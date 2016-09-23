@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<script
-	id="gov.nasa.jpl.mbee.sr"
-	name="Systems Reasoner"
-	version="17.0.10"
-	provider-name="Jet Propulsion Laboratory, Caltech"
-	script-file="configuration.py"
-	requiresApi="1.0">
-</script>

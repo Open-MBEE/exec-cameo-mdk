@@ -38,7 +38,7 @@ val commonSettings: Seq[Setting[_]] = Seq(
                         new MavenRepository("cae plugins-snapshot-local", "https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-snapshot-local")
                     ),
   autoScalaLibrary := false,
-  // disable using the Scala version in output paths and artifacts
+  // disable using the Scala humanVersion in output paths and artifacts
   crossPaths := false,
   //disable publishing other artifacts as a workaround for weird snapshot behavior
   publishArtifact in (Compile, packageBin) := true,
@@ -120,7 +120,7 @@ lazy val plugin = (project in file("."))
       IO.copyDirectory(baseDirectory.value / "lib", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "lib", true)
       
       val pluginxml = IO.read(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml")
-      val towrite = pluginxml.replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.version.human@", "3.0-SNAPSHOT-" + githash)
+      val towrite = pluginxml.replaceAllLiterally("@release.humanVersion.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.humanVersion.human@", "3.0-SNAPSHOT-" + githash)
       IO.write(zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", towrite, append=false)
       //IO.copyFile(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", true)
       //get env var BUILD_NUMBER, GIT_COMMIT, JOB_NAME, BUILD_ID (date)
@@ -136,12 +136,12 @@ lazy val plugin = (project in file("."))
                 result + "<file from=\"" + subpath + "\" to=\"" + subpath + "\"/>\n"
         }
         //streams.value.log.info(content)
-        val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
+        val dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm")
         val currentDate = dateFormat.format(Calendar.getInstance().getTime())
         val towrite = template.replaceAllLiterally("@installation@", content)
-                              .replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1"))
+                              .replaceAllLiterally("@release.humanVersion.internal@", sys.props.getOrElse("BUILD_NUMBER", "1"))
                               .replaceAllLiterally("@release.date@", currentDate)
-                              .replaceAllLiterally("@release.version.human@", "3.0 SNAPSHOT")
+                              .replaceAllLiterally("@release.humanVersion.human@", "3.0 SNAPSHOT")
         IO.write(zipfolder / "data" / "resourcemanager" / "MDR_Plugin_Docgen_91110_descriptor.xml", towrite, append=false)
         zipfolder
     },

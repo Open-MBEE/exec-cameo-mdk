@@ -12,9 +12,9 @@
 - gov.nasa.jpl.mbee.generator - Contains the core classes for parsing the document model and generating it.
 - gov.nasa.jpl.mbee.lib - Contains utility classes and methods for filtering, collecting, converting model elements and running scripts.
 - gov.nasa.jpl.mbee.model - Contain classes that model the document based on the docgen profile.
-- gov.nasa.jpl.mbee.viewedit - Contain visitors that deal with making output for view editor.
+- gov.nasa.jpl.mbee.mdk.viewedit - Contain visitors that deal with making output for view editor.
 - gov.nasa.jpl.mgss.mbee.docgen.docbook - Contain classes that model components of a document, originally based on subset of docbook model.
 - gov.nasa.jpl.mgss.mbee.docgen.validation - Classes that mirror magicdraw's validation model, can be used to show results in validation window or user validation script.
-- gov.nasa.jpl.ocl - Ocl evaluation related things.
+- gov.nasa.jpl.mbee.mdk.ocl - Ocl evaluation related things.
 
 ## Classes

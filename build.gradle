@@ -1,3 +1,6 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 /*
  *
  */
@@ -12,15 +15,16 @@ buildscript {
     }
 }
 
+apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'distribution'
 apply plugin: 'com.jfrog.artifactory'
 apply plugin: 'maven-publish'
 apply plugin: 'rebel'
 
-sourceCompatibility = 1.8
 version = humanVersion
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
+String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -38,39 +42,42 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // Production code requires MagicDraw patches to compile
-    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_0_sp6_lib_patches', version: '1.2', ext: 'zip' 
+    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.0', ext: 'zip'
     
     // SLF4J API
-    // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
-    // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
+    // compile groupId: 'org.slf4j', name: 'slf4j-api', humanVersion: '1.7.2'
+    // compile groupId: 'org.slf4j', name: 'slf4j-api', humanVersion: '1.7.21+'
     
     // SLF4J-Log4j12
-    // compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
-    // compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21+'
+    // compile groupId: 'org.slf4j', name: 'slf4j-log4j12', humanVersion: '1.7.2'
+    // compile groupId: 'org.slf4j', name: 'slf4j-log4j12', humanVersion: '1.7.21+'
     
     // JSoup
     compile group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
-    // compile group: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
+    // compile groupId: 'org.jsoup', name: 'jsoup', humanVersion: '1.9.1+'
     
     // JGraphT 
     compile group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
-    // compile group: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
+    // compile groupId: 'org.jgrapht', name: 'jgrapht', humanVersion: '1.0.0+'
     
     // JSON Simple
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
-    // compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1+'
+    // compile groupId: 'com.googlecode.json-simple', name: 'json-simple', humanVersion: '1.1.1+'
     
     // SwingX-All
     compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.4'
-    // compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.5+'
+    // compile groupId: 'org.swinglabs.swingx', name: 'swingx-all', humanVersion: '1.6.5+'
     
     // OpenCSV
     compile group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
-    // compile group: 'com.opencsv', name: 'opencsv', version: '3.8+'
+    // compile groupId: 'com.opencsv', name: 'opencsv', humanVersion: '3.8+'
     
     // ActiveMQ 
     compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
-    // compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
+    // compile groupId: 'org.apache.activemq', name: 'activemq-all', humanVersion: '5.14.0+'
+
+    // OCL
+
     
     // Other dependencies we're unable to resolve via repositories
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar','plugins/**/*.jar'])
@@ -93,6 +100,7 @@ task extractDependencies {
     doLast {
         inputs.files.each { archive ->
             copy {
+                fileMode 0755
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted'
             }
@@ -102,12 +110,13 @@ task extractDependencies {
         }*/
     }
 }
-compileJava.dependsOn extractDependencies
+//compileJava.dependsOn extractDependencies
 
 class PreDist extends DefaultTask {
-    String version
+    String humanVersion
     String internalVersion
-    String groupId
+    String buildTimestamp
+    String group
     String descriptor
 
     @TaskAction
@@ -120,23 +129,23 @@ class PreDist extends DefaultTask {
         }
         project.copy {
             from project.configurations.compile.resolvedConfiguration.resolvedArtifacts.file
-            into "build/generated-dist/plugins/${groupId}"
+            into "build/generated-dist/plugins/${group}"
         }
         project.copy {
             from project.jar
-            into "build/generated-dist/plugins/${groupId}"
+            into "build/generated-dist/plugins/${group}"
         }
 
         String pluginLibraries = ''
-        project.fileTree(dir: "build/generated-dist/plugins/${groupId}", include: '**/*.jar').each { file ->
-            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupId}\//, '') + '\"/>' + System.lineSeparator()
+        project.fileTree(dir: "build/generated-dist/plugins/${group}", include: '**/*.jar').each { file ->
+            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${group}\//, '') + '\"/>' + System.lineSeparator()
         }
         project.copy {
-            from "src/main/dist/template/plugins/${groupId}/plugin.xml"
+            from "src/main/dist/template/plugins/${group}/plugin.xml"
             filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + pluginLibraries) }
-            filter { String line -> line.replace('${human.version}', version) }
+            filter { String line -> line.replace('${human.version}', humanVersion) }
             filter { String line -> line.replace('${internal.version}', internalVersion) }
-            into "build/generated-dist/plugins/${groupId}"
+            into "build/generated-dist/plugins/${group}"
         }
 
         String descriptorFiles = ''
@@ -147,18 +156,20 @@ class PreDist extends DefaultTask {
         project.copy {
             from "src/main/dist/template/data/resourcemanager/${descriptor}"
             filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + descriptorFiles) }
-            filter { String line -> line.replace('${human.version}', version) }
+            filter { String line -> line.replace('${human.version}', humanVersion) }
             filter { String line -> line.replace('${internal.version}', internalVersion) }
+            filter { String line -> line.replace('${build.timestamp}', buildTimestamp) }
             into 'build/generated-dist/data/resourcemanager'
         }
     }
 }
 
 task preDist(type: PreDist, dependsOn: jar) {
-    version = humanVersion
+    humanVersion = version
     internalVersion = buildNumber
-    groupId = 'gov.nasa.jpl.mbee.mdk'
-    descriptor = 'MDR_Plugin_MDK_Expression_75689_descriptor.xml'
+    buildTimestamp = timestamp
+    group = groupId
+    descriptor = descriptorFile
 }
 
 distributions {
@@ -194,13 +205,12 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 publishing {
-@@@ FIXME
     // Reference to Gradle publications defined in the build script.
     // This is how we tell the Artifactory Plugin which artifacts should be
     // published to Artifactory.
     publications {
         mavenJava(MavenPublication) {
-            groupId 'gov.nasa.jpl.mbee.docgen'
+            groupId groupId
             artifactId 'mdk'
             version humanVersion
 
@@ -252,20 +262,32 @@ installDist {
 
 installDist.dependsOn distZip
 
-task runApp(type: JavaExec) {
-    classpath = sourceSets.main.runtimeClasspath
+task runJava(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    workingDir 'build/dependency-cache/extracted'
+    ignoreExitValue true
 
     standardOutput = System.out
     errorOutput = System.err
 
-    main = 'com.nomagic.magicdraw.Main'
-    jvmArgs = ['-Xmx2000M', '-Xss1024K', '-DLOCALCONFIG=true']
+    main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
+    jvmArgs = ['-Xmx4000M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-Xss1024K', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
-    args 'DEVELOPER'
-    workingDir = 'build/dependency-cache/extracted'
-
-    ignoreExitValue = true
+    args ['DEVELOPER']
 }
 
-runApp.dependsOn installDist
-runApp.dependsOn generateRebel
+//runJava.dependsOn installDist
+//runJava.dependsOn generateRebel
+
+task runScript(type: Exec) {
+    workingDir "build/dependency-cache/extracted"
+    ignoreExitValue = true
+
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'bin\\magicdraw.exe'
+    } else {
+        commandLine 'sh', 'bin/magicdraw'
+    }
+}
+
+runScript.dependsOn installDist

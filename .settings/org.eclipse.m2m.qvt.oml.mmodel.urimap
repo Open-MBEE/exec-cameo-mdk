@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="ASCII"?>
-<uriMap:MappingContainer xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:uriMap="http:///www.eclipse.org/m2m/qvt/oml/MModelUriMap/1.0.0">
-  <mapping sourceURI="http://mbee.jpl.nasa.gov/docgen/dgview" targetURI="platform:/resource/MDK/model/dgview.ecore"/>
-  <mapping sourceURI="http://mbee.jpl.nasa.gov/docgen/dgvalidation" targetURI="platform:/resource/MDK/model/dgvalidation.ecore"/>
-</uriMap:MappingContainer>

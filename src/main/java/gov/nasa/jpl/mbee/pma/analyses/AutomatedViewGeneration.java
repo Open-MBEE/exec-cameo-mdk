@@ -6,7 +6,7 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.teamwork.common.users.SessionInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import gov.nasa.jpl.mbee.api.MDKHelper;
+import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
@@ -304,7 +304,7 @@ public class AutomatedViewGeneration extends CommandLine {
      * @param args Argument string array from the console
      */
 
-    private void parseArgs(String[] args) {
+    protected void parseArgs(String[] args) {
         // iteration of argIndex is handled by following code to account for
         // variable length arguments with whitespace
         for (argIndex = 0; argIndex < args.length; ) {
