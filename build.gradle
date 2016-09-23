@@ -42,7 +42,7 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // Production code requires MagicDraw patches to compile
-    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.0', ext: 'zip'
+    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.1', ext: 'zip'
     
     // SLF4J API
     // compile groupId: 'org.slf4j', name: 'slf4j-api', humanVersion: '1.7.2'
