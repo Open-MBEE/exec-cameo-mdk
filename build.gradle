@@ -46,7 +46,7 @@ dependencies {
     
     // SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
-    // compile groupId: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
+    // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
     
     // SLF4J-Log4j12
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
@@ -219,8 +219,8 @@ publishing {
     // published to Artifactory.
     publications {
         mavenJava(MavenPublication) {
-            groupId groupId
-            artifactId 'mdk'
+            groupId artifactoryGroupId
+            artifactId project.name
             version humanVersion
 
             from components.java
