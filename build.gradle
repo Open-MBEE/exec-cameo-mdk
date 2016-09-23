@@ -45,36 +45,36 @@ dependencies {
     preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.1', ext: 'zip'
     
     // SLF4J API
-    compile groupId: 'org.slf4j', name: 'slf4j-api', humanVersion: '1.7.2'
-    // compile groupId: 'org.slf4j', name: 'slf4j-api', humanVersion: '1.7.21+'
+    compile groupId: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
+    // compile groupId: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
     
     // SLF4J-Log4j12
-    // compile groupId: 'org.slf4j', name: 'slf4j-log4j12', humanVersion: '1.7.2'
-    // compile groupId: 'org.slf4j', name: 'slf4j-log4j12', humanVersion: '1.7.21+'
+    // compile groupId: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
+    // compile groupId: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21+'
     
     // JSoup
     compile group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
-    // compile groupId: 'org.jsoup', name: 'jsoup', humanVersion: '1.9.1+'
+    // compile groupId: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
     
     // JGraphT 
     compile group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
-    // compile groupId: 'org.jgrapht', name: 'jgrapht', humanVersion: '1.0.0+'
+    // compile groupId: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
     
     // JSON Simple
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
-    // compile groupId: 'com.googlecode.json-simple', name: 'json-simple', humanVersion: '1.1.1+'
+    // compile groupId: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1+'
     
     // SwingX-All
     compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.4'
-    // compile groupId: 'org.swinglabs.swingx', name: 'swingx-all', humanVersion: '1.6.5+'
+    // compile groupId: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.5+'
     
     // OpenCSV
     compile group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
-    // compile groupId: 'com.opencsv', name: 'opencsv', humanVersion: '3.8+'
+    // compile groupId: 'com.opencsv', name: 'opencsv', version: '3.8+'
     
     // ActiveMQ 
     compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
-    // compile groupId: 'org.apache.activemq', name: 'activemq-all', humanVersion: '5.14.0+'
+    // compile groupId: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
 
     // OCL
 
