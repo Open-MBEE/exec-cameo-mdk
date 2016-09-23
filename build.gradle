@@ -97,7 +97,6 @@ task extractDependencies {
     doLast {
         inputs.files.each { archive ->
             copy {
-                fileMode 0755
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted'
             }
@@ -260,11 +259,13 @@ artifactory {
 artifactoryPublish.dependsOn distZip
 
 installDist {
-    destinationDir = file('build/install')
+    destinationDir = file('build/plugin')
     doLast {
         copy {
-            from 'build/install'
-            into 'build/dependency-cache/extracted'
+            fileMode 0755
+            from 'build/dependency-cache/extracted'
+            from 'build/plugin'
+            into 'build/install'
         }
     }
 }
@@ -273,7 +274,7 @@ installDist.dependsOn distZip
 
 task runJava(type: JavaExec) {
     classpath sourceSets.main.runtimeClasspath
-    workingDir 'build/dependency-cache/extracted'
+    workingDir 'build/install'
     ignoreExitValue true
 
     standardOutput = System.out
@@ -282,14 +283,14 @@ task runJava(type: JavaExec) {
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
     jvmArgs = ['-Xmx4000M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-Xss1024K', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
-    args ['DEVELOPER']
+    args 'DEVELOPER', '-consoleLog', '-verbose'
 }
 
 runJava.dependsOn installDist
 runJava.dependsOn generateRebel
 
 task runScript(type: Exec) {
-    workingDir "build/dependency-cache/extracted"
+    workingDir "build/install"
     ignoreExitValue = true
 
     if (System.getProperty('os.name').toLowerCase().contains('windows')) {
