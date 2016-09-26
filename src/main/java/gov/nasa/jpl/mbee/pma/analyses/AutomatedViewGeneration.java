@@ -64,6 +64,7 @@ public class AutomatedViewGeneration extends CommandLine {
     public static void main(String[] args) throws Exception {
         AutomatedViewGeneration docweb = new AutomatedViewGeneration();
         docweb.parseArgs(args);
+        docweb.reportStatus("running", false);
         docweb.cancelHandler = docweb.new InterruptTrap();
         Runtime.getRuntime().addShutdownHook(docweb.cancelHandler);
         docweb.launch(new String[0]);
@@ -506,6 +507,9 @@ public class AutomatedViewGeneration extends CommandLine {
         Map<String, String> envvars = System.getenv();
         String JOB_ID;
         String MMS_SERVER;
+        if (teamworkUsername.equals("")) {
+            loadCredentials("");
+        }
         if (!(envvars.containsKey("MMS_SERVER") && envvars.containsKey("JOB_ID"))) {
             System.out.println("MMS_SERVER or JOB_ID not specified");
             return;
