@@ -64,7 +64,6 @@ public class AutomatedViewGeneration extends CommandLine {
     public static void main(String[] args) throws Exception {
         AutomatedViewGeneration docweb = new AutomatedViewGeneration();
         docweb.parseArgs(args);
-        docweb.reportStatus("running", false);
         docweb.cancelHandler = docweb.new InterruptTrap();
         Runtime.getRuntime().addShutdownHook(docweb.cancelHandler);
         docweb.launch(new String[0]);
@@ -137,10 +136,15 @@ public class AutomatedViewGeneration extends CommandLine {
         String message = "[OPERATION] Logging in to Teamwork";
         logMessage(message);
         SessionInfo sessionInfo = null;
+        boolean reported = false;
         for (int i = 1; i <= applicationAccounts; i++) {
             try {
                 String appendage = (i == 1 ? "" : Integer.toString(i));
                 loadCredentials(appendage);
+                if (!reported) {
+                    reportStatus("running", debug);
+                    reported = true;
+                }
                 // LOG: credentials have loaded from /opt/local/jenkins/credentials/mms.properties
             } catch (IOException e) {
                 error = 100;
@@ -507,9 +511,6 @@ public class AutomatedViewGeneration extends CommandLine {
         Map<String, String> envvars = System.getenv();
         String JOB_ID;
         String MMS_SERVER;
-        if (teamworkUsername.equals("")) {
-            loadCredentials("");
-        }
         if (!(envvars.containsKey("MMS_SERVER") && envvars.containsKey("JOB_ID"))) {
             System.out.println("MMS_SERVER or JOB_ID not specified");
             return;
