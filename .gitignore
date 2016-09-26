@@ -11,3 +11,7 @@ target/
 *.mdxml.bak
 .gradle
 build
+.settings
+.classpath
+.project
+rebel.xml

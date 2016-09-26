@@ -16,6 +16,7 @@ buildscript {
 }
 
 apply plugin: 'idea'
+apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
 apply plugin: 'com.jfrog.artifactory'
