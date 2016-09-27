@@ -79,7 +79,10 @@ public class ValidationSuite {
 
     public List<ValidationRule> getValidationRules() {
         return rules;
+    }
 
+    public String getName() {
+        return name;
     }
 
     public boolean hasErrors() {

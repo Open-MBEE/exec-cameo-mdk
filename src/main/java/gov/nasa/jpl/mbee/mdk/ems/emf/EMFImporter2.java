@@ -3,10 +3,11 @@ package gov.nasa.jpl.mbee.mdk.ems.emf;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
-import gov.nasa.jpl.mbee.mdk.api.incubating.json.ToJsonFunction;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.ElementToJsonFunction;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
@@ -19,15 +20,19 @@ import org.json.simple.JSONObject;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * Created by igomes on 9/19/16.
  */
-public class EMFImporter2 implements ToJsonFunction {
+public class EMFImporter2 implements ElementToJsonFunction {
     @Override
     public Changelog.Change<Element> apply(JSONObject jsonObject, Project project, Boolean strict) throws ImportException {
-        // TODO Handle multi-thread synchronization @donbot
+        return convert(jsonObject, project, strict);
+    }
+
+    private synchronized static Changelog.Change<Element> convert(JSONObject jsonObject, Project project, Boolean strict) throws ImportException {
         UMLFactory.eINSTANCE.setRepository(project.getRepository());
         project.getCounter().setCanResetIDForObject(true);
 
@@ -66,13 +71,14 @@ public class EMFImporter2 implements ToJsonFunction {
 
     private static final Function<EStructuralFeature, String> KEY_FUNCTION = eStructuralFeature -> {
         String key = eStructuralFeature.getName();
-        if (eStructuralFeature instanceof EReference && EObject.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())) {
+        if (eStructuralFeature instanceof EReference && EObject.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())
+                && !ValueSpecification.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())) {
             key += "Id" + (eStructuralFeature.isMany() ? "s" : "");
         }
         return key;
     };
 
-    private static final ElementLookupFunction ELEMENT_LOOKUP_FUNCTION = (id, project) -> {
+    public static final BiFunction<String, Project, Element> ELEMENT_LOOKUP_FUNCTION = (id, project) -> {
         if (id.equals(project.getPrimaryProject().getProjectID())) {
             return project.getModel();
         }
@@ -112,6 +118,10 @@ public class EMFImporter2 implements ToJsonFunction {
         }
         else if (eStructuralFeature instanceof EReference) {
             EReference eReference = (EReference) eStructuralFeature;
+            if (ValueSpecification.class.isAssignableFrom(eReference.getEReferenceType().getInstanceClass()) && value instanceof JSONObject) {
+                Changelog.Change<Element> change = convert((JSONObject) value, project, strict);
+                return change != null ? change.getChanged() : null;
+            }
             if (!(value instanceof String)) {
                 if (strict) {
                     throw new ReferenceException(element, jsonObject, "Expected a String for key \"" + key + "\" in JSON, but instead got a " + value.getClass().getSimpleName() + ".");
@@ -148,6 +158,10 @@ public class EMFImporter2 implements ToJsonFunction {
         if (!eStructuralFeature.isChangeable() || eStructuralFeature.isVolatile() || eStructuralFeature.isTransient() || eStructuralFeature.isUnsettable() || eStructuralFeature.isDerived() || eStructuralFeature.getName().startsWith("_")) {
             return EMFImporter2.EMPTY_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonObject, eStructuralFeature, project, strict, element);
         }
+        return EMFImporter2.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonObject, eStructuralFeature, project, strict, element);
+    };
+
+    private static final ImportFunction UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (jsonObject, eStructuralFeature, project, strict, element) -> {
         String key = KEY_FUNCTION.apply(eStructuralFeature);
         if (!jsonObject.containsKey(key)) {
             /*if (strict) {
@@ -201,26 +215,6 @@ public class EMFImporter2 implements ToJsonFunction {
 
     private static final ImportFunction EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (jsonObject, eStructuralFeature, project, strict, element) -> element;
 
-    @FunctionalInterface
-    interface ElementLookupFunction {
-        Element apply(String id, Project project);
-    }
-
-    @FunctionalInterface
-    interface DeserializationFunction {
-        Object apply(String key, Object value, boolean ignoreMultiplicity, JSONObject jsonObject, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
-    }
-
-    @FunctionalInterface
-    interface ImportFunction {
-        Element apply(JSONObject jsonObject, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
-    }
-
-    @FunctionalInterface
-    interface ImportPredicate {
-        boolean test(JSONObject jsonObject, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element);
-    }
-
     private enum EStructuralFeatureOverride {
         ID(
                 (jsonObject, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
@@ -273,5 +267,20 @@ public class EMFImporter2 implements ToJsonFunction {
         public ImportFunction getFunction() {
             return importFunction;
         }
+    }
+
+    @FunctionalInterface
+    interface DeserializationFunction {
+        Object apply(String key, Object value, boolean ignoreMultiplicity, JSONObject jsonObject, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
+    }
+
+    @FunctionalInterface
+    interface ImportFunction {
+        Element apply(JSONObject jsonObject, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
+    }
+
+    @FunctionalInterface
+    interface ImportPredicate {
+        boolean test(JSONObject jsonObject, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element);
     }
 }

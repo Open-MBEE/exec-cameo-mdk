@@ -426,6 +426,8 @@ public class ExportUtility {
         return null;
     }
 
+    @Deprecated
+    // TODO Add project as parameter @donbot
     public static String getUrlWithWorkspace() {
         String url = getUrl(Application.getInstance().getProject());
         String workspace = getWorkspace();
@@ -435,6 +437,8 @@ public class ExportUtility {
         return null;
     }
 
+    @Deprecated
+    // TODO Add project as parameter @donbot
     public static String getUrlWithWorkspaceAndSite() {
         String url = getUrl(Application.getInstance().getProject());
         String workspace = getWorkspace();
@@ -445,6 +449,8 @@ public class ExportUtility {
         return null;
     }
 
+    @Deprecated
+    // TODO Add project as parameter @donbot
     public static String getUrlForProject() {
         String url = getUrl(Application.getInstance().getProject());
         String site = getSite();
@@ -467,6 +473,8 @@ public class ExportUtility {
         return null;
     }
 
+    @Deprecated
+    // TODO Add project as parameter @donbot
     public static String getPostElementsUrl() {
         String url = getUrlWithWorkspaceAndSite();
         if (url == null) {
@@ -1787,47 +1795,6 @@ public class ExportUtility {
         return tag;
     }
 
-    // no one uses this, should remove
-    @Deprecated
-    public static boolean checkBaselineMount() {
-        Project prj = Application.getInstance().getProject();
-        if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) {
-            String baselineTag = getBaselineTag();
-            if (baselineTag == null) {
-                return true;
-            }
-            List<String> tags = ProjectUtilities.getVersionTags(prj.getPrimaryProject());
-            if (!tags.contains(baselineTag)) {
-                Utils.guilog("The current project is not an approved baseline version!");
-                return false;
-            }
-
-            for (IAttachedProject proj : ProjectUtilities.getAllAttachedProjects(prj)) {
-                if (ProjectUtilities.isFromTeamworkServer(proj)) {
-                    List<String> tags2 = ProjectUtilities.getVersionTags(proj);
-                    if (!tags2.contains(baselineTag)) {
-                        Utils.guilog(proj.getName() + " is not an approved baseline module version!");
-                        return false;
-                    }
-                }
-            }
-        }
-        else {
-            baselineNotSet = false;
-        }
-        return true;
-    }
-
-    // no one uses this, should remove
-    @Deprecated
-    public static boolean checkBaseline() {
-		/*
-		 * if (!ExportUtility.checkBaselineMount()) { Boolean con = Utils .getUserYesNoAnswer("Mount structure check did not pass (your project or mounts are not baseline versions)! Do you want to continue?"); // Utils.showPopupMessage(
-		 * "Your project isn't the baseline/isn't mounting the baseline versions, or the check cannot be completed"); if (con == null || !con) return false; }
-		 */
-        return true;
-    }
-
     public static Integer getAlfrescoProjectVersion(String projectId) {
         String baseUrl = getUrlWithWorkspace();
         String checkProjUrl = baseUrl + "/projects/" + projectId;
@@ -2071,6 +2038,9 @@ public class ExportUtility {
         }
         if (e.getID().endsWith("sync") || (e.getOwner() != null && e.getOwner().getID().endsWith("sync"))) //delayed sync stuff
         {
+            return false;
+        }
+        if (e instanceof Diagram) {
             return false;
         }
         return !(e instanceof Constraint && isViewConstraint((Constraint) e));

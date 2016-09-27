@@ -6,10 +6,10 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.properties.PresentationElementPropertyEnum;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
@@ -99,11 +99,11 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (sysmlid.startsWith("PROJECT")) {
                         continue;
                     }
-                    if (sysmlid.startsWith(ModelValidator.HIDDEN_ID_PREFIX)) {
+                    if (sysmlid.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
                         continue;
                     }
                     if ((o = elementJson.get("classifierIds")) instanceof JSONArray) {
-                        //TODO this is legacy element support. purge? @donbot  (see also ModelValidator.java:493)
+                        //TODO this is legacy element support. purge? @donbot  (see also LegacyModelValidator.java:493)
                         boolean isPresentationElement = false;
                         for (Object c : (JSONArray) o) {
                             if (c instanceof String) {
@@ -123,7 +123,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                         }
                     }
                     if ((o = elementJson.get("definingFeatureId")) instanceof String) {
-                        //TODO this is legacy element support. purge? @donbot  (see also ModelValidator.java:513)
+                        //TODO this is legacy element support. purge? @donbot  (see also LegacyModelValidator.java:513)
                         boolean isPresentationElementProperty = false;
                         for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
                             if (o.equals(presentationElementPropertyEnum.get().getID())) {

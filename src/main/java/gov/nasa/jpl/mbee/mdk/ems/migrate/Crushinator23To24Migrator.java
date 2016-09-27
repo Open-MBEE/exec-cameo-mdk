@@ -16,12 +16,12 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.json.simple.JSONArray;
@@ -239,7 +239,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
             Object o = jsonObject.get("sysmlid");
             if (o instanceof String) {
-                String newSysmlid = ModelValidator.HIDDEN_ID_PREFIX + o;
+                String newSysmlid = MDKConstants.HIDDEN_ID_PREFIX + o;
                 jsonObject.put("sysmlid", newSysmlid);
                 jsonObject.put("owner", null);
                 hiddenViewInstancePackageJsonObjects.put(newSysmlid, jsonObject);
@@ -262,7 +262,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
             Object o = jsonObject.get("owner");
             if (o instanceof String) {
-                String newOwnerId = ModelValidator.HIDDEN_ID_PREFIX + o;
+                String newOwnerId = MDKConstants.HIDDEN_ID_PREFIX + o;
                 jsonObject.put("owner", hiddenViewInstancePackageJsonObjects.containsKey(newOwnerId) ? newOwnerId : null);
                 jsonObject = transform(jsonObject, PRESENTATION_ELEMENT_KEYS);
                 if (jsonObject == null) {

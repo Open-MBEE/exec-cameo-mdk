@@ -29,10 +29,10 @@
 package gov.nasa.jpl.mbee.mdk.actions.ems;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ValidateModelRunner;
+import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -57,9 +57,6 @@ public class ValidateModelAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.checkBaseline()) {
-            return;
-        }
-        ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(start, Application.getInstance().getProject(), true, 0), "Validating Model", true, 0);
     }
 }

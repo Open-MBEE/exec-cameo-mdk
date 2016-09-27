@@ -30,9 +30,10 @@ package gov.nasa.jpl.mbee.mdk.ems.validation.actions;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.api.incubating.json.JsonConverters;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
@@ -72,7 +73,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
             Element e = (Element) anno.getTarget();
             set.add(e);
             //infos.add(ExportUtility.fillElement(e, null));
-            infos.add(JsonConverters.getToJsonConverter().apply(e));
+            infos.add(Converters.getElementToJsonConverter().apply(e, Project.getProject(e)));
         }
         if (!ExportUtility.okToExport(set)) {
             return;
@@ -106,7 +107,7 @@ public class ExportElement extends RuleViolationAction implements AnnotationActi
     @Override
     public void actionPerformed(ActionEvent e) {
         JSONArray elements = new JSONArray();
-        elements.add(JsonConverters.getToJsonConverter().apply(element));
+        elements.add(Converters.getElementToJsonConverter().apply(element, Project.getProject(element)));
         commit(elements, "Element");
     }
 }

@@ -28,10 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.validation;
 
-import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
@@ -45,6 +42,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.properties.PresentationElementPropertyEnum;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ImportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -56,19 +54,15 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Deprecated
 //TODO rewrite the entire thing for @donbot
-public class ModelValidator {
-    public static final String HIDDEN_ID_PREFIX = "_hidden_",
-            HOLDING_BIN_PACKAGE_ID_REGEX = "^(holding_bin|(Y|M|D|H){2}_[0-9]+)_.+$";
-
+public class LegacyModelValidator {
     private ValidationSuite suite = new ValidationSuite("Model Sync");
     private ValidationRule nameDiff = new ValidationRule("Mismatched Name", "name is different", ViolationSeverity.ERROR);
     private ValidationRule docDiff = new ValidationRule("Mismatched Doc", "documentation is different", ViolationSeverity.ERROR);
@@ -105,7 +99,7 @@ public class ModelValidator {
 
     private Map<String, JSONObject> keyedElements;
 
-    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse, int depth) {
+    public LegacyModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled, boolean recurse, int depth) {
         //result is from web, elementSet is from model
         this.starts = starts;
         suite.addValidationRule(nameDiff);
@@ -139,7 +133,7 @@ public class ModelValidator {
         this.depth = depth;
     }
 
-    public ModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
+    public LegacyModelValidator(Collection<Element> starts, JSONObject result, boolean checkExist, Set<Element> elementSet, boolean crippled) {
         this(starts, result, checkExist, elementSet, crippled, true, 0);
     }
 
@@ -192,93 +186,6 @@ public class ModelValidator {
             return s.substring(0, 49) + "...";
         }
         return s;
-    }
-
-    public static JSONObject getManyAlfrescoElementsByID(Collection<String> ids, ProgressStatus ps) throws ServerException {
-        if (ids.isEmpty()) {
-            return null;
-        }
-        JSONArray idsJSONArray = new JSONArray();
-        for (String id : ids) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("sysmlId", id);
-            idsJSONArray.add(jsonObject);
-        }
-        final JSONObject body = new JSONObject();
-        body.put("elements", idsJSONArray);
-        final String url = ExportUtility.getUrlWithWorkspace() + "/elements";
-        Utils.guilog("[INFO] Searching for " + ids.size() + " elements from server...");
-
-        final AtomicReference<String> res = new AtomicReference<>();
-        final AtomicReference<Integer> code = new AtomicReference<>();
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                /*try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
-                String tres;
-                try {
-                    tres = ExportUtility.getWithBody(url, body.toJSONString());
-                    res.set(tres);
-                    code.set(200);
-                } catch (ServerException ex) {
-                    code.set(ex.getCode());
-                    if (ex.getCode() != 404) {
-                        res.set(ex.getResponse());
-                    }
-                }
-            }
-        });
-        t.start();
-        try {
-            t.join(10000);
-            while (t.isAlive()) {
-                if (ps.isCancel()) {
-                    //clean up thread?
-                    Utils.guilog("[INFO] Search for elements cancelled.");
-                    code.set(500);
-                    break;
-                }
-                t.join(10000);
-            }
-        } catch (Exception ignored) {
-        }
-
-        String response = res.get();
-        if (code.get() != 404 && code.get() != 200) {
-            throw new ServerException(response, code.get());
-        }
-        Utils.guilog("[INFO] Finished getting elements.");
-        if (response == null) {
-            JSONObject reso = new JSONObject();
-            reso.put("elements", new JSONArray());
-            return reso;
-        }
-        return (JSONObject) JSONValue.parse(response);
-    }
-
-    public static JSONObject getManyAlfrescoElements(Collection<Element> elements, ProgressStatus ps) throws ServerException {
-        if (elements.isEmpty()) {
-            return null;
-        }
-        final List<String> ids = new ArrayList<>(elements.size());
-        for (Element element : elements) {
-            ids.add(element.getID());
-        }
-        return getManyAlfrescoElementsByID(ids, ps);
-    }
-
-    @Deprecated
-    private static NMAction getPaddingAction() {
-        return new MDAction(null, null, null, null) {
-            @Override
-            public boolean isEnabled() {
-                return false;
-            }
-        };
     }
 
     public Set<String> getDifferentElementIDs() {
@@ -452,7 +359,7 @@ public class ModelValidator {
                 }
             }
         }
-        JSONObject missingResult = getManyAlfrescoElements(missing, ps);
+        JSONObject missingResult = MMSUtils.getElements(missing, ps);
         updateElementsKeyed(missingResult, elementsKeyed);
         for (Element e : all) {
             if (ps != null && ps.isCancel()) {
@@ -482,7 +389,7 @@ public class ModelValidator {
                 if (elementsKeyedId.startsWith("PROJECT")) {
                     continue;
                 }
-                if (elementsKeyedId.startsWith(ModelValidator.HIDDEN_ID_PREFIX)) {
+                if (elementsKeyedId.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
                     continue;
                 }
                 // Alfresco sysml element is not in MagicDraw
@@ -566,7 +473,7 @@ public class ModelValidator {
                 existname.replace('`', '\'');
                 v = new ValidationRuleViolation(e, "[EXIST on MMS] " + (type.equals("Product") ? "Document" : type) + " " + existname + " `" + elementsKeyedId + "` exists on MMS but was deleted locally");
                 if (!crippled) {
-                    if (!elementsKeyedId.matches(HOLDING_BIN_PACKAGE_ID_REGEX)) {
+                    if (!elementsKeyedId.matches(MDKConstants.HOLDING_BIN_PACKAGE_ID_REGEX)) {
                         v.addAction(new DeleteAlfrescoElement(elementsKeyedId, elementsKeyed));
                     }
                     v.addAction(new DetailDiff(new JSONObject(), jsonObject));
@@ -1577,37 +1484,5 @@ public class ModelValidator {
             }
         }
         return true;
-    }
-
-    public static JSONObject getAlfrescoElement(Element e) {
-        String id = ExportUtility.getElementID(e);
-        if (id == null) {
-            return null;
-        }
-        return getAlfrescoElementByID(id);
-    }
-
-    public static JSONObject getAlfrescoElementByID(String id) {
-        String url = ExportUtility.getUrlWithWorkspace();
-        if (url == null) {
-            return null;
-        }
-        id = id.replace(".", "%2E");
-        url += "/elements/" + id;
-        String response = null;
-        try {
-            response = ExportUtility.get(url, false);
-        } catch (ServerException ex) {
-
-        }
-        if (response == null) {
-            return null;
-        }
-        JSONObject result = (JSONObject) JSONValue.parse(response);
-        JSONArray elements = (JSONArray) result.get("elements");
-        if (elements == null || elements.isEmpty()) {
-            return null;
-        }
-        return (JSONObject) elements.get(0);
     }
 }

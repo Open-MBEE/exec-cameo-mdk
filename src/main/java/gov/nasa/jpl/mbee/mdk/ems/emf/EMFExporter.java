@@ -31,6 +31,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.emf;
 
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -43,9 +44,11 @@ import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.DurationInter
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeExpression;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime.TimeInterval;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.lib.ClassUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.eclipse.emf.ecore.EDataType;
@@ -64,28 +67,37 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class EMFExporter implements Function<Element, JSONObject> {
+public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
     @Override
-    public JSONObject apply(Element element) {
-        return createElement(element);
+    public JSONObject apply(Element element, Project project) {
+        return convert(element, project);
     }
 
-    private static JSONObject createElement(Element element) {
+    private static JSONObject convert(Element element, Project project) {
+        return convert(element, project, false);
+    }
+
+    private static JSONObject convert(Element element, Project project, boolean nestedValueSpecification) {
+        if (element == null) {
+            return null;
+        }
         JSONObject jsonObject = new JSONObject();
         for (PreProcessor preProcessor : PreProcessor.values()) {
-            jsonObject = preProcessor.getFunction().apply(element, jsonObject);
+            if (nestedValueSpecification && preProcessor == PreProcessor.VALUE_SPECIFICATION) {
+                continue;
+            }
+            jsonObject = preProcessor.getFunction().apply(element, project, jsonObject);
             if (jsonObject == null) {
                 return null;
             }
         }
         for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
-            TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function = Arrays.stream(EStructuralFeatureOverride.values())
+            ExportFunction function = Arrays.stream(EStructuralFeatureOverride.values())
                     .filter(override -> override.getPredicate().test(element, eStructuralFeature)).map(EStructuralFeatureOverride::getFunction)
                     .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
-            jsonObject = function.apply(element, eStructuralFeature, jsonObject);
+            jsonObject = function.apply(element, project, eStructuralFeature, jsonObject);
             if (jsonObject == null) {
                 return null;
             }
@@ -93,7 +105,7 @@ public class EMFExporter implements Function<Element, JSONObject> {
         return jsonObject;
     }
 
-    private static String getEID(EObject eObject) {
+    public static String getEID(EObject eObject) {
         if (eObject == null) {
             return null;
         }
@@ -138,116 +150,6 @@ public class EMFExporter implements Function<Element, JSONObject> {
         return einfo;
     }
 
-    private static JSONObject fillValueSpecification(ValueSpecification vs) {
-        if (vs == null) {
-            return null;
-        }
-        JSONObject elementInfo = new JSONObject();
-        if (vs instanceof InstanceValue) {
-            elementInfo.put("type", "InstanceValue");
-            InstanceValue iv = (InstanceValue) vs;
-            InstanceSpecification i = iv.getInstance();
-            elementInfo.put("instance", ((i != null) ? getEID(i) : null));
-        }
-        else if (vs instanceof LiteralSpecification) {
-            fillLiteralSpecification(vs, elementInfo);
-        }
-        else if (vs instanceof ElementValue) {
-            elementInfo.put("type", "ElementValue");
-            Element elem = ((ElementValue) vs).getElement();
-            elementInfo.put("elementId", ((elem != null) ? getEID(elem) : null));
-        }
-        else if (vs instanceof StringExpression) {
-            createStringExpression(vs, elementInfo);
-        }
-        else if (vs instanceof Expression) {
-            elementInfo.put("type", "Expression");
-            expressionPutOperand(vs, elementInfo);
-        }
-        else if (vs instanceof OpaqueExpression) {
-            elementInfo.put("type", "OpaqueExpression");
-            List<String> body = ((OpaqueExpression) vs).getBody();
-            elementInfo.put("body", ((body != null) ? makeJsonArray(body) : new JSONArray()));
-            elementInfo.put("language", ((((OpaqueExpression) vs).getLanguage() != null) ? makeJsonArray(((OpaqueExpression) vs).getLanguage()) : new JSONArray()));
-        }
-        else if (vs instanceof TimeExpression) {
-            elementInfo.put("type", "TimeExpression");
-        }
-        else if (vs instanceof Duration) {
-            elementInfo.put("type", "Duration");
-        }
-        else if (vs instanceof DurationInterval) {
-            elementInfo.put("type", "DurationInterval");
-            DurationInterval durationInterval = (DurationInterval) vs;
-            elementInfo.put("min", durationInterval.getMin());
-            elementInfo.put("max", durationInterval.getMax());
-        }
-        else if (vs instanceof TimeInterval) {
-            elementInfo.put("type", "TimeInterval");
-            TimeInterval timeInterval = (TimeInterval) vs;
-            elementInfo.put("min", timeInterval.getMin());
-            elementInfo.put("max", timeInterval.getMax());
-        }
-        return elementInfo;
-    }
-
-    private static void createStringExpression(ValueSpecification vs, JSONObject elementInfo) {
-        elementInfo.put("type", "StringExpression");
-        expressionPutOperand(vs, elementInfo);
-        for (StringExpression subexp : (((StringExpression) vs).getSubExpression())) {
-            createStringExpression(vs, elementInfo);
-        }
-    }
-
-    private static void expressionPutOperand(ValueSpecification vs, JSONObject elementInfo) {
-        List<ValueSpecification> vsl = ((Expression) vs).getOperand();
-        if (vsl != null && vsl.size() > 0) {
-            JSONArray operand = new JSONArray();
-            for (ValueSpecification vs2 : vsl) {
-                operand.add(fillValueSpecification(vs2));
-            }
-            elementInfo.put("operand", operand);
-        }
-    }
-
-    private static void fillLiteralSpecification(ValueSpecification vs, JSONObject elementInfo) {
-        if (vs instanceof LiteralBoolean) {
-            elementInfo.put("type", "LiteralBoolean");
-            elementInfo.put("booleanValue", ((LiteralBoolean) vs).isValue());
-        }
-        else if (vs instanceof LiteralInteger) {
-            elementInfo.put("type", "LiteralInteger");
-            elementInfo.put("value", (long) ((LiteralInteger) vs).getValue());
-        }
-        else if (vs instanceof LiteralNull) {
-            elementInfo.put("type", "LiteralNull");
-        }
-        else if (vs instanceof LiteralReal) {
-            elementInfo.put("type", "LiteralReal");
-            double real = ((LiteralReal) vs).getValue();
-            elementInfo.put("value", real);
-        }
-        else if (vs instanceof LiteralString) {
-            elementInfo.put("type", "LiteralString");
-            elementInfo.put("value", Utils.stripHtmlWrapper(((LiteralString) vs).getValue()));
-        }
-        else if (vs instanceof LiteralUnlimitedNatural) {
-            elementInfo.put("type", "LiteralUnlimitedNatural");
-            elementInfo.put("value", (long) ((LiteralUnlimitedNatural) vs).getValue());
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> JSONArray makeJsonArray(Collection<T> collection) {
-        JSONArray arr = new JSONArray();
-        for (T t : collection) {
-            if (t != null) {
-                arr.add(t);
-            }
-        }
-        return arr;
-    }
-
     private static void debugUMLPackageLiterals() {
         for (Field field : UMLPackage.Literals.class.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
@@ -266,14 +168,87 @@ public class EMFExporter implements Function<Element, JSONObject> {
         }
     }
 
-    private static final BiFunction<Object, EStructuralFeature, Object> DEFAULT_SERIALIZATION_FUNCTION = (object, eStructuralFeature) -> {
+    private enum PreProcessor {
+        TYPE(
+                (element, project, jsonObject) -> {
+                    jsonObject.put("type", element.eClass().getName());
+                    return jsonObject;
+                }
+        ),
+        METATYPE(
+                (element, project, jsonObject) -> {
+                    if (element instanceof Stereotype) {
+                        jsonObject.put("isMetatype", true);
+                        JSONArray metatypes = ((Stereotype) element).getSuperClass().stream().filter(c -> c instanceof Stereotype).map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
+                        metatypes.addAll(StereotypesHelper.getBaseClasses((Stereotype) element).stream().map(EMFExporter::getEID).collect(Collectors.toList()));
+                        jsonObject.put("metatypesId", metatypes);
+                    }
+                    if (element instanceof Class) {
+                        try {
+                            java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class) element);
+                            if (c != null) {
+                                jsonObject.put("isMetatype", true);
+                                jsonObject.put("metatypes", new JSONArray());
+                            }
+                        } catch (Exception ex) {
+                        }
+                    }
+                    List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(element);
+                    JSONArray applied = stereotypes.stream().map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
+                    jsonObject.put("_appliedStereotypeIds", applied);
+                    return jsonObject;
+                }
+        ),
+        DOCUMENTATION(
+                (element, project, jsonObject) -> {
+                    jsonObject.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
+                    return jsonObject;
+                }
+        ),
+        SITE_CHARACTERIZATION(
+                (element, project, jsonObject) -> {
+                    if (element instanceof Package) {
+                        jsonObject.put("_isSite", Utils.isSiteChar((Package) element));
+                    }
+                    return jsonObject;
+                }
+        ),
+        VALUE_SPECIFICATION(
+                (element, project, jsonObject) -> element instanceof ValueSpecification ? null : jsonObject
+        ),
+        CONNECTOR_END(
+                (element, project, jsonObject) -> element instanceof ConnectorEnd ? null : jsonObject
+        ),
+        DIAGRAM(
+                (element, project, jsonObject) -> element instanceof Diagram ? null : jsonObject
+        ),
+        SYNC(
+                (element, project, jsonObject) -> element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
+                        element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : jsonObject
+        ),
+        ATTACHED_PROJECT(
+                (element, project, jsonObject) -> ProjectUtilities.isElementInAttachedProject(element) ? null : jsonObject
+        );
+
+        private TriFunction<Element, Project, JSONObject, JSONObject> function;
+
+        PreProcessor(TriFunction<Element, Project, JSONObject, JSONObject> function) {
+            this.function = function;
+        }
+
+        public TriFunction<Element, Project, JSONObject, JSONObject> getFunction() {
+            return function;
+        }
+    }
+
+    private static final SerializationFunction DEFAULT_SERIALIZATION_FUNCTION = (object, project, eStructuralFeature) -> {
         if (object == null) {
             return null;
         }
         else if (object instanceof Collection) {
             JSONArray jsonArray = new JSONArray();
             for (Object o : ((Collection<?>) object)) {
-                Object serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, eStructuralFeature);
+                Object serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
                 if (serialized == null && o != null) {
                     // failed to serialize; taking the conservative approach and returning entire thing as null
                     return null;
@@ -283,10 +258,11 @@ public class EMFExporter implements Function<Element, JSONObject> {
             return jsonArray;
         }
         else if (object instanceof ValueSpecification) {
-            return fillValueSpecification((ValueSpecification) object);
+            return convert((ValueSpecification) object, project, true);
+            //return fillValueSpecification((ValueSpecification) object);
         }
         else if (eStructuralFeature instanceof EReference && object instanceof EObject) {
-            return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)), eStructuralFeature);
+            return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)), project, eStructuralFeature);
         }
         else if (eStructuralFeature.getEType() instanceof EDataType) {
             return EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object);
@@ -299,105 +275,82 @@ public class EMFExporter implements Function<Element, JSONObject> {
         return null;
     };
 
-    private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> {
+    private static final ExportFunction DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, jsonObject) -> {
         if (!eStructuralFeature.isChangeable() || eStructuralFeature.isVolatile() || eStructuralFeature.isTransient() || eStructuralFeature.isUnsettable() || eStructuralFeature.isDerived() || eStructuralFeature.getName().startsWith("_")) {
-            return EMFExporter.EMPTY_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
+            return EMFExporter.EMPTY_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, jsonObject);
         }
-        return EMFExporter.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
+        return EMFExporter.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, jsonObject);
     };
 
-    private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> {
+    private static final ExportFunction UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, jsonObject) -> {
         Object value = element.eGet(eStructuralFeature);
-        Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value, eStructuralFeature);
+        Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value, project, eStructuralFeature);
         if (value != null && serializedValue == null) {
             System.err.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value + " - " + value.getClass());
             return jsonObject;
         }
 
         String key = eStructuralFeature.getName();
-        if (eStructuralFeature instanceof EReference && EObject.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())) {
+        if (eStructuralFeature instanceof EReference && EObject.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())
+                && !ValueSpecification.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())) {
             key += "Id" + (eStructuralFeature.isMany() ? "s" : "");
         }
         jsonObject.put(key, serializedValue);
         return jsonObject;
     };
 
-    private static final TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (element, eStructuralFeature, jsonObject) -> jsonObject;
-
-    private enum PreProcessor {
-        TYPE(
-                (element, jsonObject) -> {
-                    jsonObject.put("type", element.eClass().getName());
-                    return jsonObject;
-                }
-        ),
-        METATYPE(
-                (element, jsonObject) -> {
-                    fillMetatype(element, jsonObject);
-                    return jsonObject;
-                }
-        ),
-        DOCUMENTATION(
-                (element, jsonObject) -> {
-                    jsonObject.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
-                    return jsonObject;
-                }
-        ),
-        SITE_CHARACTERIZATION(
-                (element, jsonObject) -> {
-                    if (element instanceof Package) {
-                        jsonObject.put("_isSite", Utils.isSiteChar((Package) element));
-                    }
-                    return jsonObject;
-                }
-        );
-
-        private BiFunction<Element, JSONObject, JSONObject> function;
-
-        PreProcessor(BiFunction<Element, JSONObject, JSONObject> function) {
-            this.function = function;
-        }
-
-        public BiFunction<Element, JSONObject, JSONObject> getFunction() {
-            return function;
-        }
-    }
+    private static final ExportFunction EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, jsonObject) -> jsonObject;
 
     private enum EStructuralFeatureOverride {
         ID(
                 (element, eStructuralFeature) -> eStructuralFeature == element.eClass().getEIDAttribute(),
-                (element, eStructuralFeature, jsonObject) -> {
+                (element, project, eStructuralFeature, jsonObject) -> {
                     jsonObject.put("sysmlId", getEID(element));
                     return jsonObject;
                 }
         ),
         OWNER(
                 (element, eStructuralFeature) -> UMLPackage.Literals.ELEMENT__OWNER == eStructuralFeature,
-                (element, eStructuralFeature, jsonObject) -> UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, jsonObject)
+                (element, project, eStructuralFeature, jsonObject) -> {
+                    //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, jsonObject);
+                    // safest way to prevent circular references, like with ValueSpecifications
+                    jsonObject.put(UMLPackage.Literals.ELEMENT__OWNER.getName() + "Id", getEID(element.getOwner()));
+                    return jsonObject;
+                }
         ),
-        OWNING_PACKAGE(
-                (element, eStructuralFeature) -> UMLPackage.Literals.PACKAGEABLE_ELEMENT__OWNING_PACKAGE == eStructuralFeature,
+        OWNING(
+                (element, eStructuralFeature) -> eStructuralFeature.getName().startsWith("owning"),
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
-        OWNING_TEMPLATE_PARAMETER(
-                (element, eStructuralFeature) -> UMLPackage.Literals.PARAMETERABLE_ELEMENT__OWNING_TEMPLATE_PARAMETER == eStructuralFeature,
+        OWNED(
+                (element, eStructuralFeature) -> eStructuralFeature.getName().startsWith("owned") && !eStructuralFeature.isOrdered(),
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
-        DIRECTED_RELATIONSHIP__SOURCE(
-                (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
-                UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION
-        ),
-        DIRECTED_RELATIONSHIP__TARGET(
-                (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET == eStructuralFeature,
-                UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION
+        PACKAGED_ELEMENT(
+                (element, eStructuralFeature) -> UMLPackage.Literals.PACKAGE__PACKAGED_ELEMENT == eStructuralFeature || UMLPackage.Literals.COMPONENT__PACKAGED_ELEMENT == eStructuralFeature,
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
         NAMESPACE__OWNED_DIAGRAM(
                 (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.NAMESPACE__OWNED_DIAGRAM,
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
-        CONNECTOR(
+        DIRECTED_RELATIONSHIP__SOURCE(
+                (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
+                (element, project, eStructuralFeature, jsonObject) -> {
+                    jsonObject.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    return jsonObject;
+                }
+        ),
+        DIRECTED_RELATIONSHIP__TARGET(
+                (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET == eStructuralFeature,
+                (element, project, eStructuralFeature, jsonObject) -> {
+                    jsonObject.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    return jsonObject;
+                }
+        ),
+        CONNECTOR__END(
                 (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.CONNECTOR__END,
-                (element, eStructuralFeature, jsonObject) -> {
+                (element, project, eStructuralFeature, jsonObject) -> {
                     Connector connector = (Connector) element;
                     // TODO Stop using Strings @donbot
                     List<List<Object>> propertyPaths = connector.getEnd().stream()
@@ -415,16 +368,28 @@ public class EMFExporter implements Function<Element, JSONObject> {
                     for (int i = 0; i < propertyPaths.size(); i++) {
                         propertyPaths.get(i).add(connector.getEnd().get(i).getRole());
                     }
-                    jsonObject.put("pathsOfPropertyIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths, eStructuralFeature));
+                    jsonObject.put("_propertyPathIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths, project, eStructuralFeature));
 
-                    return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, eStructuralFeature, jsonObject);
+                    return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, jsonObject);
+                }
+        ),
+        VALUE_SPECIFICATION__EXPRESSION(
+                (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION,
+                (element, project, eStructuralFeature, jsonObject) -> {
+                    Expression expression = null;
+                    Object object = element.eGet(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION);
+                    if (object instanceof Expression) {
+                        expression = (Expression) object;
+                    }
+                    jsonObject.put(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION.getName() + "Id", expression != null ? expression.getID() : null);
+                    return jsonObject;
                 }
         );
 
         private BiPredicate<Element, EStructuralFeature> predicate;
-        private TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function;
+        private ExportFunction function;
 
-        EStructuralFeatureOverride(BiPredicate<Element, EStructuralFeature> predicate, TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> function) {
+        EStructuralFeatureOverride(BiPredicate<Element, EStructuralFeature> predicate, ExportFunction function) {
             this.predicate = predicate;
             this.function = function;
         }
@@ -433,8 +398,18 @@ public class EMFExporter implements Function<Element, JSONObject> {
             return predicate;
         }
 
-        public TriFunction<Element, EStructuralFeature, JSONObject, JSONObject> getFunction() {
+        public ExportFunction getFunction() {
             return function;
         }
+    }
+
+    @FunctionalInterface
+    interface SerializationFunction {
+        Object apply(Object object, Project project, EStructuralFeature eStructuralFeature);
+    }
+
+    @FunctionalInterface
+    interface ExportFunction {
+        JSONObject apply(Element element, Project project, EStructuralFeature eStructuralFeature, JSONObject jsonObject);
     }
 }

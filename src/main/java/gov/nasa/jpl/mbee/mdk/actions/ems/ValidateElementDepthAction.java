@@ -32,8 +32,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ValidateModelRunner;
+import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -69,9 +68,6 @@ public class ValidateElementDepthAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.checkBaseline()) {
-            return;
-        }
         String message = "Choose a depth of containment to use for finding elements to validate.\n\nThis MUST be a non-negative integer, otherwise it will default to 1.\n";
         String message1 = "Nice try! To do a recursive validation, cancel this and use Validate Models.\n\nOr you can input a non-negative integer and continue.\n";
         String message2 = "You didn't input a non-negative integer!\n\nInput a non-negative integer this time or it will default to depth = 1.\n";
@@ -106,11 +102,11 @@ public class ValidateElementDepthAction extends MDAction {
         }
         if (depth < 0 && !cancel) {
             depth = 1;
-            Application.getInstance().getGUILog().log("[WARN] Validate Models: Using depth = 1 since no valid depth was input");
+            Application.getInstance().getGUILog().log("[WARN] Validate Models: Using a depth of 1 since the provided depth was not valid.");
         }
 
         if (!cancel) {
-            ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start, false, depth), "Validating Model (depth = " + Integer.toString(depth) + ")", true, 0);
+            ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(start, Application.getInstance().getProject(), false, depth), "Manual Sync (depth: " + Integer.toString(depth) + ")", true, 0);
         }
         else {
             Application.getInstance().getGUILog().log("[INFO] Cancel pressed!!! Stopping validate.");

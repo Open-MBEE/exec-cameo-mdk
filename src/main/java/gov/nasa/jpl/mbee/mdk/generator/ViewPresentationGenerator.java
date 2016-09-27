@@ -11,6 +11,11 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.ImportUtility;
@@ -20,20 +25,15 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ImageValidator;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.mdk.lib.JSONUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -68,7 +68,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
     public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
         this.start = start;
-        this.images = images != null ? images : new HashMap<String, JSONObject>();
+        this.images = images != null ? images : new HashMap<>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();
         this.recurse = recurse;
         // cannotChange is obsoleted by server-side only instance specifications
@@ -194,7 +194,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             JSONObject viewResponse;
             try {
-                viewResponse = ModelValidator.getManyAlfrescoElementsByID(viewMap.keySet(), progressStatus);
+                viewResponse = MMSUtils.getElementsById(viewMap.keySet(), progressStatus);
             } catch (ServerException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -264,7 +264,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         List<String> elementIDs = new ArrayList<>(instanceIDs);
                         elementIDs.addAll(slotIDs);
-                        response = ModelValidator.getManyAlfrescoElementsByID(elementIDs, progressStatus);
+                        response = MMSUtils.getElementsById(elementIDs, progressStatus);
                     } catch (ServerException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -499,7 +499,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 else {
                     specializationJson.put("displayedElements", view2elements.get(view));
-                    if (ModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
+                    // TODO Change me @donbot
+                    if (true) {
+                    //if (LegacyModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
                         JSONObject subViewJson = new JSONObject();
                         subViewJson.put("sysmlId", fullViewJson.get("sysmlId"));
 //                        subViewJson.put("specialization", specializationJson);

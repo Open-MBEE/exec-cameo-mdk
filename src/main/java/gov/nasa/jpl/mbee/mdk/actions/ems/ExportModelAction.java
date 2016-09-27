@@ -54,9 +54,6 @@ public class ExportModelAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!ExportUtility.checkBaseline()) {
-            return;
-        }
         //JJS--MDEV-567 fix: changed 'Export' to 'Commit'
         //
         Boolean packageOnly = false;//Utils.getUserYesNoAnswer("Commit package structure only?");

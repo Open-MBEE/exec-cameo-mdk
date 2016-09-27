@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.actions;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.github.fge.jsonpatch.diff.JsonDiff;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -35,14 +37,17 @@ import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.api.incubating.json.JsonConverters;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.emf.EMFImporter2;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 import java.util.Collection;
 
 public class DebugExportImportModels2 extends MDAction {
@@ -57,6 +62,17 @@ public class DebugExportImportModels2 extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (1 > 0) {
+            try {
+                JsonNode before = JacksonUtils.getObjectMapper().readTree("{\"elements\":[{\"isStatic\":\"false\",\"ownedCommentIds\":[\"asdf\"],\"qualifierIds\":[],\"defaultValue\":{\"ownedCommentIds\":[],\"visibility\":null,\"max\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754768575_378243_17682\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"DurationInterval\",\"ownerId\":\"_18_4_8bf0285_1474754759386_371969_17656\",\"clientDependencyIds\":[],\"expressionId\":null,\"min\":{\"ownedCommentIds\":[],\"visibility\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754783386_820149_17683\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"Duration\",\"ownerId\":\"_18_4_8bf0285_1474754783391_679302_17685\",\"clientDependencyIds\":[],\"expressionId\":null,\"syncElementId\":null,\"observationIds\":[],\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"expr\":{\"ownedCommentIds\":[],\"visibility\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754783392_354263_17686\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"LiteralString\",\"ownerId\":\"_18_4_8bf0285_1474754783386_820149_17683\",\"clientDependencyIds\":[],\"expressionId\":null,\"syncElementId\":null,\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"supplierDependencyIds\":[],\"value\":\"durationIntervalValue\",\"nameExpression\":null},\"supplierDependencyIds\":[],\"nameExpression\":null},\"syncElementId\":null,\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"supplierDependencyIds\":[],\"nameExpression\":null},\"mdExtensionsIds\":[],\"isUnique\":\"true\",\"sysmlId\":\"_18_4_8bf0285_1474754759386_371969_17656\",\"appliedStereotypeInstanceId\":\"_18_4_8bf0285_1474754759387_574165_17657\",\"templateParameterId\":null,\"aggregation\":\"composite\",\"endIds\":[],\"type\":\"Property\",\"ownerId\":\"_18_4_8bf0285_1474754260823_764159_17452\",\"isLeaf\":\"false\",\"clientDependencyIds\":[],\"redefinedPropertyIds\":[],\"isReadOnly\":\"false\",\"syncElementId\":null,\"associationEndId\":null,\"isDerivedUnion\":\"false\",\"supplierDependencyIds\":[],\"isOrdered\":\"false\",\"nameExpression\":null,\"isDerived\":\"false\",\"upperValue\":null,\"visibility\":\"public\",\"documentation\":\"\",\"lowerValue\":null,\"datatypeId\":null,\"subsettedPropertyIds\":[],\"isID\":\"false\",\"name\":\"durationIntervalProp\",\"appliedStereotypeIds\":[\"_12_0_be00301_1164123483951_695645_2041\"],\"typeId\":null,\"interfaceId\":null,\"deploymentIds\":[],\"associationId\":null},{\"ownedCommentIds\":[],\"isStatic\":\"false\",\"qualifierIds\":[],\"defaultValue\":{\"ownedCommentIds\":[],\"elementId\":\"_18_4_8bf0285_1474754260823_764159_17452\",\"visibility\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754825760_412523_17716\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"ElementValue\",\"ownerId\":\"_18_4_8bf0285_1474754799434_637544_17690\",\"clientDependencyIds\":[],\"expressionId\":null,\"syncElementId\":null,\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"supplierDependencyIds\":[],\"nameExpression\":null},\"mdExtensionsIds\":[],\"isUnique\":\"true\",\"sysmlId\":\"_18_4_8bf0285_1474754799434_637544_17690\",\"appliedStereotypeInstanceId\":\"_18_4_8bf0285_1474754799434_362590_17691\",\"templateParameterId\":null,\"aggregation\":\"composite\",\"endIds\":[],\"type\":\"Property\",\"ownerId\":\"_18_4_8bf0285_1474754260823_764159_17452\",\"isLeaf\":\"false\",\"clientDependencyIds\":[],\"redefinedPropertyIds\":[],\"isReadOnly\":\"false\",\"syncElementId\":null,\"associationEndId\":null,\"isDerivedUnion\":\"false\",\"supplierDependencyIds\":[],\"isOrdered\":\"false\",\"nameExpression\":null,\"isDerived\":\"false\",\"upperValue\":null,\"visibility\":\"public\",\"documentation\":\"\",\"lowerValue\":null,\"datatypeId\":null,\"subsettedPropertyIds\":[],\"isID\":\"false\",\"name\":\"elementValueProp\",\"appliedStereotypeIds\":[\"_12_0_be00301_1164123483951_695645_2041\"],\"typeId\":null,\"interfaceId\":null,\"deploymentIds\":[],\"associationId\":null}],\"mmsVersion\":\"2.4\",\"source\":\"magicdraw\"}");
+                JsonNode after = JacksonUtils.getObjectMapper().readTree("{\"elements\":[{\"ownedCommentIds\":[\"asdf\"],\"isStatic\":\"false\",\"qualifierIds\":[],\"defaultValue\":{\"ownedCommentIds\":[],\"visibility\":null,\"max\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754768575_378243_17682\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"DurationInterval\",\"ownerId\":\"_18_4_8bf0285_1474754759386_371969_17656\",\"clientDependencyIds\":[],\"expressionId\":null,\"min\":{\"ownedCommentIds\":[],\"visibility\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754783386_820149_17683\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"Duration\",\"ownerId\":\"_18_4_8bf0285_1474754783391_679302_17685\",\"clientDependencyIds\":[],\"expressionId\":null,\"syncElementId\":null,\"observationIds\":[],\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"expr\":{\"ownedCommentIds\":[],\"visibility\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754783392_354263_17686\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"LiteralString\",\"ownerId\":\"_18_4_8bf0285_1474754783386_820149_17683\",\"clientDependencyIds\":[],\"expressionId\":null,\"syncElementId\":null,\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"supplierDependencyIds\":[],\"value\":\"durationIntervalValue\",\"nameExpression\":null},\"supplierDependencyIds\":[],\"nameExpression\":null},\"syncElementId\":null,\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"supplierDependencyIds\":[],\"nameExpression\":null},\"mdExtensionsIds\":[],\"isUnique\":\"true\",\"sysmlId\":\"_18_4_8bf0285_1474754759386_371969_17656\",\"appliedStereotypeInstanceId\":\"_18_4_8bf0285_1474754759387_574165_17657\",\"templateParameterId\":null,\"aggregation\":\"composite\",\"endIds\":[],\"type\":\"Property\",\"ownerId\":\"_18_4_8bf0285_1474754260823_764159_17452\",\"isLeaf\":\"false\",\"clientDependencyIds\":[],\"redefinedPropertyIds\":[],\"isReadOnly\":\"false\",\"syncElementId\":null,\"associationEndId\":null,\"isDerivedUnion\":\"false\",\"supplierDependencyIds\":[],\"isOrdered\":\"false\",\"nameExpression\":null,\"isDerived\":\"false\",\"upperValue\":null,\"visibility\":\"public\",\"documentation\":\"\",\"lowerValue\":null,\"datatypeId\":null,\"subsettedPropertyIds\":[],\"isID\":\"false\",\"name\":\"durationIntervalProp\",\"appliedStereotypeIds\":[\"_12_0_be00301_1164123483951_695645_2041\"],\"typeId\":null,\"interfaceId\":null,\"deploymentIds\":[],\"associationId\":null},{\"ownedCommentIds\":[],\"isStatic\":\"false\",\"qualifierIds\":[],\"defaultValue\":{\"ownedCommentIds\":[],\"elementId\":\"_18_4_8bf0285_1474754260823_764159_17452\",\"visibility\":null,\"documentation\":\"\",\"mdExtensionsIds\":[],\"sysmlId\":\"_18_4_8bf0285_1474754825760_412523_17716\",\"appliedStereotypeInstanceId\":null,\"templateParameterId\":null,\"type\":\"ElementValue\",\"ownerId\":\"_18_4_8bf0285_1474754799434_637544_17690\",\"clientDependencyIds\":[],\"expressionId\":null,\"syncElementId\":null,\"name\":\"\",\"appliedStereotypeIds\":[],\"typeId\":null,\"supplierDependencyIds\":[],\"nameExpression\":null},\"mdExtensionsIds\":[],\"isUnique\":\"true\",\"sysmlId\":\"_18_4_8bf0285_1474754799434_637544_17690\",\"appliedStereotypeInstanceId\":\"_18_4_8bf0285_1474754799434_362590_17691\",\"templateParameterId\":null,\"aggregation\":\"composite\",\"endIds\":[],\"type\":\"Property\",\"ownerId\":\"_18_4_8bf0285_1474754260823_764159_17452\",\"isLeaf\":\"false\",\"clientDependencyIds\":[],\"redefinedPropertyIds\":[],\"isReadOnly\":\"false\",\"syncElementId\":null,\"associationEndId\":null,\"isDerivedUnion\":\"false\",\"supplierDependencyIds\":[],\"isOrdered\":\"false\",\"nameExpression\":null,\"isDerived\":\"false\",\"upperValue\":null,\"visibility\":\"public\",\"documentation\":\"\",\"lowerValue\":null,\"datatypeId\":null,\"subsettedPropertyIds\":[],\"isID\":\"false\",\"name\":\"elementValueProp\",\"appliedStereotypeIds\":[\"_12_0_be00301_1164123483951_695645_2041\"],\"typeId\":null,\"interfaceId\":null,\"deploymentIds\":[],\"associationId\":null}],\"mmsVersion\":\"2.4\",\"source\":\"magicdraw\"}");
+                JsonNode patch = JsonDiff.asJson(before, after);
+                System.out.println("Patch: " + JsonPatchUtils.isEqual(before, after) + " : " + JacksonUtils.getObjectMapper().writeValueAsString(patch));
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+            return;
+        }
         //Application.getInstance().getGUILog().log("BOO!");
         Collection<Element> selectedElements = MDUtils.getSelection(e, false);
         if (selectedElements.size() != 1) {
@@ -66,7 +82,7 @@ public class DebugExportImportModels2 extends MDAction {
         Element element = selectedElements.iterator().next();
 
         Application.getInstance().getGUILog().log("[INFO] Exporting, deleting, and importing " + element.getHumanName() + ".");
-        JSONObject jsonObject = JsonConverters.getToJsonConverter().apply(element);
+        JSONObject jsonObject = Converters.getElementToJsonConverter().apply(element, Project.getProject(element));
         if (jsonObject == null) {
             Application.getInstance().getGUILog().log("[ERROR] Null JSON for " + element + " " + element.getHumanName());
             return;
@@ -95,7 +111,7 @@ public class DebugExportImportModels2 extends MDAction {
 
         //EMFImporter imp = new EMFImporter(element);
         //imp.createElementsFromJSON();
-        jsonObject = JsonConverters.getToJsonConverter().apply(elementChange.getChanged());
+        jsonObject = Converters.getElementToJsonConverter().apply(elementChange.getChanged(), Project.getProject(elementChange.getChanged()));
         if (jsonObject == null) {
             Application.getInstance().getGUILog().log("[ERROR] Null JSON2 for " + elementChange.getChanged() + " " + elementChange.getChanged());
             return;
