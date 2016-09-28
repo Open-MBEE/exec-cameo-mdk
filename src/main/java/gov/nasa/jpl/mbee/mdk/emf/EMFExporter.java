@@ -217,6 +217,15 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
         DIAGRAM(
                 (element, project, jsonObject) -> element instanceof Diagram ? null : jsonObject
         ),
+        COMMENT(
+                (element, project, jsonObject) -> {
+                    if (!(element instanceof Comment)) {
+                        return jsonObject;
+                    }
+                    Comment comment = (Comment) element;
+                    return comment.getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner() ? null : jsonObject;
+                }
+        ),
         SYNC(
                 (element, project, jsonObject) -> element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
                         element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : jsonObject
