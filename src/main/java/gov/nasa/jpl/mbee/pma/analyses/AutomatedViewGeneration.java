@@ -129,22 +129,17 @@ public class AutomatedViewGeneration extends CommandLine {
      * @throws Exception
      */
 
-    private void loginTeamwork() throws FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+    private void loginTeamwork() throws FileNotFoundException, UnsupportedEncodingException, InterruptedException, IllegalAccessException {
         // disable all mdk popup warnings
         MDKHelper.setPopupsDisabled(true);
         
         String message = "[OPERATION] Logging in to Teamwork";
         logMessage(message);
         SessionInfo sessionInfo = null;
-        boolean reported = false;
         for (int i = 1; i <= applicationAccounts; i++) {
             try {
                 String appendage = (i == 1 ? "" : Integer.toString(i));
                 loadCredentials(appendage);
-                if (!reported) {
-                    reportStatus("running", debug);
-                    reported = true;
-                }
                 // LOG: credentials have loaded from /opt/local/jenkins/credentials/mms.properties
             } catch (IOException e) {
                 error = 100;
@@ -152,6 +147,14 @@ public class AutomatedViewGeneration extends CommandLine {
                 logMessage(message);
                 throw new IllegalStateException(message, e);
             }
+            if (i == 1) {
+                try {
+                    reportStatus("running", debug);
+                } catch (IOException e) {
+                    throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not edit site (check Alfresco site membership).");
+                }
+            }
+
             sessionInfo = TeamworkUtils.loginWithSession(teamworkServer, Integer.parseInt(teamworkPort), teamworkUsername, teamworkPassword);
 
             if (sessionInfo == null) {
