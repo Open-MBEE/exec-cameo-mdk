@@ -2,8 +2,8 @@ package gov.nasa.jpl.mbee.mdk.api.incubating.convert;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.ems.emf.EMFExporter;
-import gov.nasa.jpl.mbee.mdk.ems.emf.EMFImporter2;
+import gov.nasa.jpl.mbee.mdk.emf.EMFExporter;
+import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import org.json.simple.JSONObject;
 
 import java.util.function.BiFunction;
@@ -29,7 +29,7 @@ public class Converters {
 
     public static ElementToJsonFunction getJsonToElementConverter() {
         if (JSON_TO_ELEMENT_CONVERTER == null) {
-            JSON_TO_ELEMENT_CONVERTER = new EMFImporter2();
+            JSON_TO_ELEMENT_CONVERTER = new EMFImporter();
         }
         return JSON_TO_ELEMENT_CONVERTER;
     }
@@ -43,7 +43,7 @@ public class Converters {
 
     public static BiFunction<String, Project, Element> getIdToElementConverter() {
         if (ID_TO_ELEMENT_CONVERTER == null) {
-            ID_TO_ELEMENT_CONVERTER = EMFImporter2.ELEMENT_LOOKUP_FUNCTION;
+            ID_TO_ELEMENT_CONVERTER = EMFImporter.ELEMENT_LOOKUP_FUNCTION;
         }
         return ID_TO_ELEMENT_CONVERTER;
     }

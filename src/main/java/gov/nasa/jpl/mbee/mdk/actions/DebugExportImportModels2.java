@@ -39,7 +39,7 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.emf.EMFImporter2;
+import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
@@ -94,7 +94,7 @@ public class DebugExportImportModels2 extends MDAction {
         Changelog.Change<Element> elementChange = null;
         try {
             ModelElementsManager.getInstance().removeElement(element);
-            elementChange = new EMFImporter2().apply(jsonObject, Project.getProject(element), false);
+            elementChange = new EMFImporter().apply(jsonObject, Project.getProject(element), false);
         } catch (ReadOnlyElementException | ImportException ie) {
             ie.printStackTrace();
             SessionManager.getInstance().cancelSession();

@@ -34,9 +34,9 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.mdk.actions.docgen.GenerateViewPresentationAction;
-import gov.nasa.jpl.mbee.mdk.actions.ems.EMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.actions.ems.UpdateAllDocs;
+import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -50,7 +50,7 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -415,7 +415,7 @@ public class MDKHelper {
     }
 
     public static void generateAllDocuments() {
-        UpdateAllDocs uad = new UpdateAllDocs();
+        UpdateAllDocumentsAction uad = new UpdateAllDocumentsAction();
         validationWindow = new MDKValidationWindow(uad.updateAction());
     }
 

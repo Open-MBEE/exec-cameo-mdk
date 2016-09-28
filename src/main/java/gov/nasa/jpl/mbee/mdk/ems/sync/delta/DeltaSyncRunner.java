@@ -26,12 +26,12 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
-import gov.nasa.jpl.mbee.mdk.ems.validation.actions.DetailDiff;
+import gov.nasa.jpl.mbee.mdk.ems.validation.actions.DetailDiffAction;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -402,7 +402,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         ie.printStackTrace();
                         failedJmsChangelog.addChange((String) elementJson.get("sysmlid"), null, Changelog.ChangeType.CREATED);
                         ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ie.getMessage());
-                        vrv.addAction(new DetailDiff(new JSONObject(), elementJson));
+                        vrv.addAction(new DetailDiffAction(new JSONObject(), elementJson));
                         cannotCreate.addViolation(vrv);
                     }
                 }
@@ -416,7 +416,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         ie.printStackTrace();
                         failedJmsChangelog.addChange((String) elementJson.get("sysmlid"), null, Changelog.ChangeType.CREATED);
                         ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ie.getMessage());
-                        vrv.addAction(new DetailDiff(new JSONObject(), elementJson));
+                        vrv.addAction(new DetailDiffAction(new JSONObject(), elementJson));
                         cannotCreate.addViolation(vrv);
                     }
                 }
@@ -429,7 +429,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 for (JSONObject element : creationOrder.getFailed()) {
                     failedJmsChangelog.addChange((String) element.get("sysmlid"), null, Changelog.ChangeType.CREATED);
                     ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found");
-                    vrv.addAction(new DetailDiff(new JSONObject(), element));
+                    vrv.addAction(new DetailDiffAction(new JSONObject(), element));
                     cannotCreate.addViolation(vrv);
                 }
             }

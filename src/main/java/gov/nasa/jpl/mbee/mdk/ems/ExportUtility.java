@@ -963,6 +963,10 @@ public class ExportUtility {
             }
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
+            // TODO Remove this hackery @donbot
+            if (code == 404) {
+                json = null;
+            }
             if (print) {
                 log.info("get response: " + code + " " + json);
             }

@@ -1,19 +1,22 @@
 package gov.nasa.jpl.mbee.mdk.ems.validation;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jsonpatch.diff.JsonDiff;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.EmptyProgressStatus;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.ems.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
+import gov.nasa.jpl.mbee.mdk.ems.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
@@ -86,8 +89,8 @@ public class ElementValidator implements RunnableWithProgress {
 
         for (String id : elementKeySet) {
             Pair<Element, JSONObject> clientElement = clientElementMap.get(id);
-            Element clientElementElement = clientElement.getFirst();
-            JSONObject clientElementJson = clientElement.getSecond();
+            Element clientElementElement = clientElement != null ? clientElement.getFirst() : null;
+            JSONObject clientElementJson = clientElement != null ? clientElement.getSecond() : null;
             JSONObject serverElement = serverElementMap.get(id);
             try {
                 ValidationRuleViolation validationRuleViolation = null;
@@ -95,20 +98,36 @@ public class ElementValidator implements RunnableWithProgress {
                     continue;
                 }
                 else if (clientElementJson == null) {
-                    validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + serverElement.getOrDefault(MDKConstants.TYPE_KEY, "Element") + " " + serverElement.getOrDefault(MDKConstants.NAME_KEY, "<>") + " - " + serverElement.getOrDefault(MDKConstants.SYSML_ID_KEY, "<>"));
+                    String name = (String) serverElement.getOrDefault(MDKConstants.NAME_KEY, "<>");
+                    if (name == null || name.isEmpty()) {
+                        name = "<>";
+                    }
+                    validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + serverElement.getOrDefault(MDKConstants.TYPE_KEY, "Element") + " "
+                            + name + " - " + serverElement.getOrDefault(MDKConstants.SYSML_ID_KEY, "<>"));
                 }
                 else if (serverElement == null) {
-                    validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanName() + " - " + Converters.getElementToIdConverter().apply(clientElementElement));
+                    String name = "<>";
+                    if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
+                        name = ((NamedElement) clientElementElement).getName();
+                    }
+                    validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanType()
+                            + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement));
                 }
                 else {
                     JsonNode source = JacksonUtils.getObjectMapper().readTree(clientElementJson.toJSONString());
                     JsonNode target = JacksonUtils.getObjectMapper().readTree(serverElement.toJSONString());
-                    JsonNode patch = JsonDiff.asJson(source, target);
+                    JsonNode patch = JsonDiffFunction.getInstance().apply(source, target);
                     if (!JsonPatchUtils.isEqual(patch)) {
-                        validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanName() + " - " + Converters.getElementToIdConverter().apply(clientElementElement) + ": " + JacksonUtils.getObjectMapper().writeValueAsString(patch));
+                        String name = "<>";
+                        if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
+                            name = ((NamedElement) clientElementElement).getName();
+                        }
+                        validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanType()
+                                + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement) + ": " + JacksonUtils.getObjectMapper().writeValueAsString(patch));
                     }
                 }
                 if (validationRuleViolation != null) {
+                    validationRuleViolation.addAction(new CommitClientElementAction(id, clientElementElement, clientElementJson));
                     elementEquivalenceValidationRule.addViolation(validationRuleViolation);
                     invalidElements.put(id, new Pair<>(clientElement, serverElement));
                 }

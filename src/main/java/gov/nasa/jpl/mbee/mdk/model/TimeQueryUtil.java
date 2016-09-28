@@ -5,7 +5,6 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ResultHolder;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -61,7 +60,6 @@ public class TimeQueryUtil {
         }
         result = new JSONObject();
         result.put("elements", elements);
-        ResultHolder.lastResults = result;
         return result;
     }
 

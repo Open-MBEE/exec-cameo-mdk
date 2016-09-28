@@ -57,7 +57,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setDescription("Validating sync pre-conditions");
         progressStatus.setIndeterminate(true);
         if (!checkProject()) {
-            Utils.displayValidationWindow(validationSuite, validationSuite.getName());
+            if (validationSuite.hasErrors()) {
+                Utils.displayValidationWindow(validationSuite, validationSuite.getName());
+            }
             return;
         }
 
@@ -117,8 +119,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if (url == null) {
             return false;
         }
+        System.out.println("GETTING HERE: " + Boolean.toString(globalResponse == null));
         if (globalResponse == null) {
-            ValidationRuleViolation v = null;
+            ValidationRuleViolation v;
             if (url.contains("master")) {
                 v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
                 // TODO Change me back to false @donbot

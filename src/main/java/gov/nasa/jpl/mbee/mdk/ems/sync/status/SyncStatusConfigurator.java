@@ -5,7 +5,7 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.actions.ems.sync.SyncStatusAction;
+import gov.nasa.jpl.mbee.mdk.ems.sync.status.actions.SyncStatusAction;
 
 /**
  * Created by igomes on 8/16/16.
