@@ -35,12 +35,10 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -121,30 +119,6 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
         return EcoreUtil.getID(eObject);
     }
 
-    private static JSONObject fillMetatype(Element e, JSONObject einfo) {
-        // info.put("isMetatype", false);
-        if (e instanceof Stereotype) {
-            einfo.put("isMetatype", true);
-            JSONArray metatypes = ((Stereotype) e).getSuperClass().stream().filter(c -> c instanceof Stereotype).map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
-            metatypes.addAll(StereotypesHelper.getBaseClasses((Stereotype) e).stream().map(EMFExporter::getEID).collect(Collectors.toList()));
-            einfo.put("metatypesId", metatypes);
-        }
-        if (e instanceof Class) {
-            try {
-                java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class) e);
-                if (c != null) {
-                    einfo.put("isMetatype", true);
-                    einfo.put("metatypes", new JSONArray());
-                }
-            } catch (Exception ex) {
-            }
-        }
-        List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(e);
-        JSONArray applied = stereotypes.stream().map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
-        einfo.put("appliedStereotypeIds", applied);
-        return einfo;
-    }
-
     private static void debugUMLPackageLiterals() {
         for (Field field : UMLPackage.Literals.class.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
@@ -170,33 +144,16 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
                     return jsonObject;
                 }
         ),
-        METATYPE(
+        DOCUMENTATION(
                 (element, project, jsonObject) -> {
-                    if (element instanceof Stereotype) {
-                        jsonObject.put("isMetatype", true);
-                        JSONArray metatypes = ((Stereotype) element).getSuperClass().stream().filter(c -> c instanceof Stereotype).map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
-                        metatypes.addAll(StereotypesHelper.getBaseClasses((Stereotype) element).stream().map(EMFExporter::getEID).collect(Collectors.toList()));
-                        jsonObject.put("metatypesId", metatypes);
-                    }
-                    if (element instanceof Class) {
-                        try {
-                            java.lang.Class c = StereotypesHelper.getClassOfMetaClass((Class) element);
-                            if (c != null) {
-                                jsonObject.put("isMetatype", true);
-                                jsonObject.put("metatypes", new JSONArray());
-                            }
-                        } catch (Exception ex) {
-                        }
-                    }
-                    List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(element);
-                    JSONArray applied = stereotypes.stream().map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
-                    jsonObject.put("_appliedStereotypeIds", applied);
+                    jsonObject.put("documentation", ModelHelper.getComment(element));
                     return jsonObject;
                 }
         ),
-        DOCUMENTATION(
+        APPLIED_STEREOTYPE(
                 (element, project, jsonObject) -> {
-                    jsonObject.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(element)));
+                    JSONArray applied = StereotypesHelper.getStereotypes(element).stream().map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
+                    jsonObject.put("_appliedStereotypeIds", applied);
                     return jsonObject;
                 }
         ),

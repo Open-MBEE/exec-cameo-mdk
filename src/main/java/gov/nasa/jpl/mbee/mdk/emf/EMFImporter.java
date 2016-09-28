@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.emf;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
@@ -59,6 +60,12 @@ public class EMFImporter implements ElementToJsonFunction {
             changeType = Changelog.ChangeType.CREATED;
         }
 
+        for (PreProcessor preProcessor : PreProcessor.values()) {
+            element = preProcessor.getFunction().apply(jsonObject, project, strict, element);
+            if (element == null) {
+                return null;
+            }
+        }
         for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
             final Element finalElement = element;
             ImportFunction function = Arrays.stream(EStructuralFeatureOverride.values()).filter(override -> override.getPredicate()
@@ -67,6 +74,28 @@ public class EMFImporter implements ElementToJsonFunction {
             element = function.apply(jsonObject, eStructuralFeature, project, strict, element);
         }
         return new Changelog.Change<>(element, changeType);
+    }
+
+    private enum PreProcessor {
+        DOCUMENTATION(
+                (jsonObject, project, strict, element) -> {
+                    Object o = jsonObject.get("documentation");
+                    if (o instanceof String) {
+                        ModelHelper.setComment(element, (String) o);
+                    }
+                    return element;
+                }
+        );
+
+        private PreProcessorFunction function;
+
+        PreProcessor(PreProcessorFunction function) {
+            this.function = function;
+        }
+
+        public PreProcessorFunction getFunction() {
+            return function;
+        }
     }
 
     private static final Function<EStructuralFeature, String> KEY_FUNCTION = eStructuralFeature -> {
@@ -267,6 +296,11 @@ public class EMFImporter implements ElementToJsonFunction {
         public ImportFunction getFunction() {
             return importFunction;
         }
+    }
+
+    @FunctionalInterface
+    interface PreProcessorFunction {
+        Element apply(JSONObject jsonObject, Project project, boolean strict, Element element);
     }
 
     @FunctionalInterface
