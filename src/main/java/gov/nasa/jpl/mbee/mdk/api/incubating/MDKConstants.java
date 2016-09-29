@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.api.incubating;
 
+import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
+
 /**
  * Created by igomes on 9/26/16.
  */
@@ -13,5 +15,6 @@ public class MDKConstants {
             DERIVED_KEY_PREFIX = "_",
             ID_SUFFIX = "Id",
             ID_SUFFIX_PLURAL = ID_SUFFIX + "s",
-            SYSML_ID_KEY = "sysml" + ID_SUFFIX;
+            SYSML_ID_KEY = "sysml" + ID_SUFFIX,
+            OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_SUFFIX;
 }

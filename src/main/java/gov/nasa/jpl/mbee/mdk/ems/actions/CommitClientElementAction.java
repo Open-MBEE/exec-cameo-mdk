@@ -5,6 +5,7 @@ import com.nomagic.documentmodeling.mbee.DocGenPlugin;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -26,18 +27,21 @@ import java.util.List;
 /**
  * Created by igomes on 9/27/16.
  */
+// TODO Abstract this and update to a common class @donbot
 public class CommitClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final String NAME = "Commit Element to MMS";
 
     private final String id;
     private final Element element;
     private final JSONObject elementJson;
+    private final Project project;
 
-    public CommitClientElementAction(String id, Element element, JSONObject elementJson) {
+    public CommitClientElementAction(String id, Element element, JSONObject elementJson, Project project) {
         super(NAME, NAME, null, null);
         this.id = id;
         this.element = element;
         this.elementJson = elementJson;
+        this.project = project;
     }
 
     @Override
@@ -59,7 +63,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 }
             }
         }
-        CommitClientElementAction.request(elementsToUpdate, elementsToDelete);
+        CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);
     }
 
     @Override
@@ -85,10 +89,10 @@ public class CommitClientElementAction extends RuleViolationAction implements An
         else {
             elementsToDelete.add(id);
         }
-        CommitClientElementAction.request(elementsToUpdate, elementsToDelete);
+        CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);
     }
 
-    private static void request(List<JSONObject> elementsToUpdate, List<String> elementsToDelete) {
+    private static void request(List<JSONObject> elementsToUpdate, List<String> elementsToDelete, Project project) {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
             JSONObject request = new JSONObject();

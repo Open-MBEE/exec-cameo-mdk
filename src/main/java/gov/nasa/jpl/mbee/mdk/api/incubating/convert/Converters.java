@@ -16,7 +16,7 @@ import java.util.function.Function;
 public class Converters {
 
     private static BiFunction<Element, Project, JSONObject> ELEMENT_TO_JSON_CONVERTER;
-    private static ElementToJsonFunction JSON_TO_ELEMENT_CONVERTER;
+    private static JsonToElementFunction JSON_TO_ELEMENT_CONVERTER;
     private static Function<Element, String> ELEMENT_TO_ID_CONVERTER;
     private static BiFunction<String, Project, Element> ID_TO_ELEMENT_CONVERTER;
 
@@ -27,7 +27,7 @@ public class Converters {
         return ELEMENT_TO_JSON_CONVERTER;
     }
 
-    public static ElementToJsonFunction getJsonToElementConverter() {
+    public static JsonToElementFunction getJsonToElementConverter() {
         if (JSON_TO_ELEMENT_CONVERTER == null) {
             JSON_TO_ELEMENT_CONVERTER = new EMFImporter();
         }

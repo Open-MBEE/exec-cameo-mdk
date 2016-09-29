@@ -10,6 +10,6 @@ import org.json.simple.JSONObject;;
  * Created by igomes on 9/20/16.
  */
 @FunctionalInterface
-public interface ElementToJsonFunction {
+public interface JsonToElementFunction {
     Changelog.Change<Element> apply(JSONObject jsonObject, Project project, Boolean strict) throws ImportException;
 }

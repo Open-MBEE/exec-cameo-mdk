@@ -94,7 +94,7 @@ public class DebugExportImportModels2 extends MDAction {
         Changelog.Change<Element> elementChange = null;
         try {
             ModelElementsManager.getInstance().removeElement(element);
-            elementChange = new EMFImporter().apply(jsonObject, Project.getProject(element), false);
+            elementChange = Converters.getJsonToElementConverter().apply(jsonObject, Project.getProject(element), false);
         } catch (ReadOnlyElementException | ImportException ie) {
             ie.printStackTrace();
             SessionManager.getInstance().cancelSession();

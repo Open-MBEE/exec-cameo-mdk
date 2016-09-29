@@ -14,6 +14,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateClientElementAction;
 import gov.nasa.jpl.mbee.mdk.ems.json.JsonDiffFunction;
 import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CommitClientElementAction;
@@ -110,7 +111,7 @@ public class ElementValidator implements RunnableWithProgress {
                     if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
                         name = ((NamedElement) clientElementElement).getName();
                     }
-                    validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanType()
+                    validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanType() + " "
                             + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement));
                 }
                 else {
@@ -122,12 +123,13 @@ public class ElementValidator implements RunnableWithProgress {
                         if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
                             name = ((NamedElement) clientElementElement).getName();
                         }
-                        validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanType()
+                        validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanType() + " "
                                 + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement) + ": " + JacksonUtils.getObjectMapper().writeValueAsString(patch));
                     }
                 }
                 if (validationRuleViolation != null) {
-                    validationRuleViolation.addAction(new CommitClientElementAction(id, clientElementElement, clientElementJson));
+                    validationRuleViolation.addAction(new CommitClientElementAction(id, clientElementElement, clientElementJson, project));
+                    validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElementElement, serverElement, project));
                     elementEquivalenceValidationRule.addViolation(validationRuleViolation);
                     invalidElements.put(id, new Pair<>(clientElement, serverElement));
                 }

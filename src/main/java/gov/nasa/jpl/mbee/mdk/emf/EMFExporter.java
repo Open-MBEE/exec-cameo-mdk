@@ -266,7 +266,9 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
         ID(
                 (element, eStructuralFeature) -> eStructuralFeature == element.eClass().getEIDAttribute(),
                 (element, project, eStructuralFeature, jsonObject) -> {
-                    jsonObject.put("sysmlId", getEID(element));
+                    if (!(element instanceof ValueSpecification)) {
+                        jsonObject.put("sysmlId", getEID(element));
+                    }
                     return jsonObject;
                 }
         ),
@@ -275,7 +277,7 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
                 (element, project, eStructuralFeature, jsonObject) -> {
                     //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, jsonObject);
                     // safest way to prevent circular references, like with ValueSpecifications
-                    jsonObject.put(UMLPackage.Literals.ELEMENT__OWNER.getName() + "Id", getEID(element.getOwner()));
+                    jsonObject.put(MDKConstants.OWNER_ID_KEY, getEID(element.getOwner()));
                     return jsonObject;
                 }
         ),

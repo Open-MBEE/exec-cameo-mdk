@@ -48,6 +48,9 @@ public class JsonDiffFunction implements BiFunction<JsonNode, JsonNode, JsonNode
                 targetKeyIterator.remove();
             }
         }
+        if (targetObjectNode.has("type") && targetObjectNode.get("type").asText().equals("Model")) {
+            targetObjectNode.remove(MDKConstants.OWNER_ID_KEY);
+        }
     }
 
     public static JsonDiffFunction getInstance() {

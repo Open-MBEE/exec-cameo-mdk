@@ -3,12 +3,14 @@ package gov.nasa.jpl.mbee.mdk.emf;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.ElementToJsonFunction;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
@@ -27,7 +29,7 @@ import java.util.function.Function;
 /**
  * Created by igomes on 9/19/16.
  */
-public class EMFImporter implements ElementToJsonFunction {
+public class EMFImporter implements JsonToElementFunction {
     @Override
     public Changelog.Change<Element> apply(JSONObject jsonObject, Project project, Boolean strict) throws ImportException {
         return convert(jsonObject, project, strict);
@@ -37,7 +39,7 @@ public class EMFImporter implements ElementToJsonFunction {
         UMLFactory.eINSTANCE.setRepository(project.getRepository());
         project.getCounter().setCanResetIDForObject(true);
 
-        Object o = jsonObject.get("sysmlId");
+        Object o = jsonObject.get(MDKConstants.SYSML_ID_KEY);
         if (!(o instanceof String)) {
             return null;
         }
@@ -72,6 +74,9 @@ public class EMFImporter implements ElementToJsonFunction {
                     .test(jsonObject, eStructuralFeature, project, strict, finalElement)).map(EStructuralFeatureOverride::getFunction)
                     .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
             element = function.apply(jsonObject, eStructuralFeature, project, strict, element);
+            if (element == null) {
+                return null;
+            }
         }
         return new Changelog.Change<>(element, changeType);
     }
@@ -262,7 +267,10 @@ public class EMFImporter implements ElementToJsonFunction {
         OWNER(
                 (jsonObject, eStructuralFeature, project, strict, element) -> UMLPackage.Literals.ELEMENT__OWNER == eStructuralFeature,
                 (jsonObject, eStructuralFeature, project, strict, element) -> {
-                    Object o = jsonObject.get("ownerId");
+                    if (element instanceof Model) {
+                        return element;
+                    }
+                    Object o = jsonObject.get(MDKConstants.OWNER_ID_KEY);
                     if (!(o instanceof String)) {
                         if (strict) {
                             throw new ImportException(element, jsonObject, "Element JSON has missing/malformed ID.");
