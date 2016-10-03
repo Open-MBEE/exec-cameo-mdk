@@ -1,10 +1,10 @@
 package gov.nasa.jpl.mbee.mdk.api.incubating.convert;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.emf.EMFExporter;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
-import org.json.simple.JSONObject;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -15,12 +15,12 @@ import java.util.function.Function;
 // TODO Lombok? @donbot
 public class Converters {
 
-    private static BiFunction<Element, Project, JSONObject> ELEMENT_TO_JSON_CONVERTER;
+    private static BiFunction<Element, Project, ObjectNode> ELEMENT_TO_JSON_CONVERTER;
     private static JsonToElementFunction JSON_TO_ELEMENT_CONVERTER;
     private static Function<Element, String> ELEMENT_TO_ID_CONVERTER;
     private static BiFunction<String, Project, Element> ID_TO_ELEMENT_CONVERTER;
 
-    public static BiFunction<Element, Project, JSONObject> getElementToJsonConverter() {
+    public static BiFunction<Element, Project, ObjectNode> getElementToJsonConverter() {
         if (ELEMENT_TO_JSON_CONVERTER == null) {
             ELEMENT_TO_JSON_CONVERTER = new EMFExporter();
         }

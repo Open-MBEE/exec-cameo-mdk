@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -21,7 +23,6 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.ImportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
@@ -30,6 +31,7 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
@@ -67,16 +69,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private boolean showValidation;
 
     private final List<ValidationSuite> vss = new ArrayList<>();
-    private final Map<String, JsonNode> images;
+    private final Map<String, JSONObject> images;
     private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JsonNode> images, Set<Element> processedElements) {
+    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
         this.start = start;
         this.images = images != null ? images : new HashMap<>();
-        this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();
+        this.processedElements = processedElements != null ? processedElements : new HashSet<>();
         this.recurse = recurse;
-        // cannotChange is obsoleted by server-side only instance specifications
-        //this.cannotChange = cannotChange; //from one click doc gen, if update has unchangeable elements, check if those are things the view generation touches
         this.showValidation = showValidation;
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             isFromTeamwork = true;
@@ -127,8 +127,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         ViewHierarchyVisitor viewHierarchyVisitor = new ViewHierarchyVisitor();
         dge.accept(viewHierarchyVisitor);
 
-        Map<String, Pair<JsonNode, InstanceSpecification>> instanceSpecificationMap = new LinkedHashMap<>();
-        Map<String, Pair<JsonNode, Slot>> slotMap = new LinkedHashMap<>();
+        Map<String, Pair<ObjectNode, InstanceSpecification>> instanceSpecificationMap = new LinkedHashMap<>();
+        Map<String, Pair<ObjectNode, Slot>> slotMap = new LinkedHashMap<>();
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>(viewHierarchyVisitor.getView2ViewElements().size());
 
         for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
@@ -196,10 +196,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             progressStatus.setDescription("Downloading existing view instances");
             progressStatus.setCurrent(2);
 
-            JsonNode viewResponse;
+            ObjectNode viewResponse;
             try {
-                JSONObject jsonObject = MMSUtils.getElementsById(viewMap.keySet(), progressStatus);
-                viewResponse = jsonObject != null ? JacksonUtils.getObjectMapper().readTree(jsonObject.toJSONString()) : null;
+                viewResponse = MMSUtils.getElementsById(viewMap.keySet(), progressStatus);
             } catch (ServerException | IOException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -211,10 +210,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Queue<String> instanceIDs = new LinkedList<>();
                 Queue<String> slotIDs = new LinkedList<>();
                 Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
-                for (JsonNode elementJson : viewElementsJsonArray) {
+                for (JsonNode elementJsonNode : viewElementsJsonArray) {
+                    if (!elementJsonNode.isObject()) {
+                        continue;
+                    }
+                    ObjectNode elementObjectNode = (ObjectNode) elementJsonNode;
                     // Resolve current instances in the view constraint expression
-                    JsonNode viewOperandJsonArray = JacksonUtils.getAtPath(elementJson, "/contents/operand"),
-                            sysmlIdJson = elementJson.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode viewOperandJsonArray = JacksonUtils.getAtPath(elementObjectNode, "/contents/operand"),
+                            sysmlIdJson = elementObjectNode.get(MDKConstants.SYSML_ID_KEY);
                     String sysmlId;
                     if (viewOperandJsonArray != null && viewOperandJsonArray.isArray()
                             && sysmlIdJson != null && sysmlIdJson.isTextual() && (sysmlId = sysmlIdJson.asText()).isEmpty()) {
@@ -237,7 +240,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             }
                         }
                         ViewMapping viewMapping = viewMap.containsKey(sysmlId) ? viewMap.get(sysmlId) : new ViewMapping();
-                        viewMapping.setJson(elementJson);
+                        viewMapping.setObjectNode(elementObjectNode);
                         viewMapping.setInstanceIDs(viewInstanceIDs);
                         viewMap.put(sysmlId, viewMapping);
                     }
@@ -251,20 +254,20 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Now that all first-level instances are resolved, query for them and import client-side (in reverse order) as model elements
                 // Add any sections that are found along the way and loop until no more are found
-                List<JsonNode> instanceJsonNodes = new ArrayList<>();
-                List<JsonNode> slotJsonNodes = new ArrayList<>();
+                List<ObjectNode> instanceObjectNodes = new ArrayList<>();
+                List<ObjectNode> slotObjectNodes = new ArrayList<>();
                 while (!instanceIDs.isEmpty() && !slotIDs.isEmpty()) {
                     // Allow cancellation between every depths' server query.
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
-                    JsonNode instanceAndSlotResponse;
+                    List<String> elementIDs = new ArrayList<>(instanceIDs);
+                    elementIDs.addAll(slotIDs);
+
+                    ObjectNode instanceAndSlotResponse;
                     try {
-                        List<String> elementIDs = new ArrayList<>(instanceIDs);
-                        elementIDs.addAll(slotIDs);
-                        JSONObject jsonObject = MMSUtils.getElementsById(elementIDs, progressStatus);
-                        instanceAndSlotResponse = jsonObject != null ? JacksonUtils.getObjectMapper().readTree(jsonObject.toJSONString()) : null;
+                        instanceAndSlotResponse = MMSUtils.getElementsById(elementIDs, progressStatus);
                     } catch (ServerException | IOException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
@@ -297,8 +300,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 }
                             }
                             JsonNode typeJson = elementJson.get(MDKConstants.TYPE_KEY);
-                            if (typeJson.isTextual()) {
-                                (typeJson.asText().equalsIgnoreCase("slot") ? slotJsonNodes : instanceJsonNodes).add(elementJson);
+                            if (typeJson.isTextual() && elementJson.isObject()) {
+                                (typeJson.asText().equalsIgnoreCase("slot") ? slotObjectNodes : instanceObjectNodes).add((ObjectNode) elementJson);
                             }
                         }
                     }
@@ -309,16 +312,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setCurrent(3);
 
                 // importing instances in reverse order so that deepest level instances (sections and such) are loaded first
-                ListIterator<JsonNode> instanceJSONsIterator = new ArrayList<>(instanceJsonNodes).listIterator(instanceJsonNodes.size());
+                ListIterator<ObjectNode> instanceJSONsIterator = new ArrayList<>(instanceObjectNodes).listIterator(instanceObjectNodes.size());
                 while (instanceJSONsIterator.hasPrevious()) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
-                    JsonNode elementJsonNode = instanceJSONsIterator.previous();
+                    ObjectNode elementJsonNode = instanceJSONsIterator.previous();
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
-                        Element element = ImportUtility.createElement(elementJsonNode, false, true);
+                        //Element element = ImportUtility.createElement(elementJsonNode, false, true);
+                        Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply(elementJsonNode, project, false);
+                        Element element = change != null ? change.getChanged() : null;
+
                         if (element instanceof InstanceSpecification) {
                             instanceSpecificationMap.put(element.getID(), new Pair<>(elementJsonNode, (InstanceSpecification) element));
                         }
@@ -333,14 +339,17 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // The Alfresco service is a nice guy and returns Slots at the end so that when it's loaded in order the slots don't throw errors for missing their instances.
                 // However we're being fancy and loading them backwards so we had to separate them ahead of time and then load the slots after.
-                for (JsonNode slotJsonNode : slotJsonNodes) {
+                for (ObjectNode slotJsonNode : slotObjectNodes) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
-                        Element element = ImportUtility.createElement(slotJsonNode, false, false);
+                        //Element element = ImportUtility.createElement(slotJsonNode, false, false);
+                        Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply(slotJsonNode, project, false);
+                        Element element = change != null ? change.getChanged() : null;
+
                         if (element instanceof Slot) {
                             slotMap.put(element.getID(), new Pair<>(slotJsonNode, (Slot) element));
                         }
@@ -355,7 +364,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Build view constraints client-side as actual Constraint, Expression, InstanceValue(s), etc.
                 // Note: Doing this one first since what it does is smaller in scope than ImportUtility. Potential order-dependent edge cases require further evaluation.
-                for (ViewMapping viewMapping : viewMap.values()) {
+                // TODO I don't think I need this anymore? @donbot
+                /*for (ViewMapping viewMapping : viewMap.values()) {
                     Element view = viewMapping.getElement();
                     if (handleCancel(progressStatus)) {
                         return;
@@ -372,19 +382,20 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         }
                         instanceUtils.updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
                     }
-                }
+                }*/
 
                 // Update relations for all InstanceSpecifications and Slots
                 // Instances need to be done in reverse order to load the lowest level instances first (sections)
-                ListIterator<Pair<JsonNode, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
+                ListIterator<Pair<ObjectNode, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
                 while (instanceSpecificationMapIterator.hasPrevious()) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
-                    Pair<JsonNode, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
+                    Pair<ObjectNode, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
                     try {
-                        ImportUtility.createElement(pair.getFirst(), true, true);
+                        //ImportUtility.createElement(pair.getFirst(), true, true);
+                        Converters.getJsonToElementConverter().apply(pair.getFirst(), project, true);
                     } catch (Exception e) {
                         /*failure = true;
                         Utils.printException(e);
@@ -393,13 +404,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Application.getInstance().getGUILog().log("Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
                 }
-                for (Pair<JsonNode, Slot> pair : slotMap.values()) {
+                for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
                     try {
-                        ImportUtility.createElement(pair.getFirst(), true, false);
+                        //ImportUtility.createElement(pair.getFirst(), true, false);
+                        Converters.getJsonToElementConverter().apply(pair.getFirst(), project, true);
                     } catch (Exception e) {
                         /*failure = true;
                         Utils.printException(e);
@@ -424,7 +436,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
         Map<Element, List<PresentationElementInstance>> view2pe = dbAlfrescoVisitor.getView2Pe();
         Map<Element, List<PresentationElementInstance>> view2unused = dbAlfrescoVisitor.getView2Unused();
-        Map<Element, JSONArray> view2elements = dbAlfrescoVisitor.getView2Elements();
         List<Element> views = instanceUtils.getViewProcessOrder(start, dbAlfrescoVisitor.getHierarchyElements());
         views.removeAll(processedElements);
         Set<Element> skippedViews = new HashSet<>();
@@ -461,7 +472,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
 
             // commit to MMS
-            JSONArray elementsJsonArray = new JSONArray();
+            ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             Queue<Pair<InstanceSpecification, Element>> instanceToView = new LinkedList<>();
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
@@ -483,23 +494,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
                 // portion of the JSON required to update the view contents.
-                // TODO there's a lot of redundancy here, fix in @donbot
-                Object o;
-                JsonNode newViewJson = Converters.getElementToJsonConverter().apply(view, project);
+                ObjectNode newViewJson = Converters.getElementToJsonConverter().apply(view, project);
                 if (newViewJson == null) {
                     skippedViews.add(view);
                     continue;
                 }
-                JsonNode oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null;
-                try {
-                    JsonNode source = oldViewJson != null ? JacksonUtils.getObjectMapper().readTree(oldViewJson.toJSONString()) : null;
-                    JsonNode target = JacksonUtils.getObjectMapper().readTree(newViewJson.toJSONString());
-                    if (!JsonEquivalencePredicate.getInstance().test(source, target)) {
-                        elementsJsonArray.add(newViewJson);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    skippedViews.add(view);
+                Object o;
+                ObjectNode oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getObjectNode() : null;
+                if (!JsonEquivalencePredicate.getInstance().test(oldViewJson, newViewJson)) {
+                    elementsArrayNode.add(newViewJson);
                 }
             }
 
@@ -512,20 +515,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     instanceToView.add(new Pair<>(subInstance, pair.getSecond()));
                 }
 
-                JsonNode newInstanceSpecificationJson = Converters.getElementToJsonConverter().apply(instance, project);
+                ObjectNode newInstanceSpecificationJson = Converters.getElementToJsonConverter().apply(instance, project);
                 if (newInstanceSpecificationJson == null) {
                     continue;
                 }
-                JsonNode oldInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
-                try {
-                    JsonNode source = oldInstanceSpecificationJson != null ? JacksonUtils.getObjectMapper().readTree(oldInstanceSpecificationJson.toJSONString()) : null;
-                    JsonNode target = JacksonUtils.getObjectMapper().readTree(newInstanceSpecificationJson.toJSONString());
-                    if (!JsonEquivalencePredicate.getInstance().test(source, target)) {
-                        elementsJsonArray.add(newInstanceSpecificationJson);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    continue;
+                ObjectNode oldInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
+                if (!JsonEquivalencePredicate.getInstance().test(oldInstanceSpecificationJson, newInstanceSpecificationJson)) {
+                    elementsArrayNode.add(newInstanceSpecificationJson);
                 }
                 for (Slot slot : instance.getSlot()) {
                     JsonNode newSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
@@ -533,14 +529,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         continue;
                     }
                     JsonNode oldSlotJson = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
-                    try {
-                        JsonNode source = oldSlotJson != null ? JacksonUtils.getObjectMapper().readTree(oldSlotJson.toJSONString()) : null;
-                        JsonNode target = JacksonUtils.getObjectMapper().readTree(newSlotJson.toJSONString());
-                        if (!JsonEquivalencePredicate.getInstance().test(source, target)) {
-                            elementsJsonArray.add(newSlotJson);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if (!JsonEquivalencePredicate.getInstance().test(oldSlotJson, newSlotJson)) {
+                        elementsArrayNode.add(newSlotJson);
                     }
                 }
             }
@@ -552,24 +542,24 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             boolean changed = false;
 
-            if (!elementsJsonArray.isEmpty()) {
+            if (elementsArrayNode.size() > 0) {
                 // STAGE 5: Queueing upload of generated view instances
                 progressStatus.setDescription("Queueing upload of generated view instances");
                 progressStatus.setCurrent(5);
 
-                JsonNode body = new JsonNode();
-                body.put("elements", elementsJsonArray);
-                body.put("source", "magicdraw");
-                body.put("mmsVersion", MDKPlugin.VERSION);
-                Application.getInstance().getGUILog().log("Updating/creating " + elementsJsonArray.size() + " element" + (elementsJsonArray.size() != 1 ? "s" : "") + " to generate views.");
+                ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
+                request.set("elements", elementsArrayNode);
+                request.put("source", "magicdraw");
+                request.put("mmsVersion", MDKPlugin.VERSION);
+                Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
 
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), body.toJSONString(), "POST", true, elementsJsonArray.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(request), "POST", true, elementsArrayNode.size(), "Sync Changes"));
                 changed = true;
             }
 
             // Delete unused presentation elements
 
-            elementsJsonArray = new JSONArray();
+            elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (List<PresentationElementInstance> presentationElementInstances : view2unused.values()) {
                 for (PresentationElementInstance presentationElementInstance : presentationElementInstances) {
                     if (presentationElementInstance.getInstance() == null) {
@@ -579,19 +569,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (id == null) {
                         continue;
                     }
-                    JsonNode elementJsonNode = new JsonNode();
-                    elementJsonNode.put(MDKConstants.SYSML_ID_KEY, id);
-                    elementsJsonArray.add(elementJsonNode);
+                    ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
+                    elementObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
+                    elementsArrayNode.add(elementObjectNode);
                 }
             }
-            if (!elementsJsonArray.isEmpty()) {
-                JsonNode body = new JsonNode();
-                body.put("elements", elementsJsonArray);
-                body.put("source", "magicdraw");
-                body.put("mmsVersion", MDKPlugin.VERSION);
-                Application.getInstance().getGUILog().log("Deleting " + elementsJsonArray.size() + " unused presentation element" + (elementsJsonArray.size() != 1 ? "s" : "") + ".");
+            if (elementsArrayNode.size() > 0) {
+                ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
+                request.set("elements", elementsArrayNode);
+                request.put("source", "magicdraw");
+                request.put("mmsVersion", MDKPlugin.VERSION);
+                Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, elementsJsonArray.size(), "View Generation"));
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(request), "DELETEALL", true, elementsArrayNode.size(), "View Generation"));
                 changed = true;
             }
 
@@ -608,12 +598,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
             List<Element> elementsToDelete = new ArrayList<>(slotMap.size() + instanceSpecificationMap.size() + views.size());
-            for (Pair<JsonNode, Slot> pair : slotMap.values()) {
+            for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
                 if (pair.getSecond() != null) {
                     elementsToDelete.add(pair.getSecond());
                 }
             }
-            for (Pair<JsonNode, InstanceSpecification> pair : instanceSpecificationMap.values()) {
+            for (Pair<ObjectNode, InstanceSpecification> pair : instanceSpecificationMap.values()) {
                 if (pair.getSecond() != null) {
                     elementsToDelete.add(pair.getSecond());
                 }
@@ -694,7 +684,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
     private class ViewMapping {
         private Element element;
-        private JsonNode json;
+        private ObjectNode objectNode;
         private List<String> instanceIDs;
 
         public Element getElement() {
@@ -705,12 +695,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             this.element = element;
         }
 
-        public JsonNode getJson() {
-            return json;
+        public ObjectNode getObjectNode() {
+            return objectNode;
         }
 
-        public void setJson(JsonNode json) {
-            this.json = json;
+        public void setObjectNode(ObjectNode objectNode) {
+            this.objectNode = objectNode;
         }
 
         public List<String> getInstanceIDs() {

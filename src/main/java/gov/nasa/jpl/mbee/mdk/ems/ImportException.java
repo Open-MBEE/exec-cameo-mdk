@@ -1,38 +1,30 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import org.json.simple.JSONObject;
 
 public class ImportException extends Exception {
 
-    private Element e;
-    private JSONObject json;
+    private final Element element;
+    private final ObjectNode objectNode;
 
-    public ImportException(Element e, JSONObject json, String message) {
+    public ImportException(Element element, ObjectNode objectNode, String message) {
         super(message);
-        this.setElement(e);
-        this.setJson(json);
+        this.element = element;
+        this.objectNode = objectNode;
     }
 
-    public ImportException(Element e, JSONObject json, String message, Throwable cause) {
+    public ImportException(Element element, ObjectNode objectNode, String message, Throwable cause) {
         super(message, cause);
-        this.setElement(e);
-        this.setJson(json);
+        this.element = element;
+        this.objectNode = objectNode;
     }
 
-    public JSONObject getJson() {
-        return json;
-    }
-
-    public void setJson(JSONObject json) {
-        this.json = json;
+    public ObjectNode getObjectNode() {
+        return objectNode;
     }
 
     public Element getElement() {
-        return e;
-    }
-
-    public void setElement(Element e) {
-        this.e = e;
+        return element;
     }
 }

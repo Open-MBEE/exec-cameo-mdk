@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -121,7 +122,7 @@ public class ModelExporter {
             return false;
         }
 
-        JSONObject elementInfo = Converters.getElementToJsonConverter().apply(e, Project.getProject(e));
+        ObjectNode elementInfo = Converters.getElementToJsonConverter().apply(e, Project.getProject(e));
         elements.put(e.getID(), elementInfo);
 
         if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e)) {

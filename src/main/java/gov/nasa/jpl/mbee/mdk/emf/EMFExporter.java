@@ -30,8 +30,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.emf;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.*;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -44,6 +44,7 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.stream.MDKCollectors;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.ClassUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -52,11 +53,11 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -142,56 +143,56 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
 
     private enum PreProcessor {
         TYPE(
-                (element, project, jsonObject) -> {
-                    jsonObject.put(MDKConstants.TYPE_KEY, element.eClass().getName());
-                    return jsonObject;
+                (element, project, objectNode) -> {
+                    objectNode.put(MDKConstants.TYPE_KEY, element.eClass().getName());
+                    return objectNode;
                 }
         ),
         DOCUMENTATION(
-                (element, project, jsonObject) -> {
-                    jsonObject.put("documentation", ModelHelper.getComment(element));
-                    return jsonObject;
+                (element, project, objectNode) -> {
+                    objectNode.put("documentation", ModelHelper.getComment(element));
+                    return objectNode;
                 }
         ),
         APPLIED_STEREOTYPE(
-                (element, project, jsonObject) -> {
-                    JSONArray applied = StereotypesHelper.getStereotypes(element).stream().map(EMFExporter::getEID).collect(Collectors.toCollection(JSONArray::new));
-                    jsonObject.put("_appliedStereotypeIds", applied);
-                    return jsonObject;
+                (element, project, objectNode) -> {
+                    ArrayNode applied = StereotypesHelper.getStereotypes(element).stream().map(stereotype -> TextNode.valueOf(getEID(stereotype))).collect(MDKCollectors.toArrayNode());
+                    objectNode.set("_appliedStereotypeIds", applied);
+                    return objectNode;
                 }
         ),
         SITE_CHARACTERIZATION(
-                (element, project, jsonObject) -> {
+                (element, project, objectNode) -> {
                     if (element instanceof Package) {
-                        jsonObject.put("_isSite", Utils.isSiteChar((Package) element));
+                        objectNode.put("_isSite", Utils.isSiteChar((Package) element));
                     }
-                    return jsonObject;
+                    return objectNode;
                 }
         ),
         VALUE_SPECIFICATION(
-                (element, project, jsonObject) -> element instanceof ValueSpecification ? null : jsonObject
+                (element, project, objectNode) -> element instanceof ValueSpecification ? null : objectNode
         ),
         CONNECTOR_END(
-                (element, project, jsonObject) -> element instanceof ConnectorEnd ? null : jsonObject
+                (element, project, objectNode) -> element instanceof ConnectorEnd ? null : objectNode
         ),
         DIAGRAM(
-                (element, project, jsonObject) -> element instanceof Diagram ? null : jsonObject
+                (element, project, objectNode) -> element instanceof Diagram ? null : objectNode
         ),
         COMMENT(
-                (element, project, jsonObject) -> {
+                (element, project, objectNode) -> {
                     if (!(element instanceof Comment)) {
-                        return jsonObject;
+                        return objectNode;
                     }
                     Comment comment = (Comment) element;
-                    return comment.getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner() ? null : jsonObject;
+                    return comment.getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner() ? null : objectNode;
                 }
         ),
         SYNC(
-                (element, project, jsonObject) -> element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
-                        element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : jsonObject
+                (element, project, objectNode) -> element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
+                        element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
         ),
         ATTACHED_PROJECT(
-                (element, project, jsonObject) -> ProjectUtilities.isElementInAttachedProject(element) ? null : jsonObject
+                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) ? null : objectNode
         );
 
         private TriFunction<Element, Project, ObjectNode, ObjectNode> function;
@@ -207,15 +208,15 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
 
     private static final SerializationFunction DEFAULT_SERIALIZATION_FUNCTION = (object, project, eStructuralFeature) -> {
         if (object == null) {
-            return null;
+            return NullNode.getInstance();
         }
         else if (object instanceof Collection) {
             ArrayNode arrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (Object o : ((Collection<?>) object)) {
-                Object serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
+                JsonNode serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
                 if (serialized == null && o != null) {
                     // failed to serialize; taking the conservative approach and returning entire thing as null
-                    return null;
+                    return NullNode.getInstance();
                 }
                 arrayNode.add(serialized);
             }
@@ -229,14 +230,41 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)), project, eStructuralFeature);
         }
         else if (eStructuralFeature.getEType() instanceof EDataType) {
-            return EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object);
+            return TextNode.valueOf(EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object));
             //return ((Enumerator) object).getLiteral();
         }
-        else if (object instanceof String || ClassUtils.isPrimitive(object)) {
-            return object;
+        else if (object instanceof String) {
+            return TextNode.valueOf((String) object);
+        }
+        else if (object instanceof Boolean) {
+            return BooleanNode.valueOf((boolean) object);
+        }
+        else if (object instanceof Integer) {
+            return IntNode.valueOf((Integer) object);
+        }
+        else if (object instanceof Double) {
+            return DoubleNode.valueOf((Double) object);
+        }
+        else if (object instanceof Long) {
+            return LongNode.valueOf((Long) object);
+        }
+        else if (object instanceof Short) {
+            return ShortNode.valueOf((Short) object);
+        }
+        else if (object instanceof Float) {
+            return FloatNode.valueOf((Float) object);
+        }
+        else if (object instanceof BigInteger) {
+            return BigIntegerNode.valueOf((BigInteger) object);
+        }
+        else if (object instanceof BigDecimal) {
+            return DecimalNode.valueOf((BigDecimal) object);
+        }
+        else if (object instanceof byte[]) {
+            return BinaryNode.valueOf((byte[]) object);
         }
         // if we get here we have no idea what to do with this object
-        return null;
+        return NullNode.getInstance();
     };
 
     private static final ExportFunction DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, objectNode) -> {
@@ -248,7 +276,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
 
     private static final ExportFunction UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, objectNode) -> {
         Object value = element.eGet(eStructuralFeature);
-        Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value, project, eStructuralFeature);
+        JsonNode serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value, project, eStructuralFeature);
         if (value != null && serializedValue == null) {
             System.err.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value + " - " + value.getClass());
             return objectNode;
@@ -268,20 +296,20 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     private enum EStructuralFeatureOverride {
         ID(
                 (element, eStructuralFeature) -> eStructuralFeature == element.eClass().getEIDAttribute(),
-                (element, project, eStructuralFeature, jsonObject) -> {
+                (element, project, eStructuralFeature, objectNode) -> {
                     if (!(element instanceof ValueSpecification)) {
-                        jsonObject.put(MDKConstants.SYSML_ID_KEY, getEID(element));
+                        objectNode.put(MDKConstants.SYSML_ID_KEY, getEID(element));
                     }
-                    return jsonObject;
+                    return objectNode;
                 }
         ),
         OWNER(
                 (element, eStructuralFeature) -> UMLPackage.Literals.ELEMENT__OWNER == eStructuralFeature,
-                (element, project, eStructuralFeature, jsonObject) -> {
-                    //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, jsonObject);
+                (element, project, eStructuralFeature, objectNode) -> {
+                    //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, objectNode);
                     // safest way to prevent circular references, like with ValueSpecifications
-                    jsonObject.put(MDKConstants.OWNER_ID_KEY, getEID(element.getOwner()));
-                    return jsonObject;
+                    objectNode.put(MDKConstants.OWNER_ID_KEY, getEID(element.getOwner()));
+                    return objectNode;
                 }
         ),
         OWNING(
@@ -302,16 +330,16 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         DIRECTED_RELATIONSHIP__SOURCE(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
-                (element, project, eStructuralFeature, jsonObject) -> {
-                    jsonObject.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
-                    return jsonObject;
+                (element, project, eStructuralFeature, objectNode) -> {
+                    objectNode.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    return objectNode;
                 }
         ),
         DIRECTED_RELATIONSHIP__TARGET(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET == eStructuralFeature,
-                (element, project, eStructuralFeature, jsonObject) -> {
-                    jsonObject.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
-                    return jsonObject;
+                (element, project, eStructuralFeature, objectNode) -> {
+                    objectNode.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    return objectNode;
                 }
         ),
         CONNECTOR__END(
@@ -371,7 +399,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
 
     @FunctionalInterface
     interface SerializationFunction {
-        Object apply(Object object, Project project, EStructuralFeature eStructuralFeature);
+        JsonNode apply(Object object, Project project, EStructuralFeature eStructuralFeature);
     }
 
     @FunctionalInterface

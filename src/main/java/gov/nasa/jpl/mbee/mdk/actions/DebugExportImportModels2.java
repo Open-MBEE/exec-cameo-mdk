@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.mdk.actions;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.fge.jsonpatch.diff.JsonDiff;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
@@ -39,12 +40,10 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -82,19 +81,19 @@ public class DebugExportImportModels2 extends MDAction {
         Element element = selectedElements.iterator().next();
 
         Application.getInstance().getGUILog().log("[INFO] Exporting, deleting, and importing " + element.getHumanName() + ".");
-        JSONObject jsonObject = Converters.getElementToJsonConverter().apply(element, Project.getProject(element));
-        if (jsonObject == null) {
+        ObjectNode objectNode = Converters.getElementToJsonConverter().apply(element, Project.getProject(element));
+        if (objectNode == null) {
             Application.getInstance().getGUILog().log("[ERROR] Null JSON for " + element + " " + element.getHumanName());
             return;
         }
-        System.out.println(jsonObject);
+        System.out.println(objectNode);
         if (!SessionManager.getInstance().isSessionCreated()) {
             SessionManager.getInstance().createSession("CopyAction");
         }
         Changelog.Change<Element> elementChange = null;
         try {
             ModelElementsManager.getInstance().removeElement(element);
-            elementChange = Converters.getJsonToElementConverter().apply(jsonObject, Project.getProject(element), false);
+            elementChange = Converters.getJsonToElementConverter().apply(objectNode, Project.getProject(element), false);
         } catch (ReadOnlyElementException | ImportException ie) {
             ie.printStackTrace();
             SessionManager.getInstance().cancelSession();
@@ -111,12 +110,12 @@ public class DebugExportImportModels2 extends MDAction {
 
         //EMFImporter imp = new EMFImporter(element);
         //imp.createElementsFromJSON();
-        jsonObject = Converters.getElementToJsonConverter().apply(elementChange.getChanged(), Project.getProject(elementChange.getChanged()));
-        if (jsonObject == null) {
+        objectNode = Converters.getElementToJsonConverter().apply(elementChange.getChanged(), Project.getProject(elementChange.getChanged()));
+        if (objectNode == null) {
             Application.getInstance().getGUILog().log("[ERROR] Null JSON2 for " + elementChange.getChanged() + " " + elementChange.getChanged());
             return;
         }
-        System.out.println(jsonObject);
+        System.out.println(objectNode);
 
         /*
         Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());

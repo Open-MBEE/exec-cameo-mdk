@@ -54,7 +54,6 @@ import com.nomagic.utils.ErrorHandler;
 import gov.nasa.jpl.mbee.mdk.ems.ImportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -543,49 +542,9 @@ public class MagicDrawHelper {
     }
 
     @SuppressWarnings("unchecked")
+    @Deprecated
     public static ValueSpecification createValueSpec(String type, String value) throws ReferenceException {
-        ValueSpecification vs = null;
-        JSONObject valSpec = new JSONObject();
-        valSpec.put("type", type);
-        switch (type) {
-            case "LiteralString":
-                valSpec.put("string", value);
-                break;
-            case "LiteralInteger":
-                valSpec.put("integer", Long.parseLong(value));
-                break;
-            case "LiteralBoolean":
-                valSpec.put("boolean", Boolean.parseBoolean(value));
-                break;
-            case "LiteralUnlimitedNatural":
-                valSpec.put("naturalValue", Long.parseLong(value));
-                break;
-            case "LiteralReal":
-                valSpec.put("double", Double.parseDouble(value));
-                break;
-            case "ElementValue":
-                valSpec.put("element", value);
-                break;
-            case "InstanceValue":
-                valSpec.put("instance", value);
-                break;
-            case "Expression":
-                valSpec.put("operand", value);
-                break;
-            case "OpaqueExpression":
-                valSpec.put("expressionBody", value);
-                break;
-            case "TimeExpression":
-                break;
-            case "DurationInterval":
-                break;
-            case "TimeInterval":
-                break;
-            default:
-                return null;
-        }
-        vs = ImportUtility.createValueSpec(valSpec, null);
-        return vs;
+        return null;
     }
 
     public static Class createView(String name, Element owner) {

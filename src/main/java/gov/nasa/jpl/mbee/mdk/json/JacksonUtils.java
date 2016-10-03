@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.math.NumberUtils;
 
 import java.util.function.Function;
@@ -47,5 +48,39 @@ public class JacksonUtils {
 
     public static <R> R getAtPath(JsonNode json, String path, Function<JsonNode, R> function) {
         return function.apply(getAtPath(json, path));
+    }
+
+    @Deprecated
+    public static void put(ObjectNode objectNode, String fieldName, Object object) {
+        if (object == null) {
+            objectNode.putNull(fieldName);
+        }
+        else if (object instanceof JsonNode) {
+            objectNode.set(fieldName, (JsonNode) object);
+        }
+        else if (object instanceof String) {
+            objectNode.put(fieldName, (String) object);
+        }
+        else if (object instanceof Boolean) {
+            objectNode.put(fieldName, (Boolean) object);
+        }
+        else if (object instanceof Integer) {
+            objectNode.put(fieldName, (Integer) object);
+        }
+        else if (object instanceof Double) {
+            objectNode.put(fieldName, (Double) object);
+        }
+        else if (object instanceof Long) {
+            objectNode.put(fieldName, (Long) object);
+        }
+        else if (object instanceof Short) {
+            objectNode.put(fieldName, (Short) object);
+        }
+        else if (object instanceof Float) {
+            objectNode.put(fieldName, (Float) object);
+        }
+        else if (object instanceof byte[]) {
+            objectNode.put(fieldName, (byte[]) object);
+        }
     }
 }

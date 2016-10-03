@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.validation;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.EmptyProgressStatus;
@@ -32,32 +33,32 @@ import java.util.stream.Collectors;
  * Created by igomes on 9/26/16.
  */
 public class ElementValidator implements RunnableWithProgress {
-    private Collection<Pair<Element, JSONObject>> clientElements;
-    private Collection<JSONObject> serverElements;
+    private Collection<Pair<Element, ObjectNode>> clientElements;
+    private Collection<ObjectNode> serverElements;
     private final Project project;
 
     private ValidationSuite validationSuite = new ValidationSuite("Model Validation");
     private ValidationRule elementEquivalenceValidationRule = new ValidationRule("Element Equivalence", "Element shall be represented in MagicDraw and MMS equivalently.", ViolationSeverity.ERROR);
-    private Map<String, Pair<Pair<Element, JSONObject>, JSONObject>> invalidElements = new LinkedHashMap<>();
+    private Map<String, Pair<Pair<Element, ObjectNode>, ObjectNode>> invalidElements = new LinkedHashMap<>();
 
     {
         validationSuite.addValidationRule(elementEquivalenceValidationRule);
     }
 
-    public ElementValidator(Collection<Pair<Element, JSONObject>> clientElements, Collection<JSONObject> serverElements, Project project) {
+    public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project) {
         this.clientElements = clientElements;
         this.serverElements = serverElements;
         this.project = project;
     }
 
-    public static Collection<Pair<Element, JSONObject>> buildElementPairs(Collection<Element> elements, Project project) {
-        List<Pair<Element, JSONObject>> elementPairs = new ArrayList<>(elements.size());
+    public static Collection<Pair<Element, ObjectNode>> buildElementPairs(Collection<Element> elements, Project project) {
+        List<Pair<Element, ObjectNode>> elementPairs = new ArrayList<>(elements.size());
         for (Element element : elements) {
-            JSONObject jsonObject = Converters.getElementToJsonConverter().apply(element, project);
-            if (jsonObject == null) {
+            ObjectNode objectNode = Converters.getElementToJsonConverter().apply(element, project);
+            if (objectNode == null) {
                 continue;
             }
-            elementPairs.add(new Pair<>(element, jsonObject));
+            elementPairs.add(new Pair<>(element, objectNode));
         }
         return elementPairs;
     }
@@ -76,8 +77,8 @@ public class ElementValidator implements RunnableWithProgress {
         if (serverElements == null) {
             serverElements = new ArrayList<>(0);
         }
-        Map<String, Pair<Element, JSONObject>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getFirst()), Function.identity()));
-        Map<String, JSONObject> serverElementMap = serverElements.stream().collect(Collectors.toMap(json -> (String) json.get(MDKConstants.SYSML_ID_KEY), Function.identity()));
+        Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getFirst()), Function.identity()));
+        Map<String, ObjectNode> serverElementMap = serverElements.stream().collect(Collectors.toMap(json -> json.get(MDKConstants.SYSML_ID_KEY).asText(), Function.identity()));
 
         LinkedHashSet<String> elementKeySet = new LinkedHashSet<>();
         elementKeySet.addAll(clientElementMap.keySet());
@@ -89,22 +90,22 @@ public class ElementValidator implements RunnableWithProgress {
         progressStatus.setCurrent(0);
 
         for (String id : elementKeySet) {
-            Pair<Element, JSONObject> clientElement = clientElementMap.get(id);
+            Pair<Element, ObjectNode> clientElement = clientElementMap.get(id);
             Element clientElementElement = clientElement != null ? clientElement.getFirst() : null;
-            JSONObject clientElementJson = clientElement != null ? clientElement.getSecond() : null;
-            JSONObject serverElement = serverElementMap.get(id);
+            ObjectNode clientElementJson = clientElement != null ? clientElement.getSecond() : null;
+            ObjectNode serverElement = serverElementMap.get(id);
             try {
                 ValidationRuleViolation validationRuleViolation = null;
                 if (clientElementJson == null && serverElement == null) {
                     continue;
                 }
                 else if (clientElementJson == null) {
-                    String name = (String) serverElement.getOrDefault(MDKConstants.NAME_KEY, "<>");
+                    String name = serverElement.get(MDKConstants.NAME_KEY).asText("<>");
                     if (name == null || name.isEmpty()) {
                         name = "<>";
                     }
-                    validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + serverElement.getOrDefault(MDKConstants.TYPE_KEY, "Element") + " "
-                            + name + " - " + serverElement.getOrDefault(MDKConstants.SYSML_ID_KEY, "<>"));
+                    validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + serverElement.get(MDKConstants.TYPE_KEY).asText("Element") + " "
+                            + name + " - " + serverElement.get(MDKConstants.SYSML_ID_KEY).asText("<>"));
                 }
                 else if (serverElement == null) {
                     String name = "<>";
@@ -115,9 +116,7 @@ public class ElementValidator implements RunnableWithProgress {
                             + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement));
                 }
                 else {
-                    JsonNode source = JacksonUtils.getObjectMapper().readTree(clientElementJson.toJSONString());
-                    JsonNode target = JacksonUtils.getObjectMapper().readTree(serverElement.toJSONString());
-                    JsonNode patch = JsonDiffFunction.getInstance().apply(source, target);
+                    JsonNode patch = JsonDiffFunction.getInstance().apply(clientElementJson, serverElement);
                     if (!JsonPatchUtils.isEqual(patch)) {
                         String name = "<>";
                         if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
@@ -147,7 +146,7 @@ public class ElementValidator implements RunnableWithProgress {
         return validationSuite;
     }
 
-    public Map<String, Pair<Pair<Element, JSONObject>, JSONObject>> getInvalidElements() {
+    public Map<String, Pair<Pair<Element, ObjectNode>, ObjectNode>> getInvalidElements() {
         return invalidElements;
     }
 }

@@ -35,15 +35,9 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
-import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -173,21 +167,5 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
         if (listener != null) {
             listener.setDisabled(false);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void commit(JSONArray elements, String type) {
-        JSONObject send = new JSONObject();
-        send.put("elements", elements);
-        send.put("source", "magicdraw");
-        send.put("mmsVersion", MDKPlugin.VERSION);
-
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            return;
-        }
-
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, send.toJSONString(), elements.size(), type, false));
     }
 }

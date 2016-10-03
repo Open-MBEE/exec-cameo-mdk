@@ -29,17 +29,19 @@
 
 package gov.nasa.jpl.mbee.mdk.api;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
@@ -50,12 +52,10 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.python.google.common.collect.Lists;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -275,19 +275,19 @@ public class MDKHelper {
      *
      **********************************************************************************/
 
-    public static JSONObject getMmsElement(Element e) {
+    public static ObjectNode getMmsElement(Element e) throws IOException {
         return MMSUtils.getElement(e);
     }
 
-    public static JSONObject getMmsElementByID(String s) {
+    public static ObjectNode getMmsElementByID(String s) throws IOException {
         return MMSUtils.getElementById(s);
     }
 
-    public static JSONObject getMmsElements(Collection<Element> elements) throws ServerException {
+    public static ObjectNode getMmsElements(Collection<Element> elements) throws ServerException, IOException {
         return MMSUtils.getElements(elements, null);
     }
 
-    public static JSONObject getMmsElementsByID(Collection<String> cs) throws ServerException {
+    public static ObjectNode getMmsElementsByID(Collection<String> cs) throws ServerException, IOException {
         return MMSUtils.getElementsById(cs, null);
     }
 
@@ -327,12 +327,14 @@ public class MDKHelper {
     /**
      * Sends a POST request to MMS with the element JSON, creating or updating the element as appropriate.
      *
-     * @param elementJSON The JSONObject of the element to create or update.
+     * @param elementsNode The JSONObject of the element to create or update.
      *                    Generally acquired through ExportUtility.fillElement(element, null)
      * @throws IllegalStateException
      */
-    public static void postMmsElement(JSONObject elementJSON) throws IllegalStateException {
-        if (elementJSON == null) {
+    @Deprecated
+    // TODO Move to MMSUtils @donbot
+    public static void postMmsElement(ObjectNode elementsNode) throws IllegalStateException {
+        /*if (elementsNode == null) {
             throw new IllegalStateException("No element json specified to export to MMS");
         }
 
@@ -347,14 +349,14 @@ public class MDKHelper {
         }
 
         JSONArray elems = new JSONArray();
-        elems.add(elementJSON);
+        elems.add(elementsNode);
         JSONObject send = new JSONObject();
         send.put("elements", elems);
 
         String response = ExportUtility.send(url, send.toJSONString(), false, true);
         if (response == null) {
             throw new IllegalStateException("Invalid send formatting.");
-        }
+        }*/
     }
 
 

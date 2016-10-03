@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.NMAction;
-import com.nomagic.documentmodeling.mbee.DocGenPlugin;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
@@ -14,7 +14,6 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -33,28 +32,28 @@ public class CommitClientElementAction extends RuleViolationAction implements An
 
     private final String id;
     private final Element element;
-    private final JSONObject elementJson;
+    private final ObjectNode elementObjectNode;
     private final Project project;
 
-    public CommitClientElementAction(String id, Element element, JSONObject elementJson, Project project) {
+    public CommitClientElementAction(String id, Element element, ObjectNode elementObjectNode, Project project) {
         super(NAME, NAME, null, null);
         this.id = id;
         this.element = element;
-        this.elementJson = elementJson;
+        this.elementObjectNode = elementObjectNode;
         this.project = project;
     }
 
     @Override
     public void execute(Collection<Annotation> annotations) {
-        List<JSONObject> elementsToUpdate = new ArrayList<>(annotations.size());
+        List<ObjectNode> elementsToUpdate = new ArrayList<>(annotations.size());
         List<String> elementsToDelete = new ArrayList<>(annotations.size());
 
         for (Annotation annotation : annotations) {
             for (NMAction action : annotation.getActions()) {
                 if (action instanceof CommitClientElementAction) {
-                    JSONObject jsonObject = ((CommitClientElementAction) action).getElementJson();
-                    if (jsonObject != null) {
-                        elementsToUpdate.add(jsonObject);
+                    ObjectNode elementObjectNode = ((CommitClientElementAction) action).getElementObjectNode();
+                    if (elementObjectNode != null) {
+                        elementsToUpdate.add(elementObjectNode);
                     }
                     else {
                         elementsToDelete.add(id);
@@ -75,16 +74,16 @@ public class CommitClientElementAction extends RuleViolationAction implements An
         return element;
     }
 
-    public JSONObject getElementJson() {
-        return elementJson;
+    public ObjectNode getElementObjectNode() {
+        return elementObjectNode;
     }
 
     @Override
     public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
-        List<JSONObject> elementsToUpdate = new ArrayList<>(1);
+        List<ObjectNode> elementsToUpdate = new ArrayList<>(1);
         List<String> elementsToDelete = new ArrayList<>(1);
-        if (elementJson != null) {
-            elementsToUpdate.add(elementJson);
+        if (elementObjectNode != null) {
+            elementsToUpdate.add(elementObjectNode);
         }
         else {
             elementsToDelete.add(id);
@@ -92,7 +91,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
         CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);
     }
 
-    private static void request(List<JSONObject> elementsToUpdate, List<String> elementsToDelete, Project project) {
+    private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
             JSONObject request = new JSONObject();

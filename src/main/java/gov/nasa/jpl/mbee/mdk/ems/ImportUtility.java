@@ -187,11 +187,11 @@ public class ImportUtility {
                                     newSlot.setDefiningFeature((StructuralFeature) definingFeature);
                                 }
                                 else {
-                                    throw new ReferenceException(newSlot, elementJson, "slot doesn't have defining feature");
+                                    // @donbot throw new ReferenceException(newSlot, elementJson, "slot doesn't have defining feature");
                                 }
                             }
                             else {
-                                throw new ReferenceException(newSlot, elementJson, "slot doesn't have defining feature");
+                                // @donbot throw new ReferenceException(newSlot, elementJson, "slot doesn't have defining feature");
                             }
                         }
                     }
@@ -377,7 +377,7 @@ public class ImportUtility {
         setName(e, elementJson);
         setDocumentation(e, elementJson);
         setOwnedAttribute(e, elementJson);
-        
+
         if (elementJson != null) {
             try {
                 String type = (String) elementJson.get("type");
@@ -421,7 +421,7 @@ public class ImportUtility {
                 /*if (type != null && e instanceof Class && (type.equals("View") || type.equals("Product")) && spec.containsKey("contents"))
                     setViewConstraint(e, spec);*/
             } catch (ImportException ex) {
-                throw new ImportException(e, elementJson, ex.getMessage());
+                // @donbot throw new ImportException(e, elementJson, ex.getMessage());
             }
         }
     }
@@ -445,7 +445,7 @@ public class ImportUtility {
                 try {
                     c.setSpecification(createValueSpec((JSONObject) elementJson.get("contents"), c.getSpecification()));
                 } catch (ReferenceException ex) {
-                    throw new ImportException(e, elementJson, "View constraint: " + ex.getMessage());
+                    // @donbot throw new ImportException(e, elementJson, "View constraint: " + ex.getMessage());
                 }
             }
         }
@@ -533,7 +533,7 @@ public class ImportUtility {
             try {
                 is.setSpecification(createValueSpec(spec, is.getSpecification()));
             } catch (ReferenceException ex) {
-                throw new ImportException(is, elementJson, "Specification: " + ex.getMessage(), ex);
+                // @donbot throw new ImportException(is, elementJson, "Specification: " + ex.getMessage(), ex);
             }
         }
         else {
@@ -543,7 +543,7 @@ public class ImportUtility {
             JSONArray classifier = (JSONArray) elementJson.get("classifierId");
             if (classifier == null || classifier.isEmpty()) {
                 log.info("[IMPORT/SYNC CORRUPTION PREVENTED] instance spec classifier is empty: " + is.getID());
-                throw (new ReferenceException(is, elementJson, "Instance Specification has no classifier"));
+                // @donbot throw new ReferenceException(is, elementJson, "Instance Specification has no classifier");
             }
             List<Classifier> newClassifiers = new ArrayList<Classifier>();
             for (Object id : classifier) {
@@ -552,11 +552,11 @@ public class ImportUtility {
                     newClassifiers.add((Classifier) e);
                 }
                 else {
-                    //throw new ImportException(is, specialization, (String)id + " is not a classifier");
+                    //// @donbot throw new ImportException(is, specialization, (String)id + " is not a classifier");
                 }
             }
             if (newClassifiers.isEmpty()) {
-                throw (new ReferenceException(is, elementJson, "Instance Specification has no classifier"));
+                // @donbot throw new ReferenceException(is, elementJson, "Instance Specification has no classifier");
             }
             is.getClassifier().clear();
             is.getClassifier().addAll(newClassifiers);
@@ -574,7 +574,7 @@ public class ImportUtility {
         }
         else {
             log.info("[IMPORT/SYNC CORRUPTION PREVENTED] directed relationship missing source or target: " + dr.getID());
-            throw (new ReferenceException(dr, specialization, "Directed relationship has no source or target"));
+            // @donbot throw new ReferenceException(dr, specialization, "Directed relationship has no source or target");
         }
     }
 
@@ -698,7 +698,7 @@ public class ImportUtility {
             try {
                 c.setSpecification(createValueSpec(sp, c.getSpecification()));
             } catch (ReferenceException ex) {
-                throw new ImportException(c, spec, "Constraint Specification: " + ex.getMessage());
+                // @donbot throw new ImportException(c, spec, "Constraint Specification: " + ex.getMessage());
             }
         }
     }
@@ -837,9 +837,7 @@ public class ImportUtility {
 
 
             } catch (ReferenceException ex) {
-                throw new ImportException(operation, elementJson,
-                        "Operation Specification: "
-                                + ex.getMessage());
+                // @donbot throw new ImportException(operation, elementJson, "Operation Specification: " + ex.getMessage());
             }
         }
         //}
@@ -991,7 +989,7 @@ public class ImportUtility {
         }
         else {
             log.info("[IMPORT/SYNC CORRUPTION PREVENTED] connector missing source or target: " + c.getID());
-            throw (new ReferenceException(c, elementJson, "Connector doesn't have both connectable roles."));
+            // @donbot throw (new ReferenceException(c, elementJson, "Connector doesn't have both connectable roles."));
         }
         Stereotype nestedend = StereotypesHelper.getStereotype(Application.getInstance().getProject(), "NestedConnectorEnd");
         if (webSourcePath != null && !webSourcePath.isEmpty()) {
@@ -1022,7 +1020,7 @@ public class ImportUtility {
         int i = 0;
         if (webSource == null || webTarget == null) {
             log.info("[IMPORT/SYNC CORRUPTION PREVENTED] association missing source or target: " + a.getID());
-            throw new ReferenceException(a, spec, "Association missing ends");
+            // @donbot throw new ReferenceException(a, spec, "Association missing ends");
         }
         for (Property end : a.getMemberEnd()) {
             if (end != webSource && end != webTarget) {
@@ -1171,7 +1169,7 @@ public class ImportUtility {
                 if (find == null) {
                     if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("element") + " not found.");
-                        throw new ReferenceException(v, o, "Element with id " + o.get("element") + " for ElementValue not found.");
+                        // @donbot throw new ReferenceException(v, o, "Element with id " + o.get("element") + " for ElementValue not found.");
                     }
                     break;
                 }
@@ -1192,14 +1190,14 @@ public class ImportUtility {
                 if (findInst == null) {
                     if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("instance") + " not found.");
-                        throw new ReferenceException(v, o, "Instance with id " + o.get("instance") + " for InstanceValue not found.");
+                        // @donbot throw new ReferenceException(v, o, "Instance with id " + o.get("instance") + " for InstanceValue not found.");
                     }
                     break;
                 }
                 if (!(findInst instanceof InstanceSpecification)) {
                     if (shouldOutputError) {
                         //Utils.guilog("Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
-                        throw new ReferenceException(v, o, "Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
+                        // @donbot throw new ReferenceException(v, o, "Element with id " + o.get("instance") + " is not an instance spec, cannot be put into an InstanceValue.");
                     }
                     break;
                 }

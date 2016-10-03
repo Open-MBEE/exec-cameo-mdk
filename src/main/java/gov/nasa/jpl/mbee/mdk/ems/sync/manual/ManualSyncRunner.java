@@ -1,5 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.manual;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -15,16 +18,17 @@ import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.ems.validation.actions.InitializeProjectModel;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Created by igomes on 9/26/16.
@@ -68,11 +72,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setMax(rootElements.size());
         progressStatus.setCurrent(0);
 
-        List<Pair<Element, JSONObject>> clientElements = new ArrayList<>(rootElements.size());
-        List<JSONObject> serverElements = new ArrayList<>(rootElements.size());
+        List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
+        List<ObjectNode> serverElements = new ArrayList<>(rootElements.size());
         for (Element element : rootElements) {
             collectClientElementsRecursively(element, project, recurse, depth, clientElements);
-            Collection<JSONObject> jsonObjects = getServerElementsRecursively(element, recurse, depth, progressStatus);
+            Collection<ObjectNode> jsonObjects = getServerElementsRecursively(element, recurse, depth, progressStatus);
             if (jsonObjects == null) {
                 if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Failed to get elements from the server. Aborting manual sync.");
@@ -88,8 +92,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Utils.displayValidationWindow(elementValidator.getValidationSuite(), "Manual Sync Validation");
     }
 
-    public void collectClientElementsRecursively(Element element, Project project, boolean recurse, int depth, List<Pair<Element, JSONObject>> elements) {
-        JSONObject jsonObject = Converters.getElementToJsonConverter().apply(element, project);
+    public void collectClientElementsRecursively(Element element, Project project, boolean recurse, int depth, List<Pair<Element, ObjectNode>> elements) {
+        ObjectNode jsonObject = Converters.getElementToJsonConverter().apply(element, project);
         if (jsonObject == null) {
             return;
         }
@@ -156,7 +160,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     // TODO Fix me and move me to MMSUtils @donbot
-    public Collection<JSONObject> getServerElementsRecursively(Element element, boolean recurse, int depth, ProgressStatus progressStatus) {
+    public Collection<ObjectNode> getServerElementsRecursively(Element element, boolean recurse, int depth, ProgressStatus progressStatus) {
         String url = ExportUtility.getUrlWithWorkspace();
         String id = Converters.getElementToIdConverter().apply(element);
         final String url2;
@@ -197,9 +201,18 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if (response == null) {
             response = "{\"elements\": []}";
         }
-        JSONObject partialResult = (JSONObject) JSONValue.parse(response);
-        if (partialResult != null && partialResult.containsKey("elements")) {
-            return (JSONArray) partialResult.get("elements");
+        JsonNode responseJsonNode;
+        try {
+            responseJsonNode = JacksonUtils.getObjectMapper().readTree(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        if (responseJsonNode != null && responseJsonNode.has("elements")) {
+            JsonNode elementsJsonNode = responseJsonNode.get("elements");
+            if (elementsJsonNode.isArray()) {
+                return StreamSupport.stream(elementsJsonNode.spliterator(), false).filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
+            }
         }
         return null;
     }

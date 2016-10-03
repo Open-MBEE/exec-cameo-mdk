@@ -62,11 +62,11 @@ public class MMSUtils {
         return (ObjectNode) elements.get(0);
     }
 
-    public static ObjectNode getElements(Collection<Element> elements, ProgressStatus ps) throws ServerException, JsonProcessingException, JsonParseException, JsonMappingException, IOException {
+    public static ObjectNode getElements(Collection<Element> elements, ProgressStatus ps) throws ServerException, IOException {
         return getElementsById(elements.stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()), ps);
     }
 
-    public static ObjectNode getElementsById(Collection<String> ids, ProgressStatus ps) throws ServerException, JsonProcessingException, JsonParseException, JsonMappingException, IOException {
+    public static ObjectNode getElementsById(Collection<String> ids, ProgressStatus ps) throws ServerException, IOException {
         if (ids == null || ids.isEmpty()) {
             return null;
         }
@@ -88,24 +88,21 @@ public class MMSUtils {
 
         final AtomicReference<String> res = new AtomicReference<>();
         final AtomicReference<Integer> code = new AtomicReference<>();
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-            /*try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
-                String response;
-                try {
-                    response = ExportUtility.getWithBody(url, jsonRequest);
-                    res.set(response);
-                    code.set(200);
-                } catch (ServerException ex) {
-                    code.set(ex.getCode());
-                    if (ex.getCode() != 404) {
-                        res.set(ex.getResponse());
-                    }
+        Thread t = new Thread(() -> {
+        /*try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }*/
+            String response;
+            try {
+                response = ExportUtility.getWithBody(url, jsonRequest);
+                res.set(response);
+                code.set(200);
+            } catch (ServerException ex) {
+                code.set(ex.getCode());
+                if (ex.getCode() != 404) {
+                    res.set(ex.getResponse());
                 }
             }
         });

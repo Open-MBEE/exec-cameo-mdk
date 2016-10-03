@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -34,7 +35,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
     private final String id;
     private final Element element;
-    private final JSONObject elementJson;
+    private final ObjectNode elementObjectNode;
     private final Project project;
 
     private ValidationSuite validationSuite = new ValidationSuite("Update Changelog");
@@ -48,25 +49,25 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         validationSuite.addValidationRule(successfulChangeValidationRule);
     }
 
-    public UpdateClientElementAction(String id, Element element, JSONObject elementJson, Project project) {
+    public UpdateClientElementAction(String id, Element element, ObjectNode elementObjectNode, Project project) {
         super(NAME, NAME, null, null);
         this.id = id;
         this.element = element;
-        this.elementJson = elementJson;
+        this.elementObjectNode = elementObjectNode;
         this.project = project;
     }
 
     @Override
     public void execute(Collection<Annotation> annotations) {
-        List<JSONObject> elementsToUpdate = new ArrayList<>(annotations.size());
+        List<ObjectNode> elementsToUpdate = new ArrayList<>(annotations.size());
         List<String> elementsToDelete = new ArrayList<>(annotations.size());
 
         for (Annotation annotation : annotations) {
             for (NMAction action : annotation.getActions()) {
                 if (action instanceof UpdateClientElementAction) {
-                    JSONObject jsonObject = ((UpdateClientElementAction) action).getElementJson();
-                    if (jsonObject != null) {
-                        elementsToUpdate.add(jsonObject);
+                    ObjectNode objectNode = ((UpdateClientElementAction) action).getElementObjectNode();
+                    if (objectNode != null) {
+                        elementsToUpdate.add(objectNode);
                     }
                     else {
                         elementsToDelete.add(id);
@@ -87,16 +88,16 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         return element;
     }
 
-    public JSONObject getElementJson() {
-        return elementJson;
+    public ObjectNode getElementObjectNode() {
+        return elementObjectNode;
     }
 
     @Override
     public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
-        List<JSONObject> elementsToUpdate = new ArrayList<>(1);
+        List<ObjectNode> elementsToUpdate = new ArrayList<>(1);
         List<String> elementsToDelete = new ArrayList<>(1);
-        if (elementJson != null) {
-            elementsToUpdate.add(elementJson);
+        if (elementObjectNode != null) {
+            elementsToUpdate.add(elementObjectNode);
         }
         else {
             elementsToDelete.add(id);
@@ -104,33 +105,33 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         process(elementsToUpdate, elementsToDelete, project);
     }
 
-    private void process(List<JSONObject> elementsToUpdate, List<String> elementsToDelete, Project project) {
+    private void process(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Attempting to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " locally.");
             EMFBulkImporter emfBulkImporter = new EMFBulkImporter(UpdateClientElementAction.class.getName() + " Creations/Updates");
-            Changelog<String, Pair<Element, JSONObject>> changelog = emfBulkImporter.apply(elementsToUpdate, project);
-            for (Map.Entry<Pair<Element, JSONObject>, ImportException> entry : emfBulkImporter.getFailedJsonObjects().entrySet()) {
+            Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project);
+            for (Map.Entry<Pair<Element, ObjectNode>, ImportException> entry : emfBulkImporter.getFailedJsonObjects().entrySet()) {
                 Element element = entry.getKey().getFirst();
-                JSONObject jsonObject = entry.getKey().getSecond();
+                ObjectNode objectNode = entry.getKey().getSecond();
                 ImportException importException = entry.getValue();
                 // TODO Abstract this stuff to a converter @donbot
                 String name = null;
                 if (element == null) {
-                    name = (String) jsonObject.getOrDefault(MDKConstants.NAME_KEY, "<>");
+                    name = objectNode.get(MDKConstants.NAME_KEY).asText("<>");
                     if (name == null || name.isEmpty()) {
                         name = "<>";
                     }
                 }
                 failedChangeValidationRule.addViolation(new ValidationRuleViolation(element != null ? element : project.getPrimaryModel(), "["
-                        + (element != null ? "UPDATE" : "CREATE") + " FAILED]" + (element == null ? " " + jsonObject.getOrDefault(MDKConstants.TYPE_KEY, "Element") + " " + name + " : " + jsonObject.getOrDefault(MDKConstants.SYSML_ID_KEY, "<>") : "")
+                        + (element != null ? "UPDATE" : "CREATE") + " FAILED]" + (element == null ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + objectNode.get(MDKConstants.SYSML_ID_KEY).asText("<>") : "")
                         + (element == null && importException != null ? " -" : "") + (importException != null ? " " + importException.getMessage() : "")));
             }
-            for (Map.Entry<Element, JSONObject> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
+            for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
                 equivalentElementValidationRule.addViolation(new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT]"));
                 // TODO Add detail diff here @donbot
             }
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
-                for (Map.Entry<String, Pair<Element, JSONObject>> entry : changelog.get(changeType).entrySet()) {
+                for (Map.Entry<String, Pair<Element, ObjectNode>> entry : changelog.get(changeType).entrySet()) {
                     successfulChangeValidationRule.addViolation(new ValidationRuleViolation(entry.getValue().getFirst(), "[" + changeType.name() + "]"));
                 }
             }
