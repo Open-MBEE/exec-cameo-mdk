@@ -65,7 +65,7 @@ public class ValidateConstraints extends MDAction {
     // "Model constraint violation",
     // ViolationSeverity.WARNING);
 
-    private ValidationSuite validationUi = new ValidationSuite("sweet");
+    private ValidationSuite validationUi = new ValidationSuite("Constraint Validation");
     private Collection<ValidationSuite> validationOutput = new ArrayList<ValidationSuite>();
 
     public ValidateConstraints(Element context) {

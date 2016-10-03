@@ -108,16 +108,6 @@ public class BranchValidator {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        //get tasks on server
-        //get project branches
-        //can only do project version inits on branches where the trunk project already exists
-
-        if (currentBranch.equals("master")) {
-            Utils.guilog("[INFO] Validating Site Characterizations");
-            SiteCharValidator siteVal = new SiteCharValidator();
-            siteVal.validate(ps);
-            siteSuite = siteVal.getSuite();
-        }
     }
 
     private void fillBranchData(ProjectDescriptor currentProj, Map<String, ProjectDescriptor> branchDescriptors) throws RemoteException {

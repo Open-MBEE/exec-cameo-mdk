@@ -2436,7 +2436,7 @@ public class Utils {
 
     public static void displayValidationWindow(ValidationSuite vs, String title) {
         final List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
-        //vss.add(vs);
+        vss.add(vs);
         displayValidationWindow(vss, title);
     }
 

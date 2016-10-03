@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -11,32 +12,35 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.ImportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ImageValidator;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ModelValidator;
-import gov.nasa.jpl.mbee.mdk.lib.JSONUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Pair;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
-import gov.nasa.jpl.mbee.mdk.model.Document;
-import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
-import gov.nasa.jpl.mbee.mdk.viewedit.PresentationElementInstance;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
-import org.json.simple.JSONArray;
+import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.ImportException;
+import gov.nasa.jpl.mbee.mdk.ems.ImportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
+import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.ems.validation.ImageValidator;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
+import gov.nasa.jpl.mbee.mdk.model.Document;
+import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
+import gov.nasa.jpl.mbee.mdk.viewedit.PresentationElementInstance;
+import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
 import org.json.simple.JSONObject;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -63,12 +67,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private boolean showValidation;
 
     private final List<ValidationSuite> vss = new ArrayList<>();
-    private final Map<String, JSONObject> images;
+    private final Map<String, JsonNode> images;
     private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
+    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JsonNode> images, Set<Element> processedElements) {
         this.start = start;
-        this.images = images != null ? images : new HashMap<String, JSONObject>();
+        this.images = images != null ? images : new HashMap<>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<Element>();
         this.recurse = recurse;
         // cannotChange is obsoleted by server-side only instance specifications
@@ -123,8 +127,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         ViewHierarchyVisitor viewHierarchyVisitor = new ViewHierarchyVisitor();
         dge.accept(viewHierarchyVisitor);
 
-        Map<String, Pair<JSONObject, InstanceSpecification>> instanceSpecificationMap = new LinkedHashMap<>();
-        Map<String, Pair<JSONObject, Slot>> slotMap = new LinkedHashMap<>();
+        Map<String, Pair<JsonNode, InstanceSpecification>> instanceSpecificationMap = new LinkedHashMap<>();
+        Map<String, Pair<JsonNode, Slot>> slotMap = new LinkedHashMap<>();
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>(viewHierarchyVisitor.getView2ViewElements().size());
 
         for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
@@ -192,55 +196,50 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             progressStatus.setDescription("Downloading existing view instances");
             progressStatus.setCurrent(2);
 
-            JSONObject viewResponse;
+            JsonNode viewResponse;
             try {
-                viewResponse = ModelValidator.getManyAlfrescoElementsByID(viewMap.keySet(), progressStatus);
-            } catch (ServerException e) {
+                JSONObject jsonObject = MMSUtils.getElementsById(viewMap.keySet(), progressStatus);
+                viewResponse = jsonObject != null ? JacksonUtils.getObjectMapper().readTree(jsonObject.toJSONString()) : null;
+            } catch (ServerException | IOException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
                 e.printStackTrace();
                 return;
             }
-            if (viewResponse != null && viewResponse.containsKey("elements") && viewResponse.get("elements") instanceof JSONArray) {
+            JsonNode viewElementsJsonArray;
+            if (viewResponse != null && (viewElementsJsonArray = viewResponse.get("elements")) != null && viewElementsJsonArray.isArray()) {
                 Queue<String> instanceIDs = new LinkedList<>();
                 Queue<String> slotIDs = new LinkedList<>();
                 Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
-                for (Object viewObject : (JSONArray) viewResponse.get("elements")) {
+                for (JsonNode elementJson : viewElementsJsonArray) {
                     // Resolve current instances in the view constraint expression
-                    JSONObject viewJSONObject, viewContentsJSONObject;
-                    if (viewObject instanceof JSONObject
-                            && (viewJSONObject = (JSONObject) viewObject).containsKey("contents") 
-                            && viewJSONObject.get("contents") instanceof JSONObject 
-                            && (viewContentsJSONObject = (JSONObject) viewJSONObject.get("contents")).containsKey("operand") 
-                            && viewContentsJSONObject.get("operand") instanceof JSONArray
-                            && (viewJSONObject).containsKey("sysmlId") 
-                            && viewJSONObject.get("sysmlId") instanceof String) {
-                        JSONArray viewOperandJSONArray = (JSONArray) viewContentsJSONObject.get("operand");
-                        List<String> viewInstanceIDs = new ArrayList<>(viewOperandJSONArray.size());
-                        for (Object viewOperandObject : viewOperandJSONArray) {
-                            if (viewOperandObject instanceof JSONObject) {
-                                JSONObject viewOperandJSONObject = (JSONObject) viewOperandObject;
-                                if (viewOperandJSONObject.containsKey("instance") && viewOperandJSONObject.get("instance") instanceof String) {
-                                    String instanceID = (String) viewOperandJSONObject.get("instance");
-                                    /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
-                                        continue;
-                                    }*/
-                                    if (generatedFromViewProperty != null) {
-                                        slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
-                                    }
-                                    if (generatedFromElementProperty != null) {
-                                        slotIDs.add(instanceID + "-slot-" + generatedFromElementProperty.getID());
-                                    }
-                                    instanceIDs.add(instanceID);
-                                    viewInstanceIDs.add(instanceID);
+                    JsonNode viewOperandJsonArray = JacksonUtils.getAtPath(elementJson, "/contents/operand"),
+                            sysmlIdJson = elementJson.get(MDKConstants.SYSML_ID_KEY);
+                    String sysmlId;
+                    if (viewOperandJsonArray != null && viewOperandJsonArray.isArray()
+                            && sysmlIdJson != null && sysmlIdJson.isTextual() && (sysmlId = sysmlIdJson.asText()).isEmpty()) {
+                        List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonArray.size());
+                        for (JsonNode viewOperandJson : viewOperandJsonArray) {
+                            JsonNode instanceIdJson = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
+                            String instanceId;
+                            if (instanceIdJson != null && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
+                                /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                    continue;
+                                }*/
+                                if (generatedFromViewProperty != null) {
+                                    slotIDs.add(instanceId + "-slot-" + generatedFromViewProperty.getID());
                                 }
+                                if (generatedFromElementProperty != null) {
+                                    slotIDs.add(instanceId + "-slot-" + generatedFromElementProperty.getID());
+                                }
+                                instanceIDs.add(instanceId);
+                                viewInstanceIDs.add(instanceId);
                             }
                         }
-                        String sysmlid = (String) viewJSONObject.get("sysmlid");
-                        ViewMapping viewMapping = viewMap.containsKey(sysmlid) ? viewMap.get(sysmlid) : new ViewMapping();
-                        viewMapping.setJson(viewJSONObject);
+                        ViewMapping viewMapping = viewMap.containsKey(sysmlId) ? viewMap.get(sysmlId) : new ViewMapping();
+                        viewMapping.setJson(elementJson);
                         viewMapping.setInstanceIDs(viewInstanceIDs);
-                        viewMap.put(sysmlid, viewMapping);
+                        viewMap.put(sysmlId, viewMapping);
                     }
                 }
 
@@ -252,20 +251,21 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Now that all first-level instances are resolved, query for them and import client-side (in reverse order) as model elements
                 // Add any sections that are found along the way and loop until no more are found
-                List<JSONObject> instanceJSONObjects = new ArrayList<>();
-                List<JSONObject> slotJSONObjects = new ArrayList<>();
+                List<JsonNode> instanceJsonNodes = new ArrayList<>();
+                List<JsonNode> slotJsonNodes = new ArrayList<>();
                 while (!instanceIDs.isEmpty() && !slotIDs.isEmpty()) {
                     // Allow cancellation between every depths' server query.
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
-                    JSONObject response;
+                    JsonNode instanceAndSlotResponse;
                     try {
                         List<String> elementIDs = new ArrayList<>(instanceIDs);
                         elementIDs.addAll(slotIDs);
-                        response = ModelValidator.getManyAlfrescoElementsByID(elementIDs, progressStatus);
-                    } catch (ServerException e) {
+                        JSONObject jsonObject = MMSUtils.getElementsById(elementIDs, progressStatus);
+                        instanceAndSlotResponse = jsonObject != null ? JacksonUtils.getObjectMapper().readTree(jsonObject.toJSONString()) : null;
+                    } catch (ServerException | IOException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
                         e.printStackTrace();
@@ -274,37 +274,32 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                     instanceIDs.clear();
                     slotIDs.clear();
-                    if (response != null && response.containsKey("elements") && response.get("elements") instanceof JSONArray) {
-                        for (Object instanceObject : (JSONArray) response.get("elements")) {
-                            JSONObject elementJSONObject = null, specializationJSONObject = null, instanceSpecificationJSONObject;
-                            if (instanceObject instanceof JSONObject 
-                                    && (elementJSONObject = (JSONObject) instanceObject).containsKey("instanceSpecificationSpecification")
-                                    && elementJSONObject.get("instanceSpecificationSpecification") instanceof JSONObject
-                                    && (instanceSpecificationJSONObject = (JSONObject) elementJSONObject.get("instanceSpecificationSpecification")).containsKey("operand")
-                                    && instanceSpecificationJSONObject.get("operand") instanceof JSONArray) {
-                                JSONArray instanceOperandJSONArray = (JSONArray) instanceSpecificationJSONObject.get("operand");
-                                for (Object instanceOperandObject : instanceOperandJSONArray) {
-                                    if (instanceOperandObject instanceof JSONObject) {
-                                        JSONObject instanceOperandJSONObject = (JSONObject) instanceOperandObject;
-                                        if (instanceOperandJSONObject.containsKey("instance") && instanceOperandJSONObject.get("instance") instanceof String) {
-                                            String instanceID = (String) instanceOperandJSONObject.get("instance");
-                                            /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
-                                                continue;
-                                            }*/
-                                            if (generatedFromViewProperty != null) {
-                                                slotIDs.add(instanceID + "-slot-" + generatedFromViewProperty.getID());
-                                            }
-                                            if (generatedFromElementProperty != null) {
-                                                slotIDs.add(instanceID + "-slot-" + generatedFromElementProperty.getID());
-                                            }
-                                            instanceIDs.add(instanceID);
+                    JsonNode instanceAndSlotElementsJsonArray;
+                    if (instanceAndSlotResponse != null && (instanceAndSlotElementsJsonArray = instanceAndSlotResponse.get("elements")) != null && instanceAndSlotElementsJsonArray.isArray()) {
+                        for (JsonNode elementJson : instanceAndSlotElementsJsonArray) {
+                            JsonNode instanceOperandJsonArray = JacksonUtils.getAtPath(elementJson, "/specification/operand");
+                            if (instanceOperandJsonArray != null && instanceOperandJsonArray.isArray()) {
+                                for (JsonNode instanceOperandJson : instanceOperandJsonArray) {
+                                    JsonNode instanceIdJson = instanceOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
+                                    String instanceId;
+                                    if (instanceIdJson != null && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
+                                        /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                            continue;
+                                        }*/
+                                        if (generatedFromViewProperty != null) {
+                                            slotIDs.add(instanceId + "-slot-" + generatedFromViewProperty.getID());
                                         }
+                                        if (generatedFromElementProperty != null) {
+                                            slotIDs.add(instanceId + "-slot-" + generatedFromElementProperty.getID());
+                                        }
+                                        instanceIDs.add(instanceId);
                                     }
                                 }
                             }
-                            Object o;
-                            Boolean isSlot = specializationJSONObject != null && (o = specializationJSONObject.get("isSlot")) instanceof Boolean && ((Boolean) o);
-                            (isSlot ? slotJSONObjects : instanceJSONObjects).add(elementJSONObject);
+                            JsonNode typeJson = elementJson.get(MDKConstants.TYPE_KEY);
+                            if (typeJson.isTextual()) {
+                                (typeJson.asText().equalsIgnoreCase("slot") ? slotJsonNodes : instanceJsonNodes).add(elementJson);
+                            }
                         }
                     }
                 }
@@ -314,47 +309,47 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setCurrent(3);
 
                 // importing instances in reverse order so that deepest level instances (sections and such) are loaded first
-                ListIterator<JSONObject> instanceJSONsIterator = new ArrayList<>(instanceJSONObjects).listIterator(instanceJSONObjects.size());
+                ListIterator<JsonNode> instanceJSONsIterator = new ArrayList<>(instanceJsonNodes).listIterator(instanceJsonNodes.size());
                 while (instanceJSONsIterator.hasPrevious()) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
-                    JSONObject elementJSONObject = instanceJSONsIterator.previous();
+                    JsonNode elementJsonNode = instanceJSONsIterator.previous();
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
-                        Element element = ImportUtility.createElement(elementJSONObject, false, true);
+                        Element element = ImportUtility.createElement(elementJsonNode, false, true);
                         if (element instanceof InstanceSpecification) {
-                            instanceSpecificationMap.put(element.getID(), new Pair<>(elementJSONObject, (InstanceSpecification) element));
+                            instanceSpecificationMap.put(element.getID(), new Pair<>(elementJsonNode, (InstanceSpecification) element));
                         }
                     } catch (ImportException e) {
                         /*failure = true;
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + elementJSONObject.get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + elementJsonNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
                 }
 
                 // The Alfresco service is a nice guy and returns Slots at the end so that when it's loaded in order the slots don't throw errors for missing their instances.
                 // However we're being fancy and loading them backwards so we had to separate them ahead of time and then load the slots after.
-                for (JSONObject slotJSONObject : slotJSONObjects) {
+                for (JsonNode slotJsonNode : slotJsonNodes) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
-                        Element element = ImportUtility.createElement(slotJSONObject, false, false);
+                        Element element = ImportUtility.createElement(slotJsonNode, false, false);
                         if (element instanceof Slot) {
-                            slotMap.put(element.getID(), new Pair<>(slotJSONObject, (Slot) element));
+                            slotMap.put(element.getID(), new Pair<>(slotJsonNode, (Slot) element));
                         }
                     } catch (ImportException e) {
                         /*failure = true;
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotJSONObject.get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotJsonNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
                 }
 
@@ -370,7 +365,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (viewMap.containsKey(view.getID()) && (instanceSpecificationIDs = viewMap.get(view.getID()).getInstanceIDs()) != null) {
                         final List<InstanceSpecification> instanceSpecifications = new ArrayList<>(instanceSpecificationIDs.size());
                         for (String instanceSpecificationID : instanceSpecificationIDs) {
-                            Pair<JSONObject, InstanceSpecification> pair = instanceSpecificationMap.get(instanceSpecificationID);
+                            Pair<JsonNode, InstanceSpecification> pair = instanceSpecificationMap.get(instanceSpecificationID);
                             if (pair != null && pair.getSecond() != null) {
                                 instanceSpecifications.add(pair.getSecond());
                             }
@@ -381,13 +376,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Update relations for all InstanceSpecifications and Slots
                 // Instances need to be done in reverse order to load the lowest level instances first (sections)
-                ListIterator<Pair<JSONObject, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
+                ListIterator<Pair<JsonNode, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
                 while (instanceSpecificationMapIterator.hasPrevious()) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
 
-                    Pair<JSONObject, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
+                    Pair<JsonNode, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
                     try {
                         ImportUtility.createElement(pair.getFirst(), true, true);
                     } catch (Exception e) {
@@ -395,10 +390,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("Failed to update relations for instance specification " + pair.getFirst().get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
                 }
-                for (Pair<JSONObject, Slot> pair : slotMap.values()) {
+                for (Pair<JsonNode, Slot> pair : slotMap.values()) {
                     if (handleCancel(progressStatus)) {
                         return;
                     }
@@ -410,7 +405,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;*/
-                        Application.getInstance().getGUILog().log("Failed to update relations for slot " + pair.getFirst().get("sysmlid") + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("Failed to update relations for slot " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
                 }
             }
@@ -482,7 +477,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 /*
                 Constraint constraint = Utils.getViewConstraint(view);
                 if (constraint != null) {
-                    elementsJSONArray.add(ExportUtility.fillElement(constraint, null));
+                    elementsJSONArray.add(Converters.getElementToJsonConverter().apply(constraint, project));
                 }
                 */
 
@@ -490,21 +485,21 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // portion of the JSON required to update the view contents.
                 // TODO there's a lot of redundancy here, fix in @donbot
                 Object o;
-                JSONObject oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null,
-                        oldSpecializationJson = oldViewJson != null && (o = oldViewJson) instanceof JSONObject ? (JSONObject) o : null,
-                        fullViewJson = ExportUtility.fillElement(view, null),
-                        specializationJson = fullViewJson != null && (o = fullViewJson) instanceof JSONObject ? (JSONObject) o : null;
-                if (oldSpecializationJson == null || specializationJson == null) {
-                    elementsJsonArray.add(fullViewJson);
+                JsonNode newViewJson = Converters.getElementToJsonConverter().apply(view, project);
+                if (newViewJson == null) {
+                    skippedViews.add(view);
+                    continue;
                 }
-                else {
-                    specializationJson.put("displayedElements", view2elements.get(view));
-                    if (ModelValidator.isViewSpecializationDiff(oldSpecializationJson, specializationJson)) {
-                        JSONObject subViewJson = new JSONObject();
-                        subViewJson.put("sysmlId", fullViewJson.get("sysmlId"));
-//                        subViewJson.put("specialization", specializationJson);
-                        elementsJsonArray.add(subViewJson);
+                JsonNode oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getJson() : null;
+                try {
+                    JsonNode source = oldViewJson != null ? JacksonUtils.getObjectMapper().readTree(oldViewJson.toJSONString()) : null;
+                    JsonNode target = JacksonUtils.getObjectMapper().readTree(newViewJson.toJSONString());
+                    if (!JsonEquivalencePredicate.getInstance().test(source, target)) {
+                        elementsJsonArray.add(newViewJson);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    skippedViews.add(view);
                 }
             }
 
@@ -517,52 +512,35 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     instanceToView.add(new Pair<>(subInstance, pair.getSecond()));
                 }
 
-                JSONObject instanceSpecificationJson = ExportUtility.fillElement(instance, null);
-                if (instanceSpecificationJson == null) {
+                JsonNode newInstanceSpecificationJson = Converters.getElementToJsonConverter().apply(instance, project);
+                if (newInstanceSpecificationJson == null) {
                     continue;
                 }
-                JSONObject oldInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
-                JSONObject instanceSpecificationToCommit = null;
-                if (oldInstanceSpecificationJson == null) {
-                    instanceSpecificationToCommit = instanceSpecificationJson;
-                }
-                else {
-                    // We only want to compare documentation and specialization to see if we need to update the instance
-                    // TODO remove these "specialization" calls. redundant with new @donbot changes
-                    JSONObject subInstanceSpecificationJson = new JSONObject(), oldSubInstanceSpecificationJson = new JSONObject();
-                    subInstanceSpecificationJson.put("documentation", instanceSpecificationJson.get("documentation"));
-                    oldSubInstanceSpecificationJson.put("documentation", oldInstanceSpecificationJson.get("documentation"));
-                    subInstanceSpecificationJson.put("specialization", instanceSpecificationJson.get("specialization")); //@donbot
-                    oldSubInstanceSpecificationJson.put("specialization", oldInstanceSpecificationJson.get("specialization")); //@donbot
-                    subInstanceSpecificationJson.put("name", instanceSpecificationJson.get("name"));
-                    oldSubInstanceSpecificationJson.put("name", oldInstanceSpecificationJson.get("name"));
-                    if (!JSONUtils.compare(subInstanceSpecificationJson, oldSubInstanceSpecificationJson)) {
-                        instanceSpecificationToCommit = instanceSpecificationJson;
+                JsonNode oldInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
+                try {
+                    JsonNode source = oldInstanceSpecificationJson != null ? JacksonUtils.getObjectMapper().readTree(oldInstanceSpecificationJson.toJSONString()) : null;
+                    JsonNode target = JacksonUtils.getObjectMapper().readTree(newInstanceSpecificationJson.toJSONString());
+                    if (!JsonEquivalencePredicate.getInstance().test(source, target)) {
+                        elementsJsonArray.add(newInstanceSpecificationJson);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    continue;
                 }
-                if (instanceSpecificationToCommit != null) {
-                    elementsJsonArray.add(instanceSpecificationToCommit);
-                }
-
                 for (Slot slot : instance.getSlot()) {
-                    JSONObject slotJson = ExportUtility.fillElement(slot, null);
-                    if (slotJson == null) {
+                    JsonNode newSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
+                    if (newSlotJson == null) {
                         continue;
                     }
-                    JSONObject oldSlotJson = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
-                    if (oldSlotJson == null) {
-                        elementsJsonArray.add(slotJson);
-                        continue;
-                    }
-                    // We only want to compare owner and specialization to see if we need to update the slot
-                    JSONObject subSlotJson = new JSONObject(), oldSubSlotJson = new JSONObject();
-                    subSlotJson.put("owner", slotJson.get("owner"));
-                    oldSubSlotJson.put("owner", oldSlotJson.get("owner"));
-                    // TODO remove these "specialization" calls. redundant with new @donbot changes
-                    subSlotJson.put("specialization", slotJson.get("specialization")); //@donbot
-                    oldSubSlotJson.put("specialization", oldSlotJson.get("specialization")); //@donbot
-                    if (!JSONUtils.compare(subSlotJson, oldSubSlotJson)) {
-                        elementsJsonArray.add(slotJson);
+                    JsonNode oldSlotJson = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
+                    try {
+                        JsonNode source = oldSlotJson != null ? JacksonUtils.getObjectMapper().readTree(oldSlotJson.toJSONString()) : null;
+                        JsonNode target = JacksonUtils.getObjectMapper().readTree(newSlotJson.toJSONString());
+                        if (!JsonEquivalencePredicate.getInstance().test(source, target)) {
+                            elementsJsonArray.add(newSlotJson);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
@@ -579,7 +557,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setDescription("Queueing upload of generated view instances");
                 progressStatus.setCurrent(5);
 
-                JSONObject body = new JSONObject();
+                JsonNode body = new JsonNode();
                 body.put("elements", elementsJsonArray);
                 body.put("source", "magicdraw");
                 body.put("mmsVersion", MDKPlugin.VERSION);
@@ -597,17 +575,17 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (presentationElementInstance.getInstance() == null) {
                         continue;
                     }
-                    String id = ExportUtility.getElementID(presentationElementInstance.getInstance());
+                    String id = Converters.getElementToIdConverter().apply(presentationElementInstance.getInstance());
                     if (id == null) {
                         continue;
                     }
-                    JSONObject elementJsonObject = new JSONObject();
-                    elementJsonObject.put("sysmlid", id);
-                    elementsJsonArray.add(elementJsonObject);
+                    JsonNode elementJsonNode = new JsonNode();
+                    elementJsonNode.put(MDKConstants.SYSML_ID_KEY, id);
+                    elementsJsonArray.add(elementJsonNode);
                 }
             }
             if (!elementsJsonArray.isEmpty()) {
-                JSONObject body = new JSONObject();
+                JsonNode body = new JsonNode();
                 body.put("elements", elementsJsonArray);
                 body.put("source", "magicdraw");
                 body.put("mmsVersion", MDKPlugin.VERSION);
@@ -630,12 +608,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
             List<Element> elementsToDelete = new ArrayList<>(slotMap.size() + instanceSpecificationMap.size() + views.size());
-            for (Pair<JSONObject, Slot> pair : slotMap.values()) {
+            for (Pair<JsonNode, Slot> pair : slotMap.values()) {
                 if (pair.getSecond() != null) {
                     elementsToDelete.add(pair.getSecond());
                 }
             }
-            for (Pair<JSONObject, InstanceSpecification> pair : instanceSpecificationMap.values()) {
+            for (Pair<JsonNode, InstanceSpecification> pair : instanceSpecificationMap.values()) {
                 if (pair.getSecond() != null) {
                     elementsToDelete.add(pair.getSecond());
                 }
@@ -716,7 +694,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
     private class ViewMapping {
         private Element element;
-        private JSONObject json;
+        private JsonNode json;
         private List<String> instanceIDs;
 
         public Element getElement() {
@@ -727,11 +705,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             this.element = element;
         }
 
-        public JSONObject getJson() {
+        public JsonNode getJson() {
             return json;
         }
 
-        public void setJson(JSONObject json) {
+        public void setJson(JsonNode json) {
             this.json = json;
         }
 

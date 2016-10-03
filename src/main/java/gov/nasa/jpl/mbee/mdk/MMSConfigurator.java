@@ -34,7 +34,7 @@ import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
-import gov.nasa.jpl.mbee.mdk.actions.ems.*;
+import gov.nasa.jpl.mbee.mdk.ems.actions.*;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 
 public class MMSConfigurator implements AMConfigurator {
@@ -70,12 +70,11 @@ public class MMSConfigurator implements AMConfigurator {
             sync.addAction(new UpdateFromJMS(false));
             sync.addAction(new UpdateFromJMS(true));
             sync.addAction(new UpdateFromJMSAndCommitWithDelete());
-            sync.addAction(new UpdateAllDocs());*/
+            sync.addAction(new UpdateAllDocumentsAction());*/
 
-            category.addAction(new UpdateAllDocs());
+            category.addAction(new UpdateAllDocumentsAction());
 
             category.addAction(new SendProjectVersionAction());
-            category.addAction(new MigrationCategory());
             if (MDUtils.isDeveloperMode()) {
                 category.addAction(new UpdateWorkspacesAction());
             }

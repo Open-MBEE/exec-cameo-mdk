@@ -37,7 +37,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
-import gov.nasa.jpl.mbee.mdk.actions.docgen.EditPropertiesTableAction;
+import gov.nasa.jpl.mbee.mdk.model.actions.EditPropertiesTableAction;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;

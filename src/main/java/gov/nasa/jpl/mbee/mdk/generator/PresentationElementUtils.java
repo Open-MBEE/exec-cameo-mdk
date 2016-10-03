@@ -10,7 +10,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ModelValidator;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.viewedit.PresentationElementInstance;
 import org.json.simple.JSONObject;
@@ -290,7 +290,7 @@ public class PresentationElementUtils {
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            is.setID(ModelValidator.HIDDEN_ID_PREFIX + is.getID() + ID_SUFFIX);
+            is.setID(MDKConstants.HIDDEN_ID_PREFIX + is.getID() + ID_SUFFIX);
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);

@@ -7,9 +7,9 @@ import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -138,7 +138,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                     if (elementID == null) {
                         continue;
                     }
-                    if (elementID.matches(ModelValidator.HOLDING_BIN_PACKAGE_ID_REGEX)) {
+                    if (elementID.matches(MDKConstants.HOLDING_BIN_PACKAGE_ID_REGEX)) {
                         continue;
                     }
 

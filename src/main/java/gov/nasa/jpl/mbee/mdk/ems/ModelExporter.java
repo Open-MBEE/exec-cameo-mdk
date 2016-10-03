@@ -37,7 +37,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Extension;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.api.incubating.json.JsonConverters;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -121,7 +121,7 @@ public class ModelExporter {
             return false;
         }
 
-        JSONObject elementInfo = JsonConverters.getToJsonConverter().apply(e);
+        JSONObject elementInfo = Converters.getElementToJsonConverter().apply(e, Project.getProject(e));
         elements.put(e.getID(), elementInfo);
 
         if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e)) {

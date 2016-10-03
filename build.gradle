@@ -43,7 +43,7 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // Production code requires MagicDraw patches to compile
-    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.1', ext: 'zip'
+    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.2', ext: 'zip'
     
     // SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
@@ -76,6 +76,12 @@ dependencies {
     // ActiveMQ 
     compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
     // compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
+
+    // Jackson
+    compile group: 'com.fasterxml.jackson.core', name:'jackson-databind', version: '2.8.3'
+
+    // JSON Patch
+    compile group: "com.box", name: "json-patch", version: "1.13"
     
     // Other dependencies we're unable to resolve via repositories
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar','plugins/**/*.jar'])
@@ -98,7 +104,6 @@ task extractDependencies {
     doLast {
         inputs.files.each { archive ->
             copy {
-                fileMode 0755
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted'
             }
@@ -261,11 +266,13 @@ artifactory {
 artifactoryPublish.dependsOn distZip
 
 installDist {
-    destinationDir = file('build/install')
+    destinationDir = file('build/plugin')
     doLast {
         copy {
-            from 'build/install'
-            into 'build/dependency-cache/extracted'
+            fileMode 0755
+            from 'build/dependency-cache/extracted'
+            from 'build/plugin'
+            into 'build/install'
         }
     }
 }
@@ -273,8 +280,8 @@ installDist {
 installDist.dependsOn distZip
 
 task runJava(type: JavaExec) {
-    classpath sourceSets.main.runtimeClasspath
-    workingDir 'build/dependency-cache/extracted'
+    classpath fileTree(dir: 'build/install', include: ['lib/**/*.jar','plugins/**/*.jar'])
+    workingDir 'build/install'
     ignoreExitValue true
 
     standardOutput = System.out
@@ -283,14 +290,14 @@ task runJava(type: JavaExec) {
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
     jvmArgs = ['-Xmx4000M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-Xss1024K', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
-    args ['DEVELOPER']
+    args 'DEVELOPER'
 }
 
 runJava.dependsOn installDist
 runJava.dependsOn generateRebel
 
 task runScript(type: Exec) {
-    workingDir "build/dependency-cache/extracted"
+    workingDir "build/install"
     ignoreExitValue = true
 
     if (System.getProperty('os.name').toLowerCase().contains('windows')) {

@@ -34,24 +34,24 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.mdk.actions.docgen.GenerateViewPresentationAction;
-import gov.nasa.jpl.mbee.mdk.actions.ems.EMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.actions.ems.UpdateAllDocs;
+import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.ValidateModelRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter.LocalSyncProjectMapping;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.python.google.common.collect.Lists;
@@ -244,10 +244,10 @@ public class MDKHelper {
     public static void validateModel(Element validateTarget) {
         Collection<Element> sync = new ArrayList<Element>();
         sync.add(validateTarget);
-        ValidateModelRunner modelVal = new ValidateModelRunner(sync);
-        ProgressStatusRunner.runWithProgressStatus(modelVal, "Validating Model", true, 0);
+        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), true, 0);
+        ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Validating Model", true, 0);
         Application.getInstance().getGUILog().log("Validated");
-        validationWindow = new MDKValidationWindow(modelVal.getSuite());
+        validationWindow = new MDKValidationWindow(manualSyncRunner.getValidationSuite());
     }
 
     /**
@@ -276,19 +276,19 @@ public class MDKHelper {
      **********************************************************************************/
 
     public static JSONObject getMmsElement(Element e) {
-        return ModelValidator.getAlfrescoElement(e);
+        return MMSUtils.getElement(e);
     }
 
     public static JSONObject getMmsElementByID(String s) {
-        return ModelValidator.getAlfrescoElementByID(s);
+        return MMSUtils.getElementById(s);
     }
 
-    public static JSONObject getMmsElements(Collection<Element> ce) throws ServerException {
-        return ModelValidator.getManyAlfrescoElements(ce, null);
+    public static JSONObject getMmsElements(Collection<Element> elements) throws ServerException {
+        return MMSUtils.getElements(elements, null);
     }
 
     public static JSONObject getMmsElementsByID(Collection<String> cs) throws ServerException {
-        return ModelValidator.getManyAlfrescoElementsByID(cs, null);
+        return MMSUtils.getElementsById(cs, null);
     }
 
     /**
@@ -415,7 +415,7 @@ public class MDKHelper {
     }
 
     public static void generateAllDocuments() {
-        UpdateAllDocs uad = new UpdateAllDocs();
+        UpdateAllDocumentsAction uad = new UpdateAllDocumentsAction();
         validationWindow = new MDKValidationWindow(uad.updateAction());
     }
 
