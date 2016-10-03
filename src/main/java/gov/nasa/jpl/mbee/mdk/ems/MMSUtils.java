@@ -6,11 +6,17 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -20,11 +26,14 @@ import java.util.stream.Collectors;
  */
 // TODO Use URI builder or similar @donbot
 public class MMSUtils {
-    public static JSONObject getElement(Element element) {
+    
+    private static final ObjectMapper mapper = JacksonUtils.getObjectMapper();
+    
+    public static ObjectNode getElement(Element element) throws JsonParseException, JsonMappingException, IOException {
         return getElementById(Converters.getElementToIdConverter().apply(element));
     }
 
-    public static JSONObject getElementById(String id) {
+    public static ObjectNode getElementById(String id) throws JsonParseException, JsonMappingException, IOException {
         if (id == null) {
             return null;
         }
@@ -43,31 +52,38 @@ public class MMSUtils {
         if (response == null) {
             return null;
         }
-        JSONObject result = (JSONObject) JSONValue.parse(response);
-        JSONArray elements = (JSONArray) result.get("elements");
-        if (elements == null || elements.isEmpty()) {
+        
+        ObjectNode responseJson = mapper.readValue(response, ObjectNode.class);
+        ArrayNode elements = (ArrayNode) responseJson.get("elements");
+        if (elements == null || elements.size() == 0  ) {
             return null;
         }
-        return (JSONObject) elements.get(0);
+        
+        return (ObjectNode) elements.get(0);
     }
 
-    public static JSONObject getElements(Collection<Element> elements, ProgressStatus ps) throws ServerException {
+    public static ObjectNode getElements(Collection<Element> elements, ProgressStatus ps) throws ServerException, JsonProcessingException, JsonParseException, JsonMappingException, IOException {
         return getElementsById(elements.stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()), ps);
     }
 
-    public static JSONObject getElementsById(Collection<String> ids, ProgressStatus ps) throws ServerException {
+    public static ObjectNode getElementsById(Collection<String> ids, ProgressStatus ps) throws ServerException, JsonProcessingException, JsonParseException, JsonMappingException, IOException {
         if (ids == null || ids.isEmpty()) {
             return null;
         }
-        JSONArray idsJSONArray = new JSONArray();
+        
+        // create requests json
+        final ObjectNode requests = mapper.createObjectNode();
+        // put elements array inside request json, keep reference
+        ArrayNode idsArrayNode = requests.putArray("elements");
         for (String id : ids) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put(MDKConstants.SYSML_ID_KEY, id);
-            idsJSONArray.add(jsonObject);
+            // create json for id strings, add to request array
+            ObjectNode element = mapper.createObjectNode();
+            element.put(MDKConstants.SYSML_ID_KEY, id);
+            idsArrayNode.add(element);
         }
-        final JSONObject request = new JSONObject();
-        request.put("elements", idsJSONArray);
+        
         final String url = ExportUtility.getUrlWithWorkspace() + "/elements";
+        final String jsonRequest = mapper.writeValueAsString(requests);
         Utils.guilog("[INFO] Searching for " + ids.size() + " elements from server...");
 
         final AtomicReference<String> res = new AtomicReference<>();
@@ -82,7 +98,7 @@ public class MMSUtils {
             }*/
                 String response;
                 try {
-                    response = ExportUtility.getWithBody(url, request.toJSONString());
+                    response = ExportUtility.getWithBody(url, jsonRequest);
                     res.set(response);
                     code.set(200);
                 } catch (ServerException ex) {
@@ -113,11 +129,23 @@ public class MMSUtils {
             throw new ServerException(response, code.get());
         }
         Utils.guilog("[INFO] Finished getting elements.");
+        
         if (response == null) {
-            JSONObject reso = new JSONObject();
-            reso.put("elements", new JSONArray());
-            return reso;
+            ObjectNode empty = mapper.createObjectNode();
+            empty.putArray("elements");
+            return empty;
         }
-        return (JSONObject) JSONValue.parse(response);
+
+        ObjectNode responseJson = null;
+        responseJson = mapper.readValue(response, ObjectNode.class);
+        
+        if (responseJson == null) {
+            responseJson = mapper.createObjectNode();
+            responseJson.putArray("elements");
+        }
+        return responseJson;
+
     }
+
 }
+
