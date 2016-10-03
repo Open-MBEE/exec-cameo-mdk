@@ -92,7 +92,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                         continue;
                     }
                     JSONObject elementJson = (JSONObject) arrayObject;
-                    if (!((o = elementJson.get("sysmlid")) instanceof String)) {
+                    if (!((o = elementJson.get(MDKConstants.SYSML_ID_KEY)) instanceof String)) {
                         continue;
                     }
                     String sysmlid = (String) o;

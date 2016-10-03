@@ -46,7 +46,7 @@ public class EMFImporter implements JsonToElementFunction {
         Element element = ELEMENT_LOOKUP_FUNCTION.apply((String) o, project);
         Changelog.ChangeType changeType = Changelog.ChangeType.UPDATED;
         if (element == null) {
-            o = jsonObject.get("type");
+            o = jsonObject.get(MDKConstants.TYPE_KEY);
             if (!(o instanceof String)) {
                 return null;
             }
@@ -253,7 +253,7 @@ public class EMFImporter implements JsonToElementFunction {
         ID(
                 (jsonObject, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
                 (jsonObject, eStructuralFeature, project, strict, element) -> {
-                    Object o = jsonObject.get("sysmlId");
+                    Object o = jsonObject.get(MDKConstants.SYSML_ID_KEY);
                     if (!(o instanceof String)) {
                         if (strict) {
                             throw new ImportException(element, jsonObject, "Element JSON has missing/malformed ID.");
@@ -280,7 +280,7 @@ public class EMFImporter implements JsonToElementFunction {
                     Element owningElement = ELEMENT_LOOKUP_FUNCTION.apply((String) o, project);
                     if (owningElement == null) {
                         if (strict) {
-                            throw new ImportException(element, jsonObject, "Owner for element " + jsonObject.get("sysmlid") + " not found: " + o + ".");
+                            throw new ImportException(element, jsonObject, "Owner for element " + jsonObject.get(MDKConstants.SYSML_ID_KEY) + " not found: " + o + ".");
                         }
                         return null;
                     }

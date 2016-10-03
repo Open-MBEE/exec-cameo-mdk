@@ -16,5 +16,6 @@ public class MDKConstants {
             ID_SUFFIX = "Id",
             ID_SUFFIX_PLURAL = ID_SUFFIX + "s",
             SYSML_ID_KEY = "sysml" + ID_SUFFIX,
-            OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_SUFFIX;
+            OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_SUFFIX,
+            INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_SUFFIX;
 }

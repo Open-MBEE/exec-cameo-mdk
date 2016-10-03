@@ -30,6 +30,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.emf;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -42,6 +44,7 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.ClassUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.eclipse.emf.ecore.EDataType;
@@ -62,27 +65,27 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
-public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
+public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     @Override
-    public JSONObject apply(Element element, Project project) {
+    public ObjectNode apply(Element element, Project project) {
         return convert(element, project);
     }
 
-    private static JSONObject convert(Element element, Project project) {
+    private static ObjectNode convert(Element element, Project project) {
         return convert(element, project, false);
     }
 
-    private static JSONObject convert(Element element, Project project, boolean nestedValueSpecification) {
+    private static ObjectNode convert(Element element, Project project, boolean nestedValueSpecification) {
         if (element == null) {
             return null;
         }
-        JSONObject jsonObject = new JSONObject();
+        ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
         for (PreProcessor preProcessor : PreProcessor.values()) {
             if (nestedValueSpecification && preProcessor == PreProcessor.VALUE_SPECIFICATION) {
                 continue;
             }
-            jsonObject = preProcessor.getFunction().apply(element, project, jsonObject);
-            if (jsonObject == null) {
+            objectNode = preProcessor.getFunction().apply(element, project, objectNode);
+            if (objectNode == null) {
                 return null;
             }
         }
@@ -90,12 +93,12 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
             ExportFunction function = Arrays.stream(EStructuralFeatureOverride.values())
                     .filter(override -> override.getPredicate().test(element, eStructuralFeature)).map(EStructuralFeatureOverride::getFunction)
                     .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
-            jsonObject = function.apply(element, project, eStructuralFeature, jsonObject);
-            if (jsonObject == null) {
+            objectNode = function.apply(element, project, eStructuralFeature, objectNode);
+            if (objectNode == null) {
                 return null;
             }
         }
-        return jsonObject;
+        return objectNode;
     }
 
     public static String getEID(EObject eObject) {
@@ -140,7 +143,7 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
     private enum PreProcessor {
         TYPE(
                 (element, project, jsonObject) -> {
-                    jsonObject.put("type", element.eClass().getName());
+                    jsonObject.put(MDKConstants.TYPE_KEY, element.eClass().getName());
                     return jsonObject;
                 }
         ),
@@ -191,13 +194,13 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
                 (element, project, jsonObject) -> ProjectUtilities.isElementInAttachedProject(element) ? null : jsonObject
         );
 
-        private TriFunction<Element, Project, JSONObject, JSONObject> function;
+        private TriFunction<Element, Project, ObjectNode, ObjectNode> function;
 
-        PreProcessor(TriFunction<Element, Project, JSONObject, JSONObject> function) {
+        PreProcessor(TriFunction<Element, Project, ObjectNode, ObjectNode> function) {
             this.function = function;
         }
 
-        public TriFunction<Element, Project, JSONObject, JSONObject> getFunction() {
+        public TriFunction<Element, Project, ObjectNode, ObjectNode> getFunction() {
             return function;
         }
     }
@@ -207,16 +210,16 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
             return null;
         }
         else if (object instanceof Collection) {
-            JSONArray jsonArray = new JSONArray();
+            ArrayNode arrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (Object o : ((Collection<?>) object)) {
                 Object serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
                 if (serialized == null && o != null) {
                     // failed to serialize; taking the conservative approach and returning entire thing as null
                     return null;
                 }
-                jsonArray.add(serialized);
+                arrayNode.add(serialized);
             }
-            return jsonArray;
+            return arrayNode;
         }
         else if (object instanceof ValueSpecification) {
             return convert((ValueSpecification) object, project, true);
@@ -236,19 +239,19 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
         return null;
     };
 
-    private static final ExportFunction DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, jsonObject) -> {
+    private static final ExportFunction DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, objectNode) -> {
         if (!eStructuralFeature.isChangeable() || eStructuralFeature.isVolatile() || eStructuralFeature.isTransient() || eStructuralFeature.isUnsettable() || eStructuralFeature.isDerived() || eStructuralFeature.getName().startsWith("_")) {
-            return EMFExporter.EMPTY_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, jsonObject);
+            return EMFExporter.EMPTY_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, objectNode);
         }
-        return EMFExporter.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, jsonObject);
+        return EMFExporter.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, objectNode);
     };
 
-    private static final ExportFunction UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, jsonObject) -> {
+    private static final ExportFunction UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, objectNode) -> {
         Object value = element.eGet(eStructuralFeature);
         Object serializedValue = DEFAULT_SERIALIZATION_FUNCTION.apply(value, project, eStructuralFeature);
         if (value != null && serializedValue == null) {
             System.err.println("[EMF] Failed to serialize " + eStructuralFeature + " for " + element + ": " + value + " - " + value.getClass());
-            return jsonObject;
+            return objectNode;
         }
 
         String key = eStructuralFeature.getName();
@@ -256,18 +259,18 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
                 && !ValueSpecification.class.isAssignableFrom(((EReference) eStructuralFeature).getEReferenceType().getInstanceClass())) {
             key += "Id" + (eStructuralFeature.isMany() ? "s" : "");
         }
-        jsonObject.put(key, serializedValue);
-        return jsonObject;
+        objectNode.put(key, serializedValue);
+        return objectNode;
     };
 
-    private static final ExportFunction EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, jsonObject) -> jsonObject;
+    private static final ExportFunction EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (element, project, eStructuralFeature, objectNode) -> objectNode;
 
     private enum EStructuralFeatureOverride {
         ID(
                 (element, eStructuralFeature) -> eStructuralFeature == element.eClass().getEIDAttribute(),
                 (element, project, eStructuralFeature, jsonObject) -> {
                     if (!(element instanceof ValueSpecification)) {
-                        jsonObject.put("sysmlId", getEID(element));
+                        jsonObject.put(MDKConstants.SYSML_ID_KEY, getEID(element));
                     }
                     return jsonObject;
                 }
@@ -313,7 +316,7 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
         ),
         CONNECTOR__END(
                 (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.CONNECTOR__END,
-                (element, project, eStructuralFeature, jsonObject) -> {
+                (element, project, eStructuralFeature, objectNode) -> {
                     Connector connector = (Connector) element;
                     // TODO Stop using Strings @donbot
                     List<List<Object>> propertyPaths = connector.getEnd().stream()
@@ -331,21 +334,21 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
                     for (int i = 0; i < propertyPaths.size(); i++) {
                         propertyPaths.get(i).add(connector.getEnd().get(i).getRole());
                     }
-                    jsonObject.put("_propertyPathIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths, project, eStructuralFeature));
+                    objectNode.put("_propertyPathIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths, project, eStructuralFeature));
 
-                    return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, jsonObject);
+                    return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, objectNode);
                 }
         ),
         VALUE_SPECIFICATION__EXPRESSION(
                 (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION,
-                (element, project, eStructuralFeature, jsonObject) -> {
+                (element, project, eStructuralFeature, objectNode) -> {
                     Expression expression = null;
                     Object object = element.eGet(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION);
                     if (object instanceof Expression) {
                         expression = (Expression) object;
                     }
-                    jsonObject.put(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION.getName() + "Id", expression != null ? expression.getID() : null);
-                    return jsonObject;
+                    objectNode.put(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION.getName() + "Id", expression != null ? expression.getID() : null);
+                    return objectNode;
                 }
         );
 
@@ -373,6 +376,6 @@ public class EMFExporter implements BiFunction<Element, Project, JSONObject> {
 
     @FunctionalInterface
     interface ExportFunction {
-        JSONObject apply(Element element, Project project, EStructuralFeature eStructuralFeature, JSONObject jsonObject);
+        ObjectNode apply(Element element, Project project, EStructuralFeature eStructuralFeature, ObjectNode objectNode);
     }
 }

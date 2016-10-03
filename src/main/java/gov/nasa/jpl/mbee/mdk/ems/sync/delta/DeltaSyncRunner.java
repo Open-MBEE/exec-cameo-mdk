@@ -11,6 +11,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
@@ -217,7 +218,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
             JSONArray webArray = (JSONArray) response.get("elements");
             for (Object o : webArray) {
-                String webId = (String) ((JSONObject) o).get("sysmlid");
+                String webId = (String) ((JSONObject) o).get(MDKConstants.SYSML_ID_KEY);
                 jmsJsons.put(webId, (JSONObject) o);
             }
         }
@@ -359,7 +360,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             JSONArray elementsJsonArray = new JSONArray();
             for (String id : localElementsToDelete) {
                 JSONObject elementJsonObject = new JSONObject();
-                elementJsonObject.put("sysmlId", id);
+                elementJsonObject.put(MDKConstants.SYSML_ID_KEY, id);
                 elementsJsonArray.add(elementJsonObject);
             }
             JSONObject body = new JSONObject();
@@ -400,7 +401,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         }
                     } catch (ImportException ie) {
                         ie.printStackTrace();
-                        failedJmsChangelog.addChange((String) elementJson.get("sysmlid"), null, Changelog.ChangeType.CREATED);
+                        failedJmsChangelog.addChange((String) elementJson.get(MDKConstants.SYSML_ID_KEY), null, Changelog.ChangeType.CREATED);
                         ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ie.getMessage());
                         vrv.addAction(new DetailDiffAction(new JSONObject(), elementJson));
                         cannotCreate.addViolation(vrv);
@@ -414,7 +415,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                         locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[CREATED]"));
                     } catch (ImportException ie) {
                         ie.printStackTrace();
-                        failedJmsChangelog.addChange((String) elementJson.get("sysmlid"), null, Changelog.ChangeType.CREATED);
+                        failedJmsChangelog.addChange((String) elementJson.get(MDKConstants.SYSML_ID_KEY), null, Changelog.ChangeType.CREATED);
                         ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] " + ie.getMessage());
                         vrv.addAction(new DetailDiffAction(new JSONObject(), elementJson));
                         cannotCreate.addViolation(vrv);
@@ -427,7 +428,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     Application.getInstance().getGUILog().log("[INFO] Added " + createdElements.size() + " element" + (createdElements.size() != 1 ? "s" : "") + " locally from the MMS.");
                 }
                 for (JSONObject element : creationOrder.getFailed()) {
-                    failedJmsChangelog.addChange((String) element.get("sysmlid"), null, Changelog.ChangeType.CREATED);
+                    failedJmsChangelog.addChange((String) element.get(MDKConstants.SYSML_ID_KEY), null, Changelog.ChangeType.CREATED);
                     ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found");
                     vrv.addAction(new DetailDiffAction(new JSONObject(), element));
                     cannotCreate.addViolation(vrv);

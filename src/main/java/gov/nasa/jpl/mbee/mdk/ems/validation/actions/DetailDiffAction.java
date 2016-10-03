@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
@@ -154,7 +155,7 @@ public class DetailDiffAction extends RuleViolationAction implements AnnotationA
         }
 
         // reassign value if it is an id (but not value for sysmlid)
-        if (!current.hasKey() || (current.hasKey() && !current.getKey().equals("sysmlId"))) {
+        if (!current.hasKey() || (current.hasKey() && !current.getKey().equals(MDKConstants.SYSML_ID_KEY))) {
             Element target = ExportUtility.getElementFromID(value.toString());
             if (target instanceof NamedElement) {
                 value = ((NamedElement) target).getQualifiedName();

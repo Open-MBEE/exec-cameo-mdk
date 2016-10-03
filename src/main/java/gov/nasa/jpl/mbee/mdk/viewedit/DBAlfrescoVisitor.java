@@ -11,6 +11,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInfo;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
@@ -216,7 +217,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #674 -- Update the type and id: was hard coded.
         //
         entry.put("type", "Image");
-        entry.put("sysmlId", image.getImage().getID());
+        entry.put(MDKConstants.SYSML_ID_KEY, image.getImage().getID());
         entry.put("title", image.getTitle());
         curContains.peek().add(entry);
 
@@ -421,7 +422,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             view.put("type", "View");
         }
         String id = e.getID();
-        view.put("sysmlId", id);
+        view.put(MDKConstants.SYSML_ID_KEY, id);
         views.put(id, view);
         Set<String> viewE = new HashSet<String>();
         viewElements.push(viewE);

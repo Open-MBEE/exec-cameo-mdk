@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.ems;
 
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -61,7 +62,7 @@ public class MMSUtils {
         JSONArray idsJSONArray = new JSONArray();
         for (String id : ids) {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("sysmlId", id);
+            jsonObject.put(MDKConstants.SYSML_ID_KEY, id);
             idsJSONArray.add(jsonObject);
         }
         final JSONObject request = new JSONObject();

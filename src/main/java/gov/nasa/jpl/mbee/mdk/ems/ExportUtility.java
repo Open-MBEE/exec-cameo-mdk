@@ -66,6 +66,7 @@ import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.*;
 import com.nomagic.uml2.ext.magicdraw.statemachines.mdprotocolstatemachines.ProtocolConformance;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
@@ -170,7 +171,7 @@ public class ExportUtility {
             JSONArray array = (JSONArray) ob.get("sites");
             for (Object ws : array) {
                 JSONObject site = (JSONObject) ws;
-                String id = (String) site.get("sysmlId");
+                String id = (String) site.get(MDKConstants.SYSML_ID_KEY);
                 idmapping.put((String) site.get("name"), id);
             }
         }
@@ -1260,7 +1261,7 @@ public class ExportUtility {
         fillDoc(e, elementInfo);
         fillOwner(e, elementInfo);
         fillMetatype(e, elementInfo);
-        elementInfo.put("sysmlId", getElementID(e));
+        elementInfo.put(MDKConstants.SYSML_ID_KEY, getElementID(e));
         return elementInfo;
     }
 
@@ -1671,7 +1672,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlId", getElementID(e));
+            info.put(MDKConstants.SYSML_ID_KEY, getElementID(e));
         }
 
         info.put("name", (e instanceof NamedElement) ? ((NamedElement) e).getName() : "");
@@ -1683,7 +1684,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlId", getElementID(e));
+            info.put(MDKConstants.SYSML_ID_KEY, getElementID(e));
         }
         info.put("documentation", Utils.stripHtmlWrapper(ModelHelper.getComment(e)));
         return info;
@@ -1694,7 +1695,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlId", getElementID(e));
+            info.put(MDKConstants.SYSML_ID_KEY, getElementID(e));
         }
 
         JSONArray propIDs = new JSONArray();
@@ -1712,7 +1713,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlId", getElementID(e));
+            info.put(MDKConstants.SYSML_ID_KEY, getElementID(e));
         }
 
         info.put("ownerId", (e.getOwner() == null) ? null : getElementID(e.getOwner()));
@@ -1724,7 +1725,7 @@ public class ExportUtility {
         if (info == null) {
             info = new JSONObject();
         }
-        info.put("sysmlId", getElementID(e));
+        info.put(MDKConstants.SYSML_ID_KEY, getElementID(e));
         return info;
     }
 
@@ -1733,7 +1734,7 @@ public class ExportUtility {
         JSONObject info = einfo;
         if (info == null) {
             info = new JSONObject();
-            info.put("sysmlId", getElementID(e));
+            info.put(MDKConstants.SYSML_ID_KEY, getElementID(e));
         }
         info.put("isMetatype", false);
         if (e instanceof Stereotype) {
@@ -2092,7 +2093,7 @@ public class ExportUtility {
         if (name != null) {
             result.put("name", name);
         }
-        result.put("sysmlId", projId);
+        result.put(MDKConstants.SYSML_ID_KEY, projId);
         result.put("type", "Project");
         if (version != null) {
             result.put("projectVersion", version.toString());
@@ -2167,7 +2168,7 @@ public class ExportUtility {
                 JSONArray returnedSiteList = (JSONArray) siteResponse.get("sites");
                 for (Object returnedSite : returnedSiteList) {
                     JSONObject rs = (JSONObject) returnedSite;
-                    if (rs.containsKey("editable") && rs.containsKey("sysmlid") && rs.get("sysmlid").equals(site)) {
+                    if (rs.containsKey("editable") && rs.containsKey(MDKConstants.SYSML_ID_KEY) && rs.get(MDKConstants.SYSML_ID_KEY).equals(site)) {
                         return (boolean) rs.get("editable");
                     }
                 }

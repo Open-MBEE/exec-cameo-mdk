@@ -18,6 +18,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.graphs.algorithms.TopologicalSort;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.validation.PropertyValueType;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.log4j.Logger;
@@ -51,7 +52,7 @@ public class ImportUtility {
         DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>> graph = new DirectedGraphHashSet<JSONObject, DirectedEdgeVector<JSONObject>>();
         Map<String, JSONObject> id2ob = new HashMap<>();
         for (JSONObject ob : newElements) {
-            String sysmlid = (String) ob.get("sysmlId");
+            String sysmlid = (String) ob.get(MDKConstants.SYSML_ID_KEY);
             if (sysmlid == null) {
                 continue;
             }
@@ -60,7 +61,7 @@ public class ImportUtility {
         }
         Map<String, JSONObject> fail = new HashMap<String, JSONObject>();
         for (JSONObject ob : newElements) {
-            String sysmlid = (String) ob.get("sysmlId");
+            String sysmlid = (String) ob.get(MDKConstants.SYSML_ID_KEY);
             String ownerid = (String) ob.get("owner");
             Element newE = ExportUtility.getElementFromID(sysmlid);
             Element ownerE = ExportUtility.getElementFromID(ownerid);
@@ -135,7 +136,7 @@ public class ImportUtility {
         // For all new elements the should be the following fields
         // should be present: name, owner, and documentation
         //
-        String sysmlID = (String) elementJson.get("sysmlId");
+        String sysmlID = (String) elementJson.get(MDKConstants.SYSML_ID_KEY);
         Element existing = ExportUtility.getElementFromID(sysmlID);
         if (existing != null && !updateRelations) {
             return existing; // maybe jms feedback
