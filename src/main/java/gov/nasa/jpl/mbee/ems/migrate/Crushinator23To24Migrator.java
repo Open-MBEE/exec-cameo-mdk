@@ -167,7 +167,7 @@ public class Crushinator23To24Migrator extends Migrator {
             elementsToDeleteRemotely.add((Package) viewInstancesPackage);
         }
         BaseElement unusedViewInstancePackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances"));
-        if (unusedViewInstancePackage instanceof Element) {
+        if (unusedViewInstancePackage instanceof Package) {
             viewInstancePackages.add((Package) unusedViewInstancePackage);
             elementsToDeleteLocally.add((Package) unusedViewInstancePackage);
             elementsToDeleteRemotely.add((Package) unusedViewInstancePackage);
