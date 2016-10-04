@@ -49,6 +49,14 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         validationSuite.addValidationRule(successfulChangeValidationRule);
     }
 
+    public UpdateClientElementAction(Project project) {
+        super(NAME, NAME, null, null);
+        this.id = null;
+        this.element = null;
+        this.elementObjectNode = null;
+        this.project = project;
+    }
+
     public UpdateClientElementAction(String id, Element element, ObjectNode elementObjectNode, Project project) {
         super(NAME, NAME, null, null);
         this.id = id;
@@ -76,7 +84,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 }
             }
         }
-        process(elementsToUpdate, elementsToDelete, project);
+        process(elementsToUpdate, elementsToDelete);
     }
 
     @Override
@@ -102,10 +110,14 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         else {
             elementsToDelete.add(id);
         }
-        process(elementsToUpdate, elementsToDelete, project);
+        process(elementsToUpdate, elementsToDelete);
     }
 
-    private void process(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) {
+    public void process(Collection<ObjectNode> elementsToUpdate, Collection<String> elementsToDelete) {
+        if ((elementsToUpdate == null || elementsToUpdate.isEmpty()) && (elementsToDelete == null || elementsToDelete.isEmpty())) {
+            Application.getInstance().getGUILog().log("[INFO] No MMS changes to update locally.");
+            return;
+        }
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Attempting to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " locally.");
             EMFBulkImporter emfBulkImporter = new EMFBulkImporter(UpdateClientElementAction.class.getName() + " Creations/Updates");

@@ -1,32 +1,29 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.jms;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
-import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.properties.PresentationElementPropertyEnum;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import javax.jms.*;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class JMSMessageListener implements MessageListener, ExceptionListener {
     private static final Map<String, Changelog.ChangeType> CHANGE_MAPPING = new LinkedHashMap<>(4);
-
-    private volatile boolean isExceptionHandlerRunning;
-    private int reconnectionAttempts = 0;
 
     static {
         CHANGE_MAPPING.put("addedElements", Changelog.ChangeType.CREATED);
@@ -35,8 +32,12 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         CHANGE_MAPPING.put("movedElements", Changelog.ChangeType.UPDATED);
     }
 
+
+    private volatile boolean isExceptionHandlerRunning;
+    private int reconnectionAttempts = 0;
+
     private final Project project;
-    private final Changelog<String, JSONObject> inMemoryJMSChangelog = new Changelog<>();
+    private final Changelog<String, ObjectNode> inMemoryJMSChangelog = new Changelog<>();
 
     {
         if (MDUtils.isDeveloperMode()) {
@@ -69,121 +70,64 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
             System.out.println("JMS TextMessage for " + ExportUtility.getProjectId(project) + " -" + System.lineSeparator() + text);
         }
-        Object o = JSONValue.parse(text);
-        if (!(o instanceof JSONObject)) {
+        JsonNode messageJsonNode;
+        try {
+            messageJsonNode = JacksonUtils.getObjectMapper().readTree(text);
+        } catch (IOException e) {
+            e.printStackTrace();
             return;
         }
-        JSONObject jsonObject = (JSONObject) o;
+        if (!messageJsonNode.isObject()) {
+            return;
+        }
         // Changed elements are encapsulated in the "workspace2" JSONObject.
-        if ((o = jsonObject.get("workspace2")) instanceof JSONObject) {
-            JSONObject workspace2 = (JSONObject) o;
-
-            if (((o = jsonObject.get("source")) instanceof String) && ((String) o).startsWith("magicdraw")) {
+        JsonNode workspaceJsonNode = messageJsonNode.get("workspace2");
+        JsonNode syncedJsonNode;
+        if (!workspaceJsonNode.isNull() && workspaceJsonNode.isObject()) {
+            JsonNode sourceJsonNode = workspaceJsonNode.get("source");
+            if (!sourceJsonNode.isNull() && sourceJsonNode.isTextual() && sourceJsonNode.asText().equalsIgnoreCase("magicdraw")) {
                 return;
             }
-
-            // Retrieve the changed elements: each type of change (updated, added, moved, deleted) will be returned as an JSONArray.
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
-                if (!((o = workspace2.get(entry.getKey())) instanceof JSONArray)) {
+                JsonNode changeJsonNode = workspaceJsonNode.get(entry.getKey());
+                if (changeJsonNode.isNull() || !changeJsonNode.isArray()) {
                     continue;
                 }
-                for (Object arrayObject : (JSONArray) o) {
-                    if (!(arrayObject instanceof JSONObject)) {
+                for (JsonNode elementJsonNode : changeJsonNode) {
+                    if (elementJsonNode.isNull() || !elementJsonNode.isObject()) {
                         continue;
                     }
-                    JSONObject elementJson = (JSONObject) arrayObject;
-                    if (!((o = elementJson.get(MDKConstants.SYSML_ID_KEY)) instanceof String)) {
+                    JsonNode sysmlIdJsonNode = elementJsonNode.get(MDKConstants.SYSML_ID_KEY);
+                    if (sysmlIdJsonNode.isNull() || !sysmlIdJsonNode.isTextual()) {
                         continue;
                     }
-                    String sysmlid = (String) o;
-                    if (sysmlid.startsWith("PROJECT")) {
+                    if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply((ObjectNode) elementJsonNode, project, false, project.getModel()) == null) {
                         continue;
                     }
-                    if (sysmlid.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
-                        continue;
-                    }
-                    if ((o = elementJson.get("classifierIds")) instanceof JSONArray) {
-                        //TODO this is legacy element support. purge? @donbot  (see also LegacyModelValidator.java:493)
-                        boolean isPresentationElement = false;
-                        for (Object c : (JSONArray) o) {
-                            if (c instanceof String) {
-                                for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
-                                    if (c.equals(presentationElementEnum.get().getID())) {
-                                        isPresentationElement = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (isPresentationElement) {
-                                break;
-                            }
-                        }
-                        if (isPresentationElement) {
-                            continue;
-                        }
-                    }
-                    if ((o = elementJson.get("definingFeatureId")) instanceof String) {
-                        //TODO this is legacy element support. purge? @donbot  (see also LegacyModelValidator.java:513)
-                        boolean isPresentationElementProperty = false;
-                        for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
-                            if (o.equals(presentationElementPropertyEnum.get().getID())) {
-                                isPresentationElementProperty = true;
-                                break;
-                            }
-                        }
-                        if (isPresentationElementProperty) {
-                            continue;
-                        }
-                    }
-                      // previous instance of definingFeatureId pulled a JSONArray from propertyType key
-//                    if ((o = elementJson.get("definingFeatureId")) instanceof JSONArray) {
-//                        //TODO this is legacy element support. purge? @donbot
-//                        boolean isPresentationElementProperty = false;
-//                        for (Object c : (JSONArray) o) {
-//                            if (c instanceof String) {
-//                                for (PresentationElementPropertyEnum presentationElementPropertyEnum : PresentationElementPropertyEnum.values()) {
-//                                    if (c.equals(presentationElementPropertyEnum.get().getID())) {
-//                                        isPresentationElementProperty = true;
-//                                        break;
-//                                    }
-//                                }
-//                            }
-//                            if (isPresentationElementProperty) {
-//                                break;
-//                            }
-//                        }
-//                        if (isPresentationElementProperty) {
-//                            continue;
-//                        }
-//                    }
-
-                    inMemoryJMSChangelog.addChange(sysmlid, elementJson, entry.getValue());
+                    inMemoryJMSChangelog.addChange(sysmlIdJsonNode.asText(), (ObjectNode) elementJsonNode, entry.getValue());
                 }
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
         }
-        else if ((o = jsonObject.get("synced")) instanceof JSONObject) {
-            JSONObject synced = (JSONObject) o;
-
-            if (!((o = jsonObject.get("source")) instanceof String) || !o.equals("magicdraw")) {
+        else if (!(syncedJsonNode = messageJsonNode.get("synced")).isNull() && syncedJsonNode.isObject()) {
+            JsonNode sourceJsonNode = messageJsonNode.get("source");
+            if (sourceJsonNode.isNull() || !sourceJsonNode.isTextual() || !sourceJsonNode.asText().equals("magicdraw")) {
                 return;
             }
 
-            String username = ViewEditUtils.getUsername();
-            if (username != null && username.equals(jsonObject.get("sender"))) {
+            JsonNode senderJsonNode = messageJsonNode.get("sender");
+            if (!senderJsonNode.isNull() && senderJsonNode.isTextual() && senderJsonNode.asText().equals(ViewEditUtils.getUsername())) {
                 return;
             }
 
-            Changelog<String, Void> syncedChangelog = SyncElements.buildChangelog(synced);
+            Changelog<String, Void> syncedChangelog = SyncElements.buildChangelog((ObjectNode) syncedJsonNode);
             if (syncedChangelog.isEmpty()) {
                 return;
             }
 
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
-                Map<String, JSONObject> inMemoryJMSChanges = inMemoryJMSChangelog.get(changeType);
-                for (String key : syncedChangelog.get(changeType).keySet()) {
-                    inMemoryJMSChanges.remove(key);
-                }
+                Map<String, ObjectNode> inMemoryJMSChanges = inMemoryJMSChangelog.get(changeType);
+                syncedChangelog.get(changeType).keySet().forEach(inMemoryJMSChanges::remove);
             }
             int size = syncedChangelog.flattenedSize();
             if (MDUtils.isDeveloperMode()) {
@@ -193,7 +137,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
     }
 
-    public Changelog<String, JSONObject> getInMemoryJMSChangelog() {
+    public Changelog<String, ObjectNode> getInMemoryJMSChangelog() {
         return inMemoryJMSChangelog;
     }
 

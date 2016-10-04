@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.delta;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
@@ -32,42 +33,31 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     private static final Map<SyncElement.Type, Function<Project, Changelog<String, ?>>> CHANGELOG_FUNCTIONS = new HashMap<>(2);
 
     static {
-        CHANGELOG_FUNCTIONS.put(SyncElement.Type.LOCAL, new Function<Project, Changelog<String, ?>>() {
-            @Override
-            public Changelog<String, ?> apply(Project project) {
-                Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
-                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
-                    combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
-                }
-                if (LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog() == null) {
-                    return combinedPersistedChangelog;
-                }
-                return combinedPersistedChangelog.and(LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog(), new BiFunction<String, Element, Void>() {
-                    @Override
-                    public Void apply(String key, Element element) {
-                        return null;
-                    }
-                });
+        CHANGELOG_FUNCTIONS.put(SyncElement.Type.LOCAL, project -> {
+            Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
+            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
+                combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
             }
+            if (LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog() == null) {
+                return combinedPersistedChangelog;
+            }
+            return combinedPersistedChangelog.and(LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog(), new BiFunction<String, Element, Void>() {
+                @Override
+                public Void apply(String key, Element element) {
+                    return null;
+                }
+            });
         });
-        CHANGELOG_FUNCTIONS.put(SyncElement.Type.MMS, new Function<Project, Changelog<String, ?>>() {
-            @Override
-            public Changelog<String, ?> apply(Project project) {
-                Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
-                for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.MMS)) {
-                    combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
-                }
-                JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
-                if (jmsMessageListener == null) {
-                    return combinedPersistedChangelog;
-                }
-                return combinedPersistedChangelog.and(jmsMessageListener.getInMemoryJMSChangelog(), new BiFunction<String, JSONObject, Void>() {
-                    @Override
-                    public Void apply(String key, JSONObject jsonObject) {
-                        return null;
-                    }
-                });
+        CHANGELOG_FUNCTIONS.put(SyncElement.Type.MMS, project -> {
+            Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
+            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.MMS)) {
+                combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
             }
+            JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
+            if (jmsMessageListener == null) {
+                return combinedPersistedChangelog;
+            }
+            return combinedPersistedChangelog.and(jmsMessageListener.getInMemoryJMSChangelog(), (key, objectNode) -> null);
         });
     }
 

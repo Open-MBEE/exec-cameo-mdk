@@ -41,6 +41,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -48,6 +49,7 @@ import gov.nasa.jpl.mbee.mdk.api.stream.MDKCollectors;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.ClassUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
@@ -144,7 +146,14 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     private enum PreProcessor {
         TYPE(
                 (element, project, objectNode) -> {
-                    objectNode.put(MDKConstants.TYPE_KEY, element.eClass().getName());
+                    String type = element.eClass().getName();
+                    if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getDocumentStereotype())) {
+                        type = "Document";
+                    }
+                    else if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getViewStereotype())) {
+                        type = "View";
+                    }
+                    objectNode.put(MDKConstants.TYPE_KEY, type);
                     return objectNode;
                 }
         ),
@@ -193,6 +202,20 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         ATTACHED_PROJECT(
                 (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) ? null : objectNode
+        ),
+        VIEW(
+                (element, project, objectNode) -> {
+                    Stereotype viewStereotype = Utils.getViewStereotype();
+                    if (viewStereotype == null || !StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
+                        return objectNode;
+                    }
+                    Constraint viewConstraint = Utils.getViewConstraint(element);
+                    if (viewConstraint == null) {
+                        return objectNode;
+                    }
+                    objectNode.set("_contents", DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null));
+                    return objectNode;
+                }
         );
 
         private TriFunction<Element, Project, ObjectNode, ObjectNode> function;
@@ -331,14 +354,14 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         DIRECTED_RELATIONSHIP__SOURCE(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    objectNode.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    objectNode.put("_" + eStructuralFeature.getName() + MDKConstants.ID_SUFFIX_PLURAL, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
                     return objectNode;
                 }
         ),
         DIRECTED_RELATIONSHIP__TARGET(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    objectNode.put("_" + eStructuralFeature.getName() + "Ids", DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    objectNode.put("_" + eStructuralFeature.getName() + MDKConstants.ID_SUFFIX_PLURAL, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
                     return objectNode;
                 }
         ),
@@ -375,7 +398,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     if (object instanceof Expression) {
                         expression = (Expression) object;
                     }
-                    objectNode.put(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION.getName() + "Id", expression != null ? expression.getID() : null);
+                    objectNode.put(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION.getName() + MDKConstants.ID_SUFFIX, expression != null ? expression.getID() : null);
                     return objectNode;
                 }
         );

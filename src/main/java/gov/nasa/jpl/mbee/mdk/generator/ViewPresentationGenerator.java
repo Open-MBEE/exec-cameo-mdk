@@ -62,7 +62,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
     private boolean recurse;
     private Element start;
-    private boolean isFromTeamwork = false;
     private boolean failure = false;
 
     private Project project = Application.getInstance().getProject();
@@ -78,9 +77,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         this.processedElements = processedElements != null ? processedElements : new HashSet<>();
         this.recurse = recurse;
         this.showValidation = showValidation;
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-            isFromTeamwork = true;
-        }
         this.instanceUtils = viu;
         if (this.instanceUtils == null) {
             this.instanceUtils = new PresentationElementUtils();
@@ -216,16 +212,16 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                     ObjectNode elementObjectNode = (ObjectNode) elementJsonNode;
                     // Resolve current instances in the view constraint expression
-                    JsonNode viewOperandJsonArray = JacksonUtils.getAtPath(elementObjectNode, "/contents/operand"),
+                    JsonNode viewOperandJsonNode = JacksonUtils.getAtPath(elementObjectNode, "/_contents/operand"),
                             sysmlIdJson = elementObjectNode.get(MDKConstants.SYSML_ID_KEY);
                     String sysmlId;
-                    if (viewOperandJsonArray != null && viewOperandJsonArray.isArray()
-                            && sysmlIdJson != null && sysmlIdJson.isTextual() && (sysmlId = sysmlIdJson.asText()).isEmpty()) {
-                        List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonArray.size());
-                        for (JsonNode viewOperandJson : viewOperandJsonArray) {
-                            JsonNode instanceIdJson = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
+                    if (!viewOperandJsonNode.isNull() && viewOperandJsonNode.isArray()
+                            && !sysmlIdJson.isNull() && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
+                        List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
+                        for (JsonNode viewOperandJson : viewOperandJsonNode) {
+                            JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                             String instanceId;
-                            if (instanceIdJson != null && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
+                            if (!instanceIdJsonNode.isNull() && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
                                 /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                     continue;
                                 }*/
@@ -281,11 +277,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (instanceAndSlotResponse != null && (instanceAndSlotElementsJsonArray = instanceAndSlotResponse.get("elements")) != null && instanceAndSlotElementsJsonArray.isArray()) {
                         for (JsonNode elementJson : instanceAndSlotElementsJsonArray) {
                             JsonNode instanceOperandJsonArray = JacksonUtils.getAtPath(elementJson, "/specification/operand");
-                            if (instanceOperandJsonArray != null && instanceOperandJsonArray.isArray()) {
+                            if (!instanceOperandJsonArray.isNull() && instanceOperandJsonArray.isArray()) {
                                 for (JsonNode instanceOperandJson : instanceOperandJsonArray) {
                                     JsonNode instanceIdJson = instanceOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                                     String instanceId;
-                                    if (instanceIdJson != null && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
+                                    if (!instanceIdJson.isNull() && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
                                         /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                             continue;
                                         }*/
@@ -364,8 +360,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Build view constraints client-side as actual Constraint, Expression, InstanceValue(s), etc.
                 // Note: Doing this one first since what it does is smaller in scope than ImportUtility. Potential order-dependent edge cases require further evaluation.
-                // TODO I don't think I need this anymore? @donbot
-                /*for (ViewMapping viewMapping : viewMap.values()) {
+                for (ViewMapping viewMapping : viewMap.values()) {
                     Element view = viewMapping.getElement();
                     if (handleCancel(progressStatus)) {
                         return;
@@ -375,14 +370,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (viewMap.containsKey(view.getID()) && (instanceSpecificationIDs = viewMap.get(view.getID()).getInstanceIDs()) != null) {
                         final List<InstanceSpecification> instanceSpecifications = new ArrayList<>(instanceSpecificationIDs.size());
                         for (String instanceSpecificationID : instanceSpecificationIDs) {
-                            Pair<JsonNode, InstanceSpecification> pair = instanceSpecificationMap.get(instanceSpecificationID);
+                            Pair<ObjectNode, InstanceSpecification> pair = instanceSpecificationMap.get(instanceSpecificationID);
                             if (pair != null && pair.getSecond() != null) {
                                 instanceSpecifications.add(pair.getSecond());
                             }
                         }
                         instanceUtils.updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
                     }
-                }*/
+                }
 
                 // Update relations for all InstanceSpecifications and Slots
                 // Instances need to be done in reverse order to load the lowest level instances first (sections)

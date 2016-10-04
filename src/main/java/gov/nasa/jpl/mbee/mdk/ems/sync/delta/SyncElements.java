@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.delta;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
@@ -12,12 +14,12 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -188,28 +190,29 @@ public class SyncElements {
 
     public static Changelog<String, Void> buildChangelog(SyncElement syncElement) {
         String comment = ModelHelper.getComment(syncElement.getElement());
-        JSONParser jsonParser = new JSONParser();
         try {
-            Object o = jsonParser.parse(comment);
-            if (o instanceof JSONObject) {
-                return buildChangelog((JSONObject) o);
+            JsonNode jsonNode = JacksonUtils.getObjectMapper().readTree(comment);
+            if (!jsonNode.isNull() && jsonNode.isObject()) {
+                return buildChangelog((ObjectNode) jsonNode);
             }
-        } catch (ParseException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return new Changelog<>();
     }
 
-    public static Changelog<String, Void> buildChangelog(JSONObject jsonObject) {
+    public static Changelog<String, Void> buildChangelog(ObjectNode objectNode) {
         Changelog<String, Void> changelog = new Changelog<>();
         for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
-            Object o = jsonObject.get(entry.getKey());
-            if (o instanceof JSONArray) {
-                for (Object o1 : (JSONArray) o) {
-                    if (o1 instanceof String) {
-                        changelog.addChange((String) o1, null, entry.getValue());
-                    }
+            JsonNode jsonNode = objectNode.get(entry.getKey());
+            if (jsonNode.isNull() || !jsonNode.isObject()) {
+                continue;
+            }
+            for (JsonNode jsonNode1 : jsonNode) {
+                if (jsonNode1.isNull() || !jsonNode1.isTextual()) {
+                    continue;
                 }
+                changelog.addChange(jsonNode1.asText(), null, entry.getValue());
             }
         }
         return changelog;

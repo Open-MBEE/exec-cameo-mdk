@@ -12,6 +12,7 @@ import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
@@ -48,23 +49,7 @@ public class EMFImporter implements JsonToElementFunction {
             return null;
         }
         Element element = ELEMENT_LOOKUP_FUNCTION.apply(jsonNode.asText(), project);
-        Changelog.ChangeType changeType = Changelog.ChangeType.UPDATED;
-        if (element == null) {
-            jsonNode = objectNode.get(MDKConstants.TYPE_KEY);
-            if (jsonNode.isNull() || !jsonNode.isTextual()) {
-                return null;
-            }
-            EClassifier eClassifier = UMLPackage.eINSTANCE.getEClassifier(jsonNode.asText());
-            if (!(eClassifier instanceof EClass)) {
-                return null;
-            }
-            EObject eObject = UMLFactory.eINSTANCE.create((EClass) eClassifier);
-            if (!(eObject instanceof Element)) {
-                return null;
-            }
-            element = (Element) eObject;
-            changeType = Changelog.ChangeType.CREATED;
-        }
+        Changelog.ChangeType changeType = element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED;
 
         for (PreProcessor preProcessor : PreProcessor.values()) {
             element = preProcessor.getFunction().apply(objectNode, project, strict, element);
@@ -85,12 +70,49 @@ public class EMFImporter implements JsonToElementFunction {
         return new Changelog.Change<>(element, changeType);
     }
 
-    private enum PreProcessor {
+    public enum PreProcessor {
+        CREATE(
+                (objectNode, project, strict, element) -> {
+                    if (element != null) {
+                        return element;
+                    }
+                    JsonNode jsonNode = objectNode.get(MDKConstants.TYPE_KEY);
+                    if (jsonNode.isNull() || !jsonNode.isTextual()) {
+                        return null;
+                    }
+                    String type = jsonNode.asText();
+                    if (type.equals("View") || type.equals("Document")) {
+                        type = "Class";
+                    }
+                    EClassifier eClassifier = UMLPackage.eINSTANCE.getEClassifier(type);
+                    if (!(eClassifier instanceof EClass)) {
+                        return null;
+                    }
+                    EObject eObject = UMLFactory.eINSTANCE.create((EClass) eClassifier);
+                    if (!(eObject instanceof Element)) {
+                        return null;
+                    }
+                    return (Element) eObject;
+                }
+        ),
         DOCUMENTATION(
                 (objectNode, project, strict, element) -> {
                     JsonNode jsonNode = objectNode.get("documentation");
-                    if (jsonNode.isTextual()) {
+                    if (!jsonNode.isNull() && jsonNode.isTextual()) {
                         ModelHelper.setComment(element, jsonNode.asText());
+                    }
+                    return element;
+                }
+        ),
+        SYSML_ID_VALIDATION(
+                (objectNode, project, strict, element) -> {
+                    JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                    if (jsonNode.isNull() || !jsonNode.isTextual()) {
+                        return null;
+                    }
+                    String id = jsonNode.asText();
+                    if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX) || id.startsWith(project.getPrimaryProject().getProjectID())) {
+                        return null;
                     }
                     return element;
                 }
@@ -346,7 +368,7 @@ public class EMFImporter implements JsonToElementFunction {
     }
 
     @FunctionalInterface
-    interface PreProcessorFunction {
+    public interface PreProcessorFunction {
         Element apply(ObjectNode objectNode, Project project, boolean strict, Element element);
     }
 
