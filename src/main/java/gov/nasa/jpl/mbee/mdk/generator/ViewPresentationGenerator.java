@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,6 +22,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -215,13 +217,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     JsonNode viewOperandJsonNode = JacksonUtils.getAtPath(elementObjectNode, "/_contents/operand"),
                             sysmlIdJson = elementObjectNode.get(MDKConstants.SYSML_ID_KEY);
                     String sysmlId;
-                    if (!viewOperandJsonNode.isNull() && viewOperandJsonNode.isArray()
-                            && !sysmlIdJson.isNull() && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
+                    if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()
+                            && sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
                         List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
                         for (JsonNode viewOperandJson : viewOperandJsonNode) {
                             JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                             String instanceId;
-                            if (!instanceIdJsonNode.isNull() && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
+                            if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
                                 /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                     continue;
                                 }*/
@@ -277,11 +279,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (instanceAndSlotResponse != null && (instanceAndSlotElementsJsonArray = instanceAndSlotResponse.get("elements")) != null && instanceAndSlotElementsJsonArray.isArray()) {
                         for (JsonNode elementJson : instanceAndSlotElementsJsonArray) {
                             JsonNode instanceOperandJsonArray = JacksonUtils.getAtPath(elementJson, "/specification/operand");
-                            if (!instanceOperandJsonArray.isNull() && instanceOperandJsonArray.isArray()) {
+                            if (instanceOperandJsonArray != null && instanceOperandJsonArray.isArray()) {
                                 for (JsonNode instanceOperandJson : instanceOperandJsonArray) {
                                     JsonNode instanceIdJson = instanceOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                                     String instanceId;
-                                    if (!instanceIdJson.isNull() && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
+                                    if (instanceIdJson != null && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
                                         /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
                                             continue;
                                         }*/
@@ -307,6 +309,17 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setDescription("Importing existing view instances");
                 progressStatus.setCurrent(3);
 
+                EMFImporter emfImporter = new EMFImporter() {
+                    @Override
+                    public List<PreProcessor> getPreProcessors() {
+                        if (preProcessors == null) {
+                            preProcessors = new ArrayList<>(super.getPreProcessors());
+                            preProcessors.remove(PreProcessor.SYSML_ID_VALIDATION);
+                        }
+                        return preProcessors;
+                    }
+                };
+
                 // importing instances in reverse order so that deepest level instances (sections and such) are loaded first
                 ListIterator<ObjectNode> instanceJSONsIterator = new ArrayList<>(instanceObjectNodes).listIterator(instanceObjectNodes.size());
                 while (instanceJSONsIterator.hasPrevious()) {
@@ -318,11 +331,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
                         //Element element = ImportUtility.createElement(elementJsonNode, false, true);
-                        Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply(elementJsonNode, project, false);
+                        Changelog.Change<Element> change = emfImporter.apply(elementJsonNode, project, true);
                         Element element = change != null ? change.getChanged() : null;
 
                         if (element instanceof InstanceSpecification) {
-                            instanceSpecificationMap.put(element.getID(), new Pair<>(elementJsonNode, (InstanceSpecification) element));
+                            instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(elementJsonNode, (InstanceSpecification) element));
                         }
                     } catch (ImportException e) {
                         /*failure = true;
@@ -343,11 +356,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
                         //Element element = ImportUtility.createElement(slotJsonNode, false, false);
-                        Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply(slotJsonNode, project, false);
+                        Changelog.Change<Element> change = emfImporter.apply(slotJsonNode, project, false);
                         Element element = change != null ? change.getChanged() : null;
 
                         if (element instanceof Slot) {
-                            slotMap.put(element.getID(), new Pair<>(slotJsonNode, (Slot) element));
+                            slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotJsonNode, (Slot) element));
                         }
                     } catch (ImportException e) {
                         /*failure = true;
@@ -390,7 +403,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     Pair<ObjectNode, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
                     try {
                         //ImportUtility.createElement(pair.getFirst(), true, true);
-                        Converters.getJsonToElementConverter().apply(pair.getFirst(), project, true);
+                        emfImporter.apply(pair.getFirst(), project, true);
                     } catch (Exception e) {
                         /*failure = true;
                         Utils.printException(e);
@@ -406,7 +419,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     try {
                         //ImportUtility.createElement(pair.getFirst(), true, false);
-                        Converters.getJsonToElementConverter().apply(pair.getFirst(), project, true);
+                        emfImporter.apply(pair.getFirst(), project, true);
                     } catch (Exception e) {
                         /*failure = true;
                         Utils.printException(e);

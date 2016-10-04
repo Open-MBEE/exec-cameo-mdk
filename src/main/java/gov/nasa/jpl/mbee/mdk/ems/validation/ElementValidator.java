@@ -78,7 +78,7 @@ public class ElementValidator implements RunnableWithProgress {
             serverElements = new ArrayList<>(0);
         }
         Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getFirst()), Function.identity()));
-        Map<String, ObjectNode> serverElementMap = serverElements.stream().collect(Collectors.toMap(json -> json.get(MDKConstants.SYSML_ID_KEY).asText(), Function.identity()));
+        Map<String, ObjectNode> serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.SYSML_ID_KEY) && json.get(MDKConstants.SYSML_ID_KEY).isTextual()).collect(Collectors.toMap(json -> json.get(MDKConstants.SYSML_ID_KEY).asText(), Function.identity()));
 
         LinkedHashSet<String> elementKeySet = new LinkedHashSet<>();
         elementKeySet.addAll(clientElementMap.keySet());
@@ -100,12 +100,15 @@ public class ElementValidator implements RunnableWithProgress {
                     continue;
                 }
                 else if (clientElementJson == null) {
-                    String name = serverElement.get(MDKConstants.NAME_KEY).asText("<>");
-                    if (name == null || name.isEmpty()) {
-                        name = "<>";
-                    }
-                    validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + serverElement.get(MDKConstants.TYPE_KEY).asText("Element") + " "
-                            + name + " - " + serverElement.get(MDKConstants.SYSML_ID_KEY).asText("<>"));
+                    JsonNode nameJsonNode = serverElement.get(MDKConstants.NAME_KEY);
+                    String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
+                    JsonNode typeJsonNode = serverElement.get(MDKConstants.TYPE_KEY);
+                    String type = typeJsonNode != null ? typeJsonNode.asText("Element") : "Element";
+                    JsonNode sysmlIdNode = serverElement.get(MDKConstants.SYSML_ID_KEY);
+                    String sysmlId = sysmlIdNode != null ? sysmlIdNode.asText("<>") : "<>";
+
+                    validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + type + " "
+                            + name + " - " + sysmlId);
                 }
                 else if (serverElement == null) {
                     String name = "<>";

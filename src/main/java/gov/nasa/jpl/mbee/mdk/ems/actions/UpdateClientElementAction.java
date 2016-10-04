@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -15,6 +16,8 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.*;
 import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -114,6 +117,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
     }
 
     public void process(Collection<ObjectNode> elementsToUpdate, Collection<String> elementsToDelete) {
+        validationSuite.getValidationRules().forEach(validationRule -> validationRule.getViolations().clear());
+
         if ((elementsToUpdate == null || elementsToUpdate.isEmpty()) && (elementsToDelete == null || elementsToDelete.isEmpty())) {
             Application.getInstance().getGUILog().log("[INFO] No MMS changes to update locally.");
             return;
@@ -139,7 +144,11 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         + (element == null && importException != null ? " -" : "") + (importException != null ? " " + importException.getMessage() : "")));
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
-                equivalentElementValidationRule.addViolation(new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT]"));
+                try {
+                    equivalentElementValidationRule.addViolation(new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT] " + JacksonUtils.getObjectMapper().writeValueAsString(JsonPatchUtils.getDiffAsJson(Converters.getElementToJsonConverter().apply(entry.getKey(), project), entry.getValue()))));
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
                 // TODO Add detail diff here @donbot
             }
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {

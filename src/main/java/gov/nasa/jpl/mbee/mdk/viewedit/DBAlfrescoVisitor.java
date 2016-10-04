@@ -30,7 +30,6 @@ import java.util.zip.Checksum;
 
 public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
-    protected JSONObject elements = new JSONObject();
     private JSONObject views = new JSONObject();
     private Stack<JSONArray> curContains = new Stack<JSONArray>();  //MDEV #674 -- change to a Stack of JSONArrays
     private Stack<JSONArray> sibviews = new Stack<JSONArray>(); //sibling views (array of view ids)
@@ -81,10 +80,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         sourceMapping.put(From.DVALUE, "value");
         sourceMapping.put(From.NAME, "name");
         this.main = main;
-    }
-
-    public int getNumberOfElements() {
-        return elements.size();
     }
 
     /**
@@ -161,7 +156,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
         //    addToElements(e);
         //}
-        addToElements(image.getImage());
         // export image - also keep track of exported images
         DiagramPresentationElement diagram = Application.getInstance().getProject()
                 .getDiagram(image.getImage());
@@ -239,7 +233,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBList list) {
-        DBAlfrescoListVisitor l = new DBAlfrescoListVisitor(recurse, elements);
+        DBAlfrescoListVisitor l = new DBAlfrescoListVisitor(recurse);
         list.accept(l);
         curContains.peek().add(l.getObject());
         viewElements.peek().addAll(l.getListElements());
@@ -285,7 +279,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     protected JSONObject getJSONForDBParagraph(DBParagraph para) {
         JSONObject entry = new JSONObject();
         if (para.getFrom() != null && para.getFromProperty() != null) {
-            this.addToElements(para.getFrom());
             entry.put("sourceType", "reference");
             entry.put("source", ExportUtility.getElementID(para.getFrom()));
             entry.put("sourceProperty", sourceMapping.get(para.getFromProperty()));
@@ -324,7 +317,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     protected JSONObject getJSONForDBText(DBText text) {
         JSONObject entry = new JSONObject();
         if (text.getFrom() != null && text.getFromProperty() != null) {
-            this.addToElements(text.getFrom());
             entry.put("sourceType", "reference");
             entry.put("source", ExportUtility.getElementID(text.getFrom()));
             entry.put("sourceProperty", sourceMapping.get(text.getFromProperty()));
@@ -384,7 +376,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
-        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse, elements);
+        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse);
         table.accept(v);
         curContains.peek().add(v.getObject());
         viewElements.peek().addAll(v.getTableElements());
@@ -430,7 +422,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONArray contains = new JSONArray();
         view.put("contains", contains);
         this.curContains.push(contains);
-        addToElements(e);
         //MDEV-443 add view exposed elements to view elements
         /*for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                 DocGen3Profile.queriesStereotype, 1, false, 1))
@@ -554,39 +545,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentTableInstances.pop();
         currentInstanceList.pop();
         currentUnusedInstances.pop();
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void addToElements(Element e) {
-        if (!ExportUtility.shouldAdd(e)) {
-            return;
-        }
-        if (!viewElements.empty()) {
-            viewElements.peek().add(ExportUtility.getElementID(e));
-        }
-        if (elements.containsKey(e.getID())) {
-            return;
-        }
-        elementSet.add(e);
-        JSONObject elementInfo = new JSONObject();
-        ExportUtility.fillElement(e, elementInfo);
-        elements.put(e.getID(), elementInfo);
-        /*if (e instanceof DirectedRelationship) {
-            JSONObject sourceInfo = new JSONObject();
-            JSONObject targetInfo = new JSONObject();
-            Element source = ModelHelper.getClientElement(e);
-            Element target = ModelHelper.getSupplierElement(e);
-            ExportUtility.fillElement(source, sourceInfo);
-            ExportUtility.fillElement(target, targetInfo);
-            elements.put(source.getID(), sourceInfo);
-            elements.put(target.getID(), targetInfo);
-        }*/
-        //if (e instanceof Property || e instanceof Slot)
-        //   elements.putAll(ExportUtility.getReferencedElements(e));
-    }
-
-    public JSONObject getElements() {
-        return elements;
     }
 
     @Deprecated

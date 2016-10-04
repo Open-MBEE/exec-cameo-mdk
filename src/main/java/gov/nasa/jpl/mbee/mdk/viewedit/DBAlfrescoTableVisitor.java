@@ -20,9 +20,8 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
 
     // private GUILog gl = Application.getInstance().getGUILog();
 
-    public DBAlfrescoTableVisitor(boolean recurse, JSONObject elements) {
+    public DBAlfrescoTableVisitor(boolean recurse) {
         super(recurse);
-        this.elements = elements;
         tablejson = new JSONObject();
         tableelements = new HashSet<String>();
     }
@@ -35,7 +34,7 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
     @Override
     public void visit(DBTable table) {
         if (tablejson.containsKey("body")) {
-            DBAlfrescoTableVisitor inner = new DBAlfrescoTableVisitor(recurse, this.elements);
+            DBAlfrescoTableVisitor inner = new DBAlfrescoTableVisitor(recurse);
             table.accept(inner);
             curCell.add(inner.getObject());
             tableelements.addAll(inner.getTableElements());
@@ -151,7 +150,7 @@ public class DBAlfrescoTableVisitor extends DBAlfrescoVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBList list) {
-        DBAlfrescoListVisitor listv = new DBAlfrescoListVisitor(this.recurse, this.elements);
+        DBAlfrescoListVisitor listv = new DBAlfrescoListVisitor(this.recurse);
         list.accept(listv);
         tableelements.addAll(listv.getListElements());
         elementSet.addAll(listv.getElementSet());

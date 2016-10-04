@@ -51,7 +51,7 @@ public class EMFBulkImporter implements BiFunction<Collection<ObjectNode>, Proje
             while (iterator.hasNext()) {
                 ObjectNode objectNode = iterator.next();
                 Changelog.Change<Element> change = null;
-                ImportException importException = null;
+                ImportException importException = new ImportException(null, objectNode, "Null on first pass");
                 try {
                     change = Converters.getJsonToElementConverter().apply(objectNode, project, false);
                 } catch (ImportException e) {
@@ -65,16 +65,16 @@ public class EMFBulkImporter implements BiFunction<Collection<ObjectNode>, Proje
                     iterator.remove();
                     continue bulkImport;
                 }
-                changelog.addChange(Converters.getElementToIdConverter().apply(change.getChanged()), new Pair<>(change.getChanged(), objectNode), change.getType());
+                //changelog.addChange(Converters.getElementToIdConverter().apply(change.getChanged()), new Pair<>(change.getChanged(), objectNode), change.getType());
             }
 
             iterator = objectNodes.iterator();
             while (iterator.hasNext()) {
-                ObjectNode objetNode = iterator.next();
+                ObjectNode objectNode = iterator.next();
                 Changelog.Change<Element> change = null;
-                ImportException importException = null;
+                ImportException importException = new ImportException(null, objectNode, "Null on second pass");
                 try {
-                    change = Converters.getJsonToElementConverter().apply(objetNode, project, true);
+                    change = Converters.getJsonToElementConverter().apply(objectNode, project, true);
                 } catch (ImportException e) {
                     if (MDUtils.isDeveloperMode()) {
                         e.printStackTrace();
@@ -82,11 +82,11 @@ public class EMFBulkImporter implements BiFunction<Collection<ObjectNode>, Proje
                     importException = e;
                 }
                 if (change == null || change.getChanged() == null) {
-                    failedJsonObjects.put(new Pair<>(Converters.getIdToElementConverter().apply(objetNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objetNode), importException);
+                    failedJsonObjects.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), importException);
                     iterator.remove();
                     continue bulkImport;
                 }
-                changelog.addChange(Converters.getElementToIdConverter().apply(change.getChanged()), new Pair<>(change.getChanged(), objetNode), change.getType());
+                changelog.addChange(Converters.getElementToIdConverter().apply(change.getChanged()), new Pair<>(change.getChanged(), objectNode), change.getType());
             }
 
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {

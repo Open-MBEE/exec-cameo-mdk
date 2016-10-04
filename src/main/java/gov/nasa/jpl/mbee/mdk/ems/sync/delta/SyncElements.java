@@ -192,7 +192,7 @@ public class SyncElements {
         String comment = ModelHelper.getComment(syncElement.getElement());
         try {
             JsonNode jsonNode = JacksonUtils.getObjectMapper().readTree(comment);
-            if (!jsonNode.isNull() && jsonNode.isObject()) {
+            if (jsonNode != null && jsonNode.isObject()) {
                 return buildChangelog((ObjectNode) jsonNode);
             }
         } catch (IOException e) {
@@ -205,11 +205,11 @@ public class SyncElements {
         Changelog<String, Void> changelog = new Changelog<>();
         for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
             JsonNode jsonNode = objectNode.get(entry.getKey());
-            if (jsonNode.isNull() || !jsonNode.isObject()) {
+            if (jsonNode == null || !jsonNode.isObject()) {
                 continue;
             }
             for (JsonNode jsonNode1 : jsonNode) {
-                if (jsonNode1.isNull() || !jsonNode1.isTextual()) {
+                if (jsonNode1 == null || !jsonNode1.isTextual()) {
                     continue;
                 }
                 changelog.addChange(jsonNode1.asText(), null, entry.getValue());

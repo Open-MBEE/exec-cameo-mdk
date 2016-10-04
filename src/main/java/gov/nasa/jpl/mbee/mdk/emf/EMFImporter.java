@@ -6,8 +6,11 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.ParameterableElement;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.TemplateParameter;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.TemplateableElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
@@ -28,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -35,23 +39,25 @@ import java.util.function.Function;
  * Created by igomes on 9/19/16.
  */
 public class EMFImporter implements JsonToElementFunction {
+    protected List<PreProcessor> preProcessors;
+
     @Override
     public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
         return convert(objectNode, project, strict);
     }
 
-    private synchronized static Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
+    private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
         UMLFactory.eINSTANCE.setRepository(project.getRepository());
         project.getCounter().setCanResetIDForObject(true);
 
         JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-        if (jsonNode.isNull() || !jsonNode.isTextual()) {
+        if (jsonNode == null || !jsonNode.isTextual()) {
             return null;
         }
         Element element = ELEMENT_LOOKUP_FUNCTION.apply(jsonNode.asText(), project);
         Changelog.ChangeType changeType = element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED;
 
-        for (PreProcessor preProcessor : PreProcessor.values()) {
+        for (PreProcessor preProcessor : getPreProcessors()) {
             element = preProcessor.getFunction().apply(objectNode, project, strict, element);
             if (element == null) {
                 return null;
@@ -70,6 +76,13 @@ public class EMFImporter implements JsonToElementFunction {
         return new Changelog.Change<>(element, changeType);
     }
 
+    protected List<PreProcessor> getPreProcessors() {
+        if (preProcessors == null) {
+            preProcessors = Arrays.asList(PreProcessor.values());
+        }
+        return preProcessors;
+    }
+
     public enum PreProcessor {
         CREATE(
                 (objectNode, project, strict, element) -> {
@@ -77,7 +90,7 @@ public class EMFImporter implements JsonToElementFunction {
                         return element;
                     }
                     JsonNode jsonNode = objectNode.get(MDKConstants.TYPE_KEY);
-                    if (jsonNode.isNull() || !jsonNode.isTextual()) {
+                    if (jsonNode == null || !jsonNode.isTextual()) {
                         return null;
                     }
                     String type = jsonNode.asText();
@@ -98,7 +111,7 @@ public class EMFImporter implements JsonToElementFunction {
         DOCUMENTATION(
                 (objectNode, project, strict, element) -> {
                     JsonNode jsonNode = objectNode.get("documentation");
-                    if (!jsonNode.isNull() && jsonNode.isTextual()) {
+                    if (jsonNode != null && jsonNode.isTextual()) {
                         ModelHelper.setComment(element, jsonNode.asText());
                     }
                     return element;
@@ -107,7 +120,7 @@ public class EMFImporter implements JsonToElementFunction {
         SYSML_ID_VALIDATION(
                 (objectNode, project, strict, element) -> {
                     JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-                    if (jsonNode.isNull() || !jsonNode.isTextual()) {
+                    if (jsonNode == null || !jsonNode.isTextual()) {
                         return null;
                     }
                     String id = jsonNode.asText();
@@ -146,7 +159,7 @@ public class EMFImporter implements JsonToElementFunction {
         return baseElement instanceof Element ? (Element) baseElement : null;
     };
 
-    private static final DeserializationFunction DEFAULT_DESERIALIZATION_FUNCTION = (key, jsonNode, ignoreMultiplicity, objectNode, eStructuralFeature, project, strict, element) -> {
+    private final DeserializationFunction DEFAULT_DESERIALIZATION_FUNCTION = (key, jsonNode, ignoreMultiplicity, objectNode, eStructuralFeature, project, strict, element) -> {
         if (jsonNode == null || jsonNode instanceof NullNode) {
             return null;
         }
@@ -159,8 +172,8 @@ public class EMFImporter implements JsonToElementFunction {
             }
             Collection<Object> collection = eStructuralFeature.isUnique() ? new UniqueEList<>() : new BasicEList<>();
             for (JsonNode nestedJsonNode : jsonNode) {
-                Object deserialized = EMFImporter.DEFAULT_DESERIALIZATION_FUNCTION.apply(key, nestedJsonNode, true, objectNode, eStructuralFeature, project, strict, element);
-                if (deserialized == null && nestedJsonNode != null) {
+                Object deserialized = this.DEFAULT_DESERIALIZATION_FUNCTION.apply(key, nestedJsonNode, true, objectNode, eStructuralFeature, project, strict, element);
+                if (deserialized == null && !nestedJsonNode.isNull()) {
                     if (strict) {
                         throw new ImportException(element, objectNode, "Failed to deserialize " + eStructuralFeature + " for " + element + ": " + jsonNode + " - " + jsonNode.getClass());
                     }
@@ -179,10 +192,10 @@ public class EMFImporter implements JsonToElementFunction {
         else if (eStructuralFeature instanceof EReference) {
             EReference eReference = (EReference) eStructuralFeature;
             if (ValueSpecification.class.isAssignableFrom(eReference.getEReferenceType().getInstanceClass()) && jsonNode instanceof ObjectNode) {
-                Changelog.Change<Element> change = convert((ObjectNode) jsonNode, project, strict);
+                Changelog.Change<Element> change = this.convert((ObjectNode) jsonNode, project, strict);
                 return change != null ? change.getChanged() : null;
             }
-            if (jsonNode.isNull() || !jsonNode.isTextual()) {
+            if (jsonNode == null || !jsonNode.isTextual()) {
                 if (strict) {
                     throw new ReferenceException(element, objectNode, "Expected a String for key \"" + key + "\" in JSON, but instead got a " + jsonNode.getClass().getSimpleName() + ".");
                 }
@@ -192,7 +205,7 @@ public class EMFImporter implements JsonToElementFunction {
             Element referencedElement = ELEMENT_LOOKUP_FUNCTION.apply(id, project);
             if (referencedElement == null) {
                 if (strict) {
-                    throw new ReferenceException(element, objectNode, "Could not find referenced element " + id + "in model for key \"" + key + "\" in JSON.");
+                    throw new ReferenceException(element, objectNode, "Could not find referenced element " + id + " in model for key \"" + key + "\" in JSON.");
                 }
                 return null;
             }
@@ -245,26 +258,26 @@ public class EMFImporter implements JsonToElementFunction {
         return null;
     };
 
-    private static final ImportFunction DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (objectNode, eStructuralFeature, project, strict, element) -> {
+    private final ImportFunction DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION = (objectNode, eStructuralFeature, project, strict, element) -> {
         if (!eStructuralFeature.isChangeable() || eStructuralFeature.isVolatile() || eStructuralFeature.isTransient() || eStructuralFeature.isUnsettable() || eStructuralFeature.isDerived() || eStructuralFeature.getName().startsWith("_")) {
             return EMFImporter.EMPTY_E_STRUCTURAL_FEATURE_FUNCTION.apply(objectNode, eStructuralFeature, project, strict, element);
         }
-        return EMFImporter.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(objectNode, eStructuralFeature, project, strict, element);
+        return this.UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(objectNode, eStructuralFeature, project, strict, element);
     };
 
-    private static final ImportFunction UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (objectNode, eStructuralFeature, project, strict, element) -> {
+    private final ImportFunction UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION = (objectNode, eStructuralFeature, project, strict, element) -> {
         String key = KEY_FUNCTION.apply(eStructuralFeature);
-        if (!objectNode.has(key)) {
+        JsonNode jsonNode = objectNode.get(key);
+        if (jsonNode == null) {
             /*if (strict) {
                 throw new ImportException(element, objectNode, "Required key \"" + key + "\" missing from JSON.");
             }*/
             return element;
         }
 
-        JsonNode jsonNode = objectNode.get(key);
         Object deserialized = DEFAULT_DESERIALIZATION_FUNCTION.apply(key, jsonNode, false, objectNode, eStructuralFeature, project, strict, element);
 
-        if (deserialized == null && jsonNode != null) {
+        if (deserialized == null && !jsonNode.isNull()) {
             if (strict) {
                 throw new ImportException(element, objectNode, "Failed to deserialize " + eStructuralFeature + " for " + element + ": " + jsonNode + " - " + jsonNode.getClass());
             }
@@ -311,7 +324,7 @@ public class EMFImporter implements JsonToElementFunction {
                 (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
                 (objectNode, eStructuralFeature, project, strict, element) -> {
                     JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-                    if (jsonNode.isNull() || !jsonNode.isTextual()) {
+                    if (jsonNode == null || !jsonNode.isTextual()) {
                         if (strict) {
                             throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
                         }
@@ -332,7 +345,7 @@ public class EMFImporter implements JsonToElementFunction {
                         return element;
                     }
                     JsonNode jsonNode = objectNode.get(MDKConstants.OWNER_ID_KEY);
-                    if (jsonNode.isNull() || !jsonNode.isTextual()) {
+                    if (jsonNode == null || !jsonNode.isTextual()) {
                         if (strict) {
                             throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
                         }
@@ -343,9 +356,29 @@ public class EMFImporter implements JsonToElementFunction {
                         if (strict) {
                             throw new ImportException(element, objectNode, "Owner for element " + objectNode.get(MDKConstants.SYSML_ID_KEY).asText("<>") + " not found: " + jsonNode + ".");
                         }
-                        return null;
+                        owningElement = project.getModel();
                     }
-                    element.setOwner(owningElement);
+                    try {
+                        if (element instanceof PackageableElement && owningElement instanceof Package) {
+                            ((PackageableElement) element).setOwningPackage((Package) owningElement);
+                        }
+                        else if (element instanceof ParameterableElement && owningElement instanceof TemplateParameter) {
+                            ((ParameterableElement) element).setOwningTemplateParameter((TemplateParameter) owningElement);
+                        }
+                        else if (element instanceof Slot && owningElement instanceof InstanceSpecification) {
+                            ((Slot) element).setOwningInstance((InstanceSpecification) owningElement);
+                        }
+                        else if (element instanceof InstanceSpecification) {
+                            ((InstanceSpecification) element).setStereotypedElement(owningElement);
+                        }
+                        else {
+                            element.setOwner(owningElement);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("ELEMENT: " + element);
+                        System.out.println("OWNER: " + owningElement);
+                        throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
+                    }
                     return element;
                 }
         );

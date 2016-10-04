@@ -83,22 +83,22 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         // Changed elements are encapsulated in the "workspace2" JSONObject.
         JsonNode workspaceJsonNode = messageJsonNode.get("workspace2");
         JsonNode syncedJsonNode;
-        if (!workspaceJsonNode.isNull() && workspaceJsonNode.isObject()) {
+        if (workspaceJsonNode != null && workspaceJsonNode.isObject()) {
             JsonNode sourceJsonNode = workspaceJsonNode.get("source");
-            if (!sourceJsonNode.isNull() && sourceJsonNode.isTextual() && sourceJsonNode.asText().equalsIgnoreCase("magicdraw")) {
+            if (sourceJsonNode != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().equalsIgnoreCase("magicdraw")) {
                 return;
             }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
                 JsonNode changeJsonNode = workspaceJsonNode.get(entry.getKey());
-                if (changeJsonNode.isNull() || !changeJsonNode.isArray()) {
+                if (changeJsonNode == null || !changeJsonNode.isArray()) {
                     continue;
                 }
                 for (JsonNode elementJsonNode : changeJsonNode) {
-                    if (elementJsonNode.isNull() || !elementJsonNode.isObject()) {
+                    if (elementJsonNode == null || !elementJsonNode.isObject()) {
                         continue;
                     }
                     JsonNode sysmlIdJsonNode = elementJsonNode.get(MDKConstants.SYSML_ID_KEY);
-                    if (sysmlIdJsonNode.isNull() || !sysmlIdJsonNode.isTextual()) {
+                    if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                         continue;
                     }
                     if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply((ObjectNode) elementJsonNode, project, false, project.getModel()) == null) {
@@ -109,14 +109,14 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
         }
-        else if (!(syncedJsonNode = messageJsonNode.get("synced")).isNull() && syncedJsonNode.isObject()) {
+        else if ((syncedJsonNode = messageJsonNode.get("synced")) != null && syncedJsonNode.isObject()) {
             JsonNode sourceJsonNode = messageJsonNode.get("source");
-            if (sourceJsonNode.isNull() || !sourceJsonNode.isTextual() || !sourceJsonNode.asText().equals("magicdraw")) {
+            if (sourceJsonNode == null || !sourceJsonNode.isTextual() || !sourceJsonNode.asText().equals("magicdraw")) {
                 return;
             }
 
             JsonNode senderJsonNode = messageJsonNode.get("sender");
-            if (!senderJsonNode.isNull() && senderJsonNode.isTextual() && senderJsonNode.asText().equals(ViewEditUtils.getUsername())) {
+            if (senderJsonNode != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(ViewEditUtils.getUsername())) {
                 return;
             }
 

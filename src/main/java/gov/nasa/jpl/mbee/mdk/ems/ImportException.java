@@ -27,4 +27,11 @@ public class ImportException extends Exception {
     public Element getElement() {
         return element;
     }
+
+    @Override
+    public void printStackTrace() {
+        super.printStackTrace();
+        System.err.println("Element: " + element);
+        System.err.println("ObjectNode: " + objectNode);
+    }
 }

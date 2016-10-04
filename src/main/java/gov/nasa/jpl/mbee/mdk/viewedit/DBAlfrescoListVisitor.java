@@ -14,9 +14,8 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     private Set<String> listelements;
     private JSONArray curitem;
 
-    public DBAlfrescoListVisitor(boolean recurse, JSONObject e) {
+    public DBAlfrescoListVisitor(boolean recurse) {
         super(recurse);
-        this.elements = e;
         listjson = new JSONObject();
         listelements = new HashSet<String>();
     }
@@ -29,7 +28,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     @Override
     public void visit(DBList list) {
         if (listjson.containsKey("type")) {
-            DBAlfrescoListVisitor inner = new DBAlfrescoListVisitor(recurse, this.elements);
+            DBAlfrescoListVisitor inner = new DBAlfrescoListVisitor(recurse);
             list.accept(inner);
             curitem.add(inner.getObject());
             listelements.addAll(inner.getListElements());
@@ -88,7 +87,7 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
-        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse, this.elements);
+        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse);
         table.accept(v);
         listelements.addAll(v.getTableElements());
         elementSet.addAll(v.getElementSet());
