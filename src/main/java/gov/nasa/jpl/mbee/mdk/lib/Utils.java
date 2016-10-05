@@ -84,7 +84,6 @@ import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
 
 import javax.swing.*;
 import java.awt.*;
@@ -3693,17 +3692,6 @@ public class Utils {
         ex.printStackTrace(pw);
         Application.getInstance().getGUILog().log(sw.toString()); // stack trace as a string
         ex.printStackTrace();
-    }
-
-    public static boolean isJSONArrayEqual(JSONArray a, JSONArray b) {
-        if (a != null && b != null) {
-            Set as = new HashSet();
-            Set bs = new HashSet();
-            as.addAll(a);
-            bs.addAll(b);
-            return as.equals(bs);
-        }
-        return a == b;
     }
 
     public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {

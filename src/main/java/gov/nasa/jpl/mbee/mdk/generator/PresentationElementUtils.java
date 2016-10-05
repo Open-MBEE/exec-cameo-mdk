@@ -19,6 +19,7 @@ import org.json.simple.parser.JSONParser;
 
 import java.util.*;
 
+//@donbot update json simple to jackson
 public class PresentationElementUtils {
     public static final String ID_SUFFIX = "_pei";
 

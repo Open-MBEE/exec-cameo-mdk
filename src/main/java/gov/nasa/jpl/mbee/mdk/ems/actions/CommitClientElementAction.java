@@ -1,12 +1,16 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
@@ -14,8 +18,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
@@ -62,7 +65,12 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 }
             }
         }
-        CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);
+        try {
+            CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);
+        } catch (JsonProcessingException e) {
+            Application.getInstance().getGUILog().log("[ERROR]: Exception occurred committing element to server. Commit aborted.");
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -88,33 +96,36 @@ public class CommitClientElementAction extends RuleViolationAction implements An
         else {
             elementsToDelete.add(id);
         }
-        CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);
+        try {
+            CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);
+        } catch (JsonProcessingException e) {
+            Application.getInstance().getGUILog().log("[ERROR]: Exception occurred committing element to server. Commit aborted.");
+            e.printStackTrace();
+        }
     }
 
-    private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) {
+    private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) throws JsonProcessingException {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
-            JSONObject request = new JSONObject();
-            JSONArray elements = new JSONArray();
+            ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
+            ArrayNode elements = request.putArray("elements");
             elements.addAll(elementsToUpdate);
-            request.put("elements", elements);
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
-            OutputQueue.getInstance().offer((new Request(ExportUtility.getPostElementsUrl(), request.toJSONString(), "POST", true, elements.size(), "Sync Changes")));
+            OutputQueue.getInstance().offer((new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(request), "POST", true, elements.size(), "Sync Changes")));
         }
         if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to delete " + elementsToDelete.size() + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
-            JSONObject request = new JSONObject();
-            JSONArray elements = new JSONArray();
+            ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
+            ArrayNode elements = request.putArray("elements");
             for (String id : elementsToDelete) {
-                JSONObject element = new JSONObject();
-                element.put(MDKConstants.SYSML_ID_KEY, id);
-                elements.add(element);
+                ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
+                curElement.put(MDKConstants.SYSML_ID_KEY, id);
+                elements.add(curElement);
             }
-            request.put("elements", elements);
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
-            OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", request.toJSONString(), "DELETEALL", true, elements.size(), "Sync Deletes"));
+            OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(request), "DELETEALL", true, elements.size(), "Sync Deletes"));
         }
     }
 }

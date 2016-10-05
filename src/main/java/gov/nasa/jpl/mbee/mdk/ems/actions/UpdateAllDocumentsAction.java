@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -11,7 +12,6 @@ import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.util.*;
@@ -44,7 +44,7 @@ public class UpdateAllDocumentsAction extends MMSAction {
 
         Set<Element> docs = getProjectDocuments();
         PresentationElementUtils viu = new PresentationElementUtils();
-        Map<String, JSONObject> images = new HashMap<String, JSONObject>();
+        Map<String, ObjectNode> images = new HashMap<String, ObjectNode>();
         for (Element doc : docs) {
             /*
             if (!Utils.recommendUpdateFromTeamwork())

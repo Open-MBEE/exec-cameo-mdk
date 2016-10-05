@@ -13,6 +13,8 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
+
+//@donbot migrate simple to Jackson
 import org.json.simple.JSONObject;
 
 import javax.jms.JMSException;
@@ -24,6 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by igomes on 6/22/16.
  */
+
+//@donbot update json simple to jackson
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<String, RealTimeSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
     private DeltaSyncRunner deltaSyncRunner;

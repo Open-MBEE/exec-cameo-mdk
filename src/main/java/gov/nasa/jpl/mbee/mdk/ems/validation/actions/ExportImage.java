@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.validation.actions;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -41,7 +43,6 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
-import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -51,9 +52,9 @@ import java.util.Map;
 public class ExportImage extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final long serialVersionUID = 1L;
     private Element element;
-    private Map<String, JSONObject> images;
+    private Map<String, ObjectNode> images;
 
-    public ExportImage(Element e, Map<String, JSONObject> images) {
+    public ExportImage(Element e, Map<String, ObjectNode> images) {
         super("ExportImage", "Commit image", null, null);
         this.element = e;
         this.images = images;
@@ -64,14 +65,24 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         return true;
     }
 
-    public static boolean postImage(String key, Map<String, JSONObject> is) {
+    public static boolean postImage(String key, Map<String, ObjectNode> is) {
         if (is == null || is.get(key) == null) {
             Utils.guilog("[ERROR] Image data with id " + key + " not found.");
             return false;
         }
-        String filename = (String) is.get(key).get("abspath");
-        String cs = (String) is.get(key).get("cs");
-        String extension = (String) is.get(key).get("extension");
+        JsonNode value;
+        String filename = "";
+        String cs = "";
+        String extension = "";
+        if ((value = is.get(key).get("abspath")) != null && value.isTextual()) {
+            filename = value.asText();
+        }
+        if ((value = is.get(key).get("cs")) != null && value.isTextual()) {
+            cs = value.asText();
+        }
+        if ((value = is.get(key).get("extension")) != null && value.isTextual()) {
+            extension = value.asText();
+        }
         String url = ExportUtility.getUrlWithWorkspace();
         if (url == null) {
             return false;
@@ -106,7 +117,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         return true;
     }
 
-    public static void postImages(Map<String, JSONObject> is) {
+    public static void postImages(Map<String, ObjectNode> is) {
         for (String key : is.keySet()) {
             postImage(key, is);
         }

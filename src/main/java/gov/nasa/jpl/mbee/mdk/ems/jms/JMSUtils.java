@@ -1,17 +1,24 @@
 package gov.nasa.jpl.mbee.mdk.ems.jms;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import javax.jms.ConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+
+import java.io.IOException;
 import java.util.Hashtable;
 
 /**
@@ -35,25 +42,34 @@ public class JMSUtils {
      * Gets MMS JNDI connection details from the MMS server
      *
      * @return JSONObject of the connection details
+     * @throws JsonMappingException 
+     * @throws IOException 
+     * @throws JsonParseException 
      */
-    public static JSONObject getJmsConnectionDetails(Project project) {
+    public static ObjectNode getJmsConnectionDetails(Project project) throws JsonParseException, JsonMappingException, IOException {
         String url = ExportUtility.getUrl(project) + "/connection/jms";
-        String jsonString = null;
+        String response = null;
         try {
-            jsonString = ExportUtility.get(url, false);
+            response = ExportUtility.get(url, false);
         } catch (ServerException ignored) {
         }
-        if (jsonString == null) {
+        if (response == null) {
             return null;
         }
-        return (JSONObject) JSONValue.parse(jsonString);
+        return JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
     }
 
     // Varies by current project
     public static JMSInfo getJMSInfo(Project project) throws ServerException {
-        JSONObject jmsJson = getJmsConnectionDetails(project);
+        ObjectNode jmsJson = null;
+        try {
+            jmsJson = getJmsConnectionDetails(project);
+        } catch (IOException e) {
+            Application.getInstance().getGUILog().log("[ERROR]: Unable to acquire JMS Connection information.");
+            e.printStackTrace();
+        }
         String url = ingestJson(jmsJson);
-        boolean isFromService = url != null;
+        boolean isFromService = (url != null);
         if (url == null) {
             url = ExportUtility.getUrl(project);
             if (url != null) {
@@ -81,20 +97,22 @@ public class JMSUtils {
      *
      * @return URL string of connector
      */
-    protected static String ingestJson(JSONObject jsonInput) {
+    protected static String ingestJson(ObjectNode jsonInput) {
         if (jsonInput == null) {
             return null;
         }
-        JSONObject json = null;
-        if (jsonInput.containsKey("connections")) {
+        ArrayNode conns = null;
+        JsonNode valueNode;
+        if ((valueNode = jsonInput.get("connections")) != null && valueNode.isArray()) {
+            conns = (ArrayNode) valueNode;
+        }
+        ObjectNode json = null;
+        if (conns != null) {
             // just grab first connection
-            JSONArray conns = (JSONArray) jsonInput.get("connections");
             for (int ii = 0; ii < conns.size(); ii++) {
-                json = (JSONObject) conns.get(ii);
-                if (json.containsKey("eventType")) {
-                    if (json.get("eventType").equals("DELTA")) {
-                        break;
-                    }
+                json = (ObjectNode) conns.get(ii);
+                if (json.get("eventType").equals("DELTA")) {
+                    break;
                 }
             }
         }
@@ -103,23 +121,23 @@ public class JMSUtils {
         }
         String result = null;
         if (json != null) {
-            if (json.containsKey("uri")) {
-                result = (String) json.get("uri");
+            if ((valueNode = json.get("uri")) != null && valueNode.isTextual()) {
+                result = valueNode.asText();
             }
-            if (json.containsKey("connFactory")) {
-                JMS_CONN_FACTORY = (String) json.get("connFactory");
+            if ((valueNode = json.get("connFactory")) != null && valueNode.isTextual()) {
+                JMS_CONN_FACTORY = valueNode.asText();
             }
-            if (json.containsKey("ctxFactory")) {
-                JMS_CTX_FACTORY = (String) json.get("ctxFactory");
+            if ((valueNode = json.get("ctxFactory")) != null && valueNode.isTextual()) {
+                JMS_CTX_FACTORY = valueNode.asText();
             }
-            if (json.containsKey("password")) {
-                JMS_PASSWORD = (String) json.get("password");
+            if ((valueNode = json.get("password")) != null && valueNode.isTextual()) {
+                JMS_PASSWORD = valueNode.asText();
             }
-            if (json.containsKey("username")) {
-                JMS_USERNAME = (String) json.get("username");
+            if ((valueNode = json.get("username")) != null && valueNode.isTextual()) {
+                JMS_USERNAME = valueNode.asText();
             }
-            if (json.containsKey("topicName")) {
-                JMS_TOPIC = (String) json.get("topicName");
+            if ((valueNode = json.get("topicName")) != null && valueNode.isTextual()) {
+                JMS_TOPIC = valueNode.asText();
             }
         }
         return result;

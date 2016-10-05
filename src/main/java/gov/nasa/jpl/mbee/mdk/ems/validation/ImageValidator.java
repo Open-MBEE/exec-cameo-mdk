@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.validation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.validation.actions.ExportImage;
@@ -38,7 +40,6 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.json.simple.JSONObject;
 
 import java.net.HttpURLConnection;
 import java.util.HashMap;
@@ -46,16 +47,16 @@ import java.util.Map;
 
 public class ImageValidator {
 
-    private Map<String, JSONObject> images;
+    private Map<String, ObjectNode> images;
     private ValidationSuite suite = new ValidationSuite("images");
     private ValidationRule rule = new ValidationRule("Image Outdated", "Diagram is outdated", ViolationSeverity.ERROR);
-    private Map<String, JSONObject> allimages;
+    private Map<String, ObjectNode> allimages;
 
-    public ImageValidator(Map<String, JSONObject> images, Map<String, JSONObject> allimages) {
+    public ImageValidator(Map<String, ObjectNode> images, Map<String, ObjectNode> allimages) {
         this.images = images;
         this.allimages = allimages;
         if (allimages == null) {
-            this.allimages = new HashMap<String, JSONObject>();
+            this.allimages = new HashMap<String, ObjectNode>();
         }
         this.allimages.putAll(images);
         suite.addValidationRule(rule);
@@ -68,8 +69,13 @@ public class ImageValidator {
         }
         for (String key : images.keySet()) {
             Element e = ExportUtility.getElementFromID(key);
-            String cs = (String) images.get(key).get("cs");
-            String extension = (String) images.get(key).get("extension");
+            JsonNode value = images.get(key).get("cs");
+            String cs = "";
+            String extension = "";
+            if ((value = images.get(key).get("cs")) != null && value.isTextual())
+                cs = value.asText(); 
+            if ((value = images.get(key).get("extension")) != null && value.isTextual())
+                extension = value.asText(); 
             String id = key.replace(".", "%2E");
             String baseurl = url + "/artifacts/" + id + "?cs=" + cs + "&extension=" + extension;
 
