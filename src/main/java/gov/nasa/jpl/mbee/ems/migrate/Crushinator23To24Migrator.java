@@ -132,11 +132,13 @@ public class Crushinator23To24Migrator extends Migrator {
             views.removeAll(productElements);
         }
 
+        String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
+
         List<Element> viewsAndDocuments = new ArrayList<>(views.size() + documents.size());
         PresentationElementUtils presentationElementUtils = new PresentationElementUtils();
         viewsAndDocuments.addAll(views);
         viewsAndDocuments.addAll(documents);
-        List<Package> viewInstancePackages = new ArrayList<>(viewsAndDocuments.size());
+        List<Package> viewInstancePackages = new ArrayList<>(viewsAndDocuments.size() + 2);
         for (Element element : viewsAndDocuments) {
             Constraint constraint = Utils.getViewConstraint(element);
             if (constraint != null) {
@@ -159,14 +161,16 @@ public class Crushinator23To24Migrator extends Migrator {
             }
         }
         BaseElement viewInstancesPackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "View_Instances"));
-        if (viewInstancesPackage instanceof Element) {
-            elementsToDeleteLocally.add((Element) viewInstancesPackage);
-            elementsToDeleteRemotely.add((Element) viewInstancesPackage);
+        if (viewInstancesPackage instanceof Package) {
+            viewInstancePackages.add((Package) viewInstancesPackage);
+            elementsToDeleteLocally.add((Package) viewInstancesPackage);
+            elementsToDeleteRemotely.add((Package) viewInstancesPackage);
         }
         BaseElement unusedViewInstancePackage = project.getElementByID(project.getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances"));
-        if (unusedViewInstancePackage instanceof Element) {
-            elementsToDeleteLocally.add((Element) unusedViewInstancePackage);
-            elementsToDeleteRemotely.add((Element) unusedViewInstancePackage);
+        if (unusedViewInstancePackage instanceof Package) {
+            viewInstancePackages.add((Package) unusedViewInstancePackage);
+            elementsToDeleteLocally.add((Package) unusedViewInstancePackage);
+            elementsToDeleteRemotely.add((Package) unusedViewInstancePackage);
         }
         // cannot confirm validity of 2.3- changelogs and lots of unneeded blocks
         Package syncPackage = SyncElements.getSyncPackage(project);
@@ -178,7 +182,7 @@ public class Crushinator23To24Migrator extends Migrator {
             associations.add(property.getAssociation());
         }
         for (InstanceSpecification presentationElement : presentationElements) {
-            if (!presentationElement.has_instanceValueOfInstance()) {
+            if (!presentationElement.getID().startsWith("MMS") && !presentationElement.has_instanceValueOfInstance()) {
                 elementsToDeleteRemotely.add(presentationElement);
             }
         }
@@ -239,7 +243,7 @@ public class Crushinator23To24Migrator extends Migrator {
             if (o instanceof String) {
                 String newSysmlid = ModelValidator.HIDDEN_ID_PREFIX + o;
                 jsonObject.put("sysmlid", newSysmlid);
-                jsonObject.put("owner", null);
+                jsonObject.put("owner", holdingBinId);
                 hiddenViewInstancePackageJsonObjects.put(newSysmlid, jsonObject);
             }
         }
@@ -261,7 +265,7 @@ public class Crushinator23To24Migrator extends Migrator {
             Object o = jsonObject.get("owner");
             if (o instanceof String) {
                 String newOwnerId = ModelValidator.HIDDEN_ID_PREFIX + o;
-                jsonObject.put("owner", hiddenViewInstancePackageJsonObjects.containsKey(newOwnerId) ? newOwnerId : null);
+                jsonObject.put("owner", hiddenViewInstancePackageJsonObjects.containsKey(newOwnerId) ? newOwnerId : holdingBinId);
                 jsonObject = transform(jsonObject, PRESENTATION_ELEMENT_KEYS);
                 if (jsonObject == null) {
                     Application.getInstance().getGUILog().log("[ERROR] Failed to transform Presentation Element " + presentationElement.getID() + ".");
@@ -281,7 +285,7 @@ public class Crushinator23To24Migrator extends Migrator {
 
         if (!elementsToDeleteRemotely.isEmpty()) {
             int total = 0;
-            String status = "Deleting " + elementsToDeleteRemotely.size() + " legacy Presentation Element Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + " on the MMS";
+            String status = "Deleting " + elementsToDeleteRemotely.size() + " legacy Presentation Element Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + "/Unused Presentation Element" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + " on the MMS";
             Queue<Element> elementJsonQueue = new LinkedBlockingQueue<>(elementsToDeleteRemotely);
             ps.setIndeterminate(false);
             ps.setCurrent(0);
@@ -312,7 +316,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
             ps.setDescription(null);
             ps.setIndeterminate(true);
-            Application.getInstance().getGUILog().log("[INFO] Deleted " + elementsToDeleteRemotely.size() + " legacy Presentation Element Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/<<Presents>> Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + "/Unused Presentation Element" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + " on the MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Deleted " + elementsToDeleteRemotely.size() + " legacy Presentation Element Package" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + "/Presents Dependenc" + (elementsToDeleteRemotely.size() != 1 ? "ies" : "y") + "/Unused Presentation Element" + (elementsToDeleteRemotely.size() != 1 ? "s" : "") + " on the MMS.");
         }
 
         // POINT OF NO RETURN; NO MORE CANCELLING
