@@ -31,7 +31,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectOpened(Project project) {
         projectClosed(project);
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
-        jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project, jmsSyncProjectMapping));
+        jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project));
     }
 
     @Override
@@ -50,7 +50,16 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         } catch (JMSException e) {
             e.printStackTrace();
         }
-        projectMappings.remove(project.getID());
+        jmsSyncProjectMapping.setMessageConsumer(null);
+        jmsSyncProjectMapping.setSession(null);
+        jmsSyncProjectMapping.setConnection(null);
+        jmsSyncProjectMapping.setMessageProducer(null);
+        jmsSyncProjectMapping.setDisabled(true);
+
+        // We want to keep the JMSMessageListener so exceptions are handled by the same ExceptionListener through disconnects.
+        // Keeping it will also persist the changelog, which is the conservative approach albeit redundant since
+        // all the same JMS messages will come through on reconnect.
+        //projectMappings.remove(project.getID());
     }
 
     @Override
@@ -67,16 +76,16 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (JMSMessageListener != null) {
             JMSMessageListener.getInMemoryJMSChangelog().clear();
         }
-        if (jmsSyncProjectMapping.isDisabled() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+        if (jmsSyncProjectMapping.isDisabled() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() && project.getModel() != null && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
             Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize MMS sync.");
             projectOpened(project);
         }
     }
 
-    public static boolean initDurable(Project project, final JMSSyncProjectMapping jmsSyncProjectMapping) {
+    private static boolean initDurable(Project project) {
+        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         String projectID = ExportUtility.getProjectId(project);
         String workspaceID = ExportUtility.getWorkspace();
-
 
         JMSUtils.JMSInfo jmsInfo;
         try {
@@ -115,7 +124,11 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             }
             String subscriberId = projectID + "-" + workspaceID + "-" + username; // weblogic can't have '/' in id
 
-            JMSMessageListener jmsMessageListener = new JMSMessageListener(project);
+            // re-use existing JMSMessageListener
+            JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
+            if (jmsMessageListener == null) {
+                jmsSyncProjectMapping.setJmsMessageListener(jmsMessageListener = new JMSMessageListener(project));
+            }
 
             Connection connection = connectionFactory.createConnection();
             //((WLConnection) connection).setReconnectPolicy(JMSConstants.RECONNECT_POLICY_ALL);
@@ -145,7 +158,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             jmsSyncProjectMapping.setConnection(connection);
             jmsSyncProjectMapping.setSession(session);
             jmsSyncProjectMapping.setMessageConsumer(consumer);
-            jmsSyncProjectMapping.setJmsMessageListener(jmsMessageListener);
+            //jmsSyncProjectMapping.setJmsMessageListener(jmsMessageListener);
             jmsSyncProjectMapping.setMessageProducer(producer);
 
             // get everything that's already in the queue without blocking startup
