@@ -78,7 +78,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             JMSMessageListener.getInMemoryJMSChangelog().clear();
         }
         if (jmsSyncProjectMapping.isDisabled() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() && project.getModel() != null && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
-            Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize MMS sync.");
+            Application.getInstance().getGUILog().log("[INFO] Attempting to reinitiate MMS sync.");
             projectOpened(project);
         }
     }
