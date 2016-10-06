@@ -50,15 +50,15 @@ public class ImageValidator {
     private Map<String, ObjectNode> images;
     private ValidationSuite suite = new ValidationSuite("images");
     private ValidationRule rule = new ValidationRule("Image Outdated", "Diagram is outdated", ViolationSeverity.ERROR);
-    private Map<String, ObjectNode> allimages;
+    private Map<String, ObjectNode> allImages;
 
-    public ImageValidator(Map<String, ObjectNode> images, Map<String, ObjectNode> allimages) {
+    public ImageValidator(Map<String, ObjectNode> images, Map<String, ObjectNode> allImages) {
         this.images = images;
-        this.allimages = allimages;
-        if (allimages == null) {
-            this.allimages = new HashMap<String, ObjectNode>();
+        this.allImages = allImages;
+        if (allImages == null) {
+            this.allImages = new HashMap<>();
         }
-        this.allimages.putAll(images);
+        this.allImages.putAll(images);
         suite.addValidationRule(rule);
     }
 
@@ -94,7 +94,7 @@ public class ImageValidator {
 
             if (status != HttpURLConnection.HTTP_OK) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web");
-                v.addAction(new ExportImage(e, allimages));
+                v.addAction(new ExportImage(e, allImages));
                 rule.addViolation(v);
             }
         }

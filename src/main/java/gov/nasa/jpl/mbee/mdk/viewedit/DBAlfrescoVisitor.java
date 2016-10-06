@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.viewedit;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.export.image.ImageExporter;
@@ -15,6 +16,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInfo;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.model.Section;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
@@ -35,7 +37,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stack<JSONArray> sibviews = new Stack<JSONArray>(); //sibling views (array of view ids)
     private Stack<List<Element>> sibviewsElements = new Stack<List<Element>>();
     private Stack<Set<String>> viewElements = new Stack<Set<String>>(); //ids of view elements
-    private Map<String, JSONObject> images = new HashMap<String, JSONObject>();
+    private Map<String, ObjectNode> images = new HashMap<>();
     protected boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
     private static String FILE_EXTENSION = ".svg";
@@ -85,26 +87,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     /**
      * Simple getter for images
      */
-    public Map<String, JSONObject> getImages() {
+    public Map<String, ObjectNode> getImages() {
         return images;
-    }
-
-    /**
-     * Utility to remove all the images
-     */
-    public void removeImages() {
-        for (String key : images.keySet()) {
-            String filename = (String) images.get(key).get("abspath");
-            try {
-                File file = new File(filename);
-
-                if (!file.delete()) {
-                    gl.log("[WARNING]: could not delete " + filename);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -152,7 +136,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     public void visit(DBImage image) {
         //need to populate view elements with elements in image
         JSONObject entry = new JSONObject();
-        JSONObject imageEntry = new JSONObject();
+        ObjectNode imageEntry = JacksonUtils.getObjectMapper().createObjectNode();
         //for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
         //    addToElements(e);
         //}

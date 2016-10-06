@@ -147,12 +147,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         TYPE(
                 (element, project, objectNode) -> {
                     String type = element.eClass().getName();
-                    if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getDocumentStereotype())) {
+                    /*if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getDocumentStereotype())) {
                         type = "Document";
                     }
                     else if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getViewStereotype())) {
                         type = "View";
-                    }
+                    }*/
                     objectNode.put(MDKConstants.TYPE_KEY, type);
                     return objectNode;
                 }
@@ -213,7 +213,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     if (viewConstraint == null) {
                         return objectNode;
                     }
-                    objectNode.set("_contents", DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null));
+                    objectNode.set(MDKConstants.CONTENTS_KEY, DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null));
                     return objectNode;
                 }
         );

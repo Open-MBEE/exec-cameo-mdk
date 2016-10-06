@@ -94,9 +94,9 @@ public class EMFImporter implements JsonToElementFunction {
                         return null;
                     }
                     String type = jsonNode.asText();
-                    if (type.equals("View") || type.equals("Document")) {
+                    /*if (type.equals("View") || type.equals("Document")) {
                         type = "Class";
-                    }
+                    }*/
                     EClassifier eClassifier = UMLPackage.eINSTANCE.getEClassifier(type);
                     if (!(eClassifier instanceof EClass)) {
                         return null;
