@@ -16,26 +16,26 @@ public class JsonDiffFunction implements BiFunction<JsonNode, JsonNode, JsonNode
     private static JsonDiffFunction INSTANCE;
 
     @Override
-    public JsonNode apply(JsonNode source, JsonNode target) {
-        if (source == null && target == null) {
+    public JsonNode apply(JsonNode client, JsonNode server) {
+        if (client == null && server == null) {
             return null;
         }
-        if (source == null) {
-            source = JacksonUtils.getObjectMapper().createObjectNode();
+        if (client == null) {
+            client = JacksonUtils.getObjectMapper().createObjectNode();
         }
-        if (target == null) {
-            target = JacksonUtils.getObjectMapper().createObjectNode();
+        if (server == null) {
+            server = JacksonUtils.getObjectMapper().createObjectNode();
         }
-        preProcessSourceAndTarget(source, target);
-        return JsonDiff.asJson(source, target);
+        preProcess(client, server);
+        return JsonDiff.asJson(client, server);
     }
 
-    private static void preProcessSourceAndTarget(JsonNode source, JsonNode target) {
-        if (!(source instanceof ObjectNode) || !(target instanceof ObjectNode)) {
+    private static void preProcess(JsonNode client, JsonNode server) {
+        if (!(client instanceof ObjectNode) || !(server instanceof ObjectNode)) {
             return;
         }
-        ObjectNode sourceObjectNode = (ObjectNode) source;
-        ObjectNode targetObjectNode = (ObjectNode) target;
+        ObjectNode sourceObjectNode = (ObjectNode) client;
+        ObjectNode targetObjectNode = (ObjectNode) server;
 
         Iterator<String> targetKeyIterator = targetObjectNode.fieldNames();
         while (targetKeyIterator.hasNext()) {

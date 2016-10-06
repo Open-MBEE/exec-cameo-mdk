@@ -40,6 +40,7 @@ import java.util.function.Function;
  */
 public class EMFImporter implements JsonToElementFunction {
     protected List<PreProcessor> preProcessors;
+    protected List<EStructuralFeatureOverride> eStructuralFeatureOverrides;
 
     @Override
     public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
@@ -51,10 +52,10 @@ public class EMFImporter implements JsonToElementFunction {
         project.getCounter().setCanResetIDForObject(true);
 
         JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-        if (jsonNode == null || !jsonNode.isTextual()) {
+        /*if (jsonNode == null || !jsonNode.isTextual()) {
             return null;
-        }
-        Element element = ELEMENT_LOOKUP_FUNCTION.apply(jsonNode.asText(), project);
+        }*/
+        Element element = ELEMENT_LOOKUP_FUNCTION.apply(jsonNode != null && jsonNode.isTextual() ? jsonNode.asText() : null, project);
         Changelog.ChangeType changeType = element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED;
 
         for (PreProcessor preProcessor : getPreProcessors()) {
@@ -65,7 +66,7 @@ public class EMFImporter implements JsonToElementFunction {
         }
         for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
             final Element finalElement = element;
-            ImportFunction function = Arrays.stream(EStructuralFeatureOverride.values()).filter(override -> override.getPredicate()
+            ImportFunction function = getEStructuralFeatureOverrides().stream().filter(override -> override.getPredicate()
                     .test(objectNode, eStructuralFeature, project, strict, finalElement)).map(EStructuralFeatureOverride::getFunction)
                     .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
             element = function.apply(objectNode, eStructuralFeature, project, strict, element);
@@ -94,9 +95,9 @@ public class EMFImporter implements JsonToElementFunction {
                         return null;
                     }
                     String type = jsonNode.asText();
-                    /*if (type.equals("View") || type.equals("Document")) {
+                    if (type.equals("View") || type.equals("Document")) {
                         type = "Class";
-                    }*/
+                    }
                     EClassifier eClassifier = UMLPackage.eINSTANCE.getEClassifier(type);
                     if (!(eClassifier instanceof EClass)) {
                         return null;
@@ -121,7 +122,7 @@ public class EMFImporter implements JsonToElementFunction {
                 (objectNode, project, strict, element) -> {
                     JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
                     if (jsonNode == null || !jsonNode.isTextual()) {
-                        return null;
+                        return element;
                     }
                     String id = jsonNode.asText();
                     if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX) || id.startsWith(project.getPrimaryProject().getProjectID())) {
@@ -152,6 +153,9 @@ public class EMFImporter implements JsonToElementFunction {
     };
 
     public static final BiFunction<String, Project, Element> ELEMENT_LOOKUP_FUNCTION = (id, project) -> {
+        if (id == null) {
+            return null;
+        }
         if (id.equals(project.getPrimaryProject().getProjectID())) {
             return project.getModel();
         }
@@ -192,7 +196,7 @@ public class EMFImporter implements JsonToElementFunction {
         else if (eStructuralFeature instanceof EReference) {
             EReference eReference = (EReference) eStructuralFeature;
             if (ValueSpecification.class.isAssignableFrom(eReference.getEReferenceType().getInstanceClass()) && jsonNode instanceof ObjectNode) {
-                Changelog.Change<Element> change = this.convert((ObjectNode) jsonNode, project, strict);
+                Changelog.Change<Element> change = this.convert((ObjectNode) jsonNode, project, true);
                 return change != null ? change.getChanged() : null;
             }
             if (jsonNode == null || !jsonNode.isTextual()) {
@@ -319,16 +323,17 @@ public class EMFImporter implements JsonToElementFunction {
 
     private static final ImportFunction EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (objectNode, eStructuralFeature, project, strict, element) -> element;
 
-    private enum EStructuralFeatureOverride {
+    protected enum EStructuralFeatureOverride {
         ID(
                 (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
                 (objectNode, eStructuralFeature, project, strict, element) -> {
                     JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
                     if (jsonNode == null || !jsonNode.isTextual()) {
-                        if (strict) {
+                        /*if (strict) {
                             throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
                         }
-                        return null;
+                        return null;*/
+                        return element;
                     }
                     try {
                         UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
@@ -398,6 +403,13 @@ public class EMFImporter implements JsonToElementFunction {
         public ImportFunction getFunction() {
             return importFunction;
         }
+    }
+
+    protected List<EStructuralFeatureOverride> getEStructuralFeatureOverrides() {
+        if (eStructuralFeatureOverrides == null) {
+            eStructuralFeatureOverrides = Arrays.asList(EStructuralFeatureOverride.values());
+        }
+        return eStructuralFeatureOverrides;
     }
 
     @FunctionalInterface

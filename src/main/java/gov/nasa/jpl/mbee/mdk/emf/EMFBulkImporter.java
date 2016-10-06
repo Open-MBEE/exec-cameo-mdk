@@ -111,6 +111,9 @@ public class EMFBulkImporter implements BiFunction<Collection<ObjectNode>, Proje
             }
             return changelog;
         }
+        if (SessionManager.getInstance().isSessionCreated()) {
+            SessionManager.getInstance().cancelSession();
+        }
         return changelog;
     }
 

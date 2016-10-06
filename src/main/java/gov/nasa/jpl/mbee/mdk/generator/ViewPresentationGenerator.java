@@ -26,6 +26,7 @@ import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.json.JsonDiffFunction;
 import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
@@ -34,6 +35,7 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
@@ -213,7 +215,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                     ObjectNode elementObjectNode = (ObjectNode) elementJsonNode;
                     // Resolve current instances in the view constraint expression
-                    JsonNode viewOperandJsonNode = JacksonUtils.getAtPath(elementObjectNode, "/_contents/operand"),
+                    JsonNode viewOperandJsonNode = JacksonUtils.getAtPath(elementObjectNode, "/" + MDKConstants.CONTENTS_KEY + "/operand"),
                             sysmlIdJson = elementObjectNode.get(MDKConstants.SYSML_ID_KEY);
                     String sysmlId;
                     if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()
@@ -308,6 +310,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setDescription("Importing existing view instances");
                 progressStatus.setCurrent(3);
 
+                for (ObjectNode instanceObjectNode : instanceObjectNodes) {
+                    instanceObjectNode.putNull(MDKConstants.OWNER_ID_KEY);
+                }
+
                 EMFImporter emfImporter = new EMFImporter() {
                     @Override
                     public List<PreProcessor> getPreProcessors() {
@@ -316,6 +322,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             preProcessors.remove(PreProcessor.SYSML_ID_VALIDATION);
                         }
                         return preProcessors;
+                    }
+
+                    @Override
+                    public List<EStructuralFeatureOverride> getEStructuralFeatureOverrides() {
+                        if (eStructuralFeatureOverrides == null) {
+                            eStructuralFeatureOverrides = new ArrayList<>(super.getEStructuralFeatureOverrides());
+                            eStructuralFeatureOverrides.remove(EStructuralFeatureOverride.OWNER);
+                        }
+                        return eStructuralFeatureOverrides;
                     }
                 };
 
@@ -369,6 +384,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotJsonNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
                 }
+
 
                 // Build view constraints client-side as actual Constraint, Expression, InstanceValue(s), etc.
                 // Note: Doing this one first since what it does is smaller in scope than ImportUtility. Potential order-dependent edge cases require further evaluation.
@@ -501,15 +517,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
                 // portion of the JSON required to update the view contents.
-                ObjectNode newViewJson = Converters.getElementToJsonConverter().apply(view, project);
-                if (newViewJson == null) {
+                ObjectNode clientViewJson = Converters.getElementToJsonConverter().apply(view, project);
+                if (clientViewJson == null) {
                     skippedViews.add(view);
                     continue;
                 }
                 Object o;
-                ObjectNode oldViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getObjectNode() : null;
-                if (!JsonEquivalencePredicate.getInstance().test(oldViewJson, newViewJson)) {
-                    elementsArrayNode.add(newViewJson);
+                ObjectNode serverViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getObjectNode() : null;
+                if (!JsonEquivalencePredicate.getInstance().test(clientViewJson, serverViewJson)) {
+                    if (MDUtils.isDeveloperMode()) {
+                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonDiffFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
+                    }
+                    elementsArrayNode.add(clientViewJson);
                 }
             }
 
@@ -522,22 +541,28 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     instanceToView.add(new Pair<>(subInstance, pair.getSecond()));
                 }
 
-                ObjectNode newInstanceSpecificationJson = Converters.getElementToJsonConverter().apply(instance, project);
-                if (newInstanceSpecificationJson == null) {
+                ObjectNode clientInstanceSpecificationJson = Converters.getElementToJsonConverter().apply(instance, project);
+                if (clientInstanceSpecificationJson == null) {
                     continue;
                 }
-                ObjectNode oldInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
-                if (!JsonEquivalencePredicate.getInstance().test(oldInstanceSpecificationJson, newInstanceSpecificationJson)) {
-                    elementsArrayNode.add(newInstanceSpecificationJson);
+                ObjectNode serverInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
+                if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
+                    if (MDUtils.isDeveloperMode()) {
+                        Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonDiffFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
+                    }
+                    elementsArrayNode.add(clientInstanceSpecificationJson);
                 }
                 for (Slot slot : instance.getSlot()) {
-                    JsonNode newSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
-                    if (newSlotJson == null) {
+                    JsonNode clientSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
+                    if (clientSlotJson == null) {
                         continue;
                     }
-                    JsonNode oldSlotJson = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
-                    if (!JsonEquivalencePredicate.getInstance().test(oldSlotJson, newSlotJson)) {
-                        elementsArrayNode.add(newSlotJson);
+                    JsonNode serverSlotJson = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
+                    if (!JsonEquivalencePredicate.getInstance().test(clientSlotJson, serverSlotJson)) {
+                        elementsArrayNode.add(clientSlotJson);
+                        if (MDUtils.isDeveloperMode()) {
+                            Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonDiffFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
+                        }
                     }
                 }
             }

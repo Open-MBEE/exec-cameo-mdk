@@ -408,6 +408,8 @@ public class PresentationElementUtils {
     public void updateOrCreateConstraintFromInstanceSpecifications(Element view, List<InstanceSpecification> instanceSpecifications) {
         Constraint c = getOrCreateViewConstraint(view);
         Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : ef.createExpressionInstance();
+        Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+        expression.setID(view.getID() + "_vc_expression");
         expression.setOwner(c);
         List<InstanceValue> ivs = new ArrayList<>(instanceSpecifications.size());
         for (InstanceSpecification instanceSpecification : instanceSpecifications) {
