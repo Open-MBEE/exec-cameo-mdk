@@ -21,7 +21,6 @@ import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.json.simple.JSONObject;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;

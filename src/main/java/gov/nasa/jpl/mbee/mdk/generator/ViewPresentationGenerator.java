@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+//@donbot confirm JsonNode instead of ObjectNode / ArrayNode
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -53,6 +54,7 @@ import java.util.*;
 
 @Deprecated
 //TODO update stuff in here for @donbot
+//@donbot update json simple to jackson
 public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
@@ -70,10 +72,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private boolean showValidation;
 
     private final List<ValidationSuite> vss = new ArrayList<>();
-    private final Map<String, JSONObject> images;
+    private final Map<String, ObjectNode> images;
     private final Set<Element> processedElements;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, JSONObject> images, Set<Element> processedElements) {
+    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, ObjectNode> images, Set<Element> processedElements) {
         this.start = start;
         this.images = images != null ? images : new HashMap<>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<>();

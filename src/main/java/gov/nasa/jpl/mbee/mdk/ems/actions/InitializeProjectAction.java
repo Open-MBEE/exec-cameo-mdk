@@ -34,11 +34,10 @@ import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 
+// @donbot confirm commented method unnecessary, then purge. should be replaced with validating root element
 public class InitializeProjectAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
@@ -52,14 +51,16 @@ public class InitializeProjectAction extends MDAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", MDKPlugin.VERSION);
-        JSONObject result = ExportUtility.getProjectJson();
-        array.add(result);
-        String json = tosend.toJSONString();
+//        JSONObject tosend = new JSONObject();
+//        JSONArray array = new JSONArray();
+//        tosend.put("elements", array);
+//        tosend.put("source", "magicdraw");
+//        tosend.put("mmsVersion", MDKPlugin.VERSION);
+
+        // @donbot migrate or purge
+//        JSONObject result = ExportUtility.getProjectJson();
+//        array.add(result);
+//        String json = tosend.toJSONString();
 
         String url = ExportUtility.getUrlWithWorkspaceAndSite();
         if (url == null) {
@@ -67,6 +68,6 @@ public class InitializeProjectAction extends MDAction {
         }
         url += "/projects";
         Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, json, "Init Project"));
+//        OutputQueue.getInstance().offer(new Request(url, json, "Init Project"));
     }
 }

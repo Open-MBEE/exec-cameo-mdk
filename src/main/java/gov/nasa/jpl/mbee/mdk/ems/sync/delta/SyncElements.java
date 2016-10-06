@@ -16,6 +16,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+
+//@donbot migrate simple to Jackson
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -27,6 +29,8 @@ import java.util.*;
 /**
  * Created by igomes on 7/25/16.
  */
+
+//@donbot update json simple to jackson
 public class SyncElements {
     public static Map<String, Changelog.ChangeType> CHANGE_TYPE_KEY_MAP = new LinkedHashMap<>(3);
 
