@@ -171,7 +171,7 @@ public class MDKHelper {
      * @param password
      */
     public static void setMMSLoginCredentials(String username, String password) {
-        ViewEditUtils.setUsernameAndPassword(username, password, username != null && !username.isEmpty() && password != null && !password.isEmpty());
+        ViewEditUtils.setUsernameAndPassword(username, password);
     }
 
     /**

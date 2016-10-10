@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
@@ -70,11 +71,14 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.mdk.web.JsonRequestEntity;
+
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.*;
@@ -885,7 +889,7 @@ public class ExportUtility {
             if (username != null && !username.equals("")) {
                 ViewEditUtils.setUsernameAndPassword(username, password, true);
             }
-            userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
+            userpasswordJsonString = ViewEditUtils.getCredentialsString();
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
 
@@ -946,9 +950,12 @@ public class ExportUtility {
         if (url == null) {
             return null;
         }
+        // url = stuff
         checkAndResetTicket(url);
         url = addTicketToUrl(url);
+        // url += alf_ticket=<ticket>
         GetMethod gm = new GetMethod(url);
+        // get method for that stuff
         try {
             HttpClient client = new HttpClient();
             if (username == null || username.equals("")) {
@@ -957,11 +964,12 @@ public class ExportUtility {
             else {
                 ViewEditUtils.setCredentials(client, url, gm, username, password);
             }
-            //Application.getInstance().getGUILog().log("[INFO] Getting...");
-            //Application.getInstance().getGUILog().log("url=" + url);
+            // get method has a new Header("Authorization", getAuthStringEnc()));
             if (print) {
                 log.info("get: " + url);
             }
+            // executes
+            // parses response
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             // TODO Remove this hackery @donbot
@@ -977,10 +985,8 @@ public class ExportUtility {
             if (code == 400) {
                 throw new ServerException(json, code); //?
             }
-            //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
         } catch (IOException | IllegalArgumentException ex) {
-            //Utils.printException(ex);
             ex.printStackTrace();
             throw new ServerException("", 500);
         } finally {

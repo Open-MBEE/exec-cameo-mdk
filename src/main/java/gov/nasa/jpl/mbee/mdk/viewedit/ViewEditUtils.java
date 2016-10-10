@@ -28,15 +28,17 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.viewedit;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.json.simple.JSONObject;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,141 +48,16 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Base64;
 
 public class ViewEditUtils {
-    private static final String DEFAULT_EDITOR_CHOICE = "Community: http://docgen:8080/editor";
-    private static String editorurl = null;
-    private static String otherurl = "";
+    
     private static String username = "";
     private static String password = "";
     private static boolean passwordSet = false;
     private static boolean loginDialogDisabled = false;
     private static String authStringEnc = "";
     private static String ticket = "";
-    private static final List<String> servers = Arrays.asList(
-            "http://docgen.jpl.nasa.gov:8080/editor",
-            // "https://europaems:8443/alfresco/service",
-            "http://docgen.jpl.nasa.gov:8080/europa",
-            "Other");
-    private static final List<String> displays = Arrays.asList(
-            "Community: http://docgen:8080/editor",
-            // "Europa Alfresco: https://europaems:8443/alfresco/service",
-            "Europa Old: http://docgen:8080/europa",
-            "Other");
-
-
-    public static String getUrl() {
-        return getUrl(true, false);
-    }
-
-    public static String getUrl(boolean choice) {
-        return getUrl(choice, false);
-    }
-
-    public static String getUrl(boolean choice, boolean addsite) {
-        //return null; 
-        //return "https://sheldon.jpl.nasa.gov/alfresco/service";
-        Boolean old = false;
-        if (choice) {
-            old = Utils.getUserYesNoAnswer("Use old view editor?");
-        }
-        if (old == null) {
-            return null;
-        }
-        String url = null;
-        if (old) {
-            String chosen = editorurl == null ? DEFAULT_EDITOR_CHOICE : editorurl;
-            url = Utils.getUserDropdownSelectionForString("Choose", "Choose View Editor Server", servers,
-                    displays, chosen);
-            if (url == null) {
-                return url;
-            }
-            editorurl = displays.get(servers.indexOf(url));
-            if (url.equals("Other")) {
-                String other = JOptionPane.showInputDialog("Enter the editor URL:", otherurl);
-                if (other != null) {
-                    otherurl = other;
-                }
-                return other;
-            }
-        }
-        else {
-            Element model = Application.getInstance().getProject().getModel();
-            if (StereotypesHelper.hasStereotype(model, "ModelManagementSystem")) {
-                url = (String) StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem",
-                        "url");
-                String site = (String) StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "site");
-                if (url == null || url.equals("")) {
-                    JOptionPane
-                            .showMessageDialog(null,
-                                    "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-                    return null;
-                }
-                if (addsite) {
-                    if (site == null || site.equals("")) {
-                        JOptionPane.showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem site stereotype property set!");
-                        return null;
-                    }
-                    return url + "/javawebscripts/sites/" + site;
-                }
-            }
-            else {
-                JOptionPane
-                        .showMessageDialog(null,
-                                "Your project root element doesn't have ModelManagementSystem url stereotype property set!");
-                return null;
-            }
-        }
-        return url;
-    }
-
-    /**
-     * Modify setCredentials method to constract username and password in json.
-     *
-     * @return
-     */
-    public static String getUserNamePasswordInJSON() {
-        if (!passwordSet) {
-            showLoginDialog();
-        }
-        JSONObject temp = new JSONObject();
-        temp.put("username", username);
-        temp.put("password", password);
-        return temp.toJSONString();
-    }
-
-    /**
-     * Sets credentials for the client based on the actual URL string
-     *
-     * @param client
-     * @param urlstring
-     */
-    //TODO rewrite
-    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
-        try {
-            URL url = new URL(urlstring);
-
-            if (!passwordSet) {
-                showLoginDialog();
-            }
-
-            Credentials creds = new UsernamePasswordCredentials(username, password);
-            client.getState().setCredentials(
-                    new AuthScope(url.getHost(), url.getPort(), AuthScope.ANY_REALM), creds);
-            client.setTimeout(0);
-            client.setConnectionTimeout(0);
-            client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
-                    new DefaultHttpMethodRetryHandler(0, false));
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        // proxy cache needs Authorization header
-        method.addRequestHeader(new Header("Authorization", getAuthStringEnc()));
-    }
 
     public static void showLoginDialog() {
         if (!loginDialogDisabled) {
@@ -211,26 +88,8 @@ public class ViewEditUtils {
                     "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
 
-            setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
+            setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()));
         }
-    }
-
-    /**
-     * Sets credentials for the client based on the actual URL string and supplied strings.
-     * Intended to bypass the confirmDialog generated in the primary method
-     *
-     * @param client
-     * @param urlstring
-     * @param method
-     * @param username
-     * @param password
-     */
-    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method, String username, String password) {
-        if (!passwordSet) {
-            // setting the password here will cause us to skip the confirmDialog in the main setCredentials method
-            setUsernameAndPassword(username, password, true);
-        }
-        setCredentials(client, urlstring, method);
     }
 
     private static void makeSureUserGetsFocus(final JTextField user) {
@@ -260,9 +119,91 @@ public class ViewEditUtils {
         });
     }
 
+    /**
+     * utility for setting authorization header encoding at same time as username and password.
+     */
+    public static void setUsernameAndPassword(String uname, String pword) {
+        if (uname == null || uname.equals("") 
+                || uname == null || uname.equals("")) {
+            username = "";
+            password = "";
+            authStringEnc = "";
+            passwordSet = false;
+            return;
+        }
+        username = uname;
+        password = pword;
+        String authString = username + ":" + password;
+        byte[] authEncBytes = Base64.getEncoder().encode(authString.getBytes());
+        authStringEnc = new String(authEncBytes);
+        passwordSet = true;
+    }
+
+    /**
+     * Sets credentials for the client based on the actual URL string and supplied strings.
+     * Intended to bypass the confirmDialog generated in the primary method
+     *
+     * @param client
+     * @param urlstring
+     * @param method
+     * @param username
+     * @param password
+     */
+    @Deprecated
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method, String username, String password) {
+        if (!passwordSet) {
+            // setting the password here will cause us to skip the confirmDialog in the main setCredentials method
+            setUsernameAndPassword(username, password);
+        }
+        setCredentials(client, urlstring, method);
+    }
+
     public static void clearUsernameAndPassword() {
-        setUsernameAndPassword("", "", false);
+        setUsernameAndPassword("", "");
         setTicket("");
+    }
+
+    /**
+     * Sets credentials for the client based on the actual URL string
+     *
+     * @param client
+     * @param urlstring
+     */
+    public static String getEncodedCredentials() {
+        if (!passwordSet) {
+            showLoginDialog();
+        }
+        return authStringEnc;
+    }
+
+    /**
+     * Sets credentials for the client based on the actual URL string
+     *
+     * @param client
+     * @param urlstring
+     */
+    //TODO this modifies the passed in apache httpmethod. migrating to java HttpURLConnection, so this needs to go
+    @Deprecated
+    public static void setCredentials(HttpClient client, String urlstring, HttpMethodBase method) {
+        try {
+            URL url = new URL(urlstring);
+
+            if (!passwordSet) {
+                showLoginDialog();
+            }
+            Credentials creds = new UsernamePasswordCredentials(username, password);
+            client.getState().setCredentials(
+                    new AuthScope(url.getHost(), url.getPort(), AuthScope.ANY_REALM), creds);
+            client.setTimeout(0);
+            client.setConnectionTimeout(0);
+            client.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,
+                    new DefaultHttpMethodRetryHandler(0, false));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        // proxy cache needs Authorization header
+        method.addRequestHeader(new Header("Authorization", getAuthStringEnc()));
     }
 
     public static boolean showErrorMessage(int code) {
@@ -276,23 +217,11 @@ public class ViewEditUtils {
         else if (code == 404) {
             Utils.showPopupMessage("[ERROR] Some elements or views are not found on the server, export them first");
         }
-        return code == 401 || code == 500;
+        return (code == 401 || code == 500);
     }
 
     public static boolean isPasswordSet() {
         return passwordSet;
-    }
-
-    /**
-     * utility for setting authorization header encoding at same time as username and password.
-     */
-    public static void setUsernameAndPassword(String uname, String pword, boolean isPasswordSet) {
-        passwordSet = isPasswordSet;
-        username = uname;
-        password = pword;
-        String authString = username + ":" + password;
-        byte[] authEncBytes = Base64.encodeBase64(authString.getBytes());
-        authStringEnc = "Basic " + new String(authEncBytes);
     }
 
     public static String getAuthStringEnc() {
