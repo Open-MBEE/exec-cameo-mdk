@@ -82,7 +82,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             if (jmsMessageListener != null && (lastMessage = jmsMessageListener.getLastMessage()) != null) {
                 try {
                     lastMessage.acknowledge();
-                } catch (JMSException e) {
+                } catch (JMSException | IllegalStateException e) {
                     e.printStackTrace();
                 }
             }
