@@ -123,7 +123,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if (url == null) {
             return false;
         }
-        System.out.println("GETTING HERE: " + Boolean.toString(globalResponse == null));
         if (globalResponse == null) {
             ValidationRuleViolation v;
             if (url.contains("master")) {

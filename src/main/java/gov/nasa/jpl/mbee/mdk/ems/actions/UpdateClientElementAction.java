@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -126,14 +127,19 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             Application.getInstance().getGUILog().log("[INFO] Attempting to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " locally.");
             EMFBulkImporter emfBulkImporter = new EMFBulkImporter(UpdateClientElementAction.class.getName() + " Creations/Updates");
             Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project);
-            for (Map.Entry<Pair<Element, ObjectNode>, ImportException> entry : emfBulkImporter.getFailedJsonObjects().entrySet()) {
+            for (Map.Entry<Pair<Element, ObjectNode>, ImportException> entry : emfBulkImporter.getFailedElementMap().entrySet()) {
                 Element element = entry.getKey().getFirst();
                 ObjectNode objectNode = entry.getKey().getSecond();
                 ImportException importException = entry.getValue();
                 // TODO Abstract this stuff to a converter @donbot
                 String name = null;
                 if (element == null) {
-                    name = objectNode.get(MDKConstants.NAME_KEY).asText("<>");
+                    if (objectNode != null) {
+                        JsonNode nameJsonNode = objectNode.get(MDKConstants.NAME_KEY);
+                        if (nameJsonNode != null && nameJsonNode.isTextual()) {
+                            name = nameJsonNode.asText("<>");
+                        }
+                    }
                     if (name == null || name.isEmpty()) {
                         name = "<>";
                     }
@@ -144,7 +150,12 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
                 try {
-                    equivalentElementValidationRule.addViolation(new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT] " + JacksonUtils.getObjectMapper().writeValueAsString(JsonPatchUtils.getDiffAsJson(Converters.getElementToJsonConverter().apply(entry.getKey(), project), entry.getValue()))));
+                    ObjectNode clientElementObjectNode = Converters.getElementToJsonConverter().apply(entry.getKey(), project);
+                    ObjectNode serverElementObjectNode = entry.getValue();
+                    System.err.println("[NOT EQUIVALENT] " + Converters.getElementToIdConverter().apply(entry.getKey()));
+                    System.err.println(clientElementObjectNode);
+                    System.err.println(serverElementObjectNode);
+                    equivalentElementValidationRule.addViolation(new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT] " + JacksonUtils.getObjectMapper().writeValueAsString(JsonPatchUtils.getDiffAsJson(clientElementObjectNode, serverElementObjectNode))));
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }

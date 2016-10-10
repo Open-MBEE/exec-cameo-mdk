@@ -225,14 +225,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                             String instanceId;
                             if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
-                                /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
                                     continue;
                                 }*/
                                 if (generatedFromViewProperty != null) {
-                                    slotIDs.add(instanceId + "-slot-" + generatedFromViewProperty.getID());
+                                    slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getID());
                                 }
                                 if (generatedFromElementProperty != null) {
-                                    slotIDs.add(instanceId + "-slot-" + generatedFromElementProperty.getID());
+                                    slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getID());
                                 }
                                 instanceIDs.add(instanceId);
                                 viewInstanceIDs.add(instanceId);
@@ -285,14 +285,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                     JsonNode instanceIdJson = instanceOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                                     String instanceId;
                                     if (instanceIdJson != null && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
-                                        /*if (!instanceID.endsWith(PresentationElementUtils.ID_SUFFIX)) {
+                                        /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
                                             continue;
                                         }*/
                                         if (generatedFromViewProperty != null) {
-                                            slotIDs.add(instanceId + "-slot-" + generatedFromViewProperty.getID());
+                                            slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getID());
                                         }
                                         if (generatedFromElementProperty != null) {
-                                            slotIDs.add(instanceId + "-slot-" + generatedFromElementProperty.getID());
+                                            slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getID());
                                         }
                                         instanceIDs.add(instanceId);
                                     }
@@ -312,6 +312,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 for (ObjectNode instanceObjectNode : instanceObjectNodes) {
                     instanceObjectNode.putNull(MDKConstants.OWNER_ID_KEY);
+                    //instanceObjectNode.put(MDKConstants.OWNER_ID_KEY, Converters.getElementToIdConverter().apply(project.getModel()));
+                    //System.out.println("[SWAP] Owner -> " + Converters.getElementToIdConverter().apply(project.getModel()));
+                    //System.out.println(instanceObjectNode);
                 }
 
                 EMFImporter emfImporter = new EMFImporter() {
@@ -329,62 +332,76 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         if (eStructuralFeatureOverrides == null) {
                             eStructuralFeatureOverrides = new ArrayList<>(super.getEStructuralFeatureOverrides());
                             eStructuralFeatureOverrides.remove(EStructuralFeatureOverride.OWNER);
+                            eStructuralFeatureOverrides.add(new EStructuralFeatureOverride(
+                                    EStructuralFeatureOverride.OWNER.getPredicate(),
+                                    (objectNode, eStructuralFeature, project, strict, element) -> {
+                                        if (element instanceof InstanceSpecification) {
+                                            element.setOwner(getIdToElementConverter().apply(project.getID(), project));
+                                            return element;
+                                        }
+                                        return EStructuralFeatureOverride.OWNER.getFunction().apply(objectNode, eStructuralFeature, project, strict, element);
+                                    }));
                         }
                         return eStructuralFeatureOverrides;
                     }
                 };
 
-                // importing instances in reverse order so that deepest level instances (sections and such) are loaded first
-                ListIterator<ObjectNode> instanceJSONsIterator = new ArrayList<>(instanceObjectNodes).listIterator(instanceObjectNodes.size());
-                while (instanceJSONsIterator.hasPrevious()) {
-                    if (handleCancel(progressStatus)) {
-                        return;
+                for (Boolean strict : Arrays.asList(false, true)) {
+                    // importing instances in reverse order so that deepest level instances (sections and such) are loaded first
+                    ListIterator<ObjectNode> instanceObjectNodesIterator = instanceObjectNodes.listIterator(instanceObjectNodes.size());
+                    while (instanceObjectNodesIterator.hasPrevious()) {
+                        if (handleCancel(progressStatus)) {
+                            return;
+                        }
+
+                        ObjectNode instanceObjectNode = instanceObjectNodesIterator.previous();
+                        try {
+                            // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
+                            //Element element = ImportUtility.createElement(elementJsonNode, false, true);
+                            Changelog.Change<Element> change = emfImporter.apply(instanceObjectNode, project, strict);
+                            Element element = change != null ? change.getChanged() : null;
+
+                            if (element instanceof InstanceSpecification) {
+                                instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(instanceObjectNode, (InstanceSpecification) element));
+                            }
+                        } catch (ImportException e) {
+                            /*failure = true;
+                            Utils.printException(e);
+                            SessionManager.getInstance().cancelSession();
+                            return;*/
+                            Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + instanceObjectNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                            instanceObjectNodesIterator.remove();
+                        }
                     }
 
-                    ObjectNode elementJsonNode = instanceJSONsIterator.previous();
-                    try {
-                        // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
-                        //Element element = ImportUtility.createElement(elementJsonNode, false, true);
-                        Changelog.Change<Element> change = emfImporter.apply(elementJsonNode, project, true);
-                        Element element = change != null ? change.getChanged() : null;
-
-                        if (element instanceof InstanceSpecification) {
-                            instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(elementJsonNode, (InstanceSpecification) element));
+                    // The Alfresco service is a nice guy and returns Slots at the end so that when it's loaded in order the slots don't throw errors for missing their instances.
+                    // However we're being fancy and loading them backwards so we had to separate them ahead of time and then load the slots after.
+                    ListIterator<ObjectNode> slotObjectNodesIterator = slotObjectNodes.listIterator();
+                    while (slotObjectNodesIterator.hasNext()) {
+                        if (handleCancel(progressStatus)) {
+                            return;
                         }
-                    } catch (ImportException e) {
-                        /*failure = true;
-                        Utils.printException(e);
-                        SessionManager.getInstance().cancelSession();
-                        return;*/
-                        Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + elementJsonNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+
+                        ObjectNode slotObjectNode = slotObjectNodesIterator.next();
+                        try {
+                            // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
+                            //Element element = ImportUtility.createElement(slotJsonNode, false, false);
+                            Changelog.Change<Element> change = emfImporter.apply(slotObjectNode, project, strict);
+                            Element element = change != null ? change.getChanged() : null;
+
+                            if (element instanceof Slot) {
+                                slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotObjectNode, (Slot) element));
+                            }
+                        } catch (ImportException e) {
+                            /*failure = true;
+                            Utils.printException(e);
+                            SessionManager.getInstance().cancelSession();
+                            return;*/
+                            Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotObjectNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                            slotObjectNodesIterator.remove();
+                        }
                     }
                 }
-
-                // The Alfresco service is a nice guy and returns Slots at the end so that when it's loaded in order the slots don't throw errors for missing their instances.
-                // However we're being fancy and loading them backwards so we had to separate them ahead of time and then load the slots after.
-                for (ObjectNode slotJsonNode : slotObjectNodes) {
-                    if (handleCancel(progressStatus)) {
-                        return;
-                    }
-
-                    try {
-                        // Slots will break if imported with owner (instance) ignored, but we need to ignore InstanceSpecification owners
-                        //Element element = ImportUtility.createElement(slotJsonNode, false, false);
-                        Changelog.Change<Element> change = emfImporter.apply(slotJsonNode, project, false);
-                        Element element = change != null ? change.getChanged() : null;
-
-                        if (element instanceof Slot) {
-                            slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotJsonNode, (Slot) element));
-                        }
-                    } catch (ImportException e) {
-                        /*failure = true;
-                        Utils.printException(e);
-                        SessionManager.getInstance().cancelSession();
-                        return;*/
-                        Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotJsonNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
-                    }
-                }
-
 
                 // Build view constraints client-side as actual Constraint, Expression, InstanceValue(s), etc.
                 // Note: Doing this one first since what it does is smaller in scope than ImportUtility. Potential order-dependent edge cases require further evaluation.

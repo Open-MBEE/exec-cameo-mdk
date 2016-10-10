@@ -9,6 +9,7 @@ import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -101,7 +102,12 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                         continue;
                     }
-                    if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply((ObjectNode) elementJsonNode, project, false, project.getModel()) == null) {
+                    // TODO what is this? @donbot
+                    try {
+                        if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply((ObjectNode) elementJsonNode, project, false, project.getModel()) == null) {
+                            continue;
+                        }
+                    } catch (ImportException ignored) {
                         continue;
                     }
                     inMemoryJMSChangelog.addChange(sysmlIdJsonNode.asText(), (ObjectNode) elementJsonNode, entry.getValue());

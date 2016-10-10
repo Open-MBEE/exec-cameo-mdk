@@ -39,17 +39,15 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.TimeEvent;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.stream.MDKCollectors;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.ClassUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
@@ -108,12 +106,21 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (eObject == null) {
             return null;
         }
+        if (eObject instanceof InstanceSpecification && ((InstanceSpecification) eObject).getStereotypedElement() != null) {
+            return getEID(((InstanceSpecification) eObject).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
+        }
+        /*if (eObject instanceof TimeExpression && ((TimeExpression) eObject).get_timeEventOfWhen() != null) {
+            return getEID(((TimeExpression) eObject).get_timeEventOfWhen()) + MDKConstants.TIME_EXPRESSION_ID_SUFFIX;
+        }*/
+        if (eObject instanceof ValueSpecification && ((ValueSpecification) eObject).getOwningSlot() != null) {
+            ValueSpecification slotValue = (ValueSpecification) eObject;
+            return getEID(slotValue.getOwningSlot()) + MDKConstants.SLOT_VALUE_ID_SEPARATOR + slotValue.getOwningSlot().getValue().indexOf(slotValue) + "-" + slotValue.eClass().getName().toLowerCase();
+        }
         if (eObject instanceof Slot) {
             Slot slot = (Slot) eObject;
-            if (slot.getOwner() == null || ((Slot) eObject).getDefiningFeature() == null) {
-                return null;
+            if (slot.getOwningInstance() != null && ((Slot) eObject).getDefiningFeature() != null) {
+                return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
             }
-            return getEID(slot.getOwner()) + "-slot-" + getEID(slot.getDefiningFeature());
         }
         if (eObject instanceof Model) {
             Model model = (Model) eObject;
@@ -125,7 +132,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         return EcoreUtil.getID(eObject);
     }
 
-    private static void debugUMLPackageLiterals() {
+    private static void dumpUMLPackageLiterals() {
         for (Field field : UMLPackage.Literals.class.getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
                 try {
@@ -147,12 +154,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         TYPE(
                 (element, project, objectNode) -> {
                     String type = element.eClass().getName();
-                    if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getDocumentStereotype())) {
+                    /*if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getDocumentStereotype())) {
                         type = "Document";
                     }
                     else if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getViewStereotype())) {
                         type = "View";
-                    }
+                    }*/
                     objectNode.put(MDKConstants.TYPE_KEY, type);
                     return objectNode;
                 }
@@ -181,12 +188,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         VALUE_SPECIFICATION(
                 (element, project, objectNode) -> element instanceof ValueSpecification ? null : objectNode
         ),
-        CONNECTOR_END(
+        /*CONNECTOR_END(
                 (element, project, objectNode) -> element instanceof ConnectorEnd ? null : objectNode
         ),
         DIAGRAM(
                 (element, project, objectNode) -> element instanceof Diagram ? null : objectNode
-        ),
+        ),*/
         COMMENT(
                 (element, project, objectNode) -> {
                     if (!(element instanceof Comment)) {
@@ -197,7 +204,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 }
         ),
         SYNC(
-                (element, project, objectNode) -> element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
+                (element, project, objectNode) -> element == null || element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
                         element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
         ),
         ATTACHED_PROJECT(
@@ -214,6 +221,14 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         return objectNode;
                     }
                     objectNode.set(MDKConstants.CONTENTS_KEY, DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null));
+                    return objectNode;
+                }
+        ),
+        DIAGRAM_TYPE(
+                (element, project, objectNode) -> {
+                    if (element instanceof Diagram) {
+                        objectNode.put(MDKConstants.DIAGRAM_TYPE_KEY, ((Diagram) element).get_representation() != null ? ((Diagram) element).get_representation().getType() : null);
+                    }
                     return objectNode;
                 }
         );
@@ -320,18 +335,26 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ID(
                 (element, eStructuralFeature) -> eStructuralFeature == element.eClass().getEIDAttribute(),
                 (element, project, eStructuralFeature, objectNode) -> {
-                    if (!(element instanceof ValueSpecification)) {
-                        objectNode.put(MDKConstants.SYSML_ID_KEY, getEID(element));
-                    }
+                    /*if (element instanceof ValueSpecification && !(element instanceof TimeExpression)) {
+                        return objectNode;
+                    }*/
+                    objectNode.put(MDKConstants.SYSML_ID_KEY, getEID(element));
                     return objectNode;
                 }
         ),
         OWNER(
                 (element, eStructuralFeature) -> UMLPackage.Literals.ELEMENT__OWNER == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, UMLPackage.Literals.ELEMENT__OWNER, objectNode);
+                    if (element instanceof Model) {
+                        return objectNode;
+                    }
+                    Element owner = element.getOwner();
+                    /*if (element instanceof ValueSpecification || owner instanceof ValueSpecification) {
+                        return objectNode;
+                    }*/
+                    //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, UMLPackage.Literals.ELEMENT__OWNER, objectNode);
                     // safest way to prevent circular references, like with ValueSpecifications
-                    objectNode.put(MDKConstants.OWNER_ID_KEY, getEID(element.getOwner()));
+                    objectNode.put(MDKConstants.OWNER_ID_KEY, getEID(owner));
                     return objectNode;
                 }
         ),
@@ -347,21 +370,17 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 (element, eStructuralFeature) -> UMLPackage.Literals.PACKAGE__PACKAGED_ELEMENT == eStructuralFeature || UMLPackage.Literals.COMPONENT__PACKAGED_ELEMENT == eStructuralFeature,
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
-        NAMESPACE__OWNED_DIAGRAM(
-                (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.NAMESPACE__OWNED_DIAGRAM,
-                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
-        ),
         DIRECTED_RELATIONSHIP__SOURCE(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    objectNode.put("_" + eStructuralFeature.getName() + MDKConstants.ID_SUFFIX_PLURAL, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    objectNode.set("_" + eStructuralFeature.getName() + MDKConstants.IDS_KEY_SUFFIX, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
                     return objectNode;
                 }
         ),
         DIRECTED_RELATIONSHIP__TARGET(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    objectNode.put("_" + eStructuralFeature.getName() + MDKConstants.ID_SUFFIX_PLURAL, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    objectNode.set("_" + eStructuralFeature.getName() + MDKConstants.IDS_KEY_SUFFIX, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
                     return objectNode;
                 }
         ),
@@ -385,23 +404,31 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     for (int i = 0; i < propertyPaths.size(); i++) {
                         propertyPaths.get(i).add(connector.getEnd().get(i).getRole());
                     }
-                    objectNode.put("_propertyPathIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths, project, eStructuralFeature));
+                    objectNode.set("_propertyPathIds", DEFAULT_SERIALIZATION_FUNCTION.apply(propertyPaths, project, eStructuralFeature));
 
                     return DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, eStructuralFeature, objectNode);
                 }
         ),
         VALUE_SPECIFICATION__EXPRESSION(
                 (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION,
-                (element, project, eStructuralFeature, objectNode) -> {
+                /*(element, project, eStructuralFeature, objectNode) -> {
                     Expression expression = null;
                     Object object = element.eGet(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION);
                     if (object instanceof Expression) {
                         expression = (Expression) object;
                     }
-                    objectNode.put(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION.getName() + MDKConstants.ID_SUFFIX, expression != null ? expression.getID() : null);
+                    objectNode.put(UMLPackage.Literals.VALUE_SPECIFICATION__EXPRESSION.getName() + MDKConstants.ID_KEY_SUFFIX, expression != null ? expression.getID() : null);
+                    return objectNode;
+                }*/
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        )/*,
+        TIME_EVENT__WHEN(
+                (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.TIME_EVENT__WHEN && element instanceof TimeEvent,
+                (element, project, eStructuralFeature, objectNode) -> {
+                    objectNode.put(eStructuralFeature.getName() + MDKConstants.ID_KEY_SUFFIX, getEID(((TimeEvent) element).getWhen()));
                     return objectNode;
                 }
-        );
+        )*/;
 
         private BiPredicate<Element, EStructuralFeature> predicate;
         private ExportFunction function;

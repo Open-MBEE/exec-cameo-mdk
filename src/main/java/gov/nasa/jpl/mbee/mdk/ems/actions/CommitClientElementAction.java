@@ -59,7 +59,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                         elementsToUpdate.add(elementObjectNode);
                     }
                     else {
-                        elementsToDelete.add(id);
+                        elementsToDelete.add(((CommitClientElementAction) action).getId());
                     }
                     break;
                 }
@@ -76,6 +76,10 @@ public class CommitClientElementAction extends RuleViolationAction implements An
     @Override
     public boolean canExecute(Collection<Annotation> annotations) {
         return true;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public Element getElement() {
