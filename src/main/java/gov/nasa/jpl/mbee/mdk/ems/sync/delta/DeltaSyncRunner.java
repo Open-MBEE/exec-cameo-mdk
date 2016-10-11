@@ -37,6 +37,7 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -98,18 +99,18 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
 
-        String url = ExportUtility.getUrl(project);
+        String url = MMSUtils.getServerUrl(project);
         if (url == null || url.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Url not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
-        String site = ExportUtility.getSite();
+        String site = MMSUtils.getSiteName(project);
         if (site == null || site.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Site not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
         try {
-            if (!ExportUtility.hasSiteEditPermission(url, site)) {
+            if (!MMSUtils.isUserSiteEditor(project, site)) {
                 Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
@@ -117,6 +118,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while verifying site permissions. Skipping sync. All changes will be re-attempted in the next sync. Error: " + e.getMessage());
             return;
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         // LOCK SYNC FOLDER
@@ -192,7 +197,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             ps.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
             ObjectNode response = null;
             try {
-                response = MMSUtils.getElementsById(elementIdsToGet, ps);
+                response = MMSUtils.getElementsById(elementIdsToGet, project, ps);
             } catch (ServerException | IOException e) {
                 if (!ps.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");

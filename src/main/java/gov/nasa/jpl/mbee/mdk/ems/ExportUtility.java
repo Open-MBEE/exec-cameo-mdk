@@ -349,6 +349,7 @@ public class ExportUtility {
         return null;
     }
 
+    /*
     public static String getUrl(Project project) {
         if (project == null || project.getModel() == null) {
             return null;
@@ -376,7 +377,9 @@ public class ExportUtility {
         url += "/alfresco/service";
         return url;
     }
+    */
 
+    /*
     public static String getSite() {
         Element model = Application.getInstance().getProject().getModel();
         String site = (String) StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "MMS Site");
@@ -394,11 +397,13 @@ public class ExportUtility {
         // do switch here
         return site;
     }
+    */
 
     public static String getSiteForProject(IProject prj) {
         String human = getHumanSiteForProject(prj);
         return sites.get(Application.getInstance().getProject().getPrimaryProject().getProjectID()).get(human);
     }
+
 
     public static String getHumanSiteForProject(IProject prj) {
         return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
@@ -431,6 +436,7 @@ public class ExportUtility {
         return null;
     }
 
+    /*
     @Deprecated
     // TODO Add project as parameter @donbot
     public static String getUrlWithWorkspace() {
@@ -441,7 +447,9 @@ public class ExportUtility {
         }
         return null;
     }
+    */
 
+    /*
     @Deprecated
     // TODO Add project as parameter @donbot
     public static String getUrlWithWorkspaceAndSite() {
@@ -453,7 +461,9 @@ public class ExportUtility {
         }
         return null;
     }
+*/
 
+    /*
     @Deprecated
     // TODO Add project as parameter @donbot
     public static String getUrlForProject() {
@@ -467,8 +477,11 @@ public class ExportUtility {
         if (url != null)
             return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
         return null;*/
+    /*
     }
+    */
 
+    /*
     public static String getUrlForProject(IProject prj) {
         String url = getUrl(Application.getInstance().getProject());
         String site = getSiteForProject(prj);
@@ -477,7 +490,9 @@ public class ExportUtility {
         }
         return null;
     }
+    */
 
+    /*
     @Deprecated
     // TODO Add project as parameter @donbot
     public static String getPostElementsUrl() {
@@ -487,9 +502,9 @@ public class ExportUtility {
         }
         return url + "/elements";
     }
+    */
 
-    public static boolean showErrors(int code, String response,
-                                     boolean showPopupErrors) {
+    public static boolean showErrors(int code, String response, boolean showPopupErrors) {
         if (code != 200) {
             if (code >= 500) {
                 if (showPopupErrors) {
@@ -817,6 +832,7 @@ public class ExportUtility {
         return get(url, username, password, true);
     }
 
+    /*
     public static boolean checkAndResetTicket(String urlString) {
         // TODO Fix properly by passing project/site reference with the request so this sort of transformation isn't required
         URL url;
@@ -887,7 +903,7 @@ public class ExportUtility {
         String userpasswordJsonString = "";
         try {
             if (username != null && !username.equals("")) {
-                ViewEditUtils.setUsernameAndPassword(username, password, true);
+                ViewEditUtils.setUsernameAndPassword(username, password);
             }
             userpasswordJsonString = ViewEditUtils.getCredentialsString();
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
@@ -943,6 +959,7 @@ public class ExportUtility {
             postMethod.releaseConnection();
         }
     }
+    */
 
     // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {

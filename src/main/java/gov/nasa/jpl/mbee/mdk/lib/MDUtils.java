@@ -30,6 +30,8 @@ package gov.nasa.jpl.mbee.mdk.lib;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -41,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A collection of utility functions for accessing the MagicDraw (MD)
@@ -238,5 +241,42 @@ public class MDUtils {
     // elemt.get_constraintOfConstrainedElement();
     // return c;
     // }
+
+    public static String getWorkspace(Project project) {
+        String twbranch = getTeamworkBranch(project);
+        if (twbranch == null) {
+            return "master";
+        }
+        twbranch = "master/" + twbranch;
+        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+
+        //TODO imported from ExportUtility, update to finish the import
+//        Map<String, String> wsmap = wsIdMapping.get(projId);
+//        if (wsmap == null) {
+//            updateWorkspaceIdMapping();
+//            wsmap = wsIdMapping.get(projId);
+//        }
+//        if (wsmap != null) {
+//            String id = wsmap.get(twbranch);
+//            if (id == null) {
+//                updateWorkspaceIdMapping();
+//                id = wsmap.get(twbranch);
+//            }
+//            if (id != null) {
+//                return id;
+//            }
+//        }
+//        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
+        return null;
+    }
+
+    public static String getTeamworkBranch(Project project) {
+        String branch = null;
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(project).getURI());
+        }
+        return branch;
+    }
+
 
 }
