@@ -39,7 +39,6 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.TimeEvent;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
@@ -106,6 +105,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (eObject == null) {
             return null;
         }
+        Project project;
+        if (eObject instanceof Model && (project = Project.getProject((Model) eObject)).getPrimaryModel() == eObject) {
+            return project.getPrimaryProject().getProjectID() + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
+        }
         if (eObject instanceof InstanceSpecification && ((InstanceSpecification) eObject).getStereotypedElement() != null) {
             return getEID(((InstanceSpecification) eObject).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
         }
@@ -120,13 +123,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             Slot slot = (Slot) eObject;
             if (slot.getOwningInstance() != null && ((Slot) eObject).getDefiningFeature() != null) {
                 return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
-            }
-        }
-        if (eObject instanceof Model) {
-            Model model = (Model) eObject;
-            Project project = Project.getProject(model);
-            if (eObject == project.getModel()) {
-                return project.getPrimaryProject().getProjectID();
             }
         }
         return EcoreUtil.getID(eObject);
@@ -345,16 +341,13 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         OWNER(
                 (element, eStructuralFeature) -> UMLPackage.Literals.ELEMENT__OWNER == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    if (element instanceof Model) {
-                        return objectNode;
-                    }
                     Element owner = element.getOwner();
                     /*if (element instanceof ValueSpecification || owner instanceof ValueSpecification) {
                         return objectNode;
                     }*/
                     //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, UMLPackage.Literals.ELEMENT__OWNER, objectNode);
                     // safest way to prevent circular references, like with ValueSpecifications
-                    objectNode.put(MDKConstants.OWNER_ID_KEY, getEID(owner));
+                    objectNode.put(MDKConstants.OWNER_ID_KEY, project.getPrimaryModel() == element ? project.getPrimaryProject().getProjectID() : getEID(owner));
                     return objectNode;
                 }
         ),
@@ -373,14 +366,14 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         DIRECTED_RELATIONSHIP__SOURCE(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    objectNode.set("_" + eStructuralFeature.getName() + MDKConstants.IDS_KEY_SUFFIX, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    objectNode.set(MDKConstants.DERIVED_KEY_PREFIX + eStructuralFeature.getName() + MDKConstants.IDS_KEY_SUFFIX, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
                     return objectNode;
                 }
         ),
         DIRECTED_RELATIONSHIP__TARGET(
                 (element, eStructuralFeature) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__TARGET == eStructuralFeature,
                 (element, project, eStructuralFeature, objectNode) -> {
-                    objectNode.set("_" + eStructuralFeature.getName() + MDKConstants.IDS_KEY_SUFFIX, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
+                    objectNode.set(MDKConstants.DERIVED_KEY_PREFIX + eStructuralFeature.getName() + MDKConstants.IDS_KEY_SUFFIX, DEFAULT_SERIALIZATION_FUNCTION.apply(element.eGet(eStructuralFeature), project, eStructuralFeature));
                     return objectNode;
                 }
         ),

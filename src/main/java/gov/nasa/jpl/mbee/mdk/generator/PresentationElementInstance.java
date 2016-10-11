@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.viewedit;
+package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;

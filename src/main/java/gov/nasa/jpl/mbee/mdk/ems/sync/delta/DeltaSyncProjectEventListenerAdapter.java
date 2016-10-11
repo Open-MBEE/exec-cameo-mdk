@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.delta;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
@@ -10,6 +11,7 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -85,7 +87,11 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
                 SessionManager.getInstance().createSession(project, "Persisting Delta Sync Changelog(s)");
             }
             //setUpdatesOrFailed(project, notSaved, entry.getKey(), false);
-            SyncElements.setByType(project, entry.getKey(), SyncElements.buildJson(changelog).toJSONString());
+            try {
+                SyncElements.setByType(project, entry.getKey(), JacksonUtils.getObjectMapper().writeValueAsString(SyncElements.buildJson(changelog)));
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
         }
         if (SessionManager.getInstance().isSessionCreated(project)) {
             SessionManager.getInstance().closeSession();

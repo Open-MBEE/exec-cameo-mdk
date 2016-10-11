@@ -41,7 +41,6 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
-import gov.nasa.jpl.mbee.mdk.viewedit.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
 
 import java.io.IOException;
@@ -336,7 +335,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                     EStructuralFeatureOverride.OWNER.getPredicate(),
                                     (objectNode, eStructuralFeature, project, strict, element) -> {
                                         if (element instanceof InstanceSpecification) {
-                                            element.setOwner(getIdToElementConverter().apply(project.getID(), project));
+                                            element.setOwner(getIdToElementConverter().apply(project.getPrimaryProject().getProjectID(), project));
                                             return element;
                                         }
                                         return EStructuralFeatureOverride.OWNER.getFunction().apply(objectNode, eStructuralFeature, project, strict, element);

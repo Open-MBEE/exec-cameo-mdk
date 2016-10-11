@@ -28,7 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems;
 
-import com.nomagic.ci.persistence.IAttachedProject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
@@ -68,8 +69,7 @@ import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
@@ -83,8 +83,6 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import javax.jms.*;
 import javax.swing.*;
@@ -92,7 +90,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.regex.Pattern;
 
 @Deprecated
 //TODO migrate usage of these methods to EMFExporter.java @donbot
@@ -1837,108 +1834,11 @@ public class ExportUtility {
         return null;
     }
 
-   @Deprecated
-    public static void sendProjectVersion(Element e) {
-		/*
-		 * Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IProject module = ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) {
-		 * IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork = pv.getNumber(); sendProjectVersion(module.getProjectID(), teamwork); } } else { if
-		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { sendProjectVersion(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber()); } }
-		 */
-
-    }
-
-   @Deprecated
-   public static boolean okToExport(Element e) {
-		/*
-		 * if (mountedVersions == null) mountedVersions = new HashMap<String, Integer>(); Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IAttachedProject module =
-		 * ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) { IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork =
-		 * pv.getNumber(); // Integer teamwork = // TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber(); Integer mms = getAlfrescoProjectVersion(module.getProjectID()); if (teamwork == mms || mms == null || teamwork >= mms)
-		 * return true; Boolean con = Utils .getUserYesNoAnswer("The element is in project " + module.getName() + " (" + teamwork + ") that is an older version of what's on the server (" + mms + "), do you want to continue export?"); if
-		 * (con == null || !con) return false; } return true; } else { if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { Integer teamwork = TeamworkService.getInstance(prj) .getVersion(prj).getNumber(); Integer mms =
-		 * getAlfrescoProjectVersion(prj.getPrimaryProject() .getProjectID()); if (teamwork == mms || mms == null || teamwork >= mms) return true; Boolean con = Utils .getUserYesNoAnswer("The element is in project " + prj.getName() + " (" +
-		 * teamwork + ") that is an older version of what's on the server (" + mms + "), do you want to continue export?"); if (con == null || !con) return false; } return true; }
-		 */
-        return true;
-    }
-
-   @Deprecated
-   public static boolean okToExport(Set<Element> set) {
-		/*
-		 * Project prj = Application.getInstance().getProject(); mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); if
-		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber());
-		 * projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName()); } for (Element e : set) { if (ProjectUtilities.isElementInAttachedProject(e)) { IProject module = ProjectUtilities.getAttachedProject(e); if
-		 * (ProjectUtilities.isFromTeamworkServer(module) && !mountedVersions.containsKey(module.getProjectID())) { IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork =
-		 * pv.getNumber(); mountedVersions.put(module.getProjectID(), teamwork); projectNames.put(module.getProjectID(), module.getName()); } } } for (String prjId : mountedVersions.keySet()) { Integer serverVersion =
-		 * getAlfrescoProjectVersion(prjId); if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) { Boolean con = Utils.getUserYesNoAnswer("Your project " + projectNames.get(prjId) + " is an older project version (" +
-		 * mountedVersions.get(prjId) + ") than what's on the server (" + serverVersion + ") , do you want to continue?"); if (con == null || !con) return false; } }
-		 */
-        return true;
-    }
-
-    @Deprecated
-    public static boolean okToExport() {
-		/*
-		 * mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); Project prj = Application.getInstance().getProject(); if
-		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber());
-		 * projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName()); } for (IAttachedProject p : ProjectUtilities.getAllAttachedProjects(prj)) { if (ProjectUtilities.isFromTeamworkServer(p)) { IVersionDescriptor vd =
-		 * ProjectUtilities.getVersion(p); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork = pv.getNumber(); mountedVersions.put(p.getProjectID(), teamwork); projectNames.put(p.getProjectID(), p.getName()); } } for (String
-		 * prjId : mountedVersions.keySet()) { Integer serverVersion = getAlfrescoProjectVersion(prjId); if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) { Boolean con = Utils.getUserYesNoAnswer("Your project " +
-		 * projectNames.get(prjId) + " is an older project version (" + mountedVersions.get(prjId) + ") than what's on the server (" + serverVersion + ") , do you want to continue?"); if (con == null || !con) return false; } }
-		 */
-        return true;
-    }
-
-    public static Map<String, Integer> getMountedVersions() {
-        return mountedVersions;
-    }
-
-    public static void sendProjectVersion() {
-        String baseurl = getUrlWithWorkspaceAndSite();
-        if (baseurl == null) {
-            return;
-        }
-        JSONObject result = ExportUtility.getProjectJson();
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", MDKPlugin.VERSION);
-        array.add(result);
-        String url = baseurl + "/projects";
-        if (!url.contains("master")) {
-            url += "?createSite=true";
-        }
-        Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
-        // send(url, tosend.toJSONString(), null, false);
-    }
-
-    public static void sendProjectVersion(String projId, Integer version) {
-        String baseurl = getUrlWithWorkspaceAndSite();
-        if (baseurl == null) {
-            return;
-        }
-        JSONObject result = ExportUtility.getProjectJSON(null, projId, version);
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", MDKPlugin.VERSION);
-        array.add(result);
-        String url = baseurl + "/projects";
-        if (!url.contains("master")) {
-            url += "?createSite=true";
-        }
-        Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
-        // send(url, tosend.toJSONString(), null, false);
-    }
-
     public static String initializeBranchVersion(String taskId) {
         String baseUrl = ExportUtility.getUrl(Application.getInstance().getProject());
         String site = ExportUtility.getSite();
         String projUrl = baseUrl + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true";
-        JSONObject moduleJson = ExportUtility.getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), 0);
+        ObjectNode moduleJson = ExportUtility.getProjectObjectNode(Application.getInstance().getProject());
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
@@ -1991,12 +1891,6 @@ public class ExportUtility {
             } catch (JMSException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    public static void sendProjectVersions() {
-        for (String projid : mountedVersions.keySet()) {
-            sendProjectVersion(projid, mountedVersions.get(projid));
         }
     }
 
@@ -2065,40 +1959,22 @@ public class ExportUtility {
         return getViewFromConstraint(constraint) != null;
     }
 
-    public static final Pattern HTML_WHITESPACE_END = Pattern.compile(
-            "\\s*</p>", Pattern.DOTALL);
-    public static final Pattern HTML_WHITESPACE_START = Pattern.compile(
-            "<p>\\s*", Pattern.DOTALL);
-
-    public static String cleanHtml(String s) {
-        return Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "")
-                .replace("<br>", "").replace("</br>", "").replace("\n", "");
-        // inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
-        // return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
+    public static ObjectNode getProjectObjectNode(Project project) {
+        return getProjectObjectNode(project.getPrimaryProject());
     }
 
-    public static JSONObject getProjectJson() {
-        Project prj = Application.getInstance().getProject();
-        Integer ver = getProjectVersion(prj);
-        return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), ver);
+    public static ObjectNode getProjectObjectNode(IProject project) {
+        return getProjectObjectNode(project.getProjectID(), project.getName());
     }
 
-    public static JSONObject getProjectJsonForProject(IProject prj) {
-        return getProjectJSON(prj.getName(), prj.getProjectID(), null);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static JSONObject getProjectJSON(String name, String projId, Integer version) {
-        JSONObject result = new JSONObject();
+    private static ObjectNode getProjectObjectNode(String id, String name) {
+        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
+        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
         if (name != null) {
-            result.put("name", name);
+            projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }
-        result.put(MDKConstants.SYSML_ID_KEY, projId);
-        result.put("type", "Project");
-        if (version != null) {
-            result.put("projectVersion", version.toString());
-        }
-        return result;
+        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        return projectObjectNode;
     }
 
     public static String getProjectId(Project proj) {
@@ -2159,17 +2035,28 @@ public class ExportUtility {
                 log.info("sites response: " + code + " " + json);
             }
             if (code == 200) {
-                JSONObject siteResponse;
+                JsonNode siteResponse;
                 try {
-                    siteResponse = (JSONObject) (new JSONParser()).parse(json);
-                } catch (ParseException e) {
+                    siteResponse = JacksonUtils.getObjectMapper().readTree(json);
+                } catch (IOException e) {
                     throw new ServerException(json, 500);
                 }
-                JSONArray returnedSiteList = (JSONArray) siteResponse.get("sites");
-                for (Object returnedSite : returnedSiteList) {
-                    JSONObject rs = (JSONObject) returnedSite;
-                    if (rs.containsKey("editable") && rs.containsKey(MDKConstants.SYSML_ID_KEY) && rs.get(MDKConstants.SYSML_ID_KEY).equals(site)) {
-                        return (boolean) rs.get("editable");
+                JsonNode sitesJsonNode = siteResponse.get("sites");
+                if (!sitesJsonNode.isArray()) {
+                    return false;
+                }
+                for (JsonNode siteJsonNode : sitesJsonNode) {
+                    if (!siteJsonNode.isObject()) {
+                        continue;
+                    }
+                    JsonNode sysmlIdJsonNode = siteJsonNode.get(MDKConstants.SYSML_ID_KEY);
+                    if (sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() && sysmlIdJsonNode.asText().equals(site)) {
+                        JsonNode editableJsonNode = siteJsonNode.get(MDKConstants.DERIVED_KEY_PREFIX + "editable");
+                        if (editableJsonNode == null || !editableJsonNode.isBoolean()) {
+                            // TODO CHANGE ME @donbot
+                            return true;
+                        }
+                        return editableJsonNode.booleanValue();
                     }
                 }
             }

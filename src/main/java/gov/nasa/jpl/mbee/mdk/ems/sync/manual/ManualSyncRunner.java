@@ -128,7 +128,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             if (url.contains("master")) {
                 v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
                 // TODO Change me back to false @donbot
-                v.addAction(new InitializeProjectModel(true));
+                v.addAction(new InitializeProjectModel(project, true));
             }
             else {
                 v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");

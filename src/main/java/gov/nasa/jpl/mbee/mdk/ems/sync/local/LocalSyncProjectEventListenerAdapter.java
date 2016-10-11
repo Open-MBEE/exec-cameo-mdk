@@ -28,7 +28,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
             project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
         }
-        //projectMappings.remove(project.getID());
+        //projectMappings.remove(project.getPrimaryProject().getProjectID());
     }
 
     @Override
@@ -48,9 +48,9 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
-        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project.getID());
+        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
         if (localSyncProjectMapping == null) {
-            projectMappings.put(project.getID(), localSyncProjectMapping = new LocalSyncProjectMapping());
+            projectMappings.put(project.getPrimaryProject().getProjectID(), localSyncProjectMapping = new LocalSyncProjectMapping());
         }
         return localSyncProjectMapping;
     }

@@ -119,9 +119,9 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         String type = jsonNode.asText();
-                    /*if (type.equals("View") || type.equals("Document")) {
-                        type = "Class";
-                    }*/
+                        /*if (type.equals("View") || type.equals("Document")) {
+                            type = "Class";
+                        }*/
                         if (type.equals(UMLPackage.Literals.DIAGRAM.getName())) {
                             JsonNode diagramTypeJsonNode = objectNode.get(MDKConstants.DIAGRAM_TYPE_KEY);
                             if (diagramTypeJsonNode == null || !diagramTypeJsonNode.isTextual()) {

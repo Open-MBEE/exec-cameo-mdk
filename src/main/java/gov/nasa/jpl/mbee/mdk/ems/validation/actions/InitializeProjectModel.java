@@ -28,13 +28,18 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.validation.actions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ModelExportRunner;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
@@ -47,10 +52,12 @@ import java.util.Collection;
 public class InitializeProjectModel extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-    private boolean initOnly;
+    private final Project project;
+    private final boolean initOnly;
 
-    public InitializeProjectModel(boolean initOnly) {
+    public InitializeProjectModel(Project project, boolean initOnly) {
         super("InitializeProjectModel", initOnly ? "Initialize Project" : "Initialize Project and Model", null, null);
+        this.project = project;
         this.initOnly = initOnly;
     }
 
@@ -65,23 +72,29 @@ public class InitializeProjectModel extends RuleViolationAction implements Annot
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent e) {
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        tosend.put("mmsVersion", MDKPlugin.VERSION);
-        tosend.put("source", "magicdraw");
+        ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
+        ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
+        requestData.set("elements", elementsArrayNode);
+        requestData.put("mmsVersion", MDKPlugin.VERSION);
+        requestData.put("source", "magicdraw");
 
-        JSONObject result = ExportUtility.getProjectJson();
-        array.add(result);
+        ObjectNode projectObjectNode = ExportUtility.getProjectObjectNode(project);
+        elementsArrayNode.add(projectObjectNode);
         String url = ExportUtility.getUrlWithWorkspaceAndSite();
         if (url == null) {
             return;
         }
         url += "/projects";
-        String response = ExportUtility.send(url, tosend.toJSONString()/*, null*/, false, false);
+        String response;
+        try {
+            response = ExportUtility.send(url, JacksonUtils.getObjectMapper().writeValueAsString(requestData), false, false);
+        } catch (JsonProcessingException e1) {
+            // TODO Error handle @donbot
+            e1.printStackTrace();
+            return;
+        }
         if (response == null || response.startsWith("<html")) {
             return;
         }

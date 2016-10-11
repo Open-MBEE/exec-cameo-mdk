@@ -1,5 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.ems.validation.actions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -9,12 +12,12 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ModelExporter;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
-import org.json.simple.JSONArray;
+import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.ModelExporter;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
@@ -27,22 +30,26 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
 
         @Override
         public void run(ProgressStatus arg0) {
-            //GUILog gl = Application.getInstance().getGUILog();
-            JSONObject tosend = new JSONObject();
-            JSONArray array = new JSONArray();
-            tosend.put("elements", array);
-            tosend.put("source", "magicdraw");
-            tosend.put("mmsVersion", MDKPlugin.VERSION);
+            ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
+            ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
+            requestData.set("elements", elementsArrayNode);
+            requestData.put("source", "magicdraw");
+            requestData.put("mmsVersion", MDKPlugin.VERSION);
 
-            JSONObject ob = ExportUtility.getProjectJsonForProject(module);
-            array.add(ob);
+            ObjectNode projectObjectNode = ExportUtility.getProjectObjectNode(module);
+            elementsArrayNode.add(projectObjectNode);
             String url = ExportUtility.getUrl(Application.getInstance().getProject());
             if (url == null) {
                 return;
             }
             String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
             Utils.guilog("Initializing module");
-            if (ExportUtility.send(purl, tosend.toJSONString()/*, null*/, false, false) == null) {
+            try {
+                if (ExportUtility.send(purl, JacksonUtils.getObjectMapper().writeValueAsString(requestData), false, false) == null) {
+                    return;
+                }
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
                 return;
             }
 
