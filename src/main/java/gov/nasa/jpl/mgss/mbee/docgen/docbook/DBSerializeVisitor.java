@@ -80,7 +80,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
     @Override
     public void visit(DBBook book) {
         DocumentMeta meta = book.getMetadata();
-        out.append("<book xmlns=\"http://docbook.org/ns/docbook\" xmlns:xl=\"http://www.w3.org/1999/xlink\" version=\"5.0\">\n");
+        out.append("<book xmlns=\"http://docbook.org/ns/docbook\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"5.0\">\n");
         String title = null;
         out.append("<info>");
         if (book.getUseDefaultStylesheet() == true) {
