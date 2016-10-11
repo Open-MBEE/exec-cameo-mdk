@@ -86,7 +86,6 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             if (!SessionManager.getInstance().isSessionCreated(project)) {
                 SessionManager.getInstance().createSession(project, "Persisting Delta Sync Changelog(s)");
             }
-            //setUpdatesOrFailed(project, notSaved, entry.getKey(), false);
             try {
                 SyncElements.setByType(project, entry.getKey(), JacksonUtils.getObjectMapper().writeValueAsString(SyncElements.buildJson(changelog)));
             } catch (JsonProcessingException e) {

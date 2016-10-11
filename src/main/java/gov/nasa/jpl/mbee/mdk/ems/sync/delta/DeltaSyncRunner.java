@@ -396,6 +396,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
             UpdateClientElementAction updateClientElementAction = new UpdateClientElementAction(project);
             updateClientElementAction.process(jmsElementsToCreateOrUpdateLocally, jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()));
+            failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
 
             listener.setDisabled(false);
         }

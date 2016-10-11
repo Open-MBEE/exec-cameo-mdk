@@ -202,7 +202,7 @@ public class SyncElements {
         Changelog<String, Void> changelog = new Changelog<>();
         for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
             JsonNode jsonNode = objectNode.get(changeType.name().toLowerCase());
-            if (jsonNode == null || !jsonNode.isObject()) {
+            if (jsonNode == null || !jsonNode.isArray()) {
                 continue;
             }
             for (JsonNode jsonNode1 : jsonNode) {
