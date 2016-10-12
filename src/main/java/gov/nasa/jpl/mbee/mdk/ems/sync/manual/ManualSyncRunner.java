@@ -14,18 +14,19 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.ems.actions.InitializeProjectAction;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -74,8 +75,18 @@ public class ManualSyncRunner implements RunnableWithProgress {
         List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
         List<ObjectNode> serverElements = new ArrayList<>(rootElements.size());
         for (Element element : rootElements) {
-            collectClientElementsRecursively(element, project, recurse, depth, clientElements);
-            Collection<ObjectNode> jsonObjects = getServerElementsRecursively(element, recurse, depth, progressStatus);
+            collectClientElementsRecursively(project, element, recurse, depth, clientElements);
+            Collection<ObjectNode> jsonObjects = null;
+            try {
+                jsonObjects = collectServerElementsRecursively(project, element, recurse, depth, progressStatus);
+            } catch (ServerException e) {
+                //TODO @donbot process errors for recursive server element get
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
             if (jsonObjects == null) {
                 if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Failed to get elements from the server. Aborting manual sync.");
@@ -90,7 +101,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         elementValidator.run(progressStatus);
     }
 
-    public static void collectClientElementsRecursively(Element element, Project project, boolean recurse, int depth, List<Pair<Element, ObjectNode>> elements) {
+    public static void collectClientElementsRecursively(Project project, Element element, boolean recurse, int depth, List<Pair<Element, ObjectNode>> elements) {
         ObjectNode jsonObject = Converters.getElementToJsonConverter().apply(element, project);
         if (jsonObject == null) {
             return;
@@ -98,107 +109,73 @@ public class ManualSyncRunner implements RunnableWithProgress {
         elements.add(new Pair<>(element, jsonObject));
         if (recurse || depth > 0) {
             for (Element e : element.getOwnedElement()) {
-                collectClientElementsRecursively(e, project, recurse, --depth, elements);
+                collectClientElementsRecursively(project, e, recurse, --depth, elements);
             }
         }
     }
 
     // TODO Fix me and move me to MMSUtils @donbot
     // TODO Add both ?recurse and element list gets @donbot
-    public static Collection<ObjectNode> getServerElementsRecursively(Element element, boolean recurse, int depth, ProgressStatus progressStatus) {
-        String url = ExportUtility.getUrlWithWorkspace();
-        String id = Converters.getElementToIdConverter().apply(element);
-        final String url2;
-        if (depth > 0) {
-            url2 = url + "/elements/" + id + "?depth=" + java.lang.Integer.toString(depth) + "&qualified=false";
-        }
-        else {
-            url2 = url + "/elements/" + id + "?recurse=" + java.lang.Boolean.toString(recurse) + "&qualified=false";
-        }
+    public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element,
+                                                                          boolean recurse, int depth,
+                                                                          ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        ObjectNode response = MMSUtils.getServerElementsRecursively(project, element, recurse, depth, progressStatus);
 
-        final AtomicReference<String> res = new AtomicReference<>();
-        Thread t = new Thread(() -> {
-            String tres = null;
-            try {
-                tres = ExportUtility.get(url2, false);
-            } catch (ServerException ex) {
-            }
-            res.set(tres);
-        });
-        t.start();
-        try {
-            t.join(10000);
-            while (t.isAlive()) {
-                if (progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[INFO] Request to server for elements cancelled.");
-                    //clean up thread?
-                    return null;
-                }
-                t.join(10000);
-            }
-        } catch (Exception e) {
-
-        }
-        //response = ExportUtility.get(url2, false);
-
-        String response = res.get();
-        Application.getInstance().getGUILog().log("[INFO] Finished getting elements");
-        if (response == null) {
-            response = "{\"elements\": []}";
-        }
-        JsonNode responseJsonNode;
-        try {
-            responseJsonNode = JacksonUtils.getObjectMapper().readTree(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-        if (responseJsonNode != null && responseJsonNode.has("elements")) {
-            JsonNode elementsJsonNode = responseJsonNode.get("elements");
-            if (elementsJsonNode.isArray()) {
-                return StreamSupport.stream(elementsJsonNode.spliterator(), false).filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
-            }
+        // process response
+        JsonNode value;
+        if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+            return StreamSupport.stream(value.spliterator(), false)
+                    .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
         }
         return null;
     }
 
     // TODO Make common across all sync types @donbot
     public boolean checkProject() {
-        String projectUrl = ExportUtility.getUrlForProject();
-        if (projectUrl == null) {
+        // build request for site element
+        URIBuilder requestUri;
+        requestUri = MMSUtils.getServiceWorkspacesUri(project);
+        if (requestUri == null) {
             return false;
         }
-        String globalUrl = ExportUtility.getUrl(Application.getInstance().getProject());
-        globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        String globalResponse = null;
-        try {
-            globalResponse = ExportUtility.get(globalUrl, false);
-        } catch (ServerException ex) {
+        requestUri.setPath(requestUri.getPath() + "/elements/" + project.getPrimaryProject().getProjectID());
 
-        }
-        String url = ExportUtility.getUrlWithWorkspace();
-        if (url == null) {
+        // do request for site element
+        ObjectNode response = null;
+        try {
+            response = MMSUtils.sendMMSRequest(MMSUtils.HttpRequestType.GET, requestUri);
+        } catch (Exception e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error when querrying site element on MMS. " +
+                    "Reason: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
-        if (globalResponse == null) {
+
+        // process response for site element
+        // missing projects will return {}
+        JsonNode value;
+        if ((value = response.get("elements")) == null) {
             ValidationRuleViolation v;
-            if (url.contains("master")) {
-                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
+            String workspace = MMSUtils.getServiceWorkspacesUri(project).getPath();
+            if (workspace.contains("master")) {
+                v = new ValidationRuleViolation(project.getModel(), "The project doesn't exist on the web.");
                 v.addAction(new InitializeProjectAction(project, true));
-            }
-            else {
-                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
+            } else {
+                v = new ValidationRuleViolation(project.getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
             }
             projectExistenceValidationRule.addViolation(v);
             return false;
         }
-        String response = null;
-        try {
-            response = ExportUtility.get(projectUrl, false);
-        } catch (ServerException ex) {
 
-        }
-        if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
+
+        //TODO re-imagineer later when we've confirmed if these errors still happen
+        /*
+        String respons = null;
+        try {
+            respons = ExportUtility.get(projectUrl, false);
+        } catch (ServerException ex) { }
+        if (respons == null || respons.contains("Site node is null") || respons.contains("Could not find project")) {//tears
 
             ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
             //v.addAction(new InitializeProjectAction(false));
@@ -211,6 +188,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 return false;
             }
         }
+        */
         return true;
     }
 

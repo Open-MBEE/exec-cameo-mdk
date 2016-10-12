@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
@@ -10,27 +9,15 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -40,72 +27,71 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.eclipse.jetty.server.Server;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * Created by igomes on 9/26/16.
- * Expanded / refactored by ablack on 10/10/16
+ * Expanded/refactored by ablack on 10/10/16
  */
 
 // TODO Use URI builder or similar @donbot
 public class MMSUtils {
+
+    private static final int CHECK_CANCEL_DELAY = 100;
     
     private static String developerUrl = "";
     private static String developerSite = "";
 
+
+
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
     }
-    
-    public static ObjectNode getElement(Element element, Project project) throws IOException {
+
+    public enum ThreadRequestExceptionType {
+        IOEXCEPTION, SERVEREXCEPTION, URISYNTAXEXCEPTION
+    }
+
+    public static ObjectNode getElement(Element element, Project project)
+            throws IOException,  ServerException, URISyntaxException {
         return getElementById(Converters.getElementToIdConverter().apply(element), project);
     }
 
-    public static ObjectNode getElementById(String id, Project project) throws IOException {
+    public static ObjectNode getElementById(String id, Project project)
+            throws IOException,  ServerException, URISyntaxException {
+        // build request
         if (id == null) {
             return null;
         }
-        try {
-            URIBuilder requestUri = getElementsUri(project);
-            id = id.replace(".", "%2E");
-            requestUri.setPath(requestUri.getPath() + "/" + id);
+        URIBuilder requestUri = getServiceWorkspacesSitesProjectsElementsUri(project);
+        id = id.replace(".", "%2E");
+        requestUri.setPath(requestUri.getPath() + "/" + id);
 
-            ObjectNode response = sendMMSRequest(HttpRequestType.GET, requestUri, null);
+        // do request
+        ObjectNode response = sendMMSRequest(HttpRequestType.GET, requestUri);
 
-            JsonNode value;
-            if ((value = response.get("elements")) instanceof ArrayNode
-                    && (value = ((ArrayNode)value).get(0)) instanceof ObjectNode) {
-                return (ObjectNode) value;
-            }
-            return null;
-        } catch (ServerException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        // parse response
+        JsonNode value;
+        if ((value = response.get("elements")) instanceof ArrayNode
+                && (value = ((ArrayNode)value).get(0)) instanceof ObjectNode) {
+            return (ObjectNode) value;
         }
         return null;
     }
 
     public static ObjectNode getElements(Collection<Element> elements, Project project, ProgressStatus ps)
-            throws ServerException, IOException {
+            throws IOException,  ServerException, URISyntaxException {
         return getElementsById(elements.stream().map(Converters.getElementToIdConverter())
                 .filter(id -> id != null).collect(Collectors.toList()), project, ps);
     }
 
-    public static ObjectNode getElementsById(Collection<String> ids, Project project, ProgressStatus ps)
-            throws ServerException, IOException {
+    public static ObjectNode getElementsById(Collection<String> ids, Project project, ProgressStatus progressStatus)
+            throws IOException,  ServerException, URISyntaxException {
         if (ids == null || ids.isEmpty()) {
             return null;
         }
@@ -121,78 +107,39 @@ public class MMSUtils {
             idsArrayNode.add(element);
         }
 
-        try {
-            URIBuilder requestUri = getElementsUri(project);
-
-
-//        final String url = ExportUtility.getUrlWithWorkspace() + "/elements";
-//        final String jsonRequest = JacksonUtils.getObjectMapper().writeValueAsString(requests);
-            Utils.guilog("[INFO] Searching for " + ids.size() + " elements from server...");
-
-            final AtomicReference<ObjectNode> resp = new AtomicReference<>();
-            final AtomicReference<Integer> code = new AtomicReference<>();
-            final AtomicReference<Boolean> errors = new AtomicReference<>();
-            Thread t = new Thread(() -> {
-                ObjectNode response;
-                try {
-                    response = sendMMSRequest(HttpRequestType.GET, requestUri, requests);
-                    resp.set(response);
-                    code.set(200);
-                } catch (ServerException ex) {
-                    code.set(ex.getCode());
-                    if (ex.getCode() != 404) {
-                        res.set(ex.getResponse());
-                    }
-                } catch (IOException e) {
-                    errors.set(true);
-                    e.printStackTrace();
-                } catch (URISyntaxException e) {
-                    e.printStackTrace();
-                }
-            });
-            t.start();
-            try {
-                t.join(10000);
-                while (t.isAlive()) {
-                    if (ps.isCancel()) {
-                        //clean up thread?
-                        Utils.guilog("[INFO] Search for elements cancelled.");
-                        code.set(500);
-                        break;
-                    }
-                    t.join(10000);
-                }
-            } catch (Exception ignored) {
-            }
-
-            ObjectNode response = resp.get();
-            if (code.get() != 404 && code.get() != 200) {
-                //TODO error handling
-                throw new ServerException(resp.get().asText(), code.get());
-            }
-            if (errors.get()) {
-                //TODO error handling
-                throw new IOException("");
-            }
-            Utils.guilog("[INFO] Finished getting elements.");
-            return response;
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        URIBuilder requestUri = getServiceWorkspacesSitesProjectsElementsUri(project);
+        if (requestUri == null) {
             return null;
         }
+
+        //do cancellable request
+        Utils.guilog("[INFO] Searching for " + ids.size() + " elements from server...");
+        return sendCancellableMMSRequest(HttpRequestType.GET, requestUri, requests, progressStatus);
     }
 
-    /**
-     * Convenience method for requests without body. Not difficult to remove, but the code is easier to read if you
-     * don't have to pass 'null' when calling it
-     *
-     * @param type Type of request, as selected from one of the options in the inner enum.
-     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
-     * @return response as JSON
-     */
-    public static ObjectNode sendMMSRequest(HttpRequestType type, URIBuilder requestUri)
-            throws IOException, URISyntaxException, ServerException {
-        return sendMMSRequest(type, requestUri, null);
+    // TODO Fix me and move me to MMSUtils @donbot
+    // TODO Add both ?recurse and element list gets @donbot
+    public static ObjectNode getServerElementsRecursively(Project project, Element element,
+                                                                      boolean recurse, int depth,
+                                                                      ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        // configure request
+        String id = Converters.getElementToIdConverter().apply(element);
+        URIBuilder requestUri = getServiceWorkspacesSitesProjectsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+        requestUri = MMSUtils.getServiceWorkspacesUri(project);
+        requestUri.setPath(requestUri.getPath() + "/elements/" + id);
+        if (depth > 0) {
+            requestUri.setParameter("depth", java.lang.Integer.toString(depth));
+        } else {
+            requestUri.setParameter("recurse", java.lang.Boolean.toString(recurse));
+        }
+        requestUri.setParameter("qualified", "false");
+
+        // do request in cancellable thread
+        return sendCancellableMMSRequest(HttpRequestType.GET, requestUri, null, progressStatus);
     }
 
     /**
@@ -205,7 +152,7 @@ public class MMSUtils {
      * @return
      * @throws IOException
      * @throws URISyntaxException
-     * @throws ServerException
+     * @throws ServerException contains both response code and response body
      */
     public static ObjectNode sendMMSRequest(HttpRequestType type, URIBuilder requestUri, ObjectNode sendData)
             throws IOException, URISyntaxException, ServerException {
@@ -241,16 +188,121 @@ public class MMSUtils {
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
         ){
-            responseJson = JacksonUtils.getObjectMapper().readValue(response.getEntity().getContent(), ObjectNode.class);
-            int errorCode = response.getStatusLine().getStatusCode();
-            if (errorCode != 200) {
-                //TODO error processing
+            int responseCode = response.getStatusLine().getStatusCode();
+            String responseText = response.getEntity().getContent().toString();
+            //TODO error processing
+            if (processRequestErrors(responseText, responseCode)) {
+                throw new ServerException(responseText, responseCode);
             }
-        } catch (IOException e) {
-            throw new IOException("[ERROR] Unable to parse server response.");
+            responseJson = JacksonUtils.getObjectMapper().readValue(response.getEntity().getContent(), ObjectNode.class);
+        } catch (Exception e) {
+            throw e;
         }
         return responseJson;
     }
+
+    /**
+     * Convenience method for requests without body. Not difficult to remove, but the code is easier to read if you
+     * don't have to pass 'null' when calling it
+     *
+     * @param type Type of request, as selected from one of the options in the inner enum.
+     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
+     * @return response as JSON
+     *
+     * @throws ServerException contains both response code and response body
+     */
+    public static ObjectNode sendMMSRequest(HttpRequestType type, URIBuilder requestUri)
+            throws IOException, URISyntaxException, ServerException {
+        return sendMMSRequest(type, requestUri, null);
+    }
+
+    /**
+     * General purpose method for running a cancellable request. Builds a new thread to run the request, and passes
+     * any relevant exception information back out via atomic references and generates new exceptions in calling thread
+     *
+     * @param type Type of request, as selected from one of the options in the inner enum.
+     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
+     * @param sendData Data to send as an entity/body along with the request, if desired. Support for GET and DELETE
+     *                 with body is included.
+     * @param progressStatus
+     * @return
+     * @throws IOException
+     * @throws URISyntaxException
+     * @throws ServerException contains both response code and response body
+     */
+    public static ObjectNode sendCancellableMMSRequest (HttpRequestType type, URIBuilder requestUri,
+                                                        ObjectNode sendData, ProgressStatus progressStatus)
+            throws IOException, URISyntaxException, ServerException {
+        final AtomicReference<ObjectNode> resp = new AtomicReference<>();
+        final AtomicReference<Integer> ecode = new AtomicReference<>();
+        final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
+        final AtomicReference<String> emsg = new AtomicReference<>();
+        final AtomicReference<String> einput = new AtomicReference<>();
+        Thread t = new Thread(() -> {
+            ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+            try {
+                response = sendMMSRequest(type, requestUri, sendData);
+                etype.set(null);
+                ecode.set(200);
+                emsg.set("");
+            } catch (URISyntaxException e) {
+                etype.set(ThreadRequestExceptionType.URISYNTAXEXCEPTION);
+                emsg.set(e.getReason());
+                einput.set(e.getInput());
+                e.printStackTrace();
+            } catch (ServerException ex) {
+                etype.set(ThreadRequestExceptionType.SERVEREXCEPTION);
+                ecode.set(ex.getCode());
+                emsg.set(ex.getMessage());
+                ex.printStackTrace();
+            } catch (IOException e) {
+                etype.set(ThreadRequestExceptionType.IOEXCEPTION);
+                emsg.set(e.getMessage());
+                e.printStackTrace();
+            }
+            resp.set(response);
+        });
+        t.start();
+        try {
+            t.join(CHECK_CANCEL_DELAY);
+            while (t.isAlive()) {
+                if (progressStatus.isCancel()) {
+                    Application.getInstance().getGUILog().log("[INFO] Request to server for elements cancelled.");
+                    //clean up thread?
+                    return null;
+                }
+                t.join(CHECK_CANCEL_DELAY);
+            }
+        } catch (Exception e) {
+
+        }
+        if (etype.get() == ThreadRequestExceptionType.URISYNTAXEXCEPTION) {
+            throw new URISyntaxException(einput.get(), emsg.get());
+        } else if (etype.get() == ThreadRequestExceptionType.SERVEREXCEPTION) {
+            throw new ServerException(emsg.get(), ecode.get());
+        } else if (etype.get() == ThreadRequestExceptionType.IOEXCEPTION) {
+            throw new IOException(emsg.get());
+        }
+        return resp.get();
+    }
+
+    /**
+     * Convenience method for requests without body. Not difficult to remove, but the code is easier to read if you
+     * don't have to pass 'null' when calling it
+     *
+     * @param type Type of request, as selected from one of the options in the inner enum.
+     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
+     * @param progressStatus
+     * @return response as JSON
+     *
+     * @throws ServerException contains both response code and response body
+     */
+    public static ObjectNode sendCancellableMMSRequest(HttpRequestType type, URIBuilder requestUri,
+                                                       ProgressStatus progressStatus)
+            throws IOException, URISyntaxException, ServerException {
+        return sendCancellableMMSRequest(type, requestUri, null, progressStatus);
+    }
+
 
     /**
      * Method to check if the currently logged in user has permissions to edit the specified site on
@@ -262,7 +314,7 @@ public class MMSUtils {
      * @return true if the site lists "editable":"true" for the logged in user, false otherwise
      * @throws ServerException
      */
-    public static boolean isUserSiteEditor(Project project, String site)
+    public static boolean isSiteEditable(Project project, String site)
             throws IOException, URISyntaxException, ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (site == null || site.equals("")) {
@@ -271,7 +323,7 @@ public class MMSUtils {
 
         // configure request
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
-        URIBuilder requestUri = getWorkspaceUri(project);
+        URIBuilder requestUri = getServiceWorkspacesUri(project);
         requestUri.setPath(requestUri.getPath() + "/sites");
 
         // do request
@@ -302,115 +354,61 @@ public class MMSUtils {
         return false;
     }
 
-
-    /*
-    public static String sendGet(URI requestUri) {
-        String response = "";
-        BufferedReader in = null;
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) requestUri.toURL().openConnection();
-            connection.setRequestMethod("GET");
-
-            connection.setRequestProperty("Authorization", "Basic " + TicketUtils.getAuthStringEnc());
-//            connection.setRequestProperty("Content-Type", "application/json"); 
-//            connection.setRequestProperty("charset", "utf-8");
-            
-            int responseCode = connection.getResponseCode();
-           //printErrors(responseCode);
-            
-            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String inputLine;
-            StringBuffer responseBuffer = new StringBuffer();
-            while ((inputLine = in.readLine()) != null) {
-                responseBuffer.append(inputLine);
+    /**
+     *
+     * @param code
+     * @param response
+     * @return
+     */
+    public static boolean processRequestErrors(String response, int code) throws IOException {
+        // disabling of popup messages is handled by Utils, which will redirect them to the GUILog if disabled
+        if (code != 200) {
+            if (code >= 500) {
+                Utils.showPopupMessage("Server Error. See message window for details.");
+                if (response != null) {
+                    Utils.guilog(response);
+                }
             }
-            in.close();
-            response = responseBuffer.toString();
-        } catch (MalformedURLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ProtocolException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
+            else if (code == 403) {
+                Utils.showPopupMessage("You do not have permission to do this.");
             }
-            if (in != null) {
+            else if (code == 401) {
+                Utils.showPopupMessage("You are not authorized or don't have permission. You can login and try again.");
+                TicketUtils.clearUsernameAndPassword();
+            }
+            else {
                 try {
-                    in.close();
-                } catch (IOException ignored) {}
+                    ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
+                    JsonNode value;
+                    if (responseJson != null) {
+                        if ((value = responseJson.get("message")) != null && value.isTextual()) {
+                            Utils.guilog(value.asText());
+                        } else {
+                            Utils.guilog("Server response: " + code +
+                                    (MDKOptionsGroup.getMDKOptions().isLogJson() ?
+                                            " " + JacksonUtils.getObjectMapper().writeValueAsString(responseJson) : ""));
+                        }
+                    } else {
+                        Utils.guilog("Server response: " + code + " " + response);
+                    }
+                } catch (IOException e) {
+                    Utils.guilog("[ERROR] Unexpected error processing MMS response.");
+                    Utils.guilog("Server response: " + code + " " + response);
+                    e.printStackTrace();
+                }
+                if (code == 400) {
+                    return false;
+                }
             }
+            return true;
         }
-        return response;
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
+        JsonNode value;
+        if ((responseJson != null) && ((value = responseJson.get("message")) != null) && value.isTextual()) {
+            Utils.guilog("Server message: 200 " + value.asText());
+        }
+        return false;
     }
-    
-    public static String sendPost(URIBuilder uriBuild, String postData) {
-        String response = "";
-        URI requestUri = null;
-        try {
-            requestUri = uriBuild.build();
-        } catch (URISyntaxException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
-        BufferedReader in = null;
-        OutputStream os = null;
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) requestUri.toURL().openConnection();
-            connection.setRequestMethod("POST");
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Authorization", "Basic " + TicketUtils.getAuthStringEnc());
-            connection.setRequestProperty("Content-Type", "application/json"); 
-            connection.setRequestProperty("charset", "utf-8");
-            
-            os = connection.getOutputStream();
-            os.write(postData.getBytes());
-            os.flush();
-            
-            int responseCode = connection.getResponseCode();
-           //printErrors(responseCode);
-            
-            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String inputLine;
-            StringBuffer responseBuffer = new StringBuffer();
-            while ((inputLine = in.readLine()) != null) {
-                responseBuffer.append(inputLine);
-            }
-            in.close();
-            response = responseBuffer.toString();
-        } catch (MalformedURLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ProtocolException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException ignored) {}
-            }
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException ignored) {}
-            }
-        }
-        return response;
-    }
-    */
 
     /**
      * Returns a URIBuilder object with a path = "/alfresco/service". Used as the base for all of the rest of the
@@ -420,7 +418,7 @@ public class MMSUtils {
      * @return URIBuilder
      * @throws URISyntaxException
      */
-    public static URIBuilder getBaseUri(Project project) throws URISyntaxException {
+    public static URIBuilder getServiceUri(Project project) {
         Model primaryModel = project.getModel();
         if (project == null || primaryModel == null) {
             return null;
@@ -432,10 +430,18 @@ public class MMSUtils {
         String uriPath = "/alfresco/service";
         String uriTicket = TicketUtils.getTicket(project);
 
-        URIBuilder uri = new URIBuilder(urlString);
-        uri.setPath(uriPath)
-            .setParameter("alf_ticket", uriTicket);
-        return uri;
+        URIBuilder uri = null;
+        try {
+            uri = new URIBuilder(urlString);
+            uri.setPath(uriPath)
+                    .setParameter("alf_ticket", uriTicket);
+            return uri;
+        } catch (URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generatation of MMS URL for " +
+                    "project. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -443,10 +449,12 @@ public class MMSUtils {
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
-     * @throws URISyntaxException
      */
-    public static URIBuilder getWorkspaceUri(Project project) throws URISyntaxException {
-        URIBuilder workspaceUri = getBaseUri(project);
+    public static URIBuilder getServiceWorkspacesUri(Project project) {
+        URIBuilder workspaceUri = getServiceUri(project);
+        if (workspaceUri == null) {
+            return null;
+        }
         //TODO add support for non-master workspaces
 //        String workspace = getSiteName(project);
         String workspace = "master";
@@ -459,10 +467,12 @@ public class MMSUtils {
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
-     * @throws URISyntaxException
      */
-    public static URIBuilder getSitesUri(Project project) throws URISyntaxException {
-        URIBuilder siteUri = getWorkspaceUri(project);
+    public static URIBuilder getServiceWorkspacesSitesUri(Project project) {
+        URIBuilder siteUri = getServiceWorkspacesUri(project);
+        if (siteUri == null) {
+            return null;
+        }
         String sites = getSiteName(project);
         siteUri.setPath(siteUri.getPath() + "/sites/" + sites);
         return siteUri;
@@ -474,10 +484,12 @@ public class MMSUtils {
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
-     * @throws URISyntaxException
      */
-    public static URIBuilder getProjectUri(Project project) throws URISyntaxException {
-        URIBuilder projectUri = getSitesUri(project);
+    public static URIBuilder getSerivceWorkspacesSitesProjectsUri(Project project) {
+        URIBuilder projectUri = getServiceWorkspacesSitesUri(project);
+        if (projectUri == null) {
+            return null;
+        }
         String projectId = project.getPrimaryProject().getProjectID();
         projectUri.setPath(projectUri.getPath() + "/projects/" + projectId);
         return projectUri;
@@ -488,10 +500,12 @@ public class MMSUtils {
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
-     * @throws URISyntaxException
      */
-    public static URIBuilder getElementsUri(Project project) throws URISyntaxException {
-        URIBuilder elementsUri = getSitesUri(project);
+    public static URIBuilder getServiceWorkspacesSitesProjectsElementsUri(Project project) {
+        URIBuilder elementsUri = getServiceWorkspacesSitesUri(project);
+        if (elementsUri == null) {
+            return null;
+        }
         elementsUri.setPath(elementsUri.getPath() + "/elements");
         return elementsUri;
     }
@@ -561,8 +575,6 @@ public class MMSUtils {
         }
         return siteString;
     }
-    
-
 
 }
 

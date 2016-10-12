@@ -1,10 +1,15 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.queue;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
 
 public class Request {
 
     private String json = "";
+    private ObjectNode jsondata = null;
+    private URIBuilder requestUri = null;
     private String url = "";
     private String method = "POST";
     private boolean feedback = false;
@@ -15,12 +20,31 @@ public class Request {
     private int numElements = 1;
     private boolean background = false;
 
+    public Request(URIBuilder uri, ObjectNode data, String method, boolean feedback) {
+        this.requestUri = uri;
+        this.jsondata = data;
+        this.method = method;
+        this.feedback = feedback;
+        this.suppressGui = !feedback;
+    }
+
     public Request(String url, String json, String method, boolean feedback) {
         this.url = url;
         this.json = json;
         this.method = method;
         this.feedback = feedback;
         this.suppressGui = !feedback;
+    }
+
+    public Request(URIBuilder uri, ObjectNode data, String method, boolean feedback, int wait, String type) {
+        this.requestUri = uri;
+        this.jsondata = data;
+        this.method = method;
+        this.feedback = feedback;
+        this.suppressGui = !feedback;
+        this.wait = wait * 1000 + 120000;
+        this.type = type;
+        this.numElements = wait;
     }
 
     public Request(String url, String json, String method, boolean feedback, int wait, String type) {

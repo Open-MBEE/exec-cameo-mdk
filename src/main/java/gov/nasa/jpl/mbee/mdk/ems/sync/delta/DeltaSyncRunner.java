@@ -18,7 +18,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateClientElementAction;
@@ -35,6 +34,7 @@ import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -346,11 +346,17 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsArrayNode.size() + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
                 try {
-                    OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(body), "POST", true, elementsArrayNode.size(), "Sync Changes"));
-                } catch (JsonProcessingException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                    OutputQueue.getInstance().offer(new Request(MMSUtils.getServiceWorkspacesSitesProjectsElementsUri(project), body, "POST", true, elementsArrayNode.size(), "Sync Changes"));
+                } catch (URISyntaxException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected URI processing exception. See logs for more information.");
                     e.printStackTrace();
                 }
+//                try {
+//                    OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(body), "POST", true, elementsArrayNode.size(), "Sync Changes"));
+//                } catch (JsonProcessingException e) {
+//                    Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+//                    e.printStackTrace();
+//                }
                 shouldLogNoLocalChanges = false;
             }
         }
@@ -373,11 +379,19 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             body.put("mmsVersion", MDKPlugin.VERSION);
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + elementsArrayNode.size() + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
             try {
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(body), "DELETEALL", true, elementsArrayNode.size(), "Sync Deletes"));
-            } catch (JsonProcessingException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                URIBuilder uri = MMSUtils.getServiceWorkspacesUri(project);
+                uri.setPath(uri.getPath() + "/elements");
+                OutputQueue.getInstance().offer(new Request(uri, body, "POST", true, elementsArrayNode.size(), "Sync Changes"));
+            } catch (URISyntaxException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected URI processing exception. See logs for more information.");
                 e.printStackTrace();
             }
+//            try {
+//                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(body), "DELETEALL", true, elementsArrayNode.size(), "Sync Deletes"));
+//            } catch (JsonProcessingException e) {
+//                Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+//                e.printStackTrace();
+//            }
             shouldLogNoLocalChanges = false;
         }
 

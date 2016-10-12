@@ -28,23 +28,15 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -54,9 +46,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Base64;
 
 public class TicketUtils {
@@ -206,12 +196,10 @@ public class TicketUtils {
         }
 
         // build request
-        URIBuilder requestUri = null;
-        try {
-            requestUri = MMSUtils.getBaseUri(project);
-        } catch (URISyntaxException e) {
-            //TODO
-            e.printStackTrace();
+        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        if (requestUri == null) {
+            ticket = "";
+            return ticket;
         }
         requestUri.setPath(requestUri.getPath() + "/api/login" + ticket);
         ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
@@ -248,12 +236,9 @@ public class TicketUtils {
         }
 
         // build request
-        URIBuilder requestUri = null;
-        try {
-            requestUri = MMSUtils.getBaseUri(project);
-        } catch (URISyntaxException e) {
-            //TODO
-            e.printStackTrace();
+        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        if (requestUri == null) {
+            return false;
         }
         requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticket);
 

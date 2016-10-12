@@ -15,7 +15,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 
@@ -43,7 +45,7 @@ public class SyncElements {
 
     public static Package getSyncPackage(Project project) {
         String folderId = getSyncPackageID(project);
-        Element folder = ExportUtility.getElementFromID(folderId);
+        Element folder = Converters.getIdToElementConverter().apply(folderId, project);
         return folder instanceof Package ? (Package) folder : null;
     }
 
@@ -220,7 +222,7 @@ public class SyncElements {
             return Collections.emptyList();
         }
         String folderId = project.getPrimaryProject().getProjectID() + "_sync";
-        Element folder = ExportUtility.getElementFromID(folderId);
+        Element folder = Converters.getIdToElementConverter().apply(folderId, project);
         if (folder == null) {
             return Collections.emptyList();
         }

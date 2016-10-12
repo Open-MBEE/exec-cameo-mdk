@@ -320,21 +320,20 @@ public class ExportUtility {
         return e.getID();
     }
 
-    public static Element getElementFromID(String id) {
-        if (id == null) {
+    public static Element getElementFromID(Project project, String id) {
+        if (project == null || id == null) {
             return null;
         }
-        Project prj = Application.getInstance().getProject();
         String[] ids = id.split("-slot-");
         if (ids.length < 2) {
-            if (id.equals(prj.getPrimaryProject().getProjectID())) {
-                return prj.getModel();
+            if (id.equals(project.getPrimaryProject().getProjectID())) {
+                return project.getModel();
             }
-            return (Element) prj.getElementByID(ids[0]);
+            return (Element) project.getElementByID(ids[0]);
         }
         else {
-            Element instancespec = (Element) prj.getElementByID(ids[0]);
-            Element definingFeature = (Element) prj.getElementByID(ids[1]);
+            Element instancespec = (Element) project.getElementByID(ids[0]);
+            Element definingFeature = (Element) project.getElementByID(ids[1]);
             if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
                 for (Slot slot : ((InstanceSpecification) instancespec).getSlot()) {
                     if (slot.getDefiningFeature() == definingFeature) {
