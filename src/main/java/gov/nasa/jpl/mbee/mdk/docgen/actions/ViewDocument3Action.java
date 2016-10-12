@@ -51,10 +51,10 @@ public class ViewDocument3Action extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element doc;
-    public static final String actionid = "ViewDocument3";
+    public static final String DEFAULT_ID = "ViewDocument3";
 
     public ViewDocument3Action(Element e) {
-        super(actionid, "Preview DocGen 3 Document", null, null);
+        super(DEFAULT_ID, "Preview DocGen 3 Document", null, null);
         doc = e;
     }
 

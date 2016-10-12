@@ -79,7 +79,7 @@ public class EMFBulkImporter implements BiFunction<Collection<ObjectNode>, Proje
         };
 
         bulkImport:
-        while (failedElementMap.isEmpty() && !objectNodes.isEmpty()) {
+        while (/*failedElementMap.isEmpty() && */!objectNodes.isEmpty()) {
             changelog = new Changelog<>();
             elementCache = new HashMap<>();
 

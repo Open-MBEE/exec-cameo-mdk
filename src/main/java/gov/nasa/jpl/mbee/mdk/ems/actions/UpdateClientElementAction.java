@@ -52,6 +52,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         validationSuite.addValidationRule(successfulChangeValidationRule);
     }
 
+    private final Changelog<String, ObjectNode> failedChangelog = new Changelog<>();
+
     public UpdateClientElementAction(Project project) {
         super(NAME, NAME, null, null);
         this.id = null;
@@ -103,6 +105,10 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         return elementObjectNode;
     }
 
+    public Changelog<String, ObjectNode> getFailedChangelog() {
+        return failedChangelog;
+    }
+
     @Override
     public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
         List<ObjectNode> elementsToUpdate = new ArrayList<>(1);
@@ -131,22 +137,26 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 Element element = entry.getKey().getFirst();
                 ObjectNode objectNode = entry.getKey().getSecond();
                 ImportException importException = entry.getValue();
+                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
+                    continue;
+                }
+                String sysmlId = sysmlIdJsonNode.asText();
                 // TODO Abstract this stuff to a converter @donbot
                 String name = null;
                 if (element == null) {
-                    if (objectNode != null) {
-                        JsonNode nameJsonNode = objectNode.get(MDKConstants.NAME_KEY);
-                        if (nameJsonNode != null && nameJsonNode.isTextual()) {
-                            name = nameJsonNode.asText("<>");
-                        }
+                    JsonNode nameJsonNode = objectNode.get(MDKConstants.NAME_KEY);
+                    if (nameJsonNode != null && nameJsonNode.isTextual()) {
+                        name = nameJsonNode.asText("<>");
                     }
                     if (name == null || name.isEmpty()) {
                         name = "<>";
                     }
                 }
                 failedChangeValidationRule.addViolation(new ValidationRuleViolation(element != null ? element : project.getPrimaryModel(), "["
-                        + (element != null ? "UPDATE" : "CREATE") + " FAILED]" + (element == null ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + objectNode.get(MDKConstants.SYSML_ID_KEY).asText("<>") : "")
+                        + (element != null ? "UPDATE" : "CREATE") + " FAILED]" + (element == null ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + sysmlId : "")
                         + (element == null && importException != null ? " -" : "") + (importException != null ? " " + importException.getMessage() : "")));
+                failedChangelog.addChange(sysmlId, objectNode, element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
                 try {
@@ -188,10 +198,11 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 }
                 else {
                     failedChangeValidationRule.addViolation(element, "[DELETE FAILED]");
+                    failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                 }
             }
             if (SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().closeSession();;
+                SessionManager.getInstance().closeSession();
             }
         }
         if (validationSuite.hasErrors()) {

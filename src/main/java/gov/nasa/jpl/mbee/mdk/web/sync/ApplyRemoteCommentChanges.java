@@ -170,7 +170,7 @@ public class ApplyRemoteCommentChanges extends ChangeTheModel {
             // This can happen when comments are created and deleted
             // on DocWeb before the import happens.
             // log("Can't find local comment to apply imported deletion: "
-            // + imported.getId() + " "
+            // + imported.getElementID() + " "
             // + CommentUtil.truncateBody(imported.getBody()));
             return; // close enough
         }

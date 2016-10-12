@@ -33,6 +33,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -43,18 +44,18 @@ public class ValidateElementDepthAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Collection<Element> start;
-    public static final String actionid = "ValidateElementDepth";
+    public static final String DEFAULT_ID = "ValidateElementDepth";
     private int depth = -2;
     private boolean cancel = false;
 
     public ValidateElementDepthAction(Element e, String name, int depth) {
-        super(actionid, name, null, null);
+        super(DEFAULT_ID, name, null, null);
         start = new ArrayList<Element>();
         start.add(e);
     }
 
     public ValidateElementDepthAction(Collection<Element> e, String name, int depth) {
-        super(actionid, name, null, null);
+        super(DEFAULT_ID, name, null, null);
         start = e;
     }
 
@@ -106,10 +107,17 @@ public class ValidateElementDepthAction extends MDAction {
         }
 
         if (!cancel) {
-            ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(start, Application.getInstance().getProject(), false, depth), "Manual Sync (depth: " + Integer.toString(depth) + ")", true, 0);
+            ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), false, depth);
+            ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync (depth: " + Integer.toString(depth) + ")", true, 0);
+            if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
+                Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), "Manual Sync Validation");
+            }
+            else {
+                Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");
+            }
         }
         else {
-            Application.getInstance().getGUILog().log("[INFO] Cancel pressed!!! Stopping validate.");
+            Application.getInstance().getGUILog().log("[INFO] Cancel pressed. Aborting validation.");
         }
     }
 }

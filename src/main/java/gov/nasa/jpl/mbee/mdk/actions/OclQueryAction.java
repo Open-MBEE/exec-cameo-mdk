@@ -57,7 +57,7 @@ public class OclQueryAction extends MDAction {
     //private List<Element>        context          = new ArrayList<Element>();
     private Object context;
 
-    public static final String actionid = "OclQuery";
+    public static final String DEFAULT_ID = "OclQuery";
 
     public static String actionText = "Run OCL Query";
 
@@ -73,7 +73,7 @@ public class OclQueryAction extends MDAction {
     public static boolean useNewOclEvaluator = true;
 
     public OclQueryAction(Element context) {
-        super(actionid, actionText, null, null);
+        super(DEFAULT_ID, actionText, null, null);
         setContext(context);
     }
 

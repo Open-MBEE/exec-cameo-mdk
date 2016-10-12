@@ -18,11 +18,11 @@ import java.util.Collection;
 public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
 
     Collection<Element> elements;
-    public static final String actionid = "ConvertComponent";
+    public static final String DEFAULT_ID = "ConvertComponent";
     private static final long serialVersionUID = 1L;
 
     public ComponentToClassRefactorWithIDAction(Collection<Element> e) {
-        super(actionid, "Convert Component To Class", null, null);
+        super(DEFAULT_ID, "Convert Component To Class", null, null);
         this.elements = e;
     }
 

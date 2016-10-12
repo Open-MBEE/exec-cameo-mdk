@@ -31,16 +31,16 @@ import java.util.List;
  */
 // TODO Abstract this and update to a common class @donbot
 public class CommitClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
-    private static final String NAME = "Commit Element to MMS";
+    private static final String DEFAULT_ID = "Commit Element to MMS";
 
-    private final String id;
+    private final String elementID;
     private final Element element;
     private final ObjectNode elementObjectNode;
     private final Project project;
 
-    public CommitClientElementAction(String id, Element element, ObjectNode elementObjectNode, Project project) {
-        super(NAME, NAME, null, null);
-        this.id = id;
+    public CommitClientElementAction(String elementID, Element element, ObjectNode elementObjectNode, Project project) {
+        super(DEFAULT_ID, DEFAULT_ID, null, null);
+        this.elementID = elementID;
         this.element = element;
         this.elementObjectNode = elementObjectNode;
         this.project = project;
@@ -59,7 +59,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                         elementsToUpdate.add(elementObjectNode);
                     }
                     else {
-                        elementsToDelete.add(((CommitClientElementAction) action).getId());
+                        elementsToDelete.add(((CommitClientElementAction) action).getElementID());
                     }
                     break;
                 }
@@ -78,8 +78,8 @@ public class CommitClientElementAction extends RuleViolationAction implements An
         return true;
     }
 
-    public String getId() {
-        return id;
+    public String getElementID() {
+        return elementID;
     }
 
     public Element getElement() {
@@ -98,7 +98,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             elementsToUpdate.add(elementObjectNode);
         }
         else {
-            elementsToDelete.add(id);
+            elementsToDelete.add(elementID);
         }
         try {
             CommitClientElementAction.request(elementsToUpdate, elementsToDelete, project);

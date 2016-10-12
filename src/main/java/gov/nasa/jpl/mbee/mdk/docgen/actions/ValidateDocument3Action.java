@@ -47,10 +47,10 @@ public class ValidateDocument3Action extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element doc;
-    public static final String actionid = "ValidateDocument3";
+    public static final String DEFAULT_ID = "ValidateDocument3";
 
     public ValidateDocument3Action(Element e) {
-        super(actionid, "Validate DocGen 3 Document", null, null);
+        super(DEFAULT_ID, "Validate DocGen 3 Document", null, null);
         doc = e;
     }
 

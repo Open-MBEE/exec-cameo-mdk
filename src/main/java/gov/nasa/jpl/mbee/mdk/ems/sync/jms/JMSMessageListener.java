@@ -102,7 +102,6 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                         continue;
                     }
-                    // TODO what is this? @donbot
                     try {
                         if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply((ObjectNode) elementJsonNode, project, false, project.getModel()) == null) {
                             continue;

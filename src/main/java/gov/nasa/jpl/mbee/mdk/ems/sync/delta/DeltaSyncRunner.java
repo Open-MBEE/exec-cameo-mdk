@@ -88,6 +88,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     @Override
     public void run(ProgressStatus ps) {
         ps.setDescription("Initializing");
+        // TODO Abstract to common sync checks @donbot
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && TeamworkUtils.getLoggedUserName() == null) {
             Utils.guilog("[ERROR] You need to be logged in to Teamwork first.");
             return;
@@ -400,6 +401,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
             UpdateClientElementAction updateClientElementAction = new UpdateClientElementAction(project);
             updateClientElementAction.process(jmsElementsToCreateOrUpdateLocally, jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()));
+            failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
 
             listener.setDisabled(false);
         }
@@ -471,14 +473,22 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
         }
         unprocessedLocalChangelog = unprocessedLocalChangelog.and(failedLocalChangelog, (s, element) -> null);
-        SyncElements.setByType(project, SyncElement.Type.LOCAL, SyncElements.buildJson(unprocessedLocalChangelog).toJSONString());
+        try {
+            SyncElements.setByType(project, SyncElement.Type.LOCAL, JacksonUtils.getObjectMapper().writeValueAsString(SyncElements.buildJson(unprocessedLocalChangelog)));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
         Changelog<String, Void> unprocessedJmsChangelog = new Changelog<>();
         if (!shouldUpdate) {
             unprocessedJmsChangelog = unprocessedJmsChangelog.and(jmsChangelog);
         }
         unprocessedJmsChangelog = unprocessedJmsChangelog.and(failedJmsChangelog);
-        SyncElements.setByType(project, SyncElement.Type.MMS, SyncElements.buildJson(unprocessedJmsChangelog).toJSONString());
+        try {
+            SyncElements.setByType(project, SyncElement.Type.MMS, JacksonUtils.getObjectMapper().writeValueAsString(SyncElements.buildJson(unprocessedJmsChangelog)));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
         SessionManager.getInstance().closeSession();
         listener.setDisabled(false);

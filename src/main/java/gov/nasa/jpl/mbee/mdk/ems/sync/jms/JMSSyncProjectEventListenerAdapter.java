@@ -48,7 +48,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         } catch (JMSException e) {
             e.printStackTrace();
         }
-        projectMappings.remove(project.getID());
+        projectMappings.remove(project.getPrimaryProject().getProjectID());
     }
 
     @Override
@@ -170,9 +170,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     public static JMSSyncProjectMapping getProjectMapping(Project project) {
-        JMSSyncProjectMapping JMSSyncProjectMapping = projectMappings.get(project.getID());
+        JMSSyncProjectMapping JMSSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
         if (JMSSyncProjectMapping == null) {
-            projectMappings.put(project.getID(), JMSSyncProjectMapping = new JMSSyncProjectMapping());
+            projectMappings.put(project.getPrimaryProject().getProjectID(), JMSSyncProjectMapping = new JMSSyncProjectMapping());
         }
         return JMSSyncProjectMapping;
     }

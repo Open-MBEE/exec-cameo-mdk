@@ -18,12 +18,12 @@ import java.util.*;
 
 public class UpdateAllDocumentsAction extends MMSAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "GenerateAllDocs";
+    public static final String DEFAULT_ID = "GenerateAllDocs";
 
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
 
     public UpdateAllDocumentsAction() {
-        super(actionid, "Generate All Documents", null, null);
+        super(DEFAULT_ID, "Generate All Documents", null, null);
     }
 
     @SuppressWarnings("unchecked")

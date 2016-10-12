@@ -53,10 +53,10 @@ public class MigrateToClassViewAction extends MDAction {
     private static final long serialVersionUID = 1L;
     private Element doc;
 
-    public static final String actionid = "MigrateToClassViews";
+    public static final String DEFAULT_ID = "MigrateToClassViews";
 
     public MigrateToClassViewAction(Element e) {
-        super(actionid, "Migrate to Class Views", null, null);
+        super(DEFAULT_ID, "Migrate to Class Views", null, null);
         doc = e;
     }
 

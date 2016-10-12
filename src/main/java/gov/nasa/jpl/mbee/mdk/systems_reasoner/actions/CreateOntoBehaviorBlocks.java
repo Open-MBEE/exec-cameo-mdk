@@ -34,7 +34,7 @@ public class CreateOntoBehaviorBlocks extends SRAction {
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "Create OntoBehavior Blocks";
+    public static final String DEFAULT_ID = "Create OntoBehavior Blocks";
     private Classifier classifier;
     private Classifier behaviorOccurence = null;
     private int stateCounter;
@@ -43,7 +43,7 @@ public class CreateOntoBehaviorBlocks extends SRAction {
     private boolean isValidationMode;
 
     public CreateOntoBehaviorBlocks(final Classifier classifier, boolean isValidationMode) {
-        super(actionid, classifier);
+        super(DEFAULT_ID, classifier);
         this.classifier = classifier;
         this.isValidationMode = isValidationMode;
     }

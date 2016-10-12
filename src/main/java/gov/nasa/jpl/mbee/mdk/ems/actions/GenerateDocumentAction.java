@@ -54,10 +54,10 @@ public class GenerateDocumentAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element doc;
-    public static final String actionid = "GenerateDocument";
+    public static final String DEFAULT_ID = "GenerateDocument";
 
     public GenerateDocumentAction(Element e) {
-        super(actionid, "Generate DocGen 3 Document", null, null);
+        super(DEFAULT_ID, "Generate DocGen 3 Document", null, null);
         doc = e;
     }
 

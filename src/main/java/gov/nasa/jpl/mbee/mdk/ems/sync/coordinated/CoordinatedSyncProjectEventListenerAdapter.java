@@ -38,7 +38,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (realTimeSyncProjectMapping.isDisabled()) {
             return;
         }
-        projectMappings.remove(project.getID());
+        projectMappings.remove(project.getPrimaryProject().getProjectID());
     }
 
     @Override
@@ -114,9 +114,9 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     public static RealTimeSyncProjectMapping getProjectMapping(Project project) {
-        RealTimeSyncProjectMapping realTimeSyncProjectMapping = projectMappings.get(project.getID());
+        RealTimeSyncProjectMapping realTimeSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
         if (realTimeSyncProjectMapping == null) {
-            projectMappings.put(project.getID(), realTimeSyncProjectMapping = new RealTimeSyncProjectMapping());
+            projectMappings.put(project.getPrimaryProject().getProjectID(), realTimeSyncProjectMapping = new RealTimeSyncProjectMapping());
         }
         return realTimeSyncProjectMapping;
     }

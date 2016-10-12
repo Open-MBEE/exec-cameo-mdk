@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications.TimeEvent;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.emf.EMFExporter;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
@@ -52,9 +51,15 @@ public class Converters {
                     return null;
                 }
                 if (id.equals(project.getPrimaryProject().getProjectID())) {
-                    return project.getModel();
+                    return null;
                 }
                 BaseElement baseElement = project.getElementByID(id);
+                if (baseElement == null && id.endsWith(MDKConstants.PRIMARY_MODEL_ID_SUFFIX)) {
+                    String projectId = id.substring(0, id.length() - MDKConstants.PRIMARY_MODEL_ID_SUFFIX.length());
+                    if (projectId.equals(project.getPrimaryProject().getProjectID())) {
+                        return project.getPrimaryModel();
+                    }
+                }
                 if (baseElement == null && id.endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX)) {
                     String stereotypedElementId = id.substring(0, id.length() - MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX.length());
                     Element stereotypedElement = ID_TO_ELEMENT_CONVERTER.apply(stereotypedElementId, project);

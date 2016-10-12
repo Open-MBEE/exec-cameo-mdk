@@ -52,10 +52,10 @@ import java.util.List;
 public class ValidateOldDocgen extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "ValidateOldDocuments";
+    public static final String DEFAULT_ID = "ValidateOldDocuments";
 
     public ValidateOldDocgen() {
-        super(actionid, "Find Old DocGen Documents", null, null);
+        super(DEFAULT_ID, "Find Old DocGen Documents", null, null);
     }
 
     @Override

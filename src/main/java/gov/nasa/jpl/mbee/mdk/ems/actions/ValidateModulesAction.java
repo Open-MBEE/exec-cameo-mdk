@@ -9,10 +9,10 @@ import java.awt.event.ActionEvent;
 
 public class ValidateModulesAction extends MMSAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "ValidateModules";
+    public static final String DEFAULT_ID = "ValidateModules";
 
     public ValidateModulesAction() {
-        super(actionid, "Modules", null, null);
+        super(DEFAULT_ID, "Modules", null, null);
     }
 
     public class ValidationRunner implements RunnableWithProgress {

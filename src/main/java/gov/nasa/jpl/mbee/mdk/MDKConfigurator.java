@@ -146,19 +146,16 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         Stereotype documentView = Utils.getProductStereotype();
         Stereotype classview = Utils.getViewClassStereotype();
         Stereotype elementGroupStereotype = Utils.getElementGroupStereotype();
-        if (e == null) {
-            return;
-        }
 
         // top-level context menu: Refactor With ID
         ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");
         if (e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)) {
-            if (manager.getActionFor(ClassToComponentRefactorWithIDAction.actionid) == null) {
+            if (manager.getActionFor(ClassToComponentRefactorWithIDAction.DEFAULT_ID) == null) {
                 refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(es));
             }
         }
         if (e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component) {
-            if (manager.getActionFor(ComponentToClassRefactorWithIDAction.actionid) == null) {
+            if (manager.getActionFor(ComponentToClassRefactorWithIDAction.DEFAULT_ID) == null) {
                 refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(es));
             }
         }
@@ -168,31 +165,29 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         if (ViewEditUtils.isPasswordSet()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
-                if (manager.getActionFor(ExportModelAction.actionid) == null) {
-                    models.addAction(new ExportModelAction(e));
-                }
-                if (e instanceof Model && manager.getActionFor(InitializeProjectAction.actionid) == null) {
-                    models.addAction(new InitializeProjectAction());
+                if (e instanceof Model && manager.getActionFor(InitializeProjectAction.DEFAULT_ID) == null) {
+                    models.addAction(new InitializeProjectAction(Application.getInstance().getProject(), false, true));
+                    models.addAction(new InitializeProjectAction(Application.getInstance().getProject(), true, true));
                 }
             }
-            if (manager.getActionFor(ValidateModelAction.actionid) == null) {
+            if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {
                 models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models" : "Validate Models"));
             }
-            if (manager.getActionFor(ValidateElementAction.actionid) == null) {
+            if (manager.getActionFor(ValidateElementAction.DEFAULT_ID) == null) {
                 models.addAction(new ValidateElementAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Element" : "Validate Element"));
             }
-            if (manager.getActionFor(ValidateElementDepthAction.actionid) == null) {
+            if (manager.getActionFor(ValidateElementDepthAction.DEFAULT_ID) == null) {
                 models.addAction(new ValidateElementDepthAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models (specified depth)" : "Validate Models (specified depth)"));
             }
 
             /*if (e instanceof Package) {
-                if (manager.getActionFor(ExportAllDocuments.actionid) == null)
+                if (manager.getActionFor(ExportAllDocuments.DEFAULT_ID) == null)
                     models.addAction(new ExportAllDocuments(e));
             }*/
         }
         else {
             ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
-            if (manager.getActionFor(EMSLoginAction.actionid) == null) {
+            if (manager.getActionFor(EMSLoginAction.DEFAULT_ID) == null) {
                 login.addAction(new EMSLoginAction());
             }
             // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
@@ -214,7 +209,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(Utils2.asList(targets, Object.class));
-            if (manager.getActionFor(RunUserValidationScriptAction.actionid) == null) {
+            if (manager.getActionFor(RunUserValidationScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserValidationScriptAction(us, true));
             }
         }
@@ -227,7 +222,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGen3Profile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(Utils2.asList(targets, Object.class));
-            if (manager.getActionFor(RunUserScriptAction.actionid) == null) {
+            if (manager.getActionFor(RunUserScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserScriptAction(us, true));
             }
         }
@@ -261,10 +256,10 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             if (ViewEditUtils.isPasswordSet()) {
                 //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
-                /*NMAction action = manager.getActionFor(ValidateViewAction.actionid);
+                /*NMAction action = manager.getActionFor(ValidateViewAction.DEFAULT_ID);
                 if (action == null)
                     views.addAction(new ValidateViewAction(e));
-                action = manager.getActionFor(ValidateViewRecursiveAction.actionid);
+                action = manager.getActionFor(ValidateViewRecursiveAction.DEFAULT_ID);
                 if (action == null)
                     views.addAction(new ValidateViewRecursiveAction(e));*/
                 boolean areAllDocuments = true;
@@ -275,7 +270,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                     }
                 }
                 /*if (areAllDocuments) {
-                    NMAction action = manager.getActionFor(ValidateHierarchyAction.actionid);
+                    NMAction action = manager.getActionFor(ValidateHierarchyAction.DEFAULT_ID);
                     if (action == null)
                         modelLoad2.addAction(new ValidateHierarchyAction(es));
                 }*/
@@ -289,30 +284,30 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                     viewsC.addAction(new ExportViewAction(e, true));
                 */
                 ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
-                NMAction action = manager.getActionFor(GenerateViewPresentationAction.actionid);
+                NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(es, false));
                 }
-                action = manager.getActionFor(GenerateViewPresentationAction.recurseActionid);
+                action = manager.getActionFor(GenerateViewPresentationAction.RECURSE_DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(es, true));
                 }
-                /*action = manager.getActionFor(OrganizeViewInstancesAction.actionid);
+                /*action = manager.getActionFor(OrganizeViewInstancesAction.DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new OrganizeViewInstancesAction(es, false));
                 }
-                action = manager.getActionFor(OrganizeViewInstancesAction.recurseActionid);
+                action = manager.getActionFor(OrganizeViewInstancesAction.RECURSE_DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new OrganizeViewInstancesAction(es, true));
                 }
-                action = manager.getActionFor(OneClickUpdateDoc.actionid);
+                action = manager.getActionFor(OneClickUpdateDoc.DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new OneClickUpdateDoc(es));
                 }*/
             }
             else {
                 ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
-                if (manager.getActionFor(EMSLoginAction.actionid) == null) {
+                if (manager.getActionFor(EMSLoginAction.DEFAULT_ID) == null) {
                     login.addAction(new EMSLoginAction());
                 }
                 // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
@@ -324,7 +319,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             ActionsStateUpdater.updateActionsState();
 
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
-            //action = manager.getActionFor(ExportViewAction.actionid);
+            //action = manager.getActionFor(ExportViewAction.DEFAULT_ID);
             //if (action == null)
             //addEditableViewActions(c, (NamedElement)e);
         }
@@ -332,13 +327,13 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                                                                          // --
                                                                          // hasStereotypeOrDerived()?
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
-            NMAction act = manager.getActionFor(OrganizeViewEditorAction.actionid);
+            NMAction act = manager.getActionFor(OrganizeViewEditorAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new OrganizeViewEditorAction(e));
-            act = manager.getActionFor(DeleteProjectAction.actionid);
+            act = manager.getActionFor(DeleteProjectAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new DeleteProjectAction(e));
-            act = manager.getActionFor(EMSLogoutAction.actionid);
+            act = manager.getActionFor(EMSLogoutAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new EMSLogoutAction());
         }
@@ -346,21 +341,21 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                                                                         // --
                                                                         // hasStereotypeOrDerived()?
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
-            NMAction act = manager.getActionFor(DeleteVolumeAction.actionid);
+            NMAction act = manager.getActionFor(DeleteVolumeAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new DeleteVolumeAction(e));
-            act = manager.getActionFor(EMSLogoutAction.actionid);
+            act = manager.getActionFor(EMSLogoutAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new EMSLogoutAction());
         }
         if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.document)
                 || StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
             ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
-            NMAction act = manager.getActionFor(DeleteDocumentAction.actionid);
+            NMAction act = manager.getActionFor(DeleteDocumentAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new DeleteDocumentAction(e));
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
-                act = manager.getActionFor(OrganizeDocumentAction.actionid);
+                act = manager.getActionFor(OrganizeDocumentAction.DEFAULT_ID);
                 if (act == null)
                     c.addAction(new OrganizeDocumentAction(e));
             }
@@ -371,7 +366,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
             // DefaultPropertyResourceProvider pp = new
             // DefaultPropertyResourceProvider();
-            act = manager.getActionFor(ValidateOldDocgen.actionid);
+            act = manager.getActionFor(ValidateOldDocgen.DEFAULT_ID);
             if (act == null) {
                 c.addAction(new ValidateOldDocgen());
             }
@@ -384,44 +379,44 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
             // DefaultPropertyResourceProvider pp = new
             // DefaultPropertyResourceProvider();
-            act = manager.getActionFor(ValidateDocument3Action.actionid);
+            act = manager.getActionFor(ValidateDocument3Action.DEFAULT_ID);
             if (act == null) {
                 c.addAction(new ValidateDocument3Action(e));
             }
 
-            act = manager.getActionFor(ValidateViewStructureAction.actionid);
+            act = manager.getActionFor(ValidateViewStructureAction.DEFAULT_ID);
             if (act == null && e instanceof Classifier) {
                 c.addAction(new ValidateViewStructureAction(e));
             }
 
-            act = manager.getActionFor(ViewDocument3Action.actionid);
+            act = manager.getActionFor(ViewDocument3Action.DEFAULT_ID);
             if (act == null) {
                 c.addAction(new ViewDocument3Action(e));
             }
 
-            act = manager.getActionFor(GenerateDocumentAction.actionid);
+            act = manager.getActionFor(GenerateDocumentAction.DEFAULT_ID);
             if (act == null) {
                 c.addAction(new GenerateDocumentAction(e));
             }
 
             if (StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {
                 if (e instanceof Package) {
-                    act = manager.getActionFor(NumberDependencyAction.actionid);
+                    act = manager.getActionFor(NumberDependencyAction.DEFAULT_ID);
                     if (act == null) {
                         c.addAction(new NumberDependencyAction(e));
                     }
-                    act = manager.getActionFor(MigrateToClassViewAction.actionid);
+                    act = manager.getActionFor(MigrateToClassViewAction.DEFAULT_ID);
                     if (act == null) {
                         c.addAction(new MigrateToClassViewAction(e));
                     }
                 }
                 if (e instanceof Class) {
-                    act = manager.getActionFor(NumberAssociationAction.actionid);
+                    act = manager.getActionFor(NumberAssociationAction.DEFAULT_ID);
                     if (act == null) {
                         c.addAction(new NumberAssociationAction((Class) e));
                     }
                 }
-                //act = manager.getActionFor(PublishDocWebAction.actionid); 
+                //act = manager.getActionFor(PublishDocWebAction.DEFAULT_ID);
                 //if (act == null) 
                 //   c.addAction(new PublishDocWebAction((NamedElement)e));
             }
@@ -429,14 +424,14 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
              * if (e instanceof Activity &&
              * StereotypesHelper.hasStereotypeOrDerived(e,
              * DocGen3Profile.documentStereotype)) { act =
-             * manager.getActionFor(PublishDocWebAction.actionid); if (act ==
+             * manager.getActionFor(PublishDocWebAction.DEFAULT_ID); if (act ==
              * null) c.addAction(new PublishDocWebAction((NamedElement)e)); }
              */
         }
 
         if (StereotypesHelper.hasStereotypeOrDerived(e, sysmlviewpoint)) {
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
-            NMAction act = manager.getActionFor(InstanceViewpointAction.actionid);
+            NMAction act = manager.getActionFor(InstanceViewpointAction.DEFAULT_ID);
             if (act == null) {
                 c.addAction(new InstanceViewpointAction(e));
             }
@@ -457,7 +452,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
 //        			els.add((Property)el);
 //        	}
 //        	ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
-//        	NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
+//        	NMAction act = manager.getActionFor(CreateRestrictedValueAction.DEFAULT_ID);
 //        	if (act == null)
 //        		c.addAction(new CreateRestrictedValueAction((Property) e, els));
 //        }
@@ -469,7 +464,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         }
         if (!(selectedProperties.isEmpty())) {
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
-            NMAction act = manager.getActionFor(CreateRestrictedValueAction.actionid);
+            NMAction act = manager.getActionFor(CreateRestrictedValueAction.DEFAULT_ID);
             if (act == null) {
                 c.addAction(new CreateRestrictedValueAction(selectedProperties));
             }

@@ -22,11 +22,11 @@ public class AspectRemedyAction extends GenericRuleViolationAction {
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "Add Aspect Realization";
+    public static final String DEFAULT_ID = "Add Aspect Realization";
     public static HashMap<Classifier, Classifier> classifiersToAspectsMap = new HashMap<Classifier, Classifier>();
 
     public AspectRemedyAction(Classifier classifier, Classifier aspect) {
-        super(actionid);
+        super(DEFAULT_ID);
         classifiersToAspectsMap.put(classifier, aspect);
     }
 

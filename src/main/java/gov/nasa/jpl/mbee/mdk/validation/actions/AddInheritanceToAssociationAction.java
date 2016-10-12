@@ -15,29 +15,29 @@ public class AddInheritanceToAssociationAction extends SRAction {
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "Add inheritance to assocation.";
+    public static final String DEFAULT_ID = "Add inheritance to assocation.";
     private Association association;
     private Association superAssociation;
 
-    public AddInheritanceToAssociationAction(String actionid) {
-        super(actionid);
+    public AddInheritanceToAssociationAction(String id) {
+        super(id);
 
     }
 
-    public AddInheritanceToAssociationAction(String actionid, Element element) {
-        super(actionid, element);
+    public AddInheritanceToAssociationAction(String id, Element element) {
+        super(id, element);
 
     }
 
     public AddInheritanceToAssociationAction(Association association, Association superAssociation) {
-        super(actionid);
+        super(DEFAULT_ID);
         this.association = association;
         this.superAssociation = superAssociation;
 
     }
 
     public void actionPerformed(ActionEvent e) {
-        SessionManager.getInstance().createSession(actionid);
+        SessionManager.getInstance().createSession(DEFAULT_ID);
         if (association != null) {
             if (superAssociation != null) {
                 Generalization gen = UMLFactory.eINSTANCE.createGeneralization();

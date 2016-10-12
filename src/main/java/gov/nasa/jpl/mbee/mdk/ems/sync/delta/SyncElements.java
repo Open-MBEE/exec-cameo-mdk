@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.delta;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -13,6 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
@@ -32,20 +34,11 @@ import java.util.*;
 
 //@donbot update json simple to jackson
 public class SyncElements {
-    public static Map<String, Changelog.ChangeType> CHANGE_TYPE_KEY_MAP = new LinkedHashMap<>(3);
-
-    static {
-        // TODO Update keys :'(
-        CHANGE_TYPE_KEY_MAP.put("added", Changelog.ChangeType.CREATED);
-        CHANGE_TYPE_KEY_MAP.put("deleted", Changelog.ChangeType.DELETED);
-        CHANGE_TYPE_KEY_MAP.put("changed", Changelog.ChangeType.UPDATED);
-    }
-
     private static final String CLEAR_SUFFIX = "_clear";
     private static final DateFormat NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
 
     private static String getSyncPackageID(Project project) {
-        return project.getPrimaryProject().getProjectID() + "_sync";
+        return project.getPrimaryProject().getProjectID() + MDKConstants.SYNC_SYSML_ID_SUFFIX;
     }
 
     public static Package getSyncPackage(Project project) {
@@ -182,14 +175,14 @@ public class SyncElements {
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject buildJson(Changelog<String, ?> changelog) {
-        JSONObject jsonObject = new JSONObject();
-        for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
-            JSONArray jsonArray = new JSONArray();
-            jsonArray.addAll(changelog.get(entry.getValue()).keySet());
-            jsonObject.put(entry.getKey(), jsonArray);
+    public static ObjectNode buildJson(Changelog<String, ?> changelog) {
+        ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
+        for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
+            ArrayNode arrayNode = JacksonUtils.getObjectMapper().createArrayNode();
+            changelog.get(changeType).keySet().forEach(arrayNode::add);
+            objectNode.set(changeType.name().toLowerCase(), arrayNode);
         }
-        return jsonObject;
+        return objectNode;
     }
 
     public static Changelog<String, Void> buildChangelog(SyncElement syncElement) {
@@ -207,16 +200,16 @@ public class SyncElements {
 
     public static Changelog<String, Void> buildChangelog(ObjectNode objectNode) {
         Changelog<String, Void> changelog = new Changelog<>();
-        for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_TYPE_KEY_MAP.entrySet()) {
-            JsonNode jsonNode = objectNode.get(entry.getKey());
-            if (jsonNode == null || !jsonNode.isObject()) {
+        for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
+            JsonNode jsonNode = objectNode.get(changeType.name().toLowerCase());
+            if (jsonNode == null || !jsonNode.isArray()) {
                 continue;
             }
             for (JsonNode jsonNode1 : jsonNode) {
                 if (jsonNode1 == null || !jsonNode1.isTextual()) {
                     continue;
                 }
-                changelog.addChange(jsonNode1.asText(), null, entry.getValue());
+                changelog.addChange(jsonNode1.asText(), null, changeType);
             }
         }
         return changelog;

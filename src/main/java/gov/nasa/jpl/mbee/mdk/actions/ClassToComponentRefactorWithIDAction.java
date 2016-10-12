@@ -19,17 +19,17 @@ import java.util.Collection;
 public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
 
     Collection<Element> elements;
-    public static final String actionid = "ConvertClass";
+    public static final String DEFAULT_ID = "ConvertClass";
     private static final long serialVersionUID = 1L;
 
     public ClassToComponentRefactorWithIDAction(Collection<Element> e) {
-        super(actionid, "Convert Class To Component", null, null);
+        super(DEFAULT_ID, "Convert Class To Component", null, null);
         this.elements = e;
     }
 
     public void actionPerformed(ActionEvent e) {
         Boolean con = Utils.getUserYesNoAnswer("Warning! Refactor with ID action is best used with an immediate commit to"
-                + " teamwork \nand no other active teamwork users on this project, else data loss may \n"
+                + " Teamwork \nand no other active teamwork users on this project, else data loss may \n"
                 + "happen on update from teamwork. Do you want to continue?");
         if (con == null || !con) {
             return;
