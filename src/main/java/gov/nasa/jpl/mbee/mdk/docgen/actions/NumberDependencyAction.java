@@ -49,10 +49,10 @@ public class NumberDependencyAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element doc;
-    public static final String actionid = "NumberDependencies";
+    public static final String DEFAULT_ID = "NumberDependencies";
 
     public NumberDependencyAction(Element e) {
-        super(actionid, "Number View Dependencies", null, null);
+        super(DEFAULT_ID, "Number View Dependencies", null, null);
         doc = e;
     }
 

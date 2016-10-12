@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.ems.validation.actions;
+package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;

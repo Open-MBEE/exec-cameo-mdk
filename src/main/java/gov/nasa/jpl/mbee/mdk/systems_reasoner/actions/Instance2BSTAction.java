@@ -19,18 +19,18 @@ public class Instance2BSTAction extends SRAction {
      */
     private static final long serialVersionUID = 1L;
 
-    public static final String actionid = "Convert Instance to BST";
+    public static final String DEFAULT_ID = "Convert Instance to BST";
     public List<InstanceSpecification> instances;
 
 
     public Instance2BSTAction(List<InstanceSpecification> instances) {
-        super(actionid);
+        super(DEFAULT_ID);
         this.instances = instances;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        SessionManager.getInstance().createSession(actionid);
+        SessionManager.getInstance().createSession(DEFAULT_ID);
         for (final InstanceSpecification instance : instances) {
             if (!instance.hasClassifier()) {
                 Application.getInstance().getGUILog().log("Instance " + instance.getQualifiedName() + " has no classifiers. Skipping BST conversion.");

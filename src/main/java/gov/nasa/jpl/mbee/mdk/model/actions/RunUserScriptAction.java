@@ -43,7 +43,7 @@ public class RunUserScriptAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private UserScript scripti;
-    public static final String actionid = "RunUserScript";
+    public static final String DEFAULT_ID = "RunUserScript";
 
     public RunUserScriptAction(UserScript e) {
         super(null, "Run User Script", null, null);
@@ -55,7 +55,7 @@ public class RunUserScriptAction extends MDAction {
     }
 
     public RunUserScriptAction(UserScript e, boolean useid) {
-        super(actionid, "Run User Script", null, null);
+        super(DEFAULT_ID, "Run User Script", null, null);
         scripti = e;
         String name = e.getStereotypeName();
         if (name != null) {

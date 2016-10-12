@@ -17,7 +17,7 @@ public class ValidateAction extends SRAction {
      */
     private static final long serialVersionUID = 1L;
 
-    public static final String actionid = "Validate";
+    public static final String DEFAULT_ID = "Validate";
     public List<? extends Element> elements;
 
     public ValidateAction(Element element) {
@@ -25,7 +25,7 @@ public class ValidateAction extends SRAction {
     }
 
     public ValidateAction(List<? extends Element> elements) {
-        super(actionid);
+        super(DEFAULT_ID);
         this.elements = elements;
     }
 

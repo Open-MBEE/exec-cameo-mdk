@@ -245,7 +245,7 @@ public class MDKHelper {
         Collection<Element> sync = new ArrayList<Element>();
         sync.add(validateTarget);
         ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), true, 0);
-        ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Validating Model", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
         Application.getInstance().getGUILog().log("Validated");
         validationWindow = new MDKValidationWindow(manualSyncRunner.getValidationSuite());
     }

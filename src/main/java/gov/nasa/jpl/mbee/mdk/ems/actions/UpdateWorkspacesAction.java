@@ -6,10 +6,10 @@ import java.awt.event.ActionEvent;
 
 public class UpdateWorkspacesAction extends MMSAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "UpdateWorkspaces";
+    public static final String DEFAULT_ID = "UpdateWorkspaces";
 
     public UpdateWorkspacesAction() {
-        super(actionid, "(Update Workspaces Mappings)", null, null);
+        super(DEFAULT_ID, "(Update Workspaces Mappings)", null, null);
     }
 
     @Override

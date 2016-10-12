@@ -33,6 +33,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -42,21 +43,22 @@ public class ValidateModelAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Collection<Element> start;
-    public static final String actionid = "ValidateModel";
-
-    public ValidateModelAction(Element e, String name) {
-        super(actionid, name, null, null);
-        start = new ArrayList<Element>();
-        start.add(e);
-    }
+    public static final String DEFAULT_ID = "ValidateModel";
 
     public ValidateModelAction(Collection<Element> e, String name) {
-        super(actionid, name, null, null);
+        super(DEFAULT_ID, name, null, null);
         start = e;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ProgressStatusRunner.runWithProgressStatus(new ManualSyncRunner(start, Application.getInstance().getProject(), true, 0), "Validating Model", true, 0);
+        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), true, 0);
+        ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
+        if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
+            Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), "Manual Sync Validation");
+        }
+        else {
+            Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");
+        }
     }
 }

@@ -28,46 +28,90 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
-import com.nomagic.magicdraw.actions.MDAction;
-import com.nomagic.magicdraw.core.Application;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.annotation.Annotation;
+import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.ems.ManualSyncActionRunner;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 
 import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.Collections;
 
-// @donbot confirm commented method unnecessary, then purge. should be replaced with validating root element
-public class InitializeProjectAction extends MDAction {
+public class InitializeProjectAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
-    private static final long serialVersionUID = 1L;
+    public static final String DEFAULT_ID = InitializeProjectAction.class.getSimpleName();
+    public static final String COMMIT_MODEL_DEFAULT_ID = DEFAULT_ID + "_Commit_Model";
 
-    public static final String actionid = "InitializeProject";
+    private final Project project;
+    private final boolean shouldCommitModel;
 
-    public InitializeProjectAction() {
-        super(actionid, "(Initialize Project)", null, null);
+    public InitializeProjectAction(Project project) {
+        this(project, false, false);
     }
 
-    @SuppressWarnings("unchecked")
+    public InitializeProjectAction(Project project, boolean shouldCommitModel) {
+        this(project, shouldCommitModel, false);
+    }
+
+    public InitializeProjectAction(Project project, boolean shouldCommitModel, boolean isDeveloperAction) {
+        super(shouldCommitModel ? COMMIT_MODEL_DEFAULT_ID : DEFAULT_ID, "Initialize Project" + (shouldCommitModel ? " and Model" : "") + (isDeveloperAction ? " [DEVELOPER]" : ""), null, null);
+        this.project = project;
+        this.shouldCommitModel = shouldCommitModel;
+    }
+
+    @Override
+    public boolean canExecute(Collection<Annotation> arg0) {
+        return false;
+    }
+
+
+    @Override
+    public void execute(Collection<Annotation> annos) {
+
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
-//        JSONObject tosend = new JSONObject();
-//        JSONArray array = new JSONArray();
-//        tosend.put("elements", array);
-//        tosend.put("source", "magicdraw");
-//        tosend.put("mmsVersion", MDKPlugin.VERSION);
+        ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
+        ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
+        requestData.set("elements", elementsArrayNode);
+        requestData.put("source", "magicdraw");
+        requestData.put("mmsVersion", MDKPlugin.VERSION);
 
-        // @donbot migrate or purge
-//        JSONObject result = ExportUtility.getProjectJson();
-//        array.add(result);
-//        String json = tosend.toJSONString();
-
+        ObjectNode projectObjectNode = ExportUtility.getProjectObjectNode(project);
+        elementsArrayNode.add(projectObjectNode);
         String url = ExportUtility.getUrlWithWorkspaceAndSite();
         if (url == null) {
             return;
         }
         url += "/projects";
-        Application.getInstance().getGUILog().log("[INFO] Request is added to queue.");
-//        OutputQueue.getInstance().offer(new Request(url, json, "Init Project"));
+        String response;
+        try {
+            response = ExportUtility.send(url, JacksonUtils.getObjectMapper().writeValueAsString(requestData), false, false);
+        } catch (JsonProcessingException e1) {
+            // TODO Error handle @donbot
+            e1.printStackTrace();
+            return;
+        }
+        if (response == null || response.startsWith("<html")) {
+            return;
+        }
+        if (shouldCommitModel) {
+            url = ExportUtility.getPostElementsUrl();
+            if (url == null) {
+                return;
+            }
+            ProgressStatusRunner.runWithProgressStatus(new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1), "Model Initialization", true, 0);
+        }
     }
 }
+

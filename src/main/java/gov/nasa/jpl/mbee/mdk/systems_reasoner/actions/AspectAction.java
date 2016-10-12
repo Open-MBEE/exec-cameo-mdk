@@ -31,7 +31,7 @@ public class AspectAction extends SRAction {
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "Add Aspect";
+    public static final String DEFAULT_ID = "Add Aspect";
     public List<Classifier> classifiers;
     private static Generalization createdGeneralization = null;
 
@@ -40,7 +40,7 @@ public class AspectAction extends SRAction {
     }
 
     public AspectAction(List<Classifier> classifiers) {
-        super(actionid);
+        super(DEFAULT_ID);
         this.classifiers = classifiers;
     }
 

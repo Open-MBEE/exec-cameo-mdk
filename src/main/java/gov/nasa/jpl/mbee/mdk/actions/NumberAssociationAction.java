@@ -50,10 +50,10 @@ public class NumberAssociationAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Class doc;
-    public static final String actionid = "NumberAssociations";
+    public static final String DEFAULT_ID = "NumberAssociations";
 
     public NumberAssociationAction(Class e) {
-        super(actionid, "Number View Associations", null, null);
+        super(DEFAULT_ID, "Number View Associations", null, null);
         doc = e;
     }
 

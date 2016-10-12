@@ -62,10 +62,10 @@ public class InstanceViewpointAction extends MDAction {
     private ElementsFactory ef;
     private Stereotype sysmlViewpoint;
 
-    public static final String actionid = "InstanceViewpoint";
+    public static final String DEFAULT_ID = "InstanceViewpoint";
 
     public InstanceViewpointAction(Element e) {
-        super(actionid, "Instance Viewpoint", null, null);
+        super(DEFAULT_ID, "Instance Viewpoint", null, null);
         viewpoint = e;
     }
 

@@ -12,11 +12,11 @@ import java.awt.event.ActionEvent;
 
 public class CreateHoldingBinAction extends MDAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "Login";
+    public static final String DEFAULT_ID = "Login";
 
 
     public CreateHoldingBinAction() {
-        super(actionid, "Create Holding Bin", null, null);
+        super(DEFAULT_ID, "Create Holding Bin", null, null);
     }
 
     @Override

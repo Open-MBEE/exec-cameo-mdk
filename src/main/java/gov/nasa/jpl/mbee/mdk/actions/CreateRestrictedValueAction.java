@@ -50,7 +50,7 @@ public class CreateRestrictedValueAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private ArrayList<Property> props;
-    public static final String actionid = "CreateRestrictedValue";
+    public static final String DEFAULT_ID = "CreateRestrictedValue";
 
     public static final int[] TABBED_PANE_INDICES = {1, 0, 0, 0, 1, 0, 0, 1, 1};
     // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);

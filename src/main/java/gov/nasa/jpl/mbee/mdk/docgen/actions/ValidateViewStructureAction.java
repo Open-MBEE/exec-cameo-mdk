@@ -47,11 +47,11 @@ import java.io.StringWriter;
 public class ValidateViewStructureAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "ValidateViewStructure";
+    public static final String DEFAULT_ID = "ValidateViewStructure";
     private Element view;
 
     public ValidateViewStructureAction(Element e) {
-        super(actionid, "Validate Viewpoint Conformance", null, null);
+        super(DEFAULT_ID, "Validate Viewpoint Conformance", null, null);
         view = e;
     }
 

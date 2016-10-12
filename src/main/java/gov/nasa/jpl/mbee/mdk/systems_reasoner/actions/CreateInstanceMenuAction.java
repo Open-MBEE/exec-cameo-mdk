@@ -25,11 +25,11 @@ public class CreateInstanceMenuAction extends SRAction {
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "Create Instance";
+    public static final String DEFAULT_ID = "Create Instance";
     private Classifier classifier;
 
     public CreateInstanceMenuAction(final Classifier classifier) {
-        super(actionid, classifier);
+        super(DEFAULT_ID, classifier);
         this.classifier = classifier;
     }
 
@@ -49,7 +49,7 @@ public class CreateInstanceMenuAction extends SRAction {
         if (dlg != null) {
             dlg.setVisible(true);
             if (dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
-                SessionManager.getInstance().createSession(actionid);
+                SessionManager.getInstance().createSession(DEFAULT_ID);
                 final InstanceSpecification instance = CreateInstanceAction.createInstance(classifier, (Namespace) dlg.getSelectedElement(), false);
                 SessionManager.getInstance().closeSession();
 

@@ -16,8 +16,8 @@ import java.util.*;
 
 public class GenerateViewPresentationAction extends MDAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "GenerateViewPresentation";
-    public static final String recurseActionid = "GenerateViewPresentationR";
+    public static final String DEFAULT_ID = "GenerateViewPresentation";
+    public static final String RECURSE_DEFAULT_ID = "GenerateViewPresentationR";
 
     private List<ValidationSuite> vss = new ArrayList<>();
     private List<Element> elements;
@@ -25,7 +25,7 @@ public class GenerateViewPresentationAction extends MDAction {
 
 
     public GenerateViewPresentationAction(List<Element> elements, boolean recurse) {
-        super(recurse ? recurseActionid : actionid, "Generate View" + (recurse ? "s" : ""), null, null);
+        super(recurse ? RECURSE_DEFAULT_ID : DEFAULT_ID, "Generate View" + (recurse ? "s" : ""), null, null);
         this.elements = elements;
         this.recurse = recurse;
     }

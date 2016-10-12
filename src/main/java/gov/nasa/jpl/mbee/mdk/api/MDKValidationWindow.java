@@ -77,7 +77,7 @@ public class MDKValidationWindow {
     public static final String[][] VALIDATION_OPTIONS = {
             // intiialization messages do not start with a [MESSAGE] in the validationSuite
             // they use INITIALIZATION here for clarity in output
-            {"INITIALIZATION", "InitializeProjectModel", ""}, {"[EXIST]", "ExportElement", "DeleteMagicDrawElement"}, {"[INSTANCE]", "ExportInstanceSpec", "ImportInstanceSpec"},
+            {"INITIALIZATION", "InitializeProjectAction", ""}, {"[EXIST]", "ExportElement", "DeleteMagicDrawElement"}, {"[INSTANCE]", "ExportInstanceSpec", "ImportInstanceSpec"},
             {"[VIEW CONSTRAINT]", "ExportViewConstraint", "ImportViewConstraint"}, {"[NAME]", "ExportName", "ImportName"}, {"[DOC]", "ExportDoc", "ImportDoc"}, {"[ATTRIBUTE]", "ExportOwnedAttribute", "ImportOwnedAttribute"},
             {"[OWNER]", "ExportOwner", "FixModelOwner"}, {"[PROP]", "ExportProperty", "ImportProperty"}, {"[FEATURE]", "ExportProperty", ""}, {"[SITE CHAR]", "ExportSite", ""}, {"[REL]", "ExportRel", "ImportRel"},
             {"[VALUE]", "ExportValue", "ImportValue"}, {"[CONNECTOR]", "ExportConnector", "ImportConnector"}, {"[CONSTRAINT]", "ExportConstraint", "ImportConstraint"}, {"[ASSOC]", "ExportAssociation", "ImportAssociation"},

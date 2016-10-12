@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.manual;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -17,7 +16,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
-import gov.nasa.jpl.mbee.mdk.ems.validation.actions.InitializeProjectModel;
+import gov.nasa.jpl.mbee.mdk.ems.actions.InitializeProjectAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -89,10 +88,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
         elementValidator = new ElementValidator(clientElements, serverElements, project);
         elementValidator.run(progressStatus);
-        Utils.displayValidationWindow(elementValidator.getValidationSuite(), "Manual Sync Validation");
     }
 
-    public void collectClientElementsRecursively(Element element, Project project, boolean recurse, int depth, List<Pair<Element, ObjectNode>> elements) {
+    public static void collectClientElementsRecursively(Element element, Project project, boolean recurse, int depth, List<Pair<Element, ObjectNode>> elements) {
         ObjectNode jsonObject = Converters.getElementToJsonConverter().apply(element, project);
         if (jsonObject == null) {
             return;
@@ -105,61 +103,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
     }
 
-    // TODO Make common across all sync types @donbot
-    public boolean checkProject() {
-        String projectUrl = ExportUtility.getUrlForProject();
-        if (projectUrl == null) {
-            return false;
-        }
-        String globalUrl = ExportUtility.getUrl(Application.getInstance().getProject());
-        globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        String globalResponse = null;
-        try {
-            globalResponse = ExportUtility.get(globalUrl, false);
-        } catch (ServerException ex) {
-
-        }
-        String url = ExportUtility.getUrlWithWorkspace();
-        if (url == null) {
-            return false;
-        }
-        if (globalResponse == null) {
-            ValidationRuleViolation v;
-            if (url.contains("master")) {
-                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
-                // TODO Change me back to false @donbot
-                v.addAction(new InitializeProjectModel(project, true));
-            }
-            else {
-                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
-            }
-            projectExistenceValidationRule.addViolation(v);
-            return false;
-        }
-        String response = null;
-        try {
-            response = ExportUtility.get(projectUrl, false);
-        } catch (ServerException ex) {
-
-        }
-        if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
-
-            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
-            //v.addAction(new InitializeProjectModel(false));
-            projectExistenceValidationRule.addViolation(v);
-            return false;
-        }
-        for (Element start : rootElements) {
-            if (ProjectUtilities.isElementInAttachedProject(start)) {
-                Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
-                return false;
-            }
-        }
-        return true;
-    }
-
     // TODO Fix me and move me to MMSUtils @donbot
-    public Collection<ObjectNode> getServerElementsRecursively(Element element, boolean recurse, int depth, ProgressStatus progressStatus) {
+    // TODO Add both ?recurse and element list gets @donbot
+    public static Collection<ObjectNode> getServerElementsRecursively(Element element, boolean recurse, int depth, ProgressStatus progressStatus) {
         String url = ExportUtility.getUrlWithWorkspace();
         String id = Converters.getElementToIdConverter().apply(element);
         final String url2;
@@ -214,6 +160,58 @@ public class ManualSyncRunner implements RunnableWithProgress {
             }
         }
         return null;
+    }
+
+    // TODO Make common across all sync types @donbot
+    public boolean checkProject() {
+        String projectUrl = ExportUtility.getUrlForProject();
+        if (projectUrl == null) {
+            return false;
+        }
+        String globalUrl = ExportUtility.getUrl(Application.getInstance().getProject());
+        globalUrl += "/workspaces/master/elements/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        String globalResponse = null;
+        try {
+            globalResponse = ExportUtility.get(globalUrl, false);
+        } catch (ServerException ex) {
+
+        }
+        String url = ExportUtility.getUrlWithWorkspace();
+        if (url == null) {
+            return false;
+        }
+        if (globalResponse == null) {
+            ValidationRuleViolation v;
+            if (url.contains("master")) {
+                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project doesn't exist on the web.");
+                v.addAction(new InitializeProjectAction(project, true));
+            }
+            else {
+                v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
+            }
+            projectExistenceValidationRule.addViolation(v);
+            return false;
+        }
+        String response = null;
+        try {
+            response = ExportUtility.get(projectUrl, false);
+        } catch (ServerException ex) {
+
+        }
+        if (response == null || response.contains("Site node is null") || response.contains("Could not find project")) {//tears
+
+            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
+            //v.addAction(new InitializeProjectAction(false));
+            projectExistenceValidationRule.addViolation(v);
+            return false;
+        }
+        for (Element start : rootElements) {
+            if (ProjectUtilities.isElementInAttachedProject(start)) {
+                Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
+                return false;
+            }
+        }
+        return true;
     }
 
     public ValidationSuite getValidationSuite() {

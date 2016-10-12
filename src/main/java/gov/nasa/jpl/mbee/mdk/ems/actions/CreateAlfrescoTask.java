@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.ems.validation.actions;
+package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;

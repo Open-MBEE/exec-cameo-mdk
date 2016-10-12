@@ -9,10 +9,10 @@ import java.awt.event.ActionEvent;
 
 public class ValidateBranchesAction extends MMSAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "ValidateBranches";
+    public static final String DEFAULT_ID = "ValidateBranches";
 
     public ValidateBranchesAction() {
-        super(actionid, "Branches", null, null);
+        super(DEFAULT_ID, "Branches", null, null);
     }
 
     public class ValidationRunner implements RunnableWithProgress {

@@ -76,8 +76,8 @@ public class CompareUtils {
             return 1;
         }
         // if ( useId && o1 instanceof HasId && o2 instanceof HasId ) {
-        // return CompareUtils.compare( ( (HasId)o1 ).getId(), ( (HasId)o2
-        // ).getId() );
+        // return CompareUtils.compare( ( (HasId)o1 ).getElementID(), ( (HasId)o2
+        // ).getElementID() );
         // }
         int compare = o1.getClass().getName().compareTo(o2.getClass().getName());
         if (compare != 0) {

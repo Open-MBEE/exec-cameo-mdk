@@ -39,12 +39,12 @@ import java.awt.event.ActionEvent;
 
 public class EMSLogoutAction extends MMSAction {
     private static final long serialVersionUID = 1L;
-    public static final String actionid = "Logout";
+    public static final String DEFAULT_ID = "Logout";
 
     private EMSLoginAction login;
 
     public EMSLogoutAction() {
-        super(actionid, "Logout from MMS", null, null);
+        super(DEFAULT_ID, "Logout from MMS", null, null);
     }
 
     public void setLoginAction(EMSLoginAction login) {

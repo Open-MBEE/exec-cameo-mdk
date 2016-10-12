@@ -53,10 +53,10 @@ public class DebugExportImportModels2 extends MDAction {
 
     private static final long serialVersionUID = 1L;
 
-    public static final String actionid = "Debug";
+    public static final String DEFAULT_ID = "Debug";
 
     public DebugExportImportModels2() {
-        super(actionid, "(Debug Export)", null, null);
+        super(DEFAULT_ID, "(Debug Export)", null, null);
     }
 
     @Override

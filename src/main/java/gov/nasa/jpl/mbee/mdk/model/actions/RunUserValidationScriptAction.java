@@ -47,7 +47,7 @@ public class RunUserValidationScriptAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private UserScript scripti;
-    public static final String actionid = "RunValidationScript";
+    public static final String DEFAULT_ID = "RunValidationScript";
 
     public RunUserValidationScriptAction(UserScript us) {
         super(null, "Run Validation Script", null, null);
@@ -59,7 +59,7 @@ public class RunUserValidationScriptAction extends MDAction {
     }
 
     public RunUserValidationScriptAction(UserScript us, boolean useid) {
-        super(actionid, "Run Validation Script", null, null);
+        super(DEFAULT_ID, "Run Validation Script", null, null);
         scripti = us;
         String name = scripti.getStereotypeName();
         if (name != null) {

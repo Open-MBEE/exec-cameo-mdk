@@ -56,7 +56,7 @@ public class ValidateConstraints extends MDAction {
     // being
     // used?
 
-    public static final String actionid = "ValidateConstraints";
+    public static final String DEFAULT_ID = "ValidateConstraints";
 
     public static String actionText = "Validate constraints";
 
@@ -69,7 +69,7 @@ public class ValidateConstraints extends MDAction {
     private Collection<ValidationSuite> validationOutput = new ArrayList<ValidationSuite>();
 
     public ValidateConstraints(Element context) {
-        super(actionid, actionText, null, null);
+        super(DEFAULT_ID, actionText, null, null);
         if (context != null) {
             getContext().add(context);
         }

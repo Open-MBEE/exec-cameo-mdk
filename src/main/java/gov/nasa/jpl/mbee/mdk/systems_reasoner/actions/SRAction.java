@@ -10,16 +10,16 @@ public class SRAction extends MDAction {
      *
      */
     private static final long serialVersionUID = 1L;
-    private String actionid;
+    private String DEFAULT_ID;
     public Element element;
 
-    public SRAction(String actionid) {
-        super(actionid, actionid, null, ActionsGroups.APPLICATION_RELATED);
-        this.actionid = actionid;
+    public SRAction(String DEFAULT_ID) {
+        super(DEFAULT_ID, DEFAULT_ID, null, ActionsGroups.APPLICATION_RELATED);
+        this.DEFAULT_ID = DEFAULT_ID;
     }
 
-    public SRAction(String actionid, Element element) {
-        this(actionid);
+    public SRAction(String DEFAULT_ID, Element element) {
+        this(DEFAULT_ID);
         this.element = element;
     }
 
@@ -28,7 +28,7 @@ public class SRAction extends MDAction {
     }
 
     public void disable(String error) {
-        this.setName(actionid + " [" + error + "]");
+        this.setName(DEFAULT_ID + " [" + error + "]");
         disable();
     }
 
