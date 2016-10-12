@@ -17,6 +17,8 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.*;
 import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
+import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
@@ -25,6 +27,7 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -124,13 +127,19 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
     public void process(Collection<ObjectNode> elementsToUpdate, Collection<String> elementsToDelete) {
         validationSuite.getValidationRules().forEach(validationRule -> validationRule.getViolations().clear());
+        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
 
         if ((elementsToUpdate == null || elementsToUpdate.isEmpty()) && (elementsToDelete == null || elementsToDelete.isEmpty())) {
             Application.getInstance().getGUILog().log("[INFO] No MMS changes to update locally.");
             return;
         }
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Attempting to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " locally.");
+            Application.getInstance().getGUILog().log("[INFO] Attempting to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " locally.");
+
+            if (localSyncTransactionCommitListener != null) {
+                localSyncTransactionCommitListener.setDisabled(true);
+            }
+
             EMFBulkImporter emfBulkImporter = new EMFBulkImporter(UpdateClientElementAction.class.getName() + " Creations/Updates");
             Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project);
             for (Map.Entry<Pair<Element, ObjectNode>, ImportException> entry : emfBulkImporter.getFailedElementMap().entrySet()) {
@@ -176,12 +185,21 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                     successfulChangeValidationRule.addViolation(new ValidationRuleViolation(entry.getValue().getFirst(), "[" + changeType.name() + "]"));
                 }
             }
+
+            if (localSyncTransactionCommitListener != null) {
+                localSyncTransactionCommitListener.setDisabled(false);
+            }
         }
         if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Attempting to delete " + elementsToDelete.size() + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " locally.");
+            Application.getInstance().getGUILog().log("[INFO] Attempting to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " locally.");
+
+            if (localSyncTransactionCommitListener != null) {
+                localSyncTransactionCommitListener.setDisabled(true);
+            }
             if (!SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().createSession(UpdateClientElementAction.class.getName() + " Deletes");
             }
+
             for (String id : elementsToDelete) {
                 boolean success = false;
                 Element element = Converters.getIdToElementConverter().apply(id, project);
@@ -200,6 +218,10 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                     failedChangeValidationRule.addViolation(element, "[DELETE FAILED]");
                     failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                 }
+            }
+
+            if (localSyncTransactionCommitListener != null) {
+                localSyncTransactionCommitListener.setDisabled(false);
             }
             if (SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().closeSession();

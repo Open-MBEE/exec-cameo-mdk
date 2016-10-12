@@ -1,7 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.ems.validation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.actions.ActionsCategory;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.EmptyProgressStatus;
@@ -9,20 +11,19 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.ems.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateClientElementAction;
 import gov.nasa.jpl.mbee.mdk.ems.json.JsonDiffFunction;
-import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
-import gov.nasa.jpl.mbee.mdk.ems.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
-import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.util.*;
@@ -92,14 +93,14 @@ public class ElementValidator implements RunnableWithProgress {
         for (String id : elementKeySet) {
             Pair<Element, ObjectNode> clientElement = clientElementMap.get(id);
             Element clientElementElement = clientElement != null ? clientElement.getFirst() : null;
-            ObjectNode clientElementJson = clientElement != null ? clientElement.getSecond() : null;
+            ObjectNode clientElementObjectNode = clientElement != null ? clientElement.getSecond() : null;
             ObjectNode serverElement = serverElementMap.get(id);
             try {
                 ValidationRuleViolation validationRuleViolation = null;
-                if (clientElementJson == null && serverElement == null) {
+                if (clientElementObjectNode == null && serverElement == null) {
                     continue;
                 }
-                else if (clientElementJson == null) {
+                else if (clientElementObjectNode == null) {
                     JsonNode nameJsonNode = serverElement.get(MDKConstants.NAME_KEY);
                     String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
                     JsonNode typeJsonNode = serverElement.get(MDKConstants.TYPE_KEY);
@@ -119,7 +120,7 @@ public class ElementValidator implements RunnableWithProgress {
                             + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement));
                 }
                 else {
-                    JsonNode patch = JsonDiffFunction.getInstance().apply(clientElementJson, serverElement);
+                    JsonNode patch = JsonDiffFunction.getInstance().apply(clientElementObjectNode, serverElement);
                     if (!JsonPatchUtils.isEqual(patch)) {
                         String name = "<>";
                         if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
@@ -130,8 +131,29 @@ public class ElementValidator implements RunnableWithProgress {
                     }
                 }
                 if (validationRuleViolation != null) {
-                    validationRuleViolation.addAction(new CommitClientElementAction(id, clientElementElement, clientElementJson, project));
+                    validationRuleViolation.addAction(new CommitClientElementAction(id, clientElementElement, clientElementObjectNode, project));
                     validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElementElement, serverElement, project));
+
+                    ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
+                    copyActionsCategory.setNested(true);
+                    validationRuleViolation.addAction(copyActionsCategory);
+                    copyActionsCategory.addAction(new ClipboardAction("ID", id));
+                    if (clientElementElement != null) {
+                        copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElementElement.getID()));
+                    }
+                    if (clientElementObjectNode != null) {
+                        try {
+                            copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writeValueAsString(clientElementObjectNode)));
+                        } catch (JsonProcessingException ignored) {
+                        }
+                    }
+                    if (serverElement != null) {
+                        try {
+                            copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writeValueAsString(serverElement)));
+                        } catch (JsonProcessingException ignored) {
+                        }
+                    }
+
                     elementEquivalenceValidationRule.addViolation(validationRuleViolation);
                     invalidElements.put(id, new Pair<>(clientElement, serverElement));
                 }
