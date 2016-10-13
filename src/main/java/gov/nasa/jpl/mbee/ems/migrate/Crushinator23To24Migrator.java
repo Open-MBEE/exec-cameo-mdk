@@ -6,6 +6,8 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.magicdraw.teamwork2.locks.LockService;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -29,6 +31,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -86,9 +89,22 @@ public class Crushinator23To24Migrator extends Migrator {
             return;
         }
 
+        if (project.isTeamworkServerProject()) {
+            Collection<String> lockedElementUsers = LockService.getLockService(project).getLockedElementUsers();
+            lockedElementUsers.remove(TeamworkUtils.getLoggedUserName());
+            if (!lockedElementUsers.isEmpty()) {
+                Application.getInstance().getGUILog().log("[ERROR] Model has locks from " + NumberFormat.getInstance().format(lockedElementUsers.size()) + " other users. Aborting.");
+                return;
+            }
+        }
+        if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
+            Application.getInstance().getGUILog().log("[ERROR] Failed to lock model recursively. Aborting.");
+            return;
+        }
+
         String postUrl = ExportUtility.getPostElementsUrl();
         if (postUrl == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Could not build post URL.");
+            Application.getInstance().getGUILog().log("[ERROR] Could not build post URL. Aborting.");
             return;
         }
         try {
