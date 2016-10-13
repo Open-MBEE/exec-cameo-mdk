@@ -112,9 +112,9 @@ public class Crushinator23To24Migrator extends Migrator {
             String site = ExportUtility.getSite();
             if (originUrl != null && site != null) {
                 originUrl = originUrl.replace("tcp://", site.startsWith("http://") ? "http://" : "https://");
-                originUrl = originUrl.replaceAll(":\\d+", "");
+                originUrl = originUrl.replaceFirst(":\\d+", "");
                 Application.getInstance().getGUILog().log("[INFO] Found origin domain: " + originUrl);
-                postUrl = postUrl.replaceAll("http(s?):\\/\\/.+?(?=\\/)", originUrl);
+                postUrl = postUrl.replaceFirst("http(s?):\\/\\/.+?(?=\\/)", originUrl);
                 Application.getInstance().getGUILog().log("[INFO] New post URL: " + postUrl);
             }
         } catch (ServerException e) {
@@ -270,6 +270,9 @@ public class Crushinator23To24Migrator extends Migrator {
 
         Map<String, JSONObject> hiddenViewInstancePackageJsonObjects = new LinkedHashMap<>(viewInstancePackages.size());
         for (Package viewInstancePackage : viewInstancePackages) {
+            if (ProjectUtilities.isElementInAttachedProject(viewInstancePackage)) {
+                continue;
+            }
             JSONObject jsonObject = ExportUtility.fillElement(viewInstancePackage, null);
             if (jsonObject == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Failed to serialize Presentation Element Package " + viewInstancePackage.getID() + ".");
@@ -293,6 +296,9 @@ public class Crushinator23To24Migrator extends Migrator {
 
         List<JSONObject> presentationElementJsonObjects = new ArrayList<>(presentationElements.size());
         for (InstanceSpecification presentationElement : presentationElements) {
+            if (ProjectUtilities.isElementInAttachedProject(presentationElement)) {
+                continue;
+            }
             JSONObject jsonObject = ExportUtility.fillElement(presentationElement, null);
             if (jsonObject == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Failed to serialize Presentation Element " + presentationElement.getID() + ".");
@@ -317,6 +323,13 @@ public class Crushinator23To24Migrator extends Migrator {
             sendStaggered(postUrl, presentationElementJsonObjects, "Presentation Element", "Presentation Elements", ps, true);
             if (ps.isCancel()) {
                 return;
+            }
+        }
+
+        Iterator<Element> elementsToDeleteRemotelyIterator = elementsToDeleteRemotely.iterator();
+        while (elementsToDeleteRemotelyIterator.hasNext()) {
+            if (ProjectUtilities.isElementInAttachedProject(elementsToDeleteRemotelyIterator.next())) {
+                elementsToDeleteRemotelyIterator.remove();
             }
         }
 
@@ -360,6 +373,13 @@ public class Crushinator23To24Migrator extends Migrator {
 
         listener.setDisabled(true);
 
+        Iterator<InstanceSpecification> presentationElementsIterator = presentationElements.iterator();
+        while (presentationElementsIterator.hasNext()) {
+            if (ProjectUtilities.isElementInAttachedProject(presentationElementsIterator.next())) {
+                presentationElementsIterator.remove();
+            }
+        }
+
         if (!presentationElements.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Deleting " + presentationElements.size() + " client-side presentation element" + (presentationElements.size() != 1 ? "s" : "") + ".");
             if (!SessionManager.getInstance().isSessionCreated(project)) {
@@ -372,6 +392,13 @@ public class Crushinator23To24Migrator extends Migrator {
                     failed = true;
                     Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + presentationElement.getID() + ".");
                 }
+            }
+        }
+
+        Iterator<Element> elementsToDeleteLocallyIterator = elementsToDeleteLocally.iterator();
+        while (elementsToDeleteLocallyIterator.hasNext()) {
+            if (ProjectUtilities.isElementInAttachedProject(elementsToDeleteLocallyIterator.next())) {
+                elementsToDeleteLocallyIterator.remove();
             }
         }
 
