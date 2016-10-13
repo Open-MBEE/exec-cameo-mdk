@@ -85,8 +85,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void run(ProgressStatus ps) {
-        ps.setDescription("Initializing");
+    public void run(ProgressStatus progressStatus) {
+        progressStatus.setDescription("Initializing");
         // TODO Abstract to common sync checks @donbot
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && TeamworkUtils.getLoggedUserName() == null) {
             Utils.guilog("[ERROR] You need to be logged in to Teamwork first.");
@@ -190,16 +190,16 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // Get latest json for element added/changed from MMS
 
         if (!elementIdsToGet.isEmpty()) {
-            ps.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
+            progressStatus.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
             ObjectNode response = null;
             try {
-                response = MMSUtils.getElementsById(elementIdsToGet, ps);
+                response = MMSUtils.getElementsById(elementIdsToGet, progressStatus);
             } catch (ServerException | IOException e) {
-                if (!ps.isCancel()) {
+                if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
                 }
             }
-            if (ps.isCancel()) {
+            if (progressStatus.isCancel()) {
                 Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
                 return;
             }
@@ -219,7 +219,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // NEW CONFLICT DETECTION
 
-        ps.setDescription("Detecting conflicts");
+        progressStatus.setDescription("Detecting conflicts");
         Map<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedChanges = new LinkedHashMap<>(),
                 unconflictedChanges = new LinkedHashMap<>();
         localChangelog.findConflicts(jmsChangelog, new BiPredicate<Changelog.Change<Element>, Changelog.Change<Void>>() {
@@ -316,16 +316,18 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
         }
 
-        if (ps.isCancel()) {
+        if (progressStatus.isCancel()) {
             Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
             return;
         }
+
+        // POINT OF NO RETURN
 
         // COMMIT UNCONFLICTED CREATIONS AND UPDATES TO MMS
 
         boolean shouldLogNoLocalChanges = shouldCommit;
         if (shouldCommit && !localElementsToPost.isEmpty()) {
-            ps.setDescription("Committing creations and updates to MMS");
+            progressStatus.setDescription("Committing creations and updates to MMS");
 
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (Element element : localElementsToPost.values()) {
@@ -354,7 +356,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // NEEDS TO BE AFTER LOCAL; EX: MOVE ELEMENT OUT ON MMS, DELETE OWNER LOCALLY, WHAT HAPPENS?
 
         if (shouldCommit && shouldCommitDeletes && !localElementsToDelete.isEmpty()) {
-            ps.setDescription("Committing deletions to MMS");
+            progressStatus.setDescription("Committing deletions to MMS");
 
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (String id : localElementsToDelete) {
@@ -395,7 +397,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             jmsElementsToUpdateLocally.values().forEach(pair -> jmsElementsToCreateOrUpdateLocally.add(pair.getFirst()));
 
             UpdateClientElementAction updateClientElementAction = new UpdateClientElementAction(project);
-            updateClientElementAction.process(jmsElementsToCreateOrUpdateLocally, jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()));
+            updateClientElementAction.setElementsToUpdate(jmsElementsToCreateOrUpdateLocally);
+            updateClientElementAction.setElementsToDelete(jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()));
+            updateClientElementAction.run(progressStatus);
+
             failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
 
             listener.setDisabled(false);
@@ -403,7 +408,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // HANDLE CONFLICTS
 
-        ps.setDescription("Finishing up");
+        progressStatus.setDescription("Finishing up");
 
         Set<Element> localConflictedElements = new HashSet<>();
         Set<ObjectNode> jmsConflictedElements = new HashSet<>();
@@ -423,7 +428,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         ElementValidator elementValidator = new ElementValidator(ElementValidator.buildElementPairs(localConflictedElements, project), jmsConflictedElements, project);
-        elementValidator.run(ps);
+        elementValidator.run(progressStatus);
         if (!elementValidator.getInvalidElements().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + elementValidator.getInvalidElements().size() + " element" + (elementValidator.getInvalidElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");
             vss.add(elementValidator.getValidationSuite());

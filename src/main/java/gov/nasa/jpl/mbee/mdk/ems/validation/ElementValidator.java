@@ -95,72 +95,68 @@ public class ElementValidator implements RunnableWithProgress {
             Element clientElementElement = clientElement != null ? clientElement.getFirst() : null;
             ObjectNode clientElementObjectNode = clientElement != null ? clientElement.getSecond() : null;
             ObjectNode serverElement = serverElementMap.get(id);
-            try {
-                ValidationRuleViolation validationRuleViolation = null;
-                if (clientElementObjectNode == null && serverElement == null) {
-                    continue;
-                }
-                else if (clientElementObjectNode == null) {
-                    JsonNode nameJsonNode = serverElement.get(MDKConstants.NAME_KEY);
-                    String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
-                    JsonNode typeJsonNode = serverElement.get(MDKConstants.TYPE_KEY);
-                    String type = typeJsonNode != null ? typeJsonNode.asText("Element") : "Element";
-                    JsonNode sysmlIdNode = serverElement.get(MDKConstants.SYSML_ID_KEY);
-                    String sysmlId = sysmlIdNode != null ? sysmlIdNode.asText("<>") : "<>";
+            ValidationRuleViolation validationRuleViolation = null;
+            JsonNode diff = null;
+            if (clientElementObjectNode == null && serverElement == null) {
+                continue;
+            }
+            else if (clientElementObjectNode == null) {
+                JsonNode typeJsonNode = serverElement.get(MDKConstants.TYPE_KEY);
+                String type = typeJsonNode != null ? typeJsonNode.asText("Element") : "Element";
+                JsonNode nameJsonNode = serverElement.get(MDKConstants.NAME_KEY);
+                String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
 
-                    validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + type + " "
-                            + name + " - " + sysmlId);
+                validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + type + " " + name);
+            }
+            else if (serverElement == null) {
+                String name = "<>";
+                if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
+                    name = ((NamedElement) clientElementElement).getName();
                 }
-                else if (serverElement == null) {
+                validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanType() + " " + name);
+            }
+            else {
+                diff = JsonDiffFunction.getInstance().apply(clientElementObjectNode, serverElement);
+                if (!JsonPatchUtils.isEqual(diff)) {
                     String name = "<>";
                     if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
                         name = ((NamedElement) clientElementElement).getName();
                     }
-                    validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanType() + " "
-                            + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement));
+                    validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanType() + " " + name);
                 }
-                else {
-                    JsonNode patch = JsonDiffFunction.getInstance().apply(clientElementObjectNode, serverElement);
-                    if (!JsonPatchUtils.isEqual(patch)) {
-                        String name = "<>";
-                        if (clientElementElement instanceof NamedElement && ((NamedElement) clientElementElement).getName() != null && !((NamedElement) clientElementElement).getName().isEmpty()) {
-                            name = ((NamedElement) clientElementElement).getName();
-                        }
-                        validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanType() + " "
-                                + name + " - " + Converters.getElementToIdConverter().apply(clientElementElement) + ": " + JacksonUtils.getObjectMapper().writeValueAsString(patch));
-                    }
-                }
-                if (validationRuleViolation != null) {
-                    validationRuleViolation.addAction(new CommitClientElementAction(id, clientElementElement, clientElementObjectNode, project));
-                    validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElementElement, serverElement, project));
+            }
+            if (validationRuleViolation != null) {
+                validationRuleViolation.addAction(new CommitClientElementAction(id, clientElementElement, clientElementObjectNode, project));
+                validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElementElement, serverElement, project));
 
-                    ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
-                    copyActionsCategory.setNested(true);
-                    validationRuleViolation.addAction(copyActionsCategory);
-                    copyActionsCategory.addAction(new ClipboardAction("ID", id));
-                    if (clientElementElement != null) {
-                        copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElementElement.getID()));
-                    }
-                    if (clientElementObjectNode != null) {
-                        try {
-                            copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writeValueAsString(clientElementObjectNode)));
-                        } catch (JsonProcessingException ignored) {
-                        }
-                    }
-                    if (serverElement != null) {
-                        try {
-                            copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writeValueAsString(serverElement)));
-                        } catch (JsonProcessingException ignored) {
-                        }
-                    }
-
-                    elementEquivalenceValidationRule.addViolation(validationRuleViolation);
-                    invalidElements.put(id, new Pair<>(clientElement, serverElement));
+                ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
+                copyActionsCategory.setNested(true);
+                validationRuleViolation.addAction(copyActionsCategory);
+                copyActionsCategory.addAction(new ClipboardAction("ID", id));
+                if (clientElementElement != null) {
+                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElementElement.getID()));
                 }
-            } catch (IOException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected error occurred. Aborting model validation. Check logs for stack trace.");
-                e.printStackTrace();
-                break;
+                if (clientElementObjectNode != null) {
+                    try {
+                        copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writeValueAsString(clientElementObjectNode)));
+                    } catch (JsonProcessingException ignored) {
+                    }
+                }
+                if (serverElement != null) {
+                    try {
+                        copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writeValueAsString(serverElement)));
+                    } catch (JsonProcessingException ignored) {
+                    }
+                }
+                if (diff != null) {
+                    try {
+                        copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writeValueAsString(diff)));
+                    } catch (JsonProcessingException ignored) {
+                    }
+                }
+
+                elementEquivalenceValidationRule.addViolation(validationRuleViolation);
+                invalidElements.put(id, new Pair<>(clientElement, serverElement));
             }
 
             progressStatus.increase();

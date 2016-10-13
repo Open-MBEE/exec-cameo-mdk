@@ -1,27 +1,28 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 public class ImportException extends Exception {
 
     private final Element element;
-    private final ObjectNode objectNode;
+    private final JsonNode jsonNode;
 
-    public ImportException(Element element, ObjectNode objectNode, String message) {
+    public ImportException(Element element, JsonNode jsonNode, String message) {
         super(message);
         this.element = element;
-        this.objectNode = objectNode;
+        this.jsonNode = jsonNode;
     }
 
-    public ImportException(Element element, ObjectNode objectNode, String message, Throwable cause) {
+    public ImportException(Element element, JsonNode jsonNode, String message, Throwable cause) {
         super(message, cause);
         this.element = element;
-        this.objectNode = objectNode;
+        this.jsonNode = jsonNode;
     }
 
-    public ObjectNode getObjectNode() {
-        return objectNode;
+    public JsonNode getJsonNode() {
+        return jsonNode;
     }
 
     public Element getElement() {
@@ -32,6 +33,6 @@ public class ImportException extends Exception {
     public void printStackTrace() {
         super.printStackTrace();
         System.err.println("Element: " + element);
-        System.err.println("ObjectNode: " + objectNode);
+        System.err.println("ObjectNode: " + jsonNode);
     }
 }

@@ -11,6 +11,9 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -36,13 +39,15 @@ import java.util.Map;
 /**
  * Created by igomes on 9/27/16.
  */
-public class UpdateClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class UpdateClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction, RunnableWithProgress {
     private static final String NAME = "Update Element from MMS";
 
-    private final String id;
+    private final String sysmlId;
     private final Element element;
     private final ObjectNode elementObjectNode;
     private final Project project;
+
+    private final Changelog<String, ObjectNode> failedChangelog = new Changelog<>();
 
     private ValidationSuite validationSuite = new ValidationSuite("Update Changelog");
     private ValidationRule failedChangeValidationRule = new ValidationRule("Failed Change", "The element shall not fail to change.", ViolationSeverity.ERROR),
@@ -55,19 +60,16 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         validationSuite.addValidationRule(successfulChangeValidationRule);
     }
 
-    private final Changelog<String, ObjectNode> failedChangelog = new Changelog<>();
+    private Collection<ObjectNode> elementsToUpdate;
+    private Collection<String> elementsToDelete;
 
     public UpdateClientElementAction(Project project) {
-        super(NAME, NAME, null, null);
-        this.id = null;
-        this.element = null;
-        this.elementObjectNode = null;
-        this.project = project;
+        this(null, null, null, project);
     }
 
-    public UpdateClientElementAction(String id, Element element, ObjectNode elementObjectNode, Project project) {
-        super(NAME, NAME, null, null);
-        this.id = id;
+    public UpdateClientElementAction(String sysmlId, Element element, ObjectNode elementObjectNode, Project project) {
+        super(UpdateClientElementAction.class.getSimpleName(), NAME, null, null);
+        this.sysmlId = sysmlId;
         this.element = element;
         this.elementObjectNode = elementObjectNode;
         this.project = project;
@@ -75,8 +77,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
     @Override
     public void execute(Collection<Annotation> annotations) {
-        List<ObjectNode> elementsToUpdate = new ArrayList<>(annotations.size());
-        List<String> elementsToDelete = new ArrayList<>(annotations.size());
+        elementsToUpdate = new ArrayList<>(annotations.size());
+        elementsToDelete = new ArrayList<>(annotations.size());
 
         for (Annotation annotation : annotations) {
             for (NMAction action : annotation.getActions()) {
@@ -86,13 +88,13 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         elementsToUpdate.add(objectNode);
                     }
                     else {
-                        elementsToDelete.add(id);
+                        elementsToDelete.add(sysmlId);
                     }
                     break;
                 }
             }
         }
-        process(elementsToUpdate, elementsToDelete);
+        ProgressStatusRunner.runWithProgressStatus(this, NAME, true, 0);
     }
 
     @Override
@@ -120,12 +122,13 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             elementsToUpdate.add(elementObjectNode);
         }
         else {
-            elementsToDelete.add(id);
+            elementsToDelete.add(sysmlId);
         }
-        process(elementsToUpdate, elementsToDelete);
+        ProgressStatusRunner.runWithProgressStatus(this, NAME, true, 0);
     }
 
-    public void process(Collection<ObjectNode> elementsToUpdate, Collection<String> elementsToDelete) {
+    @Override
+    public void run(ProgressStatus progressStatus) {
         validationSuite.getValidationRules().forEach(validationRule -> validationRule.getViolations().clear());
         LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
 
@@ -140,8 +143,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 localSyncTransactionCommitListener.setDisabled(true);
             }
 
-            EMFBulkImporter emfBulkImporter = new EMFBulkImporter(UpdateClientElementAction.class.getName() + " Creations/Updates");
-            Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project);
+            EMFBulkImporter emfBulkImporter = new EMFBulkImporter(NAME);
+            Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project, progressStatus);
             for (Map.Entry<Pair<Element, ObjectNode>, ImportException> entry : emfBulkImporter.getFailedElementMap().entrySet()) {
                 Element element = entry.getKey().getFirst();
                 ObjectNode objectNode = entry.getKey().getSecond();
@@ -169,6 +172,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
                 try {
+                    // TODO Change me to clipboard stuff @donbot
                     ObjectNode clientElementObjectNode = Converters.getElementToJsonConverter().apply(entry.getKey(), project);
                     ObjectNode serverElementObjectNode = entry.getValue();
                     System.err.println("[NOT EQUIVALENT] " + Converters.getElementToIdConverter().apply(entry.getKey()));
@@ -201,21 +205,21 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             }
 
             for (String id : elementsToDelete) {
-                boolean success = false;
+                Exception exception = null;
                 Element element = Converters.getIdToElementConverter().apply(id, project);
                 if (element == null) {
                     continue;
                 }
                 try {
                     ModelElementsManager.getInstance().removeElement(element);
-                    success = true;
-                } catch (ReadOnlyElementException ignored) {
+                } catch (ReadOnlyElementException e) {
+                    exception = e;
                 }
-                if (success) {
+                if (exception == null) {
                     successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
                 }
                 else {
-                    failedChangeValidationRule.addViolation(element, "[DELETE FAILED]");
+                    failedChangeValidationRule.addViolation(element, "[DELETE FAILED] " + exception.getMessage());
                     failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                 }
             }
@@ -230,5 +234,21 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         if (validationSuite.hasErrors()) {
             Utils.displayValidationWindow(validationSuite, validationSuite.getName());
         }
+    }
+
+    public Collection<ObjectNode> getElementsToUpdate() {
+        return elementsToUpdate;
+    }
+
+    public void setElementsToUpdate(Collection<ObjectNode> elementsToUpdate) {
+        this.elementsToUpdate = elementsToUpdate;
+    }
+
+    public Collection<String> getElementsToDelete() {
+        return elementsToDelete;
+    }
+
+    public void setElementsToDelete(Collection<String> elementsToDelete) {
+        this.elementsToDelete = elementsToDelete;
     }
 }
