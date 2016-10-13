@@ -6,6 +6,8 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.magicdraw.teamwork2.locks.LockService;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -17,6 +19,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
@@ -27,6 +31,7 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -82,6 +87,38 @@ public class Crushinator23To24Migrator extends Migrator {
         if (listener == null) {
             Application.getInstance().getGUILog().log("[ERROR] Local sync transaction commit listener not found. Aborting.");
             return;
+        }
+
+        if (project.isTeamworkServerProject()) {
+            Collection<String> lockedElementUsers = LockService.getLockService(project).getLockedElementUsers();
+            lockedElementUsers.remove(TeamworkUtils.getLoggedUserName());
+            if (!lockedElementUsers.isEmpty()) {
+                Application.getInstance().getGUILog().log("[ERROR] Model has locks from " + NumberFormat.getInstance().format(lockedElementUsers.size()) + " other users. Aborting.");
+                return;
+            }
+        }
+        if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
+            Application.getInstance().getGUILog().log("[ERROR] Failed to lock model recursively. Aborting.");
+            return;
+        }
+
+        String postUrl = ExportUtility.getPostElementsUrl();
+        if (postUrl == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Could not build post URL. Aborting.");
+            return;
+        }
+        try {
+            String originUrl = JMSUtils.getJMSInfo(project).getUrl();
+            String site = ExportUtility.getSite();
+            if (originUrl != null && site != null) {
+                originUrl = originUrl.replace("tcp://", site.startsWith("http://") ? "http://" : "https://");
+                originUrl = originUrl.replaceFirst(":\\d+", "");
+                Application.getInstance().getGUILog().log("[INFO] Found origin domain: " + originUrl);
+                postUrl = postUrl.replaceFirst("http(s?):\\/\\/.+?(?=\\/)", originUrl);
+                Application.getInstance().getGUILog().log("[INFO] New post URL: " + postUrl);
+            }
+        } catch (ServerException e) {
+            e.printStackTrace();
         }
 
         List<InstanceSpecification> presentationElements = new ArrayList<>();
@@ -223,7 +260,7 @@ public class Crushinator23To24Migrator extends Migrator {
             body.put("elements", jsonArray);
             body.put("source", "magicdraw");
             body.put("mmsVersion", DocGenPlugin.VERSION);
-            ExportUtility.send(ExportUtility.getPostElementsUrl(), body.toJSONString(), false, false);
+            ExportUtility.send(postUrl, body.toJSONString(), false, false);
             if (ps.isCancel()) {
                 handleCancel();
                 return;
@@ -233,6 +270,9 @@ public class Crushinator23To24Migrator extends Migrator {
 
         Map<String, JSONObject> hiddenViewInstancePackageJsonObjects = new LinkedHashMap<>(viewInstancePackages.size());
         for (Package viewInstancePackage : viewInstancePackages) {
+            if (ProjectUtilities.isElementInAttachedProject(viewInstancePackage)) {
+                continue;
+            }
             JSONObject jsonObject = ExportUtility.fillElement(viewInstancePackage, null);
             if (jsonObject == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Failed to serialize Presentation Element Package " + viewInstancePackage.getID() + ".");
@@ -248,7 +288,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
         }
         if (!hiddenViewInstancePackageJsonObjects.isEmpty()) {
-            sendStaggered(hiddenViewInstancePackageJsonObjects.values(), "Presentation Element Package", "Presentation Element Packages", ps, true);
+            sendStaggered(postUrl, hiddenViewInstancePackageJsonObjects.values(), "Presentation Element Package", "Presentation Element Packages", ps, true);
             if (ps.isCancel()) {
                 return;
             }
@@ -256,6 +296,9 @@ public class Crushinator23To24Migrator extends Migrator {
 
         List<JSONObject> presentationElementJsonObjects = new ArrayList<>(presentationElements.size());
         for (InstanceSpecification presentationElement : presentationElements) {
+            if (ProjectUtilities.isElementInAttachedProject(presentationElement)) {
+                continue;
+            }
             JSONObject jsonObject = ExportUtility.fillElement(presentationElement, null);
             if (jsonObject == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Failed to serialize Presentation Element " + presentationElement.getID() + ".");
@@ -277,9 +320,16 @@ public class Crushinator23To24Migrator extends Migrator {
         }
         if (!presentationElementJsonObjects.isEmpty()) {
             // Intentionally not sending source so that it is not skipped on Coordinated Sync. Otherwise holding_bin intermediate packages won't be created, which could cause errors if non-hidden elements are created there.
-            sendStaggered(presentationElementJsonObjects, "Presentation Element", "Presentation Elements", ps, true);
+            sendStaggered(postUrl, presentationElementJsonObjects, "Presentation Element", "Presentation Elements", ps, true);
             if (ps.isCancel()) {
                 return;
+            }
+        }
+
+        Iterator<Element> elementsToDeleteRemotelyIterator = elementsToDeleteRemotely.iterator();
+        while (elementsToDeleteRemotelyIterator.hasNext()) {
+            if (ProjectUtilities.isElementInAttachedProject(elementsToDeleteRemotelyIterator.next())) {
+                elementsToDeleteRemotelyIterator.remove();
             }
         }
 
@@ -309,7 +359,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 //Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + jsonArray.size() + " element" + (jsonArray.size() != 1 ? "s" : "") + " on the MMS.");
                 //System.out.println(body);
                 //OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, jsonArray.size(), "Migration Deletes"));
-                ExportUtility.deleteWithBody(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), true);
+                ExportUtility.deleteWithBody(postUrl, body.toJSONString(), true);
 
                 ps.increase();
                 total += jsonArray.size();
@@ -323,6 +373,13 @@ public class Crushinator23To24Migrator extends Migrator {
 
         listener.setDisabled(true);
 
+        Iterator<InstanceSpecification> presentationElementsIterator = presentationElements.iterator();
+        while (presentationElementsIterator.hasNext()) {
+            if (ProjectUtilities.isElementInAttachedProject(presentationElementsIterator.next())) {
+                presentationElementsIterator.remove();
+            }
+        }
+
         if (!presentationElements.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Deleting " + presentationElements.size() + " client-side presentation element" + (presentationElements.size() != 1 ? "s" : "") + ".");
             if (!SessionManager.getInstance().isSessionCreated(project)) {
@@ -335,6 +392,13 @@ public class Crushinator23To24Migrator extends Migrator {
                     failed = true;
                     Application.getInstance().getGUILog().log("[ERROR] Failed to delete read-only element " + presentationElement.getID() + ".");
                 }
+            }
+        }
+
+        Iterator<Element> elementsToDeleteLocallyIterator = elementsToDeleteLocally.iterator();
+        while (elementsToDeleteLocallyIterator.hasNext()) {
+            if (ProjectUtilities.isElementInAttachedProject(elementsToDeleteLocallyIterator.next())) {
+                elementsToDeleteLocallyIterator.remove();
             }
         }
 
@@ -425,7 +489,7 @@ public class Crushinator23To24Migrator extends Migrator {
         failed = true;
     }
 
-    private void sendStaggered(Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus, boolean suppressSource) {
+    private void sendStaggered(String url, Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus, boolean suppressSource) {
         if (!jsonObjects.isEmpty()) {
             int total = 0;
             String status = "Updating " + (jsonObjects.size() != 1 ? elementTypePlural : elementType) + " on the MMS";
@@ -449,7 +513,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 //Application.getInstance().getGUILog().log("[INFO] Queueing request to update " + elementJsonMap.size() + " element" + (elementJsonMap.size() != 1 ? "s" : "") + " on the MMS.");
                 //System.out.println(body);
                 //OutputQueue.getInstance().offer(new Request(url, body.toJSONString(), jsonArray.size(), "Migration Creations/Updates", false));
-                ExportUtility.send(ExportUtility.getPostElementsUrl(), body.toJSONString(), false, false);
+                ExportUtility.send(url, body.toJSONString(), false, false);
                 if (progressStatus.isCancel()) {
                     handleCancel();
                     return;

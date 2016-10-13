@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by igomes on 6/28/16.
  */
 public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
+    private static final String ERROR_STRING = "Could not connect to JMS. Reverting to offline mode. All changes will be saved in the model until reconnected.";
     private static final Map<String, JMSSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
@@ -77,7 +78,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             JMSMessageListener.getInMemoryJMSChangelog().clear();
         }
         if (jmsSyncProjectMapping.isDisabled() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() && project.getModel() != null && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
-            Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize MMS sync.");
+            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reinitiate MMS sync.");
             projectOpened(project);
         }
     }
@@ -92,34 +93,34 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             jmsInfo = JMSUtils.getJMSInfo(project);
         } catch (ServerException | IllegalArgumentException e) {
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Message: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
             return false;
         }
         String url = jmsInfo != null ? jmsInfo.getUrl() : null;
         if (url == null) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Cannot get server URL.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get server URL.");
             return false;
         }
         if (workspaceID == null) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Cannot get the server workspace that corresponds to this project branch.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + "Reason: Cannot get the server workspace that corresponds to this project branch.");
             return false;
         }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             String user = TeamworkUtils.getLoggedUserName();
             if (user == null) {
-                Application.getInstance().getGUILog().log("[ERROR] You must be logged into Teamwork. MMS sync will not start.");
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork.");
                 return false;
             }
         }
         String username = ViewEditUtils.getUsername();
         if (username == null || username.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Could not login to MMS.");
             return false;
         }
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(JMSUtils.getJMSInfo(project));
             if (connectionFactory == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Failed to create MMS connection factory.");
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Failed to create JMS connection factory.");
                 return false;
             }
             String subscriberId = projectID + "-" + workspaceID + "-" + username; // weblogic can't have '/' in id
@@ -174,12 +175,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 }
             }.start();*/
 
-            Application.getInstance().getGUILog().log("[INFO] MMS sync initiated.");
+            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - MMS sync initiated.");
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             jmsSyncProjectMapping.setDisabled(true);
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
         }
         return false;
     }
