@@ -17,6 +17,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGenPlugin;
 import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
+import gov.nasa.jpl.mbee.ems.ServerException;
+import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
@@ -82,6 +84,25 @@ public class Crushinator23To24Migrator extends Migrator {
         if (listener == null) {
             Application.getInstance().getGUILog().log("[ERROR] Local sync transaction commit listener not found. Aborting.");
             return;
+        }
+
+        String postUrl = ExportUtility.getPostElementsUrl();
+        if (postUrl == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Could not build post URL.");
+            return;
+        }
+        try {
+            String originUrl = JMSUtils.getJMSInfo(project).getUrl();
+            String site = ExportUtility.getSite();
+            if (originUrl != null && site != null) {
+                originUrl = originUrl.replace("tcp://", site.startsWith("http://") ? "http://" : "https://");
+                originUrl = originUrl.replaceAll(":\\d+", "");
+                Application.getInstance().getGUILog().log("[INFO] Found origin domain: " + originUrl);
+                postUrl = postUrl.replaceAll("http(s?):\\/\\/.+?(?=\\/)", originUrl);
+                Application.getInstance().getGUILog().log("[INFO] New post URL: " + postUrl);
+            }
+        } catch (ServerException e) {
+            e.printStackTrace();
         }
 
         List<InstanceSpecification> presentationElements = new ArrayList<>();
@@ -223,7 +244,7 @@ public class Crushinator23To24Migrator extends Migrator {
             body.put("elements", jsonArray);
             body.put("source", "magicdraw");
             body.put("mmsVersion", DocGenPlugin.VERSION);
-            ExportUtility.send(ExportUtility.getPostElementsUrl(), body.toJSONString(), false, false);
+            ExportUtility.send(postUrl, body.toJSONString(), false, false);
             if (ps.isCancel()) {
                 handleCancel();
                 return;
@@ -248,7 +269,7 @@ public class Crushinator23To24Migrator extends Migrator {
             }
         }
         if (!hiddenViewInstancePackageJsonObjects.isEmpty()) {
-            sendStaggered(hiddenViewInstancePackageJsonObjects.values(), "Presentation Element Package", "Presentation Element Packages", ps, true);
+            sendStaggered(postUrl, hiddenViewInstancePackageJsonObjects.values(), "Presentation Element Package", "Presentation Element Packages", ps, true);
             if (ps.isCancel()) {
                 return;
             }
@@ -277,7 +298,7 @@ public class Crushinator23To24Migrator extends Migrator {
         }
         if (!presentationElementJsonObjects.isEmpty()) {
             // Intentionally not sending source so that it is not skipped on Coordinated Sync. Otherwise holding_bin intermediate packages won't be created, which could cause errors if non-hidden elements are created there.
-            sendStaggered(presentationElementJsonObjects, "Presentation Element", "Presentation Elements", ps, true);
+            sendStaggered(postUrl, presentationElementJsonObjects, "Presentation Element", "Presentation Elements", ps, true);
             if (ps.isCancel()) {
                 return;
             }
@@ -309,7 +330,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 //Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + jsonArray.size() + " element" + (jsonArray.size() != 1 ? "s" : "") + " on the MMS.");
                 //System.out.println(body);
                 //OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, jsonArray.size(), "Migration Deletes"));
-                ExportUtility.deleteWithBody(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), true);
+                ExportUtility.deleteWithBody(postUrl, body.toJSONString(), true);
 
                 ps.increase();
                 total += jsonArray.size();
@@ -425,7 +446,7 @@ public class Crushinator23To24Migrator extends Migrator {
         failed = true;
     }
 
-    private void sendStaggered(Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus, boolean suppressSource) {
+    private void sendStaggered(String url, Collection<JSONObject> jsonObjects, String elementType, String elementTypePlural, ProgressStatus progressStatus, boolean suppressSource) {
         if (!jsonObjects.isEmpty()) {
             int total = 0;
             String status = "Updating " + (jsonObjects.size() != 1 ? elementTypePlural : elementType) + " on the MMS";
@@ -449,7 +470,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 //Application.getInstance().getGUILog().log("[INFO] Queueing request to update " + elementJsonMap.size() + " element" + (elementJsonMap.size() != 1 ? "s" : "") + " on the MMS.");
                 //System.out.println(body);
                 //OutputQueue.getInstance().offer(new Request(url, body.toJSONString(), jsonArray.size(), "Migration Creations/Updates", false));
-                ExportUtility.send(ExportUtility.getPostElementsUrl(), body.toJSONString(), false, false);
+                ExportUtility.send(url, body.toJSONString(), false, false);
                 if (progressStatus.isCancel()) {
                     handleCancel();
                     return;
