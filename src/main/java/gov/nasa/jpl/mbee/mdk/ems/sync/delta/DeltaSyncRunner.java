@@ -37,6 +37,7 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -341,7 +342,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.set("elements", elementsArrayNode);
                 body.put("source", "magicdraw");
                 body.put("mmsVersion", MDKPlugin.VERSION);
-                Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsArrayNode.size() + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
+                Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
                 try {
                     OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(body), "POST", true, elementsArrayNode.size(), "Sync Changes"));
                 } catch (JsonProcessingException e) {
@@ -368,7 +369,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             body.set("elements", elementsArrayNode);
             body.put("source", "magicdraw");
             body.put("mmsVersion", MDKPlugin.VERSION);
-            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + elementsArrayNode.size() + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
             try {
                 OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(body), "DELETEALL", true, elementsArrayNode.size(), "Sync Deletes"));
             } catch (JsonProcessingException e) {

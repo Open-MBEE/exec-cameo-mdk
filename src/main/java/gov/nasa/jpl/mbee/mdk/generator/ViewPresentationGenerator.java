@@ -363,7 +363,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             if (element instanceof InstanceSpecification) {
                                 instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(instanceObjectNode, (InstanceSpecification) element));
                             }
-                        } catch (ImportException e) {
+                        } catch (ImportException | ReadOnlyElementException e) {
                             /*failure = true;
                             Utils.printException(e);
                             SessionManager.getInstance().cancelSession();
@@ -391,7 +391,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             if (element instanceof Slot) {
                                 slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotObjectNode, (Slot) element));
                             }
-                        } catch (ImportException e) {
+                        } catch (ImportException | ReadOnlyElementException e) {
                             /*failure = true;
                             Utils.printException(e);
                             SessionManager.getInstance().cancelSession();

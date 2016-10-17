@@ -42,11 +42,11 @@ public class EMFImporter implements JsonToElementFunction {
     protected List<EStructuralFeatureOverride> eStructuralFeatureOverrides;
 
     @Override
-    public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
+    public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException, ReadOnlyElementException {
         return convert(objectNode, project, strict);
     }
 
-    private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
+    private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException, ReadOnlyElementException {
         UMLFactory.eINSTANCE.setRepository(project.getRepository());
         project.getCounter().setCanResetIDForObject(true);
 
@@ -82,13 +82,21 @@ public class EMFImporter implements JsonToElementFunction {
 
     protected List<PreProcessor> getPreProcessors() {
         if (preProcessors == null) {
-            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION);
+            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.EDITABLE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION);
         }
         return preProcessors;
     }
 
     public static class PreProcessor {
         public static final PreProcessor CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
+        EDITABLE = new PreProcessor(
+                (objectNode, project, strict, element) -> {
+                    if (!element.isEditable()) {
+                        throw new ReadOnlyElementException(element);
+                    }
+                    return element;
+                }
+        ),
         DOCUMENTATION = new PreProcessor(
                 (objectNode, project, strict, element) -> {
                     JsonNode jsonNode = objectNode.get("documentation");
@@ -453,17 +461,17 @@ public class EMFImporter implements JsonToElementFunction {
 
     @FunctionalInterface
     public interface PreProcessorFunction {
-        Element apply(ObjectNode objectNode, Project project, boolean strict, Element element) throws ImportException;
+        Element apply(ObjectNode objectNode, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
     }
 
     @FunctionalInterface
     interface DeserializationFunction {
-        Object apply(String key, JsonNode jsonNode, boolean ignoreMultiplicity, ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
+        Object apply(String key, JsonNode jsonNode, boolean ignoreMultiplicity, ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
     }
 
     @FunctionalInterface
     protected interface ImportFunction {
-        Element apply(ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
+        Element apply(ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
     }
 
     @FunctionalInterface
