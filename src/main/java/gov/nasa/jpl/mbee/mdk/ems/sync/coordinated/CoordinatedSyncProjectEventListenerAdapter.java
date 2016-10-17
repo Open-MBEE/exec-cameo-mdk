@@ -1,21 +1,24 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.coordinated;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
 //@donbot migrate simple to Jackson
-import org.json.simple.JSONObject;
+//import org.json.simple.JSONObject;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -94,18 +97,18 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
 
             if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
-                JSONObject teamworkCommittedMessage = new JSONObject();
+                ObjectNode teamworkCommittedMessage = JacksonUtils.getObjectMapper().createObjectNode();
                 teamworkCommittedMessage.put("source", "magicdraw");
                 teamworkCommittedMessage.put("sender", ViewEditUtils.getUsername());
-                teamworkCommittedMessage.put("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
+                teamworkCommittedMessage.set("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
                 try {
-                    TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(teamworkCommittedMessage.toJSONString());
-                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, ExportUtility.getProjectId(project));
-                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, ExportUtility.getWorkspace() + "_mdk");
+                    TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));
+                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, project.getPrimaryProject().getProjectID());
+                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, MDUtils.getWorkspace(project) + "_mdk");
                     jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
                     int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
                     Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
-                } catch (JMSException e) {
+                } catch (JMSException | JsonProcessingException e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
                 }

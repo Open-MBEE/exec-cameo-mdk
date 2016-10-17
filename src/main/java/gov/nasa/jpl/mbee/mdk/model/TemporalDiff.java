@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.model;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -40,8 +42,8 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils2;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import org.json.simple.JSONObject;
 
+import javax.mail.MethodNotSupportedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -148,7 +150,8 @@ public class TemporalDiff extends Table {
                         }
                     }
                     else {
-                        JSONObject compareJson = TimeQueryUtil.getHistoryOfElement((Element) e, compareToDate);
+                        ObjectNode compareJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, compareToDate);
+                        //TODO @scopecreep throw new MethodNotSupportedException("");
                         // System.out.println("Comp _____________" + compareJson);
                     }
                     if (baseVersionTime == null) {
@@ -160,7 +163,8 @@ public class TemporalDiff extends Table {
                         }
                     }
                     else {
-                        JSONObject baseJson = TimeQueryUtil.getHistoryOfElement((Element) e, baseVersionDate);
+                        ObjectNode baseJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, baseVersionDate);
+                        //TODO @scopecreep throw new MethodNotSupportedException("");
                         // System.out.println("Base _____________" + baseJson);
                     }
                 }

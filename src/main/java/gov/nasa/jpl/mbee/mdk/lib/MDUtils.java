@@ -28,10 +28,13 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
 
+import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
+import com.nomagic.magicdraw.teamwork2.ProjectVersion;
+import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -250,7 +253,7 @@ public class MDUtils {
         twbranch = "master/" + twbranch;
         String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
 
-        //TODO imported from ExportUtility, update to finish the import
+        //TODO @donbot imported from ExportUtility, update to finish the import
 //        Map<String, String> wsmap = wsIdMapping.get(projId);
 //        if (wsmap == null) {
 //            updateWorkspaceIdMapping();
@@ -277,6 +280,18 @@ public class MDUtils {
         }
         return branch;
     }
+
+    public static Integer getProjectVersion(Project proj) {
+        Integer ver = null;
+        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
+            IVersionDescriptor iVersionDescriptor = TeamworkService.getInstance(proj).getVersion(proj);
+            if (iVersionDescriptor instanceof ProjectVersion) {
+                ver = ((ProjectVersion) iVersionDescriptor).getNumber();
+            }
+        }
+        return ver;
+    }
+
 
 
 }

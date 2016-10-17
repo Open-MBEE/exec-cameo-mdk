@@ -12,6 +12,7 @@ import com.nomagic.task.ProgressStatus;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CreateAlfrescoTask;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CreateTeamworkBranch;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
@@ -54,7 +55,7 @@ public class BranchValidator {
         }
         Set<String> seenTasks = new HashSet<>();
         Map<String, ProjectDescriptor> branchDescriptors = new HashMap<>();
-        String currentBranch = ExportUtility.getTeamworkBranch(proj);
+        String currentBranch = MDUtils.getTeamworkBranch(proj);
         try {
             ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(proj);
             ProjectDescriptor trunk = currentProj;

@@ -9,6 +9,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
@@ -72,8 +73,8 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     public static boolean initDurable(Project project, final JMSSyncProjectMapping jmsSyncProjectMapping) {
-        String projectID = ExportUtility.getProjectId(project);
-        String workspaceID = ExportUtility.getWorkspace();
+        String projectID = project.getPrimaryProject().getProjectID();
+        String workspaceID = MDUtils.getWorkspace(project);
 
 
         JMSUtils.JMSInfo jmsInfo;

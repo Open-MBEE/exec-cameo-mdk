@@ -51,6 +51,7 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import org.python.google.common.collect.Lists;
@@ -151,8 +152,8 @@ public class MDKHelper {
      */
     public static boolean loginToMMS(final String username, final String password) {
         Utils.setPopupsDisabled(true);
-        EMSLoginAction ela = new EMSLoginAction();
-        return ela.loginAction(username, password);
+        TicketUtils.setUsernameAndPassword(Application.getInstance().getProject(), username, password);
+        return TicketUtils.checkTicket(Application.getInstance().getProject());
     }
 
     /**
@@ -171,7 +172,7 @@ public class MDKHelper {
      * @param password
      */
     public static void setMMSLoginCredentials(String username, String password) {
-        ViewEditUtils.setUsernameAndPassword(username, password);
+        TicketUtils.setUsernameAndPassword(Application.getInstance().getProject(), username, password);
     }
 
     /**

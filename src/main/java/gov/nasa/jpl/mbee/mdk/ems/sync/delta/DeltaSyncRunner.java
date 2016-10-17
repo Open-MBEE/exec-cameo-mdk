@@ -348,13 +348,15 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.put("source", "magicdraw");
                 body.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsArrayNode.size() + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
-                OutputQueue.getInstance().offer(new Request(MMSUtils.getServiceWorkspacesSitesProjectsElementsUri(project), body, "POST", true, elementsArrayNode.size(), "Sync Changes"));
-//                try {
-//                    OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(body), "POST", true, elementsArrayNode.size(), "Sync Changes"));
-//                } catch (JsonProcessingException e) {
-//                    Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
-//                    e.printStackTrace();
-//                }
+                try {
+                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesSitesProjectsElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
+                } catch (IOException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
+                    e.printStackTrace();
+                }
                 shouldLogNoLocalChanges = false;
             }
         }
@@ -381,13 +383,15 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 return;
             }
             uri.setPath(uri.getPath() + "/elements");
-            OutputQueue.getInstance().offer(new Request(uri, body, "POST", true, elementsArrayNode.size(), "Sync Changes"));
-//            try {
-//                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(body), "DELETEALL", true, elementsArrayNode.size(), "Sync Deletes"));
-//            } catch (JsonProcessingException e) {
-//                Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
-//                e.printStackTrace();
-//            }
+            try {
+                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, uri, body, true, elementsArrayNode.size(), "Sync Changes"));
+            } catch (IOException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                e.printStackTrace();
+            } catch (URISyntaxException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
+                e.printStackTrace();
+            }
             shouldLogNoLocalChanges = false;
         }
 

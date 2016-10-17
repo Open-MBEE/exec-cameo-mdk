@@ -52,38 +52,12 @@ import java.util.Base64;
 public class TicketUtils {
     
     private static String username = "";
-    private static String password = "";
     private static boolean passwordSet = false;
-    private static boolean loginDialogDisabled = false;
-    private static String authStringEnc = "";
+    private static String encodedCredentials = "";
     private static String ticket = "";
 
     public static String getUsername() {
-        if (!passwordSet) {
-            showLoginDialog();
-        }
         return username;
-    }
-
-    public static String getPassword() {
-        if (!passwordSet) {
-            showLoginDialog();
-        }
-        return password;
-    }
-
-    public static String getAuthStringEnc() {
-        if (!passwordSet) {
-            showLoginDialog();
-        }
-        return authStringEnc;
-    }
-
-    public static String getEncodedCredentials() {
-        if (!passwordSet) {
-            showLoginDialog();
-        }
-        return authStringEnc;
     }
 
     public static String getTicket() {
@@ -94,16 +68,8 @@ public class TicketUtils {
         return passwordSet;
     }
 
-    public static boolean isLoginDialogDisabled() {
-        return loginDialogDisabled;
-    }
-
-    public static void setLoginDialogDisabled(boolean option) {
-        loginDialogDisabled = option;
-    }
-
-    public static void showLoginDialog() {
-        if (!loginDialogDisabled) {
+    public static void showLoginDialog(Project project, String user, String pass) {
+        if (!Utils.isPopupsDisabled()) {
             // Pop up one time dialog for logging into Alfresco
             JPanel userPanel = new JPanel();
             userPanel.setLayout(new GridLayout(2, 2));
@@ -123,16 +89,15 @@ public class TicketUtils {
                 usernameFld.setText(username);
                 usernameFld.requestFocus();
             }
-            if (password != null) {
-                passwordFld.setText(password);
-            }
+            passwordFld.setText("");
             makeSureUserGetsFocus(usernameFld);
             JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                     "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
-
-            setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()));
+            user = usernameFld.getText();
+            pass = new String(passwordFld.getPassword());
         }
+        setUsernameAndPassword(project, user, pass);
     }
 
     private static void makeSureUserGetsFocus(final JTextField user) {
@@ -165,42 +130,43 @@ public class TicketUtils {
     /**
      * utility for setting authorization header encoding at same time as username and password.
      */
-    public static void setUsernameAndPassword(String user, String pass) {
+    public static void setUsernameAndPassword(Project project, String user, String pass) {
         if (user == null || user.equals("") || pass == null || pass.equals("")) {
             username = "";
-            password = "";
-            authStringEnc = "";
+            encodedCredentials = "";
             ticket = "";
             passwordSet = false;
             return;
         }
+        if ( (ticket = getTicket(project, user, pass)).equals("") ) {
+            setUsernameAndPassword(null, "", "");
+        }
         username = user;
-        password = pass;
         String authString = user + ":" + pass;
         byte[] authEncBytes = Base64.getEncoder().encode(authString.getBytes());
-        authStringEnc = new String(authEncBytes);
+        encodedCredentials = new String(authEncBytes);
         passwordSet = true;
     }
 
     public static void clearUsernameAndPassword() {
-        setUsernameAndPassword("", "");
-        ticket = "";
+        setUsernameAndPassword(null, "", "");
     }
 
-    public static String getTicket(Project project) {
+    public static String getTicket(Project project, String username, String password) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
+
+        // build request
+        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        if (requestUri == null || username.equals("") || password.equals("")) {
+            ticket = "";
+            return ticket;
+        }
 
         if (checkTicket(project)) {
             return ticket;
         }
 
-        // build request
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null) {
-            ticket = "";
-            return ticket;
-        }
         requestUri.setPath(requestUri.getPath() + "/api/login" + ticket);
         ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
         credentials.put("username", username);
@@ -209,14 +175,14 @@ public class TicketUtils {
         // do request
         ObjectNode response = null;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials);
-        } catch (IOException e) {
-            //TODO
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
+        } catch (IOException | URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while getting credentials. Reason: " + e.getMessage());
             e.printStackTrace();
         } catch (ServerException e) {
-            e.printStackTrace();
+            if (!showErrorMessage(e.getCode())) {
+                e.printStackTrace();
+            }
         }
 
         // parse response
@@ -245,13 +211,14 @@ public class TicketUtils {
         // do request
         ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.HttpRequestType.GET, requestUri);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        } catch (IOException | URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpceted error while checking credentials. Reason: " + e.getMessage());
             e.printStackTrace();
         } catch (ServerException e) {
-            e.printStackTrace();
+            if (!showErrorMessage(e.getCode())) {
+                e.printStackTrace();
+            }
         }
 
         // parse response

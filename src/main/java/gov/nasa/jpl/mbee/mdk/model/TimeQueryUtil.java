@@ -1,65 +1,75 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import org.apache.http.client.utils.URIBuilder;
 
+import org.json.simple.JSONArray;
+//import org.json.simple.JSONObject;
+//import org.json.simple.JSONValue;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
 public class TimeQueryUtil {
-    private static JSONObject result;
+    private static ObjectNode result;
 
     // query server for timestamp version:
     // https://fn-cae-ems.jpl.nasa.gov/alfresco/services/workspaces/master/tmt/elements/_18_0_2_baa02e2_1422996003330_165733_91914?timestamp=2015-12-13T16:21:06.797-0700
     // compare elements
 
-    public static JSONObject getHistoryOfElement(Element elementToQuery, Date compareToTime) {
+    public static ObjectNode getHistoryOfElement(Project project, Element elementToQuery, Date compareToTime) {
         ArrayList<Element> elementsToQuery = new ArrayList<Element>();
         elementsToQuery.add(elementToQuery);
 
-        String url = ExportUtility.getUrlWithWorkspace();
-        if (url == null) {
+        result = JacksonUtils.getObjectMapper().createObjectNode();
+        ArrayNode elements = result.putArray("elements");
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        URIBuilder requestUri = MMSUtils.getServiceWorkspacesUri(project);
+        if (requestUri == null) {
             return null;
         }
-        String response = null;
-        JSONArray elements = new JSONArray();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        String basePath = requestUri.getPath();
+        requestUri.setParameter("timestamp", "");
 
-        for (Element start : elementsToQuery) {
-            String id = start.getID();
-            id = "testtimestamps_cover";
-            if (start == Application.getInstance().getProject().getModel()) {
+        GUILog log = Application.getInstance().getGUILog();
+        Utils.guilog("[INFO] Getting elements from server...");
+
+        for (Element elem : elementsToQuery) {
+            String id = elem.getID();
+            if (elem == project) {
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             }
             id = id.replace(".", "%2E");
-            final String url2;
-            String time = sdf.format(compareToTime);
-            url2 = url + "/elements/" + id + "?timestamp=" + time + "&qualified=false";
+            requestUri.setPath(basePath + "/elements/" + id);
+            requestUri.setParameter("timestamp", sdf.format(compareToTime));
 
-            GUILog log = Application.getInstance().getGUILog();
-            Utils.guilog("[INFO] Getting elements from server...");
-
-            String tres = null;
+            ObjectNode partialResponse = null;
             try {
-                tres = ExportUtility.get(url2, false);
-            } catch (ServerException ex) {
+                partialResponse = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            } catch (IOException | ServerException | URISyntaxException e) {
+                //TODO add exception handling for partial element returns?
+                e.printStackTrace();
             }
-
-            JSONObject partialResult = (JSONObject) JSONValue.parse(tres);
-            if (partialResult != null && partialResult.containsKey("elements")) {
-                elements.addAll((JSONArray) partialResult.get("elements"));
+            JsonNode value;
+            if (partialResponse != null && (value = partialResponse.get("elements")) != null && value.isArray()) {
+                elements.addAll((ArrayNode) value);
             }
         }
-        result = new JSONObject();
-        result.put("elements", elements);
         return result;
     }
 

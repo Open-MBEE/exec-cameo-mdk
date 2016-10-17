@@ -3779,7 +3779,7 @@ public class Utils {
                 Utils.guilog("[ERROR] You must be logged into Teamwork first.");
                 return false;
             }
-            if (lastVersion == ExportUtility.getProjectVersion(project)) {
+            if (lastVersion == MDUtils.getProjectVersion(project)) {
                 return true;
             }
         } catch (IOException uhe) {
@@ -3855,6 +3855,10 @@ public class Utils {
      */
     public static void setPopupsDisabled(boolean disable) {
         Utils.popupsDisabled = disable;
+    }
+
+    public static boolean isPopupsDisabled() {
+        return Utils.popupsDisabled;
     }
 
     /**

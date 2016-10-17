@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.queue;
 
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -42,8 +43,8 @@ public class OutputQueue extends LinkedBlockingQueue<Request> {
         //linkedQueue not contain current so the index of removing row is (_rowNum -1)
         if (this.size() >= _rowNum) {
             Request toBeRemoved = (Request) this.toArray()[_rowNum - 1];
-            if (toBeRemoved != null && toBeRemoved.getJson() != null) {
-                log.info("[INFO] Removing a queue: " + toBeRemoved.getJson());
+            if (toBeRemoved != null && toBeRemoved.getRequest() != null) {
+                log.info("[INFO] Removing a queue: " + ((HttpEntityEnclosingRequestBase)toBeRemoved.getRequest()).getEntity().toString());
             }
             super.remove(toBeRemoved);
         }

@@ -145,7 +145,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         // do request for site element
         ObjectNode response = null;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.HttpRequestType.GET, requestUri);
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
         } catch (Exception e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error when querrying site element on MMS. " +
                     "Reason: " + e.getMessage());

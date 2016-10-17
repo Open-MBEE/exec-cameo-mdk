@@ -7,6 +7,7 @@ import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -15,44 +16,53 @@ import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ModelExporter;
+import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import org.apache.http.client.utils.URIBuilder;
 import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Set;
 
+//@donbot
+@Deprecated
 public class ExportLocalModule extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     public class ModuleExportRunner implements RunnableWithProgress {
 
         @Override
-        public void run(ProgressStatus arg0) {
+        public void run(ProgressStatus progressStatus) {
             ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             requestData.set("elements", elementsArrayNode);
             requestData.put("source", "magicdraw");
             requestData.put("mmsVersion", MDKPlugin.VERSION);
-
             ObjectNode projectObjectNode = ExportUtility.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
-            String url = ExportUtility.getUrl(Application.getInstance().getProject());
-            if (url == null) {
+
+            URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+            if (requestUri == null) {
                 return;
             }
-            String purl = url + "/workspaces/master/sites/" + siteName + "/projects";
+            requestUri.setPath(requestUri.getPath() + "/projects");
+
             Utils.guilog("Initializing module");
             try {
-                if (ExportUtility.send(purl, JacksonUtils.getObjectMapper().writeValueAsString(requestData), false, false) == null) {
-                    return;
-                }
-            } catch (JsonProcessingException e) {
+                ObjectNode response = MMSUtils.sendMMSRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData);
+                //TODO response processing?
+            } catch (IOException | URISyntaxException | ServerException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected error occurred when initializing module.");
                 e.printStackTrace();
                 return;
             }
 
+            //@Deprecated @donbot
             ModelExporter me = new ModelExporter(mounts, 0, false, module);
             JSONObject result = me.getResult();
             String json = result.toJSONString();

@@ -32,20 +32,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.multipart.FilePart;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -65,7 +65,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         return true;
     }
 
-    public static boolean postImage(String key, Map<String, ObjectNode> is) {
+    public static boolean postImage(Project project, String key, Map<String, ObjectNode> is) {
         if (is == null || is.get(key) == null) {
             Utils.guilog("[ERROR] Image data with id " + key + " not found.");
             return false;
@@ -83,44 +83,24 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         if ((value = is.get(key).get("extension")) != null && value.isTextual()) {
             extension = value.asText();
         }
-        String url = ExportUtility.getUrlWithWorkspace();
-        if (url == null) {
+
+        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+        if (requestUri == null) {
             return false;
         }
-        String baseurl = url + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
-        String site = ExportUtility.getSite();
-        String posturl = url + "/sites/" + site + "/artifacts/" + key + "?cs=" + cs + "&extension=" + extension;
+        requestUri.setPath(requestUri.getPath() + "/artifacts/" + key);
+        requestUri.setParameter("cs", cs);
+        requestUri.setParameter("extension", extension);
 
-        //String baseurl = url + "/artifacts/magicdraw/" + key + "?cs=" + cs + "&extension=" + extension;
         File imageFile = new File(filename);
-        PostMethod post = new PostMethod(posturl);
         try {
-            Part[] parts = {new FilePart("content", imageFile)};
-            post.setRequestEntity(new MultipartRequestEntity(parts, post.getParams()));
-
-            OutputQueue.getInstance().offer(new Request(posturl, post, "Image"));
-            /*
-            HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, baseurl, post);
-            client.executeMethod(post);
-            int status = post.getStatusCode();
-            if (!ExportUtility.showErrors(status, post.getResponseBodyAsString(), false)) {
-                Utils.guilog("[INFO] Successful");
-            }
-            */
-        } catch (Exception ex) {
-            Utils.printException(ex);
+            OutputQueue.getInstance().offer(new Request(requestUri, imageFile, "Image"));
+        } catch (IOException | URISyntaxException e) {
+            Utils.printException(e);
+            e.printStackTrace();
             return false;
-        } finally {
-            //post.releaseConnection();
         }
         return true;
-    }
-
-    public static void postImages(Map<String, ObjectNode> is) {
-        for (String key : is.keySet()) {
-            postImage(key, is);
-        }
     }
 
     @Override
@@ -128,7 +108,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         for (Annotation anno : annos) {
             Element e = (Element) anno.getTarget();
             String key = e.getID();
-            postImage(key, images);
+            postImage(Project.getProject(e), key, images);
         }
         Utils.guilog("[INFO] Requests are added to queue.");
 
@@ -137,7 +117,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
     @Override
     public void actionPerformed(ActionEvent e) {
         String key = element.getID();
-        if (postImage(key, images)) {
+        if (postImage(Project.getProject(element), key, images)) {
             Utils.guilog("[INFO] Request is added to queue.");
         }
     }

@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
@@ -39,55 +41,71 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+//import org.json.simple.JSONArray;
+//import org.json.simple.JSONObject;
 
 import java.util.HashSet;
 import java.util.Set;
 
 //@donbot update json simple to jackson
+@Deprecated
 public class ModelExporter {
-    // private JSONObject elementHierarchy = new JSONObject();
-    private JSONObject elements = new JSONObject();
-    private JSONObject emfElements = new JSONObject();
+//    private JSONObject elementHierarchy = new JSONObject();
+    private ObjectNode elements;
+    private ObjectNode emfElements;
 
-    // private JSONArray roots = new JSONArray();
+//    private JSONObject elementsj = new JSONObject();
+//    private JSONObject emfElementsj = new JSONObject();
+//    private JSONArray roots = new JSONArray();
 
     private Set<Element> starts;
     private int depth;
     private boolean packageOnly;
-    private IProject parentPrj;
+    private IProject parentProject;
 
     private Stereotype view = Utils.getViewStereotype();
     private Stereotype viewpoint = Utils.getViewpointStereotype();
 
-    public ModelExporter(Project prj, int depth, boolean pkgOnly) {
+    public ModelExporter(Project project, int depth, boolean pkgOnly) {
         this.depth = depth;
-        starts = new HashSet<Element>();
-        for (Package pkg : prj.getModel().getNestedPackage()) {
+        this.starts = new HashSet<Element>();
+        for (Package pkg : project.getModel().getNestedPackage()) {
             if (ProjectUtilities.isElementInAttachedProject(pkg)) {
                 continue;// check for module??
             }
-            starts.add(pkg);
+            this.starts.add(pkg);
         }
-        packageOnly = pkgOnly;
-        parentPrj = prj.getPrimaryProject();
+        this.packageOnly = pkgOnly;
+        this.parentProject = project.getPrimaryProject();
 
     }
 
     public ModelExporter(Set<Element> roots, int depth, boolean pkgOnly, IProject prj) {
         this.depth = depth;
         this.starts = roots;
-        packageOnly = pkgOnly;
-        parentPrj = prj;
+        this.packageOnly = pkgOnly;
+        this.parentProject = prj;
     }
 
     public int getNumberOfElements() {
         return elements.size();
     }
 
-    public JSONObject getResult() {
+    public ObjectNode getResult() {
+        ObjectNode result = JacksonUtils.getObjectMapper().createObjectNode();
+        for (Element e: starts) {
+            addToElements(e, 1);
+        }
+        ArrayNode elements = result.putArray("elements");
+        //TODO finish this later if we don't migrate off it
+
+
+        return result;
+    }
+
+    public JSONObject getResultj() {
         for (Element e : starts) {
             addToElements(e, 1);
             // roots.add(e.getID());
@@ -100,12 +118,13 @@ public class ModelExporter {
         result.put("source", "magicdraw");
         result.put("mmsVersion", MDKPlugin.VERSION);
         // result.put("elementHierarchy", elementHierarchy);
-        return result;
+        return resultj;
     }
 
+    //TODO @donbot refactor?
     @SuppressWarnings("unchecked")
     private boolean addToElements(Element e, int curdepth) {
-        if (elements.containsKey(e.getID())) {
+        if (elements.get(e.getID()) != null) {
             return true;
         }
         if (// e instanceof ValueSpecification ||
@@ -124,10 +143,10 @@ public class ModelExporter {
         }
 
         ObjectNode elementInfo = Converters.getElementToJsonConverter().apply(e, Project.getProject(e));
-        elements.put(e.getID(), elementInfo);
+        elements.set(e.getID(), elementInfo);
 
         if (starts.contains(e) && ProjectUtilities.isAttachedProjectRoot(e)) {
-            elementInfo.put("ownerId", parentPrj.getProjectID());
+            elementInfo.put("ownerId", parentProject.getProjectID());
         }
 
         // if (e instanceof Property || e instanceof Slot)

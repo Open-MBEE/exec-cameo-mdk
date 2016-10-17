@@ -22,7 +22,6 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -42,12 +41,15 @@ import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 /**
  * @author dlam
+ *
  */
 
 @Deprecated
@@ -196,8 +198,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             ObjectNode viewResponse;
             try {
-                viewResponse = MMSUtils.getElementsById(viewMap.keySet(), progressStatus);
-            } catch (ServerException | IOException e) {
+                viewResponse = MMSUtils.getElementsById(viewMap.keySet(), project, progressStatus);
+            } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
                 e.printStackTrace();
@@ -265,8 +267,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     ObjectNode instanceAndSlotResponse;
                     try {
-                        instanceAndSlotResponse = MMSUtils.getElementsById(elementIDs, progressStatus);
-                    } catch (ServerException | IOException e) {
+                        instanceAndSlotResponse = MMSUtils.getElementsById(elementIDs, project, progressStatus);
+                    } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
                         e.printStackTrace();
@@ -595,13 +597,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setDescription("Queueing upload of generated view instances");
                 progressStatus.setCurrent(5);
 
-                ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
-                request.set("elements", elementsArrayNode);
-                request.put("source", "magicdraw");
-                request.put("mmsVersion", MDKPlugin.VERSION);
+                ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
+                requestData.set("elements", elementsArrayNode);
+                requestData.put("source", "magicdraw");
+                requestData.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
 
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(request), "POST", true, elementsArrayNode.size(), "Sync Changes"));
+                URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+                requestUri.setPath(requestUri.getPath() + "/elements");
+                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, requestUri, requestData, true, elementsArrayNode.size(), "Sync Changes"));
                 changed = true;
             }
 
@@ -623,13 +627,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
             if (elementsArrayNode.size() > 0) {
-                ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
-                request.set("elements", elementsArrayNode);
-                request.put("source", "magicdraw");
-                request.put("mmsVersion", MDKPlugin.VERSION);
+                ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
+                requestData.set("elements", elementsArrayNode);
+                requestData.put("source", "magicdraw");
+                requestData.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(request), "DELETEALL", true, elementsArrayNode.size(), "View Generation"));
+                URIBuilder requestUri = MMSUtils.getServiceWorkspacesUri(project);
+                requestUri.setPath(requestUri.getPath() + "/elements");
+                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, requestData, true, elementsArrayNode.size(), "View Generation"));
                 changed = true;
             }
 
@@ -684,7 +690,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
         ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);
         // this checks images generated from the local generation against what's on the web based on checksum
-        iv.validate();
+        iv.validate(project);
         // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
         for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
             for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {

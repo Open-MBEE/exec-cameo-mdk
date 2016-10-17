@@ -16,12 +16,16 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import org.apache.http.client.utils.URIBuilder;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -116,7 +120,12 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             elements.addAll(elementsToUpdate);
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
-            OutputQueue.getInstance().offer((new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(request), "POST", true, elements.size(), "Sync Changes")));
+            try {
+                OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST , MMSUtils.getServiceWorkspacesSitesElementsUri(project), request, true, elements.size(), "Sync Changes")));
+            } catch (IOException | URISyntaxException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
         if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to delete " + elementsToDelete.size() + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
@@ -129,7 +138,14 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             }
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
-            OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(request), "DELETEALL", true, elements.size(), "Sync Deletes"));
+            URIBuilder requestUri = MMSUtils.getServiceWorkspacesUri(project);
+            requestUri.setPath(requestUri.getPath() + "/elements");
+            try {
+                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
+            } catch (IOException | URISyntaxException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -28,8 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
@@ -69,16 +69,12 @@ import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.mdk.web.JsonRequestEntity;
-
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.*;
@@ -87,8 +83,6 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import javax.jms.*;
 import javax.swing.*;
@@ -96,7 +90,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.regex.Pattern;
 
 @Deprecated
 //TODO migrate usage of these methods to EMFExporter.java @donbot
@@ -123,7 +116,7 @@ public class ExportUtility {
             wsIdMapping.put(projId, idmapping);
         }
 
-        String url = getUrl(Application.getInstance().getProject());
+        String url = MMSUtils.getServerUrl(Application.getInstance().getProject());
         if (url == null) {
             return;
         }
@@ -158,7 +151,7 @@ public class ExportUtility {
             sites.put(projId, idmapping);
         }
 
-        String url = getUrl(Application.getInstance().getProject());
+        String url = MMSUtils.getServerUrl(Application.getInstance().getProject());
         if (url == null) {
             return;
         }
@@ -320,20 +313,21 @@ public class ExportUtility {
         return e.getID();
     }
 
-    public static Element getElementFromID(Project project, String id) {
-        if (project == null || id == null) {
+    public static Element getElementFromID(String id) {
+        if (id == null) {
             return null;
         }
+        Project prj = Application.getInstance().getProject();
         String[] ids = id.split("-slot-");
         if (ids.length < 2) {
-            if (id.equals(project.getPrimaryProject().getProjectID())) {
-                return project.getModel();
+            if (id.equals(prj.getPrimaryProject().getProjectID())) {
+                return prj.getModel();
             }
-            return (Element) project.getElementByID(ids[0]);
+            return (Element) prj.getElementByID(ids[0]);
         }
         else {
-            Element instancespec = (Element) project.getElementByID(ids[0]);
-            Element definingFeature = (Element) project.getElementByID(ids[1]);
+            Element instancespec = (Element) prj.getElementByID(ids[0]);
+            Element definingFeature = (Element) prj.getElementByID(ids[1]);
             if (instancespec != null && definingFeature != null && instancespec instanceof InstanceSpecification) {
                 for (Slot slot : ((InstanceSpecification) instancespec).getSlot()) {
                     if (slot.getDefiningFeature() == definingFeature) {
@@ -349,6 +343,8 @@ public class ExportUtility {
     }
 
     /*
+    @Deprecated
+    //TODO @donbot migrate to MMSUtils.getServerUrl()
     public static String getUrl(Project project) {
         if (project == null || project.getModel() == null) {
             return null;
@@ -376,9 +372,9 @@ public class ExportUtility {
         url += "/alfresco/service";
         return url;
     }
-    */
 
-    /*
+    @Deprecated
+    //TODO @donbot Migrate to MMSUtils.getSiteName()
     public static String getSite() {
         Element model = Application.getInstance().getProject().getModel();
         String site = (String) StereotypesHelper.getStereotypePropertyFirst(model, "ModelManagementSystem", "MMS Site");
@@ -396,18 +392,24 @@ public class ExportUtility {
         // do switch here
         return site;
     }
-    */
 
+    @Deprecated
+    //TODO @donbot Determine if necessary and migrate to MDUtils.java
     public static String getSiteForProject(IProject prj) {
         String human = getHumanSiteForProject(prj);
         return sites.get(Application.getInstance().getProject().getPrimaryProject().getProjectID()).get(human);
     }
 
-
+    @Deprecated
+    //TODO @donbot Determine if necessary and migrate to MDUtils.java
     public static String getHumanSiteForProject(IProject prj) {
         return prj.getName().toLowerCase().replace(' ', '-').replace('_', '-').replace('.', '-');
     }
+    */
 
+    /*
+    @Deprecated
+    //TODO @donbot migrate to MDUtils.getWorkspace()
     public static String getWorkspace() {
         Project project = Application.getInstance().getProject();
         String twbranch = getTeamworkBranch(project);
@@ -434,10 +436,11 @@ public class ExportUtility {
         Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
         return null;
     }
+    */
 
     /*
     @Deprecated
-    // TODO Add project as parameter @donbot
+    // TODO @donbot replace with MMSUtils.getServiceWorkspacesUri(project)
     public static String getUrlWithWorkspace() {
         String url = getUrl(Application.getInstance().getProject());
         String workspace = getWorkspace();
@@ -446,11 +449,9 @@ public class ExportUtility {
         }
         return null;
     }
-    */
 
-    /*
     @Deprecated
-    // TODO Add project as parameter @donbot
+    // TODO @donbot replace with MMSUtils.getServiceWorkspacesSitesUri(project)
     public static String getUrlWithWorkspaceAndSite() {
         String url = getUrl(Application.getInstance().getProject());
         String workspace = getWorkspace();
@@ -460,11 +461,9 @@ public class ExportUtility {
         }
         return null;
     }
-*/
 
-    /*
     @Deprecated
-    // TODO Add project as parameter @donbot
+    //TODO @donbot replace with MMSUtils.getServiceWorkspacesSitesProjectsUri(project)
     public static String getUrlForProject() {
         String url = getUrl(Application.getInstance().getProject());
         String site = getSite();
@@ -472,15 +471,14 @@ public class ExportUtility {
             return null;
         }
         return url + "/workspaces/master/sites/" + site + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        /*String url = getUrlWithWorkspaceAndSite();
-        if (url != null)
-            return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        return null;*/
-    /*
+//        String url = getUrlWithWorkspaceAndSite();
+//        if (url != null)
+//            return url + "/projects/" + Application.getInstance().getProject().getPrimaryProject().getProjectID();
+//        return null;
     }
-    */
 
-    /*
+
+    //TODO @donbot determine if replacement is needed
     public static String getUrlForProject(IProject prj) {
         String url = getUrl(Application.getInstance().getProject());
         String site = getSiteForProject(prj);
@@ -489,11 +487,9 @@ public class ExportUtility {
         }
         return null;
     }
-    */
 
-    /*
     @Deprecated
-    // TODO Add project as parameter @donbot
+    // TODO @donbot replace with MMSUtils.getServiceWorkspacesSitesElementsUri(project);
     public static String getPostElementsUrl() {
         String url = getUrlWithWorkspaceAndSite();
         if (url == null) {
@@ -503,7 +499,8 @@ public class ExportUtility {
     }
     */
 
-    public static boolean showErrors(int code, String response, boolean showPopupErrors) {
+    public static boolean showErrors(int code, String response,
+                                     boolean showPopupErrors) {
         if (code != 200) {
             if (code >= 500) {
                 if (showPopupErrors) {
@@ -560,6 +557,7 @@ public class ExportUtility {
         return false;
     }
 
+    /*
     public static String delete(String url, boolean feedback) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null) {
@@ -631,11 +629,11 @@ public class ExportUtility {
         }
     }
 
-    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog) {
+    public static String send(String url, String json, boolean showPopupErrors, boolean suppressGuiLog) {
         return send(url, json, showPopupErrors, suppressGuiLog, "Send#?");
     }
 
-    public static String send(String url, String json, /*String method,*/ boolean showPopupErrors, boolean suppressGuiLog, String _threadName) {
+    public static String send(String url, String json, boolean showPopupErrors, boolean suppressGuiLog, String _threadName) {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (url == null) {
             return null;
@@ -662,11 +660,11 @@ public class ExportUtility {
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
 
-            /*int timeout = 120; // seconds
-            HttpParams httpParams = client.getParams();
-            httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
-            httpParams.setParameter(HttpConnectionParams.SO_TIMEOUT, timeout * 1000); //casue SockteTimeoutException
-            */
+//            int timeout = 120; // seconds
+//            HttpParams httpParams = client.getParams();
+//            httpParams.setParameter(HttpConnectionParams.CONNECTION_TIMEOUT, timeout * 1000); //cause ConnectionTimeoutException
+//            httpParams.setParameter(HttpConnectionParams.SO_TIMEOUT, timeout * 1000); //casue SockteTimeoutException
+
 
             ViewEditUtils.setCredentials(client, url, pm);
             if (print) {
@@ -703,13 +701,10 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
-    /*
-     * public static String send(String url, String json, String method) { return send(url, json, method, true, false); }
-	 */
 
     public static String send(String url, String json) {
         //return send(url, json, null); //method == null means POST
-        return send(url, json/*, method*/, true, false);
+        return send(url, json, true, false);
     }
 
     public static String deleteWithBody(String url, String json, boolean feedback) {
@@ -784,6 +779,7 @@ public class ExportUtility {
             pm.releaseConnection();
         }
     }
+    */
 
     //convert the view2view json object given by alfresco visitor to json server expects
     @SuppressWarnings("unchecked")
@@ -831,7 +827,6 @@ public class ExportUtility {
         return get(url, username, password, true);
     }
 
-    /*
     public static boolean checkAndResetTicket(String urlString) {
         // TODO Fix properly by passing project/site reference with the request so this sort of transformation isn't required
         URL url;
@@ -902,9 +897,9 @@ public class ExportUtility {
         String userpasswordJsonString = "";
         try {
             if (username != null && !username.equals("")) {
-                ViewEditUtils.setUsernameAndPassword(username, password);
+                ViewEditUtils.setUsernameAndPassword(username, password, true);
             }
-            userpasswordJsonString = ViewEditUtils.getCredentialsString();
+            userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
 
@@ -958,7 +953,6 @@ public class ExportUtility {
             postMethod.releaseConnection();
         }
     }
-    */
 
     // long form get method allowing option of bypassing the login dialog if username is not null or empty ""
     public static String get(String url, String username, String password, boolean showPopupErrors) throws ServerException {
@@ -966,12 +960,9 @@ public class ExportUtility {
         if (url == null) {
             return null;
         }
-        // url = stuff
         checkAndResetTicket(url);
         url = addTicketToUrl(url);
-        // url += alf_ticket=<ticket>
         GetMethod gm = new GetMethod(url);
-        // get method for that stuff
         try {
             HttpClient client = new HttpClient();
             if (username == null || username.equals("")) {
@@ -980,12 +971,11 @@ public class ExportUtility {
             else {
                 ViewEditUtils.setCredentials(client, url, gm, username, password);
             }
-            // get method has a new Header("Authorization", getAuthStringEnc()));
+            //Application.getInstance().getGUILog().log("[INFO] Getting...");
+            //Application.getInstance().getGUILog().log("url=" + url);
             if (print) {
                 log.info("get: " + url);
             }
-            // executes
-            // parses response
             int code = client.executeMethod(gm);
             String json = gm.getResponseBodyAsString();
             // TODO Remove this hackery @donbot
@@ -1001,8 +991,10 @@ public class ExportUtility {
             if (code == 400) {
                 throw new ServerException(json, code); //?
             }
+            //Application.getInstance().getGUILog().log("[INFO] Successful...");
             return json;
         } catch (IOException | IllegalArgumentException ex) {
+            //Utils.printException(ex);
             ex.printStackTrace();
             throw new ServerException("", 500);
         } finally {
@@ -1822,14 +1814,8 @@ public class ExportUtility {
         return tag;
     }
 
-    public static Integer getAlfrescoProjectVersion(String projectId) {
-        String baseUrl = getUrlWithWorkspace();
-        String checkProjUrl = baseUrl + "/projects/" + projectId;
-        return getAlfrescoProjectVersionWithUrl(checkProjUrl);
-    }
-
     public static Integer getAlfrescoProjectVersion(String projectId, String wsId) {
-        String baseUrl = getUrl(Application.getInstance().getProject());//WithWorkspace();
+        String baseUrl = MMSUtils.getServerUrl(Application.getInstance().getProject());//WithWorkspace();
         baseUrl += "/workspaces/" + wsId;
         String checkProjUrl = baseUrl + "/projects/" + projectId;
         return getAlfrescoProjectVersionWithUrl(checkProjUrl);
@@ -1859,108 +1845,12 @@ public class ExportUtility {
         return null;
     }
 
-   @Deprecated
-    public static void sendProjectVersion(Element e) {
-		/*
-		 * Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IProject module = ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) {
-		 * IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork = pv.getNumber(); sendProjectVersion(module.getProjectID(), teamwork); } } else { if
-		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { sendProjectVersion(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber()); } }
-		 */
-
-    }
-
-   @Deprecated
-   public static boolean okToExport(Element e) {
-		/*
-		 * if (mountedVersions == null) mountedVersions = new HashMap<String, Integer>(); Project prj = Application.getInstance().getProject(); if (ProjectUtilities.isElementInAttachedProject(e)) { IAttachedProject module =
-		 * ProjectUtilities.getAttachedProject(e); if (ProjectUtilities.isFromTeamworkServer(module)) { IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork =
-		 * pv.getNumber(); // Integer teamwork = // TeamworkService.getInstance(prj).getVersion(modulePrj).getNumber(); Integer mms = getAlfrescoProjectVersion(module.getProjectID()); if (teamwork == mms || mms == null || teamwork >= mms)
-		 * return true; Boolean con = Utils .getUserYesNoAnswer("The element is in project " + module.getName() + " (" + teamwork + ") that is an older version of what's on the server (" + mms + "), do you want to continue export?"); if
-		 * (con == null || !con) return false; } return true; } else { if (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { Integer teamwork = TeamworkService.getInstance(prj) .getVersion(prj).getNumber(); Integer mms =
-		 * getAlfrescoProjectVersion(prj.getPrimaryProject() .getProjectID()); if (teamwork == mms || mms == null || teamwork >= mms) return true; Boolean con = Utils .getUserYesNoAnswer("The element is in project " + prj.getName() + " (" +
-		 * teamwork + ") that is an older version of what's on the server (" + mms + "), do you want to continue export?"); if (con == null || !con) return false; } return true; }
-		 */
-        return true;
-    }
-
-   @Deprecated
-   public static boolean okToExport(Set<Element> set) {
-		/*
-		 * Project prj = Application.getInstance().getProject(); mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); if
-		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber());
-		 * projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName()); } for (Element e : set) { if (ProjectUtilities.isElementInAttachedProject(e)) { IProject module = ProjectUtilities.getAttachedProject(e); if
-		 * (ProjectUtilities.isFromTeamworkServer(module) && !mountedVersions.containsKey(module.getProjectID())) { IVersionDescriptor vd = ProjectUtilities.getVersion(module); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork =
-		 * pv.getNumber(); mountedVersions.put(module.getProjectID(), teamwork); projectNames.put(module.getProjectID(), module.getName()); } } } for (String prjId : mountedVersions.keySet()) { Integer serverVersion =
-		 * getAlfrescoProjectVersion(prjId); if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) { Boolean con = Utils.getUserYesNoAnswer("Your project " + projectNames.get(prjId) + " is an older project version (" +
-		 * mountedVersions.get(prjId) + ") than what's on the server (" + serverVersion + ") , do you want to continue?"); if (con == null || !con) return false; } }
-		 */
-        return true;
-    }
-
     @Deprecated
-    public static boolean okToExport() {
-		/*
-		 * mountedVersions = new HashMap<String, Integer>(); Map<String, String> projectNames = new HashMap<String, String>(); Project prj = Application.getInstance().getProject(); if
-		 * (ProjectUtilities.isFromTeamworkServer(prj.getPrimaryProject())) { mountedVersions.put(prj.getPrimaryProject().getProjectID(), TeamworkService.getInstance(prj).getVersion(prj) .getNumber());
-		 * projectNames.put(prj.getPrimaryProject().getProjectID(), prj.getName()); } for (IAttachedProject p : ProjectUtilities.getAllAttachedProjects(prj)) { if (ProjectUtilities.isFromTeamworkServer(p)) { IVersionDescriptor vd =
-		 * ProjectUtilities.getVersion(p); ProjectVersion pv = new ProjectVersion(vd); Integer teamwork = pv.getNumber(); mountedVersions.put(p.getProjectID(), teamwork); projectNames.put(p.getProjectID(), p.getName()); } } for (String
-		 * prjId : mountedVersions.keySet()) { Integer serverVersion = getAlfrescoProjectVersion(prjId); if (serverVersion != null && serverVersion > mountedVersions.get(prjId)) { Boolean con = Utils.getUserYesNoAnswer("Your project " +
-		 * projectNames.get(prjId) + " is an older project version (" + mountedVersions.get(prjId) + ") than what's on the server (" + serverVersion + ") , do you want to continue?"); if (con == null || !con) return false; } }
-		 */
-        return true;
-    }
-
-    public static Map<String, Integer> getMountedVersions() {
-        return mountedVersions;
-    }
-
-    public static void sendProjectVersion() {
-        String baseurl = getUrlWithWorkspaceAndSite();
-        if (baseurl == null) {
-            return;
-        }
-        JSONObject result = ExportUtility.getProjectJson();
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", MDKPlugin.VERSION);
-        array.add(result);
-        String url = baseurl + "/projects";
-        if (!url.contains("master")) {
-            url += "?createSite=true";
-        }
-        Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
-        // send(url, tosend.toJSONString(), null, false);
-    }
-
-    public static void sendProjectVersion(String projId, Integer version) {
-        String baseurl = getUrlWithWorkspaceAndSite();
-        if (baseurl == null) {
-            return;
-        }
-        JSONObject result = ExportUtility.getProjectJSON(null, projId, version);
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", MDKPlugin.VERSION);
-        array.add(result);
-        String url = baseurl + "/projects";
-        if (!url.contains("master")) {
-            url += "?createSite=true";
-        }
-        Utils.guilog("[INFO] Request is added to queue.");
-        OutputQueue.getInstance().offer(new Request(url, tosend.toJSONString(), "Project Version"));
-        // send(url, tosend.toJSONString(), null, false);
-    }
-
-    public static String initializeBranchVersion(String taskId) {
-        String baseUrl = ExportUtility.getUrl(Application.getInstance().getProject());
-        String site = ExportUtility.getSite();
+    public static String initializeBranchVersion(Project project, String taskId) {
+        String baseUrl = MMSUtils.getServerUrl(project);
+        String site = MMSUtils.getSiteName(project);
         String projUrl = baseUrl + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true";
-        JSONObject moduleJson = ExportUtility.getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), 0);
+        ObjectNode moduleJson = ExportUtility.getProjectObjectNode(project);
         JSONObject tosend = new JSONObject();
         JSONArray array = new JSONArray();
         tosend.put("elements", array);
@@ -2013,12 +1903,6 @@ public class ExportUtility {
             } catch (JMSException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    public static void sendProjectVersions() {
-        for (String projid : mountedVersions.keySet()) {
-            sendProjectVersion(projid, mountedVersions.get(projid));
         }
     }
 
@@ -2087,63 +1971,22 @@ public class ExportUtility {
         return getViewFromConstraint(constraint) != null;
     }
 
-    public static final Pattern HTML_WHITESPACE_END = Pattern.compile(
-            "\\s*</p>", Pattern.DOTALL);
-    public static final Pattern HTML_WHITESPACE_START = Pattern.compile(
-            "<p>\\s*", Pattern.DOTALL);
-
-    public static String cleanHtml(String s) {
-        return Utils.stripHtmlWrapper(s).replace(" class=\"pwrapper\"", "")
-                .replace("<br>", "").replace("</br>", "").replace("\n", "");
-        // inter = HTML_WHITESPACE_END.matcher(inter).replaceAll("</p>");
-        // return HTML_WHITESPACE_START.matcher(inter).replaceAll("<p>");
+    public static ObjectNode getProjectObjectNode(Project project) {
+        return getProjectObjectNode(project.getPrimaryProject());
     }
 
-    public static JSONObject getProjectJson() {
-        Project prj = Application.getInstance().getProject();
-        Integer ver = getProjectVersion(prj);
-        return getProjectJSON(Application.getInstance().getProject().getName(), Application.getInstance().getProject().getPrimaryProject().getProjectID(), ver);
+    public static ObjectNode getProjectObjectNode(IProject project) {
+        return getProjectObjectNode(project.getProjectID(), project.getName());
     }
 
-    public static JSONObject getProjectJsonForProject(IProject prj) {
-        return getProjectJSON(prj.getName(), prj.getProjectID(), null);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static JSONObject getProjectJSON(String name, String projId, Integer version) {
-        JSONObject result = new JSONObject();
+    private static ObjectNode getProjectObjectNode(String id, String name) {
+        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
+        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
         if (name != null) {
-            result.put("name", name);
+            projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }
-        result.put(MDKConstants.SYSML_ID_KEY, projId);
-        result.put("type", "Project");
-        if (version != null) {
-            result.put("projectVersion", version.toString());
-        }
-        return result;
-    }
-
-    public static String getProjectId(Project proj) {
-        return proj.getPrimaryProject().getProjectID();
-    }
-
-    public static Integer getProjectVersion(Project proj) {
-        Integer ver = null;
-        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
-            IVersionDescriptor iVersionDescriptor = TeamworkService.getInstance(proj).getVersion(proj);
-            if (iVersionDescriptor instanceof ProjectVersion) {
-                ver = ((ProjectVersion) iVersionDescriptor).getNumber();
-            }
-        }
-        return ver;
-    }
-
-    public static String getTeamworkBranch(Project proj) {
-        String branch = null;
-        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
-            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(proj).getURI());
-        }
-        return branch;
+        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        return projectObjectNode;
     }
 
     /**
@@ -2181,17 +2024,28 @@ public class ExportUtility {
                 log.info("sites response: " + code + " " + json);
             }
             if (code == 200) {
-                JSONObject siteResponse;
+                JsonNode siteResponse;
                 try {
-                    siteResponse = (JSONObject) (new JSONParser()).parse(json);
-                } catch (ParseException e) {
+                    siteResponse = JacksonUtils.getObjectMapper().readTree(json);
+                } catch (IOException e) {
                     throw new ServerException(json, 500);
                 }
-                JSONArray returnedSiteList = (JSONArray) siteResponse.get("sites");
-                for (Object returnedSite : returnedSiteList) {
-                    JSONObject rs = (JSONObject) returnedSite;
-                    if (rs.containsKey("editable") && rs.containsKey(MDKConstants.SYSML_ID_KEY) && rs.get(MDKConstants.SYSML_ID_KEY).equals(site)) {
-                        return (boolean) rs.get("editable");
+                JsonNode sitesJsonNode = siteResponse.get("sites");
+                if (!sitesJsonNode.isArray()) {
+                    return false;
+                }
+                for (JsonNode siteJsonNode : sitesJsonNode) {
+                    if (!siteJsonNode.isObject()) {
+                        continue;
+                    }
+                    JsonNode sysmlIdJsonNode = siteJsonNode.get(MDKConstants.SYSML_ID_KEY);
+                    if (sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() && sysmlIdJsonNode.asText().equals(site)) {
+                        JsonNode editableJsonNode = siteJsonNode.get(MDKConstants.DERIVED_KEY_PREFIX + "editable");
+                        if (editableJsonNode == null || !editableJsonNode.isBoolean()) {
+                            // TODO CHANGE ME @donbot
+                            return true;
+                        }
+                        return editableJsonNode.booleanValue();
                     }
                 }
             }
