@@ -20,12 +20,8 @@ public class JsonDiffFunction implements BiFunction<JsonNode, JsonNode, JsonNode
         if (client == null && server == null) {
             return null;
         }
-        if (client == null) {
-            client = JacksonUtils.getObjectMapper().createObjectNode();
-        }
-        if (server == null) {
-            server = JacksonUtils.getObjectMapper().createObjectNode();
-        }
+        client = client != null ? client.deepCopy() : JacksonUtils.getObjectMapper().createObjectNode();
+        server = server != null ? server.deepCopy() : JacksonUtils.getObjectMapper().createObjectNode();
         preProcess(client, server);
         return JsonDiff.asJson(client, server);
     }

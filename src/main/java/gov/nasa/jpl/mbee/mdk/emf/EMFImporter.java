@@ -55,23 +55,27 @@ public class EMFImporter implements JsonToElementFunction {
             return null;
         }*/
         Element element = jsonNode != null && jsonNode.isTextual() ? getIdToElementConverter().apply(jsonNode.asText(), project) : null;
-        Changelog.ChangeType changeType = element != null && !project.isDisposed(element) && !Project.isElementDisposed(element) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED;
+        Changelog.ChangeType changeType = element != null && !project.isDisposed(element) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED;
 
-        for (PreProcessor preProcessor : getPreProcessors()) {
-            element = preProcessor.getFunction().apply(objectNode, project, strict, element);
-            if (element == null) {
-                return null;
+        try {
+            for (PreProcessor preProcessor : getPreProcessors()) {
+                element = preProcessor.getFunction().apply(objectNode, project, strict, element);
+                if (element == null) {
+                    return null;
+                }
             }
-        }
-        for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
-            final Element finalElement = element;
-            ImportFunction function = getEStructuralFeatureOverrides().stream().filter(override -> override.getPredicate()
-                    .test(objectNode, eStructuralFeature, project, strict, finalElement)).map(EStructuralFeatureOverride::getFunction)
-                    .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
-            element = function.apply(objectNode, eStructuralFeature, project, strict, element);
-            if (element == null) {
-                return null;
+            for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
+                final Element finalElement = element;
+                ImportFunction function = getEStructuralFeatureOverrides().stream().filter(override -> override.getPredicate()
+                        .test(objectNode, eStructuralFeature, project, strict, finalElement)).map(EStructuralFeatureOverride::getFunction)
+                        .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
+                element = function.apply(objectNode, eStructuralFeature, project, strict, element);
+                if (element == null) {
+                    return null;
+                }
             }
+        } catch (RuntimeException e) {
+            throw new ImportException(element, jsonNode, e.getMessage(), e);
         }
         return new Changelog.Change<>(element, changeType);
     }
@@ -108,7 +112,7 @@ public class EMFImporter implements JsonToElementFunction {
                 }
         );
 
-        public static PreProcessor getCreatePreProcessor(BiFunction<String, Project, Element> idToElementConverter) {
+        static PreProcessor getCreatePreProcessor(BiFunction<String, Project, Element> idToElementConverter) {
             return new PreProcessor(
                     (objectNode, project, strict, element) -> {
                         if (element != null) {

@@ -46,24 +46,24 @@ import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.Collections;
 
-public class InitializeProjectAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class CommitProjectAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
-    public static final String DEFAULT_ID = InitializeProjectAction.class.getSimpleName();
+    public static final String DEFAULT_ID = CommitProjectAction.class.getSimpleName();
     public static final String COMMIT_MODEL_DEFAULT_ID = DEFAULT_ID + "_Commit_Model";
 
     private final Project project;
     private final boolean shouldCommitModel;
 
-    public InitializeProjectAction(Project project) {
+    public CommitProjectAction(Project project) {
         this(project, false, false);
     }
 
-    public InitializeProjectAction(Project project, boolean shouldCommitModel) {
+    public CommitProjectAction(Project project, boolean shouldCommitModel) {
         this(project, shouldCommitModel, false);
     }
 
-    public InitializeProjectAction(Project project, boolean shouldCommitModel, boolean isDeveloperAction) {
-        super(shouldCommitModel ? COMMIT_MODEL_DEFAULT_ID : DEFAULT_ID, "Initialize Project" + (shouldCommitModel ? " and Model" : "") + (isDeveloperAction ? " [DEVELOPER]" : ""), null, null);
+    public CommitProjectAction(Project project, boolean shouldCommitModel, boolean isDeveloperAction) {
+        super(shouldCommitModel ? COMMIT_MODEL_DEFAULT_ID : DEFAULT_ID, "Commit Project" + (shouldCommitModel ? " and Model" : "") + (isDeveloperAction ? " [DEVELOPER]" : ""), null, null);
         this.project = project;
         this.shouldCommitModel = shouldCommitModel;
     }

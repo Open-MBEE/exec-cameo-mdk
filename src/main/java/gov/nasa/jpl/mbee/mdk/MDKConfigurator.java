@@ -165,9 +165,9 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         if (ViewEditUtils.isPasswordSet()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
-                if (e instanceof Model && manager.getActionFor(InitializeProjectAction.DEFAULT_ID) == null) {
-                    models.addAction(new InitializeProjectAction(Application.getInstance().getProject(), false, true));
-                    models.addAction(new InitializeProjectAction(Application.getInstance().getProject(), true, true));
+                if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
+                    models.addAction(new CommitProjectAction(Application.getInstance().getProject(), false, true));
+                    models.addAction(new CommitProjectAction(Application.getInstance().getProject(), true, true));
                 }
             }
             if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {

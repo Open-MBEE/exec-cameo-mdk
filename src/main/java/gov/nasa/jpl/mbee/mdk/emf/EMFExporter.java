@@ -414,14 +414,11 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     return objectNode;
                 }*/
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
-        )/*,
-        TIME_EVENT__WHEN(
-                (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.TIME_EVENT__WHEN && element instanceof TimeEvent,
-                (element, project, eStructuralFeature, objectNode) -> {
-                    objectNode.put(eStructuralFeature.getName() + MDKConstants.ID_KEY_SUFFIX, getEID(((TimeEvent) element).getWhen()));
-                    return objectNode;
-                }
-        )*/;
+        ),
+        UML_CLASS(
+                (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.CLASSIFIER__UML_CLASS || eStructuralFeature == UMLPackage.Literals.PROPERTY__UML_CLASS || eStructuralFeature == UMLPackage.Literals.OPERATION__UML_CLASS,
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        );
 
         private BiPredicate<Element, EStructuralFeature> predicate;
         private ExportFunction function;

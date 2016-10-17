@@ -17,7 +17,8 @@ import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
-import gov.nasa.jpl.mbee.mdk.ems.actions.InitializeProjectAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
@@ -160,7 +161,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             String workspace = MMSUtils.getServiceWorkspacesUri(project).getPath();
             if (workspace.contains("master")) {
                 v = new ValidationRuleViolation(project.getModel(), "The project doesn't exist on the web.");
-                v.addAction(new InitializeProjectAction(project, true));
+                v.addAction(new CommitProjectAction(project, true));
             } else {
                 v = new ValidationRuleViolation(project.getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
             }
@@ -178,7 +179,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if (respons == null || respons.contains("Site node is null") || respons.contains("Could not find project")) {//tears
 
             ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
-            //v.addAction(new InitializeProjectAction(false));
+            //v.addAction(new CommitProjectAction(false));
             projectExistenceValidationRule.addViolation(v);
             return false;
         }
