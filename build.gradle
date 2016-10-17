@@ -84,7 +84,7 @@ dependencies {
     compile group: "com.box", name: "json-patch", version: "1.13"
     
     // Other dependencies we're unable to resolve via repositories
-    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar','plugins/**/*.jar'])
+    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar'])
     compile fileTree(dir: 'lib', include: ['*.jar'])
     
 	// Test Dependencies
@@ -132,9 +132,7 @@ class PreDist extends DefaultTask {
         }
         project.copy {
             from project.configurations.compile.resolvedConfiguration.resolvedArtifacts.file
-            into "build/generated-dist/plugins/${group}"
-        }
-        project.copy {
+            from 'lib'
             from project.jar
             into "build/generated-dist/plugins/${group}"
         }
@@ -280,7 +278,7 @@ installDist {
 installDist.dependsOn distZip
 
 task runJava(type: JavaExec) {
-    classpath fileTree(dir: 'build/install', include: ['lib/**/*.jar','plugins/**/*.jar'])
+    classpath fileTree(dir: 'build/install', include: ['lib/**/*.jar'])
     workingDir 'build/install'
     ignoreExitValue true
 

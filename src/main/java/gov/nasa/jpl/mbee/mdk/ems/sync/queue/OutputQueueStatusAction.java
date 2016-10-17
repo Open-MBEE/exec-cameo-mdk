@@ -11,6 +11,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -108,7 +109,7 @@ public class OutputQueueStatusAction extends SRAction {
                 final Vector<Object> row = new Vector<Object>();
                 row.addElement(0);
                 row.addElement(current.getRequest().getMethod());
-                row.addElement(current.getNumElements());
+                row.addElement(NumberFormat.getInstance().format(current.getNumElements()));
                 row.addElement(current.getType());
                 row.addElement(current.getRequest().getURI().toString());
                 row.addElement("Continue in Background");
@@ -123,7 +124,7 @@ public class OutputQueueStatusAction extends SRAction {
                 final Vector<Object> row = new Vector<Object>();
                 row.addElement(counter);
                 row.addElement(r.getRequest().getMethod());
-                row.addElement(r.getNumElements());
+                row.addElement(NumberFormat.getInstance().format(r.getNumElements()));
                 row.addElement(r.getType());
                 row.addElement(r.getRequest().getURI().toString());
                 row.addElement("Delete");

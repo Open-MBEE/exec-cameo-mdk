@@ -50,11 +50,13 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
     private final Changelog<String, ObjectNode> failedChangelog = new Changelog<>();
 
     private ValidationSuite validationSuite = new ValidationSuite("Update Changelog");
-    private ValidationRule failedChangeValidationRule = new ValidationRule("Failed Change", "The element shall not fail to change.", ViolationSeverity.ERROR),
+    private ValidationRule editableValidationRule = new ValidationRule("Element Editability", "The element to be updated shall be editable.", ViolationSeverity.WARNING),
+            failedChangeValidationRule = new ValidationRule("Failed Change", "The element shall not fail to change.", ViolationSeverity.ERROR),
             equivalentElementValidationRule = new ValidationRule("Element Equivalency", "The changed element shall be equivalent to the source element.", ViolationSeverity.WARNING),
             successfulChangeValidationRule = new ValidationRule("Successful Change", "The element shall successfully change.", ViolationSeverity.INFO);
 
     {
+        validationSuite.addValidationRule(editableValidationRule);
         validationSuite.addValidationRule(failedChangeValidationRule);
         validationSuite.addValidationRule(equivalentElementValidationRule);
         validationSuite.addValidationRule(successfulChangeValidationRule);
@@ -116,8 +118,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
     @Override
     public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
-        List<ObjectNode> elementsToUpdate = new ArrayList<>(1);
-        List<String> elementsToDelete = new ArrayList<>(1);
+        elementsToUpdate = new ArrayList<>(1);
+        elementsToDelete = new ArrayList<>(1);
         if (elementObjectNode != null) {
             elementsToUpdate.add(elementObjectNode);
         }
@@ -145,10 +147,10 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
             EMFBulkImporter emfBulkImporter = new EMFBulkImporter(NAME);
             Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project, progressStatus);
-            for (Map.Entry<Pair<Element, ObjectNode>, ImportException> entry : emfBulkImporter.getFailedElementMap().entrySet()) {
+            for (Map.Entry<Pair<Element, ObjectNode>, Exception> entry : emfBulkImporter.getFailedElementMap().entrySet()) {
                 Element element = entry.getKey().getFirst();
                 ObjectNode objectNode = entry.getKey().getSecond();
-                ImportException importException = entry.getValue();
+                Exception exception = entry.getValue();
                 JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
                 if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                     continue;
@@ -165,9 +167,9 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         name = "<>";
                     }
                 }
-                failedChangeValidationRule.addViolation(new ValidationRuleViolation(element != null ? element : project.getPrimaryModel(), "["
+                (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(new ValidationRuleViolation(element != null ? element : project.getPrimaryModel(), "["
                         + (element != null ? "UPDATE" : "CREATE") + " FAILED]" + (element == null ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + sysmlId : "")
-                        + (element == null && importException != null ? " -" : "") + (importException != null ? " " + importException.getMessage() : "")));
+                        + (element == null && exception != null ? " -" : "") + (exception != null ? " " + (exception instanceof ReadOnlyElementException ? "Element is not editable." : exception.getMessage()) : "")));
                 failedChangelog.addChange(sysmlId, objectNode, element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
@@ -212,14 +214,14 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 }
                 try {
                     ModelElementsManager.getInstance().removeElement(element);
-                } catch (ReadOnlyElementException e) {
+                } catch (ReadOnlyElementException | RuntimeException e) {
                     exception = e;
                 }
                 if (exception == null) {
                     successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
                 }
                 else {
-                    failedChangeValidationRule.addViolation(element, "[DELETE FAILED] " + exception.getMessage());
+                    (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(element, "[DELETE FAILED] " + exception.getMessage());
                     failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                 }
             }

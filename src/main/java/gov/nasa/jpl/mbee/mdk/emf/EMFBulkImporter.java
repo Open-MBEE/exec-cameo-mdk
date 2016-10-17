@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.emf;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -29,7 +30,7 @@ public class EMFBulkImporter implements BulkImportFunction {
     private int sessionCount;
 
     private Changelog<String, Pair<Element, ObjectNode>> changelog;
-    private Map<Pair<Element, ObjectNode>, ImportException> failedElementMap;
+    private Map<Pair<Element, ObjectNode>, Exception> failedElementMap;
     private Map<Element, ObjectNode> nonEquivalentElements;
     private Map<String, Element> elementCache;
 
@@ -123,10 +124,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                     Changelog.Change<Element> change = null;
                     try {
                         change = jsonToElementFunction.apply(objectNode, project, false);
-                    } catch (ImportException e) {
-                        if (MDUtils.isDeveloperMode()) {
-                            e.printStackTrace();
-                        }
+                    } catch (ImportException | ReadOnlyElementException ignored) {
                     }
                     if (change == null || change.getChanged() == null) {
                         if (MDUtils.isDeveloperMode()) {
@@ -161,20 +159,17 @@ public class EMFBulkImporter implements BulkImportFunction {
                         System.out.println("[ATTEMPT 1.5] Attempting " + sysmlId);
                     }
                     Changelog.Change<Element> change = null;
-                    ImportException importException = new ImportException(null, objectNode, "Failed to create/update element.");
+                    Exception exception = new ImportException(null, objectNode, "Failed to create/update element.");
                     try {
                         change = jsonToElementFunction.apply(objectNode, project, false);
-                    } catch (ImportException e) {
-                        if (MDUtils.isDeveloperMode()) {
-                            e.printStackTrace();
-                        }
-                        importException = e;
+                    } catch (ImportException | ReadOnlyElementException e) {
+                        exception = e;
                     }
                     if (change == null || change.getChanged() == null) {
                         if (MDUtils.isDeveloperMode()) {
                             System.err.println("[FAILED 1.5] Could not create " + sysmlId);
                         }
-                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), importException);
+                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), exception);
                         objectNodes.remove(objectNode);
                         continue bulkImport;
                     }
@@ -198,20 +193,17 @@ public class EMFBulkImporter implements BulkImportFunction {
                         System.out.println("[ATTEMPT 2] Attempting " + sysmlId);
                     }
                     Changelog.Change<Element> change = null;
-                    ImportException importException = new ImportException(null, objectNode, "Failed to create/update element with relationships.");
+                    Exception exception = new ImportException(null, objectNode, "Failed to create/update element with relationships.");
                     try {
                         change = jsonToElementFunction.apply(objectNode, project, true);
-                    } catch (ImportException e) {
-                        if (MDUtils.isDeveloperMode()) {
-                            e.printStackTrace();
-                        }
-                        importException = e;
+                    } catch (ImportException | ReadOnlyElementException e) {
+                        exception = e;
                     }
                     if (change == null || change.getChanged() == null) {
                         if (MDUtils.isDeveloperMode()) {
                             System.err.println("[FAILED 2] Could not import " + sysmlId);
                         }
-                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), importException);
+                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), exception);
                         iterator.remove();
                         continue bulkImport;
                     }
@@ -287,7 +279,7 @@ public class EMFBulkImporter implements BulkImportFunction {
         return changelog;
     }
 
-    public Map<Pair<Element, ObjectNode>, ImportException> getFailedElementMap() {
+    public Map<Pair<Element, ObjectNode>, Exception> getFailedElementMap() {
         return failedElementMap;
     }
 
