@@ -88,7 +88,7 @@ dependencies {
     compile fileTree(dir: 'lib', include: ['*.jar'])
     
 	// Test Dependencies
-    testCompile 'junit:junit:4.10'
+    testCompile 'junit:junit:4.11'
 }
 
 task extractDependencies {
