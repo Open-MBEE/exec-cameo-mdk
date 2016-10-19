@@ -75,9 +75,6 @@ public class TicketUtils {
      * @return
      */
     public static String getTicket() {
-        if (ticket == null || ticket.isEmpty()) {
-            acquireTicket();
-        }
         return ticket;
     }
 

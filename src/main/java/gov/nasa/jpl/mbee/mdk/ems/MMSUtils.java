@@ -445,8 +445,10 @@ public class MMSUtils {
         URIBuilder uri;
         try {
             uri = new URIBuilder(urlString);
-            uri.setPath(uriPath)
-                    .setParameter("alf_ticket", uriTicket);
+            uri.setPath(uriPath);
+            if (!uriTicket.isEmpty()) {
+                uri.setParameter("alf_ticket", uriTicket);
+            }
             return uri;
         } catch (URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for " +
