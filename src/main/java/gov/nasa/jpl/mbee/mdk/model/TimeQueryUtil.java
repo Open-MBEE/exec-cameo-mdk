@@ -7,22 +7,20 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
-import org.json.simple.JSONArray;
-//import org.json.simple.JSONObject;
-//import org.json.simple.JSONValue;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+
+//import org.json.simple.JSONObject;
+//import org.json.simple.JSONValue;
 
 public class TimeQueryUtil {
     private static ObjectNode result;
@@ -39,7 +37,7 @@ public class TimeQueryUtil {
         ArrayNode elements = result.putArray("elements");
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
         if (requestUri == null) {
             return null;
         }
@@ -55,7 +53,7 @@ public class TimeQueryUtil {
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             }
             id = id.replace(".", "%2E");
-            requestUri.setPath(basePath + "/elements/" + id);
+            requestUri.setPath(basePath + "/" + id);
             requestUri.setParameter("timestamp", sdf.format(compareToTime));
 
             ObjectNode partialResponse = null;

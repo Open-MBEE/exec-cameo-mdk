@@ -14,8 +14,8 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
 //@donbot migrate simple to Jackson
 //import org.json.simple.JSONObject;
@@ -99,7 +99,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
                 ObjectNode teamworkCommittedMessage = JacksonUtils.getObjectMapper().createObjectNode();
                 teamworkCommittedMessage.put("source", "magicdraw");
-                teamworkCommittedMessage.put("sender", ViewEditUtils.getUsername());
+                teamworkCommittedMessage.put("sender", TicketUtils.getUsername());
                 teamworkCommittedMessage.set("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
                 try {
                     TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));

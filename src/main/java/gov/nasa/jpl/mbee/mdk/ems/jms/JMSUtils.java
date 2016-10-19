@@ -13,7 +13,7 @@ import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.http.client.utils.URIBuilder;
 
-import javax.jms.ConnectionFactory;
+import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -196,6 +196,54 @@ public class JMSUtils {
         selectorBuilder.delete(0, selectorBuilder.length());
 
         return outputMsgSelector;
+    }
+
+    public static void initializeDurableQueue(Project project, String workspace) {
+        String projectId = project.getPrimaryProject().getProjectID();
+        Connection connection = null;
+        Session session = null;
+        MessageConsumer consumer = null;
+        try {
+            JMSUtils.JMSInfo jmsInfo = null;
+            try {
+                jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
+            } catch (ServerException e) {
+                e.printStackTrace();
+            }
+            String url = jmsInfo != null ? jmsInfo.getUrl() : null;
+            if (url == null) {
+                return;
+            }
+            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
+            if (connectionFactory == null) {
+                return;
+            }
+            connection = connectionFactory.createConnection();
+            String subscriberId = projectId + "/" + workspace;
+            connection.setClientID(subscriberId);
+            // connection.setExceptionListener(this);
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            String messageSelector = JMSUtils.constructSelectorString(projectId, workspace);
+            Topic topic = session.createTopic("master");
+            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
+            connection.start();
+        } catch (JMSException e1) {
+            e1.printStackTrace();
+        } finally {
+            try {
+                if (consumer != null) {
+                    consumer.close();
+                }
+                if (session != null) {
+                    session.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static class JMSInfo {

@@ -633,8 +633,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 requestData.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
-                URIBuilder requestUri = MMSUtils.getServiceWorkspacesUri(project);
-                requestUri.setPath(requestUri.getPath() + "/elements");
+                URIBuilder requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, requestData, true, elementsArrayNode.size(), "View Generation"));
                 changed = true;
             }

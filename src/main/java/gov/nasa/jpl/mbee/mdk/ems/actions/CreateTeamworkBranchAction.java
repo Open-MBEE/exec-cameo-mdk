@@ -2,35 +2,40 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
+import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-public class CreateTeamworkBranch extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class CreateTeamworkBranchAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+    private final String branchName;
+    private final String workspace;
+    private final Map<String, String> wsMapping;
+    private final Map<String, String> wsIdMapping;
+    private final Map<String, ProjectDescriptor> branchDescriptors;
+    private final Project project;
 
-    private static final long serialVersionUID = 1L;
-    private String branchName;
-    private String taskId;
-    private Map<String, String> wsMapping;
-    private Map<String, String> wsIdMapping;
-    private Map<String, ProjectDescriptor> branchDescriptors;
-
-    public CreateTeamworkBranch(String branchName, String taskId, Map<String, String> wsMapping, Map<String, String> wsIdMapping, Map<String, ProjectDescriptor> branchDescriptors) {
-        super("CreateTeamworkBranch", "Create Teamwork Branch", null, null);
+    public CreateTeamworkBranchAction(String branchName, String workspace, Map<String, String> wsMapping, Map<String, String> wsIdMapping, Map<String, ProjectDescriptor> branchDescriptors, Project project) {
+        super(CreateTeamworkBranchAction.class.getSimpleName(), "Create Teamwork Branch", null, null);
         this.branchName = branchName;
-        this.taskId = taskId;
+        this.workspace = workspace;
         this.wsMapping = wsMapping;
         this.wsIdMapping = wsIdMapping;
         this.branchDescriptors = branchDescriptors;
+        this.project = project;
     }
 
     @Override
@@ -52,28 +57,34 @@ public class CreateTeamworkBranch extends RuleViolationAction implements Annotat
         }
         ProjectDescriptor parentBranchPd = branchDescriptors.get(parentBranch);
         if (parentBranchPd == null) {
-            Utils.guilog("The parent teamwork branch doesn't exist, create the parent branch first.");
+            Utils.guilog("[ERROR] The parent Teamwork branch doesn't exist for branch \"" + branchName +"\". Create the parent branch first. Aborting.");
             return;
         }
         ProjectDescriptor child = createBranch(branches[branches.length - 1], parentBranchPd);
         if (child == null) {
-            Utils.guilog("Creat branch failed");
+            Utils.guilog("[ERROR] Create branch failed.");
             return;
         }
         branchDescriptors.put(branchName, child);
-        Utils.guilog("Created Branch");
+        Utils.guilog("[INFO] Created branch.");
         //initialize jms queue
 
         Utils.guilog("Initializing Branch Sync");
-        ExportUtility.initializeBranchVersion(taskId);
-        ExportUtility.initializeDurableQueue(taskId);
+        try {
+            CreateMMSWorkspaceAction.initializeWorkspace(project, workspace);
+        } catch (IOException | URISyntaxException | ServerException e1) {
+            e1.printStackTrace();
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected exception occurred while attempting to initialize task on MMS. Aborting.");
+            return;
+        }
+        JMSUtils.initializeDurableQueue(project, workspace);
         //Utils.guilog("Initialized");
     }
 
     private ProjectDescriptor createBranch(String name, ProjectDescriptor parentBranch) {
         //need to take into account time and version?
         try {
-            Map<String, String> result = TeamworkUtils.branchProject(parentBranch, new HashSet<String>(), name, "Branched due to validation violation with alfresco task");
+            Map<String, String> result = TeamworkUtils.branchProject(parentBranch, new HashSet<>(), name, "Branched due to validation violation with MMS task.");
             Collection<String> branched = result.values();
             if (branched.size() > 0) {
                 String branchId = branched.iterator().next();

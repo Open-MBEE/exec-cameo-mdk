@@ -34,16 +34,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBHasContent;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils.AvailableAttribute;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBHasContent;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 
-import javax.mail.MethodNotSupportedException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -108,7 +107,7 @@ public class TemporalDiff extends Table {
             for (Object e : list) {
                 if (e instanceof Element) {
                     tag.append("<mms-diff-attr mms-eid=\"");
-                    tag.append(ExportUtility.getElementID((Element) e) + "\"");
+                    tag.append(Converters.getElementToIdConverter().apply((Element) e) + "\"");
                     tag.append(" mms-attr=\"" + tagAttr + "\" mms-version-one=\"");
                     if (compareToTime == null) {
                         tag.append("latest");

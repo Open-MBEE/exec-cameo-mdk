@@ -3,19 +3,16 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
@@ -121,7 +118,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
             try {
-                OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST , MMSUtils.getServiceWorkspacesSitesElementsUri(project), request, true, elements.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST , MMSUtils.getServiceWorkspacesElementsUri(project), request, true, elements.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();
@@ -138,8 +135,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             }
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
-            URIBuilder requestUri = MMSUtils.getServiceWorkspacesUri(project);
-            requestUri.setPath(requestUri.getPath() + "/elements");
+            URIBuilder requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
             try {
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
             } catch (IOException | URISyntaxException e) {

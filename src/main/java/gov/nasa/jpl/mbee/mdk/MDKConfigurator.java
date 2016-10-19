@@ -50,6 +50,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.actions.*;
 import gov.nasa.jpl.mbee.mdk.ems.actions.*;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
 import gov.nasa.jpl.mbee.mdk.model.CollectActionsVisitor;
@@ -57,7 +58,6 @@ import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.UserScript;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -162,7 +162,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         //manager.addCategory(refactorWithIDActionCat);
 
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (ViewEditUtils.isPasswordSet()) {
+        if (TicketUtils.isPasswordSet()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
@@ -253,7 +253,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 }
             }
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            if (ViewEditUtils.isPasswordSet()) {
+            if (TicketUtils.isPasswordSet()) {
                 //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
                 /*NMAction action = manager.getActionFor(ValidateViewAction.DEFAULT_ID);

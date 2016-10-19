@@ -1,11 +1,13 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import org.json.simple.JSONArray;
@@ -23,21 +25,23 @@ import java.util.Map;
 public class DetailDiffAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
-    private JSONObject modelData = new JSONObject();
-    private JSONObject webData = new JSONObject();
+    private final ObjectNode modelData;
+    private final ObjectNode webData;
+    private final Project project;
     private Map<String, ArrayList<JSONTreeNode>> keyMap = new HashMap<String, ArrayList<JSONTreeNode>>();
 
     private String modelName = "MD Model";
     private String webName = "MMS Web";
 
-    public DetailDiffAction(Element element, JSONObject webData) {
-        this(ExportUtility.fillElement(element, null), webData);
+    public DetailDiffAction(Element element, ObjectNode webData, Project project) {
+        this(Converters.getElementToJsonConverter().apply(element, Project.getProject(element)), webData, project);
     }
 
-    public DetailDiffAction(JSONObject modelData, JSONObject webData) {
+    public DetailDiffAction(ObjectNode modelData, ObjectNode webData, Project project) {
         super("DetailDiffAction", "Detail Diff", null, null);
         this.modelData = modelData;
         this.webData = webData;
+        this.project = project;
     }
 
     private class JSONTreeNode extends DefaultMutableTreeNode {
@@ -138,7 +142,7 @@ public class DetailDiffAction extends RuleViolationAction implements AnnotationA
             return "null";
         }
         String ret = value.toString();
-        Element target = ExportUtility.getElementFromID(value.toString());
+        Element target = Converters.getIdToElementConverter().apply(value.toString(), project);
         if (target instanceof NamedElement) {
             ret = ((NamedElement) target).getQualifiedName();
         }
@@ -156,7 +160,7 @@ public class DetailDiffAction extends RuleViolationAction implements AnnotationA
 
         // reassign value if it is an id (but not value for sysmlid)
         if (!current.hasKey() || (current.hasKey() && !current.getKey().equals(MDKConstants.SYSML_ID_KEY))) {
-            Element target = ExportUtility.getElementFromID(value.toString());
+            Element target = Converters.getIdToElementConverter().apply(value.toString(), project);
             if (target instanceof NamedElement) {
                 value = ((NamedElement) target).getQualifiedName();
             }

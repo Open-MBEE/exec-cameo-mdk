@@ -28,7 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -39,7 +38,6 @@ import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -93,7 +91,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         requestData.put("source", "magicdraw");
         requestData.put("mmsVersion", MDKPlugin.VERSION);
 
-        ObjectNode projectObjectNode = ExportUtility.getProjectObjectNode(project);
+        ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
         URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
         if (requestUri == null) {

@@ -6,12 +6,11 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
 import javax.jms.*;
 import javax.naming.NameNotFoundException;
@@ -101,7 +100,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 return false;
             }
         }
-        String username = ViewEditUtils.getUsername();
+        String username = TicketUtils.getUsername();
         if (username == null || username.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
             return false;

@@ -71,14 +71,15 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.mdk.web.JsonRequestEntity;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -88,6 +89,7 @@ import javax.jms.*;
 import javax.swing.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
@@ -515,7 +517,7 @@ public class ExportUtility {
                 else {
                     Utils.guilog("You are not authorized or don't have permission. You can login and try again.");
                 }
-                ViewEditUtils.clearUsernameAndPassword();
+                TicketUtils.clearUsernameAndPassword();
             }
             else if (code == 403) {
                 if (showPopupErrors) {
@@ -568,7 +570,7 @@ public class ExportUtility {
         DeleteMethod gm = new DeleteMethod(url);
         try {
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, gm);
+            TicketUtils.setCredentials(client, url, gm);
             if (print) {
                 log.info("delete: " + url);
             }
@@ -610,7 +612,7 @@ public class ExportUtility {
                 log.info("send file: " + url);
             }
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, pm);
+            TicketUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             if (print) {
@@ -666,7 +668,7 @@ public class ExportUtility {
 //            httpParams.setParameter(HttpConnectionParams.SO_TIMEOUT, timeout * 1000); //casue SockteTimeoutException
 
 
-            ViewEditUtils.setCredentials(client, url, pm);
+            TicketUtils.setCredentials(client, url, pm);
             if (print) {
                 log.info(_threadName + " executing....");
             }
@@ -721,7 +723,7 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, pm);
+            TicketUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             if (print) {
@@ -756,7 +758,7 @@ public class ExportUtility {
                     "application/json;charset=utf-8");
             pm.setRequestEntity(JsonRequestEntity.create(json));
             HttpClient client = new HttpClient();
-            ViewEditUtils.setCredentials(client, url, pm);
+            TicketUtils.setCredentials(client, url, pm);
             int code = client.executeMethod(pm);
             String response = pm.getResponseBodyAsString();
             if (print) {
@@ -841,7 +843,7 @@ public class ExportUtility {
         try {
             boolean validTicket = checkTicket(baseUrl);
             if (!validTicket) {
-                String loggedIn = getTicket(baseUrl + "/api/login", ViewEditUtils.getUsername(), ViewEditUtils.getPassword(), false);
+                String loggedIn = getTicket(baseUrl + "/api/login", TicketUtils.getUsername(), TicketUtils.getPassword(), false);
             }
             return true;
         } catch (ServerException e) {
@@ -852,11 +854,11 @@ public class ExportUtility {
 
     public static boolean checkTicket(String baseUrl) throws ServerException {
         boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-        String ticket = ViewEditUtils.getTicket();
+        String ticket = TicketUtils.getTicket();
         if (ticket == null || ticket.equals("")) {
             return false;
         }
-        String url = baseUrl + "/mms/login/ticket/" + ViewEditUtils.getTicket();
+        String url = baseUrl + "/mms/login/ticket/" + TicketUtils.getTicket();
         GetMethod gm = new GetMethod(url);
         try {
             HttpClient client = new HttpClient();
@@ -897,9 +899,9 @@ public class ExportUtility {
         String userpasswordJsonString = "";
         try {
             if (username != null && !username.equals("")) {
-                ViewEditUtils.setUsernameAndPassword(username, password, true);
+                TicketUtils.setUsernameAndPassword(username, password, true);
             }
-            userpasswordJsonString = ViewEditUtils.getUserNamePasswordInJSON();
+            userpasswordJsonString = TicketUtils.getUserNamePasswordInJSON();
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
 
@@ -929,7 +931,7 @@ public class ExportUtility {
                 JSONObject d = (JSONObject) ob.get("data");
                 if (d != null && !d.isEmpty()) {
                     String ticket = (String) d.get("ticket");
-                    ViewEditUtils.setTicket(ticket);
+                    TicketUtils.setTicket(ticket);
                 }
                 else {
                     return null;
@@ -966,10 +968,10 @@ public class ExportUtility {
         try {
             HttpClient client = new HttpClient();
             if (username == null || username.equals("")) {
-                ViewEditUtils.setCredentials(client, url, gm);
+                TicketUtils.setCredentials(client, url, gm);
             }
             else {
-                ViewEditUtils.setCredentials(client, url, gm, username, password);
+                TicketUtils.setCredentials(client, url, gm, username, password);
             }
             //Application.getInstance().getGUILog().log("[INFO] Getting...");
             //Application.getInstance().getGUILog().log("url=" + url);
@@ -1003,7 +1005,7 @@ public class ExportUtility {
     }
 
     public static String addTicketToUrl(String r) {
-        String ticket = ViewEditUtils.getTicket();
+        String ticket = TicketUtils.getTicket();
         if (ticket == null || ticket.equals("")) {
             return r;
         }
@@ -1835,7 +1837,6 @@ public class ExportUtility {
         if (result.containsKey("elements")) {
             JSONArray elements = (JSONArray) result.get("elements");
             if (!elements.isEmpty() && ((JSONObject) elements.get(0)).containsKey("specialization")) {
-//                JSONObject spec = (JSONObject) ((JSONObject) elements.get(0)).get("specialization");
                 JSONObject elementJson = (JSONObject) elements.get(0);
                 if (elementJson.containsKey("projectVersion") && elementJson.get("projectVersion") != null) {
                     return Integer.valueOf(elementJson.get("projectVersion").toString());
@@ -1843,67 +1844,6 @@ public class ExportUtility {
             }
         }
         return null;
-    }
-
-    @Deprecated
-    public static String initializeBranchVersion(Project project, String taskId) {
-        String baseUrl = MMSUtils.getServerUrl(project);
-        String site = MMSUtils.getSiteName(project);
-        String projUrl = baseUrl + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true";
-        ObjectNode moduleJson = ExportUtility.getProjectObjectNode(project);
-        JSONObject tosend = new JSONObject();
-        JSONArray array = new JSONArray();
-        tosend.put("elements", array);
-        tosend.put("source", "magicdraw");
-        tosend.put("mmsVersion", MDKPlugin.VERSION);
-        array.add(moduleJson);
-        // OutputQueue.getInstance().offer(new Request(projUrl, tosend.toJSONString()));
-        return ExportUtility.send(projUrl, tosend.toJSONString()/* , null */, false, false);
-    }
-
-    public static void initializeDurableQueue(String taskId) {
-        String projectId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-        Connection connection = null;
-        Session session = null;
-        MessageConsumer consumer = null;
-        try {
-            JMSUtils.JMSInfo jmsInfo = null;
-            try {
-                jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
-            } catch (ServerException e) {
-                e.printStackTrace();
-            }
-            String url = jmsInfo != null ? jmsInfo.getUrl() : null;
-            if (url == null) {
-                return;
-            }
-            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
-            connection = connectionFactory.createConnection();
-            String subscriberId = projectId + "/" + taskId;
-            connection.setClientID(subscriberId);
-            // connection.setExceptionListener(this);
-            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            String messageSelector = JMSUtils.constructSelectorString(projectId, taskId);
-            Topic topic = session.createTopic("master");
-            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
-            connection.start();
-        } catch (JMSException e1) {
-            e1.printStackTrace();
-        } finally {
-            try {
-                if (consumer != null) {
-                    consumer.close();
-                }
-                if (session != null) {
-                    session.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public static String unescapeHtml(String s) {
@@ -1969,24 +1909,6 @@ public class ExportUtility {
 
     public static boolean isViewConstraint(Constraint constraint) {
         return getViewFromConstraint(constraint) != null;
-    }
-
-    public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject());
-    }
-
-    public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(project.getProjectID(), project.getName());
-    }
-
-    private static ObjectNode getProjectObjectNode(String id, String name) {
-        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
-        if (name != null) {
-            projectObjectNode.put(MDKConstants.NAME_KEY, name);
-        }
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        return projectObjectNode;
     }
 
     /**

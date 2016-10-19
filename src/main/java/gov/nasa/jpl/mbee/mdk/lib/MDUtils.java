@@ -278,6 +278,9 @@ public class MDUtils {
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(project).getURI());
         }
+        if (branch == null) {
+            branch = "master";
+        }
         return branch;
     }
 

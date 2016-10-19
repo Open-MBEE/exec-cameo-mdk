@@ -16,7 +16,6 @@ public class MDKConstants {
             IDS_KEY_SUFFIX = ID_KEY_SUFFIX + "s",
             SLOT_ID_SEPARATOR = "-slot-",
             SLOT_VALUE_ID_SEPARATOR = SLOT_ID_SEPARATOR.substring(0, SLOT_ID_SEPARATOR.length() - 1) + "value-",
-            HOLDING_BIN_PACKAGE_ID_REGEX = "^(holding_bin|(Y|M|D|H){2}_[0-9]+)_.+$",
             TYPE_KEY = "type",
             NAME_KEY = "name",
             SYSML_ID_KEY = "sysml" + ID_KEY_SUFFIX,

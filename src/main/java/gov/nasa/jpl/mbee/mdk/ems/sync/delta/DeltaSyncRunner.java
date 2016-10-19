@@ -350,7 +350,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
                 try {
-                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesSitesProjectsElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
+                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -379,11 +379,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             body.put("source", "magicdraw");
             body.put("mmsVersion", MDKPlugin.VERSION);
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
-            URIBuilder uri = MMSUtils.getServiceWorkspacesUri(project);
-            if (uri == null) {
-                return;
-            }
-            uri.setPath(uri.getPath() + "/elements");
+            URIBuilder uri = MMSUtils.getServiceWorkspacesElementsUri(project);
             try {
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, uri, body, true, elementsArrayNode.size(), "Sync Changes"));
             } catch (IOException e) {

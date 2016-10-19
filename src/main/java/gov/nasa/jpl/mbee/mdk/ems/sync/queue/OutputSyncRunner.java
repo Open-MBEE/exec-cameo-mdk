@@ -1,15 +1,12 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.queue;
 
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.apache.batik.apps.svgbrowser.Application;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 public class OutputSyncRunner implements Runnable {
     public static Logger log = Logger.getLogger(OutputSyncRunner.class);
@@ -37,30 +34,15 @@ public class OutputSyncRunner implements Runnable {
     public void run() {
         log.info("sync runner started");
         OutputQueue q = OutputQueue.getInstance();
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
-            }
-        });
+        SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
         while (true) {
             try {
                 if (q.isEmpty()) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
-                        }
-                    });
+                    SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
                 }
                 final Request r = q.take();
                 q.setCurrent(r);
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
-                    }
-                });
+                SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
                 SendThread st = new SendThread(r);
                 st.setName("Send#" + id++);
                 st.start();

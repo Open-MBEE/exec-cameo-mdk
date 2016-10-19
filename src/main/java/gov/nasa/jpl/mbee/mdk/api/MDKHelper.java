@@ -29,17 +29,18 @@
 
 package gov.nasa.jpl.mbee.mdk.api;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
@@ -50,13 +51,15 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.python.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -276,53 +279,38 @@ public class MDKHelper {
      *
      **********************************************************************************/
 
-    public static ObjectNode getMmsElement(Element e) throws IOException {
-        return MMSUtils.getElement(e);
+    public static ObjectNode getMmsElement(Element e, Project project) throws IOException, ServerException, URISyntaxException {
+        return MMSUtils.getElement(e, project);
     }
 
-    public static ObjectNode getMmsElementByID(String s) throws IOException {
-        return MMSUtils.getElementById(s);
+    public static ObjectNode getMmsElementByID(String s, Project project) throws IOException, ServerException, URISyntaxException {
+        return MMSUtils.getElementById(s, project);
     }
 
-    public static ObjectNode getMmsElements(Collection<Element> elements) throws ServerException, IOException {
-        return MMSUtils.getElements(elements, null);
+    public static ObjectNode getMmsElements(Collection<Element> elements, Project project) throws ServerException, IOException, URISyntaxException {
+        return MMSUtils.getElements(elements, project, null);
     }
 
-    public static ObjectNode getMmsElementsByID(Collection<String> cs) throws ServerException, IOException {
-        return MMSUtils.getElementsById(cs, null);
+    public static ObjectNode getMmsElementsByID(Collection<String> cs, Project project) throws ServerException, IOException, URISyntaxException {
+        return MMSUtils.getElementsById(cs, project, null);
     }
 
     /**
      * Sends a DELETE request to MMS for the indicated element.
      *
-     * @param deleteTarget The element you want to delete on the MMS
+     * @param elements The element you want to delete on the MMS
      * @throws IllegalStateException
      * @throws ServerException
      */
-    public static void deleteMmsElement(Element deleteTarget) throws IllegalStateException {
-        Project proj = Application.getInstance().getProject();
-        if (proj == null) {
-            throw new IllegalStateException("No project opened.");
-        }
+    public static ObjectNode deleteMmsElements(Collection<Element> elements, Project project) throws IllegalStateException, IOException, URISyntaxException, ServerException {
+        ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
+        ArrayNode elementsArrayNode = objectNode.putArray("elements");
+        elements.forEach(element -> elementsArrayNode.add(Converters.getElementToIdConverter().apply(element)));
+        objectNode.put("source", "magicdraw");
+        objectNode.put("mmsVersion", MDKPlugin.VERSION);
 
-        String sysmlid = deleteTarget.getID();
-        if (sysmlid == null) {
-            throw new IllegalStateException("Element does not exist in model");
-        }
-
-        String url = ExportUtility.getUrlWithWorkspace();
-        if (url == null) {
-            throw new IllegalStateException("Project does not have MMS URL configured.");
-        }
-        url += "/elements/" + sysmlid;
-
-        String response = ExportUtility.delete(url, true);
-        if (response == null) {
-            throw new IllegalStateException("No response received from delete method. Possible malformed url.");
-        }
-        else if (response.contains("Node already deleted.")) {
-            throw new IllegalStateException("Element has already been deleted on MMS.");
-        }
+        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, MMSUtils.getServiceWorkspacesElementsUri(project));
+        return MMSUtils.sendMMSRequest(request);
     }
 
     /**
@@ -369,24 +357,9 @@ public class MDKHelper {
      * @return true if the site lists "editable":"true" for the logged in user, false otherwise
      * or when no project is open or project lacks url and site specifications
      */
-    public static boolean hasSiteEditPermission() {
-        try {
-            Project proj = Application.getInstance().getProject();
-            if (proj == null) {
-                return false;
-            }
-            String url = ExportUtility.getUrl(proj);
-            if (url == null) {
-                return false;
-            }
-            String site = ExportUtility.getSite();
-            if (site == null) {
-                return false;
-            }
-            return ExportUtility.hasSiteEditPermission(url, site);
-        } catch (ServerException se) {
-            return false;
-        }
+    public static boolean hasSiteEditPermission() throws ServerException, IOException, URISyntaxException {
+        Project project = Application.getInstance().getProject();
+        return MMSUtils.isSiteEditable(project, MMSUtils.getSiteName(project));
     }
 
 
@@ -476,10 +449,10 @@ public class MDKHelper {
     }
 
     public static boolean isLoginDialogDisabled() {
-        return ViewEditUtils.isLoginDialogDisabled();
+        return Utils.isPopupsDisabled();
     }
 
     public static void setLoginDialogDisabled(boolean loginDialogDisabled) {
-        ViewEditUtils.setLoginDialogDisabled(loginDialogDisabled);
+        Utils.setPopupsDisabled(loginDialogDisabled);
     }
 }

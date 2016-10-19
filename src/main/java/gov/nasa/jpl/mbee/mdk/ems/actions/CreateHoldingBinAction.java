@@ -5,7 +5,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.awt.event.ActionEvent;
@@ -24,7 +24,7 @@ public class CreateHoldingBinAction extends MDAction {
         Project proj = Utils.getProject();
         String projectId = proj.getPrimaryProject().getProjectID();
         String holdingBinId = "holding_bin_" + projectId;
-        Element holdingBin = ExportUtility.getElementFromID(holdingBinId);
+        Element holdingBin = Converters.getIdToElementConverter().apply(holdingBinId, proj);
         if (holdingBin != null) {
             Utils.guilog("[INFO] Holding bin already exists.");
             return;

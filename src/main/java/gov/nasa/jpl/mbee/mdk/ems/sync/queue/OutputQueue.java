@@ -6,7 +6,8 @@ import org.apache.log4j.Logger;
 import javax.swing.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class OutputQueue extends LinkedBlockingQueue<Request> {
+public class
+OutputQueue extends LinkedBlockingQueue<Request> {
     private Logger log = Logger.getLogger(OutputQueue.class);
     private final static OutputQueue instance = new OutputQueue();
     private volatile Request current = null;
@@ -18,12 +19,7 @@ public class OutputQueue extends LinkedBlockingQueue<Request> {
     @Override
     public boolean offer(Request e) {
         boolean result = super.offer(e);
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();
-            }
-        });
+        SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
         return result;
     }
 

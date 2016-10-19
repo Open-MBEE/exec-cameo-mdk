@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -13,12 +12,10 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
@@ -136,18 +133,18 @@ public class ManualSyncRunner implements RunnableWithProgress {
     public boolean checkProject() {
         // build request for site element
         URIBuilder requestUri;
-        requestUri = MMSUtils.getServiceWorkspacesUri(project);
+        requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
         if (requestUri == null) {
             return false;
         }
-        requestUri.setPath(requestUri.getPath() + "/elements/" + project.getPrimaryProject().getProjectID());
+        requestUri.setPath(requestUri.getPath() + "/" + project.getPrimaryProject().getProjectID());
 
         // do request for site element
         ObjectNode response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
         } catch (Exception e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error when querrying site element on MMS. " +
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error when querying site element on MMS. " +
                     "Reason: " + e.getMessage());
             e.printStackTrace();
             return false;
@@ -155,9 +152,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
         // process response for site element
         // missing projects will return {}
-        JsonNode value;
-        if ((value = response.get("elements")) == null) {
+        if (response.get("elements") == null) {
             ValidationRuleViolation v;
+
             String workspace = MMSUtils.getServiceWorkspacesUri(project).getPath();
             if (workspace.contains("master")) {
                 v = new ValidationRuleViolation(project.getModel(), "The project doesn't exist on the web.");

@@ -16,19 +16,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
-
-//@donbot migrate simple to Jackson
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+//@donbot migrate simple to Jackson
 
 /**
  * Created by igomes on 7/25/16.
