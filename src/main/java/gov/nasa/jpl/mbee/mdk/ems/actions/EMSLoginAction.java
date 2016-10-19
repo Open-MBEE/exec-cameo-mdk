@@ -67,9 +67,9 @@ public class EMSLoginAction extends MDAction {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
         }
-        TicketUtils.setUsernameAndPassword(project, username, password);
+        TicketUtils.loginToMMS();
 
-        if (TicketUtils.getTicket().equals("")) {
+        if (TicketUtils.getTicket().isEmpty()) {
             return false;
         }
         if (initJms) {

@@ -154,9 +154,8 @@ public class MDKHelper {
      * @param password
      */
     public static boolean loginToMMS(final String username, final String password) {
-        Utils.setPopupsDisabled(true);
-        TicketUtils.setUsernameAndPassword(Application.getInstance().getProject(), username, password);
-        return TicketUtils.checkTicket(Application.getInstance().getProject());
+        TicketUtils.setUsernameAndPassword(username, password);
+        return TicketUtils.loginToMMS();
     }
 
     /**
@@ -175,7 +174,7 @@ public class MDKHelper {
      * @param password
      */
     public static void setMMSLoginCredentials(String username, String password) {
-        TicketUtils.setUsernameAndPassword(Application.getInstance().getProject(), username, password);
+        TicketUtils.setUsernameAndPassword(username, password);
     }
 
     /**

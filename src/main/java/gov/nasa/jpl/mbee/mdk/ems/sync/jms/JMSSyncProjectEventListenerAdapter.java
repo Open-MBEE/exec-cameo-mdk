@@ -100,8 +100,8 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 return false;
             }
         }
-        String username = TicketUtils.getUsername();
-        if (username == null || username.isEmpty()) {
+        TicketUtils.loginToMMS();
+        if (!TicketUtils.isPasswordSet()) {
             Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
             return false;
         }
@@ -111,7 +111,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 Application.getInstance().getGUILog().log("[ERROR] Failed to create MMS connection factory.");
                 return false;
             }
-            String subscriberId = projectID + "-" + workspaceID + "-" + username; // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(); // weblogic can't have '/' in id
 
             JMSMessageListener jmsMessageListener = new JMSMessageListener(project);
 
