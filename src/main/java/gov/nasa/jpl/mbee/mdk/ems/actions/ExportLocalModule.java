@@ -65,7 +65,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             requestData.set("elements", elementsArrayNode);
             requestData.put("source", "magicdraw");
             requestData.put("mmsVersion", MDKPlugin.VERSION);
-            ObjectNode projectObjectNode = ExportUtility.getProjectObjectNode(module);
+            ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
 
             URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
