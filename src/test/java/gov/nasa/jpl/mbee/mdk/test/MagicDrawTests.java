@@ -24,6 +24,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 //import gov.nasa.jpl.mbee.api.ElementFinder;
 //import gov.nasa.jpl.mbee.emsrci.utils.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
+import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 

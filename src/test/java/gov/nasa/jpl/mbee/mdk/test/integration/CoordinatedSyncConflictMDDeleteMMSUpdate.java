@@ -1,5 +1,30 @@
 package gov.nasa.jpl.mbee.mdk.test.integration;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.tests.MagicDrawTestCase;
+import com.nomagic.magicdraw.tests.MagicDrawTestRunner;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.impl.ElementsFactory;
+
+import junit.framework.Assert;
+import org.junit.Before;
+import org.junit.After;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import java.util.Collection;
 
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
@@ -16,15 +41,13 @@ import org.junit.runner.Result;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
 
 /**
  * @author ablack
  * @JIRA MAGICDRAW-263
  *
  */
+@RunWith(MagicDrawTestRunner.class)
 public class CoordinatedSyncConflictMDDeleteMMSUpdate extends MDKTestCase
 {
     
@@ -32,10 +55,14 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate extends MDKTestCase
     static Element targetPackage;
     static Element targetElement;
 
+    @Test
+    public void name() throws Exception {
+        Assert.assertTrue(true);
+    }
 
-    public static void main(String[] args) throws Exception 
+
+    public static void main(String[] args) throws Exception
     {   
-        parseArgs(args);
         System.out.println("In main method");
         JUnitCore jCore = new JUnitCore();
         Result results = jCore.run(CoordinatedSyncConflictMDDeleteMMSUpdate.class);
