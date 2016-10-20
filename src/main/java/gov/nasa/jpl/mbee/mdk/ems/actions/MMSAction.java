@@ -14,7 +14,7 @@ public class MMSAction extends MDAction {
 
     @Override
     public void updateState() {
-        if (TicketUtils.isPasswordSet()) {
+        if (TicketUtils.isTicketSet()) {
             setEnabled(true);
         }
         else {

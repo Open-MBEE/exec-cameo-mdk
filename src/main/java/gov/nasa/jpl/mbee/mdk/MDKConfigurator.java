@@ -162,7 +162,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         //manager.addCategory(refactorWithIDActionCat);
 
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (TicketUtils.isPasswordSet()) {
+        if (TicketUtils.isTicketSet()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
@@ -253,7 +253,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 }
             }
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            if (TicketUtils.isPasswordSet()) {
+            if (TicketUtils.isTicketSet()) {
                 //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
                 /*NMAction action = manager.getActionFor(ValidateViewAction.DEFAULT_ID);

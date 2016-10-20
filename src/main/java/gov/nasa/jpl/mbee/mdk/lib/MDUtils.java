@@ -270,16 +270,13 @@ public class MDUtils {
 //            }
 //        }
 //        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
-        return null;
+        return "master";
     }
 
     public static String getTeamworkBranch(Project project) {
         String branch = null;
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
             branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(project).getURI());
-        }
-        if (branch == null) {
-            branch = "master";
         }
         return branch;
     }

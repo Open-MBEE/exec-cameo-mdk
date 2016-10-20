@@ -17,7 +17,9 @@ import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -33,10 +35,12 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +55,8 @@ public class MMSUtils {
 
     private static String developerUrl = "";
     private static String developerSite = "";
+
+    private static final Pattern CENSORED_PATTERN = Pattern.compile(".*password.*");
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
@@ -76,12 +82,12 @@ public class MMSUtils {
         requestUri.setPath(requestUri.getPath() + "/" + id);
 
         // do request
-        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
+        JsonNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
 
         // parse response
-        JsonNode value;
-        if ((value = response.get("elements")).isArray() && (value = value.get(0)).isObject()) {
-            return (ObjectNode) value;
+        JsonNode elementsJsonNode;
+        if ((elementsJsonNode = response.get("elements")) != null && elementsJsonNode.isArray() && elementsJsonNode.size() > 0 && (elementsJsonNode = elementsJsonNode.get(0)).isObject()) {
+            return (ObjectNode) elementsJsonNode;
         }
         return null;
     }
@@ -139,7 +145,6 @@ public class MMSUtils {
         else {
             requestUri.setParameter("recurse", java.lang.Boolean.toString(recurse));
         }
-        requestUri.setParameter("qualified", "false");
 
         // do request in cancellable thread
         return sendCancellableMMSRequest(buildRequest(HttpRequestType.GET, requestUri, null), progressStatus);
@@ -203,9 +208,9 @@ public class MMSUtils {
         }
         request.addHeader("Content-Type", "application/json");
         request.addHeader("charset", "utf-8");
-        if (sendData != null) {
+        if (sendData != null && request instanceof HttpEntityEnclosingRequest) {
             String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
-            ((HttpPost) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
+            ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
         }
         return request;
     }
@@ -235,22 +240,35 @@ public class MMSUtils {
      */
     public static ObjectNode sendMMSRequest(HttpRequestBase request)
             throws IOException, ServerException {
-
+        HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
+        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest && (httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null && httpEntityEnclosingRequest.getEntity().isRepeatable();
+        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString() + (logBody ? " - Body:" : ""));
+        if (logBody) {
+            try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
+                String requestBody = IOUtils.toString(inputStream);
+                if (CENSORED_PATTERN.matcher(requestBody).find()) {
+                    requestBody = "--- Censored ---";
+                }
+                System.out.println(requestBody);
+            }
+        }
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         ObjectNode responseJson;
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
-             CloseableHttpResponse response = httpclient.execute(request);
-        ) {
+                CloseableHttpResponse response = httpclient.execute(request);
+                InputStream inputStream = response.getEntity().getContent()) {
             int responseCode = response.getStatusLine().getStatusCode();
-            String responseText = response.getEntity().getContent().toString();
+            String responseBody = inputStream != null ? IOUtils.toString(inputStream) : null;
             //TODO error processing
-            if (processRequestErrors(responseText, responseCode)) {
-                throw new ServerException(responseText, responseCode);
+            System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " - Body:" : ""));
+            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                System.out.println(responseBody);
             }
-            responseJson = JacksonUtils.getObjectMapper().readValue(response.getEntity().getContent(), ObjectNode.class);
-        } catch (IOException | ServerException e) {
-            throw e;
+            if (processRequestErrors(responseBody, responseCode)) {
+                throw new ServerException(responseBody, responseCode);
+            }
+            responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
         }
         return responseJson;
     }
@@ -304,7 +322,7 @@ public class MMSUtils {
                 t.join(CHECK_CANCEL_DELAY);
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         if (etype.get() == ThreadRequestExceptionType.SERVER_EXCEPTION) {
             throw new ServerException(emsg.get(), ecode.get());
@@ -327,7 +345,6 @@ public class MMSUtils {
      */
     public static boolean isSiteEditable(Project project, String site)
             throws IOException, URISyntaxException, ServerException {
-        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
         if (site == null || site.equals("")) {
             site = getSiteName(project);
         }
@@ -341,12 +358,8 @@ public class MMSUtils {
         ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
         try {
             response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
-        } catch (IOException e) {
-            //TODO
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        } catch (ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException e) {
+            //TODO @donbot
             e.printStackTrace();
         }
 
@@ -354,7 +367,7 @@ public class MMSUtils {
         JsonNode arrayNode;
         if ((arrayNode = response.get("sites")) != null && arrayNode instanceof ArrayNode) {
             JsonNode value;
-            for (JsonNode node : (ArrayNode) arrayNode) {
+            for (JsonNode node : arrayNode) {
                 if ((value = node.get(MDKConstants.SYSML_ID_KEY)) != null
                         && value.isTextual() && value.asText().equals(site)
                         && (value = node.get("editable")) != null && value.isBoolean()) {
@@ -469,7 +482,7 @@ public class MMSUtils {
         if (workspaceUri == null) {
             return null;
         }
-        String workspace = MDUtils.getTeamworkBranch(project);
+        String workspace = MDUtils.getWorkspace(project);
         workspaceUri.setPath(workspaceUri.getPath() + "/workspaces/" + workspace);
         return workspaceUri;
     }

@@ -100,8 +100,10 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 return false;
             }
         }
-        TicketUtils.loginToMMS();
-        if (!TicketUtils.isPasswordSet()) {
+        if (!TicketUtils.isTicketSet()) {
+            TicketUtils.loginToMMS();
+        }
+        if (!TicketUtils.isTicketSet()) {
             Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
             return false;
         }

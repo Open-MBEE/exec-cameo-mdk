@@ -53,8 +53,6 @@ public class TicketUtils {
     
     private static String username = "";
     private static String password = "";
-    private static boolean passwordSet = false;
-    private static String encodedCredentials = "";
     private static String ticket = "";
 
     /**
@@ -78,8 +76,8 @@ public class TicketUtils {
         return ticket;
     }
 
-    public static boolean isPasswordSet() {
-        return passwordSet;
+    public static boolean isTicketSet() {
+        return ticket != null && !ticket.isEmpty();
     }
 
     /**
@@ -98,6 +96,7 @@ public class TicketUtils {
      * Shows a login dialog window and uses its filled in values to set the username and password.
      */
     private static void showLoginDialog() {
+        new RuntimeException("trace").printStackTrace();
         // Pop up dialog for logging into Alfresco
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new GridLayout(2, 2));
@@ -172,12 +171,8 @@ public class TicketUtils {
         if (pass == null) {
             pass = "";
         }
-        passwordSet = false;
         username = user;
         password = pass;
-        String authString = user + ":" + pass;
-        byte[] authEncBytes = Base64.getEncoder().encode(authString.getBytes());
-        encodedCredentials = new String(authEncBytes);
     }
 
     /**
@@ -202,7 +197,6 @@ public class TicketUtils {
 
         //ticket is invalid, clear it and re-attempt;
         ticket = "";
-        passwordSet = false;
 
         // build request
         // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
@@ -234,12 +228,9 @@ public class TicketUtils {
 
         // parse response
         JsonNode value;
-        if (response != null && (value = response.get("data")) != null
-                && (value = value.get("ticket")) != null && value.isTextual()) {
+        if (response != null && (value = response.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
             ticket = value.asText();
-            passwordSet = true;
         }
-        return;
     }
 
     /**
@@ -249,8 +240,6 @@ public class TicketUtils {
      */
     private static boolean checkAcquiredTicket() {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service//mms/login/ticket/${TICKET}
-        boolean print = MDKOptionsGroup.getMDKOptions().isLogJson();
-
         if (ticket == null || ticket.isEmpty()) {
             return false;
         }
