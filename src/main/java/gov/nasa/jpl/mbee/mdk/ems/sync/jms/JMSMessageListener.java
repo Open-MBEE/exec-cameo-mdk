@@ -85,7 +85,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         JsonNode workspaceJsonNode = messageJsonNode.get("workspace2");
         JsonNode syncedJsonNode;
         if (workspaceJsonNode != null && workspaceJsonNode.isObject()) {
-            JsonNode sourceJsonNode = workspaceJsonNode.get("source");
+            JsonNode sourceJsonNode = messageJsonNode.get("source");
             if (sourceJsonNode != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().equalsIgnoreCase("magicdraw")) {
                 return;
             }

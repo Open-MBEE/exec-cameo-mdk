@@ -201,20 +201,24 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             try {
                 response = MMSUtils.getElementsById(elementIdsToGet, project, progressStatus);
             } catch (ServerException | IOException | URISyntaxException e) {
-                if (!progressStatus.isCancel()) {
+                if (e instanceof ServerException && ((ServerException) e).getCode() == 404) {
+                    (response = JacksonUtils.getObjectMapper().createObjectNode()).putArray("elements");
+                }
+                else if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
                     e.printStackTrace();
+                    return;
                 }
             }
             if (progressStatus.isCancel()) {
                 Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
                 return;
             }
-            if (response == null) {
+            JsonNode elementsArrayNode;
+            if (response == null || (elementsArrayNode = response.get("elements")) == null || !elementsArrayNode.isArray()) {
                 Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
                 return;
             }
-            ArrayNode elementsArrayNode = (ArrayNode) response.get("elements");
             for (JsonNode jsonNode : elementsArrayNode) {
                 if (!jsonNode.isObject()) {
                     continue;
@@ -229,12 +233,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         progressStatus.setDescription("Detecting conflicts");
         Map<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedChanges = new LinkedHashMap<>(),
                 unconflictedChanges = new LinkedHashMap<>();
-        localChangelog.findConflicts(jmsChangelog, new BiPredicate<Changelog.Change<Element>, Changelog.Change<Void>>() {
-            @Override
-            public boolean test(Changelog.Change<Element> change, Changelog.Change<Void> change2) {
-                return change != null && change2 != null;
-            }
-        }, conflictedChanges, unconflictedChanges);
+        localChangelog.findConflicts(jmsChangelog, (change, change2) -> change != null && change2 != null, conflictedChanges, unconflictedChanges);
 
         // MAP CHANGES TO ACTIONABLE GROUPS
 

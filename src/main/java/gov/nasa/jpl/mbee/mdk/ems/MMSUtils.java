@@ -352,6 +352,9 @@ public class MMSUtils {
         // configure request
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
         URIBuilder requestUri = getServiceWorkspacesUri(project);
+        if (requestUri == null) {
+            return false;
+        }
         requestUri.setPath(requestUri.getPath() + "/sites");
 
         // do request
@@ -375,7 +378,8 @@ public class MMSUtils {
                 }
             }
         }
-        return false;
+        // TODO flip back to false when /sites has the editable flag again @donbot
+        return true;
     }
 
     /**
