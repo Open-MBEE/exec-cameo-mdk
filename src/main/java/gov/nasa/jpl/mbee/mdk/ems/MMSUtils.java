@@ -82,14 +82,22 @@ public class MMSUtils {
         requestUri.setPath(requestUri.getPath() + "/" + id);
 
         // do request
-        JsonNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
+        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+        try {
+            response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
+        } catch (ServerException e) {
+            if (e.getCode() != 404) {
+                throw e;
+            }
+        }
+        return response;
 
         // parse response
-        JsonNode elementsJsonNode;
-        if ((elementsJsonNode = response.get("elements")) != null && elementsJsonNode.isArray() && elementsJsonNode.size() > 0 && (elementsJsonNode = elementsJsonNode.get(0)).isObject()) {
-            return (ObjectNode) elementsJsonNode;
-        }
-        return null;
+//        JsonNode elementsJsonNode;
+//        if ((elementsJsonNode = response.get("elements")) != null && elementsJsonNode.isArray() && elementsJsonNode.size() > 0 && (elementsJsonNode = elementsJsonNode.get(0)).isObject()) {
+//            return (ObjectNode) elementsJsonNode;
+//        }
+//        return null;
     }
 
     public static ObjectNode getElements(Collection<Element> elements, Project project, ProgressStatus ps)
@@ -122,13 +130,19 @@ public class MMSUtils {
 
         //do cancellable request
         Utils.guilog("[INFO] Searching for " + ids.size() + " elements from server...");
-        return sendCancellableMMSRequest(buildRequest(HttpRequestType.GET, requestUri, requests), progressStatus);
+        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+        try {
+            response = sendCancellableMMSRequest(buildRequest(HttpRequestType.GET, requestUri, requests), progressStatus);
+        } catch (ServerException e) {
+            if (e.getCode() != 404) {
+                throw e;
+            }
+        }
+        return response;
     }
 
-    // TODO Fix me and move me to MMSUtils @donbot
     // TODO Add both ?recurse and element list gets @donbot
-    public static ObjectNode getServerElementsRecursively(Project project, Element element,
-                                                          boolean recurse, int depth,
+    public static ObjectNode getServerElementsRecursively(Project project, Element element, boolean recurse, int depth,
                                                           ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         // configure request
@@ -147,7 +161,15 @@ public class MMSUtils {
         }
 
         // do request in cancellable thread
-        return sendCancellableMMSRequest(buildRequest(HttpRequestType.GET, requestUri, null), progressStatus);
+        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+        try {
+            response = sendCancellableMMSRequest(buildRequest(HttpRequestType.GET, requestUri, null), progressStatus);
+        } catch (ServerException e) {
+            if (e.getCode() != 404) {
+                throw e;
+            }
+        }
+        return response;
     }
 
     /**
@@ -240,6 +262,7 @@ public class MMSUtils {
      */
     public static ObjectNode sendMMSRequest(HttpRequestBase request)
             throws IOException, ServerException {
+//        new RuntimeException("trace").printStackTrace();
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest && (httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null && httpEntityEnclosingRequest.getEntity().isRepeatable();
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString() + (logBody ? " - Body:" : ""));
@@ -603,7 +626,7 @@ public class MMSUtils {
         if (urlString == null || urlString.equals("")) {
             throw new IllegalStateException("MMS URL is null or empty.");
         }
-        return urlString;
+        return urlString.trim();
     }
 
     public static String getSiteName(Project project) {
@@ -634,7 +657,7 @@ public class MMSUtils {
         if (siteString == null || siteString.equals("")) {
             throw new IllegalStateException("MMS Site is null or empty.");
         }
-        return siteString;
+        return siteString.trim();
     }
 
     public static String getDefaultSiteName(IProject iProject) {

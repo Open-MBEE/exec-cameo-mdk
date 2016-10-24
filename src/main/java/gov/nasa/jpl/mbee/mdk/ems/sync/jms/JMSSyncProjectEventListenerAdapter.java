@@ -75,7 +75,16 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         String projectID = project.getPrimaryProject().getProjectID();
         String workspaceID = MDUtils.getWorkspace(project);
 
+        // log in to mms
+        if (!TicketUtils.isTicketSet()) {
+            TicketUtils.loginToMMS();
+        }
+        if (!TicketUtils.isTicketSet()) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
+            return false;
+        }
 
+        // get jms connection info and connect
         JMSUtils.JMSInfo jmsInfo;
         try {
             jmsInfo = JMSUtils.getJMSInfo(project);
@@ -100,15 +109,8 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 return false;
             }
         }
-        if (!TicketUtils.isTicketSet()) {
-            TicketUtils.loginToMMS();
-        }
-        if (!TicketUtils.isTicketSet()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
-            return false;
-        }
         try {
-            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(JMSUtils.getJMSInfo(project));
+            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
             if (connectionFactory == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Failed to create MMS connection factory.");
                 return false;

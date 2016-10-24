@@ -86,17 +86,18 @@ public class TicketUtils {
      */
     public static boolean loginToMMS() {
         if (!Utils.isPopupsDisabled()) {
-            showLoginDialog();
+            acquireTicket(showLoginDialog());
         }
-        acquireTicket();
+        else {
+            acquireTicket(password);
+        }
         return !ticket.isEmpty();
     }
 
     /**
      * Shows a login dialog window and uses its filled in values to set the username and password.
      */
-    private static void showLoginDialog() {
-        new RuntimeException("trace").printStackTrace();
+    private static String showLoginDialog() {
         // Pop up dialog for logging into Alfresco
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new GridLayout(2, 2));
@@ -121,9 +122,9 @@ public class TicketUtils {
         JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                 "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE);
-        String user = usernameFld.getText();
+        username = usernameFld.getText();
         String pass = new String(passwordFld.getPassword());
-        setUsernameAndPassword(user, pass);
+        return pass;
     }
 
     /**
@@ -176,10 +177,12 @@ public class TicketUtils {
     }
 
     /**
-     * Convenience method for clearing username and password.
+     * Clears username, password, and ticket
      */
     public static void clearUsernameAndPassword() {
-        setUsernameAndPassword("", "");
+        username = "";
+        password = "";
+        ticket = "";
     }
 
     /**
@@ -189,7 +192,7 @@ public class TicketUtils {
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
-    private static void acquireTicket() {
+    private static void acquireTicket(String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
         if ((ticket != null) && !ticket.isEmpty() && checkAcquiredTicket()) {
             return;
@@ -203,14 +206,14 @@ public class TicketUtils {
         // log in to the currently opening project
         Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null || username.isEmpty() || password.isEmpty()) {
+        if (requestUri == null || username.isEmpty() || pass.isEmpty()) {
             return;
         }
         requestUri.setPath(requestUri.getPath() + "/api/login" + ticket);
         requestUri.clearParameters();
         ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
         credentials.put("username", username);
-        credentials.put("password", password);
+        credentials.put("password", pass);
 
         // do request
         ObjectNode response = null;

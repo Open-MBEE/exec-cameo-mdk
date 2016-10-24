@@ -56,6 +56,7 @@ import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
 import org.python.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -321,31 +322,34 @@ public class MDKHelper {
      */
     @Deprecated
     // TODO Move to MMSUtils @donbot
-    public static void postMmsElement(ObjectNode elementsNode) throws IllegalStateException {
-        /*if (elementsNode == null) {
-            throw new IllegalStateException("No element json specified to export to MMS");
-        }
-
-        Project proj = Application.getInstance().getProject();
-        if (proj == null) {
-            throw new IllegalStateException("No project opened.");
-        }
-
-        String url = ExportUtility.getPostElementsUrl();
-        if (url == null) {
-            throw new IllegalStateException("Project does not have MMS URL configured.");
-        }
-
-        JSONArray elems = new JSONArray();
-        elems.add(elementsNode);
-        JSONObject send = new JSONObject();
-        send.put("elements", elems);
-
-        String response = ExportUtility.send(url, send.toJSONString(), false, true);
-        if (response == null) {
-            throw new IllegalStateException("Invalid send formatting.");
-        }*/
-    }
+//    public static void postMmsElement(ObjectNode elementsNode) throws IllegalStateException {
+//        if (elementsNode == null) {
+//            throw new IllegalStateException("No element json specified to export to MMS");
+//        }
+//
+//        Project proj = Application.getInstance().getProject();
+//        if (proj == null) {
+//            throw new IllegalStateException("No project opened.");
+//        }
+//
+//        URIBuilder requestUri = MMSUtils.getServiceWorkspacesUri();
+//        String url = ExportUtility.getPostElementsUrl();
+//        if (requestUri == null) {
+//            throw new IllegalStateException("Project does not have MMS URL configured.");
+//        }
+//
+//
+//
+//        JSONArray elems = new JSONArray();
+//        elems.add(elementsNode);
+//        JSONObject send = new JSONObject();
+//        send.put("elements", elems);
+//
+//        String response = ExportUtility.send(url, send.toJSONString(), false, true);
+//        if (response == null) {
+//            throw new IllegalStateException("Invalid send formatting.");
+//        }
+//    }
 
 
     /**

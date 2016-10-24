@@ -54,6 +54,7 @@ public class ValidateElementAction extends MDAction {
     public void actionPerformed(ActionEvent e) {
         ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), false, 0);
         ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
+        //TODO @DONBOT modify this so it doesn't show up with "Sync Pre-Condition Validation"
         if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
             Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), "Manual Sync Validation");
         }

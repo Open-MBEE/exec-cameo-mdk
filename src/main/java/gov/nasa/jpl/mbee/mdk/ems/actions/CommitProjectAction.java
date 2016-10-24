@@ -34,6 +34,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
@@ -86,8 +87,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
     @Override
     public void actionPerformed(ActionEvent e) {
         ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
-        requestData.set("elements", elementsArrayNode);
+        ArrayNode elementsArrayNode = requestData.putArray("elements");
         requestData.put("source", "magicdraw");
         requestData.put("mmsVersion", MDKPlugin.VERSION);
 
@@ -114,7 +114,8 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             if (requestUri == null) {
                 return;
             }
-            ProgressStatusRunner.runWithProgressStatus(new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1), "Model Initialization", true, 0);
+            RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1);
+            ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }
     }
 }

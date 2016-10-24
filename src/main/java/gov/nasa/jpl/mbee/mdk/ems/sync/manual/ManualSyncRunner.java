@@ -80,9 +80,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             } catch (ServerException e) {
                 //TODO @donbot process errors for recursive server element get
                 e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (URISyntaxException e) {
+            } catch (URISyntaxException | IOException e) {
                 e.printStackTrace();
             }
             if (jsonObjects == null) {
@@ -118,15 +116,15 @@ public class ManualSyncRunner implements RunnableWithProgress {
                                                                           boolean recurse, int depth,
                                                                           ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
-        ObjectNode response = MMSUtils.getServerElementsRecursively(project, element, recurse, depth, progressStatus);
-
+        ObjectNode response;
+        response = MMSUtils.getServerElementsRecursively(project, element, recurse, depth, progressStatus);
         // process response
         JsonNode value;
         if (response != null && (value = response.get("elements")) != null && value.isArray()) {
             return StreamSupport.stream(value.spliterator(), false)
                     .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
         }
-        return null;
+        return new ArrayList<ObjectNode>();
     }
 
     // TODO Make common across all sync types @donbot
@@ -143,15 +141,15 @@ public class ManualSyncRunner implements RunnableWithProgress {
         ObjectNode response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (Exception e) {
+        } catch (ServerException e) {
+            // TODO @DONBOT
+        } catch (IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error when querying site element on MMS. " +
                     "Reason: " + e.getMessage());
             e.printStackTrace();
-            return false;
         }
 
-        // process response for site element
-        // missing projects will return {}
+        // process response for site element, missing projects will return {}
         if (response.get("elements") == null) {
             ValidationRuleViolation v;
 
