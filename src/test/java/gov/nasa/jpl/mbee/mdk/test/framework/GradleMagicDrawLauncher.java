@@ -26,75 +26,32 @@ public class GradleMagicDrawLauncher {
     private String[] mainClassArgs = new String[]{};
 
     public static void main(String... args) throws Exception {
-        System.out.println("STARTED");
         new GradleMagicDrawLauncher().run(args);
     }
 
     public void run(String... args) throws Exception {
         urlClassLoader = (URLClassLoader) getClass().getClassLoader();
         parseArgs(args);
-
-        RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
-        List<String> jvmArgs = bean.getInputArguments();
-
-        for (int i = 0; i < jvmArgs.size(); i++) {
-            System.out.println(jvmArgs.get(i));
-        }
-        System.out.println(" -classpath " + System.getProperty("java.class.path"));
-        // print the non-JVM command line arguments
-        // print name of the main class with its arguments, like org.ClassName param1 param2
-        System.out.println(" " + System.getProperty("sun.java.command"));
-
-        Thread thread = new Thread(() -> {
-            try {
-                System.out.println("THREADED!");
-                invokeMainMethod(FRAMEWORK_LAUNCHER_CLASS);
-            } catch (Exception | Error e) {
-                e.printStackTrace();
-                System.exit(1);
-            }
-        }, "Start Application");
-        thread.start();
-        try (Socket socket = new ServerSocket(9001).accept(); ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
-            String message = ois.readUTF();
-            System.out.println("Message: " + message);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        System.out.println("DONE WAITING");
-        /*try {
-            this.invokeMainMethod(FRAMEWORK_LAUNCHER_CLASS);
-        } catch (Exception | Error e) {
-            throw new InitializationError(e);
-        }*/
+        invokeMainMethod(FRAMEWORK_LAUNCHER_CLASS);
     }
 
     private void invokeMainMethod(String clazzName) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, ApplicationExitedException {
         Class<?> clazz = Class.forName(clazzName, true, urlClassLoader);
         Method mainMethod = clazz.getMethod("main", String[].class);
-        System.out.println("Original com.nomagic.magicdraw.launcher: " + System.getProperty("com.nomagic.magicdraw.launcher"));
         System.setProperty("com.nomagic.magicdraw.launcher", mainClass);
-        //System.setProperty("com.nomagic.magicdraw.launcher", "gov.nasa.jpl.mbee.mdk.test.tests.MD_Tests_JUnit4");
         mainMethod.invoke(null, new Object[]{mainClassArgs});
     }
 
     private void parseArgs(String... args) throws IOException {
-        System.out.println("PARSING ARGS");
         int mainClassIndex = -1;
         List<URL> cpElements = new ArrayList<>();
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
-            System.out.println("ARG: " + arg);
             if ((arg.equals("-cp") || arg.equals("-classpath")) && i + 1 < args.length) {
                 String newClassPath = args[++i];
                 StringTokenizer tokenizer = new StringTokenizer(newClassPath, File.pathSeparator);
                 while(tokenizer.hasMoreTokens()) {
                     String cpElement = tokenizer.nextToken();
-                    if (cpElement.endsWith("gradle-worker.jar")) {
-                        System.out.println("SKIPPING gradle-worker.jar");
-                        continue;
-                    }
                     try {
                         cpElements.add((new File(".")).toURI().resolve((new File(cpElement)).toURI()).toURL());
                     } catch (MalformedURLException ignored) {
@@ -113,7 +70,6 @@ public class GradleMagicDrawLauncher {
                     value += parts[j];
                 }
                 String ignored = value != null ? System.setProperty(key, value) : System.clearProperty(key);
-                System.out.println(key + "=" + value);
                 continue;
             }
             if (arg.contains("org.gradle")) {
@@ -122,13 +78,17 @@ public class GradleMagicDrawLauncher {
                 break;
             }
         }
-        if (1 < 0 && mainClassIndex >= 0) {
+        if (mainClassIndex >= 0) {
             mainClassArgs = Arrays.copyOfRange(args, mainClassIndex + 1, args.length);
-            System.out.println("MAIN CLASS ARGS: " + Arrays.toString(mainClassArgs));
         }
-        else {
-            mainClassArgs = new String[]{"DEVELOPER"};
-        }
+
+        /**
+         * This is used to load all the necessary libraries into the classpath and is usually done in GradleWorkerMain.
+         * However, we need them added to the classpath before launching the OSGi framework and additionally need to add them to java.class.path.
+         * To achieve that we've overridden the usual GradleWorkerMain with one that excludes the classloading and done it here.
+         * {@link worker.org.gradle.process.internal.worker.GradleWorkerMain}
+         * Gradle likes it's class overriding hacks, so to avoid issues caused by ones we haven't discovered we're loading Gradle libraries first.
+         */
 
         DataInputStream instr = new DataInputStream(new EncodedStream.EncodedInput(System.in));
 
@@ -145,7 +105,6 @@ public class GradleMagicDrawLauncher {
         List<URL> moreCpElements = new ArrayList<>(1 + cpElements.size() + classPathLength);
         for (int i = 0; i < classPathLength; i++) {
             String cpElement = instr.readUTF();
-            System.out.println("More classpath: " + cpElement);
             files.add(cpElement);
             moreCpElements.add(new URL(cpElement));
         }
@@ -158,8 +117,12 @@ public class GradleMagicDrawLauncher {
             System.setProperty("java.class.path", (currentClassPath != null ? newClassPath + File.pathSeparatorChar + currentClassPath : newClassPath));
         }
 
+        /**
+         * Adds our tests-hack.jar to the front of the classloader (and java.class.path) so our patches to Gradle's hacks can do their jobs.
+         * For an example see {@link org.gradle.internal.logging.slf4j.Slf4jLoggingConfigurer}.
+         */
+
         URL runtimeJar = getClass().getProtectionDomain().getCodeSource().getLocation();
-        System.out.println("RUNTIME JAR: " + runtimeJar);
         if (runtimeJar != null) {
             cpElements.add(0, runtimeJar);
             String currentClassPath = System.getProperty("java.class.path");
@@ -173,20 +136,7 @@ public class GradleMagicDrawLauncher {
 
 
         if (!cpElements.isEmpty()) {
-            System.out.println("Classpath: " + Arrays.toString(cpElements.toArray()));
-
-            /*try {
-                Method addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-                addUrlMethod.setAccessible(true);
-                for (URL file : cpElements) {
-                    addUrlMethod.invoke(urlClassLoader, file.toURI().toURL());
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Could not initialise system classpath.", e);
-            }*/
-
             urlClassLoader = new URLClassLoader(cpElements.toArray(new URL[cpElements.size()]));
-            System.out.println("java.class.path: " + System.getProperty("java.class.path"));
         }
     }
 }

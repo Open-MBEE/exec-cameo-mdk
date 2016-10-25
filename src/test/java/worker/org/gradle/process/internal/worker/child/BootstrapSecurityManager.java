@@ -13,6 +13,16 @@ import java.security.Permission;
  * Created by igomes on 10/22/16.
  */
 
+/**
+ * This is a hack to enable our OSGi hack and counter Gradle's hack for Window's classpath limitation by dynamically loading the classpath using a SecurityManager.
+ * It passes all the necessary libraries for the bootstrap classpath, namely the ones necessary for {@link worker.org.gradle.process.internal.worker.GradleWorkerMain},
+ * but we have overridden that for other reasons anyway.
+ *
+ * This should be able to be reverted in Java 9 since Java 9 will break Gradle's hack.
+ * https://discuss.gradle.org/t/classcastexception-from-org-gradle-process-internal-child-bootstrapsecuritymanager/2443/11
+ *
+ * @author igomes
+ */
 // This is a hack to enable our OSGi hack and counter Gradle's hack for Window's classpath limitation by dynamically loading the classpath using a SecurityManager
 // This should be able to be reverted in Java 9 since Java 9 will break Gradle's hack.
 // https://discuss.gradle.org/t/classcastexception-from-org-gradle-process-internal-child-bootstrapsecuritymanager/2443/11
@@ -52,9 +62,8 @@ public class BootstrapSecurityManager extends SecurityManager {
             int count = inputStream.readInt();
             //StringBuilder classpathStr = new StringBuilder();
             for (int i = 0; i < count; i++) {
-                String entry = inputStream.readUTF();
-                /*System.out.println("Bootstrap adding " + entry);
-                File file = new File(entry);
+                /*String entry = */inputStream.readUTF();
+                /*File file = new File(entry);
                 addUrlMethod.invoke(systemClassLoader, file.toURI().toURL());
                 if (i > 0) {
                     classpathStr.append(File.pathSeparator);
@@ -63,12 +72,10 @@ public class BootstrapSecurityManager extends SecurityManager {
             }
             //System.setProperty("java.class.path", classpathStr.toString());
             securityManagerType = inputStream.readUTF();
-            //System.out.println("SECURITY MANAGER: " + securityManagerType);
         } catch (Exception e) {
             throw new RuntimeException("Could not initialise system classpath.", e);
         }
 
-        securityManagerType = "";
         if (securityManagerType.length() > 0) {
             System.setProperty("java.security.manager", securityManagerType);
             SecurityManager securityManager;

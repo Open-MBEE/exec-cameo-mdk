@@ -19,10 +19,17 @@ package org.gradle.internal.logging.slf4j;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.internal.logging.config.LoggingConfigurer;
 import org.gradle.internal.logging.events.OutputEventListener;
+//import org.slf4j.LoggerFactory;
 
 /**
  * A {@link LoggingConfigurer} implementation which configures custom slf4j binding to route logging events to a provided {@link
  * OutputEventListener}.
+ *
+ * Override prevents a ClassCastException caused by the OSGi library forcefully loading its own libraries first, which breaks
+ * Gradle's slf4j hack to redirect it by loading its own {@link org.slf4j.impl.StaticLoggerBinder}. The consequences of this patch
+ * are likely benign and disables slf4j log redirection.
+ *
+ * @author igomes
  */
 public class Slf4jLoggingConfigurer implements LoggingConfigurer {
     private final OutputEventListener outputEventListener;

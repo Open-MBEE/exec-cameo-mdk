@@ -33,6 +33,13 @@ import java.util.concurrent.Callable;
  * The main entry point for a worker process that is using the system ClassLoader strategy. Reads worker configuration and a serialized worker action from stdin,
  * sets up the worker ClassLoader, and then delegates to {org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker} to deserialize and execute the action.
  */
+
+/**
+ * Disables the Gradle dynamic classloading as its already done in {@link gov.nasa.jpl.mbee.mdk.test.framework.GradleMagicDrawLauncher}.
+ * Additionally uses reflection to change the system class loader to the current OSGi one, since Gradle library uses it to load the JUnit test and potentially other necessary components that will not be available in the bootstrap class loader.
+ *
+ * @author igomes
+ */
 public class GradleWorkerMain {
     public void run() throws Exception {
         DataInputStream instr = new DataInputStream(new EncodedStream.EncodedInput(System.in));
@@ -65,19 +72,15 @@ public class GradleWorkerMain {
 
             //DataInputStream inputStream = new DataInputStream(new EncodedStream.EncodedInput(System.in));
             int count = instr.readInt();
-            System.out.println("COUNT: " + count);
-
 
             //StringBuilder classpathStr = new StringBuilder();
             for (int i = 0; i < count; i++) {
                 String entry = instr.readUTF();
-                System.out.println("Worker adding " + entry);
                 File file = new File(entry);
                 addUrlMethod.invoke(systemClassLoader, file.toURI().toURL());
             }
             //System.setProperty("java.class.path", classpathStr.toString());
             //securityManagerType = inputStream.readUTF();
-            //System.out.println("SECURITY MANAGER: " + securityManagerType);
         } catch (Exception e) {
             throw new RuntimeException("Could not initialise system classpath.", e);
         }
@@ -96,7 +99,6 @@ public class GradleWorkerMain {
 
         //Class<? extends Callable> workerClass = ClassLoader.loadClass("org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker").asSubclass(Callable.class);
         Class<? extends Callable> workerClass = Class.forName("org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker", false, getClass().getClassLoader()).asSubclass(Callable.class);
-        System.out.println("WORKER CLASS: " + workerClass);
         Callable<Void> main = workerClass.getConstructor(DataInputStream.class).newInstance(instr);
         main.call();
     }
