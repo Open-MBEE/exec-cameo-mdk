@@ -14,6 +14,7 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.jms.*;
 import javax.naming.NameNotFoundException;
+import java.lang.IllegalStateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +78,11 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
         // log in to mms
         if (!TicketUtils.isTicketSet()) {
-            TicketUtils.loginToMMS();
+            try {
+                TicketUtils.loginToMMS();
+            } catch (IllegalStateException e) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.getMessage());
+            }
         }
         if (!TicketUtils.isTicketSet()) {
             Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
@@ -88,7 +93,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         JMSUtils.JMSInfo jmsInfo;
         try {
             jmsInfo = JMSUtils.getJMSInfo(project);
-        } catch (ServerException | IllegalArgumentException e) {
+        } catch (ServerException | IllegalArgumentException | IllegalStateException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Message: " + e.getMessage());
             return false;

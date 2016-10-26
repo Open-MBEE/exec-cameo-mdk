@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 public class DeltaSyncRunner implements RunnableWithProgress {
@@ -101,14 +100,20 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
 
-        String url = MMSUtils.getServerUrl(project);
+        String url;
+        try {
+            url = MMSUtils.getServerUrl(project);
+        } catch (IllegalStateException e) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+            return;
+        }
         if (url == null || url.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Url not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
         String site = MMSUtils.getSiteName(project);
         if (site == null || site.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Site not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
         try {
@@ -349,7 +354,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
                 try {
-                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
+                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesSitesElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -378,7 +383,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             body.put("source", "magicdraw");
             body.put("mmsVersion", MDKPlugin.VERSION);
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
-            URIBuilder uri = MMSUtils.getServiceWorkspacesElementsUri(project);
+            URIBuilder uri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
             try {
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, uri, body, true, elementsArrayNode.size(), "Sync Changes"));
             } catch (IOException e) {

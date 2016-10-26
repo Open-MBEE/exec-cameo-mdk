@@ -110,7 +110,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             return;
         }
         if (shouldCommitModel) {
-            requestUri = MMSUtils.getServiceUri(project);
+            requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
             if (requestUri == null) {
                 return;
             }

@@ -1,5 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -77,7 +80,7 @@ public class MMSUtils {
         if (id == null) {
             return null;
         }
-        URIBuilder requestUri = getServiceWorkspacesElementsUri(project);
+        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
         id = id.replace(".", "%2E");
         requestUri.setPath(requestUri.getPath() + "/" + id);
 
@@ -124,6 +127,7 @@ public class MMSUtils {
         }
 
         URIBuilder requestUri = getServiceWorkspacesElementsUri(project);
+//        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
         if (requestUri == null) {
             return null;
         }
@@ -141,18 +145,27 @@ public class MMSUtils {
         return response;
     }
 
-    // TODO Add both ?recurse and element list gets @donbot
-    public static ObjectNode getServerElementsRecursively(Project project, Element element, boolean recurse, int depth,
+    /**
+     *
+     * @param project
+     * @param elementId
+     * @param recurse
+     * @param depth
+     * @param progressStatus
+     * @return
+     * @throws ServerException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    public static ObjectNode getServerElementsRecursively(Project project, String elementId, boolean recurse, int depth,
                                                           ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
-        // configure request
-        String id = Converters.getElementToIdConverter().apply(element);
-        URIBuilder requestUri = getServiceWorkspacesElementsUri(project);
+        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
         if (requestUri == null) {
             return null;
         }
         requestUri = MMSUtils.getServiceWorkspacesUri(project);
-        requestUri.setPath(requestUri.getPath() + "/elements/" + id);
+        requestUri.setPath(requestUri.getPath() + "/elements/" + elementId);
         if (depth > 0) {
             requestUri.setParameter("depth", java.lang.Integer.toString(depth));
         }
@@ -170,6 +183,27 @@ public class MMSUtils {
             }
         }
         return response;
+    }
+
+    /**
+     *
+     * @param project
+     * @param element
+     * @param recurse
+     * @param depth
+     * @param progressStatus
+     * @return
+     * @throws ServerException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    // TODO Add both ?recurse and element list gets @donbot
+    public static ObjectNode getServerElementsRecursively(Project project, Element element, boolean recurse, int depth,
+                                                          ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        // configure request
+        String id = Converters.getElementToIdConverter().apply(element);
+        return getServerElementsRecursively(project, id, recurse, depth, progressStatus);
     }
 
     /**
@@ -410,54 +444,55 @@ public class MMSUtils {
      * @param response
      * @return
      */
-    public static boolean processRequestErrors(String response, int code) throws IOException {
+    public static boolean processRequestErrors(String response, int code) {
         // disabling of popup messages is handled by Utils, which will redirect them to the GUILog if disabled
-        if (code != 200) {
-            if (code >= 500) {
-                Utils.showPopupMessage("Server Error. See message window for details.");
-                if (response != null) {
-                    Utils.guilog(response);
+        String message = "";
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        try {
+            responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
+            JsonNode value;
+            if (responseJson != null) {
+                if ((value = responseJson.get("message")) != null && value.isTextual()) {
+                    Utils.guilog("[MESSAGE] " + message);
                 }
             }
-            else if (code == 403) {
-                Utils.showPopupMessage("You do not have permission to do this.");
+        } catch (IOException e) {
+            Utils.guilog("[ERROR] Unexpected error processing MMS response.");
+            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                Utils.guilog("Server response: " + code + " " + response);
             }
-            else if (code == 401) {
-                Utils.showPopupMessage("You are not authorized or don't have permission. You can login and try again.");
-                TicketUtils.clearUsernameAndPassword();
+            e.printStackTrace();
+            return true;
+        }
+
+        if (code >= 500) {
+            Utils.showPopupMessage("Server Error. See message window for details.");
+            Utils.guilog("Server response: " + response);
+            return true;
+        }
+        else if (code == 404) {
+            // TODO @donbot catch for not found response
+        }
+        else if (code == 403) {
+            Utils.showPopupMessage("You do not have permission to do this.");
+        }
+        else if (code == 401) {
+            Utils.showPopupMessage("You are not authorized or don't have permission. You can login and try again.");
+            TicketUtils.clearUsernameAndPassword();
+        }
+        else if (code != 200) {
+            if (!message.isEmpty()) {
+                Utils.guilog(message);
             }
             else {
                 try {
-                    ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
-                    JsonNode value;
-                    if (responseJson != null) {
-                        if ((value = responseJson.get("message")) != null && value.isTextual()) {
-                            Utils.guilog(value.asText());
-                        }
-                        else {
-                            Utils.guilog("Server response: " + code +
-                                    (MDKOptionsGroup.getMDKOptions().isLogJson() ?
-                                            " " + JacksonUtils.getObjectMapper().writeValueAsString(responseJson) : ""));
-                        }
-                    }
-                    else {
-                        Utils.guilog("Server response: " + code + " " + response);
-                    }
-                } catch (IOException e) {
-                    Utils.guilog("[ERROR] Unexpected error processing MMS response.");
-                    Utils.guilog("Server response: " + code + " " + response);
-                    e.printStackTrace();
-                }
-                if (code == 400) {
-                    return false;
+                    Utils.guilog("Server response: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ?
+                            " " + JacksonUtils.getObjectMapper().writeValueAsString(responseJson) : ""));
+                } catch (JsonProcessingException e) {
+                    Utils.guilog("Server response: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ?
+                            " " + response : ""));
                 }
             }
-            return true;
-        }
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
-        JsonNode value;
-        if ((responseJson != null) && ((value = responseJson.get("message")) != null) && value.isTextual()) {
-            Utils.guilog("Server message: 200 " + value.asText());
         }
         return false;
     }
@@ -548,10 +583,12 @@ public class MMSUtils {
 
     /**
      * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}/elements".
+     * This is supported in MMS, but is substantially slower than alternative ServiceWorkspacesSitesElements
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
+    @Deprecated
     public static URIBuilder getServiceWorkspacesElementsUri(Project project) {
         URIBuilder siteUri = getServiceWorkspacesUri(project);
         if (siteUri == null) {
@@ -567,7 +604,6 @@ public class MMSUtils {
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    @Deprecated
     public static URIBuilder getServiceWorkspacesSitesElementsUri(Project project) {
         URIBuilder elementsUri = getServiceWorkspacesSitesUri(project);
         if (elementsUri == null) {

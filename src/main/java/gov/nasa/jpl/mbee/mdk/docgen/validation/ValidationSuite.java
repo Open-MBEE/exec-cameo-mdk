@@ -85,6 +85,12 @@ public class ValidationSuite {
         return name;
     }
 
+    public void setName(String name) {
+        if (name != null && !name.isEmpty()) {
+            this.name = name;
+        }
+    }
+
     public boolean hasErrors() {
         for (ValidationRule rule : rules) {
             if (!rule.getViolations().isEmpty()) {

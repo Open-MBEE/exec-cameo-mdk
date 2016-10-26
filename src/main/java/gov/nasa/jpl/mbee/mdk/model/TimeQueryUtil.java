@@ -37,7 +37,7 @@ public class TimeQueryUtil {
         ArrayNode elements = result.putArray("elements");
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
         if (requestUri == null) {
             return null;
         }

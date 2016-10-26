@@ -56,7 +56,6 @@ import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.python.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -309,7 +308,7 @@ public class MDKHelper {
         objectNode.put("source", "magicdraw");
         objectNode.put("mmsVersion", MDKPlugin.VERSION);
 
-        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, MMSUtils.getServiceWorkspacesElementsUri(project));
+        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, MMSUtils.getServiceWorkspacesSitesElementsUri(project));
         return MMSUtils.sendMMSRequest(request);
     }
 

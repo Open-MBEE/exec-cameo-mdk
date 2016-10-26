@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
@@ -16,8 +17,8 @@ import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private int depth;
 
     // TODO Move me to common sync pre-conditions @donbot
-    private ValidationSuite validationSuite = new ValidationSuite("Sync Pre-Condition Validation");
+    private ValidationSuite validationSuite = new ValidationSuite("Manual Sync Validation");
     private ValidationRule projectExistenceValidationRule = new ValidationRule("Project Existence", "The project shall exist in the specified site.", ViolationSeverity.ERROR);
 
     {
@@ -60,7 +61,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setIndeterminate(true);
         if (!checkProject()) {
             if (validationSuite.hasErrors()) {
-                Utils.displayValidationWindow(validationSuite, validationSuite.getName());
+                validationSuite.setName("Sync Pre-Condition Validation");
+            }
+            else {
+                Application.getInstance().getGUILog().log("[ERROR] Project does not exist but no validation errors generated.");
             }
             return;
         }
@@ -117,12 +121,37 @@ public class ManualSyncRunner implements RunnableWithProgress {
                                                                           ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         ObjectNode response;
-        response = MMSUtils.getServerElementsRecursively(project, element, recurse, depth, progressStatus);
+        String id = Converters.getElementToIdConverter().apply(element);
+        response = MMSUtils.getServerElementsRecursively(project, id, recurse, depth, progressStatus);
         // process response
         JsonNode value;
         if (response != null && (value = response.get("elements")) != null && value.isArray()) {
-            return StreamSupport.stream(value.spliterator(), false)
+            Collection<ObjectNode> serverElements = StreamSupport.stream(value.spliterator(), false)
                     .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
+
+            // check if we're validating the model root
+            if (id.equals(Converters.getElementToIdConverter().apply(project.getPrimaryModel()))) {
+                String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
+                boolean found = false;
+                // check to see if the holding bin was returned
+                for (ObjectNode elem : serverElements) {
+                    value = null;
+                    if ((value = elem.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
+                            && value.asText().equals(holdingBinId)) {
+                        found = true;
+                        break;
+                    }
+                }
+                // if no holding bin in server collection && model was element && (depth > 0 || recurse)
+                if (!found && (depth > 0 || recurse)) {
+                    response = MMSUtils.getServerElementsRecursively(project, holdingBinId, recurse, depth, progressStatus);
+                    if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+                        serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
+                                .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
+                    }
+                }
+            }
+            return serverElements;
         }
         return new ArrayList<ObjectNode>();
     }
@@ -130,15 +159,14 @@ public class ManualSyncRunner implements RunnableWithProgress {
     // TODO Make common across all sync types @donbot
     public boolean checkProject() {
         // build request for site element
-        URIBuilder requestUri;
-        requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
         if (requestUri == null) {
             return false;
         }
         requestUri.setPath(requestUri.getPath() + "/" + project.getPrimaryProject().getProjectID());
 
         // do request for site element
-        ObjectNode response = null;
+        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
         } catch (ServerException e) {
@@ -165,7 +193,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
 
 
-        //TODO re-imagineer later when we've confirmed if these errors still happen
+        //TODO @DONBOT re-imagineer later when we've confirmed if these errors still happen
         /*
         String respons = null;
         try {
