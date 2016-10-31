@@ -421,6 +421,7 @@ public class MMSUtils {
         } catch (IOException | URISyntaxException | ServerException e) {
             //TODO @donbot
             e.printStackTrace();
+            return false;
         }
 
         // parse response
@@ -430,13 +431,12 @@ public class MMSUtils {
             for (JsonNode node : arrayNode) {
                 if ((value = node.get(MDKConstants.SYSML_ID_KEY)) != null
                         && value.isTextual() && value.asText().equals(site)
-                        && (value = node.get("editable")) != null && value.isBoolean()) {
+                        && (value = node.get("_editable")) != null && value.isBoolean()) {
                     return value.asBoolean();
                 }
             }
         }
-        // TODO flip back to false when /sites has the editable flag again @donbot
-        return true;
+        return false;
     }
 
     /**

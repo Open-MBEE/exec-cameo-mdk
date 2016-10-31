@@ -38,6 +38,7 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
@@ -2266,7 +2267,7 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
-        if (popupsDisabled) {
+        if (popupsDisabled || MainFrame.isSilentMode()) {
             Utils.guilog("[POPUP] " + message);
         }
         else {
@@ -3856,7 +3857,7 @@ public class Utils {
     }
 
     public static boolean isPopupsDisabled() {
-        return Utils.popupsDisabled;
+        return Utils.popupsDisabled || MainFrame.isSilentMode();
     }
 
     /**
