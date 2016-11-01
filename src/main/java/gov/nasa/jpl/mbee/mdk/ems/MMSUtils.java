@@ -446,14 +446,12 @@ public class MMSUtils {
      */
     public static boolean processRequestErrors(String response, int code) {
         // disabling of popup messages is handled by Utils, which will redirect them to the GUILog if disabled
-        String message = "";
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
         try {
-            responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
+            ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
             JsonNode value;
             if (responseJson != null) {
                 if ((value = responseJson.get("message")) != null && value.isTextual()) {
-                    Utils.guilog("[MESSAGE] " + message);
+                    Utils.guilog("[SERVER MESSAGE] " + value.asText());
                 }
             }
         } catch (IOException e) {
@@ -481,17 +479,9 @@ public class MMSUtils {
             TicketUtils.clearUsernameAndPassword();
         }
         else if (code != 200) {
-            if (!message.isEmpty()) {
-                Utils.guilog(message);
-            }
-            else {
-                try {
-                    Utils.guilog("Server response: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ?
-                            " " + JacksonUtils.getObjectMapper().writeValueAsString(responseJson) : ""));
-                } catch (JsonProcessingException e) {
-                    Utils.guilog("Server response: " + code + (MDKOptionsGroup.getMDKOptions().isLogJson() ?
-                            " " + response : ""));
-                }
+            Utils.guilog("[ERROR] Unexpected server response. (Code: " + code + ")");
+            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                Utils.guilog(response);
             }
         }
         return false;

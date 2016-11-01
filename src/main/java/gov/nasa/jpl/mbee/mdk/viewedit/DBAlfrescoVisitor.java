@@ -213,6 +213,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), (image.getTitle() == null ? "image" : image.getTitle()), parentSec, null);
         newpe.peek().add(ipe);
+        Application.getInstance().getProject().getElementsFactory().createInstanceValueInstance();
     }
 
     @SuppressWarnings("unchecked")

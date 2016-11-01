@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -344,7 +345,22 @@ public class PresentationElementUtils {
                 name = "<>";
             }
         }
-        if (newspec != null) {
+        is.setName(name);
+        is.getClassifier().clear();
+        is.getClassifier().add(classifier);
+        if (pe.getType() == PresentationElementEnum.SECTION) { //assume all children pe have instance, caller should walk bottom up
+            Expression expression = is.getSpecification() instanceof Expression ? (Expression) is.getSpecification() : ef.createExpressionInstance();
+            expression.setOwner(is);
+            List<InstanceValue> ivs = new ArrayList<>(pe.getChildren().size());
+            for (int i = 0; i < pe.getChildren().size(); i++) {
+                InstanceValue iv = i < expression.getOperand().size() && expression.getOperand().get(i) instanceof InstanceValue ? (InstanceValue) expression.getOperand().get(i) : ef.createInstanceValueInstance();
+                iv.setInstance(pe.getChildren().get(i).getInstance());
+                ivs.add(iv);
+            }
+            expression.getOperand().clear();
+            expression.getOperand().addAll(ivs);
+        }
+        else if (newspec != null) {
             ValueSpecification string = is.getSpecification();
             if (!(string instanceof LiteralString)) {
                 string = ef.createLiteralStringInstance();
@@ -352,24 +368,6 @@ public class PresentationElementUtils {
             string.setOwner(is);
             ((LiteralString) string).setValue(newspec.toJSONString());
             is.setSpecification(string);
-        }
-        is.setName(name);
-        is.getClassifier().clear();
-        is.getClassifier().add(classifier);
-        if (pe.getType() == PresentationElementEnum.SECTION) { //assume all children pe have instance, caller should walk bottom up
-            ValueSpecification expression = is.getSpecification();
-            if (!(expression instanceof Expression)) {
-                expression = ef.createExpressionInstance();
-            }
-            expression.setOwner(is);
-            List<InstanceValue> ivs = new ArrayList<InstanceValue>();
-            for (PresentationElementInstance spe : pe.getChildren()) {
-                InstanceValue iv = ef.createInstanceValueInstance();
-                iv.setInstance(spe.getInstance());
-                ivs.add(iv);
-            }
-            ((Expression) expression).getOperand().clear();
-            ((Expression) expression).getOperand().addAll(ivs);
         }
         is.setOwner(owner);
         pe.setInstance(is);
@@ -410,14 +408,23 @@ public class PresentationElementUtils {
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
         expression.setID(view.getID() + "_vc_expression");
         expression.setOwner(c);
-        List<InstanceValue> ivs = new ArrayList<>(instanceSpecifications.size());
-        for (InstanceSpecification instanceSpecification : instanceSpecifications) {
-            InstanceValue iv = ef.createInstanceValueInstance();
-            iv.setInstance(instanceSpecification);
-            ivs.add(iv);
+        List<InstanceValue> instanceValues = new ArrayList<>(instanceSpecifications.size());
+        Iterator<ValueSpecification> operandIterator = expression.getOperand().iterator();
+        while (operandIterator.hasNext()) {
+            ValueSpecification valueSpecification = operandIterator.next();
+            if (!(valueSpecification instanceof InstanceValue)) {
+                operandIterator.remove();
+                continue;
+            }
+            instanceValues.add((InstanceValue) valueSpecification);
+        }
+        for (int i = 0; i < instanceSpecifications.size(); i++) {
+            InstanceValue instanceValue = i < instanceValues.size() ? instanceValues.get(i) : ef.createInstanceValueInstance();
+            instanceValue.setInstance(instanceSpecifications.get(i));
+            instanceValues.add(instanceValue);
         }
         expression.getOperand().clear();
-        expression.getOperand().addAll(ivs);
+        expression.getOperand().addAll(instanceValues);
     }
 
     public void updateOrCreateConstraintFromPresentationElements(Element view, List<PresentationElementInstance> presentationElementInstances) {
@@ -426,55 +433,5 @@ public class PresentationElementUtils {
             instanceSpecifications.add(presentationElementInstance.getInstance());
         }
         updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
-    }
-    
-    /*public boolean needLockForEditConstraint(Element view, List<PresentationElementInstance> pes) {
-        Constraint c = Utils.getViewConstraint(view);
-        if (c == null)
-            return false;
-        ValueSpecification vs = c.getSpecification();
-        if (vs == null || !(vs instanceof Expression))
-            return true;
-        Expression ex = (Expression)vs;
-        List<InstanceSpecification> list = new ArrayList<InstanceSpecification>();
-        for (PresentationElementInstance cpe: pes) {
-            if (cpe.getInstance() == null)
-                return true;
-            list.add(cpe.getInstance());
-        }
-        List<ValueSpecification> model = ex.getOperand();
-        if (model.size() != list.size())
-             return true;
-        for (int i = 0; i < model.size(); i++) {
-            ValueSpecification modelvs = model.get(i);
-            if (!(modelvs instanceof InstanceValue) || ((InstanceValue)modelvs).getInstance() != list.get(i)) {
-                return true;
-            }
-        }
-        return false;
-    }*/
-
-    public Package getOrCreateUnusedInstancePackage() {
-        Package rootPackage = Utils.getRootElement();
-        String viewInstID = Utils.getProject().getPrimaryProject().getProjectID().replace("PROJECT", "View_Instances");
-        String unusedId = Utils.getProject().getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances");
-        Package viewInst = (Package) Application.getInstance().getProject().getElementByID(viewInstID);
-        Package unusedViewInst = (Package) Application.getInstance().getProject().getElementByID(unusedId);
-        if (unusedViewInst != null) {
-            return unusedViewInst;
-        }
-        Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        if (viewInst == null) {
-            viewInst = ef.createPackageInstance();
-            viewInst.setID(viewInstID);
-            viewInst.setName("View Instances");
-            viewInst.setOwner(rootPackage);
-        }
-        unusedViewInst = ef.createPackageInstance();
-        unusedViewInst.setID(unusedId);
-        unusedViewInst.setName("Unused View Instances");
-        unusedViewInst.setOwner(viewInst);
-        return unusedViewInst;
-
     }
 }

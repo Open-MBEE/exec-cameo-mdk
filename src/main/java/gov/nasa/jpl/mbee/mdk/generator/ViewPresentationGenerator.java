@@ -46,6 +46,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author dlam
@@ -188,7 +189,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();                // Create the session you intend to cancel to revert all temporary elements.
+        SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
+        if (localSyncTransactionCommitListener != null) {
+            localSyncTransactionCommitListener.setDisabled(true);
+        }
 
         // Query existing server-side JSONs for views
         if (!viewMap.isEmpty()) {
@@ -244,12 +249,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         viewMapping.setInstanceIDs(viewInstanceIDs);
                         viewMap.put(sysmlId, viewMapping);
                     }
-                }
-
-                // Create the session you intend to cancel to revert all temporary elements.
-                SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
-                if (localSyncTransactionCommitListener != null) {
-                    localSyncTransactionCommitListener.setDisabled(true);
                 }
 
                 // Now that all first-level instances are resolved, query for them and import client-side (in reverse order) as model elements
@@ -412,6 +411,31 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         return;
                     }
 
+                    ObjectNode viewObjectNode = viewMapping.getObjectNode();
+                    if (viewObjectNode == null) {
+                        continue;
+                    }
+                    JsonNode viewContentsJsonNode = viewObjectNode.get(MDKConstants.CONTENTS_KEY);
+                    if (viewContentsJsonNode == null || !viewContentsJsonNode.isObject()) {
+                        continue;
+                    }
+                    try {
+                        Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply((ObjectNode) viewContentsJsonNode, project, false);
+                        if (change.getChanged() != null && change.getChanged() instanceof Expression) {
+                            instanceUtils.getOrCreateViewConstraint(view).setSpecification((Expression) change.getChanged());
+                        }
+                    } catch (ImportException | ReadOnlyElementException e) {
+                        Application.getInstance().getGUILog().log("[WARNING] Could not create view contents for " + Converters.getElementToIdConverter().apply(view) + ". The result could be that the view contents are created from scratch.");
+                        continue;
+                    }
+                }
+
+                /*for (ViewMapping viewMapping : viewMap.values()) {
+                    Element view = viewMapping.getElement();
+                    if (handleCancel(progressStatus)) {
+                        return;
+                    }
+
                     List<String> instanceSpecificationIDs;
                     if (viewMap.containsKey(view.getID()) && (instanceSpecificationIDs = viewMap.get(view.getID()).getInstanceIDs()) != null) {
                         final List<InstanceSpecification> instanceSpecifications = new ArrayList<>(instanceSpecificationIDs.size());
@@ -423,11 +447,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         }
                         instanceUtils.updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
                     }
-                }
+                }*/
 
                 // Update relations for all InstanceSpecifications and Slots
                 // Instances need to be done in reverse order to load the lowest level instances first (sections)
-                ListIterator<Pair<ObjectNode, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
+                /*ListIterator<Pair<ObjectNode, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
                 while (instanceSpecificationMapIterator.hasPrevious()) {
                     if (handleCancel(progressStatus)) {
                         return;
@@ -441,8 +465,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         /*failure = true;
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
-                        return;*/
-                        Application.getInstance().getGUILog().log("Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                        return;* /
+                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
                 }
                 for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
@@ -457,10 +481,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         /*failure = true;
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
-                        return;*/
-                        Application.getInstance().getGUILog().log("Failed to update relations for slot " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                        return;* /
+                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for slot " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
                     }
-                }
+                }*/
             }
         }
 
@@ -498,7 +522,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         try {
-            Package unused = instanceUtils.getOrCreateUnusedInstancePackage();
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
                     continue;
