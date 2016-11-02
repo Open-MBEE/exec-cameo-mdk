@@ -53,6 +53,10 @@ public class EMSLogoutAction extends MMSAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        logoutAction();
+    }
+
+    public void logoutAction() {
         TicketUtils.clearUsernameAndPassword();
         for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
             MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectClosed(p);
