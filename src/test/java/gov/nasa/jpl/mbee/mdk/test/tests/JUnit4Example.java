@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.test.tests;
 
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.plugins.PluginUtils;
+import gov.nasa.jpl.mbee.mdk.test.framework.ApplicationStartClassRunner;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.test.tests.integration;
 
-import gov.nasa.jpl.mbee.mdk.test.tests.MDKTestCase;
+import gov.nasa.jpl.mbee.mdk.test.framework.MDKTestCase;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 

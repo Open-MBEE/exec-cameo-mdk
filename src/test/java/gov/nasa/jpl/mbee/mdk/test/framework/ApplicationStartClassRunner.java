@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.test.tests;
+package gov.nasa.jpl.mbee.mdk.test.framework;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.tests.MagicDrawTestRunner;
@@ -22,13 +22,8 @@ import java.util.stream.Collectors;
  */
 
 public class ApplicationStartClassRunner extends BlockJUnit4ClassRunner {
-    //private static final String FRAMEWORK_LAUNCHER_CLASS = System.getProperty("com.nomagic.osgi.launcher", "com.nomagic.osgi.launcher.ProductionFrameworkLauncher");
-
-    private final Class<?> testClass;
-
     public ApplicationStartClassRunner(Class<?> clazz) throws InitializationError {
         super(clazz);
-        testClass = clazz;
 
         try {
             Application.getInstance().start(true, true, false, new String[]{"TESTER"}, null);

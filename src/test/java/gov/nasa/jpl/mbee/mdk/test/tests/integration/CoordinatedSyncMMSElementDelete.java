@@ -5,7 +5,7 @@ import org.junit.runner.Result;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-import gov.nasa.jpl.mbee.mdk.test.tests.MDKTestCase;
+import gov.nasa.jpl.mbee.mdk.test.framework.MDKTestCase;
 
 
 /**

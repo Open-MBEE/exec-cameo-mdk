@@ -3,7 +3,7 @@ package gov.nasa.jpl.mbee.mdk.test.tests.integration;
 import com.nomagic.magicdraw.tests.MagicDrawTestRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
-import gov.nasa.jpl.mbee.mdk.test.tests.MDKTestCase;
+import gov.nasa.jpl.mbee.mdk.test.framework.MDKTestCase;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

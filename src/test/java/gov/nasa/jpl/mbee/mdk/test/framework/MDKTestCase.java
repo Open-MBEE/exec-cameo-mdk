@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.test.tests;
+package gov.nasa.jpl.mbee.mdk.test.framework;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +38,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
  * @author Tommy Hang, Aaron Black, Ryan Oillataguerre
  *
  */
+@Deprecated
 public abstract class MDKTestCase extends MagicDrawTestCase {
     protected static String testRoot = "";
     protected static String mdRoot = "";
