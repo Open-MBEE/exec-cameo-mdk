@@ -653,6 +653,24 @@ public class MagicDrawHelper {
         return ProjectDescriptorsFactory.createRemoteProjectDescriptor(remoteID, projectName, version);
     }
 
+    @Deprecated
+    public static void renameElement(NamedElement targetElement, String targetString) {
+    }
+
+    @Deprecated
+    public static void twcCommitReleaseLocks(String teamworkUsername, String targetString) {
+    }
+
+    @Deprecated
+    public static Element copyAndPaste(Element sourceElement, Element targetElement) {
+        return null;
+    }
+
+    @Deprecated
+    public static void createDiagrams(int i, Package testElementHolder) {
+    }
+
+    @Deprecated
     private static class SimpleErrorHandler implements ErrorHandler<Exception> {
         @Override
         public void error(Exception ex) throws Exception {

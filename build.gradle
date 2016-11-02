@@ -92,7 +92,8 @@ dependencies {
     compile fileTree(dir: 'lib', include: ['*.jar'])
     
 	// Test Dependencies
-    testCompile 'junit:junit:4.10'
+    //testCompile 'junit:junit:4.11'
+    //compile 'junit:junit:4.11'
 }
 
 task extractDependencies {
@@ -216,6 +217,30 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
+task testsJar(type: Jar, dependsOn: testClasses) {
+    classifier = 'tests'
+    from sourceSets.test.output
+
+    exclude 'gov/nasa/jpl/mbee/mdk/test/framework/**'
+    exclude '**/org/gradle/**'
+    include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
+}
+
+task testsHackJar(type: Jar, dependsOn: testClasses) {
+    classifier = 'tests-hack'
+    from sourceSets.test.output
+
+    include 'gov/nasa/jpl/mbee/mdk/test/framework/**'
+    include '**/org/gradle/**'
+    exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
+
+    manifest {
+        attributes(
+            'Main-Class': 'gov.nasa.jpl.mbee.mdk.test.framework.GradleMagicDrawLauncher'
+        )
+    }
+}
+
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
@@ -234,6 +259,9 @@ publishing {
             from components.java
             artifact sourcesJar {
                 classifier "sources"
+            }
+            artifact testsJar {
+                classifier "tests"
             }
             artifact javadocJar {
                 classifier "javadoc"
@@ -290,7 +318,7 @@ task runJava(type: JavaExec) {
     errorOutput = System.err
 
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx4000M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-Xss1024K', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
+    jvmArgs = ['-Xmx4000M', '-Xss1024M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
@@ -310,3 +338,33 @@ task runScript(type: Exec) {
 }
 
 runScript.dependsOn installDist
+
+test {
+    testLogging.showStandardStreams = true
+    forkEvery 1
+
+    workingDir 'build/install'
+
+    /**
+     * The short version of the rationale is that with 18.4, MagicDraw introduced the OSGi framework as part of its implementation.
+     * Gradle and JUnit work very well together out of the box (generated reports in XML and HTML, tight IDE/Jenkins integration, etc.), and Gradle and OSGi was made to work with the runJava task.
+     * However, Gradle had to implement a number of hacks to overcome OS limitations and achieve features that can be applied to a broad range of software.
+     * Those hacks work well with most applications but not OSGi (commentary: OSGi doesn't play well with anyone), so we implemented a number of hacks ourselves.
+     * They involve classloading order, classpath redirection using the jar argument, reflection, and dynamic classloading.
+     * Ultimately, this enabled the use of the well-supported and feature-rich Gradle test task, but at the cost of an implementation that could break in the unlikely, albeit possible, case of either Gradle or MagicDraw significantly changing their implementations of the test and OSGi frameworks, respectively.
+     *
+     * Clears the default classpath since all the necessary libraries are being passed as arguments to GradleMagicDrawLauncher to be added to the OSGi classpath.
+     * Then it utilizes the -jar JVM argument to override the default Gradle command and pass the original command as arguments to the main class of the jar, GradleMagicDrawLauncher,
+     * including the classpath arguments (one of our own and one of Gradle's). It additionally parses and sets the system properties that are passed.
+     *
+     * Example command: .../java -Dcom.nomagic.osgi.config.dir=configuration -Desi.system.config=data/application.conf -Djava.security.manager=worker.org.gradle.process.internal.worker.child.BootstrapSecurityManager -Dlogback.configurationFile=data/logback.xml -Dmd.class.path=$java.class.path -jar /Users/igomes/mdk/build/libs/mdk-*-tests-hack.jar -cp ... -Dfile.encoding=UTF-8 -Duser.country=US -Duser.language=en -Duser.variant -ea -cp .../.gradle/caches/.../workerMain/gradle-worker.jar worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 1'
+     *
+     * @author igomes
+     */
+    classpath = files()
+    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml']
+}
+
+test.dependsOn testsJar
+test.dependsOn testsHackJar
+test.dependsOn installDist
