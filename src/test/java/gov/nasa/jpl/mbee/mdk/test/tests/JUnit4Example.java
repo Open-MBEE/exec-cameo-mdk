@@ -8,9 +8,9 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 
-@RunWith(MyMagicDrawTestRunner.class)
-public class MD_Tests_JUnit4 {
-    public MD_Tests_JUnit4() {
+@RunWith(ApplicationStartClassRunner.class)
+public class JUnit4Example {
+    public JUnit4Example() {
         System.out.println("INSTANTIATED MD_TESTS_JUNIT4");
     }
 

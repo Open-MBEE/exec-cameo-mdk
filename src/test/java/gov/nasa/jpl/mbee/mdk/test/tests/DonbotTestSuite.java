@@ -8,7 +8,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        MD_Tests_JUnit4.class
+        JUnit4Example.class
 })
 public class DonbotTestSuite {
 }
