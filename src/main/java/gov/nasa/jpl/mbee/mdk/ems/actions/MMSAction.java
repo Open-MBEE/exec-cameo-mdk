@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 
 import javax.swing.*;
 
@@ -14,7 +14,7 @@ public class MMSAction extends MDAction {
 
     @Override
     public void updateState() {
-        if (ViewEditUtils.isPasswordSet()) {
+        if (TicketUtils.isTicketSet()) {
             setEnabled(true);
         }
         else {

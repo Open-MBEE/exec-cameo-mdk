@@ -7,10 +7,12 @@ import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.teamwork.common.users.SessionInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
+import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -235,7 +237,7 @@ public class AutomatedViewGeneration extends CommandLine {
      * @throws Exception User does not have write permissions to site, possibly due to site
      */
 
-    private void checkSiteEditPermission() throws FileNotFoundException, IllegalAccessException, InterruptedException, UnsupportedEncodingException {
+    private void checkSiteEditPermission() throws IOException, IllegalAccessException, InterruptedException, ServerException, URISyntaxException {
         if (!MDKHelper.loginToMMS(teamworkUsername, teamworkPassword)) {
             String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
             logMessage(message);

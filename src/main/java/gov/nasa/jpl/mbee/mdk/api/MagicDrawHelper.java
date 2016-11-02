@@ -51,7 +51,6 @@ import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import com.nomagic.utils.ErrorHandler;
-import gov.nasa.jpl.mbee.mdk.ems.ImportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
@@ -303,7 +302,7 @@ public class MagicDrawHelper {
      * @param documentation The new comments for the target element
      */
     public static void setElementDocumentation(Element target, String documentation) {
-        ImportUtility.setDocumentation(target, documentation);
+        ModelHelper.setComment(target, documentation);
     }
 
     /**
@@ -313,7 +312,7 @@ public class MagicDrawHelper {
      * @param newName The new name for the element
      */
     public static void setElementName(NamedElement target, String newName) {
-        ImportUtility.setName(target, newName);
+        target.setName(newName);
     }
 
     /*****************************************************************************************

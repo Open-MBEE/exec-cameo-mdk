@@ -18,7 +18,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateClientElementAction;
@@ -35,11 +34,12 @@ import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 public class DeltaSyncRunner implements RunnableWithProgress {
@@ -100,18 +100,24 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
 
-        String url = ExportUtility.getUrl(project);
-        if (url == null || url.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Url not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+        String url;
+        try {
+            url = MMSUtils.getServerUrl(project);
+        } catch (IllegalStateException e) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
-        String site = ExportUtility.getSite();
+        if (url == null || url.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+            return;
+        }
+        String site = MMSUtils.getSiteName(project);
         if (site == null || site.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Site not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
         try {
-            if (!ExportUtility.hasSiteEditPermission(url, site)) {
+            if (!MMSUtils.isSiteEditable(project, site)) {
                 Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
@@ -119,6 +125,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while verifying site permissions. Skipping sync. All changes will be re-attempted in the next sync. Error: " + e.getMessage());
             return;
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         // LOCK SYNC FOLDER
@@ -194,21 +204,26 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             progressStatus.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
             ObjectNode response = null;
             try {
-                response = MMSUtils.getElementsById(elementIdsToGet, progressStatus);
-            } catch (ServerException | IOException e) {
-                if (!progressStatus.isCancel()) {
+                response = MMSUtils.getElementsById(elementIdsToGet, project, progressStatus);
+            } catch (ServerException | IOException | URISyntaxException e) {
+                if (e instanceof ServerException && ((ServerException) e).getCode() == 404) {
+                    (response = JacksonUtils.getObjectMapper().createObjectNode()).putArray("elements");
+                }
+                else if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
+                    e.printStackTrace();
+                    return;
                 }
             }
             if (progressStatus.isCancel()) {
                 Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
                 return;
             }
-            if (response == null) {
+            JsonNode elementsArrayNode;
+            if (response == null || (elementsArrayNode = response.get("elements")) == null || !elementsArrayNode.isArray()) {
                 Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
                 return;
             }
-            ArrayNode elementsArrayNode = (ArrayNode) response.get("elements");
             for (JsonNode jsonNode : elementsArrayNode) {
                 if (!jsonNode.isObject()) {
                     continue;
@@ -223,12 +238,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         progressStatus.setDescription("Detecting conflicts");
         Map<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedChanges = new LinkedHashMap<>(),
                 unconflictedChanges = new LinkedHashMap<>();
-        localChangelog.findConflicts(jmsChangelog, new BiPredicate<Changelog.Change<Element>, Changelog.Change<Void>>() {
-            @Override
-            public boolean test(Changelog.Change<Element> change, Changelog.Change<Void> change2) {
-                return change != null && change2 != null;
-            }
-        }, conflictedChanges, unconflictedChanges);
+        localChangelog.findConflicts(jmsChangelog, (change, change2) -> change != null && change2 != null, conflictedChanges, unconflictedChanges);
 
         // MAP CHANGES TO ACTIONABLE GROUPS
 
@@ -344,9 +354,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
                 try {
-                    OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), JacksonUtils.getObjectMapper().writeValueAsString(body), "POST", true, elementsArrayNode.size(), "Sync Changes"));
-                } catch (JsonProcessingException e) {
+                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesSitesElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
+                } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
                     e.printStackTrace();
                 }
                 shouldLogNoLocalChanges = false;
@@ -370,10 +383,14 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             body.put("source", "magicdraw");
             body.put("mmsVersion", MDKPlugin.VERSION);
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
+            URIBuilder uri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", JacksonUtils.getObjectMapper().writeValueAsString(body), "DELETEALL", true, elementsArrayNode.size(), "Sync Deletes"));
-            } catch (JsonProcessingException e) {
+                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, uri, body, true, elementsArrayNode.size(), "Sync Changes"));
+            } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                e.printStackTrace();
+            } catch (URISyntaxException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
                 e.printStackTrace();
             }
             shouldLogNoLocalChanges = false;

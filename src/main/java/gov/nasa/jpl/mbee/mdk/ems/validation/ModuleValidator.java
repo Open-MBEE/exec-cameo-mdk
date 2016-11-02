@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.validation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IPrimaryProject;
 import com.nomagic.ci.persistence.mounting.IMountPoint;
@@ -8,18 +10,22 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.CreateModuleSite;
-import gov.nasa.jpl.mbee.mdk.ems.actions.ExportLocalModule;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.actions.CreateModuleSite;
+import gov.nasa.jpl.mbee.mdk.ems.actions.ExportLocalModule;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.emf.ecore.EObject;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 public class ModuleValidator {
 
@@ -36,15 +42,40 @@ public class ModuleValidator {
     }
 
     public void validate(ProgressStatus ps) {
-        Project proj = Application.getInstance().getProject();
-        IPrimaryProject prj = proj.getPrimaryProject();
-        Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(prj);
-        String baseUrl = ExportUtility.getUrl(proj);
-        String projectSite = ExportUtility.getSite();
-        ExportUtility.updateMasterSites();
-        Set<IMountPoint> mounts = ProjectUtilities.getAllMountPoints(prj);
-        if (projectSite != null && !ExportUtility.siteExists(projectSite, false)) {
-            projectSiteExist.addViolation(new ValidationRuleViolation(null, "[PSITE] The site for this project doesn't exist."));
+        Project project = Application.getInstance().getProject();
+        IPrimaryProject primaryProject = project.getPrimaryProject();
+        Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(primaryProject);
+        String baseUrl = MMSUtils.getServerUrl(project);
+        String projectSite = MMSUtils.getSiteName(project);
+
+        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesSitesUri(project);
+        if (uriBuilder == null) {
+            return;
+        }
+        JsonNode responseJsonNode;
+        try {
+            responseJsonNode = MMSUtils.sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, uriBuilder), ps);
+        } catch (IOException | ServerException | URISyntaxException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation.");
+            return;
+        }
+
+        JsonNode sitesJsonNode;
+        if (responseJsonNode == null || (sitesJsonNode = responseJsonNode.get("sites")) == null || !sitesJsonNode.isArray()) {
+            Application.getInstance().getGUILog().log("[ERROR] Malformed sites query response. Aborting module validation.");
+            return;
+        }
+
+        Set<IMountPoint> mounts = ProjectUtilities.getAllMountPoints(primaryProject);
+        if (projectSite == null) {
+            projectSiteExist.addViolation(new ValidationRuleViolation(null, "[PROJECT] No site defined for this project."));
+        }
+        else if (StreamSupport.stream(sitesJsonNode.spliterator(), false).anyMatch(jsonNode -> {
+            JsonNode nameJsonNode;
+            return jsonNode.isObject() && (nameJsonNode = jsonNode.get("name")) != null && nameJsonNode.isTextual() && nameJsonNode.asText().equals(projectSite);
+        })) {
+            projectSiteExist.addViolation(new ValidationRuleViolation(null, "[PROJECT] The site (" + projectSite + ") for this project does not exist."));
         }
         for (IAttachedProject module : modules) {
             if (ps.isCancel()) {
@@ -53,17 +84,26 @@ public class ModuleValidator {
             if (ProjectUtilities.isFromTeamworkServer(module)) {
                 continue;
             }
-            String siteHuman = ExportUtility.getHumanSiteForProject(module);
-
-            boolean siteExists = ExportUtility.siteExists(siteHuman, true);
-            if (siteExists) {
-                String response = null;
-                try {
-                    response = ExportUtility.get(ExportUtility.getUrlForProject(module), false);
-                } catch (ServerException ex) {
-
+            String moduleSite = MMSUtils.getDefaultSiteName(module);
+            if (StreamSupport.stream(sitesJsonNode.spliterator(), false).anyMatch(jsonNode -> {
+                JsonNode nameJsonNode;
+                return jsonNode.isObject() && (nameJsonNode = jsonNode.get("name")) != null && nameJsonNode.isTextual() && nameJsonNode.asText().equals(moduleSite);
+            })) {
+                URIBuilder projectUriBuilder = MMSUtils.getServiceWorkspacesSitesUri(project);
+                if (projectUriBuilder == null) {
+                    continue;
                 }
-                if (response == null) {
+                projectUriBuilder.setPath(projectUriBuilder.getPath() + "/projects/" + module.getProjectID());
+                ObjectNode responseObjectNode;
+                try {
+                    responseObjectNode = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, projectUriBuilder));
+                } catch (IOException | ServerException | URISyntaxException e) {
+                    e.printStackTrace();
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation.");
+                    return;
+                }
+                JsonNode elementsJsonNode;
+                if (responseObjectNode == null || (elementsJsonNode = responseObjectNode.get("elements")) == null || !elementsJsonNode.isArray() || elementsJsonNode.size() == 0) {
                     Set<Element> packages = new HashSet<>();
                     for (IMountPoint mp : mounts) {
                         EObject mount = mp.getMountedPoint();
@@ -71,17 +111,17 @@ public class ModuleValidator {
                             packages.add((Element) mount);
                         }
                     }
-                    ValidationRuleViolation v = new ValidationRuleViolation(null, "[LOCAL] The local module " + module.getName() + " isn't uploaded yet.");
+                    ValidationRuleViolation v = new ValidationRuleViolation(null, "[MOUNT] The local mount " + module.getName() + " has not been uploaded yet.");
                     unexportedModule.addViolation(v);
-                    String site = ExportUtility.getSiteForProject(module);
-                    v.addAction(new ExportLocalModule(module, packages, site));
+                    String site = MMSUtils.getDefaultSiteName(module);
+                    v.addAction(new ExportLocalModule(module, packages, site, project));
                 }
             }
             else {
-                ValidationRuleViolation v = new ValidationRuleViolation(null, "[SITE] The site for local module " + module.getName() + " doesn't exist. (" + siteHuman + ")");
+                ValidationRuleViolation v = new ValidationRuleViolation(null, "[MOUNT] The site - " + moduleSite + " - for local mount " + module.getName() + " does not exist.");
                 siteExist.addViolation(v);
                 String[] urls = baseUrl.split("/alfresco");
-                v.addAction(new CreateModuleSite(siteHuman, urls[0]));
+                v.addAction(new CreateModuleSite(moduleSite, urls[0]));
             }
         }
     }

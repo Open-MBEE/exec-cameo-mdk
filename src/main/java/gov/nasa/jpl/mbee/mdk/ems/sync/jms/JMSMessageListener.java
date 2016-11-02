@@ -9,15 +9,14 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
 import javax.jms.*;
 import java.io.IOException;
@@ -70,7 +69,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            System.out.println("JMS TextMessage for " + ExportUtility.getProjectId(project) + " -" + System.lineSeparator() + text);
+            System.out.println("JMS TextMessage for " + project.getPrimaryProject().getProjectID() + " -" + System.lineSeparator() + text);
         }
         JsonNode messageJsonNode;
         try {
@@ -86,7 +85,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         JsonNode workspaceJsonNode = messageJsonNode.get("workspace2");
         JsonNode syncedJsonNode;
         if (workspaceJsonNode != null && workspaceJsonNode.isObject()) {
-            JsonNode sourceJsonNode = workspaceJsonNode.get("source");
+            JsonNode sourceJsonNode = messageJsonNode.get("source");
             if (sourceJsonNode != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().equalsIgnoreCase("magicdraw")) {
                 return;
             }
@@ -122,7 +121,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
 
             JsonNode senderJsonNode = messageJsonNode.get("sender");
-            if (senderJsonNode != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(ViewEditUtils.getUsername())) {
+            if (senderJsonNode != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername())) {
                 return;
             }
 

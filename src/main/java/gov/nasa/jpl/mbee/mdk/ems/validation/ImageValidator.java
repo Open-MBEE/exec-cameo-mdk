@@ -30,18 +30,21 @@ package gov.nasa.jpl.mbee.mdk.ems.validation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.ExportImage;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.http.client.utils.URIBuilder;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,14 +65,18 @@ public class ImageValidator {
         suite.addValidationRule(rule);
     }
 
-    public void validate() {
-        String url = ExportUtility.getUrlWithWorkspace();
-        if (url == null) {
+    public void validate(Project project) {
+        URIBuilder requestUri;
+        String basePath = "";
+        requestUri = MMSUtils.getServiceUri(project);
+        if (requestUri == null) {
             return;
         }
+        basePath = requestUri.getPath() + "/artifacts/";
         for (String key : images.keySet()) {
-            Element e = ExportUtility.getElementFromID(key);
-            JsonNode value = images.get(key).get("cs");
+            // customize request
+            Element e = Converters.getIdToElementConverter().apply(key, project);
+            JsonNode value;
             String cs = "";
             String extension = "";
             if ((value = images.get(key).get("cs")) != null && value.isTextual())
@@ -77,26 +84,42 @@ public class ImageValidator {
             if ((value = images.get(key).get("extension")) != null && value.isTextual())
                 extension = value.asText(); 
             String id = key.replace(".", "%2E");
-            String baseurl = url + "/artifacts/" + id + "?cs=" + cs + "&extension=" + extension;
+            requestUri.setPath(basePath + id);
+            requestUri.setParameter("cs", cs);
+            requestUri.setParameter("extension", extension);
 
-            GetMethod get = new GetMethod(baseurl);
-            int status = 0;
+            // do request
             try {
-                HttpClient client = new HttpClient();
-                ViewEditUtils.setCredentials(client, baseurl, get);
-                client.executeMethod(get);
-                status = get.getStatusCode();
-            } catch (Exception ex) {
-                //printStackTrace(ex, gl);
-            } finally {
-                get.releaseConnection();
+                MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            } catch (URISyntaxException e1) {
+                e1.printStackTrace();
+            } catch (ServerException e1) {
+                if (e1.getCode() != HttpURLConnection.HTTP_OK) {
+                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web");
+                    v.addAction(new ExportImage(e, allImages));
+                }
+                //TODO more error handling, if necessary
+//                e1.printStackTrace();
             }
 
-            if (status != HttpURLConnection.HTTP_OK) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web");
-                v.addAction(new ExportImage(e, allImages));
-                rule.addViolation(v);
-            }
+//            GetMethod get = new GetMethod(baseurl);
+//            int status = 0;
+//            try {
+//                HttpClient client = new HttpClient();
+//                ViewEditUtils.setCredentials(client, baseurl, get);
+//                client.executeMethod(get);
+//                status = get.getStatusCode();
+//            } catch (Exception ex) {
+//                //printStackTrace(ex, gl);
+//            } finally {
+//                get.releaseConnection();
+//            }
+//
+//            if (status != HttpURLConnection.HTTP_OK) {
+//                rule.addViolation(v);
+//            }
         }
     }
 

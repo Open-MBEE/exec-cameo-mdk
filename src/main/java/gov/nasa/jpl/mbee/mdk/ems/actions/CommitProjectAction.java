@@ -28,21 +28,26 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ManualSyncActionRunner;
+import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -82,35 +87,35 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
     @Override
     public void actionPerformed(ActionEvent e) {
         ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
-        requestData.set("elements", elementsArrayNode);
+        ArrayNode elementsArrayNode = requestData.putArray("elements");
         requestData.put("source", "magicdraw");
         requestData.put("mmsVersion", MDKPlugin.VERSION);
 
-        ObjectNode projectObjectNode = ExportUtility.getProjectObjectNode(project);
+        ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
-        String url = ExportUtility.getUrlWithWorkspaceAndSite();
-        if (url == null) {
+        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+        if (requestUri == null) {
             return;
         }
-        url += "/projects";
-        String response;
+        requestUri.setPath(requestUri.getPath() + "/projects");
+
+        ObjectNode response = null;
         try {
-            response = ExportUtility.send(url, JacksonUtils.getObjectMapper().writeValueAsString(requestData), false, false);
-        } catch (JsonProcessingException e1) {
-            // TODO Error handle @donbot
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+        } catch (IOException | URISyntaxException | ServerException e1) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking if project was initialized. Reason: " + e1.getMessage());
             e1.printStackTrace();
-            return;
         }
-        if (response == null || response.startsWith("<html")) {
+        if (response == null) {
             return;
         }
         if (shouldCommitModel) {
-            url = ExportUtility.getPostElementsUrl();
-            if (url == null) {
+            requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+            if (requestUri == null) {
                 return;
             }
-            ProgressStatusRunner.runWithProgressStatus(new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1), "Model Initialization", true, 0);
+            RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1);
+            ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }
     }
 }

@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.viewedit;
 
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -65,8 +66,9 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     public void visit(DBParagraph para) {
         JSONObject o = getJSONForDBParagraph(para);
         if (para.getFrom() != null && para.getFromProperty() != null) {
-            if (ExportUtility.shouldAdd(para.getFrom())) {
-                this.listelements.add(ExportUtility.getElementID(para.getFrom()));
+            // TODO how necessary is this?
+            if (Converters.getElementToJsonConverter().apply(para.getFrom(), Project.getProject(para.getFrom())) != null) {
+                this.listelements.add(Converters.getElementToIdConverter().apply(para.getFrom()));
             }
         }
         curitem.add(o);
@@ -77,8 +79,9 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
     public void visit(DBText text) {
         JSONObject o = getJSONForDBText(text);
         if (text.getFrom() != null && text.getFromProperty() != null) {
-            if (ExportUtility.shouldAdd(text.getFrom())) {
-                this.listelements.add(ExportUtility.getElementID(text.getFrom()));
+            // TODO how necessary is this?
+            if (Converters.getElementToJsonConverter().apply(text.getFrom(), Project.getProject(text.getFrom())) != null) {
+                this.listelements.add(Converters.getElementToIdConverter().apply(text.getFrom()));
             }
         }
         curitem.add(o);

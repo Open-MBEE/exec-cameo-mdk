@@ -7,8 +7,7 @@ import com.nomagic.uml2.ext.jmi.UML2MetamodelConstants;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
@@ -111,34 +110,32 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                     }
 
                     // START PRE-PROCESSING
-                    Element e;
-                    if (sourceElement instanceof Comment && ExportUtility.isElementDocumentation((Comment) sourceElement) && changedPropertyName.equals(PropertyNames.BODY)) {
+                    Comment comment;
+                    if (changedPropertyName.equals(PropertyNames.BODY) && sourceElement instanceof Comment && (comment = (Comment) sourceElement).getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner()) {
                         sourceElement = sourceElement.getOwner();
                     }
-                    else if ((sourceElement instanceof ValueSpecification) && (changedPropertyName.equals(PropertyNames.VALUE)) ||
-                            (sourceElement instanceof OpaqueExpression) && (changedPropertyName.equals(PropertyNames.BODY)) ||
-                            (sourceElement instanceof Expression) && (changedPropertyName.equals(PropertyNames.OPERAND))) {
+                    else if (changedPropertyName.equals(PropertyNames.VALUE) && sourceElement instanceof ValueSpecification ||
+                            changedPropertyName.equals(PropertyNames.BODY) && sourceElement instanceof OpaqueExpression ||
+                            changedPropertyName.equals(PropertyNames.OPERAND) && sourceElement instanceof Expression) {
                         // Need to find the actual element that needs to be sent (most likely a Property or Slot that's the closest owner of this element)
-                        sourceElement = sourceElement.getOwner();
-                        // There may be multiple ValueSpecification changes so go up the chain of owners until we find the actual owner that should be submitted
-                        while (sourceElement instanceof ValueSpecification) {
+                        do {
                             sourceElement = sourceElement.getOwner();
                         }
+                        while (sourceElement instanceof ValueSpecification);
+                        // There may be multiple ValueSpecification changes so go up the chain of owners until we find the actual owner that should be submitted
                     }
 
-                    if (sourceElement instanceof Constraint && (e = ExportUtility.getViewFromConstraint((Constraint) sourceElement)) != null) {
+                    // no more view constraints in model
+                    /*if (sourceElement instanceof Constraint && (e = ExportUtility.getViewFromConstraint((Constraint) sourceElement)) != null) {
                         sourceElement = e;
-                    }
+                    }*/
                     // END PRE-PROCESSING
 
-                    if (!ExportUtility.shouldAdd(sourceElement)) {
+                    if (Converters.getElementToJsonConverter().apply(sourceElement, project) == null) {
                         continue;
                     }
-                    String elementID = ExportUtility.getElementID(sourceElement);
-                    if (elementID == null) {
-                        continue;
-                    }
-                    if (elementID.matches(MDKConstants.HOLDING_BIN_PACKAGE_ID_REGEX)) {
+                    String sysmlId = Converters.getElementToIdConverter().apply(sourceElement);
+                    if (sysmlId == null) {
                         continue;
                     }
 
@@ -151,7 +148,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                             changeType = Changelog.ChangeType.CREATED;
                             break;
                     }
-                    inMemoryLocalChangelog.addChange(elementID, sourceElement, changeType);
+                    inMemoryLocalChangelog.addChange(sysmlId, sourceElement, changeType);
                 }
                 SyncStatusConfigurator.getSyncStatusAction().update();
             } catch (Exception e) {

@@ -14,6 +14,11 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     private static final Map<String, LocalSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
+    public void projectCreated(Project project) {
+        projectOpened(project);
+    }
+
+    @Override
     public void projectOpened(Project project) {
         projectClosed(project);
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
@@ -42,9 +47,11 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         LocalSyncProjectMapping localSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
 
         gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener localSyncTransactionCommitListener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
-        if (localSyncTransactionCommitListener != null) {
-            localSyncTransactionCommitListener.getInMemoryLocalChangelog().clear();
+        if (localSyncTransactionCommitListener == null) {
+            projectOpened(project);
+            localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         }
+        localSyncTransactionCommitListener.getInMemoryLocalChangelog().clear();
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {

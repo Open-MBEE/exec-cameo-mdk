@@ -7,24 +7,29 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.http.client.utils.URIBuilder;
 
-import javax.jms.ConnectionFactory;
+import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Hashtable;
 
 /**
  * Created by igomes on 6/29/16.
  */
 public class JMSUtils {
+
+    private static final int JMS_PORT = 61616;
+    private static final String JMS_S = "tcp";
+
     public static final String MSG_SELECTOR_PROJECT_ID = "projectId",
             MSG_SELECTOR_WORKSPACE_ID = "workspace";
 
@@ -46,17 +51,13 @@ public class JMSUtils {
      * @throws IOException 
      * @throws JsonParseException 
      */
-    public static ObjectNode getJmsConnectionDetails(Project project) throws JsonParseException, JsonMappingException, IOException {
-        String url = ExportUtility.getUrl(project) + "/connection/jms";
-        String response = null;
-        try {
-            response = ExportUtility.get(url, false);
-        } catch (ServerException ignored) {
-        }
-        if (response == null) {
-            return null;
-        }
-        return JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
+    public static ObjectNode getJmsConnectionDetails(Project project)
+            throws IOException, ServerException, URISyntaxException {
+        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        requestUri.setPath(requestUri.getPath() + "/connection/jms");
+        ObjectNode response = null;
+
+        return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
     }
 
     // Varies by current project
@@ -67,26 +68,23 @@ public class JMSUtils {
         } catch (IOException e) {
             Application.getInstance().getGUILog().log("[ERROR]: Unable to acquire JMS Connection information.");
             e.printStackTrace();
+        } catch (URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[ERROR]: Unexpected error occurred when trying to build MMS URL. " +
+                    "Reason: " + e.getMessage());
+            e.printStackTrace();
         }
         String url = ingestJson(jmsJson);
         boolean isFromService = (url != null);
         if (url == null) {
-            url = ExportUtility.getUrl(project);
-            if (url != null) {
-                if (url.startsWith("https://")) {
-                    url = url.substring(8);
-                }
-                else if (url.startsWith("http://")) {
-                    url = url.substring(7);
-                }
-                int index = url.indexOf(":");
-                if (index != -1) {
-                    url = url.substring(0, index);
-                }
-                if (url.endsWith("/alfresco/service")) {
-                    url = url.substring(0, url.length() - 17);
-                }
-                url = "tcp://" + url + ":61616";
+            url = MMSUtils.getServerUrl(project);
+            try {
+                URIBuilder uri = new URIBuilder(url);
+                uri.setPort(JMS_PORT);
+                uri.setScheme(JMS_S);
+                uri.setPath("");
+                url = uri.build().toString();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
             }
         }
         return new JMSInfo(url, isFromService);
@@ -198,6 +196,54 @@ public class JMSUtils {
         selectorBuilder.delete(0, selectorBuilder.length());
 
         return outputMsgSelector;
+    }
+
+    public static void initializeDurableQueue(Project project, String workspace) {
+        String projectId = project.getPrimaryProject().getProjectID();
+        Connection connection = null;
+        Session session = null;
+        MessageConsumer consumer = null;
+        try {
+            JMSUtils.JMSInfo jmsInfo = null;
+            try {
+                jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
+            } catch (ServerException e) {
+                e.printStackTrace();
+            }
+            String url = jmsInfo != null ? jmsInfo.getUrl() : null;
+            if (url == null) {
+                return;
+            }
+            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
+            if (connectionFactory == null) {
+                return;
+            }
+            connection = connectionFactory.createConnection();
+            String subscriberId = projectId + "/" + workspace;
+            connection.setClientID(subscriberId);
+            // connection.setExceptionListener(this);
+            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
+            String messageSelector = JMSUtils.constructSelectorString(projectId, workspace);
+            Topic topic = session.createTopic("master");
+            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
+            connection.start();
+        } catch (JMSException e1) {
+            e1.printStackTrace();
+        } finally {
+            try {
+                if (consumer != null) {
+                    consumer.close();
+                }
+                if (session != null) {
+                    session.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static class JMSInfo {

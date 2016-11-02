@@ -6,14 +6,15 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
 import javax.jms.*;
 import javax.naming.NameNotFoundException;
+import java.lang.IllegalStateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,14 +73,27 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     public static boolean initDurable(Project project, final JMSSyncProjectMapping jmsSyncProjectMapping) {
-        String projectID = ExportUtility.getProjectId(project);
-        String workspaceID = ExportUtility.getWorkspace();
+        String projectID = project.getPrimaryProject().getProjectID();
+        String workspaceID = MDUtils.getWorkspace(project);
 
+        // log in to mms
+        if (!TicketUtils.isTicketSet()) {
+            try {
+                TicketUtils.loginToMMS();
+            } catch (IllegalStateException e) {
+                Application.getInstance().getGUILog().log("[ERROR] " + e.getMessage());
+            }
+        }
+        if (!TicketUtils.isTicketSet()) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
+            return false;
+        }
 
+        // get jms connection info and connect
         JMSUtils.JMSInfo jmsInfo;
         try {
             jmsInfo = JMSUtils.getJMSInfo(project);
-        } catch (ServerException | IllegalArgumentException e) {
+        } catch (ServerException | IllegalArgumentException | IllegalStateException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Message: " + e.getMessage());
             return false;
@@ -100,18 +114,13 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 return false;
             }
         }
-        String username = ViewEditUtils.getUsername();
-        if (username == null || username.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
-            return false;
-        }
         try {
-            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(JMSUtils.getJMSInfo(project));
+            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
             if (connectionFactory == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Failed to create MMS connection factory.");
                 return false;
             }
-            String subscriberId = projectID + "-" + workspaceID + "-" + username; // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(); // weblogic can't have '/' in id
 
             JMSMessageListener jmsMessageListener = new JMSMessageListener(project);
 

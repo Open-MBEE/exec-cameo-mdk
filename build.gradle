@@ -82,6 +82,10 @@ dependencies {
 
     // JSON Patch
     compile group: "com.box", name: "json-patch", version: "1.13"
+
+    // Apache HTTP
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
+    compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.2'
     
     // Other dependencies we're unable to resolve via repositories
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar'])

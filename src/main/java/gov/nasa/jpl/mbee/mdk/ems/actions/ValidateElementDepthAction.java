@@ -110,7 +110,7 @@ public class ValidateElementDepthAction extends MDAction {
             ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), false, depth);
             ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync (depth: " + Integer.toString(depth) + ")", true, 0);
             if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
-                Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), "Manual Sync Validation");
+                Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(),manualSyncRunner.getValidationSuite().getName());
             }
             else {
                 Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");

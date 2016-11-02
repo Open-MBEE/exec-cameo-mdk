@@ -55,7 +55,7 @@ public class ValidateElementAction extends MDAction {
         ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), false, 0);
         ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
         if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
-            Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), "Manual Sync Validation");
+            Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), manualSyncRunner.getValidationSuite().getName());
         }
         else {
             Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");

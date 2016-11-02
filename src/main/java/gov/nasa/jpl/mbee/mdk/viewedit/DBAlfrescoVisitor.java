@@ -13,14 +13,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInfo;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.model.Section;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -213,6 +213,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), (image.getTitle() == null ? "image" : image.getTitle()), parentSec, null);
         newpe.peek().add(ipe);
+        Application.getInstance().getProject().getElementsFactory().createInstanceValueInstance();
     }
 
     @SuppressWarnings("unchecked")
@@ -265,7 +266,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject entry = new JSONObject();
         if (para.getFrom() != null && para.getFromProperty() != null) {
             entry.put("sourceType", "reference");
-            entry.put("source", ExportUtility.getElementID(para.getFrom()));
+            entry.put("source", Converters.getElementToIdConverter().apply(para.getFrom()));
             entry.put("sourceProperty", sourceMapping.get(para.getFromProperty()));
         }
         else {
@@ -303,7 +304,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject entry = new JSONObject();
         if (text.getFrom() != null && text.getFromProperty() != null) {
             entry.put("sourceType", "reference");
-            entry.put("source", ExportUtility.getElementID(text.getFrom()));
+            entry.put("source", Converters.getElementToIdConverter().apply(text.getFrom()));
             entry.put("sourceProperty", sourceMapping.get(text.getFromProperty()));
         }
         else {

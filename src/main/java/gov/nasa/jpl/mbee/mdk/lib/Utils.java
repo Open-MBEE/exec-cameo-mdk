@@ -38,7 +38,7 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.magicdraw.teamwork2.TeamworkService;
+import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
@@ -70,16 +70,15 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.*;
+import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
+import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
@@ -2268,7 +2267,7 @@ public class Utils {
     }
 
     public static void showPopupMessage(String message) {
-        if (popupsDisabled) {
+        if (popupsDisabled || MainFrame.isSilentMode()) {
             Utils.guilog("[POPUP] " + message);
         }
         else {
@@ -3779,7 +3778,7 @@ public class Utils {
                 Utils.guilog("[ERROR] You must be logged into Teamwork first.");
                 return false;
             }
-            if (lastVersion == ExportUtility.getProjectVersion(project)) {
+            if (lastVersion == MDUtils.getProjectVersion(project)) {
                 return true;
             }
         } catch (IOException uhe) {
@@ -3855,6 +3854,10 @@ public class Utils {
      */
     public static void setPopupsDisabled(boolean disable) {
         Utils.popupsDisabled = disable;
+    }
+
+    public static boolean isPopupsDisabled() {
+        return Utils.popupsDisabled || MainFrame.isSilentMode();
     }
 
     /**

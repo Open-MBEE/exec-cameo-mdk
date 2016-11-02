@@ -33,10 +33,8 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.mdk.ems.ExportUtility;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
 
 import java.awt.event.ActionEvent;
 
@@ -56,34 +54,22 @@ public class EMSLoginAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // passing in "" as the username will trigger the login dialogue popup
-        loginAction("", "");
+        loginAction(Application.getInstance().getProject(), "", "");
         ActionsStateUpdater.updateActionsState();
     }
 
-    public boolean loginAction(String username, String password) {
-        return loginAction(username, password, true);
+    public boolean loginAction(Project project, String username, String password) {
+        return loginAction(project, username, password, true);
     }
 
-    public static boolean loginAction(String username, String password, boolean initJms) {
-        Project project = Application.getInstance().getProject();
-        ViewEditUtils.clearUsernameAndPassword();
+    public static boolean loginAction(Project project, String username, String password, boolean initJms) {
         if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
         }
-        String url = ExportUtility.getUrl(project);
-        if (url == null) {
-            return false;
-        }
-        String response = null;
-        try {
-            response = ExportUtility.getTicket(url + "/api/login", username, password, true); //used to be /checklogin
-        } catch (ServerException ex) {
-            ViewEditUtils.clearUsernameAndPassword();
-        }
-        if (response == null) {
-            ViewEditUtils.clearUsernameAndPassword();
+        TicketUtils.loginToMMS();
+
+        if (TicketUtils.getTicket().isEmpty()) {
             return false;
         }
         if (initJms) {

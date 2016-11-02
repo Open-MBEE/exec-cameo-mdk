@@ -33,7 +33,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.viewedit.ViewEditUtils;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 
 import java.awt.event.ActionEvent;
 
@@ -53,7 +53,7 @@ public class EMSLogoutAction extends MMSAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ViewEditUtils.clearUsernameAndPassword();
+        TicketUtils.clearUsernameAndPassword();
         for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
             MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectClosed(p);
         }
