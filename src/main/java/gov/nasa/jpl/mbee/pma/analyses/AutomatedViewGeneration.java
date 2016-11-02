@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.teamwork.common.users.SessionInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
+import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 
 import javax.xml.bind.DatatypeConverter;
@@ -245,7 +246,7 @@ public class AutomatedViewGeneration extends CommandLine {
             throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not log in to MMS server.");
             // LOG: Invalid account
         }
-        if (!MDKHelper.hasSiteEditPermission()) {
+        if (!MMSUtils.isSiteEditable(Application.getInstance().getProject(), MMSUtils.getSiteName(Application.getInstance().getProject()))) {
             String message = "[FAILURE] User " + teamworkUsername + " does not have permission to MMS site or MMS is unsupported version.";
             logMessage(message);
             error = 103;

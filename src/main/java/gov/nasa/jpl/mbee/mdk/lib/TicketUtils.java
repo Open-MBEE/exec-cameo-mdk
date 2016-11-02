@@ -81,21 +81,30 @@ public class TicketUtils {
     }
 
     /**
+     * Logs in to MMS, using pre-specified credentials or prompting the user for new credentials.
      *
-     * @return True if successfully logged in to MMS
+     * If username and password have been pre-specified, will not display the dialog even if popups are
+     * enabled. Else will display the login dialog and use the returned value.
+     *
+     * @return TRUE if successfully logged in to MMS, FALSE otherwise.
+     *         Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
     public static boolean loginToMMS() {
-        if (!Utils.isPopupsDisabled()) {
+        if (!username.isEmpty() && !password.isEmpty()){
+            acquireTicket(password);
+        }
+        else if (!Utils.isPopupsDisabled()) {
             acquireTicket(showLoginDialog());
         }
         else {
-            acquireTicket(password);
+            return false;
         }
         return !ticket.isEmpty();
     }
 
     /**
      * Shows a login dialog window and uses its filled in values to set the username and password.
+     * Stores the entered username for future use / convenience, passes the entered password to acquireTicket().
      */
     private static String showLoginDialog() {
         // Pop up dialog for logging into Alfresco
@@ -186,8 +195,10 @@ public class TicketUtils {
     }
 
     /**
-     * Uses the stored username and password to query MMS for a ticket. Will first check to see if an existing ticket is
-     * still valid, and will not resend for the ticket if it remains valid.
+     * Uses the stored username and passed password to query MMS for a ticket.
+     *
+     * Will first check to see if there is an existing ticket, and if so if it is valid. If valid, will not resend
+     * for new ticket. If invalid or not present, will send for new ticket.
      *
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
@@ -203,7 +214,7 @@ public class TicketUtils {
 
         // build request
         // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
-        // log in to the currently opening project
+        //         log in to the currently opening project
         Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null || username.isEmpty() || pass.isEmpty()) {

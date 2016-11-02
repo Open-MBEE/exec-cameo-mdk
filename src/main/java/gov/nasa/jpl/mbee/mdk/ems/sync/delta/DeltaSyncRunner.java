@@ -49,23 +49,22 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
     private boolean failure = true;
 
-    private ValidationSuite changelogSuite = new ValidationSuite("Updated Elements/Failed Updates");
-    private ValidationRule locallyChangedValidationRule = new ValidationRule("updated", "updated", ViolationSeverity.INFO);
-    private ValidationRule cannotUpdate = new ValidationRule("cannotUpdate", "cannotUpdate", ViolationSeverity.ERROR);
-    private ValidationRule cannotRemove = new ValidationRule("cannotDelete", "cannotDelete", ViolationSeverity.WARNING);
-    private ValidationRule cannotCreate = new ValidationRule("cannotCreate", "cannotCreate", ViolationSeverity.ERROR);
+//    private ValidationSuite changelogSuite = new ValidationSuite("Updated Elements/Failed Updates");
+//    private ValidationRule locallyChangedValidationRule = new ValidationRule("Updated Locally", "updated", ViolationSeverity.INFO);
+//    private ValidationRule cannotUpdate = new ValidationRule("Cannot Update", "cannotUpdate", ViolationSeverity.ERROR);
+//    private ValidationRule cannotRemove = new ValidationRule("Cannot Delete", "cannotDelete", ViolationSeverity.WARNING);
+//    private ValidationRule cannotCreate = new ValidationRule("Cannot Create", "cannotCreate", ViolationSeverity.ERROR);
 
     private Changelog<String, Element> failedLocalChangelog = new Changelog<>();
     private Changelog<String, Void> failedJmsChangelog = new Changelog<>(), successfulJmsChangelog = new Changelog<>();
 
     private List<ValidationSuite> vss = new ArrayList<>();
-
-    {
-        changelogSuite.addValidationRule(locallyChangedValidationRule);
-        changelogSuite.addValidationRule(cannotUpdate);
-        changelogSuite.addValidationRule(cannotRemove);
-        changelogSuite.addValidationRule(cannotCreate);
-    }
+//    {
+//        changelogSuite.addValidationRule(locallyChangedValidationRule);
+//        changelogSuite.addValidationRule(cannotUpdate);
+//        changelogSuite.addValidationRule(cannotRemove);
+//        changelogSuite.addValidationRule(cannotCreate);
+//    }
 
     /*public DeltaSyncRunner(boolean shouldCommit, boolean skipUpdate, boolean shouldDelete) {
         this.shouldCommit = shouldCommit;
@@ -73,10 +72,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         this.shouldDelete = shouldDelete;
     }*/
 
-    @Deprecated
-    public DeltaSyncRunner(boolean shouldCommit, boolean shouldCommitDeletes) {
-        this(shouldCommit, shouldCommitDeletes, true);
-    }
+//    @Deprecated
+//    public DeltaSyncRunner(boolean shouldCommit, boolean shouldCommitDeletes) {
+//        this(shouldCommit, shouldCommitDeletes, true);
+//    }
 
     public DeltaSyncRunner(boolean shouldCommmit, boolean shouldCommitDeletes, boolean shouldUpdate) {
         this.shouldCommit = shouldCommmit;

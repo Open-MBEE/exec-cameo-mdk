@@ -33,6 +33,8 @@ import java.util.stream.StreamSupport;
  * Created by igomes on 9/26/16.
  */
 public class ManualSyncRunner implements RunnableWithProgress {
+
+    public static final String INITIALIZE_PROJECT_COMMENT = "The project doesn't exist on the web.";
     private final Collection<Element> rootElements;
     private final Project project;
     private final boolean recurse;
@@ -183,7 +185,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
             String workspace = MMSUtils.getServiceWorkspacesUri(project).getPath();
             if (workspace.contains("master")) {
-                v = new ValidationRuleViolation(project.getModel(), "The project doesn't exist on the web.");
+                v = new ValidationRuleViolation(project.getModel(), INITIALIZE_PROJECT_COMMENT);
                 v.addAction(new CommitProjectAction(project, true));
             } else {
                 v = new ValidationRuleViolation(project.getModel(), "The trunk project doesn't exist on the web. Export the trunk first.");

@@ -35,7 +35,6 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import gov.nasa.jpl.mbee.mdk.ems.actions.*;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 
 public class MMSConfigurator implements AMConfigurator {
 

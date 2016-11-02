@@ -54,15 +54,15 @@ public class EMSLoginAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        loginAction(Application.getInstance().getProject(), "", "");
+        loginAction(Application.getInstance().getProject());
         ActionsStateUpdater.updateActionsState();
     }
 
-    public boolean loginAction(Project project, String username, String password) {
-        return loginAction(project, username, password, true);
+    public boolean loginAction(Project project) {
+        return loginAction(project, true);
     }
 
-    public static boolean loginAction(Project project, String username, String password, boolean initJms) {
+    public static boolean loginAction(Project project, boolean initJms) {
         if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
