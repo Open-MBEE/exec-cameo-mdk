@@ -346,23 +346,33 @@ test {
     workingDir 'build/install'
 
     /**
-     * The short version of the rationale is that with 18.4, MagicDraw introduced the OSGi framework as part of its implementation.
-     * Gradle and JUnit work very well together out of the box (generated reports in XML and HTML, tight IDE/Jenkins integration, etc.), and Gradle and OSGi was made to work with the runJava task.
-     * However, Gradle had to implement a number of hacks to overcome OS limitations and achieve features that can be applied to a broad range of software.
-     * Those hacks work well with most applications but not OSGi (commentary: OSGi doesn't play well with anyone), so we implemented a number of hacks ourselves.
-     * They involve classloading order, classpath redirection using the jar argument, reflection, and dynamic classloading.
-     * Ultimately, this enabled the use of the well-supported and feature-rich Gradle test task, but at the cost of an implementation that could break in the unlikely, albeit possible, case of either Gradle or MagicDraw significantly changing their implementations of the test and OSGi frameworks, respectively.
+     * The short version of the rationale is that with 18.4, MagicDraw introduced the OSGi framework as part of its
+     * implementation.
+     * Gradle and JUnit work very well together out of the box (generated reports in XML and HTML, tight IDE/Jenkins
+     * integration, etc.), and Gradle and OSGi was made to work with the runJava task.
+     * However, Gradle had to implement a number of hacks to overcome OS limitations and achieve features that can be
+     * applied to a broad range of software.
+     * Those hacks work well with most applications but not OSGi (commentary: OSGi doesn't play well with anyone), so
+     * we implemented a number of hacks ourselves.
+     * They involve classloading order, classpath redirection using the jar argument, reflection, and dynamic
+     * classloading.
+     * Ultimately, this enabled the use of the well-supported and feature-rich Gradle test task, but at the cost of
+     * an implementation that could break in the unlikely, albeit possible, case of either Gradle or MagicDraw
+     * significantly changing their implementations of the test and OSGi frameworks, respectively.
      *
-     * Clears the default classpath since all the necessary libraries are being passed as arguments to GradleMagicDrawLauncher to be added to the OSGi classpath.
-     * Then it utilizes the -jar JVM argument to override the default Gradle command and pass the original command as arguments to the main class of the jar, GradleMagicDrawLauncher,
-     * including the classpath arguments (one of our own and one of Gradle's). It additionally parses and sets the system properties that are passed.
+     * Clears the default classpath since all the necessary libraries are being passed as arguments to
+     * GradleMagicDrawLauncher to be added to the OSGi classpath.
+     * Then it utilizes the -jar JVM argument to override the default Gradle command and pass the original command
+     * as arguments to the main class of the jar, GradleMagicDrawLauncher,
+     * including the classpath arguments (one of our own and one of Gradle's). It additionally parses and sets the
+     * system properties that are passed.
      *
      * Example command: .../java -Dcom.nomagic.osgi.config.dir=configuration -Desi.system.config=data/application.conf -Djava.security.manager=worker.org.gradle.process.internal.worker.child.BootstrapSecurityManager -Dlogback.configurationFile=data/logback.xml -Dmd.class.path=$java.class.path -jar /Users/igomes/mdk/build/libs/mdk-*-tests-hack.jar -cp ... -Dfile.encoding=UTF-8 -Duser.country=US -Duser.language=en -Duser.variant -ea -cp .../.gradle/caches/.../workerMain/gradle-worker.jar worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 1'
      *
      * @author igomes
      */
     classpath = files()
-    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml']
+    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/install', include: ['plugins/**/*.jar']).asPath + fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml']
 }
 
 test.dependsOn testsJar

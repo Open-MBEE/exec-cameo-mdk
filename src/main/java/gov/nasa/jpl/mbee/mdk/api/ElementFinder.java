@@ -128,7 +128,7 @@ public class ElementFinder {
      * element in the list). No guarantee is made as to the editability of these
      * elements.
      *
-     * @param elementType Type of element. ie. Package or Document.
+     * @param elementName Name of element
      * @param parent      The top level element whose owned elements you want to search
      *                    through
      */
@@ -137,7 +137,7 @@ public class ElementFinder {
         if (elements == null) {
             return null;
         }
-        List<NamedElement> retrievedElements = new ArrayList<NamedElement>();
+        List<NamedElement> retrievedElements = new ArrayList<>();
         for (Element elem : elements) {
             if (elem instanceof NamedElement && ((NamedElement) elem).getName().equals(elementName)) {
                 retrievedElements.add((NamedElement) elem);
@@ -284,11 +284,7 @@ public class ElementFinder {
      * Retrieves the model root element.
      */
     public static Element getModelRoot() {
-        Element mdl = Application.getInstance().getProject().getModel();
-        if (mdl.getHumanName().equals("Model Data")) {
-            return mdl;
-        }
-        return null;
+        return Application.getInstance().getProject().getPrimaryModel();
     }
 
     /**
