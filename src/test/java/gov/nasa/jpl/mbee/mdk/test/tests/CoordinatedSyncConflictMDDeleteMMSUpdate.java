@@ -46,16 +46,9 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
 
     @BeforeClass
     public static void setupProject() throws IOException, ServerException, URISyntaxException {
-        System.out.println("********2");
-//        System.getProperties().stringPropertyNames().forEach(System.out::println);
-        System.out.println("JAVA_HOME" + System.getProperty("java.home"));
-        System.out.println("********2");
-        Assert.fail("quit");
-
         MDKTestHelper.setMmsCredentials("/Users/ablack/git/mdk/resources/mms.properties", "");
 
         MagicDrawHelper.openProject(filename);
-//        MDKTestHelper.waitXSeconds(30);
 
         if (!MDKHelper.isSiteEditable()) {
             throw new IOException("User does not have permissions to site");
