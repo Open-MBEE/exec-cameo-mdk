@@ -372,6 +372,8 @@ public class MDKValidationWindow {
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
                 | InvocationTargetException | IllegalStateException e) {
             MagicDrawHelper.generalMessage("[ERROR]" + e.getMessage());
+        } catch (NullPointerException n) {
+            n.printStackTrace();
         }
     }
 

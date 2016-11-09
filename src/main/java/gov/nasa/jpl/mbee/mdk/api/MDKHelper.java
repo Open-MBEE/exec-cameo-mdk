@@ -195,8 +195,17 @@ public class MDKHelper {
      * @return the currently stored validationWindow accessor
      */
     public static MDKValidationWindow getValidationWindow() {
+        if (validationWindow == null) {
+            System.out.println("null window");
+        }
         return validationWindow;
     }
+
+    /************************************************************
+     *
+     * Validation Methods
+     *
+     ************************************************************/
 
     /**
      * Updates the MDKValidationWindow object with the latest delta sync results, or sets to null if
@@ -205,14 +214,17 @@ public class MDKHelper {
     public static void loadCoordinatedSyncValidations() {
         CoordinatedSyncProjectEventListenerAdapter cspela = MMSSyncPlugin.getInstance().getCoordinatedSyncProjectEventListenerAdapter();
         if (cspela == null) {
+            System.out.println("null cspela");
             return;
         }
         DeltaSyncRunner dsr = cspela.getDeltaSyncRunner();
         if (dsr == null) {
+            System.out.println("null dsr");
             return;
         }
         List<ValidationSuite> vss = dsr.getValidations();
-        if (vss.isEmpty()) {
+        if (vss == null || vss.isEmpty()) {
+            System.out.println("null / empty vss");
             return;
         }
         validationWindow = new MDKValidationWindow(vss);
@@ -369,6 +381,26 @@ public class MDKHelper {
      * @param elementsToPost Collection of elements you want to directly post on the MMS
      * @throws IllegalStateException
      */
+    public static ObjectNode postMmsElementJson(Collection<ObjectNode> elementsToPost, Project project)
+            throws IOException, URISyntaxException, ServerException {
+        ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
+        ArrayNode elements = requestBody.putArray("elements");
+        for (ObjectNode postTarget : elementsToPost) {
+            elements.add(postTarget);
+        }
+        requestBody.put("source", "magicdraw");
+        requestBody.put("mmsVersion", MDKPlugin.VERSION);
+        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
+                MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
+        return MMSUtils.sendMMSRequest(request);
+    }
+
+    /**
+     * Sends a POST request to MMS with the element JSON, creating or updating the element as appropriate.
+     *
+     * @param elementsToPost Collection of elements you want to directly post on the MMS
+     * @throws IllegalStateException
+     */
     public static ObjectNode postMmsElement(Collection<Element> elementsToPost, Project project)
             throws IOException, URISyntaxException, ServerException {
         ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
@@ -395,7 +427,5 @@ public class MDKHelper {
         Project project = Application.getInstance().getProject();
         return MMSUtils.isSiteEditable(project, MMSUtils.getSiteName(project));
     }
-
-
 
 }
