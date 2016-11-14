@@ -219,7 +219,7 @@ public class ViewEditUtils {
                     "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
 
-            setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), true);
+            setUsernameAndPassword(usernameFld.getText(), new String(passwordFld.getPassword()), !(usernameFld.getText().isEmpty()));
         }
     }
     

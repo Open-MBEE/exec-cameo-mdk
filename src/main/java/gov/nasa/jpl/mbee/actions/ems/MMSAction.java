@@ -15,10 +15,7 @@ public class MMSAction extends MDAction {
 
     @Override
     public void updateState() {    
-        if (ViewEditUtils.isPasswordSet())
-            setEnabled(true);
-        else
-            setEnabled(false);
+        setEnabled(ViewEditUtils.isPasswordSet());
     }
 
 
