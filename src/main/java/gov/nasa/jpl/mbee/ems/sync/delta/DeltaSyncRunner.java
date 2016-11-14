@@ -457,7 +457,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     locallyChangedValidationRule.addViolation(new ValidationRuleViolation(element, "[UPDATED]"));
                 } catch (ImportException ie) {
                     ie.printStackTrace();
-                    ValidationRuleViolation vrv = new ValidationRuleViolation(element, "[LOCAL FAILED] " + ie.getMessage());
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(element, "[UPDATE FAILED] " + ie.getMessage());
                     cannotUpdate.addViolation(vrv);
                     failedJmsChangelog.addChange(elementEntry.getKey(), null, Changelog.ChangeType.UPDATED);
                 }

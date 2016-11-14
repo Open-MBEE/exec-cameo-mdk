@@ -28,6 +28,60 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.lib;
 
+import gov.nasa.jpl.mbee.DocGenUtils;
+import gov.nasa.jpl.mbee.api.ElementFinder;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.generator.CollectFilterParser;
+import gov.nasa.jpl.mbee.generator.DocumentValidator;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBParagraph;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBTable;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DBText;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
+import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
+import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
+import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.IRuleViolationAction;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationWindowRun;
+import gov.nasa.jpl.ocl.GetCallOperation;
+import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
+import gov.nasa.jpl.ocl.OclEvaluator;
+
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Frame;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.swing.JOptionPane;
+import javax.swing.JTabbedPane;
+
+import org.apache.log4j.Logger;
+import org.json.simple.JSONArray;
+
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
@@ -39,8 +93,6 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
-import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
-import com.nomagic.magicdraw.teamwork2.locks.LockService;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
@@ -60,9 +112,32 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ActivityPartition;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Association;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralBoolean;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralInteger;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralReal;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralUnlimitedNatural;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.OpaqueExpression;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Operation;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.StructuralFeature;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Type;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
@@ -70,35 +145,6 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-import gov.nasa.jpl.mbee.DocGenUtils;
-import gov.nasa.jpl.mbee.api.ElementFinder;
-import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.generator.CollectFilterParser;
-import gov.nasa.jpl.mbee.generator.DocumentValidator;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.*;
-import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTable;
-import gov.nasa.jpl.mgss.mbee.docgen.table.EditableTableModel;
-import gov.nasa.jpl.mgss.mbee.docgen.table.PropertyEnum;
-import gov.nasa.jpl.mgss.mbee.docgen.validation.*;
-import gov.nasa.jpl.ocl.GetCallOperation;
-import gov.nasa.jpl.ocl.GetCallOperation.CallReturnType;
-import gov.nasa.jpl.ocl.OclEvaluator;
-import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-
-import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Field;
-import java.text.DecimalFormat;
-import java.util.*;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class contains utility methods for collection and filtering on magicdraw
@@ -3565,59 +3611,6 @@ public class Utils {
     	return false;
     }
 
-    public static boolean tryToLockMany(Project project, Collection<Element> es, boolean isFromTeamwork, boolean recursive) {
-        Collection<Element> uneditable = new HashSet<Element>();
-        Collection<Element> toLock = new HashSet<Element>();
-        for (Element e: es) {
-            if (e.isEditable())
-                continue;
-            if (e instanceof Property || e instanceof Slot) {
-                toLock.add(e.getOwner());
-            } 
-            if ((e instanceof Slot) && !(e.getOwner().getOwner() instanceof Package))
-                toLock.add(e.getOwner().getOwner());
-            toLock.add(e);
-            uneditable.add(e);
-        }
-        if (uneditable.isEmpty())
-            return true;
-        if (!isFromTeamwork)
-            return false;
-        String user = TeamworkUtils.getLoggedUserName();
-        if (user == null) 
-            return false;
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-        if (listener != null) {
-            listener.setDisabled(true);
-        }
-      //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
-        boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
-        ILockProjectService lockService = LockService.getLockService(project);
-        try {
-            if (lockService != null){
-                lockService.lockElements(toLock, recursive, null);
-            }
-        } catch (Exception ex) {
-            log.info("caught exception when locking:");
-            ex.printStackTrace();
-        }
-        if (sessionCreated && !SessionManager.getInstance().isSessionCreated())
-            SessionManager.getInstance().createSession("session after lock");
-        if (listener != null) {
-            listener.setDisabled(false);
-        }
-        //if a session was open and lock triggered a teamwork update, session would be closed
-        uneditable.clear();
-        for (Element e: es) {
-            if (e.isEditable())
-                continue;
-            uneditable.add(e);
-        }
-        if (uneditable.isEmpty())
-            return true;
-        return false;
-    }
-    
     public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {
         return tryToLock(project, e, isFromTeamwork, false);
     }
