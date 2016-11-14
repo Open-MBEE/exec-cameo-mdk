@@ -51,12 +51,14 @@ public class MMSConfigurator implements AMConfigurator {
             category = new MDActionsCategory("MMSMAIN", "MMS");
             ((ActionsCategory) category).setNested(true);
             manager.addCategory((ActionsCategory) category);
-            EMSLogoutAction logout = new EMSLogoutAction();
+
             EMSLoginAction login = new EMSLoginAction();
+            EMSLogoutAction logout = new EMSLogoutAction();
             login.setLogoutAction(logout);
             logout.setLoginAction(login);
-            category.addAction(logout);
+
             category.addAction(login);
+            category.addAction(logout);
             MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
             validateCategory.setNested(true);
             category.addAction(validateCategory);
