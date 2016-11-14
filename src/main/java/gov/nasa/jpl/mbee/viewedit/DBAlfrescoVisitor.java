@@ -321,7 +321,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             entry.put("sourceProperty", sourceMapping.get(text.getFromProperty()));
         } else {
             entry.put("sourceType", "text");
-            entry.put("text", DocGenUtils.addP(DocGenUtils.fixString(text.getText(), false)));
+            entry.put("text", DocGenUtils.fixString(text.getText(), false));
         }
         entry.put("type", "Paragraph");
         return entry;
