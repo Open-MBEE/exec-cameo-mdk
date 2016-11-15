@@ -28,8 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by igomes on 6/22/16.
  */
-
-//@donbot update json simple to jackson
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<String, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
     private DeltaSyncRunner deltaSyncRunner;
@@ -72,7 +70,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             EMSLoginAction.loginAction(project);
             return;
         }
-        if ((ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) || project.isTeamworkServerProject()) && !savedInServer) {
+        if (project.isRemote() && !savedInServer) {
             Application.getInstance().getGUILog().log("[INFO] Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "project is being saved locally. Coordinated sync skipped.");
             return;
         }
