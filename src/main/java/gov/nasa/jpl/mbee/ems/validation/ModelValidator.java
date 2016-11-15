@@ -881,7 +881,23 @@ public class ModelValidator {
     	JSONArray webArray = (JSONArray)elementInfo.get("ownedAttribute");
     	if (JSONUtils.compare(modelArray, webArray))
     		return null;
-    	ValidationRuleViolation v = new ValidationRuleViolation(e, "[ATTRIBUTE] Owned attribute ordering is different.");
+    	HashSet<Object> modelAttribs = new HashSet<>();
+    	HashSet<Object> webAttribs = new HashSet<>();
+    	for (int i = 0; i < modelArray.size(); i++) {
+    	    modelAttribs.add(modelArray.get(i));
+    	}
+    	for (int i = 0; i < webArray.size(); i++) {
+    	    if (!modelAttribs.remove(webArray.get(i))) {
+    	        webAttribs.add(webArray.get(i));
+    	    };
+    	}
+    	ValidationRuleViolation v;
+    	if (modelAttribs.isEmpty() && webAttribs.isEmpty() ) {
+    	    v = new ValidationRuleViolation(e, "[ATTRIBUTE] Owned attribute ordering is different.");
+    	}
+    	else {
+    	    v = new ValidationRuleViolation(e, "[ATTRIBUTE] Attributes differ between model and MMS.");
+    	}
         if (editable)
             v.addAction(new ExportOwnedAttribute(e));
         v.addAction(new ImportOwnedAttribute(e, elementInfo, result));
