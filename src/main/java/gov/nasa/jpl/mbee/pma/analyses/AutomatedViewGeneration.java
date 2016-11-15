@@ -156,7 +156,14 @@ public class AutomatedViewGeneration extends CommandLine {
             }
 
             sessionInfo = TeamworkUtils.loginWithSession(teamworkServer, Integer.parseInt(teamworkPort), teamworkUsername, teamworkPassword);
-
+            // 18.4 formulation - need to investigate if will work with teamwork and teamwork cloud simultaneously
+            // twcService.login(new ServerLoginInfo(teamworkServer + ":" + Integer.parseInt(teamworkPort),
+            //         teamworkUsername, teamworkPassword, teamworkUseSSL), false);
+            // if (twcService.isConnected()) {
+            //     twlogin = true;
+            // }   else {
+            //     message = "Failed:  unable to log in (twcLogin)";
+            // }
             if (sessionInfo == null) {
                 message = "Unable to log in to Teamwork as " + teamworkUsername + " on " + teamworkServer + ":" + teamworkPort;
             }
@@ -170,7 +177,7 @@ public class AutomatedViewGeneration extends CommandLine {
             if (sessionInfo != null) {
                 break;
             }
-
+            
         }
         if (sessionInfo == null) {
             error = 101;
@@ -196,10 +203,21 @@ public class AutomatedViewGeneration extends CommandLine {
         //loginMMS();
 
         try {
-            message = "[OPERATION] Loading Teamwork project \"" + teamworkProject + (teamworkBranchName.equals("") ? "\"" : "\" on branch \"" + teamworkBranchName + "\"");
+            message = "[OPERATION] Loading Teamwork projectId \"" + teamworkProject + (teamworkBranchName.equals("") ? "\"" : "\" on branch \"" + teamworkBranchName + "\"");
             logMessage(message);
             if (teamworkBranchName.equals("") || teamworkBranchName.equals("master")) {
-                projectDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(teamworkProject);
+                // loading project from name instead of id
+//                projectDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(teamworkProject);
+                // loading project from id instead of name
+                int index = teamworkProject.indexOf("ID_");
+                if (index > 0) {
+                    teamworkProject = teamworkProject.substring(index);
+                }
+                projectDescriptor = TeamworkUtils.getRemoteProjectDescriptor(teamworkProject);
+                
+                // 18.4 formulation - need to investigate if will work with teamwork and teamwork cloud simultaneously
+                // ITeamworkService twcService = EsiUtils.getTeamworkService();
+                // projectDescriptor = twcService.getProjectDescriptorByQualifiedName(teamworkProject);
             }
             else {
                 String qualifiedName = TeamworkUtils.generateProjectQualifiedName(teamworkProject, new String[]{teamworkBranchName});
@@ -225,7 +243,6 @@ public class AutomatedViewGeneration extends CommandLine {
                 throw new IllegalAccessException(message);
             }
             twLoaded = true;
-
             // repeat the initial messages because MD log is wiped when project loads
             while (!messageLog.isEmpty()) {
                 Application.getInstance().getGUILog().log(messageLog.remove(0));
