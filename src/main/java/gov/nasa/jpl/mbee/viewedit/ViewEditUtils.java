@@ -215,9 +215,12 @@ public class ViewEditUtils {
                 passwordFld.setText(password);
             }
             makeSureUserGetsFocus(usernameFld);
-            JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
+            int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                     "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
+            if (response != JOptionPane.OK_OPTION) {
+                return;
+            }
 
             char[] chars = passwordFld.getPassword();
             setUsernameAndPassword(usernameFld.getText(), new String(chars), !usernameFld.getText().isEmpty() && chars.length > 0);
