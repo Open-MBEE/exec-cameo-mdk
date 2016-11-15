@@ -167,7 +167,7 @@ public class Utils {
     public static Logger log = Logger.getLogger(Utils.class);
     public static final int[] TABBED_PANE_INDICES = { 1, 0, 0, 0, 1, 0, 0, 1, 1 };
     // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
-	
+    
     private static boolean forceDialogFalse = false;
     private static boolean forceDialogTrue = false;
     private static boolean forceDialogCancel = false;
@@ -1811,7 +1811,7 @@ public class Utils {
      * @return the element at the top of the MagicDraw containment tree
      */
     public static Package getRootElement() {
-    	return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
+        return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
         //Package root = Application.getInstance().getProject().getModel();
         //return root;
     }
@@ -2141,21 +2141,21 @@ public class Utils {
     }
     
     public static ElementSelectionDlg disableSingleSelection(final ElementSelectionDlg dlg) {
-		Container c = dlg.getContentPane();
-		for (final int i : TABBED_PANE_INDICES) {
-			if (c.getComponents().length <= i || !(c.getComponents()[i] instanceof Container)) {
-				break;
-			}
-			c = (Container) c.getComponents()[i];
-		}
-		if (c instanceof JTabbedPane) {
-			final JTabbedPane jtp = (JTabbedPane) c;
-			if (jtp.getTabCount() >= 2) {
-				jtp.setSelectedIndex(1);
-				jtp.setEnabledAt(0, false);
-			}
-		}
-		return dlg;
+        Container c = dlg.getContentPane();
+        for (final int i : TABBED_PANE_INDICES) {
+            if (c.getComponents().length <= i || !(c.getComponents()[i] instanceof Container)) {
+                break;
+            }
+            c = (Container) c.getComponents()[i];
+        }
+        if (c instanceof JTabbedPane) {
+            final JTabbedPane jtp = (JTabbedPane) c;
+            if (jtp.getTabCount() >= 2) {
+                jtp.setSelectedIndex(1);
+                jtp.setEnabledAt(0, false);
+            }
+        }
+        return dlg;
     }
 
     /**
@@ -2268,15 +2268,15 @@ public class Utils {
 
     public static Boolean getUserYesNoAnswerWithButton(String question, String[] buttons, boolean includeCancel) {
         if (forceDialogFalse) {
-        	forceDialogFalse = false;
-        	return false;
+            forceDialogFalse = false;
+            return false;
         }
         if (forceDialogTrue) {
-        	forceDialogTrue = false;
+            forceDialogTrue = false;
             return true;
         }
         if (forceDialogCancel) {
-        	forceDialogCancel = false;
+            forceDialogCancel = false;
             return null;
         }
         int option = includeCancel ? JOptionPane.YES_NO_CANCEL_OPTION : JOptionPane.YES_NO_OPTION;
@@ -2293,16 +2293,16 @@ public class Utils {
      * @return null if user hits cancel
      */
     public static Boolean getUserYesNoAnswer(String question) {
-    	if (forceDialogFalse) {
-        	forceDialogFalse = false;
-        	return false;
+        if (forceDialogFalse) {
+            forceDialogFalse = false;
+            return false;
         }
         if (forceDialogTrue) {
-        	forceDialogTrue = false;
+            forceDialogTrue = false;
             return true;
         }
         if (forceDialogCancel) {
-        	forceDialogCancel = false;
+            forceDialogCancel = false;
             return null;
         }
         int res = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), question);
@@ -2415,9 +2415,9 @@ public class Utils {
     }
     
     public static void displayValidationWindow(ValidationSuite vs, String title) {
-    	final List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
-    	vss.add(vs);
-    	displayValidationWindow(vss, title);
+        final List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+        vss.add(vs);
+        displayValidationWindow(vss, title);
     }
 
     public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
@@ -2506,7 +2506,7 @@ public class Utils {
 
     private static void setOwnerPackage(Element child, Element parent) { 
         while (!(parent instanceof Package)){
-        	parent = parent.getOwner();
+            parent = parent.getOwner();
         }
         child.setOwner(parent);
     }
@@ -2763,7 +2763,7 @@ public class Utils {
                 } else if (elem instanceof Slot) {
                     return ((Slot)elem).getValue();
                 } else if (elem instanceof Constraint) {
-                	return ((Constraint)elem).getSpecification();
+                    return ((Constraint)elem).getSpecification();
                 }
             default:
                 return null;
@@ -3597,18 +3597,18 @@ public class Utils {
     }
     
     public static boolean isJSONArrayEqual(JSONArray a, JSONArray b) {
-    	if (a != null && b != null) {
-    		Set as = new HashSet();
-    		Set bs = new HashSet();
-    		as.addAll(a);
-    		bs.addAll(b);
-    		if (as.equals(bs))
-    			return true;
-    		return false;
-    	}
-    	if (a == b)
-    		return true;
-    	return false;
+        if (a != null && b != null) {
+            Set as = new HashSet();
+            Set bs = new HashSet();
+            as.addAll(a);
+            bs.addAll(b);
+            if (as.equals(bs))
+                return true;
+            return false;
+        }
+        if (a == b)
+            return true;
+        return false;
     }
 
     public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {
@@ -3667,14 +3667,14 @@ public class Utils {
     
     public static boolean recommendUpdateFromTeamwork(String add) {
         if (forceDialogFalse) {
-        	forceDialogFalse = false;
+            forceDialogFalse = false;
             return false;
         }
         if (forceDialogTrue) {
-        	forceDialogTrue = false;
+            forceDialogTrue = false;
             return true;
         }
-    	Project project = Application.getInstance().getProject();
+        Project project = Application.getInstance().getProject();
         if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()))
             return true;
         String user = TeamworkUtils.getLoggedUserName();
@@ -3759,7 +3759,7 @@ public class Utils {
      */
     
     public static void forceDialogReturnTrue() {
-    	Utils.forceDialogTrue = true;
+        Utils.forceDialogTrue = true;
     }
 
     public static void forceDialogReturnFalse() {

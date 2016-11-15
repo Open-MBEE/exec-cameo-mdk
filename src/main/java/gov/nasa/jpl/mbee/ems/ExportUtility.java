@@ -482,10 +482,22 @@ public class ExportUtility {
             }
             else if (code == 403) {
                 if (showPopupErrors) {
-                    Utils.showPopupMessage("You do not have permission to do this.");
+                    Utils.showPopupMessage("You do not have sufficient permissions to one or more elements in the project to complete this operation.");
+                } else {
+                    Utils.guilog("[ERROR] You do not have sufficient permissions to one or more elements in the project to complete this operation.");
                 }
-                else {
-                    Utils.guilog("You do not have permission to do this.");
+                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                    try {
+                        Object o = JSONValue.parse(response);
+                        if (o instanceof JSONObject && ((JSONObject) o).containsKey("message")) {
+                            Utils.guilog("Server message: " + ((JSONObject) o).get("message"));
+                        }
+                        else {
+                            Utils.guilog("Server response: " + code + " " + response);
+                        }
+                    } catch (Exception e) {
+                        Utils.guilog("Server response: " + code + " " + response);
+                    }
                 }
             }
             else {
