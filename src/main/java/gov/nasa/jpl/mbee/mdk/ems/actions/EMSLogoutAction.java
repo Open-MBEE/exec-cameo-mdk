@@ -44,7 +44,7 @@ public class EMSLogoutAction extends MMSAction {
     private EMSLoginAction login;
 
     public EMSLogoutAction() {
-        super(DEFAULT_ID, "Logout from MMS", null, null);
+        super(DEFAULT_ID, "Logout", null, null);
     }
 
     public void setLoginAction(EMSLoginAction login) {
