@@ -427,7 +427,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
                 if (!creationOrder.getFailed().isEmpty()) {
                     Application.getInstance().getGUILog().log("[ERROR] Some elements could not be created because their owner or chain of owners could not be found in the model."
-                            + " Manual validation of a containing package and creation of the intermediate owners is required. See the User Manual section on Manual Validation for additional information.");
+                            + " The owner of the missing element must be manually synced and the missing elements added to the model. See the User Manual section on Manual Syncing for additional information.");
                 }
                 for (JSONObject element : creationOrder.getFailed()) {
                     failedJmsChangelog.addChange((String) element.get("sysmlid"), null, Changelog.ChangeType.CREATED);
