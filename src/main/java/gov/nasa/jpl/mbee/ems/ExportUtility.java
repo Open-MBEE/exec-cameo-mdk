@@ -2152,7 +2152,7 @@ public class ExportUtility {
                 && ExportUtility.isElementDocumentation((Comment) e)) {
             return false;
         }
-        if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
+        /*if (e instanceof InstanceSpecification && !(e instanceof EnumerationLiteral)) {
             boolean shouldIgnore = true;
             for (Classifier c : ((InstanceSpecification) e).getClassifier()) {
                 if (!(c instanceof Stereotype)) {
@@ -2165,8 +2165,8 @@ public class ExportUtility {
             return !shouldIgnore && !e.getOwnedElement().isEmpty();
             /*if (((InstanceSpecification)e).getClassifier().size() == 1 &&
                     IGNORE_INSTANCE_CLASSIFIERS.contains(((InstanceSpecification)e).getClassifier().get(0).getID()))
-                return false;*/
-        }
+                return false;* /
+        }*/
         if (e instanceof ConnectorEnd) {
             return false;
         }
