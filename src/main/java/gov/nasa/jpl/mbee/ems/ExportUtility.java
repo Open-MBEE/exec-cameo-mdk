@@ -1200,7 +1200,7 @@ public class ExportUtility {
         else if (e instanceof Association) {
             fillAssociationSpecialization((Association) e, specialization);
         }
-        else if (e.getClass().getSimpleName().equals("ClassImpl")) {
+        else if (e instanceof Class) {
             Stereotype viewpoint = Utils.getViewpointStereotype();
             Stereotype view = Utils.getViewStereotype();
             Stereotype doc = Utils.getProductStereotype();
