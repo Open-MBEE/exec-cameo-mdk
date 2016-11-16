@@ -425,9 +425,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     shouldLogNoJmsChanges = false;
                     Application.getInstance().getGUILog().log("[INFO] Added " + createdElements.size() + " element" + (createdElements.size() != 1 ? "s" : "") + " locally from the MMS.");
                 }
+                if (!creationOrder.getFailed().isEmpty()) {
+                    Application.getInstance().getGUILog().log("[ERROR] Some elements could not be created because their owner or chain of owners could not be found in the model."
+                            + " Manual validation of a containing package is required. See the User Manual section on Manual Validation for additional information.");
+                }
                 for (JSONObject element : creationOrder.getFailed()) {
                     failedJmsChangelog.addChange((String) element.get("sysmlid"), null, Changelog.ChangeType.CREATED);
-                    ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found");
+                    ValidationRuleViolation vrv = new ValidationRuleViolation(null, "[CREATE FAILED] Owner or chain of owners not found. See notification window for details.");
                     vrv.addAction(new DetailDiff(new JSONObject(), element));
                     cannotCreate.addViolation(vrv);
                 }
