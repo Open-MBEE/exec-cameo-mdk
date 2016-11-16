@@ -220,8 +220,9 @@ public class AutomatedViewGeneration extends CommandLine {
                 // projectDescriptor = twcService.getProjectDescriptorByQualifiedName(teamworkProject);
             }
             else {
-                String qualifiedName = TeamworkUtils.generateProjectQualifiedName(teamworkProject, new String[]{teamworkBranchName});
-                projectDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(qualifiedName);
+                throw new UnsupportedOperationException("PMA is not supported on branches.");
+//                String qualifiedName = TeamworkUtils.generateProjectQualifiedName(teamworkProject, new String[]{teamworkBranchName});
+//                projectDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(qualifiedName);
             }
         } catch (RemoteException e) {
             generalMessage("[FAILURE] Exception thrown when attempting to load project: " + e.toString());
