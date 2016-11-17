@@ -10,19 +10,19 @@ enablePlugins(GitVersioning)
 val cae_artifactory_releases =
   Resolver.url(
     "Artifactory Realm",
-    url("https://cae-artrepo.jpl.nasa.gov/artifactory/ext-release-local")
+    url("https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local")
   )(Resolver.mavenStylePatterns)
 
 val cae_artifactory_plugin_releases = 
   Resolver.url(
     "Artifactory Realm",
-    url("https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-release-local")
+    url("https://cae-artifactory.jpl.nasa.gov/artifactory/plugins-release-local")
   )(Resolver.mavenStylePatterns)
   
 val cae_artifactory_plugin_snapshots = 
   Resolver.url(
     "Artifactory Realm",
-    url("https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-snapshot-local;build.timestamp=" + new java.util.Date().getTime())
+    url("https://cae-artifactory.jpl.nasa.gov/artifactory/plugins-snapshot-local;build.timestamp=" + new java.util.Date().getTime())
   )(Resolver.mavenStylePatterns)
   
 ivyLoggingLevel := UpdateLogging.Full
@@ -34,8 +34,8 @@ persistLogLevel := Level.Debug
 val commonSettings: Seq[Setting[_]] = Seq(
   publishMavenStyle := true,
   publishTo := Some(cae_artifactory_plugin_releases),
-  fullResolvers ++= Seq(new MavenRepository("cae ext-release-local", "https://cae-artrepo.jpl.nasa.gov/artifactory/ext-release-local"),
-                        new MavenRepository("cae plugins-snapshot-local", "https://cae-artrepo.jpl.nasa.gov/artifactory/plugins-snapshot-local")
+  fullResolvers ++= Seq(new MavenRepository("cae ext-release-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local"),
+                        new MavenRepository("cae plugins-snapshot-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/plugins-snapshot-local")
                     ),
   autoScalaLibrary := false,
   // disable using the Scala version in output paths and artifacts
