@@ -1,8 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -695,21 +692,25 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject());
+        return getProjectObjectNode(project.getID(), project.getPrimaryProject().getProjectID(), project.getPrimaryProject().getName());
     }
 
     public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(project.getProjectID(), project.getName());
+        return getProjectObjectNode(null, project.getProjectID(), project.getName());
     }
 
-    private static ObjectNode getProjectObjectNode(String id, String name) {
+    private static ObjectNode getProjectObjectNode(String descId, String projId, String name) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
-        if (name != null) {
+        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projId);
+        if (name != null && !name.isEmpty()) {
             projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        if (descId != null && !descId.isEmpty()) {
+            projectObjectNode.put(MDKConstants.DESCRIPTOR_ID, descId);
+        }
         return projectObjectNode;
     }
+
 }
 
