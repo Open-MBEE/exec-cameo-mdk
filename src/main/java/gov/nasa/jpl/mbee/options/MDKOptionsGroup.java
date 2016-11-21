@@ -38,7 +38,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property);
-
     }
     
     public boolean isPersistChangelog() {
@@ -50,7 +49,12 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(PERSIST_CHANGELOG, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        if (MDUtils.isDeveloperMode()) {
+            addProperty(property);
+        } else {
+            addInvisibleProperty(property);
+        }
+
     }
     
     public boolean isChangeListenerEnabled() {
@@ -62,7 +66,12 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(CHANGE_LISTENER, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        if (MDUtils.isDeveloperMode()) {
+            addProperty(property);
+        } else {
+            addInvisibleProperty(property);
+        }
+
     }
 
     public boolean isCoordinatedSyncEnabled() {
@@ -74,7 +83,12 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(COORDINATED_SYNC, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        if (MDUtils.isDeveloperMode()) {
+            addProperty(property);
+        } else {
+            addInvisibleProperty(property);
+        }
+
     }
     
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
