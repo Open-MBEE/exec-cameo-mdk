@@ -1953,12 +1953,6 @@ public class ExportUtility {
             if (isViewConstraint((Constraint)e))
                 return false;
         }
-        Element o = e;
-        while ((o = o.getOwner()) != null) {
-            if (o.getID().equals(Project.getProject(e).getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances"))) {
-                return false;
-            }
-        }
         return true;
     }
 

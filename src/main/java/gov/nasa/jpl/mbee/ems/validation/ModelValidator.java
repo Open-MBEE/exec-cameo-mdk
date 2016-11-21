@@ -716,12 +716,6 @@ public class ModelValidator {
                     owner = (Element)prj.getElementByID(webOwnerID);
                 if (e.getOwner() == owner)
                     return null; //in case owner is Data
-                Element o = e;
-                while ((o = o.getOwner()) != null) {
-                    if (o.getID().equals(Project.getProject(e).getPrimaryProject().getProjectID().replace("PROJECT", "Unused_View_Instances"))) {
-                        return null;
-                    }
-                }
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[OWNER] model: " + e.getOwner().getHumanName() + ", web: " + (owner == null ? webOwnerID : owner.getHumanName()));
                 if (!crippled) {
                     if (editable)
