@@ -4,12 +4,14 @@ import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.esi.EsiUtils;
+import com.nomagic.magicdraw.teamwork.application.BranchData;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.teamwork.common.users.SessionInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
+import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
@@ -24,6 +26,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 public class AutomatedViewGeneration extends CommandLine {
+
     // needed because CommandLine redirects it, and we want the output
     private static final PrintStream stdout = System.out;
 
@@ -47,13 +50,13 @@ public class AutomatedViewGeneration extends CommandLine {
             applicationAccounts = 1;
 
     private static String testRoot = "",
-            credentialsLocation = System.getenv("CREDENTIALS"),
-            teamworkProject = System.getenv("TEAMWORK_PROJECT"),
-            teamworkBranchName = System.getenv("MMS_WORKSPACE"),
+            credentialsLocation = "",
             teamworkUsername = "",
             teamworkPassword = "",
             teamworkServer = "",
-            teamworkPort = "";
+            teamworkPort = "",
+            teamworkProject = "",
+            teamworkBranchName = "master";
 
     private static final List<String> viewList = new ArrayList<>(),
             messageLog = new ArrayList<>();
@@ -62,38 +65,26 @@ public class AutomatedViewGeneration extends CommandLine {
 
     protected static final Object lock = new Object();
 
-    /************************************************************
+    /*//////////////////////////////////////////////////////////////
      *
      * Execution methods
      *
-     ************************************************************/
-
-    public static void main(String[] args) throws Exception {
-        for (int i = 0; i < args.length; i++) {
-            System.out.println(args[i]);
-        }
-//        System.getenv().put("TEAMWORK_PROJECT", "");
-//        System.getenv().put("CREDENTIALS", "");
-//        System.getenv().put("MMS_WORKSPACE", "");
-        System.setOut(AutomatedViewGeneration.stdout);
-        System.setErr(AutomatedViewGeneration.stdout);
-        for (int i = 0; i < args.length; i++) {
-            System.out.println(args[i]);
-        }
-        new RuntimeException().printStackTrace();
-        System.exit(20);
-//        AutomatedViewGeneration docweb = new AutomatedViewGeneration();
-//        docweb.parseArgs(args);
-//        docweb.cancelHandler = docweb.new InterruptTrap();
-//        Runtime.getRuntime().addShutdownHook(docweb.cancelHandler);
-//        docweb.launch(new String[0]);
-    }
+    /*//////////////////////////////////////////////////////////////
 
     @Override
     protected byte execute() {
+        // send output back to stdout
         System.setOut(AutomatedViewGeneration.stdout);
         System.setErr(AutomatedViewGeneration.stdout);
+
+        // disable logJson, in case it's on, to make the logs not hideous
         MDKOptionsGroup.getMDKOptions().setLogJson(false);
+
+        // start the cancel handler so we don't terminate in the middle of a view sync operation
+        // and so we can force logout if logged in to teamwork
+        cancelHandler = new InterruptTrap();
+        Runtime.getRuntime().addShutdownHook(cancelHandler);
+
         running = true;
         try {
             String msg = "Performing automated view generation";
@@ -140,21 +131,25 @@ public class AutomatedViewGeneration extends CommandLine {
         return error;
     }
 
-    /**************************************************************
+    /*////////////////////////////////////////////////////////////////
      *
      * "User Operation" methods
      *
-     **************************************************************/
+    /*////////////////////////////////////////////////////////////////
 
     /**
      * Logs in to teamwork using the initially loaded teamwork account. If that account
      * is already in use, will load/generate and attempt to log in with additional sets
      * of credentials, up to the limit specified in applicationAccounts.
      *
-     * @throws Exception
+     * @throws FileNotFoundException missing credentialsLocation
+     * @throws UnsupportedEncodingException logMessage failures
+     * @throws InterruptedException cancel triggered and caught by cancel handler
+     * @throws IllegalAccessException access failure with loaded credentials
      */
 
-    private void loginTeamwork() throws FileNotFoundException, UnsupportedEncodingException, InterruptedException, IllegalAccessException {
+    private void loginTeamwork()
+            throws FileNotFoundException, UnsupportedEncodingException, InterruptedException, IllegalAccessException {
         // disable all mdk popup warnings
         MDKHelper.setPopupsDisabled(true);
 
@@ -226,20 +221,16 @@ public class AutomatedViewGeneration extends CommandLine {
     /**
      * Loads the Teamwork project. Complains if it fails.
      *
-     * @throws Exception Throws Exception if project is not found on server
-     *                   Throws Exception if user does not have permissions to open project
-     *                   Check Exception text to differentiate
+     * @throws FileNotFoundException can't find teamwork project or branch
+     * @throws UnsupportedEncodingException logMessage failures
+     * @throws InterruptedException cancel triggered and caught by cancel handler
+     * @throws IllegalAccessException access failure with loaded credentials
+     * @throws RemoteException error getting the projectDescriptor back from the twUtil
      */
     private void loadTeamworkProject()
-            throws FileNotFoundException, IllegalAccessException, InterruptedException, UnsupportedEncodingException {
+            throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, InterruptedException {
         String message;
-        ProjectDescriptor projectDescriptor = null;
-
-        try {
-            System.out.println(teamworkProject =TeamworkUtils.getRemoteProjectIDByQualifiedName("OpenCAE_Donbot"));
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        ProjectDescriptor projectDescriptor;
 
         if (teamworkProject.startsWith("PROJECT-")) {
             teamworkProject = teamworkProject.substring(8);
@@ -249,68 +240,96 @@ public class AutomatedViewGeneration extends CommandLine {
             teamworkProject = teamworkProject.substring(index);
         }
 
+        // get the descriptor of the project trunk
         if (twCloud) {
-            // teamwork cloud formulation
-            ITeamworkService twcsrv = EsiUtils.getTeamworkService();
             try {
-                projectDescriptor = twcsrv.getProjectDescriptorById(teamworkProject);
+                projectDescriptor = EsiUtils.getTeamworkService().getProjectDescriptorById(teamworkProject);
             } catch (Exception e) {
-                generalMessage("[FAILURE] Exception thrown when attempting to load project: " + e.toString());
-            }
-            if (!teamworkBranchName.isEmpty() && !teamworkBranchName.equals("master")) {
-                projectDescriptor = EsiUtils.getDescriptorForBranch(projectDescriptor, teamworkBranchName);
+                throw new RemoteException(e.getMessage());
             }
         } else {
             // old teamwork formulation
-            try {
-                message = "[OPERATION] Loading Teamwork projectId \"" + teamworkProject + (teamworkBranchName.isEmpty() ? "\"" : "\" on branch \"" + teamworkBranchName + "\"");
-                logMessage(message);
-                if (teamworkBranchName.isEmpty() || teamworkBranchName.equals("master")) {
-                    projectDescriptor = TeamworkUtils.getRemoteProjectDescriptor(teamworkProject);
-                } else {
-                    //TODO add branch support in old teamwork
-//                    throw new UnsupportedOperationException("PMA is not supported on branches.");
-                }
-            } catch (RemoteException e) {
-                generalMessage("[FAILURE] Exception thrown when attempting to load project: " + e.toString());
-            }
+            projectDescriptor = TeamworkUtils.getRemoteProjectDescriptor(teamworkProject);
         }
 
+        // if trunk descriptor is null, error out and indicate projectId fail
         if (projectDescriptor == null) {
-            message = "[FAILURE] Unable to find Teamwork project " + teamworkProject + (teamworkBranchName.isEmpty() ? "" : " on branch " + teamworkBranchName);
+            message = "[FAILURE] Unable to find Teamwork" + (twCloud ? "Cloud" : "") + " projectId \"" + teamworkProject;
             logMessage(message);
             error = 102;
             throw new FileNotFoundException(message);
         }
-        else {
-            Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
-            // if not access to project,
-            if (Application.getInstance().getProject() == null) {
-                message = "[FAILURE] User does not have access to " + teamworkProject;
+
+        // if we need a branch, update the descriptor to the branch descriptor
+        if (!teamworkBranchName.isEmpty() && !teamworkBranchName.equals("master")) {
+            // name for ease of display / teamworkOld comparisons
+            String fqName = projectDescriptor.getRepresentationString() + "/" + teamworkBranchName;
+
+            if (twCloud) {
+                //TODO verify this with a TWC server with branches and whatever (need projectID and some config still)
+                projectDescriptor = EsiUtils.getDescriptorForBranch(projectDescriptor, teamworkBranchName);
+            } else {
+                // branches in teamworkOld are gathered by containing branch, so write an ugly growing for loop to check
+                // until we find the right one, then break. only add after check though.
+                //TODO find a branch-of-branch-of-branch in MMS and look at how that would get passed in
+                List<BranchData> branchData = new ArrayList<>();
+                branchData.addAll(TeamworkUtils.getBranches(projectDescriptor));
+                projectDescriptor = null;
+                for (int i = 0; i < branchData.size(); i++) {
+                    ProjectDescriptor temp = TeamworkUtils.getRemoteProjectDescriptor(branchData.get(i).getBranchId());
+                    if (temp.getRepresentationString().equals(fqName)) {
+                        projectDescriptor = temp;
+                        break;
+                    }
+                    branchData.addAll(TeamworkUtils.getBranches(temp));
+                }
+            }
+
+            // if updated projectDescriptor is now null, error out and indicate branch problem
+            if (projectDescriptor == null) {
+                message = "[FAILURE] Unable to find Teamwork" + (twCloud ? "Cloud" : "") + " project branch " + fqName;
                 logMessage(message);
                 error = 102;
-                throw new IllegalAccessException(message);
+                throw new FileNotFoundException(message);
             }
-            twLoaded = true;
-            // repeat the initial messages because MD log is wiped when project loads
-            while (!messageLog.isEmpty()) {
-                Application.getInstance().getGUILog().log(messageLog.remove(0));
-            }
-            message = "Opened Teamwork project";
-            logMessage(message);
-            // LOG: successfully opened the Teamwork project
         }
+
+        // we have a valid project descriptor, so load the associated project
+        message = "[OPERATION] Loading Teamwork" + (twCloud ? "Cloud" : "") + " project " + projectDescriptor.getRepresentationString();
+        logMessage(message);
+        Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
+        // if not access to project, loaded project will be null, so error out
+        if (Application.getInstance().getProject() == null) {
+            message = "[FAILURE] User does not have access to " + teamworkProject;
+            logMessage(message);
+            error = 102;
+            throw new IllegalAccessException(message);
+        }
+        twLoaded = true;
+
+        // move the stored message log into the MD notification window. This will mess up the time stamps, but will
+        // keep all of the messages in the same place
+        while (!messageLog.isEmpty()) {
+            Application.getInstance().getGUILog().log(messageLog.remove(0));
+        }
+        message = "Opened Teamwork project";
+        logMessage(message);
+        // LOG: successfully opened the Teamwork project
+
         checkCancel();
     }
 
     /**
      * Checks to ensure that the logged in user has edit permissions to site.
      *
-     * @throws Exception User does not have write permissions to site, possibly due to site
+     * @throws IOException either a logMessage failure or a isSiteEditable failure
+     * @throws InterruptedException cancel triggered and caught by cancel handler
+     * @throws IllegalAccessException access failure with loaded credentials
+     * @throws ServerException server error
+     * @throws URISyntaxException uri addressing error
      */
-
     private void checkSiteEditPermission()
-            throws IOException, IllegalAccessException, InterruptedException, ServerException, URISyntaxException {
+            throws IllegalAccessException, InterruptedException, ServerException, URISyntaxException, IOException {
         if (!MDKHelper.loginToMMS(teamworkUsername, teamworkPassword)) {
             String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
             logMessage(message);
@@ -333,9 +352,12 @@ public class AutomatedViewGeneration extends CommandLine {
      * sequentially. If an element is not found, skips generation and continues
      * through list, and will throw an exception at the end.
      *
-     * @throws Exception One or more elementIDs in the list were not found in the model.
+     * @throws FileNotFoundException one or more documents not found in project, or logMessage failure
+     * @throws InterruptedException cancel triggered and caught by cancel handler
+     * @throws UnsupportedEncodingException logMessage failure
      */
-    private void generateViewsForDocList() throws FileNotFoundException, InterruptedException, UnsupportedEncodingException {
+    private void generateViewsForDocList()
+            throws FileNotFoundException, InterruptedException, UnsupportedEncodingException {
         String msg = "[OPERATION] Triggering view generation on MMS";
         logMessage(msg);
         boolean failedDocs = false;
@@ -367,11 +389,11 @@ public class AutomatedViewGeneration extends CommandLine {
         checkCancel();
     }
 
-    /************************************************
+    /*//////////////////////////////////////////////////////////////////
      *
      * Helper methods
      *
-     ************************************************/
+    /*//////////////////////////////////////////////////////////////////
 
     /**
      * parses arguments passed in from command line
@@ -396,13 +418,6 @@ public class AutomatedViewGeneration extends CommandLine {
                         String csvDocumentList = buildArgString(args);
                         Collections.addAll(viewList, csvDocumentList.split(" && "));
                         System.out.println();
-                        break;
-                    case "-mdrt":
-                        String mdRoot = buildArgString(args);
-                        mdRoot = mdRoot + (mdRoot.length() > 0 && mdRoot.charAt(mdRoot.length() - 1) == '/' ? "" : "/");
-                        if (mdRoot.equals("/")) {
-                            mdRoot = "";
-                        }
                         break;
                     case "-tstrt":
                         testRoot = buildArgString(args);
@@ -448,8 +463,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private void loadCredentials(String append) throws IOException {
         Properties prop = new Properties();
-        try (InputStream input = new FileInputStream(credentialsLocation);
-        ) {
+        try (InputStream input = new FileInputStream(credentialsLocation)) {
             prop.load(input);
             if (prop.containsKey("app.accounts")) {
                 try {
@@ -498,40 +512,29 @@ public class AutomatedViewGeneration extends CommandLine {
                 if (error == 0) {
                     reportStatus("completed", debug);
                     System.out.println("Automated View Generation completed without errors.\n");
-                }
-                if (error != 0) {
-                    if (!cancel) {
-                        reportStatus("failed", debug);
-                    }
+                } else {
+                    reportStatus("failed", debug);
                     System.out.println("Automated View Generation did not finish successfully. Operations were logged in MDNotificationWindowText.html.\n");
                 }
-                if (!cancel) {
-                    System.exit(error);
-                }
+//                System.exit(error);
             }
         }
     }
 
     private void logMessage(String msg) throws FileNotFoundException, UnsupportedEncodingException {
         if (messageLog.size() > 0) {
-            if (msg.length() > 0) {
+            if (!msg.isEmpty()) {
                 messageLog.add(msg);
                 System.out.println(msg);
             }
             exportMessageLog();
         }
         else {
-            if (msg.length() > 0) {
-                generalMessage(msg);
+            if (!msg.isEmpty()) {
+                MagicDrawHelper.generalMessage(msg);
             }
             exportGUILog();
         }
-    }
-
-    private void generalMessage(String s) {
-        Application instance = Application.getInstance();
-        instance.getGUILog().log(s);
-        System.out.println(s);
     }
 
     private void exportGUILog() throws FileNotFoundException, UnsupportedEncodingException {
@@ -587,7 +590,7 @@ public class AutomatedViewGeneration extends CommandLine {
             MMS_SERVER = envvars.get("MMS_SERVER");
         }
 
-        URL url = new URL(MMS_SERVER + "/alfresco/service/workspaces/master/jobs");
+        URL url = new URL(MMS_SERVER + "/alfresco/service/workspaces/" + teamworkBranchName + "/jobs");
         String data = "{\"jobs\":[{\"sysmlid\":\"" + JOB_ID + "\", \"status\":\"" + status + "\"}]}";
         byte[] postData = data.getBytes(StandardCharsets.UTF_8);
 
