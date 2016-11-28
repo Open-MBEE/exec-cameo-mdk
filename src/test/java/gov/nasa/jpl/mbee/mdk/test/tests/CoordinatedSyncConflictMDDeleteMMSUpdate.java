@@ -13,6 +13,7 @@ import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 
 import org.junit.AfterClass;
@@ -21,10 +22,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -39,16 +43,19 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
 
     private static Element targetElement;
     private static Element targetPackage;
-    private static String filename = "/Users/ablack/git/mdk/resources/tests/CSyncTest.mdzip";
+    private static String filename = "/CSyncTest.mdzip";
     
     public CoordinatedSyncConflictMDDeleteMMSUpdate() {
     }
 
     @BeforeClass
     public static void setupProject() throws IOException, ServerException, URISyntaxException {
-        MDKTestHelper.setMmsCredentials("/Users/ablack/git/mdk/resources/mms.properties", "");
+        MDKTestHelper.setMmsCredentials("/mms.properties", "");
 
-        MagicDrawHelper.openProject(filename);
+        File testProjectFile = File.createTempFile("prj", ".mdzip");
+        testProjectFile.deleteOnExit();
+        Files.copy(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResourceAsStream(filename), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        MagicDrawHelper.openProject(testProjectFile);
 
         if (!MDKHelper.isSiteEditable()) {
             throw new IOException("User does not have permissions to site");

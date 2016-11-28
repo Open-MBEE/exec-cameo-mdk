@@ -222,8 +222,9 @@ task testsJar(type: Jar, dependsOn: testClasses) {
     from sourceSets.test.output
 
     exclude 'gov/nasa/jpl/mbee/mdk/test/framework/**'
-    exclude '**/org/gradle/**'
-    include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
+    exclude 'org/**'
+    exclude 'worker/**'
+    //include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 }
 
 task testsHackJar(type: Jar, dependsOn: testClasses) {
@@ -231,7 +232,8 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     from sourceSets.test.output
 
     include 'gov/nasa/jpl/mbee/mdk/test/framework/**'
-    include '**/org/gradle/**'
+    include 'org/**'
+    include 'worker/**'
     exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
@@ -372,7 +374,7 @@ test {
      * @author igomes
      */
     classpath = files()
-    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/install', include: ['plugins/**/*.jar']).asPath + fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml']
+    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/generated-dist', include: '**/*.jar').asPath + /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
 }
 
 test.dependsOn testsJar
