@@ -344,7 +344,6 @@ public class MMSUtils {
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
         final AtomicReference<String> emsg = new AtomicReference<>();
-        final AtomicReference<String> einput = new AtomicReference<>();
         Thread t = new Thread(() -> {
             ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
             try {
@@ -692,14 +691,14 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getID(), project.getPrimaryProject().getProjectID(), project.getPrimaryProject().getName());
+        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), project.getID());
     }
 
     public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(null, project.getProjectID(), project.getName());
+        return getProjectObjectNode(project.getName(), project.getProjectID(), null);
     }
 
-    private static ObjectNode getProjectObjectNode(String descId, String projId, String name) {
+    private static ObjectNode getProjectObjectNode(String name, String projId, String descId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
         projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projId);

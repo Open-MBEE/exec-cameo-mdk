@@ -254,7 +254,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
         // if trunk descriptor is null, error out and indicate projectId fail
         if (projectDescriptor == null) {
-            message = "[FAILURE] Unable to find Teamwork" + (twCloud ? "Cloud" : "") + " projectId \"" + teamworkProject;
+            message = "[FAILURE] Unable to find Teamwork" + (twCloud ? "Cloud" : "") + " projectId " + teamworkProject;
             logMessage(message);
             error = 102;
             throw new FileNotFoundException(message);
