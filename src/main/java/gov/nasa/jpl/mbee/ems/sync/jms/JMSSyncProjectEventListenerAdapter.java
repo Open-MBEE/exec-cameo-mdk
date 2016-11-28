@@ -32,7 +32,11 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectOpened(Project project) {
         projectClosed(project);
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
-        new Thread(() -> jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project))).start();
+        new Thread() {
+            public void run() {
+                jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project));
+            }
+        }.start();
     }
 
     @Override
