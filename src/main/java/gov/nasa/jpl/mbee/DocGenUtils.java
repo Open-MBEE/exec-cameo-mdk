@@ -120,11 +120,11 @@ public class DocGenUtils {
                                                                         put("</sup>", "</superscript>");
                                                                         put("</sub>", "</subscript>");
                                                                         put("<a href=\"(http[^\"]+)\">([^<]*)</a>",
-                                                                                "<link xl:href=\"$1\">$2</link>");
+                                                                                "<link xlink:href=\"$1\">$2</link>");
                                                                         put("<a href=\"(file[^\"]+)\">([^<]*)</a>",
-                                                                                "<link xl:href=\"$1\">$2</link>");
+                                                                                "<link xlink:href=\"$1\">$2</link>");
                                                                         put("<a href=\"(mailto[^\"]+)\">([^<]*)</a>",
-                                                                                "<link xl:href=\"$1\">$2</link>");
+                                                                                "<link xlink:href=\"$1\">$2</link>");
                                                                         put("<a href=\"mdel://([^\"&^\\?]+)(\\?[^\"]*)?\">([^<]*)</a>",
                                                                                 "<link linkend=\"$1\">$3</link>");
                                                                         put("<img [^>]*src=\"([^>]+)\"[^>]*></img>", "<imageobject><imagedata fileref=\"$1\" scalefit=\"1\"/></imageobject>");
