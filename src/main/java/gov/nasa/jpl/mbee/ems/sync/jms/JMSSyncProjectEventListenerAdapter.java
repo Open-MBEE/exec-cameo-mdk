@@ -29,9 +29,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     private static final Map<String, JMSSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
-    public void projectOpened(Project project) {
+    public void projectOpened(final Project project) {
         projectClosed(project);
-        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+        final JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         new Thread() {
             public void run() {
                 jmsSyncProjectMapping.setDisabled(!project.isRemote() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project));
