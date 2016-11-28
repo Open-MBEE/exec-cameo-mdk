@@ -34,7 +34,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         new Thread() {
             public void run() {
-                jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project));
+                jmsSyncProjectMapping.setDisabled(!project.isRemote() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project));
             }
         }.start();
     }

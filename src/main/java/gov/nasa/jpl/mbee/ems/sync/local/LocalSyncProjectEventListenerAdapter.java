@@ -18,8 +18,10 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         projectClosed(project);
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
         LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new LocalSyncTransactionCommitListener(project);
-        ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
-        getProjectMapping(project).setLocalSyncTransactionCommitListener(listener);
+        if (project.isRemote()) {
+            ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
+        }
+        localSyncProjectMapping.setLocalSyncTransactionCommitListener(listener);
     }
 
     @Override

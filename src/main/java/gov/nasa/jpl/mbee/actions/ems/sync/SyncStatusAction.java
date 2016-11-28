@@ -176,6 +176,7 @@ public class SyncStatusAction extends SRAction {
     @Override
     public void updateState() {
         super.updateState();
-        setEnabled(Application.getInstance().getProject() != null);
+        Project project = Application.getInstance().getProject();
+        setEnabled(project != null && project.isRemote());
     }
 }

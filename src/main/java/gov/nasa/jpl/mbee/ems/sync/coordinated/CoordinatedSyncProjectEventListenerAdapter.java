@@ -25,13 +25,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by igomes on 6/22/16.
  */
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<String, RealTimeSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<String, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
     private DeltaSyncRunner deltaSyncRunner;
 
     @Override
     public void projectClosed(Project project) {
-        RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
-        if (realTimeSyncProjectMapping.isDisabled()) {
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
+        if (coordinatedSyncProjectMapping.isDisabled()) {
             return;
         }
         projectMappings.remove(project.getID());
@@ -54,8 +54,8 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (!enabled) {
             return;
         }
-        RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
-        if (realTimeSyncProjectMapping.isDisabled()) {
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
+        if (coordinatedSyncProjectMapping.isDisabled()) {
             return;
         }
         if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
@@ -72,6 +72,10 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     @Override
     @SuppressWarnings("unchecked")
     public void projectSaved(Project project, boolean savedInServer) {
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
+        if (coordinatedSyncProjectMapping.isDisabled()) {
+            return;
+        }
         if (deltaSyncRunner != null && !deltaSyncRunner.isFailure()) {
             JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
             JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
@@ -109,27 +113,27 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         }
     }
 
-    public static RealTimeSyncProjectMapping getProjectMapping(Project project) {
-        RealTimeSyncProjectMapping realTimeSyncProjectMapping = projectMappings.get(project.getID());
-        if (realTimeSyncProjectMapping == null) {
-            projectMappings.put(project.getID(), realTimeSyncProjectMapping = new RealTimeSyncProjectMapping());
+    public static CoordinatedSyncProjectMapping getProjectMapping(Project project) {
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(project.getID());
+        if (coordinatedSyncProjectMapping == null) {
+            projectMappings.put(project.getID(), coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
+            projectMappings.get(project.getID()).setDisabled(!project.isRemote());
         }
-        return realTimeSyncProjectMapping;
+        return coordinatedSyncProjectMapping;
     }
 
     public DeltaSyncRunner getDeltaSyncRunner() {
         return deltaSyncRunner;
     }
 
-    public static class RealTimeSyncProjectMapping {
-        // TODO Volatile to synchronized @Ivan
-        private volatile boolean disabled;
+    public static class CoordinatedSyncProjectMapping {
+        private boolean disabled;
 
-        public boolean isDisabled() {
+        public synchronized boolean isDisabled() {
             return disabled;
         }
 
-        public void setDisabled(boolean disabled) {
+        public synchronized void setDisabled(boolean disabled) {
             this.disabled = disabled;
         }
     }
