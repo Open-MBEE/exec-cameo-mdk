@@ -32,7 +32,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectOpened(Project project) {
         projectClosed(project);
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
-        jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project));
+        new Thread(() -> jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || project.getModel() == null || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project))).start();
     }
 
     @Override
@@ -204,7 +204,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         private JMSMessageListener jmsMessageListener;
         private MessageProducer messageProducer;
 
-        private volatile boolean disabled;
+        private volatile boolean disabled = true;
 
         public Connection getConnection() {
             return connection;
