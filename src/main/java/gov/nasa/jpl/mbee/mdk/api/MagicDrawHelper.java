@@ -56,6 +56,8 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,11 +88,7 @@ public class MagicDrawHelper {
      *
      *****************************************************************************************/
 
-    public static ProjectDescriptor openProject(String filename) throws IOException {
-        final File file = new File(filename);
-        if (!file.isFile()) {
-            throw new IOException(Paths.get(file.toURI()).toString() + " is not a file and cannot be loaded.");
-        }
+    public static ProjectDescriptor openProject(File file) throws IOException {
         final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
         if (projectDescriptor == null) {
             throw new IOException(Paths.get(file.toURI()).toString() + " could not generate a project descriptor.");

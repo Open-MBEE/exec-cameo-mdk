@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -59,25 +60,20 @@ public abstract class MDKTestHelper {
     public static String setMmsCredentials(String location, String append) throws IOException {
         String mmsUsername = "";
         String mmsPassword = "";
-        if (!Paths.get(location).toFile().exists()) {
-            throw new IOException(Paths.get(location).toString() + " is not a file and cannot be loaded.");
+        InputStream propertesFileStream = MDKTestHelper.class.getResourceAsStream(location);
+        if (propertesFileStream == null) {
+            throw new IOException(location + " is not a file and cannot be loaded.");
         }
         Properties prop = new Properties();
-        try (InputStream input = new FileInputStream(location);
-        ) {
-            // load a properties file
-            prop.load(input);
-            // set appropriate fields
-            if (prop.containsKey("user.name" + append)) {
-                mmsUsername = prop.getProperty("user.name" + append);
-                mmsPassword = prop.getProperty("user.pass" + append);
-            } else {
-                mmsUsername = prop.getProperty("user.name") + append;
-                mmsPassword = prop.getProperty("user.pass") + append;
-            }
-        } catch (IOException ioe) {
-            // only using try/catch formulation so we can utilize auto-closeable
-            throw ioe;
+        // load a properties file
+        prop.load(propertesFileStream);
+        // set appropriate fields
+        if (prop.containsKey("user.name" + append)) {
+            mmsUsername = prop.getProperty("user.name" + append);
+            mmsPassword = prop.getProperty("user.pass" + append);
+        } else {
+            mmsUsername = prop.getProperty("user.name") + append;
+            mmsPassword = prop.getProperty("user.pass") + append;
         }
         if (mmsUsername.isEmpty() || mmsPassword.isEmpty()) {
             throw new IOException(Paths.get(location).toString() + " did not contain a user.name or user.pass field.");
