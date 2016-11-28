@@ -95,6 +95,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         String username = ViewEditUtils.getUsername();
         if (username == null || username.isEmpty()) {
             ViewEditUtils.showLoginDialog();
+            username = ViewEditUtils.getUsername();
             if (username == null || username.isEmpty()) {
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Could not login to MMS.");
                 return false;
