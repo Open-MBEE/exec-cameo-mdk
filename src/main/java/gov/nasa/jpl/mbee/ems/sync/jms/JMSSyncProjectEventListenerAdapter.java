@@ -88,6 +88,15 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         String projectID = ExportUtility.getProjectId(project);
         String workspaceID = ExportUtility.getWorkspace();
 
+        String username = ViewEditUtils.getUsername();
+        if (username == null || username.isEmpty()) {
+            ViewEditUtils.showLoginDialog();
+            if (username == null || username.isEmpty()) {
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Could not login to MMS.");
+                return false;
+            }
+        }
+
         JMSUtils.JMSInfo jmsInfo;
         try {
             jmsInfo = JMSUtils.getJMSInfo(project);
@@ -111,11 +120,6 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork.");
                 return false;
             }
-        }
-        String username = ViewEditUtils.getUsername();
-        if (username == null || username.isEmpty()) {
-            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Could not login to MMS.");
-            return false;
         }
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(JMSUtils.getJMSInfo(project));
