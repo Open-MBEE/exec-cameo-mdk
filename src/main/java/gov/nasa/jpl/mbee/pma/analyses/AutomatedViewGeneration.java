@@ -42,7 +42,8 @@ public class AutomatedViewGeneration extends CommandLine {
             running = false,
             twLogin = false,
             twLoaded = false,
-            twCloud = true;
+            teamworkCloud = true,
+            teamwork = false;
 
     private static byte error = 0;
 
@@ -114,7 +115,7 @@ public class AutomatedViewGeneration extends CommandLine {
             if (twLogin) {
                 // logout
                 System.out.println("[OPERATION] Logging out of teamwork");
-                if (twCloud) {
+                if (teamworkCloud) {
                     EsiUtils.getTeamworkService().logout();
                 } else {
                     TeamworkUtils.logout();
@@ -179,28 +180,29 @@ public class AutomatedViewGeneration extends CommandLine {
                 }
             }
 
-            // teamwork cloud implementation - supporting both since it these methods don't seem to work with both
-            twcService.login(new ServerLoginInfo(teamworkServer + ":" + Integer.parseInt(teamworkPort),
-                    teamworkUsername, teamworkPassword, true), true);
-            if (twcService.isConnected()) {
-                // setting MMS credentials after successful teamwork login since we don't know which account was used before hand
-                MDKHelper.setMMSLoginCredentials(teamworkUsername, teamworkPassword);
-                message = "Logged in to Teamwork as " + teamworkUsername + " on " + teamworkServer + ":" + teamworkPort;
-                logMessage(message);
-                // LOG: successfully logged in to the teamwork cloud server
-                break;
+            // teamwork cloud implementation - supporting both since these methods don't seem to work with both
+            if (teamworkCloud){
+                twcService.login(new ServerLoginInfo(teamworkServer + ":" + Integer.parseInt(teamworkPort),
+                        teamworkUsername, teamworkPassword, true), true);
+                if (twcService.isConnected()) {
+                    // setting MMS credentials after successful teamwork login since we don't know which account was used before hand
+                    MDKHelper.setMMSLoginCredentials(teamworkUsername, teamworkPassword);
+                    message = "Logged in to Teamwork as " + teamworkUsername + " on " + teamworkServer + ":" + teamworkPort;
+                    logMessage(message);
+                    // LOG: successfully logged in to the teamwork cloud server
+                    break;
+                }
             }
-
-            // older teamwork server implementation
-            sessionInfo = TeamworkUtils.loginWithSession(teamworkServer, Integer.parseInt(teamworkPort), teamworkUsername, teamworkPassword);
-            if (sessionInfo != null) {
-                // setting MMS credentials after successful teamwork login since we don't know which account was used before hand
-                twCloud = false;
-                MDKHelper.setMMSLoginCredentials(teamworkUsername, teamworkPassword);
-                message = "Logged in to Teamwork as " + teamworkUsername + " on " + teamworkServer + ":" + teamworkPort;
-                logMessage(message);
-                // LOG: successfully logged in to the teamwork server
-                break;
+            else if (teamwork) {
+                sessionInfo = TeamworkUtils.loginWithSession(teamworkServer, Integer.parseInt(teamworkPort), teamworkUsername, teamworkPassword);
+                if (sessionInfo != null) {
+                    // setting MMS credentials after successful teamwork login since we don't know which account was used before hand
+                    MDKHelper.setMMSLoginCredentials(teamworkUsername, teamworkPassword);
+                    message = "Logged in to Teamwork as " + teamworkUsername + " on " + teamworkServer + ":" + teamworkPort;
+                    logMessage(message);
+                    // LOG: successfully logged in to the teamwork server
+                    break;
+                }
             }
 
             message = "Unable to log in to Teamwork as " + teamworkUsername + " on " + teamworkServer + ":" + teamworkPort;
@@ -241,7 +243,7 @@ public class AutomatedViewGeneration extends CommandLine {
         }
 
         // get the descriptor of the project trunk
-        if (twCloud) {
+        if (teamworkCloud) {
             try {
                 projectDescriptor = EsiUtils.getTeamworkService().getProjectDescriptorById(teamworkProject);
             } catch (Exception e) {
@@ -254,7 +256,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
         // if trunk descriptor is null, error out and indicate projectId fail
         if (projectDescriptor == null) {
-            message = "[FAILURE] Unable to find Teamwork" + (twCloud ? "Cloud" : "") + " projectId " + teamworkProject;
+            message = "[FAILURE] Unable to find Teamwork" + (teamworkCloud ? "Cloud" : "") + " projectId " + teamworkProject;
             logMessage(message);
             error = 102;
             throw new FileNotFoundException(message);
@@ -265,7 +267,7 @@ public class AutomatedViewGeneration extends CommandLine {
             // name for ease of display / teamworkOld comparisons
             String fqName = projectDescriptor.getRepresentationString() + "/" + teamworkBranchName;
 
-            if (twCloud) {
+            if (teamworkCloud) {
                 //TODO verify this with a TWC server with branches and whatever (need projectID and some config still)
                 projectDescriptor = EsiUtils.getDescriptorForBranch(projectDescriptor, teamworkBranchName);
             } else {
@@ -287,7 +289,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
             // if updated projectDescriptor is now null, error out and indicate branch problem
             if (projectDescriptor == null) {
-                message = "[FAILURE] Unable to find Teamwork" + (twCloud ? "Cloud" : "") + " project branch " + fqName;
+                message = "[FAILURE] Unable to find Teamwork" + (teamworkCloud ? "Cloud" : "") + " project branch " + fqName;
                 logMessage(message);
                 error = 102;
                 throw new FileNotFoundException(message);
@@ -295,7 +297,7 @@ public class AutomatedViewGeneration extends CommandLine {
         }
 
         // we have a valid project descriptor, so load the associated project
-        message = "[OPERATION] Loading Teamwork" + (twCloud ? "Cloud" : "") + " project " + projectDescriptor.getRepresentationString();
+        message = "[OPERATION] Loading Teamwork" + (teamworkCloud ? "Cloud" : "") + " project " + projectDescriptor.getRepresentationString();
         logMessage(message);
         Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
         // if not access to project, loaded project will be null, so error out
@@ -431,6 +433,14 @@ public class AutomatedViewGeneration extends CommandLine {
                         break;
                     case "-twprj":
                         teamworkProject = buildArgString(args);
+                        if (teamworkProject.startsWith("twcloud:/")) {
+                            teamworkCloud = true;
+                            teamworkProject = teamworkProject.substring(9);
+                        }
+                        else if (teamworkProject.startsWith("teamwork://")) {
+                            teamwork = true;
+                            teamworkProject = teamworkProject.substring(11);
+                        }
                         break;
                     case "-wkspc":
                         teamworkBranchName = buildArgString(args);

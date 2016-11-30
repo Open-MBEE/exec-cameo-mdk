@@ -259,9 +259,9 @@ public class MMSUtils {
                 request = new HttpPut(requestDest);
                 break;
         }
-        request.addHeader("Content-Type", "application/json");
         request.addHeader("charset", "utf-8");
         if (sendData != null && request instanceof HttpEntityEnclosingRequest) {
+            request.addHeader("Content-Type", "application/json");
             String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
             ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
         }
@@ -691,7 +691,7 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), project.getID());
+        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString());
     }
 
     public static ObjectNode getProjectObjectNode(IProject project) {
