@@ -78,7 +78,13 @@ public abstract class DBAbstractVisitor implements IDBVisitor {
     public void visit(DBTableEntry tableentry) {
     }
 
-    protected void visitChildren(DBHasContent d) {
+    @Override
+    public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
+    }
+
+
+
+        protected void visitChildren(DBHasContent d) {
         for (DocumentElement de : d.getChildren()) {
             de.accept(this);
         }
