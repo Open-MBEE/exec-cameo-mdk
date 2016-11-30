@@ -262,9 +262,9 @@ public class MMSUtils {
                 request = new HttpPut(requestDest);
                 break;
         }
-        request.addHeader("Content-Type", "application/json");
         request.addHeader("charset", "utf-8");
-        if (sendData != null && request instanceof HttpEntityEnclosingRequest) {
+        if (sendData != null) {
+            request.addHeader("Content-Type", "application/json");
             String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
             ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
         }

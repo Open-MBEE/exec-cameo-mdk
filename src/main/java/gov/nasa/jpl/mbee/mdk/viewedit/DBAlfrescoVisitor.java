@@ -359,6 +359,36 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         curContains.peek().add(entry);
     }
 
+    @Override
+    public void visit(DBTomSawyerDiagram  tomSawyerDiagram) {
+      //  super.visit(tomSawyerDiagram);
+      //`  tomSawyerDiagram.accept();
+        JSONObject entry = new JSONObject();
+       // entry.put("sourceType", "text");
+        entry.put("type", "Tsp");
+        entry.put("tstype" , tomSawyerDiagram.getShortType().toString());
+        // here enter a list of all the elements we need.
+        JSONArray elements = new JSONArray();
+        for(Element elem : tomSawyerDiagram.getElements()){
+        elements.add(elem.getID());
+        }
+
+        entry.put("elements", elements);
+
+        curContains.peek().add(entry);
+
+        InstanceSpecification i = null;
+        if (!currentTableInstances.peek().isEmpty()) {
+            i = currentTableInstances.peek().remove(0);
+            currentInstanceList.remove(i);
+        }
+
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.TABLE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
+        System.out.println(entry.toJSONString());
+        newpe.peek().add(ipe);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {

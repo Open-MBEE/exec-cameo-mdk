@@ -51,4 +51,6 @@ public interface IDBVisitor {
     void visit(DBTable table);
 
     void visit(DBTableEntry tableentry);
+
+    void visit(DBTomSawyerDiagram tomSawyerDiagram);
 }

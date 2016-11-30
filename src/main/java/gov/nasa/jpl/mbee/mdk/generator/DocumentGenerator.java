@@ -778,6 +778,10 @@ public class DocumentGenerator {
         else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.temporalDiffStereotype)) {
             dge = new TemporalDiff();
         }
+        else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.tomsawyerDiagramStereotype)) {
+            dge = new TomSawyerDiagram();
+
+        }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.javaExtensionStereotype, true)) {
             Element e = an;
             if (!StereotypesHelper.hasStereotypeOrDerived(an, DocGen3Profile.javaExtensionStereotype)) {
