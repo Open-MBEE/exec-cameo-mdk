@@ -115,4 +115,8 @@ public class DBHTMLVisitor extends DBAbstractVisitor {
     public void visit(DBTableEntry tableentry) {
     }
 
+    @Override
+    public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
+
+    }
 }

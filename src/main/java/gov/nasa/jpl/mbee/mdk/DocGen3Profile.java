@@ -51,6 +51,8 @@ public class DocGen3Profile {
     public static final String temporalDiffStereotype = "TemporalDiff";
     public static final String combinedMatrixStereotype = "zzCombinedMatrix";
     public static final String methodStereotype = "Method";
+    public static final String tomsawyerDiagramStereotype = "TomSawyerDiagram";
+
 
     public static final String customTableStereotype = "zzCustomTable";
     public static final String tableStructureStereotype = "TableStructure";
