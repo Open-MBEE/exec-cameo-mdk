@@ -32,7 +32,7 @@ public class Test2 {
 		System.out.println(s);
 		
 		s = "<a href=\"http://www.yahoo.com/asdf.jpl?asdfasd=2343\">blah asdf</a>";
-		s = s.replaceAll("<a href=\"(http[^\"]+)\">([^<]*)</a>", "<link xl:href=\"$1\">$2</link>");
+		s = s.replaceAll("<a href=\"(http[^\"]+)\">([^<]*)</a>", "<link xlink:href=\"$1\">$2</link>");
 		System.out.println(s);
 		
 		
