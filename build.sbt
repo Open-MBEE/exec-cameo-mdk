@@ -33,7 +33,7 @@ persistLogLevel := Level.Debug
 
 val commonSettings: Seq[Setting[_]] = Seq(
   publishMavenStyle := true,
-  publishTo := Some(cae_artifactory_plugin_snapshots),
+  publishTo := Some(cae_artifactory_plugin_releases),
   fullResolvers ++= Seq(new MavenRepository("cae ext-release-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local"),
                         new MavenRepository("cae plugins-snapshot-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/plugins-snapshot-local")
                     ),
