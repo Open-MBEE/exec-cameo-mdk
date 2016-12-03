@@ -35,25 +35,7 @@ import gov.nasa.jpl.mbee.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.lib.MoreToString;
 import gov.nasa.jpl.mbee.lib.Utils;
 import gov.nasa.jpl.mbee.lib.Utils2;
-import gov.nasa.jpl.mbee.model.BulletedList;
-import gov.nasa.jpl.mbee.model.CombinedMatrix;
-import gov.nasa.jpl.mbee.model.Container;
-import gov.nasa.jpl.mbee.model.CustomTable;
-import gov.nasa.jpl.mbee.model.DependencyMatrix;
-import gov.nasa.jpl.mbee.model.DocGenElement;
-import gov.nasa.jpl.mbee.model.Document;
-import gov.nasa.jpl.mbee.model.GenericTable;
-import gov.nasa.jpl.mbee.model.Image;
-import gov.nasa.jpl.mbee.model.LibraryMapping;
-import gov.nasa.jpl.mbee.model.MissionMapping;
-import gov.nasa.jpl.mbee.model.Paragraph;
-import gov.nasa.jpl.mbee.model.PropertiesTableByAttributes;
-import gov.nasa.jpl.mbee.model.Query;
-import gov.nasa.jpl.mbee.model.Section;
-import gov.nasa.jpl.mbee.model.TableStructure;
-import gov.nasa.jpl.mbee.model.TemporalDiff;
-import gov.nasa.jpl.mbee.model.UserScript;
-import gov.nasa.jpl.mbee.model.ViewpointConstraint;
+import gov.nasa.jpl.mbee.model.*;
 import gov.nasa.jpl.mgss.mbee.docgen.docbook.From;
 
 import java.io.PrintWriter;
@@ -63,7 +45,6 @@ import java.util.List;
 import java.util.Stack;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -73,7 +54,6 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activit
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ForkNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKind;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
@@ -86,7 +66,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TypedElement;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mgss.mbee.docgen.docbook.stereotypes.EditableChoosable;
 
 /**
  * <p>
@@ -773,6 +752,9 @@ public class DocumentGenerator {
                     e1.printStackTrace();
                 }
             }
+        } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.simulateStereotype, true)) {
+            dge = new Simulate();
+
         }
         return dge;
     }

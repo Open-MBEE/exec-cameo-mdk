@@ -246,6 +246,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
 
                 // Create the session you intend to cancel to revert all temporary elements.
+                if (SessionManager.getInstance().isSessionCreated()) {
+                    SessionManager.getInstance().closeSession();
+                }
                 SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
                 if (localSyncTransactionCommitListener != null) {
                     localSyncTransactionCommitListener.setDisabled(true);
