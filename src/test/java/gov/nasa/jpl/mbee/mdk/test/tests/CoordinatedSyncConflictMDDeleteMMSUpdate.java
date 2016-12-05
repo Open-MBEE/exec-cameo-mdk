@@ -10,28 +10,25 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import org.apache.commons.io.IOUtils;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.junit.Assert;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
-
 
 /**
  * @author ablack
@@ -44,15 +41,22 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
     private static Element targetElement;
     private static Element targetPackage;
     private static String filename = "/CSyncTest.mdzip";
+    private static File testProjectFile;
     
     public CoordinatedSyncConflictMDDeleteMMSUpdate() {
     }
 
     @BeforeClass
     public static void setupProject() throws IOException, ServerException, URISyntaxException {
+        MDKOptionsGroup.getMDKOptions().setDefaultValues();
+        MDKOptionsGroup.getMDKOptions().setLogJson(true);
+//        System.out.println(MDKOptionsGroup.getMDKOptions().isLogJson());
+//        System.out.println(MDKOptionsGroup.getMDKOptions().isPersistChangelog());
+//        System.out.println(MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
+//        System.out.println(MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
         MDKTestHelper.setMmsCredentials("/mms.properties", "");
 
-        File testProjectFile = File.createTempFile("prj", ".mdzip");
+        testProjectFile = File.createTempFile("prj", ".mdzip");
         testProjectFile.deleteOnExit();
         Files.copy(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResourceAsStream(filename), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         MagicDrawHelper.openProject(testProjectFile);
@@ -60,7 +64,6 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
         if (!MDKHelper.isSiteEditable()) {
             throw new IOException("User does not have permissions to site");
         }
-        ////
 
         //clean and prepare test environment
         MagicDrawHelper.createSession();
@@ -78,7 +81,7 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
         MagicDrawHelper.setElementDocumentation(targetElement, "Initial documentation.");
         MagicDrawHelper.closeSession();
         ///
-        MagicDrawHelper.saveProject(filename);
+        MagicDrawHelper.saveProject(testProjectFile.getAbsolutePath());
         MDKHelper.loadCoordinatedSyncValidations();
         MDKHelper.getValidationWindow().listPooledViolations();
         MDKHelper.getValidationWindow().commitAllMDChangesToMMS();
@@ -86,7 +89,6 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
 
     @Test
     public void executeTest() throws IOException, ServerException, URISyntaxException {
-        Assert.fail("died");
         String updatedMMSDocumentation = "Changed documentation.";
         String targetSysmlID = targetElement.getID();
 
@@ -105,15 +107,32 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
         }
         MagicDrawHelper.cancelSession();
         MDKHelper.setSyncTransactionListenerDisabled(false);
+        MDKTestHelper.waitXSeconds(5);
 
         //confirm mms element update
         ObjectNode jo = MDKHelper.getMmsElement(targetElement, Application.getInstance().getProject());
-        JsonNode value;
-        if ((value = jo.get("documentation")) != null && value.isTextual()) {
-            Assert.assertEquals(value.asText(),updatedMMSDocumentation);
+        JsonNode returnedElements;
+        if ((returnedElements = jo.get("elements")) != null && returnedElements.isArray()) {
+            JsonNode value = null;
+            for (JsonNode val : returnedElements) {
+                if (val.get(MDKConstants.SYSML_ID_KEY) != null && val.get(MDKConstants.SYSML_ID_KEY).isTextual()
+                        && val.get(MDKConstants.SYSML_ID_KEY).asText().equals(targetElement.getID())) {
+                    value = val;
+                    break;
+                }
+            }
+            if (value == null) {
+                Assert.fail("Element not returned by MMS");
+            }
+            if ((value = value.get("documentation")) != null  && value.isTextual()) {
+                System.out.println(value.asText());
+            }
+            else {
+                Assert.fail("Retrieved element documentation failed or did not match");
+            }
         }
         else {
-            throw new IOException("Unable to retrieve element documentation from MMS");
+            Assert.fail("Unable to retrieve elements from MMS");
         }
 
         //delete local element
@@ -130,11 +149,12 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
         Assert.assertNull(ElementFinder.getElement("Document", "UpdateDoc", targetPackage));
 
         // save model to push changes
-        MagicDrawHelper.saveProject(filename);
+        MagicDrawHelper.saveProject(testProjectFile.getAbsolutePath());
 
         //confirm conflict found and recorded properly
         boolean foundViolation = false;
         MDKHelper.loadCoordinatedSyncValidations();
+        MDKHelper.getValidationWindow().listPooledViolations();
         for (ValidationRuleViolation vrv : MDKHelper.getValidationWindow().getPooledValidations("Element Equivalence")) {
             if (vrv.getComment().contains(targetSysmlID)) {
                 foundViolation = true;

@@ -223,8 +223,8 @@ public class MDKHelper {
             return;
         }
         List<ValidationSuite> vss = dsr.getValidations();
-        if (vss == null || vss.isEmpty()) {
-            System.out.println("null / empty vss");
+        if (vss == null) {
+            System.out.println("null vss");
             return;
         }
         validationWindow = new MDKValidationWindow(vss);
