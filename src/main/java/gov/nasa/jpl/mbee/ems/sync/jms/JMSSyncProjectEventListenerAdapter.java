@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by igomes on 6/28/16.
  */
 public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final String ERROR_STRING = "Could not connect to JMS. Reverting to offline mode. All changes will be saved in the model until reconnected.";
+    private static final String ERROR_STRING = "Could not connect to MMS. Reverting to offline mode. All changes will be saved in the model until reconnected.";
     private static final Map<String, JMSSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
