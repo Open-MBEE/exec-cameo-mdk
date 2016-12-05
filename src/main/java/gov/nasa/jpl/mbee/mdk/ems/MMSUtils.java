@@ -419,6 +419,7 @@ public class MMSUtils {
         try {
             response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
         } catch (IOException | URISyntaxException | ServerException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to query site permissions");
             //TODO @donbot
             e.printStackTrace();
             return false;
@@ -427,12 +428,11 @@ public class MMSUtils {
         // parse response
         JsonNode arrayNode;
         if ((arrayNode = response.get("sites")) != null && arrayNode instanceof ArrayNode) {
-            JsonNode value;
+            JsonNode value, boolValue;
             for (JsonNode node : arrayNode) {
-                if ((value = node.get(MDKConstants.SYSML_ID_KEY)) != null
-                        && value.isTextual() && value.asText().equals(site)
-                        && (value = node.get("_editable")) != null && value.isBoolean()) {
-                    return value.asBoolean();
+                if ((value = node.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual() && value.asText().equals(site)
+                        && (boolValue = node.get("_editable")) != null && boolValue.isBoolean()) {
+                    return boolValue.asBoolean();
                 }
             }
         }

@@ -79,6 +79,7 @@ public abstract class MDKTestHelper {
             throw new IOException(Paths.get(location).toString() + " did not contain a user.name or user.pass field.");
         }
         MDKHelper.setMMSLoginCredentials(mmsUsername, mmsPassword);
+
         //
         return mmsUsername;
     }
