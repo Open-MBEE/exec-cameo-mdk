@@ -27,7 +27,17 @@ public class Simulate extends Query {
             if (o instanceof Element) {
                 long startTime = System.currentTimeMillis();
                 Application.getInstance().getGUILog().log("[INFO] Simulation of " + ((Element) o).getHumanName() + " started.");
-                SimulationSession simulationSession = SimulationManager.execute((Element) o, true, true);
+                SimulationSession simulationSession;
+                try {
+                    simulationSession = SimulationManager.execute((Element) o, true, true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Application.getInstance().getGUILog().log("[ERROR] Simulation of " + ((Element) o).getHumanName() + " encountered an unexpected exception: \"" + e.getMessage() + ".\" Terminating.");
+                    if (SessionManager.getInstance().isSessionCreated()) {
+                        SessionManager.getInstance().cancelSession();
+                    }
+                    continue;
+                }
                 while (!simulationSession.isClosed() && (timeout < 0 || System.currentTimeMillis() - startTime < timeout * 1000)) {
                     try {
                         Thread.sleep(1);
