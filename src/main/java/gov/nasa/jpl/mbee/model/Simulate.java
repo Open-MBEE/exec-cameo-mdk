@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.model;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.simulation.SimulationManager;
 import com.nomagic.magicdraw.simulation.execution.session.SimulationSession;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -25,6 +26,7 @@ public class Simulate extends Query {
         for (Object o : getTargets()) {
             if (o instanceof Element) {
                 long startTime = System.currentTimeMillis();
+                Application.getInstance().getGUILog().log("[INFO] Simulation of " + ((Element) o).getHumanName() + " started.");
                 SimulationSession simulationSession = SimulationManager.execute((Element) o, true, true);
                 while (!simulationSession.isClosed() && (timeout < 0 || System.currentTimeMillis() - startTime < timeout * 1000)) {
                     try {
@@ -35,6 +37,12 @@ public class Simulate extends Query {
                 if (!simulationSession.isClosed()) {
                     Application.getInstance().getGUILog().log("[WARNING] Simulation of " + ((Element) o).getHumanName() + " timed out after " + NumberFormat.getInstance().format(timeout) + " seconds. Terminating.");
                     SimulationManager.terminateSession(simulationSession);
+                    if (SessionManager.getInstance().isSessionCreated()) {
+                        SessionManager.getInstance().cancelSession();
+                    }
+                }
+                else {
+                    Application.getInstance().getGUILog().log("[INFO] Simulation of " + ((Element) o).getHumanName() + " completed.");
                 }
             }
         }
