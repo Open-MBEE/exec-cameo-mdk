@@ -450,7 +450,7 @@ public class MMSUtils {
             ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
             JsonNode value;
             if (responseJson != null) {
-                if ((value = responseJson.get("message")) != null && value.isTextual()) {
+                if ((value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
                     Utils.guilog("[SERVER MESSAGE] " + value.asText());
                 }
             }
