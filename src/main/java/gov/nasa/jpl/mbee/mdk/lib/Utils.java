@@ -138,8 +138,8 @@ public class Utils {
      * @return
      */
     public static <T> List<T> removeDuplicates(Collection<T> elements) {
-        Set<T> added = new HashSet<T>();
-        List<T> res = new ArrayList<T>();
+        Set<T> added = new HashSet<>();
+        List<T> res = new ArrayList<>();
         for (T e : elements) {
             if (!added.contains(e)) {
                 res.add(e);
@@ -153,7 +153,7 @@ public class Utils {
     /**
      * returns collection of model elements that's on the diagram
      *
-     * @param diagram
+     * @param diagram selected diagram
      * @return
      */
     public static Collection<Element> getElementsOnDiagram(Diagram diagram) {
@@ -173,7 +173,7 @@ public class Utils {
      */
     public static List<Diagram> filterDiagramsByDiagramTypes(Collection<Element> diagrams,
                                                              List<String> types, boolean include) {
-        List<Diagram> res = new ArrayList<Diagram>();
+        List<Diagram> res = new ArrayList<>();
         for (Element d : diagrams) {
             if (!(d instanceof Diagram)) {
                 continue;
@@ -193,7 +193,7 @@ public class Utils {
 
     public static List<Element> filterElementsByStereotype(Collection<Element> elements,
                                                            Stereotype stereotype, boolean include, boolean derived) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (include) {
             for (Element e : elements) {
                 if (derived && StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
@@ -215,7 +215,7 @@ public class Utils {
 
     public static List<Element> filterElementsByStereotypeString(Collection<Element> elements,
                                                                  String stereotype, boolean include, boolean derived) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (include) {
             for (Element e : elements) {
                 if (derived && StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
@@ -275,7 +275,7 @@ public class Utils {
      */
     public static List<Element> filterElementsByExpression(Collection<Element> elements, String query,
                                                            boolean include, boolean iterate) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         OclEvaluator evaluator = null;
         if (!iterate) {
             Object o = null;
@@ -286,7 +286,7 @@ public class Utils {
                 // try {
                 // o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
-                if (include == ((Boolean) (istrue == null ? false : istrue)).booleanValue()) {
+                if (include == (istrue == null ? false : istrue)) {
                     res.addAll(elements);
                 }
                 // } catch ( ParserException e1 ) {
@@ -303,7 +303,7 @@ public class Utils {
                     // try {
                     // o = OclEvaluator.evaluateQuery(e, query);
                     Boolean istrue = isTrue(o, false);
-                    if (include == ((Boolean) (istrue == null ? false : istrue)).booleanValue()) {
+                    if (include == (istrue == null ? false : istrue)) {
                         res.add(e);
                     }
                     // } catch ( ParserException e1 ) {
@@ -323,7 +323,7 @@ public class Utils {
      */
     public static List<Element> filterElementsByStereotypes(Collection<Element> elements,
                                                             Collection<Stereotype> stereotypes, boolean include, boolean derived) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (stereotypes.isEmpty() && include) {
             return res;
         }
@@ -359,7 +359,7 @@ public class Utils {
      */
     public static List<Element> filterElementsByNames(Collection<Element> elements, Collection<String> names,
                                                       boolean include) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (names.isEmpty() && include) {
             return res;
         }
@@ -395,7 +395,7 @@ public class Utils {
      */
     public static List<Element> filterElementsByNameRegex(Collection<Element> elements,
                                                           Collection<String> regex, boolean include) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (regex.isEmpty() && include) {
             return res;
         }
@@ -403,7 +403,7 @@ public class Utils {
             res.addAll(elements);
             return res;
         }
-        List<Pattern> patterns = new ArrayList<Pattern>();
+        List<Pattern> patterns = new ArrayList<>();
         for (String s : regex) {
             patterns.add(Pattern.compile(s));
         }
@@ -433,7 +433,7 @@ public class Utils {
      */
     public static List<Element> filterElementsByJavaClasses(Collection<Element> elements,
                                                             Collection<java.lang.Class<?>> javaClasses, boolean include) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (Utils2.isNullOrEmpty(elements) || javaClasses == null) {
             return res;
         }
@@ -474,7 +474,7 @@ public class Utils {
 
     public static List<Element> filterElementsByJavaClass(Collection<Element> elements,
                                                           java.lang.Class<?> javaClass, boolean include) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (include) {
             for (Element e : elements) {
                 if (javaClass.isInstance(e)) {
@@ -515,7 +515,7 @@ public class Utils {
      */
     public static List<Element> filterElementsByMetaclasses(Collection<Element> elements,
                                                             Collection<Class> metaclasses, boolean include) {
-        List<java.lang.Class<?>> javaClasses = new ArrayList<java.lang.Class<?>>();
+        List<java.lang.Class<?>> javaClasses = new ArrayList<>();
         for (Class c : metaclasses) {
             javaClasses.add(StereotypesHelper.getClassOfMetaClass(c));
         }
@@ -527,11 +527,11 @@ public class Utils {
      * owners will be returned also)
      *
      * @param e
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectOwners(Element e, int depth) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         collectRecursiveOwners(e, res, depth, 1);
         return res;
     }
@@ -556,7 +556,7 @@ public class Utils {
      * @return
      */
     public static List<Element> collectOwnedElements(Element e, int depth) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         collectRecursiveOwnedElements(e, res, depth, 1);
         return res;
     }
@@ -654,11 +654,12 @@ public class Utils {
      * the query expression on each of the elements.
      *
      * @param elements contexts for evaluating the expression
-     * @param cba      the collect action containing the expression
+     * @param query
+     * @param iterate
      * @return a List of Elements
      */
     public static List<Element> collectByExpression(List<Element> elements, String query, boolean iterate) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (!iterate) {
             res.addAll(collectByExpression(elements, query));
         }
@@ -672,12 +673,12 @@ public class Utils {
 
     /**
      * @param e     needs to be a Classifier, else empty list will be returned
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @param kind
      * @return
      */
     public static List<Element> collectAssociatedElements(Element e, int depth, AggregationKind kind) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (e instanceof Classifier) {
             collectRecursiveAssociatedElements((Classifier) e, res, depth, 1, kind);
         }
@@ -720,7 +721,7 @@ public class Utils {
             badDirectionError(direction, "collectRelationships(element, direction)");
             direction = 0;
         }
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (direction == 0) {
             res = EmfUtils.getRelationships(e);
         }
@@ -740,7 +741,7 @@ public class Utils {
      * @param e
      * @param javaClasses this is the class of the relationships to consider
      * @param direction   0 is both, 1 is outward, 2 is inward
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByJavaClasses(Element e,
@@ -807,7 +808,7 @@ public class Utils {
      * @param e
      * @param c
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByJavaClass(Element e, java.lang.Class<?> c,
@@ -828,7 +829,7 @@ public class Utils {
      * @param e
      * @param c         this is the class from magicdraw's uml profile
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByMetaclass(Element e, Class c, int direction, int depth) {
@@ -878,7 +879,7 @@ public class Utils {
      */
     public static List<Element> collectRelatedElementsByStereotypes(Element e,
                                                                     Collection<Stereotype> stereotypes, int direction, boolean derived, int depth) {
-        List<Element> res = new ArrayList<Element>();
+        List<Element> res = new ArrayList<>();
         if (e == null) {
             return res;
         }
@@ -937,7 +938,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByStereotype(Element e, Stereotype stereotype,
@@ -960,7 +961,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByStereotypeString(Element e, String stereotype,
@@ -986,7 +987,7 @@ public class Utils {
      * @param e
      * @param javaClasses this is the class of the relationships to consider
      * @param direction   0 is both, 1 is outward, 2 is inward
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClasses(Element e,
@@ -1053,7 +1054,7 @@ public class Utils {
      * @param e
      * @param c
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClass(Element e,
@@ -1074,7 +1075,7 @@ public class Utils {
      * @param e
      * @param c         this is the class from magicdraw's uml profile
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipMetaclass(Element e, Class c,
@@ -1221,7 +1222,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotype(Element e,
@@ -1274,7 +1275,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth
+     * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypeString(Element e,
@@ -1299,7 +1300,7 @@ public class Utils {
      * includeInherited is false, will get the owned attributes of the
      * classifiers
      *
-     * @param c
+     * @param e
      * @param includeInherited
      * @return
      */
@@ -1309,12 +1310,12 @@ public class Utils {
         if (!(e instanceof Classifier)) {
             return res;
         }
-        List<Property> owned = new ArrayList<Property>(((Classifier) e).getAttribute());
+        List<Property> owned = new ArrayList<>(((Classifier) e).getAttribute());
         res.addAll(owned);
         if (includeInherited) {
-            Collection<NamedElement> inherited = new ArrayList<NamedElement>(
+            Collection<NamedElement> inherited = new ArrayList<>(
                     ((Classifier) e).getInheritedMember());
-            List<NamedElement> inheritedCopy = new ArrayList<NamedElement>(inherited);
+            List<NamedElement> inheritedCopy = new ArrayList<>(inherited);
             for (NamedElement ne : inherited) {
                 if (ne instanceof Property) {
                     for (Property redef : ((Property) ne).getRedefinedProperty()) {
@@ -1416,23 +1417,22 @@ public class Utils {
      * returns elements not shared
      * misnomer - this is really doing the symmetric difference
      *
-     * @param a
-     * @param b
+     * @param cc
      * @return
      */
     public static List<Element> xorOfCollections(Collection<? extends Collection<Element>> cc) {
         if (cc.size() > 1) {
             Iterator<? extends Collection<Element>> i = cc.iterator();
-            Set<Element> a = new HashSet<Element>(i.next());
-            Set<Element> b = new HashSet<Element>(i.next());
-            Set<Element> c = new HashSet<Element>();
+            Set<Element> a = new HashSet<>(i.next());
+            Set<Element> b = new HashSet<>(i.next());
+            Set<Element> c = new HashSet<>();
             c.addAll(a);
             c.addAll(b);
             a.retainAll(b);
             c.removeAll(a);
-            return new ArrayList<Element>(c);
+            return new ArrayList<>(c);
         }
-        return new ArrayList<Element>();
+        return new ArrayList<>();
     }
 
     /**
@@ -1629,7 +1629,6 @@ public class Utils {
 
     /**
      * Sorts elements by attribute, provided it is one of those supported by
-     * {@link gov.nasa.jpl.mbee.mdk.lib.Utils.getAvailableAttribute(Object attr)}.
      *
      * @param elem the element whose attribute is sought
      * @param attr the type of attribute (name, value, ...)
@@ -2004,91 +2003,130 @@ public class Utils {
         return StereotypesHelper.getStereotype(getProject(), stereotypeName);
     }
 
-    @Deprecated
-    public static Stereotype getDocumentStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::_Stereotypes::Document", Application.getInstance().getProject());
+    /********************************************** Direct Stereotype Utils **********************************************/
+
+    /*** SysML::Model Elements ***/
+    public static Stereotype getConformsStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
 
-    @Deprecated
-    public static Stereotype getCharacterizesStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::_Stereotypes::characterizes", Application.getInstance().getProject());
+    public static Stereotype get18ExposeStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5beta_17530432_1382587480303_325976_12505");
     }
 
-    @Deprecated
-    public static Stereotype getViewpointStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML::ModelElements::Viewpoint", Application.getInstance().getProject());
+    public static Stereotype getElementGroupStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5beta_17530432_1382588727729_600191_12925");
     }
 
-    @Deprecated
     public static Stereotype getViewStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML::ModelElements::View", Application.getInstance().getProject());
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_11_5EAPbeta_be00301_1147420760998_43940_227");
+    }
+
+    public static Stereotype getViewpointStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
+    }
+
+    /*** SysML Extensions::_Stereotypes ***/
+    public static Stereotype getAccountableForStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_e9f034d_1371599170030_696081_43276");
+    }
+
+    public static Stereotype getApprovesStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_e9f034d_1375464433330_503144_31131");
+    }
+
+    public static Stereotype getAspectStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_18_0_2_407019f_1449688347122_736579_14412");
+    }
+
+    public static Stereotype getCharacterizesStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_8660276_1407362513794_939259_26181");
+    }
+
+    public static Stereotype getConcursStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_e9f034d_1375464334580_276276_31083");
+    }
+
+    public static Stereotype getDirectedConnectorStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1404149304683_834035_15551");
+    }
+
+    public static Stereotype getDocumentStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_87b0275_1371477871400_792964_43374");
+    }
+
+    public static Stereotype getJobStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_18_0_5_407019f_1458258829038_313297_14086");
+    }
+
+    public static Stereotype getPrecedesStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1404148746390_373063_15528");
+    }
+
+    public static Stereotype getProjectStaffStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_8850274_1368737927790_384872_57206");
+    }
+
+    public static Stereotype getRoleStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_8850274_1368582235157_5746_56799");
+    }
+
+    public static Stereotype getTicketStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_18_0_5_407019f_1462145965413_380403_14076");
+    }
+
+    /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile ***/
+    public static Stereotype getCommentStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_407019f_1337877314051_474317_11891");
+    }
+
+    public static Stereotype getSysML14ConformsStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_407019f_1389807639137_860750_29082");
+    }
+
+    public static Stereotype getExposeStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_16_5_4_409a058d_1259862803278_226185_1083");
+    }
+
+    /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers ***/
+    public static Stereotype getProductStereotype() {
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
     }
 
     @Deprecated
     public static Stereotype getViewClassStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view", Application.getInstance().getProject());
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_1_232f03dc_1325612611695_581988_21583");
     }
 
-    @Deprecated
-    public static Stereotype getCommentStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Comment", Application.getInstance().getProject());
-    }
-
-    @Deprecated
-    public static Stereotype getConformsStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML::ModelElements::Conform", Application.getInstance().getProject());
-    }
-
-    @Deprecated
-    public static Stereotype getSysML14ConformsStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Conforms", Application.getInstance().getProject());
-    }
-
-    @Deprecated
-    public static Stereotype getProductStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::Product", Application.getInstance().getProject());
-    }
-
-    @Deprecated
-    public static Stereotype getExposeStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Expose", Application.getInstance().getProject());
-    }
-
-    @Deprecated
-    public static Stereotype get18ExposeStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML::ModelElements::Expose", Application.getInstance().getProject());
-    }
-
-    @Deprecated
-    public static Stereotype getElementGroupStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML::ModelElements::ElementGroup", Application.getInstance().getProject());
-    }
-
-    @Deprecated
+    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements ***/
     public static Stereotype getPresentsStereotype() {
-        return (Stereotype) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::presents", Application.getInstance().getProject());
+        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1430628469999_419411_12119");
     }
 
-    @Deprecated
+    /********************************************** Direct Property Utils **********************************************/
+
+    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement ***/
     public static Property getGeneratedFromViewProperty() {
-        return (Property) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView", Application.getInstance().getProject());
+        return (Property) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1430628276506_565_12080");
     }
 
-    @Deprecated
+    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection ***/
     public static Property getGeneratedFromElementProperty() {
-        return (Property) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection::generatedFromElement", Application.getInstance().getProject());
+        return (Property) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1430628376067_525763_12104");
     }
 
-    @Deprecated
     public static Property getViewElementsProperty() {
-        return (Property) ElementFinder.getElementByQualifiedName("SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers::view::elements", Application.getInstance().getProject());
+        return (Property) Application.getInstance().getProject().getElementByID("_18_0_2_407019f_1433361787467_278914_14410");
     }
 
-    @Deprecated
+    /********************************************** Direct Component Utils **********************************************/
+
+    /*** SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library ***/
     public static Component getSiteCharacterizationComponent() {
-        return (Component) ElementFinder.getElementByQualifiedName("SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library::Site Characterization", Application.getInstance().getProject());
+        return (Component) Application.getInstance().getProject().getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
     }
 
+    /********************************************** Constraint Utils **********************************************/
     public static Constraint getViewConstraint(Element view) {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
@@ -2173,12 +2211,10 @@ public class Utils {
      * @param types
      * @param title title of the dialog box
      * @return
-     * @see getUserSelections
      */
     public static BaseElement getUserSelection(List<java.lang.Class<?>> types, String title) {
         SelectElementTypes a = new SelectElementTypes(null, types);
-        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
-                .getModel(), true);
+        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getModel(), true);
         Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
         ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
         ElementSelectionDlgFactory.initSingle(dlg, a, b, null);
@@ -2623,7 +2659,6 @@ public class Utils {
      * durations, etc
      *
      * @param value
-     * @param ef
      * @param valueSpec
      * @return
      */
@@ -3033,8 +3068,9 @@ public class Utils {
     /**
      * Gets list of values for a stereotype property, this returns valuespecs
      *
-     * @param e
-     * @param p
+     * @param elem
+     * @param prop
+     * @param useDefaultIfNoSlot
      * @return
      */
     public static List<Object> getStereotypePropertyValues(Element elem, Property prop,
