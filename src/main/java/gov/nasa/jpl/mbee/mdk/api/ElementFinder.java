@@ -259,18 +259,23 @@ public class ElementFinder {
      * @param targetID String containing target ID in project
      * @return
      */
-    public static Element getElementByID(String targetID) {
-        Element target = (Element) Application.getInstance().getProject().getElementByID(targetID);
+    public static Element getElementByID(String targetID, Project project) {
+        Element target = (Element) project.getElementByID(targetID);
         return target;
     }
 
     /**
+     * Finds an element within the passed project's primary model. Does not search other modules loaded in project.
+     *
      * @param qualifiedName in the format of magicdraw's qualified name: ex "Package::hello::world
-     * @return
+     * @param project project to search the primary model on
+     *
+     * @return found element, or null if not found
      */
+    @Deprecated
     public static Element getElementByQualifiedName(String qualifiedName, Project project) {
         String[] path = qualifiedName.split("::");
-        Element curElement = project.getModel();
+        Element curElement = project.getPrimaryModel();
         for (int i = 0; i < path.length; i++) {
             curElement = findOwnedElementByName(curElement, path[i]);
             if (curElement == null) {

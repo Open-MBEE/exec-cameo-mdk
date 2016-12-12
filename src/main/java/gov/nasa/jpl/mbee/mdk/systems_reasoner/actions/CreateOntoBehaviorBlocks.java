@@ -76,6 +76,7 @@ public class CreateOntoBehaviorBlocks extends SRAction {
                     container = (Namespace) dlg.getSelectedElement();
                 }
                 SessionManager.getInstance().createSession("create ontobehavior");
+                //TODO @donbot this qualified name path doesn't exist. fix when fixing systems reasoner.
                 behaviorOccurence = (Classifier) ElementFinder.getElementByQualifiedName("SysML Extensions::SystemsReasoner::BehaviorOccurence", Application.getInstance().getProject());
                 Profile sysml = StereotypesHelper.getProfile(Project.getProject(classifier), "SysML");
                 Stereotype block = StereotypesHelper.getStereotype(Project.getProject(classifier), "Block", sysml);
