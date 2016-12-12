@@ -51,11 +51,6 @@ public class UtilsGetStereotypeLocalTest {
         testProjectFile.deleteOnExit();
         credentialsFile = File.createTempFile("creds", ".properties");
         credentialsFile.deleteOnExit();
-//        System.out.println(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResource(testProject).getPath());
-//        System.out.println(UtilsGetStereotypeLocalTest.class.getResource(testProject).getPath());
-//        System.out.println(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResource(credentials).getPath());
-//        System.out.println(UtilsGetStereotypeLocalTest.class.getResource(credentials).getPath());
-//        Files.copy(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResourceAsStream(testProject), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.copy(Paths.get(testProject), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         Files.copy(Paths.get(credentials), credentialsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         MDKTestHelper.loadLocalProject(testProjectFile, credentialsFile, "");
@@ -95,7 +90,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getViewStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("View"));
     }
 
@@ -104,7 +98,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getViewpointStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Viewpoint"));
     }
 
@@ -113,7 +106,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getAccountableForStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("accountableFor"));
     }
 
@@ -122,7 +114,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getApprovesStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("approves"));
     }
 
@@ -131,7 +122,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getAspectStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("aspect"));
     }
 
@@ -140,7 +130,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getCharacterizesStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("characterizes"));
     }
 
@@ -149,7 +138,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getConcursStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("concurs"));
     }
 
@@ -158,7 +146,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getDirectedConnectorStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("DirectedConnector"));
     }
 
@@ -167,7 +154,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getDocumentStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Document"));
     }
 
@@ -176,7 +162,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getJobStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Job"));
     }
 
@@ -185,7 +170,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getPrecedesStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("precedes"));
     }
 
@@ -194,7 +178,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getProjectStaffStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("ProjectStaff"));
     }
 
@@ -203,7 +186,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getRoleStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Role"));
     }
 
@@ -212,7 +194,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getTicketStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Ticket"));
     }
 
@@ -221,7 +202,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getCommentStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Comment"));
     }
 
@@ -230,7 +210,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getSysML14ConformsStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Conforms"));
     }
 
@@ -239,7 +218,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getExposeStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
     }
 
@@ -248,7 +226,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getProductStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Product"));
     }
 
@@ -257,7 +234,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getViewClassStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("view"));
     }
 
@@ -266,7 +242,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getPresentsStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("presents"));
     }
 
@@ -277,7 +252,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getGeneratedFromViewProperty();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Property);
-        System.out.println(((Property)test).getName());
         Assert.assertTrue(((Property)test).getName().equals("generatedFromView"));
     }
 
@@ -286,7 +260,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getGeneratedFromElementProperty();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Property);
-        System.out.println(((Property)test).getName());
         Assert.assertTrue(((Property)test).getName().equals("generatedFromElement"));
     }
 
@@ -295,7 +268,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getViewElementsProperty();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Property);
-        System.out.println(((Property)test).getName());
         Assert.assertTrue(((Property)test).getName().equals("elements"));
     }
 
@@ -306,7 +278,6 @@ public class UtilsGetStereotypeLocalTest {
         BaseElement test = Utils.getSiteCharacterizationComponent();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Component);
-        System.out.println(((Component)test).getName());
         Assert.assertTrue(((Component)test).getName().equals("Site Characterization"));
     }
 

@@ -88,7 +88,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getViewStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("View"));
     }
 
@@ -97,7 +96,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getViewpointStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Viewpoint"));
     }
 
@@ -106,7 +104,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getAccountableForStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("accountableFor"));
     }
 
@@ -115,7 +112,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getApprovesStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("approves"));
     }
 
@@ -124,7 +120,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getAspectStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("aspect"));
     }
 
@@ -133,7 +128,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getCharacterizesStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("characterizes"));
     }
 
@@ -142,7 +136,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getConcursStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("concurs"));
     }
 
@@ -151,7 +144,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getDirectedConnectorStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("DirectedConnector"));
     }
 
@@ -160,7 +152,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getDocumentStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Document"));
     }
 
@@ -169,7 +160,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getJobStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Job"));
     }
 
@@ -178,7 +168,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getPrecedesStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("precedes"));
     }
 
@@ -187,7 +176,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getProjectStaffStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("ProjectStaff"));
     }
 
@@ -196,7 +184,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getRoleStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Role"));
     }
 
@@ -205,7 +192,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getTicketStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Ticket"));
     }
 
@@ -214,7 +200,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getCommentStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Comment"));
     }
 
@@ -223,7 +208,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getSysML14ConformsStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Conforms"));
     }
 
@@ -232,7 +216,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getExposeStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
     }
 
@@ -241,7 +224,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getProductStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Product"));
     }
 
@@ -250,7 +232,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getViewClassStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("view"));
     }
 
@@ -259,7 +240,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getPresentsStereotype();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Stereotype);
-        System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("presents"));
     }
 
@@ -270,7 +250,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getGeneratedFromViewProperty();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Property);
-        System.out.println(((Property)test).getName());
         Assert.assertTrue(((Property)test).getName().equals("generatedFromView"));
     }
 
@@ -279,7 +258,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getGeneratedFromElementProperty();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Property);
-        System.out.println(((Property)test).getName());
         Assert.assertTrue(((Property)test).getName().equals("generatedFromElement"));
     }
 
@@ -288,7 +266,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getViewElementsProperty();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Property);
-        System.out.println(((Property)test).getName());
         Assert.assertTrue(((Property)test).getName().equals("elements"));
     }
 
@@ -299,7 +276,6 @@ public class UtilsGetStereotypeTeamworkCloudTest {
         BaseElement test = Utils.getSiteCharacterizationComponent();
         Assert.assertNotNull(test);
         Assert.assertTrue(test instanceof Component);
-        System.out.println(((Component)test).getName());
         Assert.assertTrue(((Component)test).getName().equals("Site Characterization"));
     }
 
