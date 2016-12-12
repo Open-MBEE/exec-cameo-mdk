@@ -34,5 +34,4 @@ java -Xmx4096M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \
        -Dlogback.configurationFile=data/logback.xml \
        -Dsun.locale.formatasdefault=true \
        -Dcom.nomagic.magicdraw.launcher=com.nomagic.osgi.launcher.junit_support.JUnitCoreWrapper \
-       com.nomagic.osgi.launcher.ProductionFrameworkLauncher gov.nasa.jpl.mbee.mdk.test.tests.CoordinatedSyncConflictMDDeleteMMSUpdate
-
+       com.nomagic.osgi.launcher.ProductionFrameworkLauncher gov.nasa.jpl.mbee.mdk.test.tests.$1

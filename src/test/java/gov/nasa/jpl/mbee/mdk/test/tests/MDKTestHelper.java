@@ -128,10 +128,6 @@ public abstract class MDKTestHelper {
             teamworkServer = teamworkServer.substring(teamworkServer.indexOf("//") + 2);
         if (teamworkServer != null && teamworkServer.lastIndexOf(':') != -1)
             teamworkServer = teamworkServer.substring(0, teamworkServer.lastIndexOf(':'));
-//        if (twCloudServer != null && twCloudServer.indexOf("//") != -1)
-//            twCloudServer = twCloudServer.substring(twCloudServer.indexOf("//") + 2);
-//        if (twCloudServer != null && twCloudServer.lastIndexOf(':') != -1)
-//            twCloudServer = twCloudServer.substring(0, twCloudServer.lastIndexOf(':'));
     }
 
     /**********************************************

@@ -34,7 +34,8 @@ import org.junit.runner.RunWith;
 @RunWith(MagicDrawTestRunner.class)
 public class UtilsGetStereotypeTeamworkCloudTest {
 
-    private static String projectId = "ID_10_20_16_12_01_59_AM__58f6714a_157e0e07e65__7ffd_LMC_055004_192_168_1_27";
+//    private static String projectId = "ID_10_20_16_12_01_59_AM__58f6714a_157e0e07e65__7ffd_LMC_055004_192_168_1_27";
+    private static String projectId = "twcloud:/c3c6666c-a06f-482b-8e15-6bc353288a9e/18964a74-3f24-46fb-8006-3c018bbb72ae";
     private static String credentials = "../resources/test/mms.properties";
     private static File credentialsFile;
 
