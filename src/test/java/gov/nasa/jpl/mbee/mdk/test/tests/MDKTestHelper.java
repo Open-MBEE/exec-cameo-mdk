@@ -1,8 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.test.tests;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -11,13 +9,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
+import com.nomagic.magicdraw.teamwork.application.BranchData;
+import com.nomagic.magicdraw.teamwork2.ITeamworkService;
+import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
@@ -57,79 +57,13 @@ public abstract class MDKTestHelper {
      *
      **********************************************/
 
-    public static String setMmsCredentials(String location, String append) throws IOException {
-        String mmsUsername = "";
-        String mmsPassword = "";
-        InputStream propertesFileStream = MDKTestHelper.class.getResourceAsStream(location);
-        if (propertesFileStream == null) {
-            throw new IOException(location + " is not a file and cannot be loaded.");
-        }
-        Properties prop = new Properties();
-        // load a properties file
-        prop.load(propertesFileStream);
-        // set appropriate fields
-        if (prop.containsKey("user.name" + append)) {
-            mmsUsername = prop.getProperty("user.name" + append);
-            mmsPassword = prop.getProperty("user.pass" + append);
-        } else {
-            mmsUsername = prop.getProperty("user.name") + append;
-            mmsPassword = prop.getProperty("user.pass") + append;
-        }
-        if (mmsUsername.isEmpty() || mmsPassword.isEmpty()) {
-            throw new IOException(Paths.get(location).toString() + " did not contain a user.name or user.pass field.");
-        }
-        MDKHelper.setMMSLoginCredentials(mmsUsername, mmsPassword);
+    private static String username;
+    private static String password;
+    private static String teamworkServer;
+    private static String teamworkPort;
+    private static String twCloudServer;
+    private static String twCloudPort;
 
-        //
-        return mmsUsername;
-    }
-
-    /**
-     * Logs in to Teamwork server at teamworkServer:teamworkPort using teamworkUsername and teamworkPassword
-     */
-    public static String setMmsAndTeamworkCredentials(String location, String append) throws IOException {
-        String teamworkServer;
-        String teamworkPort;
-        String teamworkUsername;
-        String teamworkPassword;
-
-        if (!Paths.get(location).toFile().exists()) {
-            throw new IOException(Paths.get(location).toString() + " is not a file and cannot be loaded.");
-        }
-        Properties prop = new Properties();
-        try (InputStream input = new FileInputStream(location);
-        ) {
-            if (prop.containsKey("user.name" + append)){
-                teamworkUsername = prop.getProperty("user.name" + append);
-                teamworkPassword = prop.getProperty("user.pass" + append);
-            }
-            else {
-                teamworkUsername = prop.getProperty("user.name") + append;
-                teamworkPassword = prop.getProperty("user.pass") + append;
-            }
-            teamworkServer = prop.getProperty("tw.url");
-            if (teamworkServer.indexOf("//") != -1)
-                teamworkServer = teamworkServer.substring(teamworkServer.indexOf("//") + 2);
-            if (teamworkServer.lastIndexOf(':') != -1)
-                teamworkServer = teamworkServer.substring(0, teamworkServer.lastIndexOf(':'));
-            teamworkPort = prop.getProperty("tw.port");
-
-        } catch (IOException ioe) {
-            // only using try/catch formulation so we can utilize auto-closeable
-            throw ioe;
-        }
-        if (teamworkUsername.isEmpty() || teamworkPassword.isEmpty()) {
-            throw new IOException(Paths.get(location).toString() + " did not contain a user.name or user.pass field.");
-        }
-        MDKHelper.setMMSLoginCredentials(teamworkUsername, teamworkPassword);
-
-        SessionInfo session = TeamworkUtils.loginWithSession(teamworkServer, Integer.parseInt(teamworkPort),
-                teamworkUsername, teamworkPassword);
-        if (session == null) {
-            throw new IOException(Paths.get(location).toString() + " did not provide valid credentials for Teamwork.");
-        }
-        return teamworkUsername;
-    }
 
     public static void printJunitResults(Result results) {
         System.out.println("Ran " + results.getRunCount() + " Tests");
@@ -171,11 +105,139 @@ public abstract class MDKTestHelper {
         catch (Exception e) {}
     }
 
+    private static void loadCredentials(File credentials, String credentialsAppend)
+            throws IOException {
+        InputStream propertiesFileStream = new FileInputStream(credentials);
+        if (propertiesFileStream == null) {
+            throw new IOException("Credentials stream is invalid.");
+        }
+        Properties prop = new Properties();
+        prop.load(propertiesFileStream);
+        if (prop.containsKey("user.name" + credentialsAppend)) {
+            username = prop.getProperty("user.name" + credentialsAppend);
+            password = prop.getProperty("user.pass" + credentialsAppend);
+        } else {
+            username = prop.getProperty("user.name") + credentialsAppend;
+            password = prop.getProperty("user.pass") + credentialsAppend;
+        }
+        teamworkServer = prop.getProperty("tw.url");
+        teamworkPort = prop.getProperty("tw.port");
+        twCloudServer = prop.getProperty("twc.url");
+        twCloudPort = prop.getProperty("twc.port");
+        if (teamworkServer != null && teamworkServer.indexOf("//") != -1)
+            teamworkServer = teamworkServer.substring(teamworkServer.indexOf("//") + 2);
+        if (teamworkServer != null && teamworkServer.lastIndexOf(':') != -1)
+            teamworkServer = teamworkServer.substring(0, teamworkServer.lastIndexOf(':'));
+//        if (twCloudServer != null && twCloudServer.indexOf("//") != -1)
+//            twCloudServer = twCloudServer.substring(twCloudServer.indexOf("//") + 2);
+//        if (twCloudServer != null && twCloudServer.lastIndexOf(':') != -1)
+//            twCloudServer = twCloudServer.substring(0, twCloudServer.lastIndexOf(':'));
+    }
+
     /**********************************************
      *
      * Test case methods
      *
      **********************************************/
+
+    public static String loadLocalProject(File projectFile, File credentials, String credentialsAppend)
+            throws IOException {
+        loadCredentials(credentials, credentialsAppend);
+        if (username == null || password == null) {
+            String message = "Credentials file did not contain the following: "
+                    + (username == null ? "user.name " : "") + (password == null ? "user.pass " : "");
+            throw new IOException(message);
+        }
+        MDKHelper.setMMSLoginCredentials(username, password);
+
+        MagicDrawHelper.openProject(projectFile);
+        return username;
+    }
+
+    public static String teamworkLoadProject(String projectId, String branch, File credentials, String credentialsAppend)
+            throws IOException {
+        loadCredentials(credentials, credentialsAppend);
+        if (username == null || password == null || teamworkServer == null || teamworkPort == null) {
+            String message = "Credentials file did not contain the following: "
+                    + (username == null ? "user.name " : "") + (password == null ? "user.pass " : "")
+                    + (teamworkServer == null ? "tw.url " : "") + (teamworkPort == null ? "tw.port " : "");
+            throw new IOException(message);
+        }
+        MDKHelper.setMMSLoginCredentials(username, password);
+
+        SessionInfo session = TeamworkUtils.loginWithSession(teamworkServer, Integer.parseInt(teamworkPort),
+                username, password);
+        if (session == null) {
+            throw new IOException("Credentials file did not provide valid credentials for Teamwork.");
+        }
+
+        ProjectDescriptor projectDescriptor = TeamworkUtils.getRemoteProjectDescriptor(projectId);
+        if (projectDescriptor == null) {
+            throw new FileNotFoundException("[FAILURE] Unable to find Teamwork projectId " + projectId);
+        }
+
+        if (branch != null && !branch.isEmpty()) {
+            String fqName = projectDescriptor.getRepresentationString() + "/" + branch;
+            List<BranchData> branchData = new ArrayList<>();
+            branchData.addAll(TeamworkUtils.getBranches(projectDescriptor));
+            projectDescriptor = null;
+            for (int i = 0; i < branchData.size(); i++) {
+                ProjectDescriptor temp = TeamworkUtils.getRemoteProjectDescriptor(branchData.get(i).getBranchId());
+                if (temp.getRepresentationString().equals(fqName)) {
+                    projectDescriptor = temp;
+                    break;
+                }
+                branchData.addAll(TeamworkUtils.getBranches(temp));
+            }
+            if (projectDescriptor == null) {
+                throw new FileNotFoundException("[FAILURE] Unable to find Teamwork project branch " + fqName);
+            }
+        }
+
+        Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
+        return username;
+    }
+
+    public static String twCloudLoadProject(String projectId, String branch, File credentials, String credentialsAppend)
+            throws IOException {
+        loadCredentials(credentials, credentialsAppend);
+        if (username == null || password == null || twCloudServer == null || twCloudPort == null) {
+            String message = "Credentials file did not contain the following: "
+                + (username == null ? "user.name " : "") + (password == null ? "user.pass " : "")
+                + (twCloudServer == null ? "twc.url " : "") + (twCloudPort == null ? "twc.port " : "");
+            throw new IOException(message);
+        }
+
+        MDKHelper.setMMSLoginCredentials(username, password);
+
+        ITeamworkService twcService = EsiUtils.getTeamworkService();
+        twcService.login(new ServerLoginInfo(twCloudServer + ":" + Integer.parseInt(twCloudPort), username, password, true), false);
+        if (!twcService.isConnected()) {
+            throw new IOException("Credentials file did not provide valid credentials for TeamworkCloud.");
+        }
+
+        ProjectDescriptor projectDescriptor;
+        try {
+            projectDescriptor = EsiUtils.getTeamworkService().getProjectDescriptorById(projectId);
+        } catch (Exception e) {
+            throw new RemoteException(e.getMessage());
+        }
+        if (projectDescriptor == null) {
+            throw new FileNotFoundException("[FAILURE] Unable to find TeamworkCloud projectId " + projectId);
+        }
+
+
+        if (branch != null && !branch.isEmpty()) {
+            String fqName = projectDescriptor.getRepresentationString() + "/" + branch;
+            projectDescriptor = EsiUtils.getDescriptorForBranch(projectDescriptor, branch);
+            if (projectDescriptor == null) {
+                throw new FileNotFoundException("[FAILURE] Unable to find TeamworkCloud project branch " + fqName);
+            }
+        }
+
+        Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
+        return username;
+    }
 
     /**
      * Confirms that the element stored in targetElement is referenced by a validation of type

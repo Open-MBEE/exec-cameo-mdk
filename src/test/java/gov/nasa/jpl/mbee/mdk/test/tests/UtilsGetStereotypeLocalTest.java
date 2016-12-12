@@ -1,21 +1,15 @@
 
 package gov.nasa.jpl.mbee.mdk.test.tests;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.tests.MagicDrawTestRunner;
+import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
-import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
-import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.junit.Assert;
 
@@ -23,9 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -40,232 +33,287 @@ import org.junit.runner.RunWith;
 @RunWith(MagicDrawTestRunner.class)
 public class UtilsGetStereotypeLocalTest {
 
-    private static Element targetElement;
-    private static Element targetPackage;
-    private static String filename = "/CSyncTest.mdzip";
+    private static String testProject = "../resources/test/CSyncTest.mdzip";
     private static File testProjectFile;
+    private static String credentials = "../resources/test/mms.properties";
+    private static File credentialsFile;
 
-    public CoordinatedSyncConflictMDDeleteMMSUpdate() {
+
+    public UtilsGetStereotypeLocalTest() {
     }
 
     @BeforeClass
     public static void setupProject() throws IOException, ServerException, URISyntaxException {
         MDKOptionsGroup.getMDKOptions().setDefaultValues();
         MDKOptionsGroup.getMDKOptions().setLogJson(true);
-//        System.out.println(MDKOptionsGroup.getMDKOptions().isLogJson());
-//        System.out.println(MDKOptionsGroup.getMDKOptions().isPersistChangelog());
-//        System.out.println(MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
-//        System.out.println(MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
-        MDKTestHelper.setMmsCredentials("/mms.properties", "");
-        System.out.println(TicketUtils.getUsername());
 
         testProjectFile = File.createTempFile("prj", ".mdzip");
         testProjectFile.deleteOnExit();
-        Files.copy(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResourceAsStream(filename), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        MagicDrawHelper.openProject(testProjectFile);
+        credentialsFile = File.createTempFile("creds", ".properties");
+        credentialsFile.deleteOnExit();
+//        System.out.println(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResource(testProject).getPath());
+//        System.out.println(UtilsGetStereotypeLocalTest.class.getResource(testProject).getPath());
+//        System.out.println(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResource(credentials).getPath());
+//        System.out.println(UtilsGetStereotypeLocalTest.class.getResource(credentials).getPath());
+//        Files.copy(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResourceAsStream(testProject), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Paths.get(testProject), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Paths.get(credentials), credentialsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        MDKTestHelper.loadLocalProject(testProjectFile, credentialsFile, "");
+    }
 
-        if (!MDKHelper.isSiteEditable()) {
-            throw new IOException("User does not have permissions to site");
-        }
+    /********************************************** Direct Stereotype Utils **********************************************/
 
-        //clean and prepare test environment
-        MagicDrawHelper.createSession();
-        try {
-            MagicDrawHelper.clearModel();
-        } catch (ReadOnlyElementException roee)  {
-            System.out.println(roee.getMessage() + ": " + roee.getElement().getHumanName());
-        }
-        MagicDrawHelper.closeSession();
-
-        //make sure expected stuff is in place
-        MagicDrawHelper.createSession();
-        targetPackage = MagicDrawHelper.createPackage("ConflictPkg", ElementFinder.getModelRoot());
-        targetElement = MagicDrawHelper.createDocument("ConflictDoc", targetPackage);
-        MagicDrawHelper.setElementDocumentation(targetElement, "Initial documentation.");
-        MagicDrawHelper.closeSession();
-        ///
-        MagicDrawHelper.saveProject(testProjectFile.getAbsolutePath());
-        MDKHelper.loadCoordinatedSyncValidations();
-        MDKHelper.getValidationWindow().listPooledViolations();
-        MDKHelper.getValidationWindow().commitAllMDChangesToMMS();
+    @Test
+    public void _utils_getConformsStereotype() {
+        BaseElement test = Utils.getConformsStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Conform"));
     }
 
     @Test
-    public void executeTest() throws IOException, ServerException, URISyntaxException {
-        String updatedMMSDocumentation = "Changed documentation.";
-        String targetSysmlID = targetElement.getID();
-
-        //update mms element without md session so it's not tracked in model, export its json to mms to update it and trigger pending
-        MDKHelper.setSyncTransactionListenerDisabled(true);
-        MagicDrawHelper.createSession();
-        MagicDrawHelper.setElementDocumentation(targetElement, updatedMMSDocumentation);
-        try {
-            Collection<ObjectNode> postData = new ArrayList<>();
-            ObjectNode jsob = Converters.getElementToJsonConverter().apply(targetElement, Application.getInstance().getProject());
-            System.out.println("******");
-            System.out.println(jsob.asText());
-            System.out.println("******");
-            postData.add(jsob);
-            MDKHelper.postMmsElementJson(postData, Application.getInstance().getProject());
-        } catch (IllegalStateException e) {
-            System.out.println("Exception: " + e.getMessage());
-            e.printStackTrace();
-        }
-        MagicDrawHelper.cancelSession();
-        MDKHelper.setSyncTransactionListenerDisabled(false);
-        MDKTestHelper.waitXSeconds(5);
-
-        //confirm mms element update
-        ObjectNode jo = MDKHelper.getMmsElement(targetElement, Application.getInstance().getProject());
-        JsonNode returnedElements;
-        if ((returnedElements = jo.get("elements")) != null && returnedElements.isArray()) {
-            JsonNode value = null;
-            for (JsonNode val : returnedElements) {
-                if (val.get(MDKConstants.SYSML_ID_KEY) != null && val.get(MDKConstants.SYSML_ID_KEY).isTextual()
-                        && val.get(MDKConstants.SYSML_ID_KEY).asText().equals(targetElement.getID())) {
-                    value = val;
-                    break;
-                }
-            }
-            if (value == null) {
-                Assert.fail("Element not returned by MMS");
-            }
-            if ((value = value.get("documentation")) != null  && value.isTextual()) {
-                System.out.println(value.asText());
-            }
-            else {
-                Assert.fail("Retrieved element documentation failed or did not match");
-            }
-        }
-        else {
-            Assert.fail("Unable to retrieve elements from MMS");
-        }
-
-        //delete local element
-        MagicDrawHelper.createSession();
-        try {
-            MagicDrawHelper.deleteMDElement(targetElement);
-        } catch (ReadOnlyElementException e) {
-            MagicDrawHelper.cancelSession();
-            throw new IOException("Unable to delete element id " + targetElement.getID());
-        }
-        MagicDrawHelper.closeSession();
-
-        //confirm local delete
-        Assert.assertNull(ElementFinder.getElement("Document", "UpdateDoc", targetPackage));
-
-        // save model to push changes
-        MagicDrawHelper.saveProject(testProjectFile.getAbsolutePath());
-
-        //confirm conflict found and recorded properly
-        boolean foundViolation = false;
-        MDKHelper.loadCoordinatedSyncValidations();
-        MDKHelper.getValidationWindow().listPooledViolations();
-        for (ValidationRuleViolation vrv : MDKHelper.getValidationWindow().getPooledValidations("Element Equivalence")) {
-            if (vrv.getComment().contains(targetSysmlID)) {
-                foundViolation = true;
-                break;
-            }
-        }
-        if (!foundViolation) {
-            Assert.fail("Conflict for target element not reported in violations.");
-        }
-        Collection<Element> syncElements = ElementFinder.getElement("Package", "__MMSSync__").getOwnedElement();
-        for (Element se : syncElements) {
-            if (!MagicDrawHelper.getElementDocumentation(se).contains(targetSysmlID)) {
-                Assert.fail("Conflict not recorded in MMSSync element " + se.getHumanName());
-            }
-        }
-
+    public void _utils_get18ExposeStereotype() {
+        BaseElement test = Utils.get18ExposeStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
     }
+
+    @Test
+    public void _utils_getElementGroupStereotype() {
+        BaseElement test = Utils.getElementGroupStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("ElementGroup"));
+    }
+
+    @Test
+    public void _utils_getViewStereotype() {
+        BaseElement test = Utils.getViewStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("View"));
+    }
+
+    @Test
+    public void _utils_getViewpointStereotype() {
+        BaseElement test = Utils.getViewpointStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Viewpoint"));
+    }
+
+    @Test
+    public void _utils_getAccountableForStereotype() {
+        BaseElement test = Utils.getAccountableForStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("accountableFor"));
+    }
+
+    @Test
+    public void _utils_getApprovesStereotype() {
+        BaseElement test = Utils.getApprovesStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("approves"));
+    }
+
+    @Test
+    public void _utils_getAspectStereotype() {
+        BaseElement test = Utils.getAspectStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("aspect"));
+    }
+
+    @Test
+    public void _utils_getCharacterizesStereotype() {
+        BaseElement test = Utils.getCharacterizesStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("characterizes"));
+    }
+
+    @Test
+    public void _utils_getConcursStereotype() {
+        BaseElement test = Utils.getConcursStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("concurs"));
+    }
+
+    @Test
+    public void _utils_getDirectedConnectorStereotype() {
+        BaseElement test = Utils.getDirectedConnectorStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("DirectedConnector"));
+    }
+
+    @Test
+    public void _utils_getDocumentStereotype() {
+        BaseElement test = Utils.getDocumentStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Document"));
+    }
+
+    @Test
+    public void _utils_getJobStereotype() {
+        BaseElement test = Utils.getJobStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Job"));
+    }
+
+    @Test
+    public void _utils_getPrecedesStereotype() {
+        BaseElement test = Utils.getPrecedesStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("precedes"));
+    }
+
+    @Test
+    public void _utils_getProjectStaffStereotype() {
+        BaseElement test = Utils.getProjectStaffStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("ProjectStaff"));
+    }
+
+    @Test
+    public void _utils_getRoleStereotype() {
+        BaseElement test = Utils.getRoleStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Role"));
+    }
+
+    @Test
+    public void _utils_getTicketStereotype() {
+        BaseElement test = Utils.getTicketStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Ticket"));
+    }
+
+    @Test
+    public void _utils_getCommentStereotype() {
+        BaseElement test = Utils.getCommentStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Comment"));
+    }
+
+    @Test
+    public void _utils_getSysML14ConformsStereotype() {
+        BaseElement test = Utils.getSysML14ConformsStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Conforms"));
+    }
+
+    @Test
+    public void _utils_getExposeStereotype() {
+        BaseElement test = Utils.getExposeStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
+    }
+
+    @Test
+    public void _utils_getProductStereotype() {
+        BaseElement test = Utils.getProductStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("Product"));
+    }
+
+    @Test
+    public void _utils_getViewClassStereotype() {
+        BaseElement test = Utils.getViewClassStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("view"));
+    }
+
+    @Test
+    public void _utils_getPresentsStereotype() {
+        BaseElement test = Utils.getPresentsStereotype();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Stereotype);
+        System.out.println(((Stereotype)test).getName());
+        Assert.assertTrue(((Stereotype)test).getName().equals("presents"));
+    }
+
+    /********************************************** Direct Property Utils **********************************************/
+
+    @Test
+    public void _utils_getGeneratedFromViewProperty() {
+        BaseElement test = Utils.getGeneratedFromViewProperty();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Property);
+        System.out.println(((Property)test).getName());
+        Assert.assertTrue(((Property)test).getName().equals("generatedFromView"));
+    }
+
+    @Test
+    public void _utils_getGeneratedFromElementProperty() {
+        BaseElement test = Utils.getGeneratedFromElementProperty();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Property);
+        System.out.println(((Property)test).getName());
+        Assert.assertTrue(((Property)test).getName().equals("generatedFromElement"));
+    }
+
+    @Test
+    public void _utils_getViewElementsProperty() {
+        BaseElement test = Utils.getViewElementsProperty();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Property);
+        System.out.println(((Property)test).getName());
+        Assert.assertTrue(((Property)test).getName().equals("elements"));
+    }
+
+    /********************************************** Direct Component Utils **********************************************/
+
+    @Test
+    public void _utils_getSiteCharacterizationComponent() {
+        BaseElement test = Utils.getSiteCharacterizationComponent();
+        Assert.assertNotNull(test);
+        Assert.assertTrue(test instanceof Component);
+        System.out.println(((Component)test).getName());
+        Assert.assertTrue(((Component)test).getName().equals("Site Characterization"));
+    }
+
 
     @AfterClass
     public static void closeProject() throws IOException {
-        MagicDrawHelper.createSession();
-        try {
-            MagicDrawHelper.clearModel();
-        } catch (ReadOnlyElementException e) {
-            MagicDrawHelper.cancelSession();
-        }
-        MagicDrawHelper.closeSession();
-
-        // save model to push changes
-        MagicDrawHelper.saveProject(testProjectFile.getAbsolutePath());
-
         MagicDrawHelper.closeProject();
     }
 
-    /*
-    public void executeTest() {
-        
-        String updatedMMSDocumentation = "Changed documentation.";
-        
-        String targetSysmlID = targetElement.getID();
-        //confirm mms permissions
-        super.confirmMMSPermissions();
-        
-        //update mms element without md session so it's not tracked in model, export its json to mms to update it and trigger pending
-        MDKHelper.setSyncTransactionListenerDisabled(true);
-        MagicDrawHelper.createSession();
-        MagicDrawHelper.setElementDocumentation(targetElement, updatedMMSDocumentation);
-        JSONObject jsob = ExportUtility.fillElement(targetElement, null);
-        MagicDrawHelper.cancelSession();
-        MDKHelper.setSyncTransactionListenerDisabled(false);
-        try {
-            MDKHelper.postMmsElement(jsob);
-        } catch (IllegalStateException e) {
-            System.out.println("Exception: " + e.getMessage());
-            e.printStackTrace();
-        }
-        //confirm mms element update
-        JSONObject jo = MDKHelper.getMmsElement(targetElement);
-        assertTrue(jo.get("documentation").equals(updatedMMSDocumentation));
-        
-        //delete local element
-        MagicDrawHelper.createSession();
-        try {
-            MagicDrawHelper.deleteMDElement(targetElement);
-        } catch (ReadOnlyElementException e) {
-            MagicDrawHelper.cancelSession();
-            fail("Unable to delete element id " + targetElement.getID());
-        }
-        MagicDrawHelper.closeSession();
-        //confirm local delete
-        assertNull(ElementFinder.getElement("Document", "UpdateDoc", targetPackage));
-        
-        // save model to push changes
-        super.saveUpdatedProject();
-        
-        //confirm conflict found and recorded properly
-        boolean foundViolation = false;
-        searchViolations: for (ValidationRuleViolation vrv : MDKHelper.getCoordinatedSyncValidationWindow().getPooledValidations("[EXIST ON MMS]")) {
-            if (vrv.getComment().contains(targetSysmlID)) {
-                foundViolation = true;
-                break searchViolations;
-            }
-        }
-        if (!foundViolation) {
-            fail("Conflict for target element not reported in violations.");
-        }
-        Collection<Element> syncElements = ElementFinder.getElement("Package", "__MMSSync__").getOwnedElement();
-        for (Element se : syncElements) {
-            if (!MagicDrawHelper.getElementDocumentation(se).contains(targetSysmlID)) {
-                fail("Conflict not recorded in MMSSync element " + se.getHumanName());
-            }
-        }
-    }
-    
-    @Override
-    protected void tearDownTest() throws Exception {
-        super.tearDownTest();
-        // do tear down here
-        
-        //clear pending messages
-//        MDKHelper.getCoordinatedSyncValidationWindow().commitMDChangesToMMS("[EXIST ON MMS]");
-        super.saveUpdatedProject();
-        
-        //close project
-        super.closeProject();
-    }
-    */
 }
