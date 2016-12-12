@@ -584,6 +584,7 @@ public class OclEvaluator {
                 }
 
                 // try qualified name
+                //TODO @donbot verify that this usage can be removed, or that it's harmless to restrict search to only primary model
                 e = ElementFinder.getElementByQualifiedName(nameOrId, Application.getInstance().getProject());
                 if (e != null) {
                     return e;

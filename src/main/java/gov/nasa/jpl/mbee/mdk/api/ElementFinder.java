@@ -128,7 +128,7 @@ public class ElementFinder {
      * element in the list). No guarantee is made as to the editability of these
      * elements.
      *
-     * @param elementType Type of element. ie. Package or Document.
+     * @param elementName Name of element
      * @param parent      The top level element whose owned elements you want to search
      *                    through
      */
@@ -137,7 +137,7 @@ public class ElementFinder {
         if (elements == null) {
             return null;
         }
-        List<NamedElement> retrievedElements = new ArrayList<NamedElement>();
+        List<NamedElement> retrievedElements = new ArrayList<>();
         for (Element elem : elements) {
             if (elem instanceof NamedElement && ((NamedElement) elem).getName().equals(elementName)) {
                 retrievedElements.add((NamedElement) elem);
@@ -259,18 +259,23 @@ public class ElementFinder {
      * @param targetID String containing target ID in project
      * @return
      */
-    public static Element getElementByID(String targetID) {
-        Element target = (Element) Application.getInstance().getProject().getElementByID(targetID);
+    public static Element getElementByID(String targetID, Project project) {
+        Element target = (Element) project.getElementByID(targetID);
         return target;
     }
 
     /**
+     * Finds an element within the passed project's primary model. Does not search other modules loaded in project.
+     *
      * @param qualifiedName in the format of magicdraw's qualified name: ex "Package::hello::world
-     * @return
+     * @param project project to search the primary model on
+     *
+     * @return found element, or null if not found
      */
+    @Deprecated
     public static Element getElementByQualifiedName(String qualifiedName, Project project) {
         String[] path = qualifiedName.split("::");
-        Element curElement = project.getModel();
+        Element curElement = project.getPrimaryModel();
         for (int i = 0; i < path.length; i++) {
             curElement = findOwnedElementByName(curElement, path[i]);
             if (curElement == null) {
@@ -284,11 +289,7 @@ public class ElementFinder {
      * Retrieves the model root element.
      */
     public static Element getModelRoot() {
-        Element mdl = Application.getInstance().getProject().getModel();
-        if (mdl.getHumanName().equals("Model Data")) {
-            return mdl;
-        }
-        return null;
+        return Application.getInstance().getProject().getPrimaryModel();
     }
 
     /**
