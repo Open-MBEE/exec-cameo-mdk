@@ -1,10 +1,6 @@
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/*
- *
- */
-
 version = humanVersion
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
 String buildType = project.getProperties().getOrDefault('buildType', 'public');
