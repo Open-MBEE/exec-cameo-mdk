@@ -437,7 +437,7 @@ public class MagicDrawHelper {
 
     public static Class createBlock(String name, Element owner) {
         Class newBlock = createClass(name, owner);
-        Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958");
+        Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }
@@ -508,7 +508,7 @@ public class MagicDrawHelper {
 
     public static Property createPartProperty(String name, Element owner) {
         Property newProp = createProperty(name, owner, null, null, null, null, null);
-        Element stereo = ElementFinder.getElementByID("_15_0_be00301_1199377756297_348405_2678");
+        Element stereo = ElementFinder.getElementByID("_15_0_be00301_1199377756297_348405_2678", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }
