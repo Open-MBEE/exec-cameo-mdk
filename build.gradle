@@ -5,6 +5,11 @@ import java.time.format.DateTimeFormatter
  *
  */
 
+version = humanVersion
+String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
+String buildType = project.getProperties().getOrDefault('buildType', 'public');
+String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
+
 buildscript {
     repositories {
         jcenter()
@@ -19,20 +24,27 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
-apply plugin: 'com.jfrog.artifactory'
+if (buildType == 'internal') {
+    apply plugin: 'com.jfrog.artifactory'
+}
 apply plugin: 'maven-publish'
 apply plugin: 'rebel'
-
-version = humanVersion
-String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
-String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
 // In this section you declare where to find the dependencies of your project
 repositories {
     jcenter()
     // mavenCentral()
-    maven {
-    	url 'https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local'
+    if (buildType == 'internal') {
+        maven {
+            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local'
+        }
+    }
+    ivy {
+        // http://d1g91r27pzl568.cloudfront.net/magicdraw184sp1/MagicDraw_184_sp1_no_install.zip
+        url 'http://d1g91r27pzl568.cloudfront.net/'
+        layout 'pattern', {
+            artifact '/[module]184sp1/MagicDraw_[revision]_[classifier].[ext]'
+        }
     }
 }
 
@@ -43,7 +55,12 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // Production code requires MagicDraw patches to compile
-    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.2', ext: 'zip'
+    if (buildType == 'internal') {
+        preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.2', ext: 'zip'
+    }
+    else {
+        preCompile group: 'nomagic', name: 'magicdraw', version: '184_sp1', classifier: 'no_install', ext: 'zip'
+    }
     
     // SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
@@ -248,54 +265,56 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-publishing {
-    // Reference to Gradle publications defined in the build script.
-    // This is how we tell the Artifactory Plugin which artifacts should be
-    // published to Artifactory.
-    publications {
-        mavenJava(MavenPublication) {
-            groupId artifactoryGroupId
-            artifactId project.name
-            version humanVersion
+if (buildType == 'internal') {
+    publishing {
+        // Reference to Gradle publications defined in the build script.
+        // This is how we tell the Artifactory Plugin which artifacts should be
+        // published to Artifactory.
+        publications {
+            mavenJava(MavenPublication) {
+                groupId artifactoryGroupId
+                artifactId project.name
+                version humanVersion
 
-            from components.java
-            artifact sourcesJar {
-                classifier "sources"
-            }
-            artifact testsJar {
-                classifier "tests"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
-            }
-            artifact distZip {
-                classifier "plugin"
+                from components.java
+                artifact sourcesJar {
+                    classifier "sources"
+                }
+                artifact testsJar {
+                    classifier "tests"
+                }
+                artifact javadocJar {
+                    classifier "javadoc"
+                }
+                artifact distZip {
+                    classifier "plugin"
+                }
             }
         }
     }
-}
 
-artifactory {
-    contextUrl = 'https://cae-artifactory.jpl.nasa.gov/artifactory/'
-    publish {
-        repository {
-            repoKey = 'plugins-' + (version.endsWith('SNAPSHOT') ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
-            username = "${artifactory_user}" // The publisher user name
-            password = "${artifactory_password}" // The publisher password
-            maven = true
-        }
-        defaults {
-            publications('mavenJava')
-            publishArtifacts = true
-            // Properties to be attached to the published artifacts.
-            //properties = ['qa.level': 'basic', 'dev.team' : 'core']
-            // Publish generated POM files to Artifactory (true by default)
-            publishPom = true
+    artifactory {
+        contextUrl = 'https://cae-artifactory.jpl.nasa.gov/artifactory/'
+        publish {
+            repository {
+                repoKey = 'plugins-' + (version.endsWith('SNAPSHOT') ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
+                username = project.getProperties().get('artifactory_user') // The publisher user name
+                password = project.getProperties().get('artifactory_password') // The publisher password
+                maven = true
+            }
+            defaults {
+                publications('mavenJava')
+                publishArtifacts = true
+                // Properties to be attached to the published artifacts.
+                //properties = ['qa.level': 'basic', 'dev.team' : 'core']
+                // Publish generated POM files to Artifactory (true by default)
+                publishPom = true
+            }
         }
     }
-}
 
-artifactoryPublish.dependsOn distZip
+    artifactoryPublish.dependsOn distZip
+}
 
 installDist {
     destinationDir = file('build/plugin')
