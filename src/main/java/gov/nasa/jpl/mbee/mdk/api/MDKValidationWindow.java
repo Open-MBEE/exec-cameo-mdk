@@ -38,7 +38,6 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import org.apache.poi.openxml4j.exceptions.InvalidOperationException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -190,13 +189,13 @@ public class MDKValidationWindow {
      * @param type String of the type to look for. Expected format: '[type]'
      * @return index of the list of validation results of the specified type
      */
-    private int lookupListIndex(String type) throws UnsupportedOperationException{
+    private int lookupListIndex(String type) throws IllegalArgumentException{
         for (int index = 0; index < VALIDATION_RULE_OPTIONS.length; index++) {
             if (VALIDATION_RULE_OPTIONS[index][VIOLATION_RULE_NAME].equalsIgnoreCase(type)) {
                 return index;
             }
         }
-        throw new UnsupportedOperationException(type + " is not a supported violation rule.");
+        throw new IllegalArgumentException(type + " is not a supported violation rule.");
     }
 
     private String getVRVElementID(ValidationRuleViolation vrv) {
@@ -245,7 +244,7 @@ public class MDKValidationWindow {
         int ruleIndex;
         try {
             ruleIndex = lookupListIndex(violationRuleName);
-        } catch (InvalidOperationException e) {
+        } catch (IllegalArgumentException e) {
             MagicDrawHelper.generalMessage("[ERROR]" + violationRuleName + " is not a supported violation rule.");
             return;
         }
