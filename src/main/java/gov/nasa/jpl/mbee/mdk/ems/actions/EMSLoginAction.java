@@ -67,11 +67,11 @@ public class EMSLoginAction extends MDAction {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
         }
-        TicketUtils.loginToMMS();
 
-        if (TicketUtils.getTicket().isEmpty()) {
+        if (!TicketUtils.loginToMMS()) {
             return false;
         }
+
         if (initJms) {
             for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(p);

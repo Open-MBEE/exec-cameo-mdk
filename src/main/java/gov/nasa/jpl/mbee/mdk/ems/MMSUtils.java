@@ -15,6 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
@@ -286,17 +287,29 @@ public class MMSUtils {
         return buildRequest(type, requestUri, null);
     }
 
-    /**
-     * General purpose method for sending a constructed http request via http client.
-     *
-     * @param request
-     * @return
-     * @throws IOException
-     * @throws ServerException
-     */
     public static ObjectNode sendMMSRequest(HttpRequestBase request)
             throws IOException, ServerException {
-//        new RuntimeException("trace").printStackTrace();
+        return sendMMSRequest(request, false);
+    }
+
+        /**
+         * General purpose method for sending a constructed http request via http client.
+         *
+         * @param request
+         * @return
+         * @throws IOException
+         * @throws ServerException
+         */
+    public static ObjectNode sendMMSRequest(HttpRequestBase request, boolean bypassTicketCheck)
+            throws IOException, ServerException {
+        // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
+        if (!bypassTicketCheck && !TicketUtils.checkAcquiredTicket()) {
+            // if new login credentials fail, logout and terminal jms sync;
+            // 403 exception should already be thrown by failed credentials acquisition attempt
+            if (!TicketUtils.loginToMMS()) {
+                new EMSLogoutAction().logoutAction();
+            }
+        }
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest && (httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null && httpEntityEnclosingRequest.getEntity().isRepeatable();
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString() + (logBody ? " - Body:" : ""));
@@ -330,19 +343,33 @@ public class MMSUtils {
         return responseJson;
     }
 
+    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
+            throws IOException, ServerException {
+        return sendCancellableMMSRequest(request, progressStatus, false);
+    }
+
     /**
      * General purpose method for running a cancellable request. Builds a new thread to run the request, and passes
      * any relevant exception information back out via atomic references and generates new exceptions in calling thread
      *
      * @param request
      * @param progressStatus
+     * @param bypassTicketCheck
      * @return
      * @throws IOException
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
+    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus, boolean bypassTicketCheck)
             throws IOException, ServerException {
+        // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
+        if (!bypassTicketCheck && !TicketUtils.checkAcquiredTicket()) {
+            // if new login credentials fail, logout and terminal jms sync;
+            // 403 exception should already be thrown by failed credentials acquisition attempt
+            if (!TicketUtils.loginToMMS()) {
+                new EMSLogoutAction().logoutAction();
+            }
+        }
         final AtomicReference<ObjectNode> resp = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
@@ -440,12 +467,14 @@ public class MMSUtils {
     }
 
     /**
-     * @param code
-     * @param response
-     * @return
+     * @param response string response from server
+     * @param code integer code from server
+     * @return true if further error processing is needed by calling function
      */
-    public static boolean processRequestErrors(String response, int code) {
-        // disabling of popup messages is handled by Utils, which will redirect them to the GUILog if disabled
+    private static boolean processRequestErrors(String response, int code) {
+        // not disabling popup messages locally. it's handled by Utils, which will redirect them to the GUILog if disabled
+
+        // try to parse the response and display a message, if one was included
         try {
             ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
             JsonNode value;
@@ -454,7 +483,9 @@ public class MMSUtils {
                     Utils.guilog("[SERVER MESSAGE] " + value.asText());
                 }
             }
+        // if response parsing failed, warn user that something weird happened and discontinue processing
         } catch (IOException e) {
+            Utils.showPopupMessage("Unable to process server response. Your action may have failed.");
             Utils.guilog("[ERROR] Unexpected error processing MMS response.");
             if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
                 Utils.guilog("Server response: " + code + " " + response);
@@ -463,27 +494,32 @@ public class MMSUtils {
             return true;
         }
 
-        if (code >= 500) {
-            Utils.showPopupMessage("Server Error. See message window for details.");
-            Utils.guilog("Server response: " + response);
+        // deal with various return codes
+        if (code == 200) {
+            return false;
+        }
+        Utils.showPopupMessage("Action failed. See message window for details.");
+        if (code != 404 && code != 403 && code != 401) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected server response. (Code: " + code + ")");
+            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                Application.getInstance().getGUILog().log(response);
+            }
+            Utils.showPopupMessage("Action failed. See message window for details.");
             return true;
         }
         else if (code == 404) {
-            // TODO @donbot catch for not found response
+            Application.getInstance().getGUILog().log("[ERROR] Unable to complete action. Some necessary elements or " +
+                    "views were not found on the MMS. You will need to sync them and then reattempt this action.");
         }
         else if (code == 403) {
-            Utils.showPopupMessage("You do not have permission to do this.");
+            Application.getInstance().getGUILog().log("[ERROR] Inappropriate credentials. You do not have permission to " +
+                    "perform this action on some target elements, or you are not logged in.");
         }
         else if (code == 401) {
-            Utils.showPopupMessage("You are not authorized or don't have permission. You can login and try again.");
-            TicketUtils.clearUsernameAndPassword();
+            Application.getInstance().getGUILog().log("[ERROR] No credentials were supplied with this request. Please " +
+                    "login and try again.");
         }
-        else if (code != 200) {
-            Utils.guilog("[ERROR] Unexpected server response. (Code: " + code + ")");
-            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                Utils.guilog(response);
-            }
-        }
+        Utils.showPopupMessage("Action failed. See message window for details.");
         return false;
     }
 
