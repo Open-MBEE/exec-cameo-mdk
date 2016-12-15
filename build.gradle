@@ -1,9 +1,11 @@
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/*
- *
- */
+
+version = humanVersion
+String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
+String buildType = project.getProperties().getOrDefault('buildType', 'public');
+String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
 buildscript {
     repositories {
@@ -19,20 +21,27 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
-apply plugin: 'com.jfrog.artifactory'
+if (buildType == 'internal') {
+    apply plugin: 'com.jfrog.artifactory'
+}
 apply plugin: 'maven-publish'
 apply plugin: 'rebel'
-
-version = humanVersion
-String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
-String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
 // In this section you declare where to find the dependencies of your project
 repositories {
     jcenter()
     // mavenCentral()
-    maven {
-    	url 'https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local'
+    if (buildType == 'internal') {
+        maven {
+            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local'
+        }
+    }
+    ivy {
+        // http://d1g91r27pzl568.cloudfront.net/magicdraw184sp1/MagicDraw_184_sp1_no_install.zip
+        url 'http://d1g91r27pzl568.cloudfront.net/'
+        layout 'pattern', {
+            artifact '/[module]184sp1/MagicDraw_[revision]_[classifier].[ext]'
+        }
     }
 }
 
@@ -43,7 +52,12 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // Production code requires MagicDraw patches to compile
-    preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.2', ext: 'zip'
+    if (buildType == 'internal') {
+        preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.2', ext: 'zip'
+    }
+    else {
+        preCompile group: 'nomagic', name: 'magicdraw', version: '184_sp1', classifier: 'no_install', ext: 'zip'
+    }
     
     // SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
@@ -222,8 +236,9 @@ task testsJar(type: Jar, dependsOn: testClasses) {
     from sourceSets.test.output
 
     exclude 'gov/nasa/jpl/mbee/mdk/test/framework/**'
-    exclude '**/org/gradle/**'
-    include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
+    exclude 'org/**'
+    exclude 'worker/**'
+    //include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 }
 
 task testsHackJar(type: Jar, dependsOn: testClasses) {
@@ -231,7 +246,8 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     from sourceSets.test.output
 
     include 'gov/nasa/jpl/mbee/mdk/test/framework/**'
-    include '**/org/gradle/**'
+    include 'org/**'
+    include 'worker/**'
     exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
@@ -246,54 +262,56 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-publishing {
-    // Reference to Gradle publications defined in the build script.
-    // This is how we tell the Artifactory Plugin which artifacts should be
-    // published to Artifactory.
-    publications {
-        mavenJava(MavenPublication) {
-            groupId artifactoryGroupId
-            artifactId project.name
-            version humanVersion
+if (buildType == 'internal') {
+    publishing {
+        // Reference to Gradle publications defined in the build script.
+        // This is how we tell the Artifactory Plugin which artifacts should be
+        // published to Artifactory.
+        publications {
+            mavenJava(MavenPublication) {
+                groupId artifactoryGroupId
+                artifactId project.name
+                version humanVersion
 
-            from components.java
-            artifact sourcesJar {
-                classifier "sources"
-            }
-            artifact testsJar {
-                classifier "tests"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
-            }
-            artifact distZip {
-                classifier "plugin"
+                from components.java
+                artifact sourcesJar {
+                    classifier "sources"
+                }
+                artifact testsJar {
+                    classifier "tests"
+                }
+                artifact javadocJar {
+                    classifier "javadoc"
+                }
+                artifact distZip {
+                    classifier "plugin"
+                }
             }
         }
     }
-}
 
-artifactory {
-    contextUrl = 'https://cae-artifactory.jpl.nasa.gov/artifactory/'
-    publish {
-        repository {
-            repoKey = 'plugins-' + (version.endsWith('SNAPSHOT') ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
-            username = "${artifactory_user}" // The publisher user name
-            password = "${artifactory_password}" // The publisher password
-            maven = true
-        }
-        defaults {
-            publications('mavenJava')
-            publishArtifacts = true
-            // Properties to be attached to the published artifacts.
-            //properties = ['qa.level': 'basic', 'dev.team' : 'core']
-            // Publish generated POM files to Artifactory (true by default)
-            publishPom = true
+    artifactory {
+        contextUrl = 'https://cae-artifactory.jpl.nasa.gov/artifactory/'
+        publish {
+            repository {
+                repoKey = 'plugins-' + (version.endsWith('SNAPSHOT') ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
+                username = project.getProperties().get('artifactory_user') // The publisher user name
+                password = project.getProperties().get('artifactory_password') // The publisher password
+                maven = true
+            }
+            defaults {
+                publications('mavenJava')
+                publishArtifacts = true
+                // Properties to be attached to the published artifacts.
+                //properties = ['qa.level': 'basic', 'dev.team' : 'core']
+                // Publish generated POM files to Artifactory (true by default)
+                publishPom = true
+            }
         }
     }
-}
 
-artifactoryPublish.dependsOn distZip
+    artifactoryPublish.dependsOn distZip
+}
 
 installDist {
     destinationDir = file('build/plugin')
@@ -346,23 +364,33 @@ test {
     workingDir 'build/install'
 
     /**
-     * The short version of the rationale is that with 18.4, MagicDraw introduced the OSGi framework as part of its implementation.
-     * Gradle and JUnit work very well together out of the box (generated reports in XML and HTML, tight IDE/Jenkins integration, etc.), and Gradle and OSGi was made to work with the runJava task.
-     * However, Gradle had to implement a number of hacks to overcome OS limitations and achieve features that can be applied to a broad range of software.
-     * Those hacks work well with most applications but not OSGi (commentary: OSGi doesn't play well with anyone), so we implemented a number of hacks ourselves.
-     * They involve classloading order, classpath redirection using the jar argument, reflection, and dynamic classloading.
-     * Ultimately, this enabled the use of the well-supported and feature-rich Gradle test task, but at the cost of an implementation that could break in the unlikely, albeit possible, case of either Gradle or MagicDraw significantly changing their implementations of the test and OSGi frameworks, respectively.
+     * The short version of the rationale is that with 18.4, MagicDraw introduced the OSGi framework as part of its
+     * implementation.
+     * Gradle and JUnit work very well together out of the box (generated reports in XML and HTML, tight IDE/Jenkins
+     * integration, etc.), and Gradle and OSGi was made to work with the runJava task.
+     * However, Gradle had to implement a number of hacks to overcome OS limitations and achieve features that can be
+     * applied to a broad range of software.
+     * Those hacks work well with most applications but not OSGi (commentary: OSGi doesn't play well with anyone), so
+     * we implemented a number of hacks ourselves.
+     * They involve classloading order, classpath redirection using the jar argument, reflection, and dynamic
+     * classloading.
+     * Ultimately, this enabled the use of the well-supported and feature-rich Gradle test task, but at the cost of
+     * an implementation that could break in the unlikely, albeit possible, case of either Gradle or MagicDraw
+     * significantly changing their implementations of the test and OSGi frameworks, respectively.
      *
-     * Clears the default classpath since all the necessary libraries are being passed as arguments to GradleMagicDrawLauncher to be added to the OSGi classpath.
-     * Then it utilizes the -jar JVM argument to override the default Gradle command and pass the original command as arguments to the main class of the jar, GradleMagicDrawLauncher,
-     * including the classpath arguments (one of our own and one of Gradle's). It additionally parses and sets the system properties that are passed.
+     * Clears the default classpath since all the necessary libraries are being passed as arguments to
+     * GradleMagicDrawLauncher to be added to the OSGi classpath.
+     * Then it utilizes the -jar JVM argument to override the default Gradle command and pass the original command
+     * as arguments to the main class of the jar, GradleMagicDrawLauncher,
+     * including the classpath arguments (one of our own and one of Gradle's). It additionally parses and sets the
+     * system properties that are passed.
      *
      * Example command: .../java -Dcom.nomagic.osgi.config.dir=configuration -Desi.system.config=data/application.conf -Djava.security.manager=worker.org.gradle.process.internal.worker.child.BootstrapSecurityManager -Dlogback.configurationFile=data/logback.xml -Dmd.class.path=$java.class.path -jar /Users/igomes/mdk/build/libs/mdk-*-tests-hack.jar -cp ... -Dfile.encoding=UTF-8 -Duser.country=US -Duser.language=en -Duser.variant -ea -cp .../.gradle/caches/.../workerMain/gradle-worker.jar worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 1'
      *
      * @author igomes
      */
     classpath = files()
-    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml']
+    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/generated-dist', include: '**/*.jar').asPath + /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
 }
 
 test.dependsOn testsJar

@@ -54,6 +54,11 @@ import com.nomagic.utils.ErrorHandler;
 import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -76,6 +81,41 @@ public class MagicDrawHelper {
         project = Application.getInstance().getProject();
         ef = project.getElementsFactory();
     }
+
+    /*****************************************************************************************
+     *
+     * Project load / close functions
+     *
+     *****************************************************************************************/
+
+    public static ProjectDescriptor openProject(File file) throws IOException {
+        final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
+        if (projectDescriptor == null) {
+            throw new IOException(Paths.get(file.toURI()).toString() + " could not generate a project descriptor.");
+        }
+        final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
+        projectsManager.loadProject(projectDescriptor, true);
+        final Project project = projectsManager.getActiveProject();
+        if (project == null) {
+            throw new IOException(Paths.get(file.toURI()).toString() + " could not be loaded into MagicDraw.");
+        }
+        return projectDescriptor;
+    }
+
+    public static void saveProject(String filename) {
+        System.out.println(System.currentTimeMillis());
+        File file = new File(filename);
+        ProjectDescriptor projectDescriptor =
+                ProjectDescriptorsFactory.createLocalProjectDescriptor(Application.getInstance().getProject(), file);
+        Application.getInstance().getProjectsManager().saveProject(projectDescriptor, false);
+        System.out.println(System.currentTimeMillis());
+    }
+
+    public static void closeProject() {
+        Application.getInstance().getProjectsManager().closeProject();
+    }
+
+
 
     /*****************************************************************************************
      *
@@ -208,17 +248,15 @@ public class MagicDrawHelper {
      */
     public static void deleteEditableContainerChildren(Element parent) throws ReadOnlyElementException {
         Collection<Element> elements = parent.getOwnedElement();
-        ArrayList<Element> eList = new ArrayList<Element>();
+        ArrayList<Element> eList = new ArrayList<>();
 
         for (Element e : elements) {
-            if (e.getHumanName().startsWith("Package") && e.isEditable()) {
-                eList.add(e);
-            }
-            if (e.getHumanName().startsWith("Diagram") && e.isEditable()) {
+            if (e.canBeDeleted() && e.isEditable() && (e.getHumanName().startsWith("Diagram")
+                    || (e.getHumanName().startsWith("Package")
+                    && !(e.getHumanName().contains("__MMSSync__") || e.getHumanName().contains("Holding Bin"))))) {
                 eList.add(e);
             }
         }
-
         for (Element elem : eList) {
             deleteMDElement(elem);
         }
@@ -227,7 +265,11 @@ public class MagicDrawHelper {
     /**
      * Deletes all editable container elements in a project.
      */
-    public static void deleteLocalMDElements() throws ReadOnlyElementException {
+    public static void clearModel() throws ReadOnlyElementException {
+        if (ElementFinder.getModelRoot() == null) {
+            System.out.println("Null root");
+            return;
+        }
         deleteEditableContainerChildren(ElementFinder.getModelRoot());
     }
 
@@ -395,7 +437,7 @@ public class MagicDrawHelper {
 
     public static Class createBlock(String name, Element owner) {
         Class newBlock = createClass(name, owner);
-        Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958");
+        Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }
@@ -466,7 +508,7 @@ public class MagicDrawHelper {
 
     public static Property createPartProperty(String name, Element owner) {
         Property newProp = createProperty(name, owner, null, null, null, null, null);
-        Element stereo = ElementFinder.getElementByID("_15_0_be00301_1199377756297_348405_2678");
+        Element stereo = ElementFinder.getElementByID("_15_0_be00301_1199377756297_348405_2678", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }

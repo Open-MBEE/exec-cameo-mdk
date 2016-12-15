@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
@@ -65,7 +66,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (realTimeSyncProjectMapping.isDisabled()) {
             return;
         }
-        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+        if (!StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
             return;
         }
         if (project.isTeamworkServerProject() && !savedInServer) {

@@ -23,7 +23,7 @@ public abstract class ElementReference<E extends Element> implements Function<Pr
         if (e != null) {
             return e;
         }
-        element = ElementFinder.getElementByQualifiedName(getQualifiedName(), project);
+        element = ElementFinder.getElementByID(getID(), project);
         e = convertInstanceOfObject(element, getElementClass());
         return e;
     }

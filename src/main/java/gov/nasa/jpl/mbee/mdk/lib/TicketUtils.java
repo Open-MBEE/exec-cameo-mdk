@@ -95,7 +95,7 @@ public class TicketUtils {
      *         Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
     public static boolean loginToMMS() {
-        if (!username.isEmpty() && !password.isEmpty()){
+        if (!username.isEmpty() && !password.isEmpty()) {
             acquireTicket(password);
             password = "";
         }
