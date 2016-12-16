@@ -43,7 +43,8 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
     private static Element targetPackage;
     private static String filename = "/CSyncTest.mdzip";
     private static File testProjectFile;
-    
+    private static File credentials = new File(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResource("/mms.properties").getPath());
+
     public CoordinatedSyncConflictMDDeleteMMSUpdate() {
     }
 
@@ -55,12 +56,11 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
 //        System.out.println(MDKOptionsGroup.getMDKOptions().isPersistChangelog());
 //        System.out.println(MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
 //        System.out.println(MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
-        MDKTestHelper.setMmsCredentials("/mms.properties", "");
-        System.out.println(TicketUtils.getUsername());
-
         testProjectFile = File.createTempFile("prj", ".mdzip");
         testProjectFile.deleteOnExit();
         Files.copy(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResourceAsStream(filename), testProjectFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        MDKTestHelper.loadLocalProject(testProjectFile, credentials, "");
+
         MagicDrawHelper.openProject(testProjectFile);
 
         if (!MDKHelper.isSiteEditable()) {
