@@ -103,6 +103,7 @@ public class Crushinator23To24Migrator extends Migrator {
         }
 
         String postUrl = ExportUtility.getPostElementsUrl();
+        String deleteUrl = ExportUtility.getUrlWithWorkspace() + "/elements";
         if (postUrl == null) {
             Application.getInstance().getGUILog().log("[ERROR] Could not build post URL. Aborting.");
             return;
@@ -114,8 +115,11 @@ public class Crushinator23To24Migrator extends Migrator {
                 originUrl = originUrl.replace("tcp://", site.startsWith("http://") ? "http://" : "https://");
                 originUrl = originUrl.replaceFirst(":\\d+", "");
                 Application.getInstance().getGUILog().log("[INFO] Found origin domain: " + originUrl);
-                postUrl = postUrl.replaceFirst("http(s?):\\/\\/.+?(?=\\/)", originUrl);
+                String pattern = "http(s?):\\/\\/.+?(?=\\/)";
+                postUrl = postUrl.replaceFirst(pattern, originUrl);
+                deleteUrl = deleteUrl.replaceFirst(pattern, originUrl);
                 Application.getInstance().getGUILog().log("[INFO] New post URL: " + postUrl);
+                Application.getInstance().getGUILog().log("[INFO] New delete URL: " + deleteUrl);
             }
         } catch (ServerException e) {
             e.printStackTrace();
@@ -359,7 +363,7 @@ public class Crushinator23To24Migrator extends Migrator {
                 //Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + jsonArray.size() + " element" + (jsonArray.size() != 1 ? "s" : "") + " on the MMS.");
                 //System.out.println(body);
                 //OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, jsonArray.size(), "Migration Deletes"));
-                ExportUtility.deleteWithBody(postUrl, body.toJSONString(), true);
+                ExportUtility.deleteWithBody(deleteUrl, body.toJSONString(), true);
 
                 ps.increase();
                 total += jsonArray.size();
