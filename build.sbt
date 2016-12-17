@@ -1,8 +1,6 @@
 import java.io.File
 import java.util.Calendar
 import java.text.SimpleDateFormat
-import sbt.Keys._
-import sbt._
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.4")
 enablePlugins(GitVersioning)
