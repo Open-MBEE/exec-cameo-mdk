@@ -1,8 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -263,7 +260,7 @@ public class MMSUtils {
                 break;
         }
         request.addHeader("charset", "utf-8");
-        if (sendData != null) {
+        if (sendData != null && request instanceof HttpEntityEnclosingRequest) {
             request.addHeader("Content-Type", "application/json");
             String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
             ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
@@ -347,7 +344,6 @@ public class MMSUtils {
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
         final AtomicReference<String> emsg = new AtomicReference<>();
-        final AtomicReference<String> einput = new AtomicReference<>();
         Thread t = new Thread(() -> {
             ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
             try {
@@ -695,21 +691,25 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject());
+        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString());
     }
 
     public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(project.getProjectID(), project.getName());
+        return getProjectObjectNode(project.getName(), project.getProjectID(), null);
     }
 
-    private static ObjectNode getProjectObjectNode(String id, String name) {
+    private static ObjectNode getProjectObjectNode(String name, String projId, String descId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
-        if (name != null) {
+        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projId);
+        if (name != null && !name.isEmpty()) {
             projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        if (descId != null && !descId.isEmpty()) {
+            projectObjectNode.put(MDKConstants.DESCRIPTOR_ID, descId);
+        }
         return projectObjectNode;
     }
+
 }
 
