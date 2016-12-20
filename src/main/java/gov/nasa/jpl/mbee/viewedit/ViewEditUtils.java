@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.viewedit;
 
+import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
 import gov.nasa.jpl.mbee.lib.Utils;
 
 import java.awt.GridLayout;
@@ -219,6 +220,9 @@ public class ViewEditUtils {
                     "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
             if (response != JOptionPane.OK_OPTION) {
+                if (!username.isEmpty() || !ticket.isEmpty()) {
+                    EMSLogoutAction.logoutAction();
+                }
                 return;
             }
 
@@ -281,8 +285,8 @@ public class ViewEditUtils {
     }
 
     public static void clearUsernameAndPassword() {
+        ticket = "";
         setUsernameAndPassword("", "", false);
-        setTicket("");
     }
 
     public static boolean showErrorMessage(int code) {
@@ -299,7 +303,7 @@ public class ViewEditUtils {
     }
     
     public static boolean isPasswordSet() {
-        return passwordSet;
+        return !ticket.isEmpty();
     }
     
     /**
@@ -329,6 +333,7 @@ public class ViewEditUtils {
     public static String getTicket(){
         return ticket;
     }
+    
     public static void setTicket(String _ticket){
         ticket = _ticket;
     }

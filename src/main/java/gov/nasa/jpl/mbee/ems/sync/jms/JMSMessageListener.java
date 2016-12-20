@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.api.docgen.presentation_elements.properties.PresentationElementPropertyEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -204,7 +205,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             } catch (InterruptedException ignored) {
             }
             if (shouldAttemptToReconnect()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(project);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
             }
         }
         if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
@@ -218,6 +220,9 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     }
 
     private boolean shouldAttemptToReconnect() {
-        return JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && !project.isProjectClosed() && project.getModel() != null && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled();
+        return !project.isProjectClosed() && ViewEditUtils.isPasswordSet()
+                && JMSSyncProjectEventListenerAdapter.enableJMS(project) 
+                && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled();
     }
 }
+

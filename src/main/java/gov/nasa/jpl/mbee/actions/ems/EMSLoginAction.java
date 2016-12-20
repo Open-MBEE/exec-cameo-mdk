@@ -82,6 +82,7 @@ public class EMSLoginAction extends MDAction {
             response = ExportUtility.getTicket(url + "/api/login", username, password, true); //used to be /checklogin
         } catch (ServerException ex) {
             ViewEditUtils.clearUsernameAndPassword();
+            return false;
         }
         if (response == null) {
             ViewEditUtils.clearUsernameAndPassword();
@@ -89,10 +90,11 @@ public class EMSLoginAction extends MDAction {
         }
         if (initJms) {
             for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(p);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
             }
         }
-        Application.getInstance().getGUILog().log("Login complete.");
+        Application.getInstance().getGUILog().log("MMS login complete.");
         return true;
     }
 
