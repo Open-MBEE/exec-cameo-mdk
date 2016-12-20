@@ -3,8 +3,11 @@ import java.time.format.DateTimeFormatter
 
 
 version = humanVersion
+if (project.getProperties().get('buildBranch') != 'master') {
+    version += '-SNAPSHOT'
+}
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
-String buildType = project.getProperties().getOrDefault('buildType', 'public');
+String buildAccess = project.getProperties().getOrDefault('buildAccess', 'internal');
 String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
 buildscript {
@@ -21,7 +24,7 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
-if (buildType == 'internal') {
+if (buildAccess == 'internal') {
     apply plugin: 'com.jfrog.artifactory'
 }
 apply plugin: 'maven-publish'
@@ -31,9 +34,9 @@ apply plugin: 'rebel'
 repositories {
     jcenter()
     // mavenCentral()
-    if (buildType == 'internal') {
+    if (buildAccess == 'internal') {
         maven {
-            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local'
+            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
         }
     }
     ivy {
@@ -52,8 +55,8 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // Production code requires MagicDraw patches to compile
-    if (buildType == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.magicdraw.packages', name: 'cae_md18_4_vendor', version: '1.2', ext: 'zip'
+    if (buildAccess == 'internal') {
+        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0-SNAPSHOT', ext: 'zip'
     }
     else {
         preCompile group: 'nomagic', name: 'magicdraw', version: '184_sp1', classifier: 'no_install', ext: 'zip'
@@ -262,7 +265,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-if (buildType == 'internal') {
+if (buildAccess == 'internal') {
     publishing {
         // Reference to Gradle publications defined in the build script.
         // This is how we tell the Artifactory Plugin which artifacts should be
