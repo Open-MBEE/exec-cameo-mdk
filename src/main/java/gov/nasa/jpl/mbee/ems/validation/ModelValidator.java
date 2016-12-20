@@ -886,11 +886,13 @@ public class ModelValidator {
     	for (int i = 0; i < modelArray.size(); i++) {
     	    modelAttribs.add(modelArray.get(i));
     	}
-    	for (int i = 0; i < webArray.size(); i++) {
-    	    if (!modelAttribs.remove(webArray.get(i))) {
-    	        webAttribs.add(webArray.get(i));
-    	    };
-    	}
+    	if (webArray != null) {
+            for (int i = 0; i < webArray.size(); i++) {
+                if (!modelAttribs.remove(webArray.get(i))) {
+                    webAttribs.add(webArray.get(i));
+                }
+            }
+        }
     	ValidationRuleViolation v;
     	if (modelAttribs.isEmpty() && webAttribs.isEmpty() ) {
     	    v = new ValidationRuleViolation(e, "[ATTRIBUTE] Owned attribute ordering is different.");
