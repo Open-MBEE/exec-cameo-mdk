@@ -1,5 +1,16 @@
 # MagicDraw Model Development Kit (MDK)
 
+## OCL patch
+
+### To use MDK's ocl support or expressions in DocGen, do the following in MagicDraw 18.0
+- replace md.install.dir/lib/org.eclipse.emf.ecore.change_2.7.0.v20110408-2116.jar with ocl_libraries/org.eclipse.emf.ecore.change_2.7.1.201210251512.jar
+- replace md.install.dir/lib/org.eclipse.emf.ecore.xmi_2.7.0.v20110411-2239.jar with ocl_libraries/org.eclipse.emf.ecore.xmi_2.7.0.201210251512.jar
+- replace md.install.dir/lib/org.eclipse.emf.ecore_2.7.0.v20110513-1719.jar with ocl_libraries/org.eclipse.emf.ecore_2.7.0.201210251512.jar
+- replace md.install.dir/lib/org.eclipse.ocl_3.0.1.R30x_v201008251030.jar with ocl_libraries/org.eclipse.ocl_3.2.0.201210251512.jar
+- replace md.install.dir/lib/org.eclipse.ocl.ecore_3.0.1.R30x_v201008251030.jar with ocl_libraries/org.eclipse.ocl.ecore_3.2.2.201210251512.jar
+- replace md.install.dir/lib/org.eclipse.ocl.ecore.edit_3.0.0.R30x_v201008251030.jar with ocl_libraries/org.eclipse.ocl.ecore.edit_3.1.0.v20110526-1523.jar
+- modify the classpath in md.install.dir/bin/magicdraw.properties accordingly
+
 ## Packages
 
 - gov.nasa.jpl.mbee - Contains classes for configuring and initializing the plugin, profile stereotype strings, and DocGen specific utilities.
@@ -17,4 +28,3 @@
 - gov.nasa.jpl.mgss.mbee.docgen.validation - Classes that mirror magicdraw's validation model, can be used to show results in validation window or user validation script.
 - gov.nasa.jpl.ocl - Ocl evaluation related things.
 
-## Classes
