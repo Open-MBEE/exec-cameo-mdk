@@ -88,13 +88,13 @@ public class EMSLoginAction extends MDAction {
             ViewEditUtils.clearUsernameAndPassword();
             return false;
         }
+        Application.getInstance().getGUILog().log("MMS login complete.");
         if (initJms) {
             for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
             }
         }
-        Application.getInstance().getGUILog().log("MMS login complete.");
         return true;
     }
 

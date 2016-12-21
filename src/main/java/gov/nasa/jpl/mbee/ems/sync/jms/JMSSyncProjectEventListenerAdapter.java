@@ -62,17 +62,17 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (JMSMessageListener != null) {
             JMSMessageListener.getInMemoryJMSChangelog().clear();
         }
-        if (jmsSyncProjectMapping.isDisabled() && enableJMS(project)) {
+        if (jmsSyncProjectMapping.isDisabled() && shouldEnableJMS(project)) {
             Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reinitiate MMS sync.");
             closeJMS(project);
-            if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
-                EMSLoginAction.loginAction("", "", false);
-            }
+//            if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
+//                EMSLoginAction.loginAction("", "", false);
+//            }
             initializeJMS(project);
         }
     }
     
-    public static boolean enableJMS(Project project) {
+    public static boolean shouldEnableJMS(Project project) {
         return ((project.getModel() != null) && project.isRemote() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()
                 && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"));
     }
@@ -80,7 +80,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public static void initializeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         boolean initialized = initDurable(project);
-        jmsSyncProjectMapping.setDisabled(!enableJMS(project) || !initialized);
+        jmsSyncProjectMapping.setDisabled(!shouldEnableJMS(project) || !initialized);
     }
     
     public static void closeJMS(Project project) {

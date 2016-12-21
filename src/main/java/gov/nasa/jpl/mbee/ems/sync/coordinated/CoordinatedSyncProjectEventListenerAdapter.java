@@ -5,6 +5,8 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+
+import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.ems.sync.delta.DeltaSyncRunner;
@@ -59,6 +61,11 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }
         if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+            return;
+        }
+        if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
+            Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync skipped for this commit. Attempting to reconnect to MMS for next commit.");
+            EMSLoginAction.loginAction("", "", false);
             return;
         }
         if (project.isTeamworkServerProject() && !savedInServer) {

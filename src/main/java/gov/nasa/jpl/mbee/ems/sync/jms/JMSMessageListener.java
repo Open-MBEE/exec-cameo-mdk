@@ -221,7 +221,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     private boolean shouldAttemptToReconnect() {
         return !project.isProjectClosed() && ViewEditUtils.isPasswordSet()
-                && JMSSyncProjectEventListenerAdapter.enableJMS(project) 
+                && JMSSyncProjectEventListenerAdapter.shouldEnableJMS(project) 
                 && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled();
     }
 }
