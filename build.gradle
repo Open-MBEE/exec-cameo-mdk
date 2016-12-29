@@ -110,7 +110,7 @@ dependencies {
     
     // Other dependencies we're unable to resolve via repositories
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar'])
-    compile fileTree(dir: 'lib', include: ['*.jar'])
+    compile fileTree(dir: 'lib', include: ['**/*.jar'])
     
 	// Test Dependencies
     //testCompile 'junit:junit:4.11'
