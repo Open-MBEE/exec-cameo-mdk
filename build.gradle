@@ -5,7 +5,7 @@ if (project.getProperties().get('buildBranch') != 'master') {
     version += '-SNAPSHOT'
 }
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
-String buildAccess = project.getProperties().getOrDefault('buildAccess', 'internal');
+String buildAccess = project.getProperties().getOrDefault('buildAccess', 'external');
 String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
 buildscript {
@@ -37,11 +37,13 @@ repositories {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
         }
     }
-    ivy {
-        // http://d1g91r27pzl568.cloudfront.net/magicdraw184sp1/MagicDraw_184_sp1_no_install.zip
-        url 'http://d1g91r27pzl568.cloudfront.net/'
-        layout 'pattern', {
-            artifact '/[module]184sp1/MagicDraw_[revision]_[classifier].[ext]'
+    else {
+        ivy {
+            // http://d1g91r27pzl568.cloudfront.net/magicdraw184sp1/MagicDraw_184_sp1_no_install.zip
+            url 'http://d1g91r27pzl568.cloudfront.net/'
+            layout 'pattern', {
+                artifact '/[module]184sp1/MagicDraw_[revision]_[classifier].[ext]'
+            }
         }
     }
 }
