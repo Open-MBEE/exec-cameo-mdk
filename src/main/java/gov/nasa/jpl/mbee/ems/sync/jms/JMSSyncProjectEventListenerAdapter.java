@@ -62,14 +62,6 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (JMSMessageListener != null) {
             JMSMessageListener.getInMemoryJMSChangelog().clear();
         }
-        if (jmsSyncProjectMapping.isDisabled() && shouldEnableJMS(project)) {
-            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reinitiate MMS sync.");
-            closeJMS(project);
-//            if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
-//                EMSLoginAction.loginAction("", "", false);
-//            }
-            initializeJMS(project);
-        }
     }
     
     public static boolean shouldEnableJMS(Project project) {
@@ -77,13 +69,13 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"));
     }
     
-    public static void initializeJMS(Project project) {
+    public void initializeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         boolean initialized = initDurable(project);
         jmsSyncProjectMapping.setDisabled(!shouldEnableJMS(project) || !initialized);
     }
     
-    public static void closeJMS(Project project) {
+    public void closeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         try {
             if (jmsSyncProjectMapping.getMessageConsumer() != null) {
@@ -110,7 +102,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         //projectMappings.remove(project.getID());
     }
 
-    private static boolean initDurable(Project project) {
+    private boolean initDurable(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         String projectID = ExportUtility.getProjectId(project);
         String workspaceID = ExportUtility.getWorkspace();
@@ -138,8 +130,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             return false;
         }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-            String user = TeamworkUtils.getLoggedUserName();
-            if (user == null) {
+            if (TeamworkUtils.getLoggedUserName() == null) {
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork.");
                 return false;
             }

@@ -2,9 +2,11 @@ package gov.nasa.jpl.mbee.actions.ems;
 
 import javax.swing.KeyStroke;
 
+import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.viewedit.ViewEditUtils;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 
 public class MMSAction extends MDAction {
 
@@ -15,7 +17,7 @@ public class MMSAction extends MDAction {
 
     @Override
     public void updateState() {    
-        setEnabled(ViewEditUtils.isPasswordSet());
+        setEnabled(ViewEditUtils.isPasswordSet() && !JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getJmsMessageListener().isExceptionHandlerRunning());
     }
 
 

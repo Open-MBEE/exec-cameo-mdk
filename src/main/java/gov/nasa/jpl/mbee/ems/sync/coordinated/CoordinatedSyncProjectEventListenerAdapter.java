@@ -64,8 +64,8 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }
         if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync skipped for this commit. Attempting to reconnect to MMS for next commit.");
-            EMSLoginAction.loginAction("", "", false);
+            Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
+            EMSLoginAction.loginAction("", "", true);
             return;
         }
         if (project.isTeamworkServerProject() && !savedInServer) {
@@ -80,42 +80,41 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     @SuppressWarnings("unchecked")
     public void projectSaved(Project project, boolean savedInServer) {
         CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled()) {
+        if (coordinatedSyncProjectMapping.isDisabled() || deltaSyncRunner == null || deltaSyncRunner.isFailure()) {
+            // CSync isn't running, so return
             return;
         }
-        if (deltaSyncRunner != null && !deltaSyncRunner.isFailure()) {
-            JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
-            JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
+        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
+        JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
-            // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE
+        // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE
 
-            Message lastMessage;
-            if (jmsMessageListener != null && (lastMessage = jmsMessageListener.getLastMessage()) != null) {
-                try {
-                    lastMessage.acknowledge();
-                } catch (JMSException | IllegalStateException e) {
-                    e.printStackTrace();
-                }
+        Message lastMessage;
+        if (jmsMessageListener != null && (lastMessage = jmsMessageListener.getLastMessage()) != null) {
+            try {
+                lastMessage.acknowledge();
+            } catch (JMSException | IllegalStateException e) {
+                e.printStackTrace();
             }
+        }
 
-            // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
+        // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
 
-            if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
-                JSONObject teamworkCommittedMessage = new JSONObject();
-                teamworkCommittedMessage.put("source", "magicdraw");
-                teamworkCommittedMessage.put("sender", ViewEditUtils.getUsername());
-                teamworkCommittedMessage.put("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
-                try {
-                    TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(teamworkCommittedMessage.toJSONString());
-                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, ExportUtility.getProjectId(project));
-                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, ExportUtility.getWorkspace() + "_mdk");
-                    jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
-                    int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
-                    Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
-                } catch (JMSException e) {
-                    e.printStackTrace();
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
-                }
+        if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
+            JSONObject teamworkCommittedMessage = new JSONObject();
+            teamworkCommittedMessage.put("source", "magicdraw");
+            teamworkCommittedMessage.put("sender", ViewEditUtils.getUsername());
+            teamworkCommittedMessage.put("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
+            try {
+                TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(teamworkCommittedMessage.toJSONString());
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, ExportUtility.getProjectId(project));
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, ExportUtility.getWorkspace() + "_mdk");
+                jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
+                int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
+                Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
+            } catch (JMSException e) {
+                e.printStackTrace();
+                Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
             }
         }
     }

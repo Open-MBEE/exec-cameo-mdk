@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
@@ -72,6 +74,10 @@ public class EMSLoginAction extends MDAction {
         ViewEditUtils.clearUsernameAndPassword();
         if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
+            return false;
+        }
+        if (project.isRemote() && TeamworkUtils.getLoggedUserName() == null) {
+            Utils.showPopupMessage("You need to be logged in to Teamwork first!");
             return false;
         }
         String url = ExportUtility.getUrl(project);

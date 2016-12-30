@@ -49,6 +49,7 @@ import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.docgen.*;
 import gov.nasa.jpl.mbee.actions.ems.*;
+import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
@@ -153,7 +154,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         //manager.addCategory(refactorWithIDActionCat);
 
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (ViewEditUtils.isPasswordSet()) {
+        if (ViewEditUtils.isPasswordSet() && !JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getJmsMessageListener().isExceptionHandlerRunning()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
