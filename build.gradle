@@ -2,7 +2,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 String buildBranch = project.getProperties().get('buildBranch');
-if (buildBranch != 'master' && !buildBranch.matches('support/[0-9.]+')) {
+if (buildBranch == null || buildBranch != 'master' && !buildBranch.matches('support/[0-9.]+')) {
     version += '-SNAPSHOT'
 }
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
