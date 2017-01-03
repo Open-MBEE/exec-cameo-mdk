@@ -42,6 +42,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -171,15 +172,14 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 }
             }
             if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models" : "Validate Models"));
-            }
-            if (manager.getActionFor(ValidateElementAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateElementAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Element" : "Validate Element"));
+                models.addAction(new ValidateModelAction(es, "Validate Models"));
             }
             if (manager.getActionFor(ValidateElementDepthAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateElementDepthAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models (specified depth)" : "Validate Models (specified depth)"));
+                models.addAction(new ValidateElementDepthAction(es, "Validate Models (specified depth)"));
             }
-
+            if (manager.getActionFor(ValidateElementAction.DEFAULT_ID) == null) {
+                models.addAction(new ValidateElementAction(es, "Validate Element"));
+            }
             /*if (e instanceof Package) {
                 if (manager.getActionFor(ExportAllDocuments.DEFAULT_ID) == null)
                     models.addAction(new ExportAllDocuments(e));
@@ -291,6 +291,9 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 action = manager.getActionFor(GenerateViewPresentationAction.RECURSE_DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(es, true));
+                }
+                if (manager.getActionFor(MMSViewLinkAction.DEFAULT_ID) == null) {
+                    viewInstances.addAction(new MMSViewLinkAction(es));
                 }
                 /*action = manager.getActionFor(OrganizeViewInstancesAction.DEFAULT_ID);
                 if (action == null) {
