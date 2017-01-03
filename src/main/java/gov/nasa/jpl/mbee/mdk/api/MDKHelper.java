@@ -68,7 +68,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -353,7 +352,7 @@ public class MDKHelper {
     }
 
     /**
-     * Sends a DELETE request to MMS for the indicated element.
+     * Sends a DELETE request to MMS for the indicated elements.
      *
      * @param elementsToDelete Collection of elements you want to directly delete on the MMS
      * @throws IllegalStateException
@@ -371,7 +370,7 @@ public class MDKHelper {
         requestBody.put("source", "magicdraw");
         requestBody.put("mmsVersion", MDKPlugin.VERSION);
         HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE,
-                MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
+                MMSUtils.getServiceProjectsWorkspacesElementsUri(project), requestBody);
         return MMSUtils.sendMMSRequest(request);
     }
 
@@ -381,37 +380,18 @@ public class MDKHelper {
      * @param elementsToPost Collection of elements you want to directly post on the MMS
      * @throws IllegalStateException
      */
-    public static ObjectNode postMmsElementJson(Collection<ObjectNode> elementsToPost, Project project)
+    public static ObjectNode postMmsElements(Collection<Element> elementsToPost, Project project)
             throws IOException, URISyntaxException, ServerException {
         ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elements = requestBody.putArray("elements");
-        for (ObjectNode postTarget : elementsToPost) {
-            elements.add(postTarget);
+        ArrayNode elementJson = requestBody.putArray("elements");
+        for (Element target : elementsToPost) {
+            ObjectNode elemJson = Converters.getElementToJsonConverter().apply(target, project);
+            elementJson.add(elemJson);
         }
         requestBody.put("source", "magicdraw");
         requestBody.put("mmsVersion", MDKPlugin.VERSION);
         HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
-                MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
-        return MMSUtils.sendMMSRequest(request);
-    }
-
-    /**
-     * Sends a POST request to MMS with the element JSON, creating or updating the element as appropriate.
-     *
-     * @param elementsToPost Collection of elements you want to directly post on the MMS
-     * @throws IllegalStateException
-     */
-    public static ObjectNode postMmsElement(Collection<Element> elementsToPost, Project project)
-            throws IOException, URISyntaxException, ServerException {
-        ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elements = requestBody.putArray("elements");
-        for (Element postTarget : elementsToPost) {
-            elements.add(Converters.getElementToJsonConverter().apply(postTarget, project));
-        }
-        requestBody.put("source", "magicdraw");
-        requestBody.put("mmsVersion", MDKPlugin.VERSION);
-        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
-                MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
+                MMSUtils.getServiceProjectsWorkspacesElementsUri(project), requestBody);
         return MMSUtils.sendMMSRequest(request);
     }
 

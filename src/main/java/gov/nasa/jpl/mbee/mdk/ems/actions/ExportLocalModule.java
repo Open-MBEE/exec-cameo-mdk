@@ -68,12 +68,10 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
 
-            URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceSitesProjectsUri(project);
             if (requestUri == null) {
                 return;
             }
-            requestUri.setPath(requestUri.getPath() + "/projects");
-
             Utils.guilog("Initializing module");
             try {
                 ObjectNode response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));

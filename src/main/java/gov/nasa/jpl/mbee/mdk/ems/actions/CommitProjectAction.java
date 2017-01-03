@@ -90,15 +90,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ArrayNode elementsArrayNode = requestData.putArray("elements");
         requestData.put("source", "magicdraw");
         requestData.put("mmsVersion", MDKPlugin.VERSION);
-
         ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+
+        URIBuilder requestUri = MMSUtils.getServiceSitesProjectsUri(project);
         if (requestUri == null) {
             return;
         }
-        requestUri.setPath(requestUri.getPath() + "/projects");
-
         ObjectNode response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
@@ -110,10 +108,6 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             return;
         }
         if (shouldCommitModel) {
-            requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
-            if (requestUri == null) {
-                return;
-            }
             RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }

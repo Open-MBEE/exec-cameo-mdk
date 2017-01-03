@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
@@ -84,19 +85,21 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             extension = value.asText();
         }
 
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
+
         if (requestUri == null) {
             return false;
         }
-        requestUri.setPath(requestUri.getPath() + "/artifacts/" + key);
         requestUri.setParameter("cs", cs);
         requestUri.setParameter("extension", extension);
 
         File imageFile = new File(filename);
         try {
-            OutputQueue.getInstance().offer(new Request(requestUri, imageFile, "Image"));
+            Request imageRequest = new Request(requestUri, imageFile, "Image");
+            imageRequest.getRequest().setHeader("Content-Type", "image/" + extension);
+            OutputQueue.getInstance().offer(imageRequest);
         } catch (IOException | URISyntaxException e) {
-            Utils.printException(e);
+            Application.getInstance().getGUILog().log("[ERROR] Unable to commit image " + filename + ". Reason: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

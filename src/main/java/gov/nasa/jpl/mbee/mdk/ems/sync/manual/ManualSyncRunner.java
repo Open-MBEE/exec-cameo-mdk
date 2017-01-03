@@ -116,8 +116,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
     }
 
-    // TODO Fix me and move me to MMSUtils @donbot
-    // TODO Add both ?recurse and element list gets @donbot
+    // TODO donbot Add both ?recurse and element list gets
     public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element,
                                                                           boolean recurse, int depth,
                                                                           ProgressStatus progressStatus)
@@ -160,31 +159,30 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Make common across all sync types @donbot
     public boolean checkProject() {
-        // build request for site element
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesElementsUri(project);
+        // build request for project element
+        URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
         if (requestUri == null) {
             return false;
         }
         requestUri.setPath(requestUri.getPath() + "/" + project.getPrimaryProject().getProjectID());
 
-        // do request for site element
+        // do request for project element
         ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (ServerException e) {
-            // TODO @DONBOT
-        } catch (IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error when querying site element on MMS. " +
+        } catch (ServerException | IOException | URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to verify project existence on MMS. MMS function can not continue. " +
                     "Reason: " + e.getMessage());
             e.printStackTrace();
+            return false;
         }
 
-        // process response for site element, missing projects will return {}
+        // process response for project element, missing projects will return {}
         if (response.get("elements") == null) {
             ValidationRuleViolation v;
 
-            String workspace = MMSUtils.getServiceWorkspacesUri(project).getPath();
-            if (workspace.contains("master")) {
+            String workspace = requestUri.getPath();
+            if (workspace.contains("/workspaces/master/")) {
                 v = new ValidationRuleViolation(project.getModel(), INITIALIZE_PROJECT_COMMENT);
                 v.addAction(new CommitProjectAction(project, true));
             } else {

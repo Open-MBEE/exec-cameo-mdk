@@ -71,15 +71,17 @@ public class MMSUtils {
         return getElementById(Converters.getElementToIdConverter().apply(element), project);
     }
 
-    public static ObjectNode getElementById(String id, Project project)
+    public static ObjectNode getElementById(String elementId, Project project)
             throws IOException, ServerException, URISyntaxException {
         // build request
-        if (id == null) {
+        if (elementId == null) {
             return null;
         }
-        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
-        id = id.replace(".", "%2E");
-        requestUri.setPath(requestUri.getPath() + "/" + id);
+//        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
+//        elementId = elementId.replace(".", "%2E");
+//        requestUri.setPath(requestUri.getPath() + "/" + elementId);
+        URIBuilder requestUri = getServiceProjectsWorkspacesElementsUri(project);
+        requestUri.setPath(requestUri.getPath() + "/" + elementId);
 
         // do request
         ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
@@ -123,8 +125,7 @@ public class MMSUtils {
             idsArrayNode.add(element);
         }
 
-        URIBuilder requestUri = getServiceWorkspacesElementsUri(project);
-//        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
+        URIBuilder requestUri = getServiceProjectsWorkspacesElementsUri(project);
         if (requestUri == null) {
             return null;
         }
@@ -144,12 +145,12 @@ public class MMSUtils {
 
     /**
      *
-     * @param project
-     * @param elementId
-     * @param recurse
-     * @param depth
-     * @param progressStatus
-     * @return
+     * @param project project to check
+     * @param elementId id of element to get elements from
+     * @param recurse true if should recurse to all leaves. will not be used if depth > 0
+     * @param depth depth to recurse through child elements. takes priority over recurse field
+     * @param progressStatus progress status object
+     * @return object node response
      * @throws ServerException
      * @throws IOException
      * @throws URISyntaxException
@@ -157,12 +158,11 @@ public class MMSUtils {
     public static ObjectNode getServerElementsRecursively(Project project, String elementId, boolean recurse, int depth,
                                                           ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
+        URIBuilder requestUri = getServiceProjectsWorkspacesElementsUri(project);
+        requestUri.setPath(requestUri.getPath() + "/" + elementId);
         if (requestUri == null) {
             return null;
         }
-        requestUri = MMSUtils.getServiceWorkspacesUri(project);
-        requestUri.setPath(requestUri.getPath() + "/elements/" + elementId);
         if (depth > 0) {
             requestUri.setParameter("depth", java.lang.Integer.toString(depth));
         }
@@ -404,14 +404,14 @@ public class MMSUtils {
 
         // configure request
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
-        URIBuilder requestUri = getServiceWorkspacesUri(project);
+        URIBuilder requestUri = getServiceSitesUri(project);
         if (requestUri == null) {
             return false;
         }
         requestUri.setPath(requestUri.getPath() + "/sites");
 
         // do request
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+        ObjectNode response;
         try {
             response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
         } catch (IOException | URISyntaxException | ServerException e) {
@@ -520,45 +520,44 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}".
+     * Returns a URIBuilder object with a path = "/alfresco/service/sites/${SITE_ID}/projects"
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceWorkspacesUri(Project project) {
-        URIBuilder workspaceUri = getServiceUri(project);
-        if (workspaceUri == null) {
-            return null;
-        }
-        String workspace = MDUtils.getWorkspace(project);
-        workspaceUri.setPath(workspaceUri.getPath() + "/workspaces/" + workspace);
-        return workspaceUri;
-    }
-
-    /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}/sites/{$SITE}".
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     */
-    public static URIBuilder getServiceWorkspacesSitesUri(Project project) {
-        URIBuilder siteUri = getServiceWorkspacesUri(project);
+    public static URIBuilder getServiceSitesUri (Project project) {
+        URIBuilder siteUri = getServiceUri(project);
         if (siteUri == null) {
             return null;
         }
-        String sites = getSiteName(project);
-        siteUri.setPath(siteUri.getPath() + "/sites/" + sites);
+        siteUri.setPath(siteUri.getPath() + "/sites");
         return siteUri;
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}/sites/{$SITE}/projects/{$PROJECTID}".
+     * Returns a URIBuilder object with a path = "/alfresco/service/sites/${SITE_ID}/projects"
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getSerivceWorkspacesSitesProjectsUri(Project project) {
-        URIBuilder projectUri = getServiceWorkspacesSitesUri(project);
+    public static URIBuilder getServiceSitesProjectsUri (Project project) {
+        URIBuilder siteUri = getServiceUri(project);
+        if (siteUri == null) {
+            return null;
+        }
+        String site = getSiteName(project);
+        siteUri.setPath(siteUri.getPath() + "/sites/" + site + "/projects");
+        return siteUri;
+    }
+
+    /**
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}"
+     *
+     * @param project The project to gather the mms url and site name information from
+     * @return URIBuilder
+     */
+    public static URIBuilder getServiceProjectsUri (Project project) {
+        URIBuilder projectUri = getServiceUri(project);
         if (projectUri == null) {
             return null;
         }
@@ -568,51 +567,36 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}/elements".
-     * This is supported in MMS, but is substantially slower than alternative ServiceWorkspacesSitesElements
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/workspaces/{$WORKSPACE_ID}"
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    @Deprecated
-    public static URIBuilder getServiceWorkspacesElementsUri(Project project) {
-        URIBuilder siteUri = getServiceWorkspacesUri(project);
-        if (siteUri == null) {
+    public static URIBuilder getServiceProjectsWorkspacesUri (Project project) {
+        URIBuilder workspaceUri = getServiceProjectsUri(project);
+        if (workspaceUri == null) {
             return null;
         }
-        siteUri.setPath(siteUri.getPath() + "/elements");
-        return siteUri;
+        String workspace = MDUtils.getWorkspace(project);
+        workspaceUri.setPath(workspaceUri.getPath() + "/workspaces/" + workspace);
+        return workspaceUri;
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}/sites/{$SITE}/elements".
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/workspaces/{$WORKSPACE_ID}/elements/${ELEMENT_ID}"
+     * if element is not null
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
-     */
-    public static URIBuilder getServiceWorkspacesSitesElementsUri(Project project) {
-        URIBuilder elementsUri = getServiceWorkspacesSitesUri(project);
-        if (elementsUri == null) {
-            return null;
-        }
-        elementsUri.setPath(elementsUri.getPath() + "/elements");
-        return elementsUri;
-    }
-
-    /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}/sites/{$SITE}/projects/{$PROJECTID}/elements".
      *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
      */
-    @Deprecated
-    public static URIBuilder getServiceWorkspacesSitesProjectsElementsUri(Project project) {
-        URIBuilder elementsUri = getSerivceWorkspacesSitesProjectsUri(project);
-        if (elementsUri == null) {
+    public static URIBuilder getServiceProjectsWorkspacesElementsUri(Project project) {
+        URIBuilder elementUri = getServiceProjectsWorkspacesUri(project);
+        if (elementUri == null) {
             return null;
         }
-        elementsUri.setPath(elementsUri.getPath() + "/elements");
-        return elementsUri;
+        elementUri.setPath(elementUri.getPath() + "/elements");
+        return elementUri;
     }
 
     /**

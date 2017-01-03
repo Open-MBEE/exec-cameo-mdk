@@ -352,8 +352,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.put("source", "magicdraw");
                 body.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
+                URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
                 try {
-                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesSitesElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
+                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, requestUri, body, true, elementsArrayNode.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -382,9 +383,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             body.put("source", "magicdraw");
             body.put("mmsVersion", MDKPlugin.VERSION);
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
-            URIBuilder uri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, uri, body, true, elementsArrayNode.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, body, true, elementsArrayNode.size(), "Sync Changes"));
             } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                 e.printStackTrace();

@@ -626,8 +626,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 requestData.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
 
-                URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
-                requestUri.setPath(requestUri.getPath() + "/elements");
+                URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, requestUri, requestData, true, elementsArrayNode.size(), "Sync Changes"));
                 changed = true;
             }
@@ -656,7 +655,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 requestData.put("mmsVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
-                URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+                URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, requestData, true, elementsArrayNode.size(), "View Generation"));
                 changed = true;
             }

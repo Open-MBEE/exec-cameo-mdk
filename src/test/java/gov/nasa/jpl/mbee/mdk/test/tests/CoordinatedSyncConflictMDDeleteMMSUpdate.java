@@ -14,7 +14,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.junit.Assert;
 
@@ -99,13 +98,13 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
         MagicDrawHelper.createSession();
         MagicDrawHelper.setElementDocumentation(targetElement, updatedMMSDocumentation);
         try {
-            Collection<ObjectNode> postData = new ArrayList<>();
             ObjectNode jsob = Converters.getElementToJsonConverter().apply(targetElement, Application.getInstance().getProject());
             System.out.println("******");
             System.out.println(jsob.asText());
             System.out.println("******");
-            postData.add(jsob);
-            MDKHelper.postMmsElementJson(postData, Application.getInstance().getProject());
+            Collection<Element> postElements = new ArrayList<>();
+            postElements.add(targetElement);
+            MDKTestHelper.postMmsElements(postElements);
         } catch (IllegalStateException e) {
             System.out.println("Exception: " + e.getMessage());
             e.printStackTrace();

@@ -117,8 +117,9 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             elements.addAll(elementsToUpdate);
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
             try {
-                OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST , MMSUtils.getServiceWorkspacesSitesElementsUri(project), request, true, elements.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST, requestUri, request, true, elements.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();
@@ -135,7 +136,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             }
             request.put("source", "magicdraw");
             request.put("mmsVersion", MDKPlugin.VERSION);
-            URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
             try {
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
             } catch (IOException | URISyntaxException e) {

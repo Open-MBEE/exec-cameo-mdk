@@ -48,7 +48,7 @@ public class ModuleValidator {
         String baseUrl = MMSUtils.getServerUrl(project);
         String projectSite = MMSUtils.getSiteName(project);
 
-        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesSitesUri(project);
+        URIBuilder uriBuilder = MMSUtils.getServiceSitesUri(project);
         if (uriBuilder == null) {
             return;
         }
@@ -57,7 +57,8 @@ public class ModuleValidator {
             responseJsonNode = MMSUtils.sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, uriBuilder), ps);
         } catch (IOException | ServerException | URISyntaxException e) {
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation.");
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation. "
+                    + "Reason:" + e.getMessage());
             return;
         }
 
@@ -89,17 +90,19 @@ public class ModuleValidator {
                 JsonNode nameJsonNode;
                 return jsonNode.isObject() && (nameJsonNode = jsonNode.get("name")) != null && nameJsonNode.isTextual() && nameJsonNode.asText().equals(moduleSite);
             })) {
-                URIBuilder projectUriBuilder = MMSUtils.getServiceWorkspacesSitesUri(project);
+                // GET /projects/${MODULE_ID}
+                URIBuilder projectUriBuilder = MMSUtils.getServiceProjectsUri(project);
                 if (projectUriBuilder == null) {
                     continue;
                 }
-                projectUriBuilder.setPath(projectUriBuilder.getPath() + "/projects/" + module.getProjectID());
+                projectUriBuilder.setPath(projectUriBuilder.getPath() + "/" + module.getProjectID());
                 ObjectNode responseObjectNode;
                 try {
                     responseObjectNode = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, projectUriBuilder));
                 } catch (IOException | ServerException | URISyntaxException e) {
                     e.printStackTrace();
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation.");
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation. "
+                            + "Reason:" + e.getMessage());
                     return;
                 }
                 JsonNode elementsJsonNode;
