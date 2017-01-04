@@ -34,12 +34,10 @@ public class LockAction extends SRAction implements AnnotationAction {
         Set<Element> elements = new HashSet<>(annotations.size());
         for (Annotation annotation : annotations) {
             if (annotation.getTarget() instanceof Element) {
-                Application.getInstance().getGUILog().log(annotation.getTarget().toString());
                 elements.add((Element) annotation.getTarget());
             }
         }
         if (!elements.isEmpty()) {
-            Application.getInstance().getGUILog().log(elements.toString());
             lockElements(elements, recursive);
         }
     }

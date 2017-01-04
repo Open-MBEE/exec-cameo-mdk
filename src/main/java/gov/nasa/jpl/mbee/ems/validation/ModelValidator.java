@@ -76,7 +76,9 @@ import gov.nasa.jpl.mbee.ems.validation.actions.ImportViewConstraint;
 import gov.nasa.jpl.mbee.ems.validation.actions.InitializeProjectModel;
 import gov.nasa.jpl.mbee.lib.Debug;
 import gov.nasa.jpl.mbee.lib.JSONUtils;
+import gov.nasa.jpl.mbee.lib.MDUtils;
 import gov.nasa.jpl.mbee.lib.Utils;
+import gov.nasa.jpl.mbee.options.MDKOptionsGroup;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mgss.mbee.docgen.validation.ValidationSuite;
@@ -950,6 +952,10 @@ public class ModelValidator {
             webcopy.remove("value");
         JSONObject model = ExportUtility.fillPropertySpecialization(e, null, false, true);
         if (!JSONUtils.compare(webcopy, model)) {
+            if (MDUtils.isDeveloperMode()) {
+                System.out.println("MMS:   " + webcopy);
+                System.out.println("Model: " + model);
+            }
             ValidationRuleViolation v = new ValidationRuleViolation(e, "[PROP] Property type/aggregation/multiplicity/redefines is different");
             if (editable)
                 v.addAction(new ExportProperty(e));
