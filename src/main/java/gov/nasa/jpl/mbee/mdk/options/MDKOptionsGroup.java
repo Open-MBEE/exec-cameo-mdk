@@ -17,7 +17,10 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     public static final String LOG_JSON_ID = "LOG_JSON",
             PERSIST_CHANGELOG = "PERSIST_CHANGELOG_ON_SAVE",
             CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
-            COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC";
+            COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC",
+            MMS_ADVANCED_OPTIONS = "MMS_ADVANCED_OPTIONS";
+
+
 
 
     public MDKOptionsGroup() {
@@ -77,6 +80,22 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         addProperty(property);
     }
 
+    public boolean isMMSAdvancedOptions() {
+        Property p = getProperty(MMS_ADVANCED_OPTIONS);
+        if((Boolean) p.getValue()) {
+            Application.getInstance().getGUILog().log("-------------------------------------------------- MAGICDRAW RESTART REQUIRED TO ENABLE MMS ADVANCED OPTIONS! --------------------------------------------------  ");
+        }
+        return (Boolean) p.getValue();
+    }
+
+    public void setisMMSAdvancedOptions(boolean value) {
+        BooleanProperty property = new BooleanProperty(MMS_ADVANCED_OPTIONS, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property);
+
+    }
+
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
         @Override
         public String getString(String key, Property property) {
@@ -90,6 +109,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
+        setisMMSAdvancedOptions(false);
+
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK";
