@@ -641,6 +641,13 @@ public class SyncStatusFrame extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(3, 3, 3, 3);
         panel1.add(separator12, gbc);
+        detailsButton = new JButton();
+        detailsButton.setText("Details");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel1.add(detailsButton, gbc);
     }
 
     /**
