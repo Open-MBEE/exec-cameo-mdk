@@ -60,7 +60,7 @@ public class MMSConfigurator implements AMConfigurator {
 
             category.addAction(login);
             category.addAction(logout);
-            if(MDKOptionsGroup.getMDKOptions().isMMSAdvancedOptions()) {
+            if(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
                 MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
                 validateCategory.setNested(true);
                 category.addAction(validateCategory);

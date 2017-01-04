@@ -18,7 +18,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             PERSIST_CHANGELOG = "PERSIST_CHANGELOG_ON_SAVE",
             CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
             COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC",
-            MMS_ADVANCED_OPTIONS = "MMS_ADVANCED_OPTIONS";
+            SHOW_MDK_ADVANCED_OPTIONS = "SHOW_MDK_ADVANCED_OPTIONS";
 
 
 
@@ -80,16 +80,16 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         addProperty(property);
     }
 
-    public boolean isMMSAdvancedOptions() {
-        Property p = getProperty(MMS_ADVANCED_OPTIONS);
+    public boolean isMDKAdvancedOptions() {
+        Property p = getProperty(SHOW_MDK_ADVANCED_OPTIONS);
         if((Boolean) p.getValue()) {
-            Application.getInstance().getGUILog().log("-------------------------------------------------- MAGICDRAW RESTART REQUIRED TO ENABLE MMS ADVANCED OPTIONS! --------------------------------------------------  ");
+            Application.getInstance().getGUILog().log("--- MAGICDRAW RESTART REQUIRED TO ENABLE MDK ADVANCED OPTIONS! ---  ");
         }
         return (Boolean) p.getValue();
     }
 
-    public void setisMMSAdvancedOptions(boolean value) {
-        BooleanProperty property = new BooleanProperty(MMS_ADVANCED_OPTIONS, value);
+    public void setMDKAdvancedOptions(boolean value) {
+        BooleanProperty property = new BooleanProperty(SHOW_MDK_ADVANCED_OPTIONS, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property);
@@ -109,7 +109,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
-        setisMMSAdvancedOptions(false);
+        setMDKAdvancedOptions(false);
 
     }
 
