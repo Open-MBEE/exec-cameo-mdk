@@ -1,5 +1,7 @@
 # MagicDraw Model Development Kit (MDK)
 
+## Precompiled versions of the MDK are availabe to be downloaded at https://github.com/Open-MBEE/mvn-repo
+
 ## OCL patch
 
 ### To use MDK's ocl support or expressions in DocGen, do the following in MagicDraw 18.0
