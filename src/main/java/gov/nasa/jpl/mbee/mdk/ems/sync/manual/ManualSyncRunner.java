@@ -155,7 +155,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             }
             return serverElements;
         }
-        return new ArrayList<ObjectNode>();
+        return new ArrayList<>();
     }
 
     // TODO Make common across all sync types @donbot

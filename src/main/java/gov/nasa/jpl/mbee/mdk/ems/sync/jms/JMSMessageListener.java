@@ -180,6 +180,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     }
 
     private boolean shouldAttemptToReconnect() {
-        return JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && !project.isProjectClosed() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled();
+        return JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && project.getModel() != null
+                && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && !project.isProjectClosed()
+                && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled();
     }
 }

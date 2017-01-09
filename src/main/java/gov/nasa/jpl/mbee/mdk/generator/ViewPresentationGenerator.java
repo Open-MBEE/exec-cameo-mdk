@@ -62,6 +62,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule uneditableElements = new ValidationRule("Uneditable elements", "uneditable elements", ViolationSeverity.WARNING);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
+    private ValidationRule viewDoesNotExist = new ValidationRule("viewDoesNotExist", "viewDoesNotExist", ViolationSeverity.ERROR);
 
     private PresentationElementUtils instanceUtils;
 
@@ -90,6 +91,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(updateFailed);
         suite.addValidationRule(uneditableElements);
+        suite.addValidationRule(viewDoesNotExist);
         vss.add(suite);
     }
 
@@ -196,6 +198,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         // Query existing server-side JSONs for views
+        List<String> viewIDs = new ArrayList<>();
         if (!viewMap.isEmpty()) {
             // STAGE 2: Downloading existing view instances
             progressStatus.setDescription("Downloading existing view instances");
@@ -206,7 +209,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewResponse = MMSUtils.getElementsById(viewMap.keySet(), project, progressStatus);
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
-                Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
+                Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
                 e.printStackTrace();
                 return;
             }
@@ -226,6 +229,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     String sysmlId;
                     if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()
                             && sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
+                        // store returned ids so we can exclude view generation for elements that aren't on the mms yet
+                        viewIDs.add(sysmlId);
                         List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
                         for (JsonNode viewOperandJson : viewOperandJsonNode) {
                             JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
@@ -269,7 +274,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         instanceAndSlotResponse = MMSUtils.getElementsById(elementIDs, project, progressStatus);
                     } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
-                        Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
+                        Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
                         e.printStackTrace();
                         SessionManager.getInstance().cancelSession();
                         return;
@@ -511,6 +516,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewInProject.addViolation(violation);
                 skippedViews.add(view);
             }
+            if (!viewIDs.contains(view.getID())) {
+                ValidationRuleViolation violation = new ValidationRuleViolation(view, "View does not exist on MMS. Generation skipped.");
+                viewDoesNotExist.addViolation(violation);
+                skippedViews.add(view);
+            }
         }
 
         if (failure) {
@@ -542,20 +552,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (skippedViews.contains(view)) {
                     continue;
                 }
-                for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
-                    if (presentationElementInstance.getInstance() != null) {
-                        instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
-                    }
-                }
-
-                // No need to commit constraint as it's wrapped up into the view
-                /*
-                Constraint constraint = Utils.getViewConstraint(view);
-                if (constraint != null) {
-                    elementsJSONArray.add(Converters.getElementToJsonConverter().apply(constraint, project));
-                }
-                */
-
                 // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
                 // portion of the JSON required to update the view contents.
                 ObjectNode clientViewJson = Converters.getElementToJsonConverter().apply(view, project);
@@ -571,6 +567,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                     elementsArrayNode.add(clientViewJson);
                 }
+                for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
+                    if (presentationElementInstance.getInstance() != null) {
+                        instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
+                    }
+                }
+
+                // No need to commit constraint as it's wrapped up into the view
+                /*
+                Constraint constraint = Utils.getViewConstraint(view);
+                if (constraint != null) {
+                    elementsJSONArray.add(Converters.getElementToJsonConverter().apply(constraint, project));
+                }
+                */
             }
 
             while (!instanceToView.isEmpty()) {
@@ -721,12 +730,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
-        /*vss.add(iv.getSuite());
+        /*vss.add(iv.getSuite());*/
         if (showValidation) {
             if (suite.hasErrors() || iv.getSuite().hasErrors()) {
                 Utils.displayValidationWindow(vss, "View Generation Validation");
             }
-        }*/
+        }
     }
 
     private void handlePes(List<PresentationElementInstance> pes, Package p) {
