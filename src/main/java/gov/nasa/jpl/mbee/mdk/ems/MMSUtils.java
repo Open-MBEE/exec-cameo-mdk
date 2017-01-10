@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.ems;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -10,6 +11,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -17,6 +19,7 @@ import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -396,9 +399,16 @@ public class MMSUtils {
         try {
             ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
             JsonNode value;
-            if (responseJson != null && (value = responseJson.get("message")) != null
-                    && value.isTextual() && !value.asText().isEmpty()) {
+            if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
                 Utils.guilog("[SERVER MESSAGE] " + value.asText());
+            }
+            if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
+                ArrayNode msgs = (ArrayNode)value;
+                for (JsonNode msg : msgs) {
+                    if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                        Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                    }
+                }
             }
         } catch (IOException e) {
             Utils.guilog("[ERROR] Unexpected error processing MMS response.");
@@ -417,7 +427,7 @@ public class MMSUtils {
         if (code == 200) {
             return false;
         }
-        Utils.showPopupMessage("An error occurred while communicating with the MMS. Your operation may not have completed successfully. See the notification window for details.");
+        Utils.showPopupMessage("An error occurred while communicating with the MMS.\nYour operation may not have completed successfully.\nSee the notification window for details.");
         boolean furtherProcessing = false;
         if (code >= 500) {
             Utils.guilog("[ERROR] Operation failed due to server error.");
@@ -432,6 +442,10 @@ public class MMSUtils {
         }
         else if (code == 401) {
             Utils.guilog("[ERROR] Authentication is required to utilize MMS functions. Please log in before trying again.");
+            TicketUtils.clearUsernameAndPassword();
+        }
+        else if (code == 400) {
+            // missing username code. display of server message covers informing the user
             TicketUtils.clearUsernameAndPassword();
         }
         else {

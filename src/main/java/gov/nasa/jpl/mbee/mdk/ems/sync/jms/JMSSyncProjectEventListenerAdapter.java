@@ -32,13 +32,13 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     @Override
     public void projectOpened(final Project project) {
         closeJMS(project);
-        final JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         new Thread() {
             public void run() {
-                if (TicketUtils.isTicketSet()) {
+                if (TicketUtils.isTicketValid()) {
+                    initializeJMS(project);
+                } else {
                     EMSLoginAction.loginAction(project, false);
                 }
-                initializeJMS(project);
             }
         }.start();
     }
@@ -98,26 +98,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         String projectID = project.getPrimaryProject().getProjectID();
         String workspaceID = MDUtils.getWorkspace(project);
 
+        // verify logged in to appropriate places
         if (!TicketUtils.isTicketSet()) {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into MMS.");
-        }
-
-        // get jms connection info and connect
-        JMSUtils.JMSInfo jmsInfo;
-        try {
-            jmsInfo = JMSUtils.getJMSInfo(project);
-        } catch (ServerException | IllegalArgumentException | IllegalStateException e) {
-            e.printStackTrace();
-            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
-            return false;
-        }
-        String url = jmsInfo != null ? jmsInfo.getUrl() : null;
-        if (url == null) {
-            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get server URL.");
-            return false;
-        }
-        if (workspaceID == null) {
-            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + "Reason: Cannot get the server workspace that corresponds to this project branch.");
             return false;
         }
         if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
@@ -131,6 +114,25 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork Cloud.");
                 return false;
             }
+        }
+
+        // get jms connection info and connect
+        JMSUtils.JMSInfo jmsInfo;
+        try {
+            jmsInfo = JMSUtils.getJMSInfo(project);
+        } catch (ServerException | IllegalArgumentException | IllegalStateException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
+            return false;
+        }
+        String url = (jmsInfo != null ? jmsInfo.getUrl() : null);
+        if (url == null) {
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get server URL.");
+            return false;
+        }
+        if (workspaceID == null) {
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + "Reason: Cannot get the server workspace that corresponds to this project branch.");
+            return false;
         }
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);

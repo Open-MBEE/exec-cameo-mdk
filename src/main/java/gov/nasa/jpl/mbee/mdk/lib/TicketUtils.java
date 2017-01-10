@@ -60,21 +60,23 @@ public class TicketUtils {
      * @return username
      */
     public static String getUsername() {
-        if ((username == null || username.isEmpty()) && !Utils.isPopupsDisabled()) {
-            showLoginDialog();
-        }
         return username;
     }
 
     /**
      * Accessor for ticket field. Will attempt to acquire a new ticket if the field is empty.
      *
-     * @return
+     * @return ticket
      */
     public static String getTicket() {
         return ticket;
     }
 
+    /**
+     * Convenience method for checking if ticket is non-empty. Used as a shorthand to verify that a user is logged in to MMS
+     *
+     * @return ticket exists and is non-empty.
+     */
     public static boolean isTicketSet() {
         return ticket != null && !ticket.isEmpty();
     }
@@ -90,22 +92,22 @@ public class TicketUtils {
      */
     public static boolean loginToMMS() {
         if (!username.isEmpty() && !password.isEmpty()) {
-            acquireTicket(password);
+            return acquireTicket(password);
         }
         else if (!Utils.isPopupsDisabled()) {
-            acquireTicket(showLoginDialog());
+            return acquireTicket(getUserCredentialsDialog());
         }
         else {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
             return false;
         }
-        return !ticket.isEmpty();
     }
 
     /**
      * Shows a login dialog window and uses its filled in values to set the username and password.
      * Stores the entered username for future use / convenience, passes the entered password to acquireTicket().
      */
-    private static String showLoginDialog() {
+    private static String getUserCredentialsDialog() {
         // Pop up dialog for logging into Alfresco
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new GridLayout(2, 2));
@@ -134,7 +136,9 @@ public class TicketUtils {
             String pass = new String(passwordFld.getPassword());
             return pass;
         }
-        EMSLogoutAction.logoutAction();
+        else if (response == JOptionPane.CANCEL_OPTION) {
+            Application.getInstance().getGUILog().log("[INFO] MMS login has been cancelled.");
+        }
         return null;
     }
 
@@ -197,7 +201,7 @@ public class TicketUtils {
     }
 
     /**
-     * Uses the stored username and passed password to query MMS for a ticket.
+     * Uses the stored username and passed password to query MMS for a ticket. Will clear any stored password on attempt.
      *
      * Will first check to see if there is an existing ticket, and if so if it is valid. If valid, will not resend
      * for new ticket. If invalid or not present, will send for new ticket.
@@ -205,10 +209,11 @@ public class TicketUtils {
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
-    private static void acquireTicket(String pass) {
+    private static boolean acquireTicket(String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
-        if (pass == null || ((ticket != null) && !ticket.isEmpty() && checkAcquiredTicket())) {
-            return;
+        password = "";
+        if (pass == null) {
+            return false;
         }
 
         //ticket is invalid, clear it and re-attempt;
@@ -219,8 +224,8 @@ public class TicketUtils {
         //         log in to the currently opening project
         Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null || username.isEmpty() || pass.isEmpty()) {
-            return;
+        if (requestUri == null) {
+            return false;
         }
         requestUri.setPath(requestUri.getPath() + "/api/login" + ticket);
         requestUri.clearParameters();
@@ -233,11 +238,11 @@ public class TicketUtils {
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
         } catch (IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Log in failed. Reason: " + e.getMessage());
             e.printStackTrace();
         } catch (ServerException e) {
             if (!showErrorMessage(e.getCode())) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected server error while acquiring credentials. Reason: " + e.getMessage());
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected server error while acquiring credentials. Log in failed. Reason: " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -246,7 +251,10 @@ public class TicketUtils {
         JsonNode value;
         if (response != null && (value = response.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
             ticket = value.asText();
+            return true;
         }
+        Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
+        return false;
     }
 
     /**
@@ -254,7 +262,7 @@ public class TicketUtils {
      *
      * @return True if ticket is still valid and matches the currently stored username
      */
-    private static boolean checkAcquiredTicket() {
+    public static boolean isTicketValid() {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service//mms/login/ticket/${TICKET}
         if (ticket == null || ticket.isEmpty()) {
             return false;
@@ -281,18 +289,18 @@ public class TicketUtils {
                 invalidCredentials = true;
             }
             else {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpceted error while checking credentials. Reason: " + se.getMessage());
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking credentials. Reason: " + se.getMessage());
                 se.printStackTrace();
             }
         } catch (IOException | URISyntaxException e ) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpceted error while checking credentials. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking credentials. Reason: " + e.getMessage());
             e.printStackTrace();
         }
 
         // parse response
         JsonNode value;
         if (invalidCredentials || ((value = response.get("username")) == null) || !value.isTextual() || !value.asText().equals(username)) {
-            Application.getInstance().getGUILog().log("[WARNING] Stored credentials are invalid. You will need to log in to MMS again before further operations can be attempted.");
+            Application.getInstance().getGUILog().log("[WARNING] Stored credentials are invalid. You will be logged out of MMS, and will need to log in again.");
             EMSLogoutAction.logoutAction();
             return false;
         }

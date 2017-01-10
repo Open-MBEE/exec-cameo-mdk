@@ -350,7 +350,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 ObjectNode body = JacksonUtils.getObjectMapper().createObjectNode();
                 body.set("elements", elementsArrayNode);
                 body.put("source", "magicdraw");
-                body.put("mmsVersion", MDKPlugin.VERSION);
+                body.put("mdkVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
                 try {
                     OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesSitesElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
@@ -380,7 +380,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             ObjectNode body = JacksonUtils.getObjectMapper().createObjectNode();
             body.set("elements", elementsArrayNode);
             body.put("source", "magicdraw");
-            body.put("mmsVersion", MDKPlugin.VERSION);
+            body.put("mdkVersion", MDKPlugin.VERSION);
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
             URIBuilder uri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
             try {

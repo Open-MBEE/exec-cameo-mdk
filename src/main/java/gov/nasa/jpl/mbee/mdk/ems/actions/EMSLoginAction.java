@@ -74,19 +74,18 @@ public class EMSLoginAction extends MDAction {
             Utils.showPopupMessage("You need to be logged in to Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "first!");
             return false;
         }
-        TicketUtils.loginToMMS();
 
-        if (TicketUtils.getTicket().isEmpty()) {
+        if (!TicketUtils.loginToMMS()) {
+//            Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
             return false;
         }
-        Application.getInstance().getGUILog().log("MMS login complete.");
+        Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
         if (initJms) {
             for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
             }
         }
-        Application.getInstance().getGUILog().log("Login complete.");
         return true;
     }
 
