@@ -55,6 +55,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 
+import gov.nasa.jpl.mbee.mdk.model.Simulate;
+
 /**
  * <p>
  * Given the document head or a view, generates the document element model
@@ -806,6 +808,8 @@ public class DocumentGenerator {
                     e1.printStackTrace();
                 }
             }
+        } else if (GeneratorUtils.hasStereotypeByString(an, DocGen3Profile.simulateStereotype, true)) {
+            dge = new Simulate();
         }
         return dge;
     }

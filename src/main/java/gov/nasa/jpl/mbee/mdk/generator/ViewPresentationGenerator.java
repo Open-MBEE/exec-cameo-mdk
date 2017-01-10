@@ -46,7 +46,6 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author dlam
@@ -55,7 +54,6 @@ import java.util.stream.Collectors;
 
 @Deprecated
 //TODO update stuff in here for @donbot
-//@donbot update json simple to jackson
 public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
@@ -167,12 +165,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         ModelElementsManager.getInstance().removeElement(constraint);
                     } catch (ReadOnlyElementException e) {
-                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[LOCAL FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
                 }
                 else {
-                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[LOCAL FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                     failure = true;
                 }
             }
@@ -191,7 +189,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();                // Create the session you intend to cancel to revert all temporary elements.
+        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+
+        // Create the session you intend to cancel to revert all temporary elements.
+        if (SessionManager.getInstance().isSessionCreated()) {
+            SessionManager.getInstance().closeSession();
+        }
         SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
@@ -682,7 +685,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
-            List<Element> elementsToDelete = new ArrayList<>(slotMap.size() + instanceSpecificationMap.size() + views.size());
+            Set<Element> elementsToDelete = new HashSet<>();
             for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
                 if (pair.getSecond() != null) {
                     elementsToDelete.add(pair.getSecond());
@@ -695,8 +698,30 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             for (Element element : views) {
                 Constraint constraint = Utils.getViewConstraint(element);
-                if (constraint != null) {
-                    elementsToDelete.add(constraint);
+                if (constraint == null) {
+                    continue;
+                }
+                elementsToDelete.add(constraint);
+                ValueSpecification valueSpecification = constraint.getSpecification();
+                if (valueSpecification == null) {
+                    continue;
+                }
+                elementsToDelete.add(valueSpecification);
+                List<ValueSpecification> operands;
+                if (!(valueSpecification instanceof Expression) || (operands = ((Expression) valueSpecification).getOperand()) == null) {
+                    continue;
+                }
+                for (ValueSpecification operand : operands) {
+                    elementsToDelete.add(operand);
+                    InstanceSpecification instanceSpecification;
+                    if (!(operand instanceof InstanceValue) || (instanceSpecification = ((InstanceValue) operand).getInstance()) == null) {
+                        continue;
+                    }
+                    elementsToDelete.add(instanceSpecification);
+                    for (Slot slot : instanceSpecification.getSlot()) {
+                        elementsToDelete.add(slot);
+                        elementsToDelete.addAll(slot.getValue());
+                    }
                 }
             }
             for (Element element : elementsToDelete) {

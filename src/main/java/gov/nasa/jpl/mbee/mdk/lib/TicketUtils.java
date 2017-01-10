@@ -35,8 +35,8 @@ import com.nomagic.magicdraw.core.Project;
 
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -47,7 +47,6 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Base64;
 
 public class TicketUtils {
     
@@ -128,12 +127,15 @@ public class TicketUtils {
         }
         passwordFld.setText("");
         makeSureUserGetsFocus(usernameFld);
-        JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
-                "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE);
-        username = usernameFld.getText();
-        String pass = new String(passwordFld.getPassword());
-        return pass;
+        int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
+                "MMS Credentials", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (response == JOptionPane.OK_OPTION) {
+            username = usernameFld.getText();
+            String pass = new String(passwordFld.getPassword());
+            return pass;
+        }
+        EMSLogoutAction.logoutAction();
+        return null;
     }
 
     /**
@@ -205,7 +207,7 @@ public class TicketUtils {
      */
     private static void acquireTicket(String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
-        if ((ticket != null) && !ticket.isEmpty() && checkAcquiredTicket()) {
+        if (pass == null || ((ticket != null) && !ticket.isEmpty() && checkAcquiredTicket())) {
             return;
         }
 
@@ -271,20 +273,30 @@ public class TicketUtils {
 
         // do request
         ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+        boolean invalidCredentials = false;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (IOException | URISyntaxException | ServerException e) {
-            // this should never throw a server error, so we're not going to pass it through standard handling
+        } catch (ServerException se) {
+            if (se.getCode() == 404) {
+                invalidCredentials = true;
+            }
+            else {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpceted error while checking credentials. Reason: " + se.getMessage());
+                se.printStackTrace();
+            }
+        } catch (IOException | URISyntaxException e ) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpceted error while checking credentials. Reason: " + e.getMessage());
             e.printStackTrace();
         }
 
         // parse response
         JsonNode value;
-        if (((value = response.get("username")) != null) && value.isTextual() && value.asText().equals(username)) {
-            return true;
+        if (invalidCredentials || ((value = response.get("username")) == null) || !value.isTextual() || !value.asText().equals(username)) {
+            Application.getInstance().getGUILog().log("[WARNING] Stored credentials are invalid. You will need to log in to MMS again before further operations can be attempted.");
+            EMSLogoutAction.logoutAction();
+            return false;
         }
-        return false;
+        return true;
     }
 
     /**
