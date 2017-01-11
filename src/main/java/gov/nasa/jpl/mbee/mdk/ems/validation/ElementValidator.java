@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.EmptyProgressStatus;
 import com.nomagic.task.ProgressStatus;
@@ -90,6 +91,11 @@ public class ElementValidator implements RunnableWithProgress {
         progressStatus.setMax(elementKeySet.size());
         progressStatus.setCurrent(0);
 
+
+        int notEquivalentCount =0;
+        int missinginClientCount =0 ;
+        int missingOnMmsCount=0;
+
         for (String id : elementKeySet) {
             Pair<Element, ObjectNode> clientElement = clientElementMap.get(id);
             Element clientElementElement = clientElement != null ? clientElement.getFirst() : null;
@@ -107,6 +113,7 @@ public class ElementValidator implements RunnableWithProgress {
                 String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
 
                 validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + type + " " + name);
+                missinginClientCount++;
             }
             else if (serverElement == null) {
                 String name = "<>";
@@ -114,6 +121,7 @@ public class ElementValidator implements RunnableWithProgress {
                     name = ((NamedElement) clientElementElement).getName();
                 }
                 validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanType() + " " + name);
+                missingOnMmsCount++;
             }
             else {
                 diff = JsonDiffFunction.getInstance().apply(clientElementObjectNode, serverElement);
@@ -123,6 +131,7 @@ public class ElementValidator implements RunnableWithProgress {
                         name = ((NamedElement) clientElementElement).getName();
                     }
                     validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanType() + " " + name);
+                    notEquivalentCount++;
                 }
             }
             if (validationRuleViolation != null) {
@@ -160,8 +169,25 @@ public class ElementValidator implements RunnableWithProgress {
             }
 
             progressStatus.increase();
+
+
+        }
+        GUILog log = Application.getInstance().getGUILog();
+
+        reportResults(log, missinginClientCount, "MISSING IN CLIENT");
+        reportResults(log, missingOnMmsCount, "MISSING ON MMS");
+        reportResults(log, notEquivalentCount, " NOT EQUIVALENT");
+    }
+    private void reportResults(GUILog log, int count, String message) {
+        if(count > 0){
+            if(count > 1){
+                log.log(count + " ELEMENTS "+message +".");
+            }else {
+                log.log(count + " ELEMENT "+message +".");
+            }
         }
     }
+
 
     public ValidationSuite getValidationSuite() {
         return validationSuite;
