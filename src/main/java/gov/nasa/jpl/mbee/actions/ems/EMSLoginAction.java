@@ -29,6 +29,8 @@
 package gov.nasa.jpl.mbee.actions.ems;
 
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
@@ -74,6 +76,10 @@ public class EMSLoginAction extends MDAction {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
         }
+        if (project.isRemote() && TeamworkUtils.getLoggedUserName() == null) {
+            Utils.showPopupMessage("You need to be logged in to Teamwork first!");
+            return false;
+        }
         String url = ExportUtility.getUrl(project);
         if (url == null)
             return false;
@@ -82,17 +88,19 @@ public class EMSLoginAction extends MDAction {
             response = ExportUtility.getTicket(url + "/api/login", username, password, true); //used to be /checklogin
         } catch (ServerException ex) {
             ViewEditUtils.clearUsernameAndPassword();
+            return false;
         }
         if (response == null) {
             ViewEditUtils.clearUsernameAndPassword();
             return false;
         }
+        Application.getInstance().getGUILog().log("MMS login complete.");
         if (initJms) {
             for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(p);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
             }
         }
-        Application.getInstance().getGUILog().log("Login complete.");
         return true;
     }
 

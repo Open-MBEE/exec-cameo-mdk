@@ -1,6 +1,8 @@
 import java.io.File
 import java.util.Calendar
 import java.text.SimpleDateFormat
+import sbt.Keys._
+import sbt._
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.4")
 enablePlugins(GitVersioning)
@@ -31,7 +33,7 @@ persistLogLevel := Level.Debug
 
 val commonSettings: Seq[Setting[_]] = Seq(
   publishMavenStyle := true,
-  publishTo := Some(cae_artifactory_plugin_releases),
+  publishTo := Some(cae_artifactory_plugin_snapshots),
   fullResolvers ++= Seq(new MavenRepository("cae ext-release-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local"),
                         new MavenRepository("cae plugins-snapshot-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/plugins-snapshot-local")
                     ),
@@ -64,7 +66,7 @@ val lib_patches_packageID = "gov.nasa.jpl.cae.magicdraw.packages" % "cae_md18_0_
 val lib_patches_packageA = Artifact(lib_patches_packageID.name, "zip", "zip")
 val lib_patches_package_zipID = lib_patches_packageID.artifacts(lib_patches_packageA)
 
-val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "2.4.5"
+val mdk_pluginID = "gov.nasa.jpl.cae.magicdraw.plugins" % "mdk" % "2.5-SNAPSHOT"
 val mdk_pluginA = Artifact(mdk_pluginID.name, "zip", "zip")
 val mdk_plugin_zipID = mdk_pluginID.artifacts(mdk_pluginA)
 
@@ -118,7 +120,7 @@ lazy val plugin = (project in file("."))
       IO.copyDirectory(baseDirectory.value / "lib", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "lib", true)
       
       val pluginxml = IO.read(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml")
-      val towrite = pluginxml.replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.version.human@", "2.4.5-" + githash)
+      val towrite = pluginxml.replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1")).replaceAllLiterally("@release.version.human@", "2.5-SNAPSHOT-" + githash)
       IO.write(zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", towrite, append=false)
       //IO.copyFile(baseDirectory.value / "src" / "main" / "resources" / "plugin.xml", zipfolder / "plugins" / "gov.nasa.jpl.mbee.docgen" / "plugin.xml", true)
       //get env var BUILD_NUMBER, GIT_COMMIT, JOB_NAME, BUILD_ID (date)
@@ -139,7 +141,7 @@ lazy val plugin = (project in file("."))
         val towrite = template.replaceAllLiterally("@installation@", content)
                               .replaceAllLiterally("@release.version.internal@", sys.props.getOrElse("BUILD_NUMBER", "1"))
                               .replaceAllLiterally("@release.date@", currentDate)
-                              .replaceAllLiterally("@release.version.human@", "2.4.5")
+                              .replaceAllLiterally("@release.version.human@", "2.5-SNAPSHOT")
         IO.write(zipfolder / "data" / "resourcemanager" / "MDR_Plugin_Docgen_91110_descriptor.xml", towrite, append=false)
         zipfolder
     },

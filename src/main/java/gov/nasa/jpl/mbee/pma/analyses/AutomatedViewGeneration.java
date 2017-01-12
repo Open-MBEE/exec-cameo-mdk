@@ -206,30 +206,26 @@ public class AutomatedViewGeneration extends CommandLine {
             message = "[OPERATION] Loading Teamwork projectId \"" + teamworkProject + (teamworkBranchName.equals("") ? "\"" : "\" on branch \"" + teamworkBranchName + "\"");
             logMessage(message);
             if (teamworkBranchName.equals("") || teamworkBranchName.equals("master")) {
-                // loading project from name instead of id
-//                projectDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(teamworkProject);
-                // loading project from id instead of name
                 int index = teamworkProject.indexOf("ID_");
                 if (index > 0) {
                     teamworkProject = teamworkProject.substring(index);
                 }
                 projectDescriptor = TeamworkUtils.getRemoteProjectDescriptor(teamworkProject);
+                // try to load by qualified name if still null, in case projectId send not properly deployed
+                if (projectDescriptor == null) {
+                    projectDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(teamworkProject);
+                }
                 
-                // 18.4 formulation - need to investigate if will work with teamwork and teamwork cloud simultaneously
-                // ITeamworkService twcService = EsiUtils.getTeamworkService();
-                // projectDescriptor = twcService.getProjectDescriptorByQualifiedName(teamworkProject);
             }
             else {
-                throw new UnsupportedOperationException("PMA is not supported on branches.");
-//                String qualifiedName = TeamworkUtils.generateProjectQualifiedName(teamworkProject, new String[]{teamworkBranchName});
-//                projectDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(qualifiedName);
+                throw new UnsupportedOperationException("PMA is not supported on branches in this MDK version.");
             }
         } catch (RemoteException e) {
             generalMessage("[FAILURE] Exception thrown when attempting to load project: " + e.toString());
         }
 
         if (projectDescriptor == null) {
-            message = "[FAILURE] Unable to find Teamwork project " + teamworkProject + (teamworkBranchName.equals("") ? "" : "or branch " + teamworkBranchName);
+            message = "[FAILURE] Unable to find Teamwork project " + teamworkProject;
             logMessage(message);
             error = 102;
             throw new FileNotFoundException(message);

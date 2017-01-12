@@ -246,6 +246,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
 
                 // Create the session you intend to cancel to revert all temporary elements.
+                if (SessionManager.getInstance().isSessionCreated()) {
+                    SessionManager.getInstance().closeSession();
+                }
                 SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
                 if (localSyncTransactionCommitListener != null) {
                     localSyncTransactionCommitListener.setDisabled(true);
@@ -637,7 +640,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
-            List<Element> elementsToDelete = new ArrayList<>(slotMap.size() + instanceSpecificationMap.size() + views.size());
+            Set<Element> elementsToDelete = new HashSet<>();
             for (Pair<JSONObject, Slot> pair : slotMap.values()) {
                 if (pair.getSecond() != null) {
                     elementsToDelete.add(pair.getSecond());
@@ -650,8 +653,30 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             for (Element element : views) {
                 Constraint constraint = Utils.getViewConstraint(element);
-                if (constraint != null) {
-                    elementsToDelete.add(constraint);
+                if (constraint == null) {
+                    continue;
+                }
+                elementsToDelete.add(constraint);
+                ValueSpecification valueSpecification = constraint.getSpecification();
+                if (valueSpecification == null) {
+                    continue;
+                }
+                elementsToDelete.add(valueSpecification);
+                List<ValueSpecification> operands;
+                if (!(valueSpecification instanceof Expression) || (operands = ((Expression) valueSpecification).getOperand()) == null) {
+                    continue;
+                }
+                for (ValueSpecification operand : operands) {
+                    elementsToDelete.add(operand);
+                    InstanceSpecification instanceSpecification;
+                    if (!(operand instanceof InstanceValue) || (instanceSpecification = ((InstanceValue) operand).getInstance()) == null) {
+                        continue;
+                    }
+                    elementsToDelete.add(instanceSpecification);
+                    for (Slot slot : instanceSpecification.getSlot()) {
+                        elementsToDelete.add(slot);
+                        elementsToDelete.addAll(slot.getValue());
+                    }
                 }
             }
             for (Element element : elementsToDelete) {

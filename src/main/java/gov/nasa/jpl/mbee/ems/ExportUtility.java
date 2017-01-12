@@ -55,6 +55,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.ProfileApplication;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGen3Profile;
 import gov.nasa.jpl.mbee.DocGenPlugin;
+import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
 import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
@@ -850,7 +851,8 @@ public class ExportUtility {
                 throw new ServerException(json, code); //?
             }
             //Application.getInstance().getGUILog().log("[INFO] Successful...");
-            if (code == 404) {
+            if (code == 404 || json.contains("Ticket not found")) {
+                EMSLogoutAction.logoutAction();
                 return false;
             }
             return true;
@@ -890,7 +892,6 @@ public class ExportUtility {
                     userpasswordJsonString,
                     "application/json",
                     "UTF-8");
-
 
             postMethod.setRequestEntity(requestEntity);
             int code = client.executeMethod(postMethod);

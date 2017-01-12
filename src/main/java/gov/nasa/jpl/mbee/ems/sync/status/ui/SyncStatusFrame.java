@@ -1,9 +1,12 @@
 package gov.nasa.jpl.mbee.ems.sync.status.ui;
 
 import com.nomagic.magicdraw.core.Application;
+import gov.nasa.jpl.mbee.actions.ems.sync.DetailedSyncStatusAction;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * Created by igomes on 8/16/16.
@@ -34,6 +37,7 @@ public class SyncStatusFrame extends JFrame {
     private JLabel totalInMemoryJmsChangedLabel;
     private JLabel totalPersistedJmsChangedLabel;
     private JLabel totalJmsChangedLabel;
+    private JButton detailsButton;
 
     public JPanel getRootPanel() {
         return rootPanel;
@@ -135,6 +139,10 @@ public class SyncStatusFrame extends JFrame {
         return totalJmsChangedLabel;
     }
 
+    public JButton getDetailsButton() {
+        return detailsButton;
+    }
+
     public SyncStatusFrame() {
         super("Sync Status");
         setContentPane(rootPanel);
@@ -143,6 +151,12 @@ public class SyncStatusFrame extends JFrame {
         setMinimumSize(getSize());
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setAlwaysOnTop(true);
+        detailsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new DetailedSyncStatusAction().actionPerformed(null);
+            }
+        });
     }
 
     {
@@ -627,6 +641,13 @@ public class SyncStatusFrame extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(3, 3, 3, 3);
         panel1.add(separator12, gbc);
+        detailsButton = new JButton();
+        detailsButton.setText("Details");
+        gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel1.add(detailsButton, gbc);
     }
 
     /**
