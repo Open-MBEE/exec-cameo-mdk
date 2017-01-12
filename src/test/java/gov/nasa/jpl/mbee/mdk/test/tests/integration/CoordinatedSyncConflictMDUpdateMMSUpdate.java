@@ -102,7 +102,7 @@
 //        MagicDrawHelper.cancelSession();
 //        MDKHelper.setSyncTransactionListenerDisabled(false);
 //        try {
-//            MDKHelper.postMmsElement(jsob);
+//            MDKHelper.postMmsElements(jsob);
 //        } catch (IllegalStateException e) {
 //            System.out.println("Exception: " + e.getMessage());
 //            e.printStackTrace();
@@ -247,7 +247,7 @@
 ////        MagicDrawHelper.cancelSession();
 ////        MDKHelper.setSyncTransactionListenerDisabled(false);
 ////        try {
-////            MDKHelper.postMmsElement(jsob);
+////            MDKHelper.postMmsElements(jsob);
 ////        } catch (IllegalStateException e) {
 ////            System.out.println("Exception: " + e.getMessage());
 ////            e.printStackTrace();

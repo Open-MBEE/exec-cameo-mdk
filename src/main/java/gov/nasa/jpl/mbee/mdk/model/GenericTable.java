@@ -62,8 +62,7 @@ public class GenericTable extends Table {
         }
         else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGen3Profile.headersChoosable)) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
-            for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d,
-                    DocGen3Profile.headersChoosable, "headers")) {
+            for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d, DocGen3Profile.headersChoosable, "headers")) {
                 row.add(new DBText(h));
             }
             res.add(row);
@@ -86,12 +85,12 @@ public class GenericTable extends Table {
 
     public List<List<DocumentElement>> getBody(Diagram d, List<Element> rowElements, List<String> columnIds,
                                                DiagramTableTool dtt, boolean forViewEditor) {
-        List<List<DocumentElement>> res = new ArrayList<List<DocumentElement>>();
+        List<List<DocumentElement>> res = new ArrayList<>();
         for (Element e : rowElements) {
             if (skipIfNoDoc && ModelHelper.getComment(e).trim().equals("")) {
                 continue;
             }
-            List<DocumentElement> row = new ArrayList<DocumentElement>();
+            List<DocumentElement> row = new ArrayList<>();
             int count = 0;
             for (String cid : columnIds) {
                 if (count == 0) {
@@ -107,7 +106,7 @@ public class GenericTable extends Table {
 
     @SuppressWarnings("rawtypes")
     public List<Object> getTableValues(Object o) {
-        List<Object> res = new ArrayList<Object>();
+        List<Object> res = new ArrayList<>();
         if (o instanceof Object[]) {
             Object[] a = (Object[]) o;
             for (int i = 0; i < a.length; i++) {

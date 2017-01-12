@@ -59,7 +59,7 @@ public class OutputSyncRunner implements Runnable {
                     //log.info(st.getName() + " Did not finish yet so waiting another 5 sec.");
                     Thread.sleep(5000);
                 } //end of while
-                log.info(st.getName() + " received response or cancel is pressed.");
+                //log.info(st.getName() + " received response or cancel is pressed.");
                 q.setCurrent(null);
 
             } catch (Exception e) {

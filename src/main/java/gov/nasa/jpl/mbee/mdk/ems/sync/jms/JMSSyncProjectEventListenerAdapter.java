@@ -4,9 +4,11 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
@@ -24,17 +26,56 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by igomes on 6/28/16.
  */
 public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
+    private static final String ERROR_STRING = "Reverting to offline mode. All changes will be saved in the model until reconnected.";
     private static final Map<String, JMSSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
-    public void projectOpened(Project project) {
-        projectClosed(project);
-        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
-        jmsSyncProjectMapping.setDisabled(!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") || !initDurable(project, jmsSyncProjectMapping));
+    public void projectOpened(final Project project) {
+        closeJMS(project);
+        new Thread() {
+            public void run() {
+                if (TicketUtils.isTicketValid()) {
+                    initializeJMS(project);
+                } else {
+                    EMSLoginAction.loginAction(project, true);
+                }
+            }
+        }.start();
     }
 
     @Override
     public void projectClosed(Project project) {
+        closeJMS(project);
+    }
+
+    @Override
+    public void projectReplaced(Project oldProject, Project newProject) {
+        projectClosed(oldProject);
+        projectOpened(newProject);
+    }
+
+    @Override
+    public void projectSaved(Project project, boolean savedInServer) {
+        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+
+        JMSMessageListener JMSMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
+        if (JMSMessageListener != null) {
+            JMSMessageListener.getInMemoryJMSChangelog().clear();
+        }
+    }
+
+    public static boolean shouldEnableJMS(Project project) {
+        return ((project.getModel() != null) && project.isRemote() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()
+                && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"));
+    }
+
+    public void initializeJMS(Project project) {
+        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+        boolean initialized = initDurable(project);
+        jmsSyncProjectMapping.setDisabled(!shouldEnableJMS(project) || !initialized);
+    }
+
+    public void closeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         try {
             if (jmsSyncProjectMapping.getMessageConsumer() != null) {
@@ -52,41 +93,27 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         projectMappings.remove(project.getPrimaryProject().getProjectID());
     }
 
-    @Override
-    public void projectReplaced(Project oldProject, Project newProject) {
-        projectClosed(oldProject);
-        projectOpened(newProject);
-    }
-
-    @Override
-    public void projectSaved(Project project, boolean savedInServer) {
-        JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(project);
-
-        JMSMessageListener JMSMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
-        if (JMSMessageListener != null) {
-            JMSMessageListener.getInMemoryJMSChangelog().clear();
-        }
-        if (jmsSyncProjectMapping.isDisabled() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
-            Application.getInstance().getGUILog().log("[INFO] Attempting to re-initialize MMS sync.");
-            projectOpened(project);
-        }
-    }
-
-    public static boolean initDurable(Project project, final JMSSyncProjectMapping jmsSyncProjectMapping) {
+    public boolean initDurable(Project project) {
+        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         String projectID = project.getPrimaryProject().getProjectID();
         String workspaceID = MDUtils.getWorkspace(project);
 
-        // log in to mms
+        // verify logged in to appropriate places
         if (!TicketUtils.isTicketSet()) {
-            try {
-                TicketUtils.loginToMMS();
-            } catch (IllegalStateException e) {
-                Application.getInstance().getGUILog().log("[ERROR] " + e.getMessage());
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into MMS.");
+            return false;
+        }
+        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+            if (TeamworkUtils.getLoggedUserName() == null) {
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork.");
+                return false;
             }
         }
-        if (!TicketUtils.isTicketSet()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Could not login to MMS.");
-            return false;
+        if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
+            if (EsiUtils.getTeamworkService().getConnectedUser() == null) {
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork Cloud.");
+                return false;
+            }
         }
 
         // get jms connection info and connect
@@ -95,29 +122,22 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             jmsInfo = JMSUtils.getJMSInfo(project);
         } catch (ServerException | IllegalArgumentException | IllegalStateException e) {
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Message: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
             return false;
         }
-        String url = jmsInfo != null ? jmsInfo.getUrl() : null;
+        String url = (jmsInfo != null ? jmsInfo.getUrl() : null);
         if (url == null) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Cannot get server URL.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get server URL.");
             return false;
         }
         if (workspaceID == null) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed. Cannot get the server workspace that corresponds to this project branch.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + "Reason: Cannot get the server workspace that corresponds to this project branch.");
             return false;
-        }
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-            String user = TeamworkUtils.getLoggedUserName();
-            if (user == null) {
-                Application.getInstance().getGUILog().log("[ERROR] You must be logged into Teamwork. MMS sync will not start.");
-                return false;
-            }
         }
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
             if (connectionFactory == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Failed to create MMS connection factory.");
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Failed to create JMS connection factory.");
                 return false;
             }
             String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(); // weblogic can't have '/' in id
@@ -168,12 +188,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 }
             }.start();*/
 
-            Application.getInstance().getGUILog().log("[INFO] MMS sync initiated.");
+            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - MMS sync initiated.");
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             jmsSyncProjectMapping.setDisabled(true);
-            Application.getInstance().getGUILog().log("[ERROR] MMS sync initialization failed: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
         }
         return false;
     }
@@ -193,7 +213,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         private JMSMessageListener jmsMessageListener;
         private MessageProducer messageProducer;
 
-        private volatile boolean disabled;
+        private volatile boolean disabled = true;
 
         public Connection getConnection() {
             return connection;

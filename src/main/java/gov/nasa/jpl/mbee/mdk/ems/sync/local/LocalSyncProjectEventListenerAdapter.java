@@ -23,8 +23,10 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         projectClosed(project);
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
         gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener(project);
-        ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
-        getProjectMapping(project).setLocalSyncTransactionCommitListener(listener);
+        if (project.isRemote()) {
+            ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
+        }
+        localSyncProjectMapping.setLocalSyncTransactionCommitListener(listener);
     }
 
     @Override

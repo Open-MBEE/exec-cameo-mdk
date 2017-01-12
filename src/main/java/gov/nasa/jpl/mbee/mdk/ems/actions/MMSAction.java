@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 
 import javax.swing.*;
@@ -14,12 +16,7 @@ public class MMSAction extends MDAction {
 
     @Override
     public void updateState() {
-        if (TicketUtils.isTicketSet()) {
-            setEnabled(true);
-        }
-        else {
-            setEnabled(false);
-        }
+        setEnabled(TicketUtils.isTicketSet() && !JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getJmsMessageListener().isExceptionHandlerRunning());
     }
 
 

@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
@@ -17,9 +18,6 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-
-//@donbot migrate simple to Jackson
-//import org.json.simple.JSONObject;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -33,13 +31,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //@donbot update json simple to jackson
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<String, RealTimeSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<String, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
     private DeltaSyncRunner deltaSyncRunner;
 
     @Override
     public void projectClosed(Project project) {
-        RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
-        if (realTimeSyncProjectMapping.isDisabled()) {
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
+        if (coordinatedSyncProjectMapping.isDisabled()) {
             return;
         }
         projectMappings.remove(project.getPrimaryProject().getProjectID());
@@ -62,15 +60,20 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (!enabled) {
             return;
         }
-        RealTimeSyncProjectMapping realTimeSyncProjectMapping = getProjectMapping(project);
-        if (realTimeSyncProjectMapping.isDisabled()) {
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
+        if (coordinatedSyncProjectMapping.isDisabled()) {
             return;
         }
         if (!StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
             return;
         }
-        if (project.isTeamworkServerProject() && !savedInServer) {
-            Application.getInstance().getGUILog().log("[INFO] Teamwork project is being saved locally. Coordinated sync skipped.");
+        if (!TicketUtils.isTicketSet()) {
+            Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
+            EMSLoginAction.loginAction(project);
+            return;
+        }
+        if ((ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) || project.isTeamworkServerProject()) && !savedInServer) {
+            Application.getInstance().getGUILog().log("[INFO] Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "project is being saved locally. Coordinated sync skipped.");
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
@@ -80,64 +83,67 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     @Override
     @SuppressWarnings("unchecked")
     public void projectSaved(Project project, boolean savedInServer) {
-        if (deltaSyncRunner != null && !deltaSyncRunner.isFailure()) {
-            JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
-            JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
+        if (coordinatedSyncProjectMapping.isDisabled() || deltaSyncRunner == null || deltaSyncRunner.isFailure()) {
+            // CSync isn't running, so return
+            return;
+        }
+        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
+        JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
-            // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE
+        // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE
 
-            Message lastMessage;
-            if (jmsMessageListener != null && (lastMessage = jmsMessageListener.getLastMessage()) != null) {
-                try {
-                    lastMessage.acknowledge();
-                } catch (JMSException | IllegalStateException e) {
-                    e.printStackTrace();
-                }
+        Message lastMessage;
+        if (jmsMessageListener != null && (lastMessage = jmsMessageListener.getLastMessage()) != null) {
+            try {
+                lastMessage.acknowledge();
+            } catch (JMSException | IllegalStateException e) {
+                e.printStackTrace();
             }
+        }
 
-            // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
+        // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
 
-            if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
-                ObjectNode teamworkCommittedMessage = JacksonUtils.getObjectMapper().createObjectNode();
-                teamworkCommittedMessage.put("source", "magicdraw");
-                teamworkCommittedMessage.put("sender", TicketUtils.getUsername());
-                teamworkCommittedMessage.set("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
-                try {
-                    TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));
-                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, project.getPrimaryProject().getProjectID());
-                    successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, MDUtils.getWorkspace(project) + "_mdk");
-                    jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
-                    int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
-                    Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
-                } catch (JMSException | JsonProcessingException e) {
-                    e.printStackTrace();
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
-                }
+        if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
+            ObjectNode teamworkCommittedMessage = JacksonUtils.getObjectMapper().createObjectNode();
+            teamworkCommittedMessage.put("source", "magicdraw");
+            teamworkCommittedMessage.put("sender", TicketUtils.getUsername());
+            teamworkCommittedMessage.set("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
+            try {
+                TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, project.getPrimaryProject().getProjectID());
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, MDUtils.getWorkspace(project) + "_mdk");
+                jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
+                int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
+                Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
+            } catch (JMSException | JsonProcessingException e) {
+                e.printStackTrace();
+                Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
             }
         }
     }
 
-    public static RealTimeSyncProjectMapping getProjectMapping(Project project) {
-        RealTimeSyncProjectMapping realTimeSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
-        if (realTimeSyncProjectMapping == null) {
-            projectMappings.put(project.getPrimaryProject().getProjectID(), realTimeSyncProjectMapping = new RealTimeSyncProjectMapping());
+    public static CoordinatedSyncProjectMapping getProjectMapping(Project project) {
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(project.getID());
+        if (coordinatedSyncProjectMapping == null) {
+            projectMappings.put(project.getID(), coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
+            projectMappings.get(project.getID()).setDisabled(!project.isRemote());
         }
-        return realTimeSyncProjectMapping;
+        return coordinatedSyncProjectMapping;
     }
 
     public DeltaSyncRunner getDeltaSyncRunner() {
         return deltaSyncRunner;
     }
 
-    public static class RealTimeSyncProjectMapping {
-        // TODO Volatile to synchronized @Ivan
-        private volatile boolean disabled;
+    public static class CoordinatedSyncProjectMapping {
+        private boolean disabled;
 
-        public boolean isDisabled() {
+        public synchronized boolean isDisabled() {
             return disabled;
         }
 
-        public void setDisabled(boolean disabled) {
+        public synchronized void setDisabled(boolean disabled) {
             this.disabled = disabled;
         }
     }
