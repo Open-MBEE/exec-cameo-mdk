@@ -18,7 +18,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             PERSIST_CHANGELOG = "PERSIST_CHANGELOG_ON_SAVE",
             CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
             COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC",
-            SHOW_MDK_ADVANCED_OPTIONS = "SHOW_MDK_ADVANCED_OPTIONS";
+            SHOW_ADVANCED_OPTIONS = "SHOW_ADVANCED_OPTIONS";
 
 
 
@@ -81,7 +81,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public boolean isMDKAdvancedOptions() {
-        Property p = getProperty(SHOW_MDK_ADVANCED_OPTIONS);
+        Property p = getProperty(SHOW_ADVANCED_OPTIONS);
         if((Boolean) p.getValue()) {
             Application.getInstance().getGUILog().log("--- MAGICDRAW RESTART REQUIRED TO ENABLE MDK ADVANCED OPTIONS! ---  ");
         }
@@ -89,7 +89,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public void setMDKAdvancedOptions(boolean value) {
-        BooleanProperty property = new BooleanProperty(SHOW_MDK_ADVANCED_OPTIONS, value);
+        BooleanProperty property = new BooleanProperty(SHOW_ADVANCED_OPTIONS, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property);
