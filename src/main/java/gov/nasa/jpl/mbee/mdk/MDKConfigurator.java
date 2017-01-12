@@ -61,10 +61,15 @@ import gov.nasa.jpl.mbee.mdk.model.UserScript;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.awt.Desktop;
+      import java.net.URI;
+import java.util.stream.IntStream;
 
 public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
@@ -138,11 +143,25 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         return false;
     }
 
+    private void dumpCategory(ActionsCategory category, int i) {
+        IntStream.range(0, i++).forEach(ignored -> System.out.print("-"));
+        System.out.println("[C] " + category.getID() + " : " + category.getName());
+        for (ActionsCategory c : category.getCategories()) {
+            dumpCategory(c, i);
+        }
+        for (NMAction action : category.getActions()) {
+            IntStream.range(0, i).forEach(ignored -> System.out.print("-"));
+            System.out.println("[A] " + action.getID() + " : " + action.getName());
+        }
+    }
+
     private void addElementActions(ActionsManager manager, Element e, List<Element> es) {
+        //manager.getCategories().forEach(category -> dumpCategory(category, 0));
         Project prj = Project.getProject(e);
         if (prj == null) {
             return;
         }
+
         Stereotype sysmlview = Utils.getViewStereotype();
         Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
         Stereotype documentView = Utils.getProductStereotype();
@@ -294,6 +313,14 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(es, true));
                 }
+                ActionsCategory tracingCategory = manager.getCategory("TRACING_CATEGORY");
+                if (tracingCategory != null) {
+                    action = manager.getActionFor(MMSViewLinkAction.DEFAULT_ID);
+                    if (action == null) {
+                        tracingCategory.addAction(new MMSViewLinkAction(es));
+                    }
+                }
+
                 /*action = manager.getActionFor(OrganizeViewInstancesAction.DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new OrganizeViewInstancesAction(es, false));
