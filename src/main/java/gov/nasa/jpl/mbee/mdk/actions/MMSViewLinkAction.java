@@ -57,12 +57,12 @@ public class MMSViewLinkAction extends MDAction {
     public static final String DEFAULT_ID = "ViewLink";
  
     public MMSViewLinkAction(Collection<Element> elements) {
-        super(DEFAULT_ID, "Show View in Browser", null, null);
+        super(DEFAULT_ID, "Open in View Editor", null, null);
         targetElements = elements;
     }
  
     public MMSViewLinkAction(Element element) {
-        super(DEFAULT_ID, "Show View in Browser", null, null);
+        super(DEFAULT_ID, "Open in View Editor", null, null);
         targetElements = new ArrayList<Element>();
         targetElements.add(element);
     }
