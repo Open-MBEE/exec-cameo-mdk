@@ -37,7 +37,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 if (TicketUtils.isTicketValid()) {
                     initializeJMS(project);
                 } else {
-                    EMSLoginAction.loginAction(project, false);
+                    EMSLoginAction.loginAction(project, true);
                 }
             }
         }.start();

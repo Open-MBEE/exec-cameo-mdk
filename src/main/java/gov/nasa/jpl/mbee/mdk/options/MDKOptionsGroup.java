@@ -19,7 +19,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
             COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC";
 
-
     public MDKOptionsGroup() {
         super(ID);
     }
@@ -55,7 +54,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         else {
             addInvisibleProperty(property);
         }
-
     }
 
     public boolean isChangeListenerEnabled() {
@@ -73,7 +71,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         else {
             addInvisibleProperty(property);
         }
-
     }
 
     public boolean isCoordinatedSyncEnabled() {
@@ -91,7 +88,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         else {
             addInvisibleProperty(property);
         }
-
     }
 
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
