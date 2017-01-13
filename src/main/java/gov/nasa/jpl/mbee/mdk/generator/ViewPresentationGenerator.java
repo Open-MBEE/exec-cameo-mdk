@@ -46,7 +46,6 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author dlam
@@ -55,13 +54,13 @@ import java.util.stream.Collectors;
 
 @Deprecated
 //TODO update stuff in here for @donbot
-//@donbot update json simple to jackson
 public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
     private ValidationRule uneditableElements = new ValidationRule("Uneditable elements", "uneditable elements", ViolationSeverity.WARNING);
     private ValidationRule viewInProject = new ValidationRule("viewInProject", "viewInProject", ViolationSeverity.WARNING);
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
+    private ValidationRule viewDoesNotExist = new ValidationRule("viewDoesNotExist", "viewDoesNotExist", ViolationSeverity.ERROR);
 
     private PresentationElementUtils instanceUtils;
 
@@ -90,6 +89,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(updateFailed);
         suite.addValidationRule(uneditableElements);
+        suite.addValidationRule(viewDoesNotExist);
         vss.add(suite);
     }
 
@@ -165,12 +165,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         ModelElementsManager.getInstance().removeElement(constraint);
                     } catch (ReadOnlyElementException e) {
-                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[LOCAL FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
                 }
                 else {
-                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[LOCAL FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                     failure = true;
                 }
             }
@@ -189,13 +189,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();                // Create the session you intend to cancel to revert all temporary elements.
+        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+
+        // Create the session you intend to cancel to revert all temporary elements.
+        if (SessionManager.getInstance().isSessionCreated()) {
+            SessionManager.getInstance().closeSession();
+        }
         SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
         }
 
         // Query existing server-side JSONs for views
+        List<String> viewIDs = new ArrayList<>();
         if (!viewMap.isEmpty()) {
             // STAGE 2: Downloading existing view instances
             progressStatus.setDescription("Downloading existing view instances");
@@ -206,7 +212,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewResponse = MMSUtils.getElementsById(viewMap.keySet(), project, progressStatus);
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
-                Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
+                Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
                 e.printStackTrace();
                 return;
             }
@@ -226,6 +232,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     String sysmlId;
                     if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()
                             && sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
+                        // store returned ids so we can exclude view generation for elements that aren't on the mms yet
+                        viewIDs.add(sysmlId);
                         List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
                         for (JsonNode viewOperandJson : viewOperandJsonNode) {
                             JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
@@ -269,7 +277,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         instanceAndSlotResponse = MMSUtils.getElementsById(elementIDs, project, progressStatus);
                     } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
-                        Application.getInstance().getGUILog().log("Server error occurred. Please check your network connection or view logs for more information.");
+                        Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
                         e.printStackTrace();
                         SessionManager.getInstance().cancelSession();
                         return;
@@ -511,6 +519,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewInProject.addViolation(violation);
                 skippedViews.add(view);
             }
+            if (!viewIDs.contains(view.getID())) {
+                ValidationRuleViolation violation = new ValidationRuleViolation(view, "View does not exist on MMS. Generation skipped.");
+                viewDoesNotExist.addViolation(violation);
+                skippedViews.add(view);
+            }
         }
 
         if (failure) {
@@ -542,20 +555,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (skippedViews.contains(view)) {
                     continue;
                 }
-                for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
-                    if (presentationElementInstance.getInstance() != null) {
-                        instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
-                    }
-                }
-
-                // No need to commit constraint as it's wrapped up into the view
-                /*
-                Constraint constraint = Utils.getViewConstraint(view);
-                if (constraint != null) {
-                    elementsJSONArray.add(Converters.getElementToJsonConverter().apply(constraint, project));
-                }
-                */
-
                 // Sends the full view JSON if it doesn't exist on the server yet. If it does exist, it sends just the
                 // portion of the JSON required to update the view contents.
                 ObjectNode clientViewJson = Converters.getElementToJsonConverter().apply(view, project);
@@ -571,6 +570,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                     elementsArrayNode.add(clientViewJson);
                 }
+                for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
+                    if (presentationElementInstance.getInstance() != null) {
+                        instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
+                    }
+                }
+
+                // No need to commit constraint as it's wrapped up into the view
+                /*
+                Constraint constraint = Utils.getViewConstraint(view);
+                if (constraint != null) {
+                    elementsJSONArray.add(Converters.getElementToJsonConverter().apply(constraint, project));
+                }
+                */
             }
 
             while (!instanceToView.isEmpty()) {
@@ -623,7 +635,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
                 requestData.set("elements", elementsArrayNode);
                 requestData.put("source", "magicdraw");
-                requestData.put("mmsVersion", MDKPlugin.VERSION);
+                requestData.put("mdkVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
@@ -652,7 +664,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
                 requestData.set("elements", elementsArrayNode);
                 requestData.put("source", "magicdraw");
-                requestData.put("mmsVersion", MDKPlugin.VERSION);
+                requestData.put("mdkVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
@@ -672,7 +684,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
-            List<Element> elementsToDelete = new ArrayList<>(slotMap.size() + instanceSpecificationMap.size() + views.size());
+            Set<Element> elementsToDelete = new HashSet<>();
             for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
                 if (pair.getSecond() != null) {
                     elementsToDelete.add(pair.getSecond());
@@ -685,8 +697,30 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             for (Element element : views) {
                 Constraint constraint = Utils.getViewConstraint(element);
-                if (constraint != null) {
-                    elementsToDelete.add(constraint);
+                if (constraint == null) {
+                    continue;
+                }
+                elementsToDelete.add(constraint);
+                ValueSpecification valueSpecification = constraint.getSpecification();
+                if (valueSpecification == null) {
+                    continue;
+                }
+                elementsToDelete.add(valueSpecification);
+                List<ValueSpecification> operands;
+                if (!(valueSpecification instanceof Expression) || (operands = ((Expression) valueSpecification).getOperand()) == null) {
+                    continue;
+                }
+                for (ValueSpecification operand : operands) {
+                    elementsToDelete.add(operand);
+                    InstanceSpecification instanceSpecification;
+                    if (!(operand instanceof InstanceValue) || (instanceSpecification = ((InstanceValue) operand).getInstance()) == null) {
+                        continue;
+                    }
+                    elementsToDelete.add(instanceSpecification);
+                    for (Slot slot : instanceSpecification.getSlot()) {
+                        elementsToDelete.add(slot);
+                        elementsToDelete.addAll(slot.getValue());
+                    }
                 }
             }
             for (Element element : elementsToDelete) {
@@ -720,12 +754,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
-        /*vss.add(iv.getSuite());
+        /*vss.add(iv.getSuite());*/
         if (showValidation) {
             if (suite.hasErrors() || iv.getSuite().hasErrors()) {
                 Utils.displayValidationWindow(vss, "View Generation Validation");
             }
-        }*/
+        }
     }
 
     private void handlePes(List<PresentationElementInstance> pes, Package p) {

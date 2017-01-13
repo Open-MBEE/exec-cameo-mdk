@@ -29,7 +29,7 @@ public class CreateSpecificAction extends SRAction {
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String DEFAULT_ID = "Create Block Specific Types";
+    public static final String DEFAULT_ID = "Specialize Structure";
     private Classifier classifier;
     private ArrayList<Namespace> recursionList;
     private boolean isValidationMode = false;
@@ -39,7 +39,6 @@ public class CreateSpecificAction extends SRAction {
         this.classifier = classifier;
         recursionList = new ArrayList<>();
         this.isValidationMode = isValidationMode;
-
     }
 
     @Override

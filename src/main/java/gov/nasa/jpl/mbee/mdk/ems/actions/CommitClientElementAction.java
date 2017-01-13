@@ -116,7 +116,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             ArrayNode elements = request.putArray("elements");
             elements.addAll(elementsToUpdate);
             request.put("source", "magicdraw");
-            request.put("mmsVersion", MDKPlugin.VERSION);
+            request.put("mdkVersion", MDKPlugin.VERSION);
             URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
             try {
                 OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST, requestUri, request, true, elements.size(), "Sync Changes")));
@@ -135,7 +135,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 elements.add(curElement);
             }
             request.put("source", "magicdraw");
-            request.put("mmsVersion", MDKPlugin.VERSION);
+            request.put("mdkVersion", MDKPlugin.VERSION);
             URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
             try {
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));

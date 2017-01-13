@@ -17,7 +17,9 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     public static final String LOG_JSON_ID = "LOG_JSON",
             PERSIST_CHANGELOG = "PERSIST_CHANGELOG_ON_SAVE",
             CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
-            COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC";
+            COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC",
+            SHOW_ADVANCED_OPTIONS = "SHOW_ADVANCED_OPTIONS";
+
 
 
     public MDKOptionsGroup() {
@@ -38,7 +40,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property);
-
     }
 
     public boolean isPersistChangelog() {
@@ -50,7 +51,12 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(PERSIST_CHANGELOG, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        if (MDUtils.isDeveloperMode()) {
+            addProperty(property);
+        }
+        else {
+            addInvisibleProperty(property);
+        }
     }
 
     public boolean isChangeListenerEnabled() {
@@ -62,7 +68,12 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(CHANGE_LISTENER, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        if (MDUtils.isDeveloperMode()) {
+            addProperty(property);
+        }
+        else {
+            addInvisibleProperty(property);
+        }
     }
 
     public boolean isCoordinatedSyncEnabled() {
@@ -74,7 +85,28 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(COORDINATED_SYNC, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
+        if (MDUtils.isDeveloperMode()) {
+            addProperty(property);
+        }
+        else {
+            addInvisibleProperty(property);
+        }
+    }
+
+    public boolean isMDKAdvancedOptions() {
+        Property p = getProperty(SHOW_ADVANCED_OPTIONS);
+        if((Boolean) p.getValue()) {
+            Application.getInstance().getGUILog().log("--- MAGICDRAW RESTART REQUIRED TO ENABLE MDK ADVANCED OPTIONS! ---  ");
+        }
+        return (Boolean) p.getValue();
+    }
+
+    public void setMDKAdvancedOptions(boolean value) {
+        BooleanProperty property = new BooleanProperty(SHOW_ADVANCED_OPTIONS, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
         addProperty(property);
+
     }
 
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
@@ -90,6 +122,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
+        setMDKAdvancedOptions(false);
+
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK";

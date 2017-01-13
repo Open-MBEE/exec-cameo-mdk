@@ -1815,6 +1815,8 @@ public class Utils {
      * @return the element at the top of the MagicDraw containment tree
      */
     public static Package getRootElement() {
+//      return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
+
         return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
         //Package root = Application.getInstance().getProject().getModel();
         //return root;
