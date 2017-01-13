@@ -91,9 +91,9 @@ public class ElementValidator implements RunnableWithProgress {
         progressStatus.setCurrent(0);
 
 
-        int notEquivalentCount =0;
-        int missinginClientCount =0 ;
-        int missingOnMmsCount=0;
+        int notEquivalentCount = 0;
+        int missinginClientCount = 0;
+        int missingOnMmsCount = 0;
 
         for (String id : elementKeySet) {
             Pair<Element, ObjectNode> clientElement = clientElementMap.get(id);
