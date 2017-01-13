@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.EmptyProgressStatus;
 import com.nomagic.task.ProgressStatus;
@@ -26,7 +25,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 
-import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -167,27 +166,14 @@ public class ElementValidator implements RunnableWithProgress {
                 elementEquivalenceValidationRule.addViolation(validationRuleViolation);
                 invalidElements.put(id, new Pair<>(clientElement, serverElement));
             }
-
             progressStatus.increase();
-
-
         }
-        GUILog log = Application.getInstance().getGUILog();
-
-        reportResults(log, missinginClientCount, "MISSING IN CLIENT");
-        reportResults(log, missingOnMmsCount, "MISSING ON MMS");
-        reportResults(log, notEquivalentCount, " NOT EQUIVALENT");
+        Application.getInstance().getGUILog().log("[INFO] --- Start MDK Element Validation Summary ---");
+        Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missinginClientCount) + " element" + (missinginClientCount != 1 ? "s are" : " is") + " missing in client.");
+        Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingOnMmsCount) + " element" + (missingOnMmsCount != 1 ? "s are" : "is") + " missing on MMS.");
+        Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(notEquivalentCount) + " element" + (notEquivalentCount != 1 ? "s are" : " is") + " not equivalent between client and MMS.");
+        Application.getInstance().getGUILog().log("[INFO] ---  End MDK Element Validation Summary  ---");
     }
-    private void reportResults(GUILog log, int count, String message) {
-        if(count > 0){
-            if(count > 1){
-                log.log(count + " ELEMENTS "+message +".");
-            }else {
-                log.log(count + " ELEMENT "+message +".");
-            }
-        }
-    }
-
 
     public ValidationSuite getValidationSuite() {
         return validationSuite;
