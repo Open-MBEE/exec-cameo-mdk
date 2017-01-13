@@ -56,7 +56,7 @@ public class LockAction extends SRAction implements AnnotationAction {
         lockElements(Collections.singletonList(element), recursive);
     }
 
-    private void lockElements(final Collection<Element> elements, boolean recursive) {
+    private void lockElements(final Collection<Element> elements, final boolean recursive) {
         if (elements.isEmpty()) {
             return;
         }
