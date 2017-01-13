@@ -5,6 +5,8 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.actions.ems.EMSLoginAction;
+import gov.nasa.jpl.mbee.actions.ems.EMSLogoutAction;
+import gov.nasa.jpl.mbee.actions.ems.MMSAction;
 import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.api.docgen.presentation_elements.properties.PresentationElementPropertyEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
@@ -199,6 +201,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         exceptionHandlerRunning = true;
+        MMSAction.setDisabled(true);
         Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
         JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
         while (shouldAttemptToReconnect()) {
@@ -222,8 +225,10 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
         else {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Failed to reconnect to MMS after dropped connection. Please manually login to MMS, or close and re-open the project, to re-initiate.");
+            EMSLogoutAction.logoutAction();
         }
         exceptionHandlerRunning = false;
+        MMSAction.setDisabled(false);
     }
 
     private boolean shouldAttemptToReconnect() {

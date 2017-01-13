@@ -154,7 +154,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
         //manager.addCategory(refactorWithIDActionCat);
 
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (ViewEditUtils.isPasswordSet() && !JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getJmsMessageListener().isExceptionHandlerRunning()) {
+        if (ViewEditUtils.isPasswordSet() && !MMSAction.isDisabled()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (manager.getActionFor(ExportModelAction.actionid) == null)
@@ -237,7 +237,7 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 }
             }
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            if (ViewEditUtils.isPasswordSet()) {
+            if (ViewEditUtils.isPasswordSet() && !MMSAction.isDisabled()) {
                 //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
                 /*NMAction action = manager.getActionFor(ValidateViewAction.actionid);
