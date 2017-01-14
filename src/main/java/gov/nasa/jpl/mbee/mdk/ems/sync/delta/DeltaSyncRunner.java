@@ -110,13 +110,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
-        String site = MMSUtils.getSiteName(project);
-        if (site == null || site.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
+        // TODO @DONBOT restore this functionality (remove false) after updating isSiteEditable()
         try {
-            if (!MMSUtils.isSiteEditable(project, site)) {
+            if (false || !MMSUtils.isSiteEditable(project, "")) {
                 Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }

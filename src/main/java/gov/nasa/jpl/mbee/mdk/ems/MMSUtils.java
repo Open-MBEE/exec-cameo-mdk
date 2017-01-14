@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -491,6 +492,7 @@ public class MMSUtils {
         return urlString.trim();
     }
 
+    @Deprecated
     public static String getSiteName(Project project) {
         String siteString = null;
         if (project == null) {
@@ -532,6 +534,8 @@ public class MMSUtils {
      * @return true if the site lists "editable":"true" for the logged in user, false otherwise
      * @throws ServerException
      */
+    // TODO update for orgs / projects instead of site, then remove deprecation
+    @Deprecated
     public static boolean isSiteEditable(Project project, String site)
             throws IOException, URISyntaxException, ServerException {
         if (site == null || site.equals("")) {
@@ -540,7 +544,7 @@ public class MMSUtils {
 
         // configure request
         //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
-        URIBuilder requestUri = getServiceSitesUri(project);
+        URIBuilder requestUri = getServiceProjectsUri(project);
         if (requestUri == null) {
             return false;
         }
@@ -613,12 +617,12 @@ public class MMSUtils {
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceSitesUri (Project project) {
+    public static URIBuilder getServiceOrgsUri(Project project) {
         URIBuilder siteUri = getServiceUri(project);
         if (siteUri == null) {
             return null;
         }
-        siteUri.setPath(siteUri.getPath() + "/sites");
+        siteUri.setPath(siteUri.getPath() + "/orgs");
         return siteUri;
     }
 
@@ -628,13 +632,51 @@ public class MMSUtils {
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceSitesProjectsUri (Project project) {
+    public static URIBuilder getServiceOrgsProjectsUri(Project project) {
+        URIBuilder requestUri = getServiceOrgsUri(project);
+        ObjectNode response = null;
+        try {
+            response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
+        } catch (IOException | URISyntaxException | ServerException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
+            e.printStackTrace();
+//            return null;
+        }
+        ArrayList<String> mmsOrgsList = new ArrayList<>();
+        //TODO remove or developer-mode this option. update length check if removed
+        mmsOrgsList.add("<Enter Manually>");
+        if (response != null) {
+            JsonNode value;
+            if ((value = response.get("orgs")) != null && value.isArray()) {
+                for (JsonNode orgNode : value) {
+                    JsonNode org;
+                    if ((org = orgNode.get("name")) != null && org.isTextual()) {
+                        mmsOrgsList.add(org.asText());
+                    }
+                }
+            }
+        }
+        String[] mmsOrgs = mmsOrgsList.toArray(new String[mmsOrgsList.size()]);
+
         URIBuilder siteUri = getServiceUri(project);
         if (siteUri == null) {
             return null;
         }
-        String site = getSiteName(project);
-        siteUri.setPath(siteUri.getPath() + "/sites/" + site + "/projects");
+        String org = null;
+        //TODO fix length check
+        if (mmsOrgs.length >= 1) {
+            JFrame selectionDialog = new JFrame();
+            org = (String)JOptionPane.showInputDialog(selectionDialog, "Select a MMS org from the list below...",
+                    "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
+        }
+        if (mmsOrgs.length < 2 || org.equals("<Enter Manually>")) {
+            JFrame selectionDialog = new JFrame();
+            org = JOptionPane.showInputDialog(selectionDialog, "Input the intended MMS org below...");
+        }
+        if (org == null || org.isEmpty()) {
+            return null;
+        }
+        siteUri.setPath(siteUri.getPath() + "/orgs/" + org + "/projects");
         return siteUri;
     }
 
@@ -696,7 +738,8 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString());
+        String descriptor = (project.isRemote() ? project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString() : "local");
+        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), descriptor);
     }
 
     public static ObjectNode getProjectObjectNode(IProject project) {
@@ -704,6 +747,7 @@ public class MMSUtils {
     }
 
     private static ObjectNode getProjectObjectNode(String name, String projId, String descId) {
+
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
         projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projId);

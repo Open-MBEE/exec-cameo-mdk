@@ -46,9 +46,10 @@ public class ModuleValidator {
         IPrimaryProject primaryProject = project.getPrimaryProject();
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(primaryProject);
         String baseUrl = MMSUtils.getServerUrl(project);
+        //TODO @DONBOT update this to function without siteName
         String projectSite = MMSUtils.getSiteName(project);
 
-        URIBuilder uriBuilder = MMSUtils.getServiceSitesUri(project);
+        URIBuilder uriBuilder = MMSUtils.getServiceOrgsUri(project);
         if (uriBuilder == null) {
             return;
         }

@@ -93,7 +93,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
 
-        URIBuilder requestUri = MMSUtils.getServiceSitesProjectsUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceOrgsProjectsUri(project);
         if (requestUri == null) {
             return;
         }

@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
@@ -19,13 +18,11 @@ import gov.nasa.jpl.mbee.mdk.ems.*;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
-import org.json.simple.JSONObject;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 public class ExportLocalModule extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -68,7 +65,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
 
-            URIBuilder requestUri = MMSUtils.getServiceSitesProjectsUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceOrgsProjectsUri(project);
             if (requestUri == null) {
                 return;
             }

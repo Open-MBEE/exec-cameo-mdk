@@ -389,6 +389,8 @@ public abstract class MDKTestHelper {
      * @return true if the site lists "editable":"true" for the logged in user, false otherwise
      * or when no project is open or project lacks url and site specifications
      */
+    @Deprecated
+    //TODO @DONBOT migrate off of site
     public static boolean hasSiteEditPermission() {
         try {
             Project proj = Application.getInstance().getProject();
