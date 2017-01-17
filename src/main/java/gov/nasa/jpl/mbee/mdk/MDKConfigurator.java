@@ -68,7 +68,7 @@ import java.util.Set;
 
 public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
-    private Set<ActionsManager> viewQueryCalled = new HashSet<ActionsManager>();
+    private Set<ActionsManager> viewQueryCalled = new HashSet<>();
 
     @Override
     public int getPriority() {
@@ -85,7 +85,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         if (!(o instanceof Element)) {
             return;
         }
-        List<Element> elements = new ArrayList<Element>();
+        List<Element> elements = new ArrayList<>();
         for (Node node : browser.getSelectedNodes()) {
             if (node == null) {
                 continue;
@@ -164,7 +164,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         //manager.addCategory(refactorWithIDActionCat);
 
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (TicketUtils.isTicketSet() && !JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getJmsMessageListener().isExceptionHandlerRunning()) {
+        if (TicketUtils.isTicketSet() && !MMSAction.isDisabled()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
@@ -255,7 +255,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 }
             }
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            if (TicketUtils.isTicketSet()) {
+            if (TicketUtils.isTicketSet() && !MMSAction.isDisabled()) {
                 //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
                 /*NMAction action = manager.getActionFor(ValidateViewAction.DEFAULT_ID);
