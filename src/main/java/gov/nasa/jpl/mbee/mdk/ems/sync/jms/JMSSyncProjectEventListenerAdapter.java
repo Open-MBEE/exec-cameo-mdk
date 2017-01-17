@@ -5,7 +5,6 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.esi.EsiUtils;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
@@ -103,12 +102,6 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into MMS.");
             return false;
         }
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-            if (TeamworkUtils.getLoggedUserName() == null) {
-                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork.");
-                return false;
-            }
-        }
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
             if (EsiUtils.getTeamworkService().getConnectedUser() == null) {
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork Cloud.");
@@ -133,6 +126,13 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (workspaceID == null) {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + "Reason: Cannot get the server workspace that corresponds to this project branch.");
             return false;
+        }
+        if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
+            String user = EsiUtils.getLoggedUserName();
+            if (user == null) {
+                Application.getInstance().getGUILog().log("[ERROR] You must be logged into Teamwork Cloud. MMS sync will not start.");
+                return false;
+            }
         }
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);

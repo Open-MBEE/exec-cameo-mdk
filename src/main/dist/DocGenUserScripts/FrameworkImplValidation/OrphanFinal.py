@@ -25,7 +25,7 @@ from com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities import Ac
 from javax.swing import JOptionPane
 
 
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 import sys
 import traceback
 import os

@@ -547,7 +547,7 @@ public class MMSUtils {
         requestUri.setPath(requestUri.getPath() + "/sites");
 
         // do request
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+        ObjectNode response;
         try {
             response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
         } catch (IOException | URISyntaxException | ServerException e) {
