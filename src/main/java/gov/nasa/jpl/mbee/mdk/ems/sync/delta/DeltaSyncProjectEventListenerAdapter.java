@@ -74,7 +74,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         persistChanges(project);
     }
 
-    public static void persistChanges(Project project) {
+    private static void persistChanges(Project project) {
 
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         if (listener != null) {
@@ -84,7 +84,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         for (Map.Entry<SyncElement.Type, Function<Project, Changelog<String, ?>>> entry : CHANGELOG_FUNCTIONS.entrySet()) {
             Changelog<String, ?> changelog = entry.getValue().apply(project);
             if (!SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().createSession(project, "Persisting Delta Sync Changelog(s)");
+                SessionManager.getInstance().createSession(project, "Delta Sync Changelog Persistence #2");
             }
             try {
                 SyncElements.setByType(project, entry.getKey(), JacksonUtils.getObjectMapper().writeValueAsString(SyncElements.buildJson(changelog)));

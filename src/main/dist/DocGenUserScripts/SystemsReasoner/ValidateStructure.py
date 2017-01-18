@@ -5,7 +5,7 @@ from com.nomagic.magicdraw.openapi.uml import ModelElementsManager
 from com.nomagic.uml2.ext.jmi.helpers import ModelHelper
 from com.nomagic.uml2.ext.magicdraw.classes.mdkernel import Enumeration
 from com.nomagic.uml2.ext.magicdraw.compositestructures.mdports import Port
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 
 
 from javax.swing import JOptionPane

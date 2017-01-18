@@ -24,7 +24,7 @@ from com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities import *
 from com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdinformationflows import *
 from com.nomagic.uml2.ext.magicdraw.compositestructures.mdports import *
 from com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime import *
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 from com.nomagic.uml2.ext.magicdraw.interactions.mdbasicinteractions import Interaction 
 from com.nomagic.uml2.ext.magicdraw.classes.mdpowertypes import GeneralizationSet
 from com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdcommunications import Reception, Signal, SignalEvent
