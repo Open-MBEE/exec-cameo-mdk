@@ -1,5 +1,6 @@
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.zip.ZipFile
 
 String buildBranch = project.getProperties().get('buildBranch');
 if (buildBranch == null || buildBranch != 'master' && !buildBranch.matches('support/[0-9.]+')) {
@@ -41,6 +42,7 @@ repositories {
     else {
         ivy {
             // http://d1g91r27pzl568.cloudfront.net/magicdraw184sp1/MagicDraw_184_sp1_no_install.zip
+            // http://d1g91r27pzl568.cloudfront.net/sysml184sp1/SysML_Plugin_184_sp1_bundle.zip
             // http://d1g91r27pzl568.cloudfront.net/cst184sp1/Cameo_Simulation_Toolkit_184_sp1.zip
             url 'http://d1g91r27pzl568.cloudfront.net/'
             layout 'pattern', {
@@ -61,8 +63,9 @@ dependencies {
         preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0-SNAPSHOT', ext: 'zip'
     }
     else {
-        preCompile group: 'nomagic', name: 'magicdraw', version: '184sp1', classifier: 'MagicDraw_184_sp1_no_install', ext: 'zip'
-        preCompile group: 'nomagic', name: 'cst', version: '184sp1', classifier: 'Cameo_Simulation_Toolkit_184_sp1', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'magicdraw', version: '184sp1', classifier: 'MagicDraw_184_sp1_no_install', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'sysml', version: '184sp1', classifier: 'SysML_Plugin_184_sp1_bundle', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'cst', version: '184sp1', classifier: 'Cameo_Simulation_Toolkit_184_sp1', ext: 'zip'
     }
     
     // SLF4J API
@@ -123,7 +126,7 @@ dependencies {
 task extractDependencies {
     configurations.preCompile.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         inputs.file artifact.file
-        def zipFile = new java.util.zip.ZipFile(artifact.file)
+        def zipFile = new ZipFile(artifact.file)
         zipFile.entries().each { entry ->
             if (!entry.isDirectory()) {
                 outputs.file 'build/dependency-cache/extracted/' + entry.getName()
@@ -132,6 +135,12 @@ task extractDependencies {
     }
     doLast {
         inputs.files.each { archive ->
+            copy {
+                from zipTree(archive)
+                into 'build/dependency-cache/extracted'
+            }
+        }
+        fileTree(dir: 'build/dependency-cache/extracted', include: '*.zip').each { archive ->
             copy {
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted'
