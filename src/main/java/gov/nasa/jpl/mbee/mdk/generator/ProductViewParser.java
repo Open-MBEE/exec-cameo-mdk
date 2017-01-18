@@ -1,33 +1,34 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
- *
+ * <p>
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * <p>
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * <p>
+ * - Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ * - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ * nor the names of its contributors may be used to endorse or promote products derived
+ * from this software without specific prior written permission.
+ * <p>
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -60,10 +61,13 @@ public class ProductViewParser {
     private Set<Element> excludeViews;
     private Stereotype productS;
     private boolean product;
+    private List<Class> visitedViews;
+
 
     @SuppressWarnings("unchecked")
     public ProductViewParser(DocumentGenerator dg, boolean singleView, boolean recurse, Document doc,
                              Element start) {
+        this.visitedViews = new ArrayList<Class>();
         this.dg = dg;
         this.singleView = singleView;
         this.recurse = recurse;
@@ -82,8 +86,7 @@ public class ProductViewParser {
                     productS, "excludeViews");
             this.noSections = new HashSet<Element>(noSections);
             this.excludeViews = new HashSet<Element>(excludeViews);
-        }
-        else {
+        } else {
             noSections = new HashSet<Element>();
             excludeViews = new HashSet<Element>();
         }
@@ -98,8 +101,7 @@ public class ProductViewParser {
             Section chapter1 = dg.parseView(start);
             top = chapter1;
             doc.addElement(chapter1);
-        }
-        else {
+        } else {
             Section s = dg.parseView(start);
             for (DocGenElement e : s.getChildren()) {
                 top.addElement(e);
@@ -116,11 +118,18 @@ public class ProductViewParser {
      * @param nosection whether current view is a nosection
      */
     private void parseView(Class view, Container parent, boolean nosection, boolean recurse) {
-        Section viewSection = dg.parseView(view);
-        viewSection.setNoSection(nosection);
-        parent.addElement(viewSection);
-        if (recurse) {
-            handleViewChildren(view, viewSection);
+        if (visitedViews.contains(view)) {
+            Application.getInstance().getGUILog().log("[WARNING] View " + view.getName() + " is visited in circular reference! Skipping view.");
+        } else {
+            visitedViews.add(view);
+            String viewname = view.getName();
+            Section viewSection = dg.parseView(view);
+            viewSection.setNoSection(nosection);
+            parent.addElement(viewSection);
+            if (recurse) {
+                handleViewChildren(view, viewSection);
+            }
+            visitedViews.remove(view);
         }
     }
 
@@ -138,8 +147,7 @@ public class ProductViewParser {
             }
             if (noSections.contains(prop) || noSections.contains(type)) {
                 childNoSections.add(new Pair<>(type, prop.getAggregation()));
-            }
-            else {
+            } else {
                 childSections.add(new Pair<>(type, prop.getAggregation()));
             }
         }
