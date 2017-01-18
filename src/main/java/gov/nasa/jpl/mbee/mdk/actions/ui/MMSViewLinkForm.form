@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="gov.nasa.jpl.mbee.mdk.actions.ui.MMSViewLinkForm">
+  <grid id="27dc6" binding="rootPanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties>
+      <maximumSize width="406" height="424"/>
+      <minimumSize width="406" height="40"/>
+      <preferredSize width="406" height="40"/>
+      <requestFocusEnabled value="true"/>
+    </properties>
+    <border type="none">
+      <title-color color="-4473925"/>
+    </border>
+    <children>
+      <component id="54c23" class="javax.swing.JLabel" binding="viewLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="3" left="10" bottom="3" right="10" weightx="1.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <horizontalAlignment value="2"/>
+          <horizontalTextPosition value="2"/>
+          <labelFor value="dddbb"/>
+          <maximumSize width="380" height="100"/>
+          <minimumSize width="380" height="16"/>
+          <opaque value="true"/>
+          <preferredSize width="380" height="16"/>
+          <text value="MMS View List"/>
+          <verticalAlignment value="1"/>
+          <verticalTextPosition value="0"/>
+        </properties>
+      </component>
+      <scrollpane id="dddbb" binding="scrollPane">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="1" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="3" left="0" bottom="3" right="0" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <horizontalScrollBarPolicy value="31"/>
+          <maximumSize width="300" height="400"/>
+          <minimumSize width="300" height="20"/>
+          <preferredSize width="300" height="20"/>
+          <verticalScrollBarPolicy value="20"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <grid id="b19f0" binding="buttonPanel" layout-manager="GridBagLayout">
+            <constraints/>
+            <properties>
+              <autoscrolls value="false"/>
+              <maximumSize width="280" height="400"/>
+              <minimumSize width="280" height="20"/>
+              <opaque value="true"/>
+              <preferredSize width="280" height="20"/>
+            </properties>
+            <border type="none"/>
+            <children/>
+          </grid>
+        </children>
+      </scrollpane>
+    </children>
+  </grid>
+</form>
