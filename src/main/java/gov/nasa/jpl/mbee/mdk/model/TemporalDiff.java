@@ -54,6 +54,8 @@ public class TemporalDiff extends Table {
     private String compareToTime;
     private AvailableAttribute attributeToCompare;
     private String tagAttr;
+    private String baseBranchName;
+    private String compareToBranchName;
 
     public TemporalDiff() {
         setSortElementsByName(false);
@@ -84,6 +86,8 @@ public class TemporalDiff extends Table {
         }
         baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseVersionTime", null);
         compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToTime", "latest");
+        baseBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseBranch", null);
+        compareToBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToBranch", null);
     }
 
     @Override
@@ -128,10 +132,13 @@ public class TemporalDiff extends Table {
                     else {
                         tag.append(sdf.format(baseVersionDate));
                     }
+                    if(baseBranchName != null){
+                        tag.append("");
+                    }
                     tag.append("\"></mms-diff-attr>");
                 }
             }
-
+            System.out.println(tag);
             retval.setText(tag); // concatenate the elements
             // System.out.println(tag);
             res.add(retval);
