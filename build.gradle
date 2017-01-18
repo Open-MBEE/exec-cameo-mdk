@@ -24,9 +24,6 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
-if (buildAccess == 'internal') {
-    apply plugin: 'com.jfrog.artifactory'
-}
 apply plugin: 'rebel'
 
 // In this section you declare where to find the dependencies of your project
@@ -284,6 +281,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 
 if (buildAccess == 'internal') {
     apply plugin: 'maven-publish'
+    apply plugin: 'com.jfrog.artifactory'
 
     publishing {
         // Reference to Gradle publications defined in the build script.
