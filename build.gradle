@@ -27,7 +27,6 @@ apply plugin: 'distribution'
 if (buildAccess == 'internal') {
     apply plugin: 'com.jfrog.artifactory'
 }
-apply plugin: 'maven-publish'
 apply plugin: 'rebel'
 
 // In this section you declare where to find the dependencies of your project
@@ -37,6 +36,10 @@ repositories {
     if (buildAccess == 'internal') {
         maven {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
+            credentials {
+                username project.getProperties().get('artifactory_user')
+                password project.getProperties().get('artifactory_password')
+            }
         }
     }
     else {
@@ -280,6 +283,8 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 if (buildAccess == 'internal') {
+    apply plugin: 'maven-publish'
+
     publishing {
         // Reference to Gradle publications defined in the build script.
         // This is how we tell the Artifactory Plugin which artifacts should be
