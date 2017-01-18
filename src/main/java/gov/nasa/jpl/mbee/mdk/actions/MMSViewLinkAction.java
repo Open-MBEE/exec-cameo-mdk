@@ -1,14 +1,15 @@
 package gov.nasa.jpl.mbee.mdk.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.actions.ui.MMSViewLinkForm;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,20 +40,15 @@ public class MMSViewLinkAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         for (Element element: targetElements) {
-            String viewName = "(empty name)";
-            if(element instanceof NamedElement && ((NamedElement) element).getName()!=null
-                    && !((NamedElement) element).getName().isEmpty()) {
-                viewName = ((NamedElement)element).getName();
-            }
-
             Project project = Project.getProject(element);
-            // build url
-            boolean showPane = false;
-            int numDocuments = 0;
-            URI link = null;
 
+            // build url
             // can't use URIBuilder, it converts the ‘#’ in the url and breaks things
-            String uriBasePath = MMSUtils.getServiceUri(project).setPath("").clearParameters().toString()
+            URIBuilder uriBase = MMSUtils.getServiceUri(project);
+            if (uriBase == null) {
+                return;
+            }
+            String uriBasePath = uriBase.setPath("").clearParameters().toString()
                     + "/alfresco/mmsapp/mms.html#/workspaces/" + MDUtils.getWorkspace(project)
                     + "/sites/" + MMSUtils.getSiteName(project);
             Set<Element> documents = new HashSet<>();
@@ -68,7 +64,6 @@ public class MMSViewLinkAction extends MDAction {
                 if (!(relationships.get(i) instanceof Association)) {
                     continue;
                 }
-
                 Element hierarchyParent = ((Association) relationships.get(i)).getMemberEnd().get(0).getOwner();
                 if (StereotypesHelper.hasStereotype(hierarchyParent, Utils.getDocumentStereotype())) {
                     documents.add(hierarchyParent);
@@ -79,62 +74,65 @@ public class MMSViewLinkAction extends MDAction {
                 }
             }
 
-            String label;
-            List<JButton> linkButtons = new ArrayList<>();
-            try {
-                if (!documents.isEmpty()) {
-                    label = "Documents containing " + viewName + ":";
-                    for (Element doc : documents) {
-                        if (doc.equals(element)) {
-                            link = new URI(uriBasePath + "/documents/" + element.getID());
-                        } else {
-                            link = new URI(uriBasePath + "/documents/" + doc.getID() + "/views/" + element.getID());
+            // build links
+            URI link = null;
+
+            if(documents.size() > 1){
+                // build multiple links
+                String label = "";
+                List<JButton> linkButtons = new ArrayList<>();
+                try {
+                    if (!documents.isEmpty()) {
+                        label = "Documents containing " + element.getHumanName() + ":";
+                        for (Element doc : documents) {
+                            if (doc.equals(element)) {
+                                link = new URI(uriBasePath + "/documents/" + element.getID());
+                            } else {
+                                link = new URI(uriBasePath + "/documents/" + doc.getID() + "/views/" + element.getID());
+                            }
+                            JButton button = new ViewButton(doc.getHumanName(), link);
+                            linkButtons.add(button);
                         }
-                        String documentName = "(empty name)";
-                        if(doc instanceof NamedElement && ((NamedElement) doc).getName()!=null &! ((NamedElement) doc).getName().isEmpty()) {
-                            documentName = ((NamedElement)doc).getName();
-                        }
-                        JButton button = new ViewButton(documentName, link);
-                        linkButtons.add(button);
-                        numDocuments++;
                     }
                 }
-                else {
-                    label = "No documents contain " + viewName + ". <br>Direct view link:";
-                    link = new URI(uriBasePath + "/documents/" + element.getID() + "/views/" + element.getID());
-                    JButton button = new ViewButton(viewName, link);
-                    linkButtons.add(button);
+                catch (URISyntaxException se) {
+                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating VE links for " + element.getHumanName() + ". Unable to proceed.");
+                    return;
                 }
-            }
-            catch (URISyntaxException se) {
-                label = "[ERROR] Unable to generate view links for this element.";
-            }
-
-            MMSViewLinkForm viewLinkForm = new MMSViewLinkForm(label, linkButtons);
-            if(numDocuments > 1 || numDocuments == 0){
-                showPane = true;
+                // and display
+                MMSViewLinkForm viewLinkForm = new MMSViewLinkForm(label, linkButtons);
+                viewLinkForm.setVisible(true);
             }else {
+                // build single link
+                try {
+                    link = new URI(uriBasePath + "/documents/" + element.getID() + "/views/" + element.getID());
+                }
+                catch (URISyntaxException se) {
+                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating VE links for " + element.getHumanName() + ". Unable to proceed.");
+                    return;
+                }
+                // just open it if possible
                 if (Desktop.isDesktopSupported()) {
                     try {
+                        Application.getInstance().getGUILog().log("[INFO] " + element.getHumanName()
+                                + "does not belong to a document hierarchy. Opening view in VE without document context.");
                         Desktop.getDesktop().browse(link);
-                    } catch (IOException e1) {
+                    }
+                    catch (IOException e1) {
+                        Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the VE page. Link: " + link.toString());
                         e1.printStackTrace();
                     }
                 } else {
-                    showPane = true;
+                    Application.getInstance().getGUILog().log("[WARNING] Java is unable to open links on your computer. Link: " + link.toString());
                 }
-            }
-            if(showPane) {
-                viewLinkForm.setVisible(true);
             }
         }
     }
 
-    public class ViewButton extends JButton {
-//        private String text;
+    private class ViewButton extends JButton {
         private URI uri;
 
-        public ViewButton(String text, URI uri){
+        ViewButton(String text, URI uri){
             super(text);
             setup(uri);
             this.setMaximumSize(new Dimension(280, 18));
@@ -156,14 +154,10 @@ public class MMSViewLinkAction extends MDAction {
                 try {
                     desktop.browse(uri);
                 } catch (IOException e) {
-                    JOptionPane.showMessageDialog(null,
-                            "Failed to launch the link, possibly due to a configuration issue.\nLink: " + uri.toString(),
-                            "Cannot Launch Link", JOptionPane.WARNING_MESSAGE);
+                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the VE page. Link: " + uri.toString());
                 }
             } else {
-                JOptionPane.showMessageDialog(null,
-                        "Java is not able to launch links on your computer.\nLink: " + uri.toString(),
-                        "Cannot Launch Link", JOptionPane.WARNING_MESSAGE);
+                Application.getInstance().getGUILog().log("[WARNING] Java is unable to open links on your computer. Link: " + uri.toString());
             }
         }
     }
