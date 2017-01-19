@@ -35,10 +35,15 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         closeJMS(project);
         new Thread() {
             public void run() {
-                if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
-                    EMSLoginAction.loginAction("", "", false);
+                if (shouldEnableJMS(project)) {
+                    if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
+                        EMSLoginAction.loginAction("", "", false);
+                        // loginAction contains a call back to initializeProject if appropriate
+                    }
+                    else {
+                        initializeJMS(project);
+                    }
                 }
-                initializeJMS(project);            
             }
         }.start();
     }
