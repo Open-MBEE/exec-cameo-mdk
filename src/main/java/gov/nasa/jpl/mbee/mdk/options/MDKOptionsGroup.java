@@ -22,7 +22,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             PERSIST_CHANGELOG = "PERSIST_CHANGELOG_ON_SAVE",
             CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
             COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC",
-            USER_SCRIPT_DIRECTORY = "USER_SCRIPT_DIRECTORIES",
+            USER_SCRIPT_DIRECTORIES = "USER_SCRIPT_DIRECTORIES",
             SHOW_ADVANCED_OPTIONS = "SHOW_ADVANCED_OPTIONS";
 
 
@@ -114,7 +114,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public File[] getCustomUserScriptDirectories(){
-        Property p = getProperty(USER_SCRIPT_DIRECTORY);
+        Property p = getProperty(USER_SCRIPT_DIRECTORIES);
         String val =  p.getValueStringRepresentation();
         if(val == null || val.isEmpty()){
             return null;
@@ -126,7 +126,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         return dirs;
     }
     public int getNumberOfCustomUserScriptDirectories(){
-        Property p = getProperty(USER_SCRIPT_DIRECTORY);
+        Property p = getProperty(USER_SCRIPT_DIRECTORIES);
         String val =  p.getValueStringRepresentation();
         if(val == null || val.isEmpty()){
             return 0;
@@ -136,7 +136,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public void setUserScriptDirectory(String path) {
-        StringProperty property = new StringProperty(USER_SCRIPT_DIRECTORY, path);
+        StringProperty property = new StringProperty(USER_SCRIPT_DIRECTORIES, path);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property);
