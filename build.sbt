@@ -37,6 +37,7 @@ val commonSettings: Seq[Setting[_]] = Seq(
   fullResolvers ++= Seq(new MavenRepository("cae ext-release-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/ext-release-local"),
                         new MavenRepository("cae plugins-release-local", "https://cae-artifactory.jpl.nasa.gov/artifactory/plugins-release-local")
                     ),
+  credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
   autoScalaLibrary := false,
   // disable using the Scala version in output paths and artifacts
   crossPaths := false,
