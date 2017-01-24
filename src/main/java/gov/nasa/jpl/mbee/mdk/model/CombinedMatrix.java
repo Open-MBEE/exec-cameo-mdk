@@ -155,7 +155,7 @@ public class CombinedMatrix extends Table {
         List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
         for (Object o : targets) {
             Element e = o instanceof Element ? (Element) o : null;
-            if (isSkipIfNoDoc() && (e == null || ModelHelper.getComment(e).trim().equals(""))) {
+            if (isSkipIfNoDoc() && (e == null || ModelHelper.getComment(e).trim().isEmpty())) {
                 continue;
             }
             List<DocumentElement> row = new ArrayList<DocumentElement>();

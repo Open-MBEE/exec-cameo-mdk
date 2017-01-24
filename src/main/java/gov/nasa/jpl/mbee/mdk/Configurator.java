@@ -237,6 +237,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             this.objectInvokingAction = objectInvokingMethod;
         }
 
+
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
             // super.actionPerformed( actionEvent ); // don't call super -- it

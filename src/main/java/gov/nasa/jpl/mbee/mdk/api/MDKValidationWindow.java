@@ -255,7 +255,7 @@ public class MDKValidationWindow {
             MagicDrawHelper.generalMessage("[INFO] There are no instances of " + violationRuleName + " to " + (commit ? "commit" : "accept") + ".");
             return;
         }
-        else if (className.equals("")) {
+        else if (className.isEmpty()) {
             MagicDrawHelper.generalMessage("[INFO] There is no " + (commit ? "commit" : "accept") + " action for instances of " + violationRuleName + " to process.");
             return;
         }
