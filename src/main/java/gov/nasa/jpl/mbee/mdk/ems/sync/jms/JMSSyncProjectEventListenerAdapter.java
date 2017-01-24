@@ -31,15 +31,18 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     @Override
     public void projectOpened(final Project project) {
         closeJMS(project);
-        new Thread() {
-            public void run() {
-                if (TicketUtils.isTicketValid()) {
-                    initializeJMS(project);
-                } else {
-                    EMSLoginAction.loginAction(project, true);
+        if (shouldEnableJMS(project)) {
+            new Thread() {
+                public void run() {
+                    if (TicketUtils.isTicketValid()) {
+                        initializeJMS(project);
+                    } else {
+                        EMSLoginAction.loginAction(project, true);
+                        // loginAction contains a call to initializeJMS on a successful ticket get
+                    }
                 }
-            }
-        }.start();
+            }.start();
+        }
     }
 
     @Override
@@ -64,8 +67,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     public static boolean shouldEnableJMS(Project project) {
-        return ((project.getModel() != null) && project.isRemote() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()
-                && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem"));
+        return ((project.getPrimaryModel() != null) && project.isRemote()
+                && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()
+                && StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem"));
     }
 
     public void initializeJMS(Project project) {
