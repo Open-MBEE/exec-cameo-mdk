@@ -84,7 +84,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             if (nestedValueSpecification && preProcessor == PreProcessor.VALUE_SPECIFICATION) {
                 continue;
             }
-            objectNode = preProcessor.getFunction().apply(element, project, objectNode);
+            try {
+                objectNode = preProcessor.getFunction().apply(element, project, objectNode);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                System.err.println(element);
+            }
             if (objectNode == null) {
                 return null;
             }
@@ -93,7 +98,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             ExportFunction function = Arrays.stream(EStructuralFeatureOverride.values())
                     .filter(override -> override.getPredicate().test(element, eStructuralFeature)).map(EStructuralFeatureOverride::getFunction)
                     .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
-            objectNode = function.apply(element, project, eStructuralFeature, objectNode);
+            try {
+                objectNode = function.apply(element, project, eStructuralFeature, objectNode);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                System.err.println(element);
+            }
             if (objectNode == null) {
                 return null;
             }
@@ -246,13 +256,18 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         }
         else if (object instanceof Collection) {
             ArrayNode arrayNode = JacksonUtils.getObjectMapper().createArrayNode();
-            for (Object o : ((Collection<?>) object)) {
-                JsonNode serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
-                if (serialized == null && o != null) {
-                    // failed to serialize; taking the conservative approach and returning entire thing as null
-                    return NullNode.getInstance();
+            try {
+                for (Object o : ((Collection<?>) object)) {
+                    JsonNode serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
+                    if (serialized == null && o != null) {
+                        // failed to serialize; taking the conservative approach and returning entire thing as null
+                        return NullNode.getInstance();
+                    }
+                    arrayNode.add(serialized);
                 }
-                arrayNode.add(serialized);
+            } catch (UnsupportedOperationException e) {
+                e.printStackTrace();
+                System.err.println("Object: " + object.getClass());
             }
             return arrayNode;
         }

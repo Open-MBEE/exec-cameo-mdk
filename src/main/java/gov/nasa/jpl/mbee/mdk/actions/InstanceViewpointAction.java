@@ -117,7 +117,7 @@ public class InstanceViewpointAction extends MDAction {
             Type type = p.getType();
             if (type instanceof Class && StereotypesHelper.hasStereotypeOrDerived(type, sysmlViewpoint)) {
                 Class child = null;
-                if (p.getName().equals("")) {
+                if (p.getName().isEmpty()) {
                     child = instance(view, (Class) type, type.getName());
                 }
                 else {

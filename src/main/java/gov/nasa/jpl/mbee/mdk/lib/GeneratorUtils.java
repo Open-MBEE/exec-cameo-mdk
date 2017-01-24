@@ -227,18 +227,18 @@ public class GeneratorUtils {
         boolean gen = (genO instanceof Boolean && (Boolean) genO || genO instanceof String
                 && genO.equals("true"));
 
-        if (title == null || title.equals("")) {
+        if (title == null || title.isEmpty()) {
             title = ((NamedElement) start).getName();
         }
 
-        if (FooterLegalNotice == null || FooterLegalNotice.equals("")) {
+        if (FooterLegalNotice == null || FooterLegalNotice.isEmpty()) {
             Property propertyByName = StereotypesHelper
                     .getPropertyByName(documentView, "Footer Legal Notice");
             if (propertyByName != null) {
                 FooterLegalNotice = UML2ModelUtil.getDefault(propertyByName);
             }
         }
-        if (TitlePageLegalNotice == null || TitlePageLegalNotice.equals("")) {
+        if (TitlePageLegalNotice == null || TitlePageLegalNotice.isEmpty()) {
             Property propertyByName = StereotypesHelper.getPropertyByName(documentView,
                     "Title Page Legal Notice");
             if (propertyByName != null) {
@@ -419,7 +419,7 @@ public class GeneratorUtils {
     public static List<Person> getPersons(List<String> s) {
         List<Person> ps = new ArrayList<Person>();
         for (String author : s) {
-            if (author == null || author.equals("")) {
+            if (author == null || author.isEmpty()) {
                 continue;
             }
             String[] tokens = author.split("[,]");
@@ -440,7 +440,7 @@ public class GeneratorUtils {
     public static List<Revision> getRevisions(List<String> s) {
         List<Revision> rs = new ArrayList<Revision>();
         for (String rev : s) {
-            if (rev == null || rev.equals("")) {
+            if (rev == null || rev.isEmpty()) {
                 continue;
             }
             String[] tokens = rev.split("[|]");

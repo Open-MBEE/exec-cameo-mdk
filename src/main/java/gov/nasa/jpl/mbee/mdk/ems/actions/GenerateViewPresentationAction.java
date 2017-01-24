@@ -32,7 +32,7 @@ public class GenerateViewPresentationAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Utils.recommendUpdateFromTeamwork();
+        Utils.recommendUpdateFromRemote(Application.getInstance().getProject());
         updateAction();
     }
 

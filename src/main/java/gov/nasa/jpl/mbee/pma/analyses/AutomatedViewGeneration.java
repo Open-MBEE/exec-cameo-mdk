@@ -25,6 +25,8 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.*;
 
+// TODO Redo in @donbot
+@Deprecated
 public class AutomatedViewGeneration extends CommandLine {
 
     // needed because CommandLine redirects it, and we want the output

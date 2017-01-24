@@ -134,7 +134,7 @@ public class MissionComponent {
         for (MissionCharacterization mc : willBeRemoved) {
             list += mc.getName() + ",";
         }
-        if (!list.equals("")) {
+        if (!list.isEmpty()) {
             if (!Utils.getUserYesNoAnswer("If you remove inheritance to component " + lc.getName()
                     + ", the following characterizations will also be removed from the model: " + list
                     + " is this ok?")) {
