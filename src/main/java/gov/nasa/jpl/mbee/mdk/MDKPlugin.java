@@ -164,8 +164,7 @@ public class MDKPlugin extends Plugin {
         }
         for (File file : extensionDir.listFiles()) {
             try {
-                @SuppressWarnings("unused")
-                JarFile jarFile = new JarFile(file);
+                //     JarFile jarFile = new JarFile(file);
                 extensions.add(file.toURI().toURL());
             } catch (MalformedURLException e) {
                 e.printStackTrace();

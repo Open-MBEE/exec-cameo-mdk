@@ -848,7 +848,7 @@ public class Utils2 {
     @SuppressWarnings("unused")
     public static boolean isInt(String intStr) {
         try {
-            int i = Integer.parseInt(intStr);
+            Integer.parseInt(intStr);
             return true;
         } catch (Exception e) {
             return false;

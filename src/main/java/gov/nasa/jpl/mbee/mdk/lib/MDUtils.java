@@ -190,38 +190,7 @@ public class MDUtils {
         return selectedElements;
     }
 
-    // /**
-    // * THIS DOESN'T WORK!!
-    // * @param event
-    // * @return
-    // */
-    // public static boolean eventInDiagram( ActionEvent event ) {
-    // Assert.fail();
-    // Object source = event.getSource();
-    // if ( source instanceof ActionsMenuCreator.CustomJMenuItem ) {
-    // ActionsMenuCreator.CustomJMenuItem item =
-    // (ActionsMenuCreator.CustomJMenuItem)source;
-    // // ((MDAction)item.getAction()).
-    // }
-    // boolean calledFromDiagram =
-    // ( source != null &&
-    // source.getClass().getSimpleName().toLowerCase().contains( "diagram" ) );
-    // return calledFromDiagram;
-    // }
 
-    // public gov.nasa.jpl.ae.event.Expression<?> toAeExpression(
-    // ValueSpecification mdValueSpec ) {
-    // Assert.assertFalse( true ); // TODO
-    // return null;
-    // }
-    //
-    // public gov.nasa.jpl.ae.event.Expression<?> toAeExpression( Expression
-    // mdExpression ) {
-    // Assert.assertFalse( true ); // TODO
-    // gov.nasa.jpl.ae.event.Expression<?> aeExpr = null;
-    // List< ValueSpecification > args = mdExpression.getOperand();
-    // return aeExpr;
-    // }
 
     public static Class<?> getType(BaseElement elem) {
         Class<?> type = elem.getClassType();
@@ -250,7 +219,7 @@ public class MDUtils {
             return "master";
         }
         twbranch = "master/" + twbranch;
-        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+      //  String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
 
         //TODO @donbot imported from ExportUtility, update to finish the import
 //        Map<String, String> wsmap = wsIdMapping.get(projId);
