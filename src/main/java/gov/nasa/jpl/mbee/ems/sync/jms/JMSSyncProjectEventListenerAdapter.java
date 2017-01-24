@@ -37,7 +37,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             public void run() {
                 if (shouldEnableJMS(project)) {
                     if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
-                        EMSLoginAction.loginAction("", "", false);
+                        EMSLoginAction.loginAction("", "", true);
                         // loginAction contains a call back to initializeProject if appropriate
                     }
                     else {
