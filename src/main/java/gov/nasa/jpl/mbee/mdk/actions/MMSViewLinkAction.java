@@ -5,6 +5,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.actions.ui.MMSViewLinkForm;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
@@ -39,44 +41,67 @@ public class MMSViewLinkAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        Stereotype documentStereotype = Utils.getDocumentStereotype();
+        Stereotype viewStereotype = Utils.getViewStereotype();
+
         for (Element element: targetElements) {
+            if (!StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)
+                    && !StereotypesHelper.hasStereotypeOrDerived(element, documentStereotype)) {
+                continue;
+            }
             Project project = Project.getProject(element);
 
             // build url
             // can't use URIBuilder, it converts the ‘#’ in the url and breaks things
             URIBuilder uriBase = MMSUtils.getServiceUri(project);
             if (uriBase == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Unable to retrieve MMS information from model stereotype. Cancelling view open.");
                 return;
             }
             String uriBasePath = uriBase.setPath("").clearParameters().toString()
                     + "/alfresco/mmsapp/mms.html#/workspaces/" + MDUtils.getWorkspace(project)
                     + "/sites/" + MMSUtils.getSiteName(project);
             Set<Element> documents = new HashSet<>();
-            if (StereotypesHelper.hasStereotype(element, Utils.getDocumentStereotype())) {
-                documents.add(element);
-            }
 
-            List<Relationship> relationships = new ArrayList<>();
-            Set<Element> viewChain = new HashSet<>();
+            // collect document parents from hierarchy
+            ArrayList<Element> viewChain = new ArrayList<>();
             viewChain.add(element);
-            relationships.addAll(element.get_relationshipOfRelatedElement());
-            for (int i = 0; i < relationships.size(); i++) {
-                if (!(relationships.get(i) instanceof Association)) {
-                    continue;
+            for (int i = 0; i <  viewChain.size(); i++) {
+                if (StereotypesHelper.hasStereotype(viewChain.get(i), documentStereotype)) {
+                    documents.add(viewChain.get(i));
                 }
-                Element hierarchyParent = ((Association) relationships.get(i)).getMemberEnd().get(0).getOwner();
-                if (StereotypesHelper.hasStereotype(hierarchyParent, Utils.getDocumentStereotype())) {
-                    documents.add(hierarchyParent);
+                // create set of hierarchy children so we can ignore those ends and only climb the hierarchy
+                Set<Element> childViews = new HashSet<>();
+                for (Property prop : ((Class) viewChain.get(i)).getOwnedAttribute()) {
+                    if (!(prop.getType() instanceof Class)) {
+                        continue;
+                    }
+                    Class type = (Class) prop.getType();
+                    if (type == null || !(StereotypesHelper.hasStereotypeOrDerived(type, viewStereotype)
+                            || StereotypesHelper.hasStereotypeOrDerived(type, documentStereotype))) {
+                        continue;
+                    }
+                    childViews.add(type);
                 }
-                if (!viewChain.contains(hierarchyParent)) {
-                    viewChain.add(hierarchyParent);
-                    relationships.addAll(hierarchyParent.get_relationshipOfRelatedElement());
+                // check each association end, if it's a non-child view/document then add it to chain for further processing
+                for (Relationship relation : viewChain.get(i).get_relationshipOfRelatedElement()) {
+                    if (!(relation instanceof Association)) {
+                        continue;
+                    }
+                    Element assocEnd = ((Association) relation).getMemberEnd().get(0).getOwner();
+                    if (!StereotypesHelper.hasStereotypeOrDerived(assocEnd, viewStereotype)
+                            && !StereotypesHelper.hasStereotypeOrDerived(assocEnd, documentStereotype)) {
+                        continue;
+                    }
+                    if (!childViews.contains(assocEnd) && !viewChain.contains(assocEnd)) {
+                        viewChain.add(assocEnd);
+                    }
                 }
+
             }
 
             // build links
-            URI link = null;
-
+            URI link;
             if(documents.size() > 1){
                 // build multiple links
                 String label = "";
@@ -96,7 +121,7 @@ public class MMSViewLinkAction extends MDAction {
                     }
                 }
                 catch (URISyntaxException se) {
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating VE links for " + element.getHumanName() + ". Unable to proceed.");
+                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");
                     return;
                 }
                 // and display
@@ -108,18 +133,20 @@ public class MMSViewLinkAction extends MDAction {
                     link = new URI(uriBasePath + "/documents/" + element.getID() + "/views/" + element.getID());
                 }
                 catch (URISyntaxException se) {
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating VE links for " + element.getHumanName() + ". Unable to proceed.");
+                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");
                     return;
                 }
                 // just open it if possible
                 if (Desktop.isDesktopSupported()) {
                     try {
-                        Application.getInstance().getGUILog().log("[INFO] " + element.getHumanName()
-                                + "does not belong to a document hierarchy. Opening view in VE without document context.");
+                        if (documents.size() == 0) {
+                            Application.getInstance().getGUILog().log("[INFO] " + element.getHumanName()
+                                    + " does not belong to a document hierarchy. Opening view in View Editor without document context.");
+                        }
                         Desktop.getDesktop().browse(link);
                     }
                     catch (IOException e1) {
-                        Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the VE page. Link: " + link.toString());
+                        Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + link.toString());
                         e1.printStackTrace();
                     }
                 } else {
@@ -154,7 +181,7 @@ public class MMSViewLinkAction extends MDAction {
                 try {
                     desktop.browse(uri);
                 } catch (IOException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the VE page. Link: " + uri.toString());
+                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + uri.toString());
                 }
             } else {
                 Application.getInstance().getGUILog().log("[WARNING] Java is unable to open links on your computer. Link: " + uri.toString());

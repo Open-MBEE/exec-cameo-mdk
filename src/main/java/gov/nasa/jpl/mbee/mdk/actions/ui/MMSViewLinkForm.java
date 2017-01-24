@@ -12,36 +12,26 @@ import java.util.List;
 public class MMSViewLinkForm extends JFrame {
     private JPanel buttonPanel;
     private JPanel rootPanel;
-    private JLabel viewLabel;
     private JScrollPane scrollPane;
 
     private static final int DISPLAYED_LINKS = 4;
 
     public MMSViewLinkForm(String label, List<JButton> buttons) {
-        super("MMS View Links");
-        viewLabel.setText("<html>" + label + "</html>");
+        super(label);
         buttonPanel.setLayout(new GridLayout(0, 1, 0, 2));
 
-//        GridBagConstraints c = new GridBagConstraints();
-//        c.weightx = 0.5;
-//        c.fill = GridBagConstraints.HORIZONTAL;
-//        c.anchor = GridBagConstraints.CENTER;
-//        c.gridx = 0;
-//        c.gridy = 0;
         for (JButton button : buttons) {
             buttonPanel.add(button);
-//            buttonPanel.add(button, c);
-//            c.gridy = c.gridy + 1;
         }
         buttonPanel.setPreferredSize(new Dimension(320, buttons.size() * 25));
         scrollPane.setPreferredSize(new Dimension(340, Math.min(DISPLAYED_LINKS, buttons.size()) * 25 + 4));
-        rootPanel.setPreferredSize(new Dimension(400, scrollPane.getPreferredSize().height + 30));
+        rootPanel.setPreferredSize(new Dimension(360, scrollPane.getPreferredSize().height + 12));
         setContentPane(rootPanel);
         setLocationRelativeTo(Application.getInstance().getMainFrame());
         pack();
         setMinimumSize(getSize());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//        setResizable(false);
+        setResizable(false);
         setAlwaysOnTop(true);
     }
 
@@ -62,41 +52,24 @@ public class MMSViewLinkForm extends JFrame {
     private void $$$setupUI$$$() {
         rootPanel = new JPanel();
         rootPanel.setLayout(new GridBagLayout());
-        rootPanel.setMaximumSize(new Dimension(406, 424));
-        rootPanel.setMinimumSize(new Dimension(406, 40));
-        rootPanel.setPreferredSize(new Dimension(406, 40));
+        rootPanel.setMaximumSize(new Dimension(406, 404));
+        rootPanel.setMinimumSize(new Dimension(406, 20));
+        rootPanel.setPreferredSize(new Dimension(406, 20));
         rootPanel.setRequestFocusEnabled(true);
-        viewLabel = new JLabel();
-        viewLabel.setHorizontalAlignment(2);
-        viewLabel.setHorizontalTextPosition(2);
-        viewLabel.setMaximumSize(new Dimension(380, 100));
-        viewLabel.setMinimumSize(new Dimension(380, 16));
-        viewLabel.setOpaque(true);
-        viewLabel.setPreferredSize(new Dimension(380, 16));
-        viewLabel.setText("MMS View List");
-        viewLabel.setVerticalAlignment(1);
-        viewLabel.setVerticalTextPosition(0);
-        GridBagConstraints gbc;
-        gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.insets = new Insets(3, 10, 3, 10);
-        rootPanel.add(viewLabel, gbc);
         scrollPane = new JScrollPane();
         scrollPane.setHorizontalScrollBarPolicy(31);
         scrollPane.setMaximumSize(new Dimension(300, 400));
         scrollPane.setMinimumSize(new Dimension(300, 20));
         scrollPane.setPreferredSize(new Dimension(300, 20));
         scrollPane.setVerticalScrollBarPolicy(20);
+        GridBagConstraints gbc;
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.anchor = GridBagConstraints.NORTH;
-        gbc.insets = new Insets(3, 0, 3, 0);
+        gbc.insets = new Insets(6, 6, 6, 6);
         rootPanel.add(scrollPane, gbc);
         buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridBagLayout());
@@ -106,7 +79,6 @@ public class MMSViewLinkForm extends JFrame {
         buttonPanel.setOpaque(true);
         buttonPanel.setPreferredSize(new Dimension(280, 20));
         scrollPane.setViewportView(buttonPanel);
-        viewLabel.setLabelFor(scrollPane);
     }
 
     /**

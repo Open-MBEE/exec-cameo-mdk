@@ -239,6 +239,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                     }
                 }
             }
+
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
             if (TicketUtils.isTicketSet() && !MMSAction.isDisabled()) {
                 //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
@@ -279,13 +280,6 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(es, true));
                 }
-                ActionsCategory tracingCategory = manager.getCategory("TRACING_CATEGORY");
-                if (tracingCategory != null) {
-                    action = manager.getActionFor(MMSViewLinkAction.DEFAULT_ID);
-                    if (action == null) {
-                            tracingCategory.addAction(new MMSViewLinkAction(es));
-                    }
-                }
                 /*action = manager.getActionFor(OrganizeViewInstancesAction.DEFAULT_ID);
                 if (action == null) {
                     viewInstances.addAction(new OrganizeViewInstancesAction(es, false));
@@ -310,6 +304,17 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 //mda.setEnabled(false);
                 //modelLoad2.addAction(mda);
             }
+
+            if (StereotypesHelper.hasStereotype(Project.getProject(e).getPrimaryModel(), "ModelManagementSystem")) {
+                ActionsCategory tracingCategory = manager.getCategory("TRACING_CATEGORY");
+                if (tracingCategory != null) {
+                    NMAction action = manager.getActionFor(MMSViewLinkAction.DEFAULT_ID);
+                    if (action == null) {
+                        tracingCategory.addAction(new MMSViewLinkAction(es));
+                    }
+                }
+            }
+
             ActionsStateUpdater.updateActionsState();
 
             //ActionsCategory c = myCategory(manager, "ViewEditor", "View Editor");
