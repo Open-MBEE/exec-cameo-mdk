@@ -161,7 +161,7 @@ public class TemporalDiff extends Table {
                         }
                     }
                     else {
-                        ObjectNode compareJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, compareToDate);
+                       // ObjectNode compareJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, compareToDate);
                         //TODO @scopecreep throw new MethodNotSupportedException("");
                         // System.out.println("Comp _____________" + compareJson);
                     }
@@ -174,7 +174,7 @@ public class TemporalDiff extends Table {
                         }
                     }
                     else {
-                        ObjectNode baseJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, baseVersionDate);
+                       // ObjectNode baseJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, baseVersionDate);
                         //TODO @scopecreep throw new MethodNotSupportedException("");
                         // System.out.println("Base _____________" + baseJson);
                     }
@@ -183,7 +183,6 @@ public class TemporalDiff extends Table {
                 DBParagraph retval = new DBParagraph();
                 retval.setText("</diffResult>this will be the results.</diffResults>"); // concatenate the elements
                 res.add(retval);
-
             }
             return res;
         }
