@@ -27,9 +27,9 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
     }
 
     public void actionPerformed(ActionEvent e) {
-        Boolean con = Utils.getUserYesNoAnswer("Warning! Refactor with ID action is best used with an immediate commit to"
-                + " teamwork \nand no other active teamwork users on this project, else data loss may \n"
-                + "happen on update from teamwork. Do you want to continue?");
+        Boolean con = Utils.getUserYesNoAnswer("Warning! Refactor with ID action is best used with an immediate commit/save"
+                + "\nand no remote users on this project. Otherwise, data loss may \n"
+                + "happen on remote update. Do you want to continue?");
         if (con == null || !con) {
             return;
         }

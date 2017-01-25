@@ -27,6 +27,8 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
+// TODO Figure me out @donbot
+@Deprecated
 public class ModuleValidator {
 
     private ValidationSuite suite = new ValidationSuite("structure");

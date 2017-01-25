@@ -41,7 +41,6 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.lib.Debug;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.patternloader.PatternLoaderConfigurator;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 
 import java.io.File;
@@ -101,8 +100,6 @@ public class MDKPlugin extends Plugin {
         //acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
         //acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
 
-        PatternLoaderConfigurator plc = new PatternLoaderConfigurator();
-        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, plc);
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
 

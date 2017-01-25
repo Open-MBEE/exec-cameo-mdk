@@ -88,37 +88,38 @@ public class EMFImporter implements JsonToElementFunction {
     }
 
     public static class PreProcessor {
-        public static final PreProcessor CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
-        EDITABLE = new PreProcessor(
-                (objectNode, project, strict, element) -> {
-                    if (!element.isEditable()) {
-                        throw new ReadOnlyElementException(element);
-                    }
-                    return element;
-                }
-        ),
-        DOCUMENTATION = new PreProcessor(
-                (objectNode, project, strict, element) -> {
-                    JsonNode jsonNode = objectNode.get("documentation");
-                    if (jsonNode != null && jsonNode.isTextual()) {
-                        ModelHelper.setComment(element, jsonNode.asText());
-                    }
-                    return element;
-                }
-        ),
-        SYSML_ID_VALIDATION = new PreProcessor(
-                (objectNode, project, strict, element) -> {
-                    JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-                    if (jsonNode == null || !jsonNode.isTextual()) {
-                        return element;
-                    }
-                    String id = jsonNode.asText();
-                    if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
-                        return null;
-                    }
-                    return element;
-                }
-        );
+        public static final PreProcessor
+                CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
+                EDITABLE = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            if (!element.isEditable()) {
+                                throw new ReadOnlyElementException(element);
+                            }
+                            return element;
+                        }
+                ),
+                DOCUMENTATION = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            JsonNode jsonNode = objectNode.get("documentation");
+                            if (jsonNode != null && jsonNode.isTextual()) {
+                                ModelHelper.setComment(element, jsonNode.asText());
+                            }
+                            return element;
+                        }
+                ),
+                SYSML_ID_VALIDATION = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                            if (jsonNode == null || !jsonNode.isTextual()) {
+                                return element;
+                            }
+                            String id = jsonNode.asText();
+                            if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
+                                return null;
+                            }
+                            return element;
+                        }
+                );
 
         static PreProcessor getCreatePreProcessor(BiFunction<String, Project, Element> idToElementConverter) {
             return new PreProcessor(
@@ -358,26 +359,27 @@ public class EMFImporter implements JsonToElementFunction {
     private static final ImportFunction EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (objectNode, eStructuralFeature, project, strict, element) -> element;
 
     protected static class EStructuralFeatureOverride {
-        public static final EStructuralFeatureOverride ID = new EStructuralFeatureOverride(
-                (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
-                (objectNode, eStructuralFeature, project, strict, element) -> {
-                    JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-                    if (jsonNode == null || !jsonNode.isTextual()) {
-                        /*if (strict) {
-                            throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
+        public static final EStructuralFeatureOverride
+                ID = new EStructuralFeatureOverride(
+                    (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
+                    (objectNode, eStructuralFeature, project, strict, element) -> {
+                        JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                        if (jsonNode == null || !jsonNode.isTextual()) {
+                            /*if (strict) {
+                                throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
+                            }
+                            return null;*/
+                            return element;
                         }
-                        return null;*/
+                        try {
+                            UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
+                        } catch (IllegalArgumentException e) {
+                            throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
+                        }
                         return element;
                     }
-                    try {
-                        UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
-                    } catch (IllegalArgumentException e) {
-                        throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
-                    }
-                    return element;
-                }
-        ),
-        OWNER = getOwnerEStructuralFeatureOverride(Converters.getIdToElementConverter());
+                ),
+                OWNER = getOwnerEStructuralFeatureOverride(Converters.getIdToElementConverter());
 
         private ImportPredicate importPredicate;
         private ImportFunction importFunction;

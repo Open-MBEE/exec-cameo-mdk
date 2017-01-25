@@ -29,7 +29,7 @@ from com.nomagic.uml2.ext.magicdraw.interactions.mdfragments import InteractionC
 from javax.swing import JOptionPane
 
 
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 import sys
 import traceback
 import os

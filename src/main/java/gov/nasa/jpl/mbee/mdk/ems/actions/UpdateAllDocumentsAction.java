@@ -29,7 +29,7 @@ public class UpdateAllDocumentsAction extends MMSAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
-        Utils.recommendUpdateFromTeamwork();
+        Utils.recommendUpdateFromRemote(Application.getInstance().getProject());
         updateAction();
     }
 
@@ -46,10 +46,6 @@ public class UpdateAllDocumentsAction extends MMSAction {
         PresentationElementUtils viu = new PresentationElementUtils();
         Map<String, ObjectNode> images = new HashMap<String, ObjectNode>();
         for (Element doc : docs) {
-            /*
-            if (!Utils.recommendUpdateFromTeamwork())
-                return vss;
-            */
             ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement) doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
@@ -58,18 +54,8 @@ public class UpdateAllDocumentsAction extends MMSAction {
                 Utils.displayValidationWindow(vss, "View Generation and Images Validation");
                 return vss;
             }
-            
-            /*ValidateViewRunner vvr = new ValidateViewRunner(doc, false, true, false);
-            ProgressStatusRunner.runWithProgressStatus(vvr, "Validating View Hierarchy", true, 0);
-            vss.addAll(vvr.getValidations());*/
         }
         Utils.displayValidationWindow(vss, "View Generation and Images Validation");
-        
-        /*if (!Utils.recommendUpdateFromTeamwork("(MMS Update and Document Generations have finished.)"))
-            return vss;
-        DeltaSyncRunner msr2 = new DeltaSyncRunner(true, false);
-        ProgressStatusRunner.runWithProgressStatus(msr2, "Committing project to MMS", true, 0);
-        vss.addAll(msr2.getValidations());*/
         return vss;
     }
 

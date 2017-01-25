@@ -22,7 +22,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public void projectOpened(Project project) {
         projectClosed(project);
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener(project);
+        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new LocalSyncTransactionCommitListener(project);
         if (project.isRemote()) {
             ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
         }
@@ -48,12 +48,12 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public void projectSaved(Project project, boolean savedInServer) {
         LocalSyncProjectMapping localSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
 
-        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener localSyncTransactionCommitListener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
-        if (localSyncTransactionCommitListener == null) {
+        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
+        if (listener == null) {
             projectOpened(project);
-            localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+            listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         }
-        localSyncTransactionCommitListener.getInMemoryLocalChangelog().clear();
+        listener.getInMemoryLocalChangelog().clear();
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
