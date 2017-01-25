@@ -156,7 +156,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
-        setMDKAdvancedOptions(true);
+        setMDKAdvancedOptions(false);
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK";
