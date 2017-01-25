@@ -118,13 +118,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Fix me and move me to MMSUtils @donbot
     // TODO Add both ?recurse and element list gets @donbot
-    public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element,
-                                                                          boolean recurse, int depth,
-                                                                          ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        ObjectNode response;
+    public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element, boolean recurse, int depth, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         String id = Converters.getElementToIdConverter().apply(element);
-        response = MMSUtils.getServerElementsRecursively(project, id, recurse, depth, progressStatus);
+        ObjectNode response = MMSUtils.getServerElementsRecursively(project, id, recurse, depth, progressStatus);
         // process response
         JsonNode value;
         if (response != null && (value = response.get("elements")) != null && value.isArray()) {
@@ -132,12 +128,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
 
             // check if we're validating the model root
-            if (id.equals(Converters.getElementToIdConverter().apply(project.getPrimaryModel()))) {
+            if ((depth > 0 || recurse) && id.equals(Converters.getElementToIdConverter().apply(project.getPrimaryModel()))) {
                 String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
                 boolean found = false;
                 // check to see if the holding bin was returned
                 for (ObjectNode elem : serverElements) {
-                    value = null;
                     if ((value = elem.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
                             && value.asText().equals(holdingBinId)) {
                         found = true;
@@ -145,7 +140,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                 }
                 // if no holding bin in server collection && model was element && (depth > 0 || recurse)
-                if (!found && (depth > 0 || recurse)) {
+                if (!found) {
                     response = MMSUtils.getServerElementsRecursively(project, holdingBinId, recurse, depth, progressStatus);
                     if (response != null && (value = response.get("elements")) != null && value.isArray()) {
                         serverElements.addAll(StreamSupport.stream(value.spliterator(), false)

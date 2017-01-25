@@ -32,6 +32,7 @@ package gov.nasa.jpl.mbee.mdk.emf;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -44,6 +45,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.stream.MDKCollectors;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -185,7 +187,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         SITE_CHARACTERIZATION(
                 (element, project, objectNode) -> {
-                    if (element instanceof Package) {
+                    if (element instanceof Package && !(element instanceof Model)) {
                         objectNode.put("_isSite", Utils.isSiteChar((Package) element));
                     }
                     return objectNode;
@@ -214,7 +216,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
         ),
         ATTACHED_PROJECT(
-                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) ? null : objectNode
+                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && !(element instanceof Model) ? null : objectNode
         ),
         VIEW(
                 (element, project, objectNode) -> {
@@ -362,7 +364,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     }*/
                     //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, UMLPackage.Literals.ELEMENT__OWNER, objectNode);
                     // safest way to prevent circular references, like with ValueSpecifications
-                    objectNode.put(MDKConstants.OWNER_ID_KEY, project.getPrimaryModel() == element ? project.getPrimaryProject().getProjectID() : getEID(owner));
+                    objectNode.put(MDKConstants.OWNER_ID_KEY, element instanceof Model ? project.getPrimaryProject().getProjectID() : getEID(owner));
                     return objectNode;
                 }
         ),
@@ -433,6 +435,27 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         UML_CLASS(
                 (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.CLASSIFIER__UML_CLASS || eStructuralFeature == UMLPackage.Literals.PROPERTY__UML_CLASS || eStructuralFeature == UMLPackage.Literals.OPERATION__UML_CLASS,
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
+        MODEL(
+                (element, eStructuralFeature) -> element instanceof Model,
+                (element, project, eStructuralFeature, objectNode) -> {
+                    if (!objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY)) {
+                        Model model = (Model) element;
+                        IAttachedProject attachedProject = ProjectUtilities.getAttachedProjects(project.getPrimaryProject()).stream().filter(ap -> ProjectUtilities.isAttachedProjectRoot(model, ap)).findAny().orElse(null);
+                        if (attachedProject == null) {
+                            return objectNode;
+                        }
+                        if (!ProjectUtilities.isRemote(attachedProject.getPrimaryProject())) {
+                            return null;
+                        }
+                        objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
+                        objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, attachedProject.getPrimaryProject().getProjectID());
+                        objectNode.put("version", ProjectUtilities.getVersion(attachedProject).getName());
+                        //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
+                        objectNode.put(MDKConstants.TYPE_KEY, "Mount");
+                    }
+                    return objectNode;
+                }
         );
 
         private BiPredicate<Element, EStructuralFeature> predicate;
