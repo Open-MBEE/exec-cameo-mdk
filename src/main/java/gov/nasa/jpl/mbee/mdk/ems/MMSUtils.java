@@ -89,8 +89,11 @@ public class MMSUtils {
         try {
             response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
         } catch (ServerException e) {
-            if (e.getCode() != 404) {
+            /*if (e.getCode() != 404) {
                 throw e;
+            }*/
+            if (response == null) {
+                response = JacksonUtils.getObjectMapper().createObjectNode();
             }
         }
         return response;
