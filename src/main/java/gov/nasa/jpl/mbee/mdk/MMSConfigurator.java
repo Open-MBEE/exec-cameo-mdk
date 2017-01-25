@@ -35,6 +35,7 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import gov.nasa.jpl.mbee.mdk.ems.actions.*;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 public class MMSConfigurator implements AMConfigurator {
 
@@ -59,12 +60,13 @@ public class MMSConfigurator implements AMConfigurator {
 
             category.addAction(login);
             category.addAction(logout);
-            MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
-            validateCategory.setNested(true);
-            category.addAction(validateCategory);
-            validateCategory.addAction(new ValidateModulesAction());
-            validateCategory.addAction(new ValidateBranchesAction());
-            
+            if(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
+                MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
+                validateCategory.setNested(true);
+                category.addAction(validateCategory);
+                validateCategory.addAction(new ValidateModulesAction());
+                validateCategory.addAction(new ValidateBranchesAction());
+            }
             /*MDActionsCategory sync = new MDActionsCategory("MMSMAINSYNC", "Update and Commit");
             sync.setNested(true);
             category.addAction(sync);

@@ -48,12 +48,12 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public void projectSaved(Project project, boolean savedInServer) {
         LocalSyncProjectMapping localSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
 
-        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener localSyncTransactionCommitListener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
-        if (localSyncTransactionCommitListener == null) {
+        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
+        if (listener == null) {
             projectOpened(project);
-            localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+            listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         }
-        localSyncTransactionCommitListener.getInMemoryLocalChangelog().clear();
+        listener.getInMemoryLocalChangelog().clear();
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
