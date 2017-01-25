@@ -113,16 +113,6 @@ public class TemporalDiff extends Table {
                     tag.append("<mms-diff-attr mms-eid=\"");
                     tag.append(Converters.getElementToIdConverter().apply((Element) e) + "\"");
                     tag.append(" mms-attr=\"" + tagAttr + "\" mms-version-one=\"");
-                    if (compareToTime == null) {
-                        tag.append("latest");
-                    }
-                    else if (compareToDate == null) {
-                        tag.append(compareToTime);
-                    }
-                    else {
-                        tag.append(sdf.format(compareToDate));
-                    }
-                    tag.append("\" mms-version-two=\"");
                     if (baseVersionTime == null) {
                         tag.append("latest");
                     }
@@ -132,8 +122,23 @@ public class TemporalDiff extends Table {
                     else {
                         tag.append(sdf.format(baseVersionDate));
                     }
+                    tag.append("\" mms-version-two=\"");
+                    if (compareToTime == null) {
+                        tag.append("latest");
+                    }
+                    else if (compareToDate == null) {
+                        tag.append(compareToTime);
+                    }
+                    else {
+                        tag.append(sdf.format(compareToDate));
+                    }
                     if(baseBranchName != null){
-                        tag.append("");
+                        tag.append("\" mms-ws-one=\"");
+                         tag.append(baseBranchName);
+                    }
+                    if(compareToBranchName != null){
+                        tag.append("\" mms-ws-two=\"");
+                         tag.append(compareToBranchName);
                     }
                     tag.append("\"></mms-diff-attr>");
                 }
