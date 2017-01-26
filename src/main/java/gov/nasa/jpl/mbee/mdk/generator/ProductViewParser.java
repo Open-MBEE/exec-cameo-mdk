@@ -93,7 +93,7 @@ public class ProductViewParser {
      */
     private void parseView(Class view, Container parent, boolean nosection, boolean recurse) {
         if (visitedViews.contains(view)) {
-            Application.getInstance().getGUILog().log("[WARNING] View " + view.getName() + " has already been visited! Skipping view.");
+            Application.getInstance().getGUILog().log("[WARNING] View " + view.getName() + " has already been visited. Skipping view.");
         }
         else {
             visitedViews.add(view);
