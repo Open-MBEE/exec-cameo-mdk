@@ -53,9 +53,11 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }*/
         if ( !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
+                || !MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled()
                 || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
                 || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() ) {
             // skip csync
+            return;
         }
         if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
