@@ -52,15 +52,11 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (tempDisabled) {
             return;
         }*/
-        boolean enabled = MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled();
-        if (!enabled) {
-            return;
-        }
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled()) {
-            return;
-        }
-        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+        if ( !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
+                || !MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled()
+                || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
+                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() ) {
+            // skip csync
             return;
         }
         if (ViewEditUtils.getTicket() == null || ViewEditUtils.getTicket().isEmpty()) {
