@@ -477,7 +477,7 @@ public class MMSUtils {
         else {
             Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
         }
-        if ((urlString == null || urlString.equals(""))) {
+        if ((urlString == null || urlString.isEmpty())) {
             if (!MDUtils.isDeveloperMode()) {
                 Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
             }
@@ -486,7 +486,7 @@ public class MMSUtils {
                 developerUrl = urlString;
             }
         }
-        if (urlString == null || urlString.equals("")) {
+        if (urlString == null || urlString.isEmpty()) {
             throw new IllegalStateException("MMS URL is null or empty.");
         }
         return urlString.trim();
@@ -509,7 +509,7 @@ public class MMSUtils {
         else {
             Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
         }
-        if ((siteString == null || siteString.equals(""))) {
+        if ((siteString == null || siteString.isEmpty())) {
             if (!MDUtils.isDeveloperMode()) {
                 Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
             }
@@ -518,7 +518,7 @@ public class MMSUtils {
                 developerSite = siteString;
             }
         }
-        if (siteString == null || siteString.equals("")) {
+        if (siteString == null || siteString.isEmpty()) {
             throw new IllegalStateException("MMS Site is null or empty.");
         }
         return siteString.trim();
@@ -538,7 +538,7 @@ public class MMSUtils {
     @Deprecated
     public static boolean isSiteEditable(Project project, String site)
             throws IOException, URISyntaxException, ServerException {
-        if (site == null || site.equals("")) {
+        if (site == null || site.isEmpty()) {
             site = getSiteName(project);
         }
 

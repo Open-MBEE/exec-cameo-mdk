@@ -62,7 +62,7 @@ public class PostProcessor {
         for (DocGenElement de : c.getChildren()) {
             if (de instanceof Container) {
                 String title = ((Container) de).getTitle();
-                if ((title == null || title.equals("")) && de.getUseContextNameAsTitle()) {
+                if ((title == null || title.isEmpty()) && de.getUseContextNameAsTitle()) {
                     ((Container) de).setTitle(titles.peek());
                 }
                 titles.push(((Container) de).getTitle());

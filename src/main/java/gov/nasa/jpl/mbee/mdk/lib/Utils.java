@@ -2655,7 +2655,7 @@ public class Utils {
             if (valueSpec instanceof LiteralBoolean) {
                 v = ef.createLiteralBooleanInstance();
                 if (value.equals("false") || value.equals("False") || value.equals("F") || value.equals("f")
-                        || value.equals("no") || value.equals("n") || value.equals("")
+                        || value.equals("no") || value.equals("n") || value.isEmpty()
                         || value.equals("FALSE") || value.equals("NO") || value.equals("No")) {
                     ((LiteralBoolean) v).setValue(false);
                 }
@@ -3422,7 +3422,7 @@ public class Utils {
                 String s = "";
                 for (int j = 0; j < i; j++) {
                     Object val = tm.getValueAt(row, curCol);
-                    if (val.toString().equals("")) {
+                    if (val.toString().isEmpty()) {
                         s += "&#xA0;&#xA0;&#xA0;&#xA0;";
                         curCol++;
                     }

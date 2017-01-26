@@ -242,35 +242,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
 
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
             if (TicketUtils.isTicketSet() && !MMSAction.isDisabled()) {
-                //ActionsCategory views = getCategory(manager, "MMSView", "MMSView", modelLoad2);
 
-                /*NMAction action = manager.getActionFor(ValidateViewAction.DEFAULT_ID);
-                if (action == null)
-                    views.addAction(new ValidateViewAction(e));
-                action = manager.getActionFor(ValidateViewRecursiveAction.DEFAULT_ID);
-                if (action == null)
-                    views.addAction(new ValidateViewRecursiveAction(e));*/
-                boolean areAllDocuments = true;
-                for (Element element : es) {
-                    if (!StereotypesHelper.hasStereotypeOrDerived(element, documentView)) {
-                        areAllDocuments = false;
-                        break;
-                    }
-                }
-                /*if (areAllDocuments) {
-                    NMAction action = manager.getActionFor(ValidateHierarchyAction.DEFAULT_ID);
-                    if (action == null)
-                        modelLoad2.addAction(new ValidateHierarchyAction(es));
-                }*/
-                /*ActionsCategory viewsC = getCategory(manager, "MMSViewC", "MMSViewC", modelLoad2);
-
-                action = manager.getActionFor("ExportView");
-                if (action == null)
-                    viewsC.addAction(new ExportViewAction(e, false));
-                action = manager.getActionFor("ExportViewRecursive");
-                if (action == null)
-                    viewsC.addAction(new ExportViewAction(e, true));
-                */
                 ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
                 NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
                 if (action == null) {

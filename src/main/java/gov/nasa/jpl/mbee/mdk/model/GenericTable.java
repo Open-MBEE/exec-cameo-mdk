@@ -87,7 +87,7 @@ public class GenericTable extends Table {
                                                DiagramTableTool dtt, boolean forViewEditor) {
         List<List<DocumentElement>> res = new ArrayList<>();
         for (Element e : rowElements) {
-            if (skipIfNoDoc && ModelHelper.getComment(e).trim().equals("")) {
+            if (skipIfNoDoc && ModelHelper.getComment(e).trim().isEmpty()) {
                 continue;
             }
             List<DocumentElement> row = new ArrayList<>();
