@@ -1,4 +1,4 @@
-package gov.nasa.jpl.ocl;
+package gov.nasa.jpl.mbee.mdk.options;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.options.AbstractPropertyOptionsGroup;
