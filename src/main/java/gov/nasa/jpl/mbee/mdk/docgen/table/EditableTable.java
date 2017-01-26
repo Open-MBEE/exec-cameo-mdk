@@ -251,7 +251,7 @@ public class EditableTable extends JDialog {
                 // gl.log("line: " + props.toString());
                 int col = 0;
                 for (int c = 0; c < props.length; c = c + 2) {
-                    if (props[c].equals("")) {
+                    if (props[c].isEmpty()) {
                         col++;
                         continue;
                     }
@@ -279,7 +279,7 @@ public class EditableTable extends JDialog {
                                     if (e instanceof Property && whatToChange == PropertyEnum.VALUE) {
                                         if (UML2ModelUtil.getDefault(((Property) e)) == null
                                                 || !UML2ModelUtil.getDefault(((Property) e)).equals(value)) {
-                                            if (value.equals("")) {
+                                            if (value.isEmpty()) {
                                                 int ok = JOptionPane.showConfirmDialog(null,
                                                         "You're about to set the value of "
                                                                 + ((NamedElement) e).getQualifiedName()
@@ -307,7 +307,7 @@ public class EditableTable extends JDialog {
                                     }
                                     else if (e instanceof NamedElement && whatToChange == PropertyEnum.NAME) {
                                         if (!((NamedElement) e).getName().equals(value)) {
-                                            if (value.equals("")) {
+                                            if (value.isEmpty()) {
                                                 int ok = JOptionPane.showConfirmDialog(null,
                                                         "You're about to set the name of "
                                                                 + ((NamedElement) e).getQualifiedName()

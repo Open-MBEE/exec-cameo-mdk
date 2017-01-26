@@ -55,7 +55,6 @@ public class JMSUtils {
             throws IOException, ServerException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         requestUri.setPath(requestUri.getPath() + "/connection/jms");
-        ObjectNode response = null;
 
         return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
     }

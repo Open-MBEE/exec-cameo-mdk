@@ -797,7 +797,7 @@ public class PropertiesTable {
         List<String> drillProp = new ArrayList<String>();
         for (String key : props) {
             String mapKey = key;
-            if (!prefix.equals("")) {
+            if (!prefix.isEmpty()) {
                 mapKey = prefix + ";" + key;
             }
             if (row.get(mapKey).isEmpty()) {
@@ -811,7 +811,7 @@ public class PropertiesTable {
         List<String> drillUserAlphaSorted = sortUserInput(drillProp);
         for (String s : emptyUserAlphaSorted) {
             String mapKey = s;
-            if (!prefix.equals("")) {
+            if (!prefix.isEmpty()) {
                 mapKey = prefix + ";" + s;
             }
             DefaultMutableTreeNode child = new DefaultMutableTreeNode();
@@ -820,7 +820,7 @@ public class PropertiesTable {
         }
         for (String s : drillUserAlphaSorted) {
             String mapKey = s;
-            if (!prefix.equals("")) {
+            if (!prefix.isEmpty()) {
                 mapKey = prefix + ";" + s;
             }
             DefaultMutableTreeNode child = new DefaultMutableTreeNode();
