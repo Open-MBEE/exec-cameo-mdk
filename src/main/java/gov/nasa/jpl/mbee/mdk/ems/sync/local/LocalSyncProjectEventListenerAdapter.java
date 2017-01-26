@@ -80,10 +80,16 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         }
 
         public void setDisabled(boolean disable) {
+            if (localSyncTransactionCommitListener == null) {
+                return;
+            }
             this.localSyncTransactionCommitListener.setDisabled(disable);
         }
 
         public boolean isDisabled() {
+            if (localSyncTransactionCommitListener == null) {
+                return true;
+            }
             return this.localSyncTransactionCommitListener.isDisabled();
         }
     }

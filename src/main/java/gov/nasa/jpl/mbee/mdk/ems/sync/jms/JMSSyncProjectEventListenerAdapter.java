@@ -271,6 +271,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         }
 
         public void setDisabled(boolean disabled) {
+            if (jmsMessageListener == null) {
+                return;
+            }
             this.jmsMessageListener.setDisabled(disabled);
         }
 

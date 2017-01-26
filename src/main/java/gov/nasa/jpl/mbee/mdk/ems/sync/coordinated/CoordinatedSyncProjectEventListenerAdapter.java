@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -54,10 +53,10 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (tempDisabled) {
             return;
         }*/
-        if ( !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
+        if ( (project.isRemote() && !savedInServer)
+                || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
                 || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
-                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
-                || (project.isRemote() && !savedInServer) ) {
+                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() ) {
             // skip csync
             return;
         }
