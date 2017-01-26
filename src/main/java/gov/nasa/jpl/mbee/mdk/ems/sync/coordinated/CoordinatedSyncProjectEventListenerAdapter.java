@@ -54,24 +54,16 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (tempDisabled) {
             return;
         }*/
-        boolean enabled = MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled();
-        if (!enabled) {
-            return;
-        }
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled()) {
-            return;
-        }
-        if (!StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+        if ( !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
+                || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
+                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
+                || (project.isRemote() && !savedInServer) ) {
+            // skip csync
             return;
         }
         if (!TicketUtils.isTicketSet()) {
             Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
             EMSLoginAction.loginAction(project);
-            return;
-        }
-        if (project.isRemote() && !savedInServer) {
-            Application.getInstance().getGUILog().log("[INFO] Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "project is being saved locally. Coordinated sync skipped.");
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
@@ -138,7 +130,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         private boolean disabled;
 
         public synchronized boolean isDisabled() {
-            return disabled;
+            return (disabled || !MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
         }
 
         public synchronized void setDisabled(boolean disabled) {

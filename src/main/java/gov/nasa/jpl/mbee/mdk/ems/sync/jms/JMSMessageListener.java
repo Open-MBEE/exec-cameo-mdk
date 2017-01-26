@@ -24,6 +24,7 @@ import javax.jms.*;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JMSMessageListener implements MessageListener, ExceptionListener {
     private static final Map<String, Changelog.ChangeType> CHANGE_MAPPING = new LinkedHashMap<>(4);
@@ -35,8 +36,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         CHANGE_MAPPING.put("movedElements", Changelog.ChangeType.UPDATED);
     }
 
-
-    private volatile boolean exceptionHandlerRunning;
+    private final AtomicBoolean disabled = new AtomicBoolean();
+    private final AtomicBoolean exceptionHandlerRunning = new AtomicBoolean();
     private int reconnectionAttempts = 0;
 
     private final Project project;
@@ -48,10 +49,24 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
     }
 
+    public void setDisabled(boolean disabled) {
+        synchronized (this.disabled) {
+            this.disabled.set(disabled);
+        }
+    }
+
+    public boolean isDisabled() {
+        synchronized (this.disabled) {
+            return (disabled.get() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
+        }
+    }
+
     private Message lastMessage;
 
     public boolean isExceptionHandlerRunning() {
-        return exceptionHandlerRunning;
+        synchronized (this.exceptionHandlerRunning) {
+            return exceptionHandlerRunning.get();
+        }
     }
 
     JMSMessageListener(Project project) {
@@ -60,7 +75,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     @Override
     public void onMessage(Message message) {
-        if (!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
+        if (isDisabled()) {
             return;
         }
         lastMessage = message;
@@ -158,11 +173,11 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     @Override
     public void onException(JMSException exception) {
-        if (exceptionHandlerRunning) {
+        if (exceptionHandlerRunning.get()) {
             return;
         }
-        exceptionHandlerRunning = true;
-        MMSAction.setDisabled(exceptionHandlerRunning);
+        exceptionHandlerRunning.set(true);
+        MMSAction.setDisabled(exceptionHandlerRunning.get());
         Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
         JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
         while (shouldAttemptToReconnect()) {
@@ -172,7 +187,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                 Thread.sleep(delay * 1000);
             } catch (InterruptedException ignored) {
             }
-            if (!exceptionHandlerRunning) {
+            if (!exceptionHandlerRunning.get()) {
                 return;
             }
             if (shouldAttemptToReconnect()) {
@@ -189,8 +204,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             EMSLogoutAction.logoutAction();
         }
         reconnectionAttempts = 0;
-        exceptionHandlerRunning = false;
-        MMSAction.setDisabled(exceptionHandlerRunning);
+        exceptionHandlerRunning.set(false);
+        MMSAction.setDisabled(exceptionHandlerRunning.get());
     }
 
     private boolean shouldAttemptToReconnect() {

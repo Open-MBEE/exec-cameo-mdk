@@ -90,12 +90,12 @@ public class TicketUtils {
      * @return TRUE if successfully logged in to MMS, FALSE otherwise.
      *         Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
-    public static boolean loginToMMS() {
+    public static boolean loginToMMS(Project project) {
         if (!username.isEmpty() && !password.isEmpty()) {
-            return acquireTicket(password);
+            return acquireTicket(project, password);
         }
         else if (!Utils.isPopupsDisabled()) {
-            return acquireTicket(getUserCredentialsDialog());
+            return acquireTicket(project, getUserCredentialsDialog());
         }
         else {
             Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
@@ -209,7 +209,7 @@ public class TicketUtils {
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
-    private static boolean acquireTicket(String pass) {
+    private static boolean acquireTicket(Project project, String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
         password = "";
         if (pass == null) {
@@ -220,9 +220,6 @@ public class TicketUtils {
         ticket = "";
 
         // build request
-        // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
-        //         log in to the currently opening project
-        Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return false;
@@ -262,16 +259,13 @@ public class TicketUtils {
      *
      * @return True if ticket is still valid and matches the currently stored username
      */
-    public static boolean isTicketValid() {
+    public static boolean isTicketValid(Project project) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service//mms/login/ticket/${TICKET}
         if (ticket == null || ticket.isEmpty()) {
             return false;
         }
 
         // build request
-        // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
-        // log in to the currently opening project
-        Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return false;
@@ -307,6 +301,7 @@ public class TicketUtils {
         return true;
     }
 
+    // TODO @donbot verify need for this block
     /**
      * Error handling for common server codes.
      *
@@ -314,7 +309,6 @@ public class TicketUtils {
      * @return True if a popup/log has been displayed for the user for the message, false otherwise (which implies that
      * we need to do additional error dumping)
      */
-    // @donbot - consider merging with MMSUtils.DisplayErrors thing
     private static boolean showErrorMessage(int code) {
         if (code == 400 || code == 401 || code == 403) {
             Utils.showPopupMessage("[ERROR] You could not be logged in, and may have entered the wrong credentials. Please again.");

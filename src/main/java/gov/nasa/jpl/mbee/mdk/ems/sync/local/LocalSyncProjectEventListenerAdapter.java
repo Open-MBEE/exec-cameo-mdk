@@ -20,9 +20,10 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectOpened(Project project) {
-        projectClosed(project);
+        closeLocalCommitListener(project);
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener(project);
+        LocalSyncTransactionCommitListener listener =
+                (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new LocalSyncTransactionCommitListener(project));
         if (project.isRemote()) {
             ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
         }
@@ -31,11 +32,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectClosed(Project project) {
-        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
-            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
-        }
-        //projectMappings.remove(project.getPrimaryProject().getProjectID());
+        closeLocalCommitListener(project);
     }
 
     @Override
@@ -47,13 +44,20 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
         LocalSyncProjectMapping localSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
-
-        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
+        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
         if (listener == null) {
             projectOpened(project);
             listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         }
         listener.getInMemoryLocalChangelog().clear();
+    }
+
+    private static void closeLocalCommitListener(Project project) {
+        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
+        if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
+            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
+        }
+        //projectMappings.remove(project.getID());
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
@@ -73,6 +77,14 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
         public void setLocalSyncTransactionCommitListener(LocalSyncTransactionCommitListener localSyncTransactionCommitListener) {
             this.localSyncTransactionCommitListener = localSyncTransactionCommitListener;
+        }
+
+        public void setDisabled(boolean disable) {
+            this.localSyncTransactionCommitListener.setDisabled(disable);
+        }
+
+        public boolean isDisabled() {
+            return this.localSyncTransactionCommitListener.isDisabled();
         }
     }
 }

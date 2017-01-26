@@ -34,10 +34,10 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (shouldEnableJMS(project)) {
             new Thread() {
                 public void run() {
-                    if (TicketUtils.isTicketValid()) {
+                    if (TicketUtils.isTicketValid(project)) {
                         initializeJMS(project);
                     } else {
-                        EMSLoginAction.loginAction(project, true);
+                        EMSLoginAction.loginAction(project);
                         // loginAction contains a call to initializeJMS on a successful ticket get
                     }
                 }
@@ -60,9 +60,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectSaved(Project project, boolean savedInServer) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
 
-        JMSMessageListener JMSMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
-        if (JMSMessageListener != null) {
-            JMSMessageListener.getInMemoryJMSChangelog().clear();
+        JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
+        if (jmsMessageListener != null) {
+            jmsMessageListener.getInMemoryJMSChangelog().clear();
         }
     }
 
@@ -74,8 +74,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
     public void initializeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+        if (!shouldEnableJMS(project)) {
+            jmsSyncProjectMapping.setDisabled(true);
+            return;
+        }
         boolean initialized = initDurable(project);
-        jmsSyncProjectMapping.setDisabled(!shouldEnableJMS(project) || !initialized);
+        jmsSyncProjectMapping.setDisabled(!initialized);
     }
 
     public void closeJMS(Project project) {
@@ -261,13 +265,13 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
         public boolean isDisabled() {
             if (jmsMessageListener == null) {
-                disabled = true;
+                return true;
             }
-            return disabled;
+            return this.jmsMessageListener.isDisabled();
         }
 
         public void setDisabled(boolean disabled) {
-            this.disabled = disabled;
+            this.jmsMessageListener.setDisabled(disabled);
         }
 
         @Deprecated

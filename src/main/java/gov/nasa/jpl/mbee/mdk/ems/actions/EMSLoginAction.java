@@ -62,10 +62,6 @@ public class EMSLoginAction extends MDAction {
     }
 
     public static boolean loginAction(Project project) {
-        return loginAction(project, true);
-    }
-
-    public static boolean loginAction(Project project, boolean initJms) {
         if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
@@ -75,17 +71,22 @@ public class EMSLoginAction extends MDAction {
             return false;
         }
 
-        if (!TicketUtils.loginToMMS()) {
-//            Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
-            return false;
-        }
-        Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
-        if (initJms) {
-            for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
+        if (!TicketUtils.isTicketValid(project)) {
+            if (!TicketUtils.loginToMMS(project)) {
+//                Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
+                return false;
+            }
+            else {
+                Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
             }
         }
+        MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+        MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
+
+//        for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
+//            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
+//            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
+//        }
         return true;
     }
 
