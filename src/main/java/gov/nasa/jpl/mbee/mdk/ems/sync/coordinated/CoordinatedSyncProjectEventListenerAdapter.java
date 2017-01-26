@@ -62,7 +62,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         }
         if (!TicketUtils.isTicketSet()) {
             Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
-            EMSLoginAction.loginAction(project);
+            EMSLoginAction.loginAction();
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);

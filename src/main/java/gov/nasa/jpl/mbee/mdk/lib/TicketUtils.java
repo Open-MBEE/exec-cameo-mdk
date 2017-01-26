@@ -90,12 +90,12 @@ public class TicketUtils {
      * @return TRUE if successfully logged in to MMS, FALSE otherwise.
      *         Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
-    public static boolean loginToMMS(Project project) {
+    public static boolean loginToMMS() {
         if (!username.isEmpty() && !password.isEmpty()) {
-            return acquireTicket(project, password);
+            return acquireTicket(password);
         }
         else if (!Utils.isPopupsDisabled()) {
-            return acquireTicket(project, getUserCredentialsDialog());
+            return acquireTicket(getUserCredentialsDialog());
         }
         else {
             Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
@@ -209,7 +209,7 @@ public class TicketUtils {
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
-    private static boolean acquireTicket(Project project, String pass) {
+    private static boolean acquireTicket(String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
         password = "";
         if (pass == null) {
@@ -220,7 +220,7 @@ public class TicketUtils {
         ticket = "";
 
         // build request
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceUri(Application.getInstance().getProject());
         if (requestUri == null) {
             return false;
         }
@@ -259,14 +259,14 @@ public class TicketUtils {
      *
      * @return True if ticket is still valid and matches the currently stored username
      */
-    public static boolean isTicketValid(Project project) {
+    public static boolean isTicketValid() {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service//mms/login/ticket/${TICKET}
         if (ticket == null || ticket.isEmpty()) {
             return false;
         }
 
         // build request
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceUri(Application.getInstance().getProject());
         if (requestUri == null) {
             return false;
         }
