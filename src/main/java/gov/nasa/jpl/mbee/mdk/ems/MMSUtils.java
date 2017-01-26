@@ -81,10 +81,10 @@ public class MMSUtils {
         if (elementId == null) {
             return null;
         }
-//        URIBuilder requestUri = getServiceWorkspacesSitesElementsUri(project);
+//        URIBuilder requestUri = getServiceRefsSitesElementsUri(project);
 //        elementId = elementId.replace(".", "%2E");
 //        requestUri.setPath(requestUri.getPath() + "/" + elementId);
-        URIBuilder requestUri = getServiceProjectsWorkspacesElementsUri(project);
+        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
         requestUri.setPath(requestUri.getPath() + "/" + elementId);
 
         // do request
@@ -129,7 +129,7 @@ public class MMSUtils {
             idsArrayNode.add(element);
         }
 
-        URIBuilder requestUri = getServiceProjectsWorkspacesElementsUri(project);
+        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
         if (requestUri == null) {
             return null;
         }
@@ -162,7 +162,7 @@ public class MMSUtils {
     public static ObjectNode getServerElementsRecursively(Project project, String elementId, boolean recurse, int depth,
                                                           ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = getServiceProjectsWorkspacesElementsUri(project);
+        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
         requestUri.setPath(requestUri.getPath() + "/" + elementId);
         if (requestUri == null) {
             return null;
@@ -543,7 +543,7 @@ public class MMSUtils {
         }
 
         // configure request
-        //https://cae-ems.jpl.nasa.gov/alfresco/service/workspaces/master/sites
+        //https://cae-ems.jpl.nasa.gov/alfresco/service/refs/master/sites
         URIBuilder requestUri = getServiceProjectsUri(project);
         if (requestUri == null) {
             return false;
@@ -697,31 +697,31 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/workspaces/{$WORKSPACE_ID}"
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs/{$WORKSPACE_ID}"
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceProjectsWorkspacesUri (Project project) {
+    public static URIBuilder getServiceProjectsRefsUri (Project project) {
         URIBuilder workspaceUri = getServiceProjectsUri(project);
         if (workspaceUri == null) {
             return null;
         }
         String workspace = MDUtils.getWorkspace(project);
-        workspaceUri.setPath(workspaceUri.getPath() + "/workspaces/" + workspace);
+        workspaceUri.setPath(workspaceUri.getPath() + "/refs/" + workspace);
         return workspaceUri;
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/workspaces/{$WORKSPACE_ID}/elements/${ELEMENT_ID}"
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs/{$WORKSPACE_ID}/elements/${ELEMENT_ID}"
      * if element is not null
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      *
      */
-    public static URIBuilder getServiceProjectsWorkspacesElementsUri(Project project) {
-        URIBuilder elementUri = getServiceProjectsWorkspacesUri(project);
+    public static URIBuilder getServiceProjectsRefsElementsUri(Project project) {
+        URIBuilder elementUri = getServiceProjectsRefsUri(project);
         if (elementUri == null) {
             return null;
         }

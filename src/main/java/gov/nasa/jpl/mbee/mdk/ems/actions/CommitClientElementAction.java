@@ -117,7 +117,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             elements.addAll(elementsToUpdate);
             request.put("source", "magicdraw");
             request.put("mdkVersion", MDKPlugin.VERSION);
-            URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST, requestUri, request, true, elements.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
@@ -136,7 +136,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             }
             request.put("source", "magicdraw");
             request.put("mdkVersion", MDKPlugin.VERSION);
-            URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
             } catch (IOException | URISyntaxException e) {

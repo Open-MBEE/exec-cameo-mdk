@@ -85,7 +85,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             extension = value.asText();
         }
 
-        URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
 
         if (requestUri == null) {
             return false;

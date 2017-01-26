@@ -370,7 +370,7 @@ public class MDKHelper {
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
         HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE,
-                MMSUtils.getServiceProjectsWorkspacesElementsUri(project), requestBody);
+                MMSUtils.getServiceProjectsRefsElementsUri(project), requestBody);
         return MMSUtils.sendMMSRequest(request);
     }
 
@@ -391,7 +391,7 @@ public class MDKHelper {
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
         HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
-                MMSUtils.getServiceProjectsWorkspacesElementsUri(project), requestBody);
+                MMSUtils.getServiceProjectsRefsElementsUri(project), requestBody);
         return MMSUtils.sendMMSRequest(request);
     }
 

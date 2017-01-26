@@ -120,7 +120,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
 //        String site = MMSUtils.getSiteName(project);
 //        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesUri(project);
 //        uriBuilder.setPath(uriBuilder.getPath() + "/workspaces/" + branchId + "/sites/" + site + "/projects?createSite=true");
-        URIBuilder uriBuilder = MMSUtils.getServiceProjectsWorkspacesUri(project);
+        URIBuilder uriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
 
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
         objectNode.putArray("elements").add(MMSUtils.getProjectObjectNode(project));

@@ -171,7 +171,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     // TODO Make common across all sync types @donbot
     private boolean checkProject() {
         // build request for project element
-        URIBuilder requestUri = MMSUtils.getServiceProjectsWorkspacesElementsUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
         if (requestUri == null) {
             return false;
         }
