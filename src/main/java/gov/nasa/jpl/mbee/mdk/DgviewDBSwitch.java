@@ -56,7 +56,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
     }
 
     private void setVe(ViewElement ve, DocumentElement de) {
-        if (ve.getFromElementId() != null && !ve.getFromElementId().equals("")) {
+        if (ve.getFromElementId() != null && !ve.getFromElementId().isEmpty()) {
             de.setFrom((Element) Application.getInstance().getProject().getElementByID(ve.getFromElementId()));
             if (ve.getFromProperty() != null) {
                 if (ve.getFromProperty() == FromProperty.NAME) {
@@ -79,7 +79,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         DBColSpec res = new DBColSpec();
         res.setColname(object.getColname());
         res.setColnum(object.getColnum());
-        if (object.getColwidth() != null && !object.getColwidth().equals("")) {
+        if (object.getColwidth() != null && !object.getColwidth().isEmpty()) {
             res.setColwidth(object.getColwidth());
         }
         setVe(object, res);
@@ -89,7 +89,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
     @Override
     public DocumentElement caseImage(Image object) {
         DBImage res = new DBImage();
-        if (object.getCaption() != null && !object.getCaption().equals("")) {
+        if (object.getCaption() != null && !object.getCaption().isEmpty()) {
             res.setCaption(object.getCaption());
         }
         res.setDoNotShow(object.isDoNotShow());
@@ -185,10 +185,10 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         if (object.getMorerows() != 0) {
             res.setMorerows(object.getMorerows());
         }
-        if (object.getNameend() != null && !object.getNameend().equals("")) {
+        if (object.getNameend() != null && !object.getNameend().isEmpty()) {
             res.setNameend(object.getNameend());
         }
-        if (object.getNamest() != null && !object.getNamest().equals("")) {
+        if (object.getNamest() != null && !object.getNamest().isEmpty()) {
             res.setNamest(object.getNamest());
         }
         for (ViewElement ve : object.getChildren()) {
@@ -243,7 +243,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
             java.util.List<Object> row = new ArrayList<Object>();
             java.util.List<PropertyEnum> rowe = new ArrayList<PropertyEnum>();
             for (ViewElement ve : tr.getChildren()) {
-                if (ve.getFromElementId() != null && !ve.getFromElementId().equals("")) {
+                if (ve.getFromElementId() != null && !ve.getFromElementId().isEmpty()) {
                     Element element = (Element) Application.getInstance().getProject()
                             .getElementByID(ve.getFromElementId());
                     row.add(element);

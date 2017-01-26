@@ -75,7 +75,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         DBBook book = new DBBook();
         book.setDgElement(doc);
         book.setTitle(doc.getTitle());
-        if (doc.getTitle() == null || doc.getTitle().equals("")) {
+        if (doc.getTitle() == null || doc.getTitle().isEmpty()) {
             book.setTitle("Default Title");
         }
         book.setFrom(doc.getDgElement());
@@ -99,7 +99,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         sec.setView(section.isView());
         sec.isNoSection(section.isNoSection());
         String title = "";
-        if (section.getTitle() != null && !section.getTitle().equals("")) {
+        if (section.getTitle() != null && !section.getTitle().isEmpty()) {
             title = section.getTitle();
         }
         if (section.getTitlePrefix() != null) {

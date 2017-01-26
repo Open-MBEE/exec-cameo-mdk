@@ -107,7 +107,7 @@ public class Image extends Query {
                     res.add(im);
 
                     String doc = ModelHelper.getComment(diagram);
-                    if (doc != null && (forViewEditor || (!doc.trim().equals("") && !getDoNotShow()))) {
+                    if (doc != null && (forViewEditor || (!doc.trim().isEmpty() && !getDoNotShow()))) {
                         if ((Boolean) GeneratorUtils.getObjectProperty(diagram, DocGen3Profile.editableChoosable, "editable", true)) {
                             res.add(new DBParagraph(doc, diagram, From.DOCUMENTATION));
                         }

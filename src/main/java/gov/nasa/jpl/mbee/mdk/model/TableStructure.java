@@ -404,7 +404,7 @@ public class TableStructure extends Table {
             body.add(tableRow);
         }
         table.setBody(body);
-        if (title != null && !title.equals("") && titles.isEmpty()) {
+        if (title != null && !title.isEmpty() && titles.isEmpty()) {
             titles.add(title);
         }
         setTableThings(table);
