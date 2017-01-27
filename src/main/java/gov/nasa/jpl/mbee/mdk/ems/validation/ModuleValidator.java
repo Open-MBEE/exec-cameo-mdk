@@ -49,7 +49,8 @@ public class ModuleValidator {
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(primaryProject);
         String baseUrl = MMSUtils.getServerUrl(project);
         //TODO @DONBOT update this to function without siteName
-        String projectSite = MMSUtils.getSiteName(project);
+//        String projectSite = MMSUtils.getSiteName(project);
+        String projectSite = project.getName();
 
         URIBuilder uriBuilder = MMSUtils.getServiceOrgsUri(project);
         if (uriBuilder == null) {
@@ -98,6 +99,7 @@ public class ModuleValidator {
                 if (projectUriBuilder == null) {
                     continue;
                 }
+                // TODO @donbot update this to use a bulk get if needed
                 projectUriBuilder.setPath(projectUriBuilder.getPath() + "/" + module.getProjectID());
                 ObjectNode responseObjectNode;
                 try {

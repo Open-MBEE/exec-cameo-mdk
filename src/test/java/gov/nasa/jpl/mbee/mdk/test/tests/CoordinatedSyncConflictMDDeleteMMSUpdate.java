@@ -114,7 +114,7 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
         MDKTestHelper.waitXSeconds(5);
 
         //confirm mms element update
-        ObjectNode jo = MDKHelper.getMmsElement(targetElement, Application.getInstance().getProject());
+        ObjectNode jo = MDKHelper.getElement(targetElement, Application.getInstance().getProject());
         JsonNode returnedElements;
         if ((returnedElements = jo.get("elements")) != null && returnedElements.isArray()) {
             JsonNode value = null;

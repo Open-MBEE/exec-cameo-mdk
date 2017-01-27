@@ -317,9 +317,9 @@ public class MDKHelper {
      * @param validateTarget element that the validation is to be performed upon
      */
     public static void manualValidateElement(Element validateTarget) {
-        Collection<Element> sync = new ArrayList<Element>();
+        Collection<Element> sync = new ArrayList<>();
         sync.add(validateTarget);
-        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), true, 0);
+        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), -1);
         ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
         Application.getInstance().getGUILog().log("Validated");
         validationWindow = new MDKValidationWindow(manualSyncRunner.getValidationSuite());
@@ -453,7 +453,7 @@ public class MDKHelper {
      */
     public static boolean isSiteEditable() throws ServerException, IOException, URISyntaxException {
         Project project = Application.getInstance().getProject();
-        return MMSUtils.isSiteEditable(project, MMSUtils.getSiteName(project));
+        return MMSUtils.isSiteEditable(project, project.getName());
     }
 
 }

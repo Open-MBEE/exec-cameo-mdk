@@ -30,7 +30,7 @@ public class TimeQueryUtil {
     // compare elements
 
     public static ObjectNode getHistoryOfElement(Project project, Element elementToQuery, Date compareToTime) {
-        ArrayList<Element> elementsToQuery = new ArrayList<Element>();
+        ArrayList<Element> elementsToQuery = new ArrayList<>();
         elementsToQuery.add(elementToQuery);
 
         result = JacksonUtils.getObjectMapper().createObjectNode();

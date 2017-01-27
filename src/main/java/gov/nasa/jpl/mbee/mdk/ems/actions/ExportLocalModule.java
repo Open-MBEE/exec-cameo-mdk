@@ -57,6 +57,23 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
     public class ModuleExportRunner implements RunnableWithProgress {
         @Override
         public void run(ProgressStatus progressStatus) {
+            URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
+            if (requestUri == null) {
+                return;
+            }
+            String org;
+            try {
+                org = MMSUtils.getProjectOrg(project);
+            } catch (IOException | URISyntaxException | ServerException e) {
+                e.printStackTrace();
+                return;
+            }
+            if (org == null || org.isEmpty()) {
+                return;
+            }
+            requestUri.setPath(requestUri.getPath() + "/orgs/" + org + "/projects");
+
+            Utils.guilog("Initializing module");
             ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             requestData.set("elements", elementsArrayNode);
@@ -64,12 +81,6 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             requestData.put("mdkVersion", MDKPlugin.VERSION);
             ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
-
-            URIBuilder requestUri = MMSUtils.getServiceOrgsProjectsUri(project);
-            if (requestUri == null) {
-                return;
-            }
-            Utils.guilog("Initializing module");
             try {
                 ObjectNode response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
             } catch (IOException | URISyntaxException | ServerException e) {
@@ -79,7 +90,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             }
 
             // should be safe to pass projects here since the expectation is that all it is used for is to build urls
-            ProgressStatusRunner.runWithProgressStatus(new ManualSyncActionRunner<>(CommitClientElementAction.class, mounts, project, true, -1), "Model Initialization", true, 0);
+            ProgressStatusRunner.runWithProgressStatus(new ManualSyncActionRunner<>(CommitClientElementAction.class, mounts, project, -1), "Model Initialization", true, 0);
         }
     }
 }

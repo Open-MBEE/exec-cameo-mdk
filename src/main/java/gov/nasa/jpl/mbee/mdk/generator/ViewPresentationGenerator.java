@@ -209,7 +209,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             ObjectNode viewResponse;
             try {
-                viewResponse = MMSUtils.getElementsById(viewMap.keySet(), project, progressStatus);
+                viewResponse = MMSUtils.getElements(project, viewMap.keySet(), progressStatus);
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
@@ -274,7 +274,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     ObjectNode instanceAndSlotResponse;
                     try {
-                        instanceAndSlotResponse = MMSUtils.getElementsById(elementIDs, project, progressStatus);
+                        instanceAndSlotResponse = MMSUtils.getElements(project, elementIDs, progressStatus);
                     } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");

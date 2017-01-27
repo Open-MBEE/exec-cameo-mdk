@@ -60,7 +60,8 @@ public class MMSViewLinkAction extends MDAction {
             }
             String uriBasePath = uriBase.setPath("").clearParameters().toString()
                     + "/alfresco/mmsapp/mms.html#/workspaces/" + MDUtils.getWorkspace(project)
-                    + "/sites/" + MMSUtils.getSiteName(project);
+//                    + "/sites/" + MMSUtils.getSiteName(project);
+                    + "/projects/" + project.getName();
             Set<Element> documents = new HashSet<>();
 
             // collect document parents from hierarchy

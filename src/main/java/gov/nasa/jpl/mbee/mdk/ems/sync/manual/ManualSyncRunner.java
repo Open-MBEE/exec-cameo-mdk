@@ -37,7 +37,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
     public static final String INITIALIZE_PROJECT_COMMENT = "The project doesn't exist on the web.";
     private final Collection<Element> rootElements;
     private final Project project;
-    private final boolean recurse;
     private int depth;
 
     // TODO Move me to common sync pre-conditions @donbot
@@ -50,10 +49,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     private ElementValidator elementValidator;
 
-    public ManualSyncRunner(Collection<Element> rootElements, Project project, boolean recurse, int depth) {
+    public ManualSyncRunner(Collection<Element> rootElements, Project project, int depth) {
         this.rootElements = rootElements;
         this.project = project;
-        this.recurse = recurse;
         this.depth = depth;
     }
 
@@ -71,7 +69,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             return;
         }
 
-        progressStatus.setDescription("Processing and querying for " + rootElements.size() + " " + (recurse || depth > 0 ? "root " : "") + "element" + (rootElements.size() != 1 ? "s" : ""));
+        progressStatus.setDescription("Processing and querying for " + rootElements.size() + " " + ((depth != 0) ? "root " : "") + "element" + (rootElements.size() != 1 ? "s" : ""));
         progressStatus.setIndeterminate(false);
         progressStatus.setMax(rootElements.size());
         progressStatus.setCurrent(0);
@@ -79,10 +77,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
         List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
         List<ObjectNode> serverElements = new ArrayList<>(rootElements.size());
         for (Element element : rootElements) {
-            collectClientElementsRecursively(project, element, recurse, depth, clientElements);
+            collectClientElementsRecursively(project, element, depth, clientElements);
             Collection<ObjectNode> jsonObjects = null;
             try {
-                jsonObjects = collectServerElementsRecursively(project, element, recurse, depth, progressStatus);
+                jsonObjects = collectServerElementsRecursively(project, element, depth, progressStatus);
             } catch (ServerException | URISyntaxException | IOException e) {
                 //TODO @donbot process errors for recursive server element get if necessary
                 e.printStackTrace();
@@ -101,7 +99,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         elementValidator.run(progressStatus);
     }
 
-    private static void collectClientElementsRecursively(Project project, Element element, boolean recurse, int depth, List<Pair<Element, ObjectNode>> elements) {
+    private static void collectClientElementsRecursively(Project project, Element element, int depth, List<Pair<Element, ObjectNode>> elements) {
         ObjectNode jsonObject = Converters.getElementToJsonConverter().apply(element, project);
         if (jsonObject == null) {
             return;
@@ -110,11 +108,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if (element.equals(project.getPrimaryModel())) {
             List<Package> attachedModels = project.getModels();
             attachedModels.remove(project.getPrimaryModel());
-            attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, false, 0, elements));
+            attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements));
         }
-        if (recurse || depth > 0) {
+        if (depth != 0) {
             for (Element e : element.getOwnedElement()) {
-                collectClientElementsRecursively(project, e, recurse, --depth, elements);
+                collectClientElementsRecursively(project, e, --depth, elements);
             }
         }
     }
@@ -137,14 +135,14 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 Collection<Element> attachedModels = new ArrayList<>(project.getModels());
                 attachedModels.remove(project.getPrimaryModel());
                 Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter())
-                        .filter(id -> id != null).collect(Collectors.toList());
+                        .filter(amId -> amId != null).collect(Collectors.toList());
                 response = MMSUtils.getElements(project, attachedModelIds, null);
                 if (response != null && (value = response.get("elements")) != null && value.isArray()) {
                     serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
                             .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
                 }
 
-                if (depth == -1 || depth > 0) {
+                if (depth != 0) {
                     String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
                     boolean found = false;
                     // check to see if the holding bin was returned
@@ -157,7 +155,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                     // if no holding bin in server collection && model was element && (depth > 0 || depth == -1)
                     if (!found) {
-                        response = MMSUtils.getElementsRecursively(project, holdingBinId, depth, progressStatus);
+                        response = MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
                         if (response != null && (value = response.get("elements")) != null && value.isArray()) {
                             serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
                                     .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));

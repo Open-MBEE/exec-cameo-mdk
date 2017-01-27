@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -43,11 +44,14 @@ import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import org.apache.http.client.utils.URIBuilder;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -86,6 +90,74 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
     @Override
     public void actionPerformed(ActionEvent e) {
+
+        // check for existing org
+        URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
+        if (requestUri == null) {
+            return;
+        }
+
+        /////////////////
+        String org = null;
+        try {
+            org = MMSUtils.getProjectOrg(project);
+        } catch (IOException | URISyntaxException | ServerException e1) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
+            e1.printStackTrace();
+            if (!MDUtils.isDeveloperMode()) {
+                return;
+            }
+        }
+
+        if (org == null || org.isEmpty()) {
+            ObjectNode response = null;
+            try {
+                response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            } catch (IOException | URISyntaxException | ServerException e1) {
+                Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
+                e1.printStackTrace();
+                if (!MDUtils.isDeveloperMode()) {
+                    return;
+                }
+            }
+            ArrayList<String> mmsOrgsList = new ArrayList<>();
+            if (response != null) {
+                JsonNode arrayNode;
+                if ((arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
+                    for (JsonNode orgNode : arrayNode) {
+                        JsonNode value;
+                        if ((value = orgNode.get("name")) != null && value.isTextual()) {
+                            mmsOrgsList.add(value.asText());
+                        }
+                    }
+                }
+            }
+            if (MDUtils.isDeveloperMode()) {
+                mmsOrgsList.add("<Enter Manually>");
+            }
+            String[] mmsOrgs = mmsOrgsList.toArray(new String[mmsOrgsList.size()]);
+
+            if (mmsOrgs.length >= 1) {
+                JFrame selectionDialog = new JFrame();
+                Object selection = JOptionPane.showInputDialog(selectionDialog, "Select a MMS org from the list below...",
+                        "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
+                System.out.println(selection.getClass().toString());
+            }
+//            if (mmsOrgs.length < 2 || org.equals("<Enter Manually>")) {
+//                JFrame selectionDialog = new JFrame();
+//                org = JOptionPane.showInputDialog(selectionDialog, "Input the intended MMS org below...");
+//            }
+        }
+
+        if (org == null || org.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to load project without an org.");
+            return;
+        }
+        requestUri.setPath(requestUri.getPath() + "/orgs/" + org + "/projects");
+
+        ////////////////////
+
+        // build post data
         ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elementsArrayNode = requestData.putArray("elements");
         requestData.put("source", "magicdraw");
@@ -93,10 +165,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
 
-        URIBuilder requestUri = MMSUtils.getServiceOrgsProjectsUri(project);
-        if (requestUri == null) {
-            return;
-        }
+        // do post request
         ObjectNode response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
@@ -108,7 +177,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             return;
         }
         if (shouldCommitModel) {
-            RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1);
+            RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }
     }

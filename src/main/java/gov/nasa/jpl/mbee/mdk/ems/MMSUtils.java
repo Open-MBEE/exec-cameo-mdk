@@ -13,7 +13,6 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
@@ -58,7 +57,6 @@ public class MMSUtils {
     private static final int CHECK_CANCEL_DELAY = 100;
 
     private static String developerUrl = "";
-    private static String developerSite = "";
 
     private static final Pattern CENSORED_PATTERN = Pattern.compile(".*password.*");
 
@@ -68,6 +66,26 @@ public class MMSUtils {
 
     public enum ThreadRequestExceptionType {
         IO_EXCEPTION, SERVER_EXCEPTION
+    }
+
+    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException {
+        Collection<String> elementIds = new ArrayList<>(1);
+        elementIds.add(elementId);
+        ObjectNode response = getElementsRecursively(project, elementIds, 0, progressStatus);
+        JsonNode value;
+        if (((value = response.get("elements")) != null) && value.isArray()
+                && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
+            return (ObjectNode) value;
+        }
+        return response;
+    }
+
+    public static ObjectNode getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException {
+        Collection<String> elementIds = new ArrayList<>(1);
+        elementIds.add(elementId);
+        return getElementsRecursively(project, elementIds, depth, progressStatus);
     }
 
     /**
@@ -416,36 +434,29 @@ public class MMSUtils {
         return urlString.trim();
     }
 
-    @Deprecated
-    public static String getSiteName(Project project) {
-        String siteString = null;
-        if (project == null) {
-            throw new IllegalStateException("Project is null.");
-        }
-        Element primaryModel = project.getModel();
-        if (primaryModel == null) {
-            throw new IllegalStateException("Model is null.");
-        }
+    public static String getProjectOrg(Project project)
+            throws IOException, URISyntaxException, ServerException {
+        URIBuilder uriBuilder = getServiceProjectsUri(project);
+        // create requests json
+        final ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
+        // put elements array inside request json, keep reference
+        ArrayNode idsArrayNode = requests.putArray("elements");
+        ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
+        element.put(MDKConstants.SYSML_ID_KEY, project.getID());
+        idsArrayNode.add(element);
 
-        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
-            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS Site");
-        }
-        else {
-            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
-        }
-        if ((siteString == null || siteString.isEmpty())) {
-            if (!MDUtils.isDeveloperMode()) {
-                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
-            }
-            else {
-                siteString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
-                developerSite = siteString;
+        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder, requests));
+        JsonNode arrayNode;
+        if (((arrayNode = response.get("elements")) != null) && arrayNode.isArray()) {
+            JsonNode value;
+            for (JsonNode projectNode : arrayNode) {
+                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+                        && ((value = projectNode.get("org")) != null ) && value.isTextual() && !value.asText().isEmpty()) {
+                    return value.asText();
+                }
             }
         }
-        if (siteString == null || siteString.isEmpty()) {
-            throw new IllegalStateException("MMS Site is null or empty.");
-        }
-        return siteString.trim();
+        return "";
     }
 
     /**
@@ -463,7 +474,8 @@ public class MMSUtils {
     public static boolean isSiteEditable(Project project, String site)
             throws IOException, URISyntaxException, ServerException {
         if (site == null || site.isEmpty()) {
-            site = getSiteName(project);
+//            site = getSiteName(project);
+            site = project.getName();
         }
 
         // configure request
@@ -536,7 +548,7 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/sites/${SITE_ID}/projects"
+     * Returns a URIBuilder object with a path = "/alfresco/service/orgs"
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
@@ -547,60 +559,6 @@ public class MMSUtils {
             return null;
         }
         siteUri.setPath(siteUri.getPath() + "/orgs");
-        return siteUri;
-    }
-
-    /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/sites/${SITE_ID}/projects"
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     */
-    public static URIBuilder getServiceOrgsProjectsUri(Project project) {
-        URIBuilder requestUri = getServiceOrgsUri(project);
-        ObjectNode response = null;
-        try {
-            response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
-        } catch (IOException | URISyntaxException | ServerException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
-            e.printStackTrace();
-//            return null;
-        }
-        ArrayList<String> mmsOrgsList = new ArrayList<>();
-        //TODO remove or developer-mode this option. update length check if removed
-        mmsOrgsList.add("<Enter Manually>");
-        if (response != null) {
-            JsonNode value;
-            if ((value = response.get("orgs")) != null && value.isArray()) {
-                for (JsonNode orgNode : value) {
-                    JsonNode org;
-                    if ((org = orgNode.get("name")) != null && org.isTextual()) {
-                        mmsOrgsList.add(org.asText());
-                    }
-                }
-            }
-        }
-        String[] mmsOrgs = mmsOrgsList.toArray(new String[mmsOrgsList.size()]);
-
-        URIBuilder siteUri = getServiceUri(project);
-        if (siteUri == null) {
-            return null;
-        }
-        String org = null;
-        //TODO fix length check
-        if (mmsOrgs.length >= 1) {
-            JFrame selectionDialog = new JFrame();
-            org = (String)JOptionPane.showInputDialog(selectionDialog, "Select a MMS org from the list below...",
-                    "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
-        }
-        if (mmsOrgs.length < 2 || org.equals("<Enter Manually>")) {
-            JFrame selectionDialog = new JFrame();
-            org = JOptionPane.showInputDialog(selectionDialog, "Input the intended MMS org below...");
-        }
-        if (org == null || org.isEmpty()) {
-            return null;
-        }
-        siteUri.setPath(siteUri.getPath() + "/orgs/" + org + "/projects");
         return siteUri;
     }
 
