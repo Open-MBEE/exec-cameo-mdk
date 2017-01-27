@@ -178,7 +178,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         exceptionHandlerRunning.set(true);
         MMSAction.setDisabled(exceptionHandlerRunning.get());
         Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
-        JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
+        JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().setDisabled(true);
         while (shouldAttemptToReconnect()) {
             int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
             Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reconnect to MMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
@@ -194,7 +194,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
             }
         }
-        if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
+        if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
             reconnectionAttempts = 0;
             Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Successfully reconnected to MMS after dropped connection.");
         }
@@ -210,6 +210,6 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     private boolean shouldAttemptToReconnect() {
         return !project.isProjectClosed() && TicketUtils.isTicketSet()
                 && JMSSyncProjectEventListenerAdapter.shouldEnableJMS(project)
-                && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled();
+                && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled();
     }
 }

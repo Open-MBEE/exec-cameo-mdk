@@ -56,7 +56,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if ( (project.isRemote() && !savedInServer)
                 || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
                 || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
-                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() ) {
+                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled() ) {
             // skip csync
             return;
         }

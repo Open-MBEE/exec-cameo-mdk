@@ -22,12 +22,10 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public void projectOpened(Project project) {
         closeLocalCommitListener(project);
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        LocalSyncTransactionCommitListener listener =
-                (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new LocalSyncTransactionCommitListener(project));
+        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
         if (project.isRemote()) {
             ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
         }
-        localSyncProjectMapping.setLocalSyncTransactionCommitListener(listener);
     }
 
     @Override
@@ -63,7 +61,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
         LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
         if (localSyncProjectMapping == null) {
-            projectMappings.put(project.getPrimaryProject().getProjectID(), localSyncProjectMapping = new LocalSyncProjectMapping());
+            projectMappings.put(project.getPrimaryProject().getProjectID(), localSyncProjectMapping = new LocalSyncProjectMapping(project));
         }
         return localSyncProjectMapping;
     }
@@ -71,26 +69,13 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public static class LocalSyncProjectMapping {
         private LocalSyncTransactionCommitListener localSyncTransactionCommitListener;
 
+        public LocalSyncProjectMapping (Project project) {
+            localSyncTransactionCommitListener = new LocalSyncTransactionCommitListener(project);
+        }
+
         public LocalSyncTransactionCommitListener getLocalSyncTransactionCommitListener() {
             return localSyncTransactionCommitListener;
         }
 
-        public void setLocalSyncTransactionCommitListener(LocalSyncTransactionCommitListener localSyncTransactionCommitListener) {
-            this.localSyncTransactionCommitListener = localSyncTransactionCommitListener;
-        }
-
-        public void setDisabled(boolean disable) {
-            if (localSyncTransactionCommitListener == null) {
-                return;
-            }
-            this.localSyncTransactionCommitListener.setDisabled(disable);
-        }
-
-        public boolean isDisabled() {
-            if (localSyncTransactionCommitListener == null) {
-                return true;
-            }
-            return this.localSyncTransactionCommitListener.isDisabled();
-        }
     }
 }
