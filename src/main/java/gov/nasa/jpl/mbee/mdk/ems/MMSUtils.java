@@ -314,6 +314,7 @@ public class MMSUtils {
                     Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 } else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
                     // TODO @donbot block this check when we've migrated to bulk calls only
+                    Application.getInstance().getGUILog().log("[WARNING] Targetted 404 processed.");
                     // do nothing
                     furtherProcessing = false;
                 } else if (responseCode == 404) {

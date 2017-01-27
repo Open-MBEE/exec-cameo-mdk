@@ -132,25 +132,23 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                     }
                 }
             }
-            if (MDUtils.isDeveloperMode()) {
-                mmsOrgsList.add("<Enter Manually>");
-            }
             String[] mmsOrgs = mmsOrgsList.toArray(new String[mmsOrgsList.size()]);
-
-            if (mmsOrgs.length >= 1) {
+            if (mmsOrgs.length > 0) {
                 JFrame selectionDialog = new JFrame();
-                Object selection = JOptionPane.showInputDialog(selectionDialog, "Select a MMS org from the list below...",
+                org = (String) JOptionPane.showInputDialog(selectionDialog, "Select a MMS org from the list below",
                         "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
-                System.out.println(selection.getClass().toString());
             }
-//            if (mmsOrgs.length < 2 || org.equals("<Enter Manually>")) {
-//                JFrame selectionDialog = new JFrame();
-//                org = JOptionPane.showInputDialog(selectionDialog, "Input the intended MMS org below...");
-//            }
+            else {
+                Application.getInstance().getGUILog().log("[ERROR] No orgs were returned from MMS.");
+            }
+            if (org == null && MDUtils.isDeveloperMode()) {
+                JFrame selectionDialog = new JFrame();
+                org = JOptionPane.showInputDialog(selectionDialog, "[DEVELOPER] Input MMS org below");
+            }
         }
 
         if (org == null || org.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to load project without an org.");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org.");
             return;
         }
         requestUri.setPath(requestUri.getPath() + "/orgs/" + org + "/projects");
