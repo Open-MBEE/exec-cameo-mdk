@@ -258,17 +258,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     if (attachedProject == null) {
                         return null;
                     }
-                    if (!ProjectUtilities.isRemote(attachedProject)) {
+                    if (!ProjectUtilities.isRemote(attachedProject) || attachedProject.getLocationURI().isFile()) {
                         return null;
                     }
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, attachedProject.getPrimaryProject().getProjectID());
-                    try {
-                        objectNode.put(MDKConstants.REF_ID, EsiUtilsInternal.getCurrentBranch(attachedProject).getName());
-                    } catch (IllegalArgumentException ignored) {
-                        // exception occurs on profiles on TWC projects
-                        return null;
-                    }
+                    objectNode.put(MDKConstants.REF_ID, EsiUtilsInternal.getCurrentBranch(attachedProject).getName());
                     objectNode.put("teamworkCloudVersion", ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
                     //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
                     return objectNode;
