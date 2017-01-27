@@ -369,7 +369,7 @@ public class MDKHelper {
             elements.add(curElement);
         }
         requestBody.put("source", "magicdraw");
-        requestBody.put("mmsVersion", MDKPlugin.VERSION);
+        requestBody.put("mdkVersion", MDKPlugin.VERSION);
         HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE,
                 MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
         return MMSUtils.sendMMSRequest(request);
@@ -389,7 +389,7 @@ public class MDKHelper {
             elements.add(postTarget);
         }
         requestBody.put("source", "magicdraw");
-        requestBody.put("mmsVersion", MDKPlugin.VERSION);
+        requestBody.put("mdkVersion", MDKPlugin.VERSION);
         HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
                 MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
         return MMSUtils.sendMMSRequest(request);
@@ -401,7 +401,7 @@ public class MDKHelper {
      * @param elementsToPost Collection of elements you want to directly post on the MMS
      * @throws IllegalStateException
      */
-    public static ObjectNode postMmsElement(Collection<Element> elementsToPost, Project project)
+    public static ObjectNode postMmsElements(Collection<Element> elementsToPost, Project project)
             throws IOException, URISyntaxException, ServerException {
         ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elements = requestBody.putArray("elements");
@@ -409,7 +409,7 @@ public class MDKHelper {
             elements.add(Converters.getElementToJsonConverter().apply(postTarget, project));
         }
         requestBody.put("source", "magicdraw");
-        requestBody.put("mmsVersion", MDKPlugin.VERSION);
+        requestBody.put("mdkVersion", MDKPlugin.VERSION);
         HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
                 MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
         return MMSUtils.sendMMSRequest(request);

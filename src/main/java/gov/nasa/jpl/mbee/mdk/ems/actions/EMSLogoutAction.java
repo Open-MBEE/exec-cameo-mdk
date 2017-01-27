@@ -56,12 +56,13 @@ public class EMSLogoutAction extends MMSAction {
         logoutAction();
     }
 
-    public void logoutAction() {
+    public static void logoutAction() {
         TicketUtils.clearUsernameAndPassword();
+        Application.getInstance().getGUILog().log("[INFO] MMS logout complete.");
         for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectClosed(p);
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
+            Application.getInstance().getGUILog().log("[WARNING] " + p.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
         }
-        Application.getInstance().getGUILog().log("Logged out");
         SyncStatusConfigurator.getSyncStatusAction().update();
         ActionsStateUpdater.updateActionsState();
     }

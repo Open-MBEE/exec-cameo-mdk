@@ -1,11 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -13,6 +11,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
@@ -21,6 +20,7 @@ import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -303,7 +303,7 @@ public class MMSUtils {
     public static ObjectNode sendMMSRequest(HttpRequestBase request, boolean bypassTicketCheck)
             throws IOException, ServerException {
         // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
-        if (!bypassTicketCheck && !TicketUtils.checkAcquiredTicket()) {
+        if (!bypassTicketCheck && !TicketUtils.isTicketValid()) {
             // if new login credentials fail, logout and terminal jms sync;
             // 403 exception should already be thrown by failed credentials acquisition attempt
             if (!TicketUtils.loginToMMS()) {
@@ -328,17 +328,70 @@ public class MMSUtils {
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
                 CloseableHttpResponse response = httpclient.execute(request);
                 InputStream inputStream = response.getEntity().getContent()) {
+            // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
             String responseBody = inputStream != null ? IOUtils.toString(inputStream) : null;
-            //TODO error processing
-            System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " - Body:" : ""));
+            String responseType = response.getEntity().getContentType().getValue();
+            responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+
+            // debug / logging output from response
+            System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
             if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                System.out.println(responseBody);
+                System.out.println(" - Body:"  + responseBody);
+                Utils.guilog("Server response: " + responseBody);
             }
-            if (processRequestErrors(responseBody, responseCode)) {
+
+            // NOTE: not disabling popup messages locally. it's handled by Utils, which will redirect them to the GUILog if disabled
+            JsonNode value;
+            // display single response message
+            if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                Utils.guilog("[SERVER MESSAGE] " + value.asText());
+            }
+            // display multiple response messages
+            if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
+                ArrayNode msgs = (ArrayNode)value;
+                for (JsonNode msg : msgs) {
+                    if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                        Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                    }
+                }
+            }
+
+            // try to handle response codes at this level, throw them if it makes sense.
+            // note that furtherProcessing == true means we will throw a ServerException and NOT return any JSON
+            boolean furtherProcessing = false;
+            if (responseCode < 200 || responseCode >= 300) {
+                // check for single target 404s that still returned properly, and check before warning popup
+//                if (responseCode == 404 && responseType.equals("application/json")) {
+//                    // do nothing
+//                }
+//                else {
+                // big flashing red letters that the action failed, or as close as we're going to get
+                Utils.showPopupMessage("Action failed. See notification window for details.");
+                if (responseCode >= 500) {
+                    Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
+                    furtherProcessing = true;
+                } else if (responseCode == 404) {
+                    // because we're using bulk get targets for operations, this should only happen on an invalid endpoint
+                    Application.getInstance().getGUILog().log("[ERROR] Target URL for operation was invalid. Server code: " + responseCode);
+                    furtherProcessing = true;
+                } else if (responseCode == 403) {
+                    Utils.guilog("[ERROR] You do not have sufficient permissions to one or more elements in the project to complete this operation. Server code: " + responseCode);
+                } else if (responseCode == 401) {
+                    Utils.guilog("[ERROR] Authentication is required to utilize MMS functions. Please log in before trying again. Server code: " + responseCode);
+                    TicketUtils.clearUsernameAndPassword();
+                } else if (responseCode == 400) {
+                    // missing username code. display of server message covers informing the user
+                    TicketUtils.clearUsernameAndPassword();
+                } else {
+                    Utils.guilog("[ERROR] Unexpected server response. Server code: " + responseCode);
+                    furtherProcessing = true;
+                }
+//                }
+            }
+            if (furtherProcessing) {
                 throw new ServerException(responseBody, responseCode);
             }
-            responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
         }
         return responseJson;
     }
@@ -360,10 +413,10 @@ public class MMSUtils {
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus, boolean bypassTicketCheck)
+    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus, final boolean bypassTicketCheck)
             throws IOException, ServerException {
         // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
-        if (!bypassTicketCheck && !TicketUtils.checkAcquiredTicket()) {
+        if (!bypassTicketCheck && !TicketUtils.isTicketValid()) {
             // if new login credentials fail, logout and terminal jms sync;
             // 403 exception should already be thrown by failed credentials acquisition attempt
             if (!TicketUtils.loginToMMS()) {
@@ -374,11 +427,10 @@ public class MMSUtils {
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
         final AtomicReference<String> emsg = new AtomicReference<>();
-        final AtomicReference<String> einput = new AtomicReference<>();
         Thread t = new Thread(() -> {
             ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
             try {
-                response = sendMMSRequest(request);
+                response = sendMMSRequest(request, bypassTicketCheck);
                 etype.set(null);
                 ecode.set(200);
                 emsg.set("");
@@ -418,6 +470,73 @@ public class MMSUtils {
     }
 
     /**
+     * @param project
+     * @return
+     * @throws IllegalStateException
+     */
+    public static String getServerUrl(Project project) throws IllegalStateException {
+        String urlString = null;
+        if (project == null) {
+            throw new IllegalStateException("Project is null.");
+        }
+        Element primaryModel = project.getPrimaryModel();
+        if (primaryModel == null) {
+            throw new IllegalStateException("Model is null.");
+        }
+
+        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
+            urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
+        }
+        else {
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
+        }
+        if ((urlString == null || urlString.isEmpty())) {
+            if (!MDUtils.isDeveloperMode()) {
+                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+            }
+            else {
+                urlString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the server URL:", developerUrl);
+                developerUrl = urlString;
+            }
+        }
+        if (urlString == null || urlString.isEmpty()) {
+            throw new IllegalStateException("MMS URL is null or empty.");
+        }
+        return urlString.trim();
+    }
+
+    public static String getSiteName(Project project) {
+        String siteString = null;
+        if (project == null) {
+            throw new IllegalStateException("Project is null.");
+        }
+        Element primaryModel = project.getModel();
+        if (primaryModel == null) {
+            throw new IllegalStateException("Model is null.");
+        }
+
+        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
+            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS Site");
+        }
+        else {
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
+        }
+        if ((siteString == null || siteString.isEmpty())) {
+            if (!MDUtils.isDeveloperMode()) {
+                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
+            }
+            else {
+                siteString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
+                developerSite = siteString;
+            }
+        }
+        if (siteString == null || siteString.isEmpty()) {
+            throw new IllegalStateException("MMS Site is null or empty.");
+        }
+        return siteString.trim();
+    }
+
+    /**
      * Method to check if the currently logged in user has permissions to edit the specified site on
      * the specified server.
      *
@@ -429,7 +548,7 @@ public class MMSUtils {
      */
     public static boolean isSiteEditable(Project project, String site)
             throws IOException, URISyntaxException, ServerException {
-        if (site == null || site.equals("")) {
+        if (site == null || site.isEmpty()) {
             site = getSiteName(project);
         }
 
@@ -442,7 +561,7 @@ public class MMSUtils {
         requestUri.setPath(requestUri.getPath() + "/sites");
 
         // do request
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+        ObjectNode response;
         try {
             response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
         } catch (IOException | URISyntaxException | ServerException e) {
@@ -463,63 +582,6 @@ public class MMSUtils {
                 }
             }
         }
-        return false;
-    }
-
-    /**
-     * @param response string response from server
-     * @param code integer code from server
-     * @return true if further error processing is needed by calling function
-     */
-    private static boolean processRequestErrors(String response, int code) {
-        // not disabling popup messages locally. it's handled by Utils, which will redirect them to the GUILog if disabled
-
-        // try to parse the response and display a message, if one was included
-        try {
-            ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
-            JsonNode value;
-            if (responseJson != null) {
-                if ((value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                    Utils.guilog("[SERVER MESSAGE] " + value.asText());
-                }
-            }
-        // if response parsing failed, warn user that something weird happened and discontinue processing
-        } catch (IOException e) {
-            Utils.showPopupMessage("Unable to process server response. Your action may have failed.");
-            Utils.guilog("[ERROR] Unexpected error processing MMS response.");
-            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                Utils.guilog("Server response: " + code + " " + response);
-            }
-            e.printStackTrace();
-            return true;
-        }
-
-        // deal with various return codes
-        if (code == 200) {
-            return false;
-        }
-        Utils.showPopupMessage("Action failed. See message window for details.");
-        if (code != 404 && code != 403 && code != 401) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected server response. (Code: " + code + ")");
-            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                Application.getInstance().getGUILog().log(response);
-            }
-            Utils.showPopupMessage("Action failed. See message window for details.");
-            return true;
-        }
-        else if (code == 404) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to complete action. Some necessary elements or " +
-                    "views were not found on the MMS. You will need to sync them and then reattempt this action.");
-        }
-        else if (code == 403) {
-            Application.getInstance().getGUILog().log("[ERROR] Inappropriate credentials. You do not have permission to " +
-                    "perform this action on some target elements, or you are not logged in.");
-        }
-        else if (code == 401) {
-            Application.getInstance().getGUILog().log("[ERROR] No credentials were supplied with this request. Please " +
-                    "login and try again.");
-        }
-        Utils.showPopupMessage("Action failed. See message window for details.");
         return false;
     }
 
@@ -639,89 +701,6 @@ public class MMSUtils {
         return elementsUri;
     }
 
-    /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/workspaces/{$WORKSPACE}/sites/{$SITE}/projects/{$PROJECTID}/elements".
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     */
-    @Deprecated
-    public static URIBuilder getServiceWorkspacesSitesProjectsElementsUri(Project project) {
-        URIBuilder elementsUri = getSerivceWorkspacesSitesProjectsUri(project);
-        if (elementsUri == null) {
-            return null;
-        }
-        elementsUri.setPath(elementsUri.getPath() + "/elements");
-        return elementsUri;
-    }
-
-    /**
-     * @param project
-     * @return
-     * @throws IllegalStateException
-     */
-    public static String getServerUrl(Project project) throws IllegalStateException {
-        String urlString = null;
-        if (project == null) {
-            throw new IllegalStateException("Project is null.");
-        }
-        Element primaryModel = project.getPrimaryModel();
-        if (primaryModel == null) {
-            throw new IllegalStateException("Model is null.");
-        }
-
-        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
-            urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
-        }
-        else {
-            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
-        }
-        if ((urlString == null || urlString.equals(""))) {
-            if (!MDUtils.isDeveloperMode()) {
-                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
-            }
-            else {
-                urlString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the server URL:", developerUrl);
-                developerUrl = urlString;
-            }
-        }
-        if (urlString == null || urlString.equals("")) {
-            throw new IllegalStateException("MMS URL is null or empty.");
-        }
-        return urlString.trim();
-    }
-
-    public static String getSiteName(Project project) {
-        String siteString = null;
-        if (project == null) {
-            throw new IllegalStateException("Project is null.");
-        }
-        Element primaryModel = project.getModel();
-        if (primaryModel == null) {
-            throw new IllegalStateException("Model is null.");
-        }
-
-        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
-            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS Site");
-        }
-        else {
-            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
-        }
-        if ((siteString == null || siteString.equals(""))) {
-            if (!MDUtils.isDeveloperMode()) {
-                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS Site stereotype property set!");
-            }
-            else {
-                siteString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the site:", developerSite);
-                developerSite = siteString;
-            }
-        }
-        if (siteString == null || siteString.equals("")) {
-            throw new IllegalStateException("MMS Site is null or empty.");
-        }
-        return siteString.trim();
-    }
-
     public static String getDefaultSiteName(IProject iProject) {
         String name = iProject.getName().trim().replaceAll("\\W+", "-");
         if (name.endsWith("-")) {
@@ -731,21 +710,25 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject());
+        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString());
     }
 
     public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(project.getProjectID(), project.getName());
+        return getProjectObjectNode(project.getName(), project.getProjectID(), null);
     }
 
-    private static ObjectNode getProjectObjectNode(String id, String name) {
+    private static ObjectNode getProjectObjectNode(String name, String projId, String descId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
-        if (name != null) {
+        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projId);
+        if (name != null && !name.isEmpty()) {
             projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
+        if (descId != null && !descId.isEmpty()) {
+            projectObjectNode.put(MDKConstants.DESCRIPTOR_ID, descId);
+        }
         return projectObjectNode;
     }
+
 }
 

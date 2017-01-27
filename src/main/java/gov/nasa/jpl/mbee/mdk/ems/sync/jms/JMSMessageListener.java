@@ -10,6 +10,8 @@ import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -34,7 +36,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     }
 
 
-    private volatile boolean isExceptionHandlerRunning;
+    private volatile boolean exceptionHandlerRunning;
     private int reconnectionAttempts = 0;
 
     private final Project project;
@@ -47,6 +49,10 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     }
 
     private Message lastMessage;
+
+    public boolean isExceptionHandlerRunning() {
+        return exceptionHandlerRunning;
+    }
 
     JMSMessageListener(Project project) {
         this.project = project;
@@ -69,7 +75,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            System.out.println("JMS TextMessage for " + project.getPrimaryProject().getProjectID() + " -" + System.lineSeparator() + text);
+            System.out.println("MMS TextMessage for " + project.getPrimaryProject().getProjectID() + " -" + System.lineSeparator() + text);
         }
         JsonNode messageJsonNode;
         try {
@@ -136,7 +142,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
             int size = syncedChangelog.flattenedSize();
             if (MDUtils.isDeveloperMode()) {
-                Application.getInstance().getGUILog().log("[INFO] Cleared " + size + " MMS element change" + (size != 1 ? "s" : "") + " as a result of another client syncing the model.");
+                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Cleared " + size + " MMS element change" + (size != 1 ? "s" : "") + " as a result of another client syncing the model.");
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
         }
@@ -152,34 +158,44 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     @Override
     public void onException(JMSException exception) {
-        if (isExceptionHandlerRunning) {
+        if (exceptionHandlerRunning) {
             return;
         }
-        isExceptionHandlerRunning = true;
-        Application.getInstance().getGUILog().log("[WARNING] Lost connection with MMS. Please check your network configuration.");
+        exceptionHandlerRunning = true;
+        MMSAction.setDisabled(exceptionHandlerRunning);
+        Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
         JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
         while (shouldAttemptToReconnect()) {
             int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
-            Application.getInstance().getGUILog().log("[INFO] Attempting to reconnect to MMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
+            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reconnect to MMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
             try {
                 Thread.sleep(delay * 1000);
             } catch (InterruptedException ignored) {
             }
+            if (!exceptionHandlerRunning) {
+                return;
+            }
             if (shouldAttemptToReconnect()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(project);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
             }
         }
         if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
             reconnectionAttempts = 0;
-            Application.getInstance().getGUILog().log("[INFO] Successfully reconnected to MMS after dropped connection.");
+            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Successfully reconnected to MMS after dropped connection.");
         }
         else {
-            Application.getInstance().getGUILog().log("[WARNING] Failed to reconnect to MMS after dropped connection. Please close and re-open the project to re-initiate.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Failed to reconnect to MMS after dropped connection. Please manually login to MMS, or close and re-open the project, to re-initiate.");
+            EMSLogoutAction.logoutAction();
         }
-        isExceptionHandlerRunning = false;
+        reconnectionAttempts = 0;
+        exceptionHandlerRunning = false;
+        MMSAction.setDisabled(exceptionHandlerRunning);
     }
 
     private boolean shouldAttemptToReconnect() {
-        return JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled() && StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem") && !project.isProjectClosed() && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled();
+        return !project.isProjectClosed() && TicketUtils.isTicketSet()
+                && JMSSyncProjectEventListenerAdapter.shouldEnableJMS(project)
+                && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled();
     }
 }

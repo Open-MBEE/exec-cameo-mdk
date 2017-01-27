@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.uml.transaction.RepositoryModelValidator;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.transaction.ModelValidationResult;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.annotations.SessionManaged;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -16,6 +18,9 @@ import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import org.eclipse.emf.common.util.TreeIterator;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -36,10 +41,10 @@ public class EMFBulkImporter implements BulkImportFunction {
 
     private final BiFunction<String, Project, Element> bulkIdToElementConverter = (id, project) -> {
         Element element = Converters.getIdToElementConverter().apply(id, project);
-        //System.out.println("[NO CACHE] " + id + " -> " + element);
+        System.out.println("[NO CACHE] " + id + " -> " + element);
         if (element == null && elementCache != null) {
             element = elementCache.get(id);
-            //System.out.println("[CACHE] " + id + " -> " + element);
+            System.out.println("[CACHE] " + id + " -> " + element);
         }
         return element;
     };
@@ -54,6 +59,7 @@ public class EMFBulkImporter implements BulkImportFunction {
         String initialProgressStatusDescription = null;
         long initialProgressStatusCurrent = 0;
         boolean initialProgressStatusIndeterminate = false;
+        RepositoryModelValidator validator = new RepositoryModelValidator(project);
 
         if (progressStatus != null) {
             initialProgressStatusDescription = progressStatus.getDescription();
@@ -63,6 +69,8 @@ public class EMFBulkImporter implements BulkImportFunction {
             progressStatus.setMax(objectNodes.size() * 3);
             progressStatus.setCurrent(0);
         }
+
+        project.getModels().forEach(EMFBulkImporter::preloadRecursively);
 
         try {
             objectNodes = new ArrayList<>(objectNodes);
@@ -228,11 +236,23 @@ public class EMFBulkImporter implements BulkImportFunction {
                         Element element = entry.getValue().getFirst();
                         ObjectNode objectNode = entry.getValue().getSecond();
 
+                        Collection<ModelValidationResult> results = validator.validateChanges(Collections.singleton(element));
+
+                        if (results != null && !results.isEmpty()) {
+                            ModelValidationResult result = results.iterator().next();
+                            if (MDUtils.isDeveloperMode()) {
+                                System.err.println("[FAILED 3] " + result.toString());
+                            }
+                            failedElementMap.put(new Pair<>(element, objectNode), new ImportException(element, objectNode, "Element failed validation after importing. Reason: " + result.getReason()));
+                            objectNodes.remove(objectNode);
+                            continue bulkImport;
+                        }
+
                         if (element.isInvalid()) {
                             if (MDUtils.isDeveloperMode()) {
                                 JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
                                 String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
-                                System.err.println("[FAILED 3] Could not create " + sysmlId);
+                                System.err.println("[FAILED 4] Could not create " + sysmlId);
                             }
                             failedElementMap.put(new Pair<>(element, objectNode), new ImportException(element, objectNode, "Element was found to be invalid after importing."));
                             objectNodes.remove(objectNode);
@@ -249,6 +269,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                         }
                     }
                 }
+
                 if (SessionManager.getInstance().isSessionCreated()) {
                     SessionManager.getInstance().closeSession();
                 }
@@ -265,6 +286,12 @@ public class EMFBulkImporter implements BulkImportFunction {
             }
         }
         return changelog;
+    }
+
+    private static void preloadRecursively(EObject eObject) {
+        for (final TreeIterator<Object> allProperContents = EcoreUtil.getAllProperContents(eObject, true); allProperContents.hasNext(); allProperContents.next()) {
+            // just iterate to load contents
+        }
     }
 
     public String getSessionName() {

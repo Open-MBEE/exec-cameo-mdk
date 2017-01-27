@@ -232,7 +232,7 @@ public class ElementFinder {
         Element current;
         for (int i = 0; i < elements.size(); i++) {
             current = elements.get(i);
-            if (current.getHumanName().equals(type + (name.equals("") ? "" : " " + name))) {
+            if (current.getHumanName().equals(type + (name.isEmpty() ? "" : " " + name))) {
                 return current;
             }
             if (current.hasOwnedElement()) {

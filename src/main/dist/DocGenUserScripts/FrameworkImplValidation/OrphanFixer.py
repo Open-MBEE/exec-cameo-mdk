@@ -24,7 +24,7 @@ from javax.swing import JOptionPane
 import MDUtils._MDUtils as MDUtils
 reload(MDUtils)
 
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 import sys
 import traceback
 import os

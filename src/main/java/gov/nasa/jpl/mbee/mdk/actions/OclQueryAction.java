@@ -138,7 +138,7 @@ public class OclQueryAction extends MDAction {
             final String oclString = input != null ? input.toString() : null;
             Object result = null;
             OclEvaluator evaluator = null;
-            OCLSyntaxHelper syntaxHelper = null;
+          //  OCLSyntaxHelper syntaxHelper = null;
             try {
                 //result = OclEvaluator.evaluateQuery(contextEObject, oclString, true);
                 result = OclEvaluator.evaluateQuery(input, oclString, true);
@@ -300,7 +300,6 @@ public class OclQueryAction extends MDAction {
                     output = output
                             + "\nOclInvalid\nThis may be the result of a problem with a shortcut/blackbox function.";
                 }
-                String type = null;
 
                 output = output + " : " + getTypeName(result);
                 Debug.outln("evaluated \"" + oclString + "\" for element " + toString(elem) + "\n"

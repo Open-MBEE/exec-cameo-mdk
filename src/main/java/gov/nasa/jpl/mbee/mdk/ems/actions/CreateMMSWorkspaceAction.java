@@ -7,7 +7,6 @@ import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
@@ -15,6 +14,7 @@ import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 import org.joda.time.DateTime;
@@ -22,7 +22,6 @@ import org.joda.time.DateTime;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -74,7 +73,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         uriBuilder.setPath(uriBuilder.getPath() + "/workspaces");
 
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode()
-                .put("source", "magicdraw").put("mmsVersion", MDKPlugin.VERSION)
+                .put("source", "magicdraw").put("mdkVersion", MDKPlugin.VERSION)
                 .putArray("workspaces").addObject()
                 .put("name", branches[branches.length - 1]).put("parent", parentId).put("branched", new DateTime().toString())
                 .put("description", "Created from MagicDraw.");
@@ -102,12 +101,8 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         wsMapping.put(name, id);
         wsIdMapping.put(id, name);
         ProjectDescriptor newBranch = branchDescriptors.get(name);
-        int version;
-        try {
-            version = TeamworkUtils.getLastVersion(newBranch);
-        } catch (RemoteException e1) {
-            version = -1;
-        }
+        // TODO Test this version stuff @donbot
+        int version = MDUtils.getLatestEsiVersion(newBranch);
         try {
             CreateMMSWorkspaceAction.initializeWorkspace(project, id);
         } catch (IOException | URISyntaxException | ServerException e1) {
@@ -127,7 +122,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
 
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
         objectNode.putArray("elements").add(MMSUtils.getProjectObjectNode(project));
-        objectNode.put("source", "magicdraw").put("mmsVersion", MDKPlugin.VERSION);
+        objectNode.put("source", "magicdraw").put("mdkVersion", MDKPlugin.VERSION);
         return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
     }
 }

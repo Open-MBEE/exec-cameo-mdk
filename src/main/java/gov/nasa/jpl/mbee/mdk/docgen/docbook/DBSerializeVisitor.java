@@ -74,11 +74,11 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
     @Override
     public void visit(DBBook book) {
         DocumentMeta meta = book.getMetadata();
-        out.append("<book xmlns=\"http://docbook.org/ns/docbook\" xmlns:xl=\"http://www.w3.org/1999/xlink\" version=\"5.0\">\n");
+        out.append("<book xmlns=\"http://docbook.org/ns/docbook\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"5.0\">\n");
         String title = null;
         out.append("<info>");
         if (book.getUseDefaultStylesheet() == true) {
-            if (book.getSubtitle() == null || book.getSubtitle().equals("")) {
+            if (book.getSubtitle() == null || book.getSubtitle().isEmpty()) {
                 title = DocGenUtils.fixString(book.getTitle());
             }
             else {
@@ -89,15 +89,15 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         }
         else {
 
-            if (meta.getDocumentId() != null && !meta.getDocumentId().equals("")) {
+            if (meta.getDocumentId() != null && !meta.getDocumentId().isEmpty()) {
                 out.append("\n<productnumber>" + meta.getDocumentId() + "</productnumber>");
             }
-            if (meta.getVersion() != null && !meta.getVersion().equals("")) {
+            if (meta.getVersion() != null && !meta.getVersion().isEmpty()) {
                 out.append("\n<releaseinfo>" + meta.getVersion() + "</releaseinfo>");
             }
-            if (meta.getLogoLink() != null && !meta.getLogoLink().equals("") && meta.getLogoAlignment() != null && !meta.getLogoAlignment().equals("")) {
+            if (meta.getLogoLink() != null && !meta.getLogoLink().isEmpty() && meta.getLogoAlignment() != null && !meta.getLogoAlignment().isEmpty()) {
                 String depth = "";
-                if (meta.getLogoSize() != null && !meta.getLogoSize().equals("")) {
+                if (meta.getLogoSize() != null && !meta.getLogoSize().isEmpty()) {
                     depth = "depth=\"" + meta.getLogoSize() + "\"";
                 }
                 String align = "";
@@ -114,8 +114,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                         + meta.getLogoLink() + "\" " + depth + "/></imageobject></mediaobject>");
 
             }
-            if (meta.getProjectAcronym() != null && !meta.getProjectAcronym().equals("")) {
-                if (meta.getLink() != null && !meta.getLink().equals("")) {
+            if (meta.getProjectAcronym() != null && !meta.getProjectAcronym().isEmpty()) {
+                if (meta.getLink() != null && !meta.getLink().isEmpty()) {
                     out.append("\n<publisher><publishername>" + meta.getProjectAcronym()
                             + "</publishername><address>" + meta.getLink()
                             + "</address></publisher>");
@@ -126,14 +126,14 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
                 }
             }
             out.append("\n<pubdate>" + new Date().toString() + "</pubdate>");
-            if (meta.getProjectTitle() == null || meta.getProjectTitle().equals("")) {
+            if (meta.getProjectTitle() == null || meta.getProjectTitle().isEmpty()) {
                 out.append("\n<title>" + DocGenUtils.fixString(book.getTitle()) + "</title>");
             }
             else {
                 out.append("\n<title>" + meta.getProjectTitle() + "</title><subtitle>"
                         + DocGenUtils.fixString(book.getTitle()) + "</subtitle>");
             }
-            if (meta.getDocumentAcronym() != null && !meta.getDocumentAcronym().equals("")) {
+            if (meta.getDocumentAcronym() != null && !meta.getDocumentAcronym().isEmpty()) {
                 out.append("\n<titleabbrev>" + meta.getDocumentAcronym() + "</titleabbrev>");
             }
             out.append("\n<legalnotice><title>" + meta.getTitlePageLegalNotice() + "</title><para>"
@@ -207,7 +207,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         // "</productnumber>");
         /*
          * if (book.getLegalnotice() != null &&
-         * !book.getLegalnotice().equals("")) out.append("<legalnotice>" +
+         * !book.getLegalnotice().isEmpty()) out.append("<legalnotice>" +
          * DocGenUtils.addDocbook(DocGenUtils.fixString(book.getLegalnotice()))
          * + "</legalnotice>");
          */
@@ -242,7 +242,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             }
         }
         out.append("</info>\n");
-        if (meta.getAcknowledgement() != null && !meta.getAcknowledgement().equals("")) {
+        if (meta.getAcknowledgement() != null && !meta.getAcknowledgement().isEmpty()) {
             out.append("<acknowledgement>"
                     + DocGenUtils.addDocbook(DocGenUtils.fixString(meta.getAcknowledgement()))
                     + "</acknowledgement>\n");
@@ -263,7 +263,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         out.append("<colspec ");
         out.append("colname=\"" + colspec.getColname() + "\" ");
         out.append("colnum=\"" + colspec.getColnum() + "\"");
-        if (colspec.getColwidth() != null && !colspec.getColwidth().equals("")) {
+        if (colspec.getColwidth() != null && !colspec.getColwidth().isEmpty()) {
             out.append(" colwidth=\"" + colspec.getColwidth() + "\"/>\n");
         }
         else {
@@ -307,7 +307,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         }
         out.append("</imageobject><imageobject role=\"html\"><imagedata fileref=\""
                 + filename.replaceAll(".svg", ".png") + "\"/></imageobject>\n");
-        if (image.getCaption() != null && !image.getCaption().equals("")) {
+        if (image.getCaption() != null && !image.getCaption().isEmpty()) {
             out.append("<caption>" + DocGenUtils.addDocbook(DocGenUtils.fixString(image.getCaption()))
                     + "</caption>\n");
         }
@@ -387,7 +387,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             de.accept(inside);
         }
         String inString = inside.getOut();
-        if (inString.equals("")) {
+        if (inString.isEmpty()) {
             if (section.isSkipIfEmpty()) {
                 return;
             }
@@ -459,7 +459,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             ids.add(table.getId());
         }
         String style = "";
-        if (table.getStyle() != null && !table.getStyle().equals("")) {
+        if (table.getStyle() != null && !table.getStyle().isEmpty()) {
             style = " tabstyle=\"" + table.getStyle() + "\"";
         }
         out.append("<table frame=\"all\" pgwide=\"1\" role=\"longtable\"" + id + style + ">\n");
@@ -485,7 +485,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         getTableRows(table.getBody());
         out.append("</tbody>\n");
         out.append("</tgroup>\n");
-        if (table.getCaption() != null && !table.getCaption().equals("")) {
+        if (table.getCaption() != null && !table.getCaption().isEmpty()) {
             out.append("<caption>" + DocGenUtils.addDocbook(DocGenUtils.fixString(table.getCaption()))
                     + "</caption>\n");
         }
@@ -519,10 +519,10 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         if (tableentry.getMorerows() > 0) {
             out.append(" morerows=\"" + tableentry.getMorerows() + "\"");
         }
-        if (tableentry.getNamest() != null && !tableentry.getNamest().equals("")) {
+        if (tableentry.getNamest() != null && !tableentry.getNamest().isEmpty()) {
             out.append(" namest=\"" + tableentry.getNamest() + "\"");
         }
-        if (tableentry.getNameend() != null && !tableentry.getNameend().equals("")) {
+        if (tableentry.getNameend() != null && !tableentry.getNameend().isEmpty()) {
             out.append(" nameend=\"" + tableentry.getNameend() + "\"");
         }
         out.append(">");

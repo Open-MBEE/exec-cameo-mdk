@@ -34,38 +34,38 @@ import java.util.zip.Checksum;
 public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     private JSONObject views = new JSONObject();
-    private Stack<JSONArray> curContains = new Stack<JSONArray>();  //MDEV #674 -- change to a Stack of JSONArrays
-    private Stack<JSONArray> sibviews = new Stack<JSONArray>(); //sibling views (array of view ids)
-    private Stack<List<Element>> sibviewsElements = new Stack<List<Element>>();
-    private Stack<Set<String>> viewElements = new Stack<Set<String>>(); //ids of view elements
+    private Stack<JSONArray> curContains = new Stack<>();  //MDEV #674 -- change to a Stack of JSONArrays
+    private Stack<JSONArray> sibviews = new Stack<>(); //sibling views (array of view ids)
+    private Stack<List<Element>> sibviewsElements = new Stack<>();
+    private Stack<Set<String>> viewElements = new Stack<>(); //ids of view elements
     private Map<String, ObjectNode> images = new HashMap<>();
     protected boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
     private static String FILE_EXTENSION = ".svg";
 
-    private Map<From, String> sourceMapping = new HashMap<From, String>();
+    private Map<From, String> sourceMapping = new HashMap<>();
     private JSONObject view2view = new JSONObject(); //parent view id to array of children view ids (from sibviews)
-    private Map<Element, List<Element>> view2viewElements = new HashMap<Element, List<Element>>();
+    private Map<Element, List<Element>> view2viewElements = new HashMap<>();
     private JSONArray noSections = new JSONArray();
     private boolean doc;
-    protected Set<Element> elementSet = new HashSet<Element>();
+    protected Set<Element> elementSet = new HashSet<>();
 
     //for ems 2.2 reference tree
     // these are linked hash maps to make recursive sense in ViewPresentationGenerator
-    private Map<Element, JSONArray> view2elements = new LinkedHashMap<Element, JSONArray>();
-    private Map<Element, List<PresentationElementInstance>> view2pe = new LinkedHashMap<Element, List<PresentationElementInstance>>();
-    private Map<Element, List<PresentationElementInstance>> view2peOld = new LinkedHashMap<Element, List<PresentationElementInstance>>();
-    private Stack<Element> currentView = new Stack<Element>();
-    private Stack<PresentationElementInstance> currentSection = new Stack<PresentationElementInstance>(); //if currently in section, sections cannot cross views
-    private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<List<InstanceSpecification>>();
-    private Stack<List<InstanceSpecification>> currentTableInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<InstanceSpecification>> currentListInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<InstanceSpecification>> currentParaInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<InstanceSpecification>> currentSectionInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<InstanceSpecification>> currentImageInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<InstanceSpecification>> currentManualInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<InstanceSpecification>> currentUnusedInstances = new Stack<List<InstanceSpecification>>();
-    private Stack<List<PresentationElementInstance>> newpe = new Stack<List<PresentationElementInstance>>();
+    private Map<Element, JSONArray> view2elements = new LinkedHashMap<>();
+    private Map<Element, List<PresentationElementInstance>> view2pe = new LinkedHashMap<>();
+    private Map<Element, List<PresentationElementInstance>> view2peOld = new LinkedHashMap<>();
+    private Stack<Element> currentView = new Stack<>();
+    private Stack<PresentationElementInstance> currentSection = new Stack<>(); //if currently in section, sections cannot cross views
+    private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentTableInstances = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentListInstances = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentParaInstances = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentSectionInstances = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentImageInstances = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentManualInstances = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentUnusedInstances = new Stack<>();
+    private Stack<List<PresentationElementInstance>> newpe = new Stack<>();
 
     private boolean main = false; //for ems 2.2 reference tree, only consider generated pe from main view and 
     //not nested tables/lists since those are embedded in json blob, main is false for Table and List Visitor
@@ -207,7 +207,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentImageInstances.peek().isEmpty()) {
             i = currentImageInstances.peek().remove(0);
-            currentInstanceList.remove(i);
+            currentInstanceList.peek().remove(0);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -232,7 +232,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentListInstances.peek().isEmpty()) {
             i = currentListInstances.peek().remove(0);
-            currentInstanceList.remove(i);
+            currentInstanceList.peek().remove(0);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -253,7 +253,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentParaInstances.peek().isEmpty()) {
             i = currentParaInstances.peek().remove(0);
-            currentInstanceList.remove(i);
+            currentInstanceList.peek().remove(0);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -291,7 +291,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentParaInstances.peek().isEmpty()) {
             i = currentParaInstances.peek().remove(0);
-            currentInstanceList.remove(i);
+            currentInstanceList.peek().remove(0);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -405,7 +405,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentTableInstances.peek().isEmpty()) {
             i = currentTableInstances.peek().remove(0);
-            currentInstanceList.remove(i);
+            currentInstanceList.peek().remove(0);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();

@@ -74,6 +74,7 @@ public class DocGen3Profile {
     public static final String missionMappingStereotype = "MissionMapping";
     public static final String libraryChooserStereotype = "LibraryMapping";
     public static final String javaExtensionStereotype = "JavaExtension";
+    public static final String simulateStereotype = "Simulate";
 
     public static final String collectionStereotype = "CollectionAndFilterGroup";
     public static final String documentMetaStereotype = "DocumentMeta";

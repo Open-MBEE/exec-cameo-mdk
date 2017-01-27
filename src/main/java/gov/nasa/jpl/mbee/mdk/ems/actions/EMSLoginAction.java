@@ -32,6 +32,9 @@ import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -58,7 +61,7 @@ public class EMSLoginAction extends MDAction {
         ActionsStateUpdater.updateActionsState();
     }
 
-    public boolean loginAction(Project project) {
+    public static boolean loginAction(Project project) {
         return loginAction(project, true);
     }
 
@@ -67,17 +70,22 @@ public class EMSLoginAction extends MDAction {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
         }
-
-        if (!TicketUtils.loginToMMS()) {
+        if (project.isRemote() && (TeamworkUtils.getLoggedUserName() == null && EsiUtils.getTeamworkService().getConnectedUser() == null)) {
+            Utils.showPopupMessage("You need to be logged in to Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "first!");
             return false;
         }
 
+        if (!TicketUtils.loginToMMS()) {
+//            Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
+            return false;
+        }
+        Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
         if (initJms) {
             for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().projectOpened(p);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
             }
         }
-        Application.getInstance().getGUILog().log("Login complete.");
         return true;
     }
 

@@ -2,8 +2,6 @@ package gov.nasa.jpl.mbee.mdk.test.tests;
 
 import java.io.*;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,28 +9,18 @@ import java.util.List;
 
 import java.util.Properties;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork.application.BranchData;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
-import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
-import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import org.apache.http.client.utils.URIBuilder;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 
@@ -374,39 +362,17 @@ public abstract class MDKTestHelper {
     }
 
     public static void deleteMmsElements(Collection<Element> deleteTargets) {
-        ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elements = requestBody.putArray("elements");
-        for (Element delTarget : deleteTargets) {
-            ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
-            curElement.put(MDKConstants.SYSML_ID_KEY, Converters.getElementToIdConverter().apply(delTarget));
-            elements.add(curElement);
-        }
-        requestBody.put("source", "magicdraw");
-        requestBody.put("mmsVersion", MDKPlugin.VERSION);
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(Application.getInstance().getProject());
         try {
-            MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, requestBody));
+            MDKHelper.deleteMmsElements(deleteTargets, Application.getInstance().getProject());
         } catch (IOException | URISyntaxException | ServerException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public static void postMmsElemens(Collection<Element> postTargets) {
-        //todo
-        Project project = Application.getInstance().getProject();
-        ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elements = requestBody.putArray("elements");
-        for (Element pstTarget : postTargets) {
-            elements.add(Converters.getElementToJsonConverter().apply(pstTarget, project));
-        }
-        requestBody.put("source", "magicdraw");
-        requestBody.put("mmsVersion", MDKPlugin.VERSION);
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
         try {
-            MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestBody));
+            MDKHelper.postMmsElements(postTargets, Application.getInstance().getProject());
         } catch (IOException | URISyntaxException | ServerException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
             e.printStackTrace();
         }
     }

@@ -66,9 +66,6 @@ public class TicketUtils {
      * @return username
      */
     public static String getUsername() {
-        if ((username == null || username.isEmpty()) && !Utils.isPopupsDisabled()) {
-            showLoginDialog();
-        }
         return username;
     }
 
@@ -81,6 +78,11 @@ public class TicketUtils {
         return ticket;
     }
 
+    /**
+     * Convenience method for checking if ticket is non-empty. Used as a shorthand to verify that a user is logged in to MMS
+     *
+     * @return ticket exists and is non-empty.
+     */
     public static boolean isTicketSet() {
         return ticket != null && !ticket.isEmpty();
     }
@@ -96,25 +98,24 @@ public class TicketUtils {
      */
     public static boolean loginToMMS() {
         if (!username.isEmpty() && !password.isEmpty()) {
-            acquireTicket(password);
-            password = "";
+            return acquireTicket(password);
         }
         else if (!Utils.isPopupsDisabled()) {
 //            if (!isDisplayed) {
-                acquireTicket(showLoginDialog());
+                return acquireTicket(getUserCredentialsDialog());
 //            }
         }
         else {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
             return false;
         }
-        return !ticket.isEmpty();
     }
 
     /**
      * Shows a login dialog window and uses its filled in values to set the username and password.
      * Stores the entered username for future use / convenience, passes the entered password to acquireTicket().
      */
-    private static String showLoginDialog() {
+    private static String getUserCredentialsDialog() {
         // Pop up dialog for logging into Alfresco
 
         JPanel userPanel = new JPanel();
@@ -138,12 +139,18 @@ public class TicketUtils {
         passwordFld.setText("");
         makeSureUserGetsFocus(usernameFld);
         isDisplayed = true;
-        JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
-                "MMS Credentials", JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE);
+        int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
+                "MMS Credentials", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         isDisplayed = false;
-        username = usernameFld.getText();
-        return new String(passwordFld.getPassword());
+        if (response == JOptionPane.OK_OPTION) {
+            username = usernameFld.getText();
+            String pass = new String(passwordFld.getPassword());
+            return pass;
+        }
+        else if (response == JOptionPane.CANCEL_OPTION) {
+            Application.getInstance().getGUILog().log("[INFO] MMS login has been cancelled.");
+        }
+        return null;
     }
 
     /**
@@ -207,7 +214,7 @@ public class TicketUtils {
     }
 
     /**
-     * Uses the stored username and passed password to query MMS for a ticket.
+     * Uses the stored username and passed password to query MMS for a ticket. Will clear any stored password on attempt.
      *
      * Will first check to see if there is an existing ticket, and if so if it is valid. If valid, will not resend
      * for new ticket. If invalid or not present, will send for new ticket.
@@ -215,7 +222,7 @@ public class TicketUtils {
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
-    private static void acquireTicket(String pass) {
+    private static boolean acquireTicket(String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
         if (pass == null) {
             pass = "";
@@ -230,7 +237,7 @@ public class TicketUtils {
         Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null || username.isEmpty()) {
-            return;
+            return false;
         }
         requestUri.setPath(requestUri.getPath() + "/api/login" + ticket);
         requestUri.clearParameters();
@@ -251,11 +258,17 @@ public class TicketUtils {
         JsonNode value;
         if (response != null && (value = response.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
             ticket = value.asText();
+            password = "";
+
             // set auto-renewal
             ticketRenewer = Executors.newScheduledThreadPool(1);
-            final Runnable renewTicket = () -> { try {TicketUtils.checkAcquiredTicket();} catch (Exception ignored) {} };
+            final Runnable renewTicket = () -> { try {TicketUtils.isTicketValid();} catch (Exception ignored) {} };
             ticketRenewer.scheduleAtFixedRate(renewTicket, 1, 1, TimeUnit.MINUTES);
+            return true;
         }
+        Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
+        password = "";
+        return false;
     }
 
     /**
@@ -263,8 +276,7 @@ public class TicketUtils {
      *
      * @return True if ticket is still valid and matches the currently stored username
      */
-    public static boolean checkAcquiredTicket()
-            throws IOException, ServerException {
+    public static boolean isTicketValid() {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service//mms/login/ticket/${TICKET}
         if (ticket == null || ticket.isEmpty()) {
             return false;
@@ -285,7 +297,7 @@ public class TicketUtils {
         ObjectNode response;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri), true);
-        } catch (URISyntaxException e) {
+        } catch (ServerException | IOException | URISyntaxException e) {
             // don't want to throw this one. any function that would cause this should have already caused it in the
             // initial request that was built, which should have stopped it before it even got to the ticket check point.
             // included here for safety

@@ -23,7 +23,7 @@ from com.nomagic.uml2.ext.jmi.helpers import ModelHelper
 from com.nomagic.uml2.ext.magicdraw.classes.mdkernel import Enumeration
 from com.nomagic.uml2.ext.magicdraw.classes.mdkernel import AggregationKindEnum
 from com.nomagic.uml2.ext.magicdraw.compositestructures.mdports import Port
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 from com.nomagic.uml2.ext.magicdraw.interactions.mdbasicinteractions import Lifeline
 from com.nomagic.uml2.ext.magicdraw.interactions.mdbasicinteractions import StateInvariant
 from com.nomagic.uml2.ext.magicdraw.interactions.mdbasicinteractions import Interaction
