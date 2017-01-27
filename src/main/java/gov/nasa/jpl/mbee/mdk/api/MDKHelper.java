@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -62,6 +63,7 @@ import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -69,6 +71,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This class exposes MDK operations for use in external programs.
@@ -335,21 +338,66 @@ public class MDKHelper {
      *
      **********************************************************************************/
 
-    public static ObjectNode getMmsElement(Element e, Project project) throws IOException, ServerException, URISyntaxException {
-        return MMSUtils.getElement(e, project);
+    public static ObjectNode getElement(Element element, Project project)
+            throws IOException, ServerException, URISyntaxException {
+        if (element == null) {
+            return null;
+        }
+        Collection<String> collection = new ArrayList<>(1);
+        collection.add(Converters.getElementToIdConverter().apply(element));
+        return getElementsById(collection, project, null);
     }
 
-    public static ObjectNode getMmsElementByID(String s, Project project) throws IOException, ServerException, URISyntaxException {
-        return MMSUtils.getElementById(s, project);
+    public static ObjectNode getElementById(String elementId, Project project)
+            throws IOException, ServerException, URISyntaxException {
+        // build request
+        if (elementId == null) {
+            return null;
+        }
+        Collection<String> collection = new ArrayList<>(1);
+        collection.add(elementId);
+        return getElementsById(collection, project, null);
     }
 
-    public static ObjectNode getMmsElements(Collection<Element> elements, Project project) throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElements(elements, project, null);
+    public static ObjectNode getElements(Collection<Element> elements, Project project, ProgressStatus ps)
+            throws IOException, ServerException, URISyntaxException {
+        if (elements == null || elements.size() == 0) {
+            return null;
+        }
+        return getElementsById(elements.stream().map(Converters.getElementToIdConverter())
+                .filter(id -> id != null).collect(Collectors.toList()), project, ps);
     }
 
-    public static ObjectNode getMmsElementsByID(Collection<String> cs, Project project) throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElementsById(cs, project, null);
+    public static ObjectNode getElementsById(Collection<String> elementIds, Project project, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException {
+        if (elementIds == null || elementIds.isEmpty()) {
+            return null;
+        }
+
+        // create requests json
+        final ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
+        // put elements array inside request json, keep reference
+        ArrayNode idsArrayNode = requests.putArray("elements");
+        for (String id : elementIds) {
+            // create json for id strings, add to request array
+            ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
+            element.put(MDKConstants.SYSML_ID_KEY, id);
+            idsArrayNode.add(element);
+        }
+
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
+        //do cancellable request if progressStatus exists
+        Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
+        if (progressStatus != null) {
+            return MMSUtils.sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests), progressStatus);
+        }
+        return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests));
     }
+
 
     /**
      * Sends a DELETE request to MMS for the indicated elements.

@@ -70,51 +70,45 @@ public class MMSUtils {
         IO_EXCEPTION, SERVER_EXCEPTION
     }
 
-    public static ObjectNode getElement(Element element, Project project)
+    /**
+     *
+     * @param elementIds collection of elements to get mms data for
+     * @param project project to check
+     * @param progressStatus progress status object, can be null
+     * @return object node response
+     * @throws ServerException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    public static ObjectNode getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
-        return getElementById(Converters.getElementToIdConverter().apply(element), project);
+        return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
 
-    public static ObjectNode getElementById(String elementId, Project project)
-            throws IOException, ServerException, URISyntaxException {
-        // build request
-        if (elementId == null) {
+    /**
+     *
+     * @param elementIds collection of elements to get mms data for
+     * @param depth depth to recurse through child elements. takes priority over recurse field
+     * @param project project to check
+     * @param progressStatus progress status object, can be null
+     * @return object node response
+     * @throws ServerException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    public static ObjectNode getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        // build uri
+        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
             return null;
         }
-//        URIBuilder requestUri = getServiceRefsSitesElementsUri(project);
-//        elementId = elementId.replace(".", "%2E");
-//        requestUri.setPath(requestUri.getPath() + "/" + elementId);
-        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
-        requestUri.setPath(requestUri.getPath() + "/" + elementId);
-
-        // do request
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
-        try {
-            response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
-        } catch (ServerException e) {
-            if (e.getCode() != 404) {
-                throw e;
-            }
+        if (depth == -1 || depth > 0) {
+            requestUri.setParameter("depth", java.lang.Integer.toString(depth));
         }
-        return response;
 
-        // parse response
-//        JsonNode elementsJsonNode;
-//        if ((elementsJsonNode = response.get("elements")) != null && elementsJsonNode.isArray() && elementsJsonNode.size() > 0 && (elementsJsonNode = elementsJsonNode.get(0)).isObject()) {
-//            return (ObjectNode) elementsJsonNode;
-//        }
-//        return null;
-    }
-
-    public static ObjectNode getElements(Collection<Element> elements, Project project, ProgressStatus ps)
-            throws IOException, ServerException, URISyntaxException {
-        return getElementsById(elements.stream().map(Converters.getElementToIdConverter())
-                .filter(id -> id != null).collect(Collectors.toList()), project, ps);
-    }
-
-    public static ObjectNode getElementsById(Collection<String> ids, Project project, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
-        if (ids == null || ids.isEmpty()) {
+        // verify and convert elements
+        if (elementIds == null || elementIds.isEmpty()) {
             return null;
         }
 
@@ -122,89 +116,19 @@ public class MMSUtils {
         final ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
         // put elements array inside request json, keep reference
         ArrayNode idsArrayNode = requests.putArray("elements");
-        for (String id : ids) {
+        for (String id : elementIds) {
             // create json for id strings, add to request array
             ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
             element.put(MDKConstants.SYSML_ID_KEY, id);
             idsArrayNode.add(element);
         }
 
-        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
-        if (requestUri == null) {
-            return null;
+        //do cancellable request if progressStatus exists
+        Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
+        if (progressStatus != null) {
+            return sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests), progressStatus);
         }
-
-        //do cancellable request
-        Utils.guilog("[INFO] Searching for " + ids.size() + " elements from server...");
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
-        try {
-            response = sendCancellableMMSRequest(buildRequest(HttpRequestType.GET, requestUri, requests), progressStatus);
-        } catch (ServerException e) {
-            if (e.getCode() != 404) {
-                throw e;
-            }
-        }
-        return response;
-    }
-
-    /**
-     *
-     * @param project project to check
-     * @param elementId id of element to get elements from
-     * @param recurse true if should recurse to all leaves. will not be used if depth > 0
-     * @param depth depth to recurse through child elements. takes priority over recurse field
-     * @param progressStatus progress status object
-     * @return object node response
-     * @throws ServerException
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static ObjectNode getServerElementsRecursively(Project project, String elementId, boolean recurse, int depth,
-                                                          ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
-        requestUri.setPath(requestUri.getPath() + "/" + elementId);
-        if (requestUri == null) {
-            return null;
-        }
-        if (depth > 0) {
-            requestUri.setParameter("depth", java.lang.Integer.toString(depth));
-        }
-        else {
-            requestUri.setParameter("recurse", java.lang.Boolean.toString(recurse));
-        }
-
-        // do request in cancellable thread
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
-        try {
-            response = sendCancellableMMSRequest(buildRequest(HttpRequestType.GET, requestUri, null), progressStatus);
-        } catch (ServerException e) {
-            if (e.getCode() != 404) {
-                throw e;
-            }
-        }
-        return response;
-    }
-
-    /**
-     *
-     * @param project
-     * @param element
-     * @param recurse
-     * @param depth
-     * @param progressStatus
-     * @return
-     * @throws ServerException
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    // TODO Add both ?recurse and element list gets @donbot
-    public static ObjectNode getServerElementsRecursively(Project project, Element element, boolean recurse, int depth,
-                                                          ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        // configure request
-        String id = Converters.getElementToIdConverter().apply(element);
-        return getServerElementsRecursively(project, id, recurse, depth, progressStatus);
+        return sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests));
     }
 
     /**
@@ -264,7 +188,7 @@ public class MMSUtils {
                 break;
         }
         request.addHeader("charset", "utf-8");
-        if (sendData != null && request instanceof HttpEntityEnclosingRequest) {
+        if (sendData != null) {
             request.addHeader("Content-Type", "application/json");
             String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
             ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
