@@ -36,7 +36,6 @@ import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -273,7 +272,8 @@ public class TicketUtils {
 
             // set auto-renewal
             ticketRenewer = Executors.newScheduledThreadPool(1);
-            final Runnable renewTicket = TicketUtils::isTicketValid;
+            // intentionally catching exceptions here, to avoid scheduled thread suspension
+            final Runnable renewTicket = () -> { try {TicketUtils.isTicketValid();} catch (Exception ignored) {} };
             ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.MINUTES);
             return true;
         }
