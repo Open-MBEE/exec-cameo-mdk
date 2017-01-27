@@ -59,7 +59,7 @@ public class TicketUtils {
     private static String password = "";
     private static String ticket = "";
 //    private static boolean isDisplayed;
-    private static final int TICKET_RENEWAL_INTERVAL = 5;
+    private static final int TICKET_RENEWAL_INTERVAL = 30;
     private static ScheduledExecutorService ticketRenewer;
 
     /**
