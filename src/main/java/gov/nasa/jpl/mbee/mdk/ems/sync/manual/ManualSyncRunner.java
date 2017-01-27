@@ -81,8 +81,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Collection<ObjectNode> jsonObjects = null;
             try {
                 jsonObjects = collectServerElementsRecursively(project, element, depth, progressStatus);
-            } catch (ServerException | URISyntaxException | IOException e) {
-                //TODO @donbot process errors for recursive server element get if necessary
+            } catch (ServerException e) {
+                //TODO @donbot process errors for recursive server element get
+                validationSuite = null;
+                e.printStackTrace();
+            } catch (URISyntaxException | IOException e) {
                 e.printStackTrace();
             }
             if (jsonObjects == null) {
@@ -117,11 +120,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
     }
 
-    // TODO donbot Add remove ?recurse get, update depth get
     private static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         String id = Converters.getElementToIdConverter().apply(element);
-        Collection elementIds = new ArrayList<>(1);
+        Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(id);
         ObjectNode response = MMSUtils.getElementsRecursively(project, elementIds, depth, progressStatus);
         // process response
@@ -228,6 +230,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     public ValidationSuite getValidationSuite() {
+        if (validationSuite == null) {
+            return null;
+        }
         return validationSuite.hasErrors() ? validationSuite : (elementValidator != null ? elementValidator.getValidationSuite() : null);
     }
 }
