@@ -58,7 +58,7 @@ public class TicketUtils {
     private static String password = "";
     private static String ticket = "";
 //    private static boolean isDisplayed;
-    private static final int TICKET_RENEWAL_INTERVAL = 30;
+    private static final int TICKET_RENEWAL_INTERVAL = 1800;
     private static ScheduledExecutorService ticketRenewer;
 
     /**
@@ -274,7 +274,7 @@ public class TicketUtils {
             ticketRenewer = Executors.newScheduledThreadPool(1);
             // intentionally catching exceptions here, to avoid scheduled thread suspension
             final Runnable renewTicket = () -> { try {TicketUtils.isTicketValid();} catch (Exception ignored) {} };
-            ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.MINUTES);
+            ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS);
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
