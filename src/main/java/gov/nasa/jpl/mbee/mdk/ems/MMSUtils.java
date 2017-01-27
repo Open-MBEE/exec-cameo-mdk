@@ -311,28 +311,30 @@ public class MMSUtils {
             }
         }
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
-        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest && (httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null && httpEntityEnclosingRequest.getEntity().isRepeatable();
-        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString() + (logBody ? " - Body:" : ""));
+        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest
+                && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null)
+                && httpEntityEnclosingRequest.getEntity().isRepeatable();
+        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
         if (logBody) {
             try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
                 String requestBody = IOUtils.toString(inputStream);
                 if (CENSORED_PATTERN.matcher(requestBody).find()) {
                     requestBody = "--- Censored ---";
                 }
-                System.out.println(requestBody);
+                System.out.println(" - Body:" + requestBody);
             }
         }
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
-        ObjectNode responseJson;
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
                 CloseableHttpResponse response = httpclient.execute(request);
                 InputStream inputStream = response.getEntity().getContent()) {
+
             // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = inputStream != null ? IOUtils.toString(inputStream) : null;
-            String responseType = response.getEntity().getContentType().getValue();
-            responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : null);
+            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
             // debug / logging output from response
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
@@ -341,18 +343,21 @@ public class MMSUtils {
                 Utils.guilog("Server response: " + responseBody);
             }
 
-            // NOTE: not disabling popup messages locally. it's handled by Utils, which will redirect them to the GUILog if disabled
-            JsonNode value;
-            // display single response message
-            if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                Utils.guilog("[SERVER MESSAGE] " + value.asText());
-            }
-            // display multiple response messages
-            if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
-                ArrayNode msgs = (ArrayNode)value;
-                for (JsonNode msg : msgs) {
-                    if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                        Utils.guilog("[SERVER MESSAGE] " + value.asText());
+            if (responseBody != null && !responseBody.isEmpty()) {
+                responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+                // NOTE: not disabling popup messages locally. it's handled by Utils, which will redirect them to the GUILog if disabled
+                JsonNode value;
+                // display single response message
+                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                    Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                }
+                // display multiple response messages
+                if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
+                    ArrayNode msgs = (ArrayNode) value;
+                    for (JsonNode msg : msgs) {
+                        if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                            Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                        }
                     }
                 }
             }
@@ -362,19 +367,16 @@ public class MMSUtils {
             boolean furtherProcessing = false;
             if (responseCode < 200 || responseCode >= 300) {
                 // check for single target 404s that still returned properly, and check before warning popup
-//                if (responseCode == 404 && responseType.equals("application/json")) {
-//                    // do nothing
-//                }
-//                else {
-                // big flashing red letters that the action failed, or as close as we're going to get
-                Utils.showPopupMessage("Action failed. See notification window for details.");
+                furtherProcessing = true;
                 if (responseCode >= 500) {
                     Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                    furtherProcessing = true;
+                } else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
+                    // TODO @donbot block this check when we've migrated to bulk calls only
+                    // do nothing
+                    furtherProcessing = false;
                 } else if (responseCode == 404) {
                     // because we're using bulk get targets for operations, this should only happen on an invalid endpoint
                     Application.getInstance().getGUILog().log("[ERROR] Target URL for operation was invalid. Server code: " + responseCode);
-                    furtherProcessing = true;
                 } else if (responseCode == 403) {
                     Utils.guilog("[ERROR] You do not have sufficient permissions to one or more elements in the project to complete this operation. Server code: " + responseCode);
                 } else if (responseCode == 401) {
@@ -385,11 +387,12 @@ public class MMSUtils {
                     TicketUtils.clearUsernameAndPassword();
                 } else {
                     Utils.guilog("[ERROR] Unexpected server response. Server code: " + responseCode);
-                    furtherProcessing = true;
                 }
 //                }
             }
             if (furtherProcessing) {
+                // big flashing red letters that the action failed, or as close as we're going to get
+                Utils.showPopupMessage("Action failed. See notification window for details.");
                 throw new ServerException(responseBody, responseCode);
             }
         }

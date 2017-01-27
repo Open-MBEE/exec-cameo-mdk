@@ -36,6 +36,7 @@ import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -57,7 +58,8 @@ public class TicketUtils {
     private static String username = "";
     private static String password = "";
     private static String ticket = "";
-    private static boolean isDisplayed = false;
+//    private static boolean isDisplayed;
+    private static final int TICKET_RENEWAL_INTERVAL = 5;
     private static ScheduledExecutorService ticketRenewer;
 
     /**
@@ -138,16 +140,16 @@ public class TicketUtils {
         }
         passwordFld.setText("");
         makeSureUserGetsFocus(usernameFld);
-        isDisplayed = true;
+//        isDisplayed = true;
         int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                 "MMS Credentials", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-        isDisplayed = false;
+//        isDisplayed = false;
         if (response == JOptionPane.OK_OPTION) {
             username = usernameFld.getText();
             String pass = new String(passwordFld.getPassword());
             return pass;
         }
-        else if (response == JOptionPane.CANCEL_OPTION) {
+        else if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION) {
             Application.getInstance().getGUILog().log("[INFO] MMS login has been cancelled.");
         }
         return null;
@@ -210,7 +212,9 @@ public class TicketUtils {
         password = "";
         ticket = "";
         // kill auto-renewal
-        ticketRenewer.shutdown();
+        if (ticketRenewer != null) {
+            ticketRenewer.shutdown();
+        }
     }
 
     /**
@@ -224,8 +228,12 @@ public class TicketUtils {
      */
     private static boolean acquireTicket(String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
+        if (username == null || username.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username");
+            return false;
+        }
         if (pass == null) {
-            pass = "";
+            return false;
         }
 
         //ensure ticket is cleared in case of failure
@@ -236,7 +244,7 @@ public class TicketUtils {
         //         log in to the currently opening project
         Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null || username.isEmpty()) {
+        if (requestUri == null) {
             return false;
         }
         requestUri.setPath(requestUri.getPath() + "/api/login" + ticket);
@@ -249,8 +257,11 @@ public class TicketUtils {
         ObjectNode response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials), true);
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
+            e.printStackTrace();
+        } catch (ServerException e) {
+            // messaging handled at lower level
             e.printStackTrace();
         }
 
@@ -262,8 +273,8 @@ public class TicketUtils {
 
             // set auto-renewal
             ticketRenewer = Executors.newScheduledThreadPool(1);
-            final Runnable renewTicket = () -> { try {TicketUtils.isTicketValid();} catch (Exception ignored) {} };
-            ticketRenewer.scheduleAtFixedRate(renewTicket, 1, 1, TimeUnit.MINUTES);
+            final Runnable renewTicket = TicketUtils::isTicketValid;
+            ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.MINUTES);
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
@@ -313,7 +324,7 @@ public class TicketUtils {
         if ((((value = response.get("message")) != null) && value.isTextual() && value.asText().equals("Ticket not found"))
                 || (((value = response.get("username")) != null) && value.isTextual() && !value.asText().equals(username)) ) {
             Application.getInstance().getGUILog().log("[WARNING] Authentication has expired. Please log in to the MMS again.");
-            new EMSLogoutAction().logoutAction();
+            EMSLogoutAction.logoutAction();
             return false;
         }
         // no exceptions and not confirmed invalid
