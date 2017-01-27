@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
  *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
@@ -48,11 +48,18 @@ import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class TicketUtils {
     
     private static String username = "";
     private static String password = "";
     private static String ticket = "";
+//    private static boolean isDisplayed;
+    private static final int TICKET_RENEWAL_INTERVAL = 1800;
+    private static ScheduledExecutorService ticketRenewer;
 
     /**
      * Accessor for username field. Will attempt to display the login dialog to acquire a username if the field is empty.
@@ -66,7 +73,7 @@ public class TicketUtils {
     /**
      * Accessor for ticket field. Will attempt to acquire a new ticket if the field is empty.
      *
-     * @return ticket
+     * @return ticket string
      */
     public static String getTicket() {
         return ticket;
@@ -95,7 +102,9 @@ public class TicketUtils {
             return acquireTicket(password);
         }
         else if (!Utils.isPopupsDisabled()) {
-            return acquireTicket(getUserCredentialsDialog());
+//            if (!isDisplayed) {
+                return acquireTicket(getUserCredentialsDialog());
+//            }
         }
         else {
             Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
@@ -109,6 +118,7 @@ public class TicketUtils {
      */
     private static String getUserCredentialsDialog() {
         // Pop up dialog for logging into Alfresco
+
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new GridLayout(2, 2));
 
@@ -129,14 +139,16 @@ public class TicketUtils {
         }
         passwordFld.setText("");
         makeSureUserGetsFocus(usernameFld);
+//        isDisplayed = true;
         int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                 "MMS Credentials", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+//        isDisplayed = false;
         if (response == JOptionPane.OK_OPTION) {
             username = usernameFld.getText();
             String pass = new String(passwordFld.getPassword());
             return pass;
         }
-        else if (response == JOptionPane.CANCEL_OPTION) {
+        else if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION) {
             Application.getInstance().getGUILog().log("[INFO] MMS login has been cancelled.");
         }
         return null;
@@ -198,6 +210,10 @@ public class TicketUtils {
         username = "";
         password = "";
         ticket = "";
+        // kill auto-renewal
+        if (ticketRenewer != null) {
+            ticketRenewer.shutdown();
+        }
     }
 
     /**
@@ -211,12 +227,15 @@ public class TicketUtils {
      */
     private static boolean acquireTicket(String pass) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
-        password = "";
+        if (username == null || username.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username");
+            return false;
+        }
         if (pass == null) {
             return false;
         }
 
-        //ticket is invalid, clear it and re-attempt;
+        //ensure ticket is cleared in case of failure
         ticket = "";
 
         // build request
@@ -233,24 +252,30 @@ public class TicketUtils {
         // do request
         ObjectNode response = null;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials), true);
         } catch (IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Log in failed. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
             e.printStackTrace();
         } catch (ServerException e) {
-            if (!showErrorMessage(e.getCode())) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected server error while acquiring credentials. Log in failed. Reason: " + e.getMessage());
-                e.printStackTrace();
-            }
+            // messaging handled at lower level
+            e.printStackTrace();
         }
 
         // parse response
         JsonNode value;
         if (response != null && (value = response.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
             ticket = value.asText();
+            password = "";
+
+            // set auto-renewal
+            ticketRenewer = Executors.newScheduledThreadPool(1);
+            // intentionally catching exceptions here, to avoid scheduled thread suspension
+            final Runnable renewTicket = () -> { try {TicketUtils.isTicketValid();} catch (Exception ignored) {} };
+            ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS);
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
+        password = "";
         return false;
     }
 
@@ -274,54 +299,30 @@ public class TicketUtils {
         requestUri.clearParameters();
 
         // do request
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
-        boolean invalidCredentials = false;
+        ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (ServerException se) {
-            if (se.getCode() == 404) {
-                invalidCredentials = true;
-            }
-            else {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking credentials. Reason: " + se.getMessage());
-                se.printStackTrace();
-            }
-        } catch (IOException | URISyntaxException e ) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking credentials. Reason: " + e.getMessage());
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri), true);
+        } catch (ServerException | IOException | URISyntaxException e) {
+            // don't want to throw this one. any function that would cause this should have already caused it in the
+            // initial request that was built, which should have stopped it before it even got to the ticket check point.
+            // included here for safety
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for " +
+                    "project. Reason: " + e.getMessage());
             e.printStackTrace();
+            // can't confirm invalid if can't check site at all
+            return true;
         }
 
-        // parse response
+        // parse response, clearing ticket if appropriate
         JsonNode value;
-        if (invalidCredentials || ((value = response.get("username")) == null) || !value.isTextual() || !value.asText().equals(username)) {
-            Application.getInstance().getGUILog().log("[WARNING] Stored credentials are invalid. You will be logged out of MMS, and will need to log in again.");
+        if ((((value = response.get("message")) != null) && value.isTextual() && value.asText().equals("Ticket not found"))
+                || (((value = response.get("username")) != null) && value.isTextual() && !value.asText().equals(username)) ) {
+            Application.getInstance().getGUILog().log("[WARNING] Authentication has expired. Please log in to the MMS again.");
             EMSLogoutAction.logoutAction();
             return false;
         }
+        // no exceptions and not confirmed invalid
         return true;
     }
-
-    // TODO @donbot verify need for this block
-    /**
-     * Error handling for common server codes.
-     *
-     * @param code Server code
-     * @return True if a popup/log has been displayed for the user for the message, false otherwise (which implies that
-     * we need to do additional error dumping)
-     */
-    private static boolean showErrorMessage(int code) {
-        if (code == 400 || code == 401 || code == 403) {
-            Utils.showPopupMessage("[ERROR] You could not be logged in, and may have entered the wrong credentials. Please again.");
-            clearUsernameAndPassword();
-        }
-        else if (code == 500) {
-            Utils.showPopupMessage("[ERROR] Server error occured, you may not have permission to modify view(s) or their contents");
-        }
-        else if (code == 404) {
-            Utils.showPopupMessage("[ERROR] Some elements or views are not found on the server, export them first");
-        }
-        return (code == 400 || code == 401 || code == 403 || code == 500);
-    }
-
 
 }
