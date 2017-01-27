@@ -21,6 +21,7 @@ import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -87,6 +88,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 jsonObjects = collectServerElementsRecursively(project, element, recurse, depth, progressStatus);
             } catch (ServerException e) {
                 //TODO @donbot process errors for recursive server element get
+                validationSuite = null;
                 e.printStackTrace();
             } catch (URISyntaxException | IOException e) {
                 e.printStackTrace();
@@ -125,7 +127,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Fix me and move me to MMSUtils @donbot
     // TODO Add both ?recurse and element list gets @donbot
-    public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element, boolean recurse, int depth, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element, boolean recurse, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
         String id = Converters.getElementToIdConverter().apply(element);
         ObjectNode response = MMSUtils.getServerElementsRecursively(project, id, recurse, depth, progressStatus);
         // process response
@@ -231,6 +234,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     public ValidationSuite getValidationSuite() {
+        if (validationSuite == null) {
+            return null;
+        }
         return validationSuite.hasErrors() ? validationSuite : (elementValidator != null ? elementValidator.getValidationSuite() : null);
     }
 }

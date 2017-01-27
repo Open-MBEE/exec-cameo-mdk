@@ -14,6 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
@@ -263,7 +264,7 @@ public class MMSUtils {
                 break;
         }
         request.addHeader("charset", "utf-8");
-        if (sendData != null && request instanceof HttpEntityEnclosingRequest) {
+        if (sendData != null) {
             request.addHeader("Content-Type", "application/json");
             String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
             ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
@@ -286,48 +287,121 @@ public class MMSUtils {
         return buildRequest(type, requestUri, null);
     }
 
-    /**
-     * General purpose method for sending a constructed http request via http client.
-     *
-     * @param request
-     * @return
-     * @throws IOException
-     * @throws ServerException
-     */
     public static ObjectNode sendMMSRequest(HttpRequestBase request)
             throws IOException, ServerException {
-//        new RuntimeException("trace").printStackTrace();
+        return sendMMSRequest(request, false);
+    }
+
+        /**
+         * General purpose method for sending a constructed http request via http client.
+         *
+         * @param request
+         * @return
+         * @throws IOException
+         * @throws ServerException
+         */
+    public static ObjectNode sendMMSRequest(HttpRequestBase request, boolean bypassTicketCheck)
+            throws IOException, ServerException {
+        // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
+        if (!bypassTicketCheck && !TicketUtils.isTicketValid()) {
+            // if new login credentials fail, logout and terminal jms sync;
+            // 403 exception should already be thrown by failed credentials acquisition attempt
+            if (!TicketUtils.loginToMMS()) {
+                new EMSLogoutAction().logoutAction();
+            }
+        }
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
-        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest && (httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null && httpEntityEnclosingRequest.getEntity().isRepeatable();
-        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString() + (logBody ? " - Body:" : ""));
+        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest
+                && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null)
+                && httpEntityEnclosingRequest.getEntity().isRepeatable();
+        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
         if (logBody) {
             try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
                 String requestBody = IOUtils.toString(inputStream);
                 if (CENSORED_PATTERN.matcher(requestBody).find()) {
                     requestBody = "--- Censored ---";
                 }
-                System.out.println(requestBody);
+                System.out.println(" - Body:" + requestBody);
             }
         }
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
-        ObjectNode responseJson;
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
                 CloseableHttpResponse response = httpclient.execute(request);
                 InputStream inputStream = response.getEntity().getContent()) {
+
+            // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = inputStream != null ? IOUtils.toString(inputStream) : null;
-            //TODO error processing
-            System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode + (MDKOptionsGroup.getMDKOptions().isLogJson() ? " - Body:" : ""));
+            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : null);
+            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
+
+            // debug / logging output from response
+            System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
             if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                System.out.println(responseBody);
+                System.out.println(" - Body:"  + responseBody);
+                Utils.guilog("Server response: " + responseBody);
             }
-            if (processRequestErrors(responseBody, responseCode)) {
+
+            if (responseBody != null && !responseBody.isEmpty()) {
+                responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+                // NOTE: not disabling popup messages locally. it's handled by Utils, which will redirect them to the GUILog if disabled
+                JsonNode value;
+                // display single response message
+                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                    Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                }
+                // display multiple response messages
+                if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
+                    ArrayNode msgs = (ArrayNode) value;
+                    for (JsonNode msg : msgs) {
+                        if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                            Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                        }
+                    }
+                }
+            }
+
+            // try to handle response codes at this level, throw them if it makes sense.
+            // note that furtherProcessing == true means we will throw a ServerException and NOT return any JSON
+            boolean furtherProcessing = false;
+            if (responseCode < 200 || responseCode >= 300) {
+                // check for single target 404s that still returned properly, and check before warning popup
+                furtherProcessing = true;
+                if (responseCode >= 500) {
+                    Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
+                } else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
+                    // TODO @donbot block this check when we've migrated to bulk calls only
+                    // do nothing
+                    furtherProcessing = false;
+                } else if (responseCode == 404) {
+                    // because we're using bulk get targets for operations, this should only happen on an invalid endpoint
+                    Application.getInstance().getGUILog().log("[ERROR] Target URL for operation was invalid. Server code: " + responseCode);
+                } else if (responseCode == 403) {
+                    Utils.guilog("[ERROR] You do not have sufficient permissions to one or more elements in the project to complete this operation. Server code: " + responseCode);
+                } else if (responseCode == 401) {
+                    Utils.guilog("[ERROR] Authentication is required to utilize MMS functions. Please log in before trying again. Server code: " + responseCode);
+                    TicketUtils.clearUsernameAndPassword();
+                } else if (responseCode == 400) {
+                    // missing username code. display of server message covers informing the user
+                    TicketUtils.clearUsernameAndPassword();
+                } else {
+                    Utils.guilog("[ERROR] Unexpected server response. Server code: " + responseCode);
+                }
+//                }
+            }
+            if (furtherProcessing) {
+                // big flashing red letters that the action failed, or as close as we're going to get
+                Utils.showPopupMessage("Action failed. See notification window for details.");
                 throw new ServerException(responseBody, responseCode);
             }
-            responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
         }
         return responseJson;
+    }
+
+    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
+            throws IOException, ServerException {
+        return sendCancellableMMSRequest(request, progressStatus, false);
     }
 
     /**
@@ -336,13 +410,22 @@ public class MMSUtils {
      *
      * @param request
      * @param progressStatus
+     * @param bypassTicketCheck
      * @return
      * @throws IOException
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
+    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus, final boolean bypassTicketCheck)
             throws IOException, ServerException {
+        // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
+        if (!bypassTicketCheck && !TicketUtils.isTicketValid()) {
+            // if new login credentials fail, logout and terminal jms sync;
+            // 403 exception should already be thrown by failed credentials acquisition attempt
+            if (!TicketUtils.loginToMMS()) {
+                new EMSLogoutAction().logoutAction();
+            }
+        }
         final AtomicReference<ObjectNode> resp = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
@@ -350,7 +433,7 @@ public class MMSUtils {
         Thread t = new Thread(() -> {
             ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
             try {
-                response = sendMMSRequest(request);
+                response = sendMMSRequest(request, bypassTicketCheck);
                 etype.set(null);
                 ecode.set(200);
                 emsg.set("");
@@ -387,72 +470,6 @@ public class MMSUtils {
             throw new IOException(emsg.get());
         }
         return resp.get();
-    }
-
-    /**
-     * @param code
-     * @param response
-     * @return
-     */
-    public static boolean processRequestErrors(String response, int code) {
-        // display server message if possible, prepare additional data for display if needed
-        try {
-            ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(response, ObjectNode.class);
-            JsonNode value;
-            if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                Utils.guilog("[SERVER MESSAGE] " + value.asText());
-            }
-            if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
-                ArrayNode msgs = (ArrayNode)value;
-                for (JsonNode msg : msgs) {
-                    if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                        Utils.guilog("[SERVER MESSAGE] " + value.asText());
-                    }
-                }
-            }
-        } catch (IOException e) {
-            Utils.guilog("[ERROR] Unexpected error processing MMS response.");
-            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                Utils.guilog("Server response: " + code + " " + response);
-            }
-            e.printStackTrace();
-            return true;
-        }
-
-        if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            Utils.guilog("Server response: " + response);
-        }
-
-        // handle response codes
-        if (code == 200) {
-            return false;
-        }
-        Utils.showPopupMessage("An error occurred while communicating with the MMS.\nYour operation may not have completed successfully.\nSee the notification window for details.");
-        boolean furtherProcessing = false;
-        if (code >= 500) {
-            Utils.guilog("[ERROR] Operation failed due to server error.");
-            furtherProcessing = true;
-        }
-        else if (code == 404) {
-            // TODO @donbot verify 404 response cases
-            furtherProcessing = true;
-        }
-        else if (code == 403) {
-            Utils.guilog("[ERROR] You do not have sufficient permissions to one or more elements in the project to complete this operation.");
-        }
-        else if (code == 401) {
-            Utils.guilog("[ERROR] Authentication is required to utilize MMS functions. Please log in before trying again.");
-            TicketUtils.clearUsernameAndPassword();
-        }
-        else if (code == 400) {
-            // missing username code. display of server message covers informing the user
-            TicketUtils.clearUsernameAndPassword();
-        }
-        else {
-            Utils.guilog("[ERROR] Unexpected server response - code: " + code + ".");
-            furtherProcessing = true;
-        }
-        return furtherProcessing;
     }
 
     /**
