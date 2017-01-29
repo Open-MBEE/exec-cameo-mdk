@@ -28,8 +28,6 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.model;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
@@ -132,18 +130,17 @@ public class TemporalDiff extends Table {
                     else {
                         tag.append(sdf.format(compareToDate));
                     }
-                    if(baseBranchName != null){
+                    if (baseBranchName != null) {
                         tag.append("\" mms-ws-one=\"");
-                         tag.append(baseBranchName);
+                        tag.append(baseBranchName);
                     }
-                    if(compareToBranchName != null){
+                    if (compareToBranchName != null) {
                         tag.append("\" mms-ws-two=\"");
-                         tag.append(compareToBranchName);
+                        tag.append(compareToBranchName);
                     }
                     tag.append("\"></mms-diff-attr>");
                 }
             }
-            System.out.println(tag);
             retval.setText(tag); // concatenate the elements
             // System.out.println(tag);
             res.add(retval);
@@ -161,9 +158,7 @@ public class TemporalDiff extends Table {
                         }
                     }
                     else {
-                       // ObjectNode compareJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, compareToDate);
                         //TODO @scopecreep throw new MethodNotSupportedException("");
-                        // System.out.println("Comp _____________" + compareJson);
                     }
                     if (baseVersionTime == null) {
                         Object v = Utils.getElementAttribute((Element) e, attributeToCompare);
@@ -174,9 +169,7 @@ public class TemporalDiff extends Table {
                         }
                     }
                     else {
-                       // ObjectNode baseJson = TimeQueryUtil.getHistoryOfElement(Project.getProject((Element) e), (Element) e, baseVersionDate);
                         //TODO @scopecreep throw new MethodNotSupportedException("");
-                        // System.out.println("Base _____________" + baseJson);
                     }
                 }
                 // diff the elements
