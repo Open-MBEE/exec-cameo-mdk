@@ -239,10 +239,7 @@ public class TicketUtils {
         ticket = "";
 
         // build request
-        // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
-        //         log in to the currently opening project
-        Project project = Application.getInstance().getProject();
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceUri(Application.getInstance().getProject());
         if (requestUri == null) {
             return false;
         }
@@ -294,10 +291,7 @@ public class TicketUtils {
         }
 
         // build request
-        // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
-        // log in to the currently opening project
-        Project project = Application.getInstance().getProject();
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceUri(Application.getInstance().getProject());
         if (requestUri == null) {
             return false;
         }
@@ -330,6 +324,5 @@ public class TicketUtils {
         // no exceptions and not confirmed invalid
         return true;
     }
-
 
 }

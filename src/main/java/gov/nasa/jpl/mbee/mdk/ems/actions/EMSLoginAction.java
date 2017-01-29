@@ -57,15 +57,12 @@ public class EMSLoginAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        loginAction(Application.getInstance().getProject());
+        loginAction();
         ActionsStateUpdater.updateActionsState();
     }
 
-    public static boolean loginAction(Project project) {
-        return loginAction(project, true);
-    }
-
-    public static boolean loginAction(Project project, boolean initJms) {
+    public static boolean loginAction() {
+        Project project = Application.getInstance().getProject();
         if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
@@ -80,11 +77,9 @@ public class EMSLoginAction extends MDAction {
             return false;
         }
         Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
-        if (initJms) {
-            for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
-            }
+        for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
         }
         return true;
     }

@@ -37,7 +37,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                     if (TicketUtils.isTicketValid()) {
                         initializeJMS(project);
                     } else {
-                        EMSLoginAction.loginAction(project, true);
+                        EMSLoginAction.loginAction();
                         // loginAction contains a call to initializeJMS on a successful ticket get
                     }
                 }
@@ -60,9 +60,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectSaved(Project project, boolean savedInServer) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
 
-        JMSMessageListener JMSMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
-        if (JMSMessageListener != null) {
-            JMSMessageListener.getInMemoryJMSChangelog().clear();
+        JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
+        if (jmsMessageListener != null) {
+            jmsMessageListener.getInMemoryJMSChangelog().clear();
         }
     }
 
@@ -74,8 +74,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
     public void initializeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+        if (!shouldEnableJMS(project)) {
+            jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
+            return;
+        }
         boolean initialized = initDurable(project);
-        jmsSyncProjectMapping.setDisabled(!shouldEnableJMS(project) || !initialized);
+        jmsSyncProjectMapping.getJmsMessageListener().setDisabled(!initialized);
     }
 
     public void closeJMS(Project project) {
@@ -97,7 +101,6 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     public boolean initDurable(Project project) {
-        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         String projectID = project.getPrimaryProject().getProjectID();
         String workspaceID = MDUtils.getWorkspace(project);
 
@@ -138,6 +141,8 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 return false;
             }
         }
+
+        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
         try {
             ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
             if (connectionFactory == null) {
@@ -146,7 +151,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             }
             String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(); // weblogic can't have '/' in id
 
-            JMSMessageListener jmsMessageListener = new JMSMessageListener(project);
+            JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
             Connection connection = connectionFactory.createConnection();
             //((WLConnection) connection).setReconnectPolicy(JMSConstants.RECONNECT_POLICY_ALL);
@@ -176,7 +181,6 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             jmsSyncProjectMapping.setConnection(connection);
             jmsSyncProjectMapping.setSession(session);
             jmsSyncProjectMapping.setMessageConsumer(consumer);
-            jmsSyncProjectMapping.setJmsMessageListener(jmsMessageListener);
             jmsSyncProjectMapping.setMessageProducer(producer);
 
             // get everything that's already in the queue without blocking startup
@@ -196,7 +200,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            jmsSyncProjectMapping.setDisabled(true);
+            jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
         }
         return false;
@@ -205,7 +209,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public static JMSSyncProjectMapping getProjectMapping(Project project) {
         JMSSyncProjectMapping JMSSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
         if (JMSSyncProjectMapping == null) {
-            projectMappings.put(project.getPrimaryProject().getProjectID(), JMSSyncProjectMapping = new JMSSyncProjectMapping());
+            projectMappings.put(project.getPrimaryProject().getProjectID(), JMSSyncProjectMapping = new JMSSyncProjectMapping(project));
         }
         return JMSSyncProjectMapping;
     }
@@ -217,7 +221,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         private JMSMessageListener jmsMessageListener;
         private MessageProducer messageProducer;
 
-        private volatile boolean disabled = true;
+        public JMSSyncProjectMapping(Project project) {
+            jmsMessageListener = new JMSMessageListener(project);
+        }
 
         public Connection getConnection() {
             return connection;
@@ -247,27 +253,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             return jmsMessageListener;
         }
 
-        public void setJmsMessageListener(JMSMessageListener jmsMessageListener) {
-            this.jmsMessageListener = jmsMessageListener;
-        }
-
         public MessageProducer getMessageProducer() {
             return messageProducer;
         }
 
         public void setMessageProducer(MessageProducer messageProducer) {
             this.messageProducer = messageProducer;
-        }
-
-        public boolean isDisabled() {
-            if (jmsMessageListener == null) {
-                disabled = true;
-            }
-            return disabled;
-        }
-
-        public void setDisabled(boolean disabled) {
-            this.disabled = disabled;
         }
 
         @Deprecated
