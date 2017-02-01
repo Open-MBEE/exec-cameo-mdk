@@ -11,6 +11,7 @@ import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.jms.*;
@@ -107,7 +108,10 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             return false;
         }
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
-            if (EsiUtils.getTeamworkService().getConnectedUser() == null) {
+//            if (EsiUtils.getTeamworkService().getConnectedUser() == null) {
+//            if (!EsiUtils.getTeamworkService().isConnected()) {
+//            if (!EsiUtils.getTeamworkService().isLiveConnection()) {
+            if (com.nomagic.magicdraw.teamwork2.esi.EsiSessionUtil.isLoggedIn()) {
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork Cloud.");
                 return false;
             }

@@ -38,6 +38,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
@@ -90,14 +91,16 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        commitAction();
+    }
 
+    public String commitAction() {
         // check for existing org
         URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
         if (requestUri == null) {
-            return;
+            return null;
         }
 
-        /////////////////
         String org = null;
         try {
             org = MMSUtils.getProjectOrg(project);
@@ -105,7 +108,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
             e1.printStackTrace();
             if (!MDUtils.isDeveloperMode()) {
-                return;
+                return null;
             }
         }
 
@@ -117,7 +120,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
                 e1.printStackTrace();
                 if (!MDUtils.isDeveloperMode()) {
-                    return;
+                    return null;
                 }
             }
             ArrayList<String> mmsOrgsList = new ArrayList<>();
@@ -126,7 +129,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 if ((arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
                     for (JsonNode orgNode : arrayNode) {
                         JsonNode value;
-                        if ((value = orgNode.get("name")) != null && value.isTextual()) {
+                        if ((value = orgNode.get(MDKConstants.ORG_NAME_KEY)) != null && value.isTextual()) {
                             mmsOrgsList.add(value.asText());
                         }
                     }
@@ -141,19 +144,16 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             else {
                 Application.getInstance().getGUILog().log("[ERROR] No orgs were returned from MMS.");
             }
-            if (org == null && MDUtils.isDeveloperMode()) {
-                JFrame selectionDialog = new JFrame();
-                org = JOptionPane.showInputDialog(selectionDialog, "[DEVELOPER] Input MMS org below");
+            if ((org == null || org.isEmpty()) && MDUtils.isDeveloperMode()) {
+                org = new CommitOrgAction(project).commitAction();
             }
         }
 
         if (org == null || org.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org.");
-            return;
+            return null;
         }
-        requestUri.setPath(requestUri.getPath() + "/orgs/" + org + "/projects");
-
-        ////////////////////
+        requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
 
         // build post data
         ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
@@ -172,12 +172,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             e1.printStackTrace();
         }
         if (response == null) {
-            return;
+            return null;
         }
         if (shouldCommitModel) {
             RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }
+        return project.getPrimaryProject().getProjectID();
     }
 }
 

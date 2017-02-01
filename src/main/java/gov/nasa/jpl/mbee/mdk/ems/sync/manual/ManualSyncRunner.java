@@ -18,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -172,61 +173,27 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Make common across all sync types @donbot
     private boolean checkProject() {
-        // build request for project element
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-        requestUri.setPath(requestUri.getPath() + "/" + project.getPrimaryProject().getProjectID());
-
-        // do request for project element
-        ObjectNode response;
-        try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (ServerException | IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to verify project existence on MMS. MMS function can not continue. " +
-                    "Reason: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        boolean projectFound = MMSUtils.isProjectOnMms(project);
+        String branch = MDUtils.getRemoteBranchPath(project);
 
         // process response for project element, missing projects will return {}
-        if (response.get("elements") == null) {
+        if (!projectFound) {
             ValidationRuleViolation v;
 
-            String workspace = requestUri.getPath();
-            if (workspace.contains("/workspaces/master/")) {
+            // TODO @donbot refactor into a separate project trunk and branch checks
+            //String workspace = requestUri.getPath();
+            //if (workspace.contains("/workspaces/master/")) {
+            if (true) {
                 v = new ValidationRuleViolation(project.getPrimaryModel(), INITIALIZE_PROJECT_COMMENT);
                 v.addAction(new CommitProjectAction(project, true));
             } else {
                 v = new ValidationRuleViolation(project.getPrimaryModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
             }
             projectExistenceValidationRule.addViolation(v);
-            return false;
         }
 
 
-        //TODO @DONBOT re-imagineer later when we've confirmed if these errors still happen
-        /*
-        String respons = null;
-        try {
-            respons = ExportUtility.get(projectUrl, false);
-        } catch (ServerException ex) { }
-        if (respons == null || respons.contains("Site node is null") || respons.contains("Could not find project")) {//tears
-
-            ValidationRuleViolation v = new ValidationRuleViolation(Application.getInstance().getProject().getModel(), "The project exists on the server already under a different site.");
-            //v.addAction(new CommitProjectAction(false));
-            projectExistenceValidationRule.addViolation(v);
-            return false;
-        }
-        for (Element start : rootElements) {
-            if (ProjectUtilities.isElementInAttachedProject(start)) {
-                Utils.showPopupMessage("You should not validate or export elements not from this project! Open the right project and do it from there");
-                return false;
-            }
-        }
-        */
-        return true;
+        return projectFound;
     }
 
     public ValidationSuite getValidationSuite() {
@@ -236,3 +203,4 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return validationSuite.hasErrors() ? validationSuite : (elementValidator != null ? elementValidator.getValidationSuite() : null);
     }
 }
+

@@ -86,7 +86,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             // CSync isn't running, so return
             return;
         }
-        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
+        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(project);
         JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
         // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE

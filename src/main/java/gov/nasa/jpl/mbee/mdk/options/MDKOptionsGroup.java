@@ -167,7 +167,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         return MDK_OPTIONS_NAME;
     }
 
-
     //@Override
     //public SwingImageIcon getIcon() {
     //    return (SwingImageIcon) ImageMap16.SYSTEM_BOUNDARY;
