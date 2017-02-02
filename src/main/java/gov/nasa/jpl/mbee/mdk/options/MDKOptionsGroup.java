@@ -100,9 +100,9 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     public boolean isMDKAdvancedOptions() {
         Property p = getProperty(SHOW_ADVANCED_OPTIONS);
-        if((Boolean) p.getValue()) {
-            Application.getInstance().getGUILog().log("--- MAGICDRAW RESTART REQUIRED TO ENABLE MDK ADVANCED OPTIONS! ---  ");
-        }
+//        if((Boolean) p.getValue()) {
+//            Application.getInstance().getGUILog().log("--- MAGICDRAW RESTART REQUIRED TO ENABLE MDK ADVANCED OPTIONS! ---  ");
+//        }
         return (Boolean) p.getValue();
     }
 
@@ -125,6 +125,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         }
         return dirs;
     }
+
     public int getNumberOfCustomUserScriptDirectories(){
         Property p = getProperty(USER_SCRIPT_DIRECTORIES);
         String val =  p.getValueStringRepresentation();

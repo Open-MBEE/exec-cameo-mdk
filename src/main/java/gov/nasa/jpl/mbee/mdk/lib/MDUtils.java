@@ -238,7 +238,7 @@ public class MDUtils {
 //            }
 //        }
 //        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
-        return "master";
+        return twbranch;
     }
 
     public static String getRemoteBranchPath(Project project) {

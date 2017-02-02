@@ -60,13 +60,15 @@ public class MMSConfigurator implements AMConfigurator {
 
             category.addAction(login);
             category.addAction(logout);
+            category.addAction(new UpdateAllDocumentsAction());
             if(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-                MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
+                MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Advanced Options");
                 validateCategory.setNested(true);
                 category.addAction(validateCategory);
                 validateCategory.addAction(new ValidateModulesAction());
                 validateCategory.addAction(new ValidateBranchesAction());
             }
+
             /*MDActionsCategory sync = new MDActionsCategory("MMSMAINSYNC", "Update and Commit");
             sync.setNested(true);
             category.addAction(sync);
@@ -74,8 +76,6 @@ public class MMSConfigurator implements AMConfigurator {
             sync.addAction(new UpdateFromJMS(true));
             sync.addAction(new UpdateFromJMSAndCommitWithDelete());
             sync.addAction(new UpdateAllDocumentsAction());*/
-
-            category.addAction(new UpdateAllDocumentsAction());
 
             //category.addAction(new SendProjectVersionAction());
         }

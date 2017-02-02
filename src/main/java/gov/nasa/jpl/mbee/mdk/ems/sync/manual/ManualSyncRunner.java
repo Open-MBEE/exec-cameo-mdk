@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -20,6 +21,7 @@ import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -135,17 +137,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
             // check if we're validating the model root
             if (id.equals(Converters.getElementToIdConverter().apply(project.getPrimaryModel()))) {
-                Collection<Element> attachedModels = new ArrayList<>(project.getModels());
-                attachedModels.remove(project.getPrimaryModel());
-                Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter())
-                        .filter(amId -> amId != null).collect(Collectors.toList());
-                response = MMSUtils.getElements(project, attachedModelIds, null);
-                if (response != null && (value = response.get("elements")) != null && value.isArray()) {
-                    serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
-                            .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
-                }
-
                 if (depth != 0) {
+                    Collection<Element> attachedModels = new ArrayList<>(project.getModels());
+                    attachedModels.remove(project.getPrimaryModel());
+                    Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter())
+                            .filter(amId -> amId != null).collect(Collectors.toList());
+                    response = MMSUtils.getElements(project, attachedModelIds, null);
+                    if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+                        serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
+                                .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
+                    }
+
                     String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
                     boolean found = false;
                     // check to see if the holding bin was returned
@@ -173,27 +175,36 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Make common across all sync types @donbot
     private boolean checkProject() {
-        boolean projectFound = MMSUtils.isProjectOnMms(project);
-        String branch = MDUtils.getRemoteBranchPath(project);
+//        String branch = MDUtils.getWorkspace(project);
+        String branch = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
+        Utils.guilog(branch);
+        if (branch.equals("trunk")) {
+            branch = "master";
+        }
 
         // process response for project element, missing projects will return {}
-        if (!projectFound) {
+        if (!MMSUtils.isProjectOnMms(project)) {
             ValidationRuleViolation v;
 
-            // TODO @donbot refactor into a separate project trunk and branch checks
-            //String workspace = requestUri.getPath();
-            //if (workspace.contains("/workspaces/master/")) {
-            if (true) {
+            if (branch.equals("master")) {
                 v = new ValidationRuleViolation(project.getPrimaryModel(), INITIALIZE_PROJECT_COMMENT);
                 v.addAction(new CommitProjectAction(project, true));
             } else {
                 v = new ValidationRuleViolation(project.getPrimaryModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
             }
             projectExistenceValidationRule.addViolation(v);
+            return false;
         }
 
+        if (!branch.equals("master") && !MMSUtils.isBranchOnMms(project, branch)) {
+            ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "The branch doesn't exist on the web. Export the trunk first.");
+            // TODO @donbot re-add branch creation
+//            v.addAction(new CommitBranchAction(project, true));
+            projectExistenceValidationRule.addViolation(v);
+            return false;
+        }
 
-        return projectFound;
+        return true;
     }
 
     public ValidationSuite getValidationSuite() {

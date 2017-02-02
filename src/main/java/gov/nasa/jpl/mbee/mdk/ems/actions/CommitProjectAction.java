@@ -129,7 +129,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 if ((arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
                     for (JsonNode orgNode : arrayNode) {
                         JsonNode value;
-                        if ((value = orgNode.get(MDKConstants.ORG_NAME_KEY)) != null && value.isTextual()) {
+                        if ((value = orgNode.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
                             mmsOrgsList.add(value.asText());
                         }
                     }

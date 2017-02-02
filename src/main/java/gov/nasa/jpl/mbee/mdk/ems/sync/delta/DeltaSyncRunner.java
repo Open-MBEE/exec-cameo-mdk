@@ -93,22 +93,22 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-        if (listener == null) {
-            Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
+//        if (listener == null) {
+//            Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener. Skipping sync. All changes will be re-attempted in the next sync.");
+//            return;
+//        }
 
         String url;
         try {
             url = MMSUtils.getServerUrl(project);
+            if (url == null || url.isEmpty()) {
+                throw new IllegalStateException("");
+            }
         } catch (IllegalStateException e) {
             Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
-        if (url == null || url.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
+
         // TODO @DONBOT restore this functionality (remove false) after updating isSiteEditable()
         try {
             if (false || !MMSUtils.isSiteEditable(project, "")) {
@@ -119,9 +119,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while verifying site permissions. Skipping sync. All changes will be re-attempted in the next sync. Error: " + e.getMessage());
             return;
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (URISyntaxException | IOException e) {
             e.printStackTrace();
         }
 

@@ -111,7 +111,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 //            if (EsiUtils.getTeamworkService().getConnectedUser() == null) {
 //            if (!EsiUtils.getTeamworkService().isConnected()) {
 //            if (!EsiUtils.getTeamworkService().isLiveConnection()) {
-            if (com.nomagic.magicdraw.teamwork2.esi.EsiSessionUtil.isLoggedIn()) {
+            if (!com.nomagic.magicdraw.teamwork2.esi.EsiSessionUtil.isLoggedIn()) {
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork Cloud.");
                 return false;
             }

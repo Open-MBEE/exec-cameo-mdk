@@ -126,7 +126,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         requestData.put("mdkVersion", MDKPlugin.VERSION);
         ObjectNode orgObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         orgObjectNode.put(MDKConstants.ORG_ID_KEY, org);
-        orgObjectNode.put(MDKConstants.ORG_NAME_KEY, org);
+        orgObjectNode.put(MDKConstants.NAME_KEY, org);
         elementsArrayNode.add(orgObjectNode);
 
         // do post request

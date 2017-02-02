@@ -493,36 +493,35 @@ public class MMSUtils {
                 }
             }
         } catch (ServerException | IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while verifying project existence on MMS. MMS function can not continue. " +
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while verifying project existence on MMS. " +
                     "Reason: " + e.getMessage());
             e.printStackTrace();
         }
         return false;
     }
 
-    public static boolean isBranchOnMms(Project project) {
+    public static boolean isBranchOnMms(Project project, String branch) {
         // build request for project element
         URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
         if (requestUri == null) {
             return false;
         }
-        // TODO
 
-        // do request for project element
+        // do request for ref element
         ObjectNode response;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             JsonNode projectsJson;
-            if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
+            if ((projectsJson = response.get("refs")) != null && projectsJson.isArray()) {
                 JsonNode value;
                 for (JsonNode projectJson : projectsJson) {
-                    if ((value = projectJson.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual() && value.asText().equals(project.getID())) {
+                    if ((value = projectJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual() && value.asText().equals(branch)) {
                         return true;
                     }
                 }
             }
         } catch (ServerException | IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while verifying project existence on MMS. MMS function can not continue. " +
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while verifying ref existence on MMS. " +
                     "Reason: " + e.getMessage());
             e.printStackTrace();
         }
