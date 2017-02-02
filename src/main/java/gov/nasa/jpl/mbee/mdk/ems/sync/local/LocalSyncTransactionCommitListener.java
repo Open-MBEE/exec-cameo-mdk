@@ -54,7 +54,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
 
     public boolean isDisabled() {
         synchronized (this.disabled) {
-            return disabled.get();
+            return (disabled.get() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
         }
     }
 
@@ -70,7 +70,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
 
     @Override
     public Runnable transactionCommited(Collection<PropertyChangeEvent> events) {
-        if (isDisabled() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
+        if (isDisabled()) {
             return null;
         }
         return new TransactionCommitHandler(events, project);

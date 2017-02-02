@@ -39,10 +39,11 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
                 combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
             }
-            if (LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog() == null) {
+            LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+            if (localSyncTransactionCommitListener == null) {
                 return combinedPersistedChangelog;
             }
-            return combinedPersistedChangelog.and(LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener().getInMemoryLocalChangelog(), new BiFunction<String, Element, Void>() {
+            return combinedPersistedChangelog.and(localSyncTransactionCommitListener.getInMemoryLocalChangelog(), new BiFunction<String, Element, Void>() {
                 @Override
                 public Void apply(String key, Element element) {
                     return null;
@@ -81,11 +82,11 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             listener.setDisabled(true);
         }
 
+        if (!SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().createSession(project, "Delta Sync Changelog Persistence #2");
+        }
         for (Map.Entry<SyncElement.Type, Function<Project, Changelog<String, ?>>> entry : CHANGELOG_FUNCTIONS.entrySet()) {
             Changelog<String, ?> changelog = entry.getValue().apply(project);
-            if (!SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().createSession(project, "Delta Sync Changelog Persistence #2");
-            }
             try {
                 SyncElements.setByType(project, entry.getKey(), JacksonUtils.getObjectMapper().writeValueAsString(SyncElements.buildJson(changelog)));
             } catch (JsonProcessingException e) {
