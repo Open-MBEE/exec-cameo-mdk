@@ -247,10 +247,9 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         MOUNT(
                 (element, project, objectNode) -> {
-                    if (element.equals(project.getPrimaryModel())) {
-                        return objectNode;
-                    }
-                    if (objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY)) {
+                    if (!(element instanceof Model)
+                            || element.equals(project.getPrimaryModel())
+                            || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY) ) {
                         return objectNode;
                     }
                     Model model = (Model) element;
