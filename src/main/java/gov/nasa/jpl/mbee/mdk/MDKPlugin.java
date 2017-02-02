@@ -1,31 +1,3 @@
-/*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").
- * U.S. Government sponsorship acknowledged.
- * <p>
- * All rights reserved.
- * <p>
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
- * <p>
- * - Redistributions of source code must retain the above copyright notice, this list of
- * conditions and the following disclaimer.
- * - Redistributions in binary form must reproduce the above copyright notice, this list
- * of conditions and the following disclaimer in the documentation and/or other materials
- * provided with the distribution.
- * - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
- * nor the names of its contributors may be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * <p>
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk;
 
 import com.nomagic.actions.ActionsCategory;
@@ -33,9 +5,12 @@ import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
+import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
+
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
@@ -44,13 +19,11 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.JarFile;
 
 public class MDKPlugin extends Plugin {
     public static final String VERSION = "3.0",
@@ -60,6 +33,7 @@ public class MDKPlugin extends Plugin {
     private OclEvaluatorPlugin oclPlugin = null;
     private ValidateConstraintsPlugin vcPlugin = null;
     private DebugExportImportModelPlugin debugExportImportModelPlugin = null;
+    private EnvironmentOptions.EnvironmentChangeListener mdkEnvOptionsListener;
 
     public MDKPlugin() {
         super();
@@ -120,7 +94,7 @@ public class MDKPlugin extends Plugin {
 
         loadExtensionJars(); // people can actually just create a new plugin and
 
-        Application.getInstance().getEnvironmentOptions().addGroup(new MDKOptionsGroup());
+        configureEnvironmentOptions();
     }
 
     public DebugExportImportModelPlugin getDebugExportImportPlugin() {
@@ -168,12 +142,25 @@ public class MDKPlugin extends Plugin {
                 extensions.add(file.toURI().toURL());
             } catch (MalformedURLException e) {
                 e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
             }
         }
         extensionsClassloader = new URLClassLoader(extensions.toArray(new URL[]{}),
                 MDKPlugin.class.getClassLoader());
     }
+
+    private void configureEnvironmentOptions() {
+        EnvironmentOptions mdkOptions = Application.getInstance().getEnvironmentOptions();
+        mdkOptions.addGroup(new MDKOptionsGroup());
+        mdkEnvOptionsListener = new EnvironmentOptions.EnvironmentChangeListener() {
+            @Override
+            public void updateByEnvironmentProperties(List<Property> list) {
+                System.out.println("Options changed: ");
+                for (Property p : list) {
+                    System.out.println(p.getName() + " : " + p.getValueStringRepresentation());
+                }
+            }
+        };
+        mdkOptions.addEnvironmentChangeListener(mdkEnvOptionsListener);
+    }
+
 }
