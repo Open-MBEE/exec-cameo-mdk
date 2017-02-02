@@ -1,9 +1,9 @@
-package gov.nasa.jpl.mbee.mdk.options.resources;
+package gov.nasa.jpl.mbee.mdk.options;
 
 import com.nomagic.magicdraw.resources.ResourceManager;
 
 public class EnvironmentOptionsResources {
-    public static final String BUNDLE_NAME = "gov.nasa.jpl.mbee.mdk.options.resources.EnvironmentOptionsResources";
+    public static final String BUNDLE_NAME = "gov.nasa.jpl.mbee.mdk.options.EnvironmentOptionsResources";
 
     /**
      * Constructs this resource handler.
