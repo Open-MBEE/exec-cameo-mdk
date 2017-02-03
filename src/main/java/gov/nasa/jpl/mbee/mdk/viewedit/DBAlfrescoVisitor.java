@@ -144,7 +144,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         // export image - also keep track of exported images
         DiagramPresentationElement diagram = Application.getInstance().getProject()
                 .getDiagram(image.getImage());
-        String svgFilename = image.getImage().getID();
+        String svgFilename = image.getImage().getLocalID();
 
         // create image file
         String userhome = System.getProperty("user.home");
@@ -184,7 +184,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         // Lets rename the file to have the hash code
         // make sure this matches what's in the View Editor ImageResource.java
-        String svgCrcFilename = image.getImage().getID() + "_latest" + FILE_EXTENSION;
+        String svgCrcFilename = image.getImage().getLocalID() + "_latest" + FILE_EXTENSION;
         //gl.log("Exporting diagram to: " + svgDiagramFile.getAbsolutePath());
 
         // keep record of all images found
@@ -196,7 +196,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #674 -- Update the type and id: was hard coded.
         //
         entry.put("type", "Image");
-        entry.put(MDKConstants.SYSML_ID_KEY, image.getImage().getID());
+        entry.put(MDKConstants.SYSML_ID_KEY, image.getImage().getLocalID());
         entry.put("title", image.getTitle());
         curContains.peek().add(entry);
 
@@ -332,7 +332,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             }
             //sibviews.pop();
             if (section.isNoSection()) {
-                noSections.add(eview.getID());
+                noSections.add(eview.getLocalID());
             }
             endView(eview);
         }
@@ -370,7 +370,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         // here enter a list of all the elements we need.
         JSONArray elements = new JSONArray();
         for(Element elem : tomSawyerDiagram.getElements()){
-        elements.add(elem.getID());
+        elements.add(elem.getLocalID());
         }
 
         entry.put("elements", elements);
@@ -429,7 +429,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         else {
             view.put("type", "View");
         }
-        String id = e.getID();
+        String id = e.getLocalID();
         view.put(MDKConstants.SYSML_ID_KEY, id);
         views.put(id, view);
         Set<String> viewE = new HashSet<String>();
@@ -442,7 +442,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         /*for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                 DocGen3Profile.queriesStereotype, 1, false, 1))
             addToElements(exposed);*/
-        sibviews.peek().add(e.getID());
+        sibviews.peek().add(e.getLocalID());
         sibviewsElements.peek().add(e);
         JSONArray childViews = new JSONArray();
         sibviews.push(childViews);
@@ -472,14 +472,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #673: update code to use the
         //specialization element.
         //
-        JSONObject view = (JSONObject) views.get(e.getID());
+        JSONObject view = (JSONObject) views.get(e.getLocalID());
 
         view.put("displayedElements", viewEs);
         view.put("allowedElements", viewEs);
         if (recurse && !doc) {
             view.put("childrenViews", sibviews.peek());
         }
-        view2view.put(e.getID(), sibviews.pop());
+        view2view.put(e.getLocalID(), sibviews.pop());
         view2viewElements.put(e, sibviewsElements.pop());
         this.curContains.pop();
 
