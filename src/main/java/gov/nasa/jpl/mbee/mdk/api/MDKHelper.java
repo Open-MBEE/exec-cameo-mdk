@@ -168,7 +168,7 @@ public class MDKHelper {
      */
     public static boolean loginToMMS(final String username, final String password) {
         TicketUtils.setUsernameAndPassword(username, password);
-        return new EMSLoginAction().loginAction(Application.getInstance().getProject());
+        return new EMSLoginAction().loginAction();
     }
 
     /**

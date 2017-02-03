@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -28,8 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by igomes on 6/22/16.
  */
-
-//@donbot update json simple to jackson
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<String, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
     private DeltaSyncRunner deltaSyncRunner;
@@ -56,24 +53,16 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (tempDisabled) {
             return;
         }*/
-        boolean enabled = MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled();
-        if (!enabled) {
-            return;
-        }
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled()) {
-            return;
-        }
-        if (!StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+        if ( (project.isRemote() && !savedInServer)
+                || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
+                || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
+                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled() ) {
+            // skip csync
             return;
         }
         if (!TicketUtils.isTicketSet()) {
             Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
-            EMSLoginAction.loginAction(project);
-            return;
-        }
-        if ((ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) || project.isTeamworkServerProject()) && !savedInServer) {
-            Application.getInstance().getGUILog().log("[INFO] Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "project is being saved locally. Coordinated sync skipped.");
+            EMSLoginAction.loginAction();
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
@@ -140,7 +129,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         private boolean disabled;
 
         public synchronized boolean isDisabled() {
-            return disabled;
+            return (disabled || !MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
         }
 
         public synchronized void setDisabled(boolean disabled) {

@@ -17,7 +17,10 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EventObject;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * This class responds to commits done in the document.
@@ -36,8 +39,8 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
     /**
      * Allow listener to be disabled during imports.
      */
-    private boolean disabled;
-    private Changelog<String, Element> inMemoryLocalChangelog = new Changelog<>();
+    private final AtomicBoolean disabled = new AtomicBoolean();
+    private final Changelog<String, Element> inMemoryLocalChangelog = new Changelog<>();
 
     {
         if (MDUtils.isDeveloperMode()) {
@@ -49,12 +52,16 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
         this.project = project;
     }
 
-    public synchronized boolean isDisabled() {
-        return disabled;
+    public boolean isDisabled() {
+        synchronized (this.disabled) {
+            return (disabled.get() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
+        }
     }
 
-    public synchronized void setDisabled(boolean disabled) {
-        this.disabled = disabled;
+    public void setDisabled(boolean disabled) {
+        synchronized (this.disabled) {
+            this.disabled.set(disabled);
+        }
     }
 
     public Changelog<String, Element> getInMemoryLocalChangelog() {
@@ -63,7 +70,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
 
     @Override
     public Runnable transactionCommited(Collection<PropertyChangeEvent> events) {
-        if (isDisabled() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
+        if (isDisabled()) {
             return null;
         }
         return new TransactionCommitHandler(events, project);

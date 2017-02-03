@@ -107,7 +107,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
     public void execute(Collection<Annotation> annos) {
         for (Annotation anno : annos) {
             Element e = (Element) anno.getTarget();
-            String key = e.getID();
+            String key = e.getLocalID();
             postImage(Project.getProject(e), key, images);
         }
         Utils.guilog("[INFO] Requests are added to queue.");
@@ -116,7 +116,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String key = element.getID();
+        String key = element.getLocalID();
         if (postImage(Project.getProject(element), key, images)) {
             Utils.guilog("[INFO] Request is added to queue.");
         }

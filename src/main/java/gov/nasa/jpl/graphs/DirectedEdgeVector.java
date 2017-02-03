@@ -68,7 +68,7 @@ public class DirectedEdgeVector<VertexType> extends UndirectedEdgeVector<VertexT
 
     @Override
     public String toString() {
-        return new String(getSourceVertex().toString() + " -> " + getTargetVertex().toString());
+        return getSourceVertex().toString() + " -> " + getTargetVertex().toString();
     }
 
 }

@@ -6,7 +6,9 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
@@ -19,6 +21,7 @@ import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -85,6 +88,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 jsonObjects = collectServerElementsRecursively(project, element, recurse, depth, progressStatus);
             } catch (ServerException e) {
                 //TODO @donbot process errors for recursive server element get
+                validationSuite = null;
                 e.printStackTrace();
             } catch (URISyntaxException | IOException e) {
                 e.printStackTrace();
@@ -109,6 +113,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
             return;
         }
         elements.add(new Pair<>(element, jsonObject));
+        if (element.equals(project.getPrimaryModel())) {
+            List<Package> attachedModels = project.getModels();
+            attachedModels.remove(project.getPrimaryModel());
+            attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, false, 0, elements));
+        }
         if (recurse || depth > 0) {
             for (Element e : element.getOwnedElement()) {
                 collectClientElementsRecursively(project, e, recurse, --depth, elements);
@@ -118,13 +127,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Fix me and move me to MMSUtils @donbot
     // TODO Add both ?recurse and element list gets @donbot
-    public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element,
-                                                                          boolean recurse, int depth,
-                                                                          ProgressStatus progressStatus)
+    public static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element, boolean recurse, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
-        ObjectNode response;
         String id = Converters.getElementToIdConverter().apply(element);
-        response = MMSUtils.getServerElementsRecursively(project, id, recurse, depth, progressStatus);
+        ObjectNode response = MMSUtils.getServerElementsRecursively(project, id, recurse, depth, progressStatus);
         // process response
         JsonNode value;
         if (response != null && (value = response.get("elements")) != null && value.isArray()) {
@@ -133,23 +139,32 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
             // check if we're validating the model root
             if (id.equals(Converters.getElementToIdConverter().apply(project.getPrimaryModel()))) {
-                String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
-                boolean found = false;
-                // check to see if the holding bin was returned
-                for (ObjectNode elem : serverElements) {
-                    value = null;
-                    if ((value = elem.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
-                            && value.asText().equals(holdingBinId)) {
-                        found = true;
-                        break;
-                    }
+                Collection<Element> attachedModels = new ArrayList<>(project.getModels());
+                attachedModels.remove(project.getPrimaryModel());
+                response = MMSUtils.getElements(attachedModels, project, null);
+                if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+                    serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
+                            .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
                 }
-                // if no holding bin in server collection && model was element && (depth > 0 || recurse)
-                if (!found && (depth > 0 || recurse)) {
-                    response = MMSUtils.getServerElementsRecursively(project, holdingBinId, recurse, depth, progressStatus);
-                    if (response != null && (value = response.get("elements")) != null && value.isArray()) {
-                        serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
-                                .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
+
+                if (depth > 0 || recurse) {
+                    String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
+                    boolean found = false;
+                    // check to see if the holding bin was returned
+                    for (ObjectNode elem : serverElements) {
+                        if ((value = elem.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
+                                && value.asText().equals(holdingBinId)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    // if no holding bin in server collection && model was element && (depth > 0 || recurse)
+                    if (!found) {
+                        response = MMSUtils.getServerElementsRecursively(project, holdingBinId, recurse, depth, progressStatus);
+                        if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+                            serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
+                                    .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
+                        }
                     }
                 }
             }
@@ -219,6 +234,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     public ValidationSuite getValidationSuite() {
+        if (validationSuite == null) {
+            return null;
+        }
         return validationSuite.hasErrors() ? validationSuite : (elementValidator != null ? elementValidator.getValidationSuite() : null);
     }
 }

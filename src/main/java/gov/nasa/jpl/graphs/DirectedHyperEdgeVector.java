@@ -59,7 +59,7 @@ public class DirectedHyperEdgeVector<VertexType> extends UndirectedHyperEdgeVect
 
     @Override
     public String toString() {
-        String string = new String("[");
+        String string = "[";
         boolean isFirst = true;
         for (VertexType v : getSourceVertices()) {
             if (isFirst) {

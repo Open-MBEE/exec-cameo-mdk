@@ -34,10 +34,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.core.project.ProjectDescriptor;
-import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
@@ -86,7 +83,6 @@ import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -2133,7 +2129,7 @@ public class Utils {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
             for (Constraint constraint : constraints) {
-                if (constraint != null && constraint.getID().endsWith(("_vc"))) {
+                if (constraint != null && constraint.getLocalID().endsWith(("_vc"))) {
                     return constraint;
                 }
             }
@@ -2362,18 +2358,6 @@ public class Utils {
             return false;
         }
         return null;
-    }
-
-    public static String getUsername() {
-        String username;
-        String teamworkUsername = TeamworkUtils.getLoggedUserName();
-        if (teamworkUsername != null) {
-            username = teamworkUsername;
-        }
-        else {
-            username = System.getProperty("user.name", "");
-        }
-        return username;
     }
 
     public static Set<Annotation> getAnnotations(ValidationRule vr, Project project, Constraint cons) {
@@ -2671,7 +2655,7 @@ public class Utils {
             if (valueSpec instanceof LiteralBoolean) {
                 v = ef.createLiteralBooleanInstance();
                 if (value.equals("false") || value.equals("False") || value.equals("F") || value.equals("f")
-                        || value.equals("no") || value.equals("n") || value.equals("")
+                        || value.equals("no") || value.equals("n") || value.isEmpty()
                         || value.equals("FALSE") || value.equals("NO") || value.equals("No")) {
                     ((LiteralBoolean) v).setValue(false);
                 }
@@ -3438,7 +3422,7 @@ public class Utils {
                 String s = "";
                 for (int j = 0; j < i; j++) {
                     Object val = tm.getValueAt(row, curCol);
-                    if (val.toString().equals("")) {
+                    if (val.toString().isEmpty()) {
                         s += "&#xA0;&#xA0;&#xA0;&#xA0;";
                         curCol++;
                     }
@@ -3656,6 +3640,7 @@ public class Utils {
         else {
             s = type;
         }
+        // TODO verify that these work with TWC as BaseElements with .getID instead of as Elements with .getLocalID
         if (includeId && o instanceof BaseElement) {
             if (!Utils2.isNullOrEmpty(s)) {
                 s = s + ":" + ((BaseElement) o).getID();
@@ -3731,71 +3716,11 @@ public class Utils {
         ex.printStackTrace();
     }
 
-    public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork) {
-        return tryToLock(project, e, isFromTeamwork, false);
+    public static boolean recommendUpdateFromRemote(Project project) {
+        return recommendUpdateFromRemote(project, "");
     }
 
-    public static boolean tryToLock(Project project, Element e, boolean isFromTeamwork, boolean recursive) {
-        if (e.isEditable()) {
-            return true;
-        }
-        if (!isFromTeamwork) {
-            return false;
-        }
-        String user = TeamworkUtils.getLoggedUserName();
-        if (user == null) {
-            return false;
-        }
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-        if (listener != null) {
-            listener.setDisabled(true);
-        }
-        //lock may trigger teamwork update which we don't want to catch changes for since it should already be in sync folder
-        boolean sessionCreated = SessionManager.getInstance().isSessionCreated();
-        try {
-            if (e instanceof Property) {
-                TeamworkUtils.lockElement(project, e.getOwner(), recursive);
-            }
-            else if (e instanceof Slot) {
-                Element owner = e.getOwner();
-                if (owner != null && owner.getOwner() instanceof Package) {
-                    TeamworkUtils.lockElement(project, owner, recursive);
-                }
-                else {
-                    TeamworkUtils.lockElement(project, owner.getOwner(), recursive);
-                }
-            }
-            else if (e instanceof InstanceSpecification && recursive) {
-                Element owner = e.getOwner();
-                if (owner instanceof Package || owner instanceof Classifier) {
-                    TeamworkUtils.lockElement(project, owner, true);
-                }
-                else {
-                    TeamworkUtils.lockElement(project, e, true);
-                }
-            }
-            else {
-                TeamworkUtils.lockElement(project, e, recursive);
-            }
-        } catch (Exception ex) {
-            log.info("caught exception when locking:");
-            ex.printStackTrace();
-        }
-        if (sessionCreated && !SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().createSession("session after lock");
-        }
-        if (listener != null) {
-            listener.setDisabled(false);
-        }
-        //if a session was open and lock triggered a teamwork update, session would be closed
-        return e.isEditable();
-    }
-
-    public static boolean recommendUpdateFromTeamwork() {
-        return recommendUpdateFromTeamwork("");
-    }
-
-    public static boolean recommendUpdateFromTeamwork(String add) {
+    public static boolean recommendUpdateFromRemote(Project project, String add) {
         if (forceDialogFalse) {
             forceDialogFalse = false;
             return false;
@@ -3804,32 +3729,27 @@ public class Utils {
             forceDialogTrue = false;
             return true;
         }
-        Project project = Application.getInstance().getProject();
-        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+        if (!project.isRemote()) {
             return true;
         }
-        String user = TeamworkUtils.getLoggedUserName();
-        ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(project);
+        String user = EsiUtils.getLoggedUserName();
         try {
-            int lastVersion = TeamworkUtils.getLastVersion(currentProj);
+            int lastVersion = MDUtils.getLatestEsiVersion(project);
             if (user == null || lastVersion < 0) {
-                Utils.guilog("[ERROR] You must be logged into Teamwork first.");
+                Utils.guilog("[ERROR] You must be logged into Teamwork Cloud first.");
                 return false;
             }
-            if (lastVersion == MDUtils.getProjectVersion(project)) {
+            if (lastVersion == MDUtils.getRemoteVersion(project)) {
                 return true;
             }
-        } catch (IOException uhe) {
-            Utils.guilog("[ERROR] You must be logged into Teamwork first.");
-            uhe.printStackTrace();
-            return false;
         } catch (Exception ex) {
-            Utils.guilog("[ERROR] Unknown exception occurred when trying to verify Teamwork state.");
+            Utils.guilog("[ERROR] Unexpected exception occurred when trying to verify Teamwork Cloud state.");
             ex.printStackTrace();
+            System.out.println(ex.getMessage());
             return false;
         }
         String[] buttons = {"Update", "Ignore"};
-        Boolean reply = Utils.getUserYesNoAnswerWithButton("There is a new project version available on Teamwork.\nIt is highly recommended that you update before proceeding.\n"
+        Boolean reply = Utils.getUserYesNoAnswerWithButton("There is a new project version available on Teamwork Cloud.\nIt is highly recommended that you update before proceeding.\n"
                 + add, buttons, false);
         if (reply == null || !reply) {
             return false;
@@ -3838,7 +3758,7 @@ public class Utils {
         if (listener != null) {
             listener.setDisabled(true);
         }
-        TeamworkUtils.updateProject(project);
+        EsiUtils.updateProject(project);
         if (listener != null) {
             listener.setDisabled(false);
         }

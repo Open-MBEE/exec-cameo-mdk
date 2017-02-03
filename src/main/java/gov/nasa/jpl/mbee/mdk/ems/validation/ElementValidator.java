@@ -25,7 +25,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 
-import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -90,6 +90,11 @@ public class ElementValidator implements RunnableWithProgress {
         progressStatus.setMax(elementKeySet.size());
         progressStatus.setCurrent(0);
 
+
+        int notEquivalentCount = 0;
+        int missinginClientCount = 0;
+        int missingOnMmsCount = 0;
+
         for (String id : elementKeySet) {
             Pair<Element, ObjectNode> clientElement = clientElementMap.get(id);
             Element clientElementElement = clientElement != null ? clientElement.getFirst() : null;
@@ -107,6 +112,7 @@ public class ElementValidator implements RunnableWithProgress {
                 String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
 
                 validationRuleViolation = new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + type + " " + name);
+                missinginClientCount++;
             }
             else if (serverElement == null) {
                 String name = "<>";
@@ -114,6 +120,7 @@ public class ElementValidator implements RunnableWithProgress {
                     name = ((NamedElement) clientElementElement).getName();
                 }
                 validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[MISSING ON MMS] " + clientElementElement.getHumanType() + " " + name);
+                missingOnMmsCount++;
             }
             else {
                 diff = JsonDiffFunction.getInstance().apply(clientElementObjectNode, serverElement);
@@ -123,6 +130,7 @@ public class ElementValidator implements RunnableWithProgress {
                         name = ((NamedElement) clientElementElement).getName();
                     }
                     validationRuleViolation = new ValidationRuleViolation(clientElementElement, "[NOT EQUIVALENT] " + clientElementElement.getHumanType() + " " + name);
+                    notEquivalentCount++;
                 }
             }
             if (validationRuleViolation != null) {
@@ -134,7 +142,7 @@ public class ElementValidator implements RunnableWithProgress {
                 validationRuleViolation.addAction(copyActionsCategory);
                 copyActionsCategory.addAction(new ClipboardAction("ID", id));
                 if (clientElementElement != null) {
-                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElementElement.getID()));
+                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElementElement.getLocalID()));
                 }
                 if (clientElementObjectNode != null) {
                     try {
@@ -158,9 +166,13 @@ public class ElementValidator implements RunnableWithProgress {
                 elementEquivalenceValidationRule.addViolation(validationRuleViolation);
                 invalidElements.put(id, new Pair<>(clientElement, serverElement));
             }
-
             progressStatus.increase();
         }
+        Application.getInstance().getGUILog().log("[INFO] --- Start MDK Element Validation Summary ---");
+        Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missinginClientCount) + " element" + (missinginClientCount != 1 ? "s are" : " is") + " missing in client.");
+        Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingOnMmsCount) + " element" + (missingOnMmsCount != 1 ? "s are" : "is") + " missing on MMS.");
+        Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(notEquivalentCount) + " element" + (notEquivalentCount != 1 ? "s are" : " is") + " not equivalent between client and MMS.");
+        Application.getInstance().getGUILog().log("[INFO] ---  End MDK Element Validation Summary  ---");
     }
 
     public ValidationSuite getValidationSuite() {

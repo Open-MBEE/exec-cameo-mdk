@@ -103,11 +103,11 @@ public class Image extends Query {
                     if (getCaptions() != null && getCaptions().size() > i && getShowCaptions()) {
                         im.setCaption(getCaptions().get(i));
                     }
-                    im.setId(diagram.getID());
+                    im.setId(diagram.getLocalID());
                     res.add(im);
 
                     String doc = ModelHelper.getComment(diagram);
-                    if (doc != null && (forViewEditor || (!doc.trim().equals("") && !getDoNotShow()))) {
+                    if (doc != null && (forViewEditor || (!doc.trim().isEmpty() && !getDoNotShow()))) {
                         if ((Boolean) GeneratorUtils.getObjectProperty(diagram, DocGen3Profile.editableChoosable, "editable", true)) {
                             res.add(new DBParagraph(doc, diagram, From.DOCUMENTATION));
                         }

@@ -10,12 +10,12 @@ public class SyncStatusProjectEventListenerAdapter extends ProjectEventListenerA
 
     @Override
     public void projectOpened(Project project) {
-        SyncStatusConfigurator.getSyncStatusAction().update();
+        updateSyncStatus();
     }
 
     @Override
     public void projectClosed(Project project) {
-        projectOpened(project);
+        updateSyncStatus();
     }
 
     @Override
@@ -25,6 +25,10 @@ public class SyncStatusProjectEventListenerAdapter extends ProjectEventListenerA
 
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
-        projectOpened(project);
+        updateSyncStatus();
+    }
+
+    private void updateSyncStatus() {
+        SyncStatusConfigurator.getSyncStatusAction().update();
     }
 }

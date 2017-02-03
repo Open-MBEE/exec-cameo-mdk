@@ -63,7 +63,7 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
         }
         visitChildren(doc);
         if (doc.getDgElement() != null) {
-            result.put(doc.getDgElement().getID(), curChildren.pop());
+            result.put(doc.getDgElement().getLocalID(), curChildren.pop());
             resultElements.put(doc.getDgElement(), curChildrenElements.pop());
         }
     }
@@ -73,10 +73,10 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
     public void visit(Section sec) {
         if (sec.isView()) {
             if (sec.isNoSection()) {
-                nosections.add(sec.getDgElement().getID());
+                nosections.add(sec.getDgElement().getLocalID());
             }
             if (!curChildren.isEmpty()) {
-                curChildren.peek().add(sec.getDgElement().getID());
+                curChildren.peek().add(sec.getDgElement().getLocalID());
                 curChildrenElements.peek().add(sec.getDgElement());
             }
             curChildren.push(new JSONArray());
@@ -84,7 +84,7 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
         }
         visitChildren(sec);
         if (sec.isView()) {
-            result.put(sec.getDgElement().getID(), curChildren.pop());
+            result.put(sec.getDgElement().getLocalID(), curChildren.pop());
             resultElements.put(sec.getDgElement(), curChildrenElements.pop());
         }
     }

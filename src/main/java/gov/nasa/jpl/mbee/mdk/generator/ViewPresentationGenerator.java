@@ -134,12 +134,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
             if (processedElements.contains(view)) {
-                Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + view.getID() + ".");
+                Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + view.getLocalID() + ".");
                 continue;
             }
-            ViewMapping viewMapping = viewMap.containsKey(view.getID()) ? viewMap.get(view.getID()) : new ViewMapping();
+            ViewMapping viewMapping = viewMap.containsKey(view.getLocalID()) ? viewMap.get(view.getLocalID()) : new ViewMapping();
             viewMapping.setElement(view);
-            viewMap.put(view.getID(), viewMapping);
+            viewMap.put(view.getLocalID(), viewMapping);
         }
 
         // Find and delete existing view constraints to prevent ID conflict when importing. Migration should handle this,
@@ -161,7 +161,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             SessionManager.getInstance().createSession("Legacy View Constraint Purge");
             for (Constraint constraint : constraintsToBeDeleted) {
                 if (constraint.isEditable()) {
-                    Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + constraint.getID());
+                    Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + constraint.getLocalID());
                     try {
                         ModelElementsManager.getInstance().removeElement(constraint);
                     } catch (ReadOnlyElementException e) {
@@ -204,15 +204,17 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         List<String> viewIDs = new ArrayList<>();
         if (!viewMap.isEmpty()) {
             // STAGE 2: Downloading existing view instances
-            progressStatus.setDescription("Downloading existing view instances");
+            progressStatus.setDescription("Downloading existing views and view instances");
             progressStatus.setCurrent(2);
 
             ObjectNode viewResponse;
             try {
+                System.out.println("**************");
                 viewResponse = MMSUtils.getElementsById(viewMap.keySet(), project, progressStatus);
+                System.out.println("**************");
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
-                Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
+                Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view the logs for more information.");
                 e.printStackTrace();
                 return;
             }
@@ -220,7 +222,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (viewResponse != null && (viewElementsJsonArray = viewResponse.get("elements")) != null && viewElementsJsonArray.isArray()) {
                 Queue<String> instanceIDs = new LinkedList<>();
                 Queue<String> slotIDs = new LinkedList<>();
-                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
+                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(),
+                        generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
                 for (JsonNode elementJsonNode : viewElementsJsonArray) {
                     if (!elementJsonNode.isObject()) {
                         continue;
@@ -230,32 +233,33 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     JsonNode viewOperandJsonNode = JacksonUtils.getAtPath(elementObjectNode, "/" + MDKConstants.CONTENTS_KEY + "/operand"),
                             sysmlIdJson = elementObjectNode.get(MDKConstants.SYSML_ID_KEY);
                     String sysmlId;
-                    if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()
-                            && sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
+                    if (sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
                         // store returned ids so we can exclude view generation for elements that aren't on the mms yet
                         viewIDs.add(sysmlId);
-                        List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
-                        for (JsonNode viewOperandJson : viewOperandJsonNode) {
-                            JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
-                            String instanceId;
-                            if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
+                        if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()) {
+                            List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
+                            for (JsonNode viewOperandJson : viewOperandJsonNode) {
+                                JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
+                                String instanceId;
+                                if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
                                 /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
                                     continue;
                                 }*/
-                                if (generatedFromViewProperty != null) {
-                                    slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getID());
+                                    if (generatedFromViewProperty != null) {
+                                        slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getLocalID());
+                                    }
+                                    if (generatedFromElementProperty != null) {
+                                        slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getLocalID());
+                                    }
+                                    instanceIDs.add(instanceId);
+                                    viewInstanceIDs.add(instanceId);
                                 }
-                                if (generatedFromElementProperty != null) {
-                                    slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getID());
-                                }
-                                instanceIDs.add(instanceId);
-                                viewInstanceIDs.add(instanceId);
                             }
+                            ViewMapping viewMapping = viewMap.containsKey(sysmlId) ? viewMap.get(sysmlId) : new ViewMapping();
+                            viewMapping.setObjectNode(elementObjectNode);
+                            viewMapping.setInstanceIDs(viewInstanceIDs);
+                            viewMap.put(sysmlId, viewMapping);
                         }
-                        ViewMapping viewMapping = viewMap.containsKey(sysmlId) ? viewMap.get(sysmlId) : new ViewMapping();
-                        viewMapping.setObjectNode(elementObjectNode);
-                        viewMapping.setInstanceIDs(viewInstanceIDs);
-                        viewMap.put(sysmlId, viewMapping);
                     }
                 }
 
@@ -297,10 +301,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                             continue;
                                         }*/
                                         if (generatedFromViewProperty != null) {
-                                            slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getID());
+                                            slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getLocalID());
                                         }
                                         if (generatedFromElementProperty != null) {
-                                            slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getID());
+                                            slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getLocalID());
                                         }
                                         instanceIDs.add(instanceId);
                                     }
@@ -519,7 +523,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewInProject.addViolation(violation);
                 skippedViews.add(view);
             }
-            if (!viewIDs.contains(view.getID())) {
+            if (!viewIDs.contains(view.getLocalID())) {
                 ValidationRuleViolation violation = new ValidationRuleViolation(view, "View does not exist on MMS. Generation skipped.");
                 viewDoesNotExist.addViolation(violation);
                 skippedViews.add(view);
@@ -563,7 +567,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     continue;
                 }
                 Object o;
-                ObjectNode serverViewJson = (o = viewMap.get(view.getID())) != null ? ((ViewMapping) o).getObjectNode() : null;
+                ObjectNode serverViewJson = (o = viewMap.get(view.getLocalID())) != null ? ((ViewMapping) o).getObjectNode() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientViewJson, serverViewJson)) {
                     if (MDUtils.isDeveloperMode()) {
                         Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonDiffFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
@@ -598,7 +602,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (clientInstanceSpecificationJson == null) {
                     continue;
                 }
-                ObjectNode serverInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getID()) ? instanceSpecificationMap.get(instance.getID()).getFirst() : null;
+                ObjectNode serverInstanceSpecificationJson = instanceSpecificationMap.containsKey(instance.getLocalID()) ? instanceSpecificationMap.get(instance.getLocalID()).getFirst() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
                     if (MDUtils.isDeveloperMode()) {
                         Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonDiffFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
@@ -610,7 +614,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (clientSlotJson == null) {
                         continue;
                     }
-                    JsonNode serverSlotJson = slotMap.containsKey(slot.getID()) ? slotMap.get(slot.getID()).getFirst() : null;
+                    JsonNode serverSlotJson = slotMap.containsKey(slot.getLocalID()) ? slotMap.get(slot.getLocalID()).getFirst() : null;
                     if (!JsonEquivalencePredicate.getInstance().test(clientSlotJson, serverSlotJson)) {
                         elementsArrayNode.add(clientSlotJson);
                         if (MDUtils.isDeveloperMode()) {

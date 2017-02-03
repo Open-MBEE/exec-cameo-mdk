@@ -81,26 +81,26 @@ public class OclEvaluatorPlugin extends MDPlugin {
         Method method = getNmActionMethod();
 
         String category = "MDK";
-
+        String diagramContext ="BaseDiagramContext";
         addConfiguration("MainMenu", "", OclQueryAction.actionText, category, method, this);
         addConfiguration("ContainmentBrowserContext", "", OclQueryAction.actionText, category, method, this);
-        addConfiguration("BaseDiagramContext", "Class Diagram", OclQueryAction.actionText, category, method,
+        addConfiguration(diagramContext, "Class Diagram", OclQueryAction.actionText, category, method,
                 this);
-        addConfiguration("BaseDiagramContext", "Activity Diagram", OclQueryAction.actionText, category,
+        addConfiguration(diagramContext, "Activity Diagram", OclQueryAction.actionText, category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "SysML Block Definition Diagram", OclQueryAction.actionText,
+        addConfiguration(diagramContext, "SysML Block Definition Diagram", OclQueryAction.actionText,
                 category, method, this);
-        addConfiguration("BaseDiagramContext", "SysML Internal Block Diagram", OclQueryAction.actionText,
+        addConfiguration(diagramContext, "SysML Internal Block Diagram", OclQueryAction.actionText,
                 category, method, this);
-        addConfiguration("BaseDiagramContext", "DocGen 3 View Diagram", OclQueryAction.actionText, category,
+        addConfiguration(diagramContext, "DocGen 3 View Diagram", OclQueryAction.actionText, category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "DocGen 3 Diagram", OclQueryAction.actionText, category,
+        addConfiguration(diagramContext, "DocGen 3 Diagram", OclQueryAction.actionText, category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "View Diagram", OclQueryAction.actionText, category, method,
+        addConfiguration(diagramContext, "View Diagram", OclQueryAction.actionText, category, method,
                 this);
-        addConfiguration("BaseDiagramContext", "Viewpoint Method Diagram", OclQueryAction.actionText, category, method,
+        addConfiguration(diagramContext, "Viewpoint Method Diagram", OclQueryAction.actionText, category, method,
                 this);
-        addConfiguration("BaseDiagramContext", "DocumentView", OclQueryAction.actionText, category, method,
+        addConfiguration(diagramContext, "DocumentView", OclQueryAction.actionText, category, method,
                 this);
         Debug.outln("finished initializing TestPlugin!");
     }
