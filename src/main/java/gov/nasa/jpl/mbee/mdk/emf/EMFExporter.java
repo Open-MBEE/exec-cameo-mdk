@@ -37,6 +37,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.esi.EsiUtilsInternal;
+import com.nomagic.magicdraw.foundation.MDObject;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -138,6 +139,9 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             if (slot.getOwningInstance() != null && ((Slot) eObject).getDefiningFeature() != null) {
                 return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
             }
+        }
+        if (eObject instanceof MDObject) {
+            return ((MDObject) eObject).getID();
         }
         return EcoreUtil.getID(eObject);
     }
