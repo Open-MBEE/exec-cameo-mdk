@@ -273,7 +273,7 @@ public class OclEvaluator {
 
     public Object evaluateQueryNoSetup(Object context, String queryString, boolean verbose)
             throws ParserException {
-        Object result = null;
+        final Object[] result = {null};
         OCLExpression<EClassifier> query = null;
         try {
             query = getHelper().createQuery(queryString);
@@ -312,12 +312,20 @@ public class OclEvaluator {
         }
 
         if (query != null) {
-            result = getOcl().evaluate(context, query);
-            if (getOcl().isInvalid(result)) {
+            final OCLExpression<EClassifier> finalQuery = query;
+            Thread queryThread = new Thread() {
+                public void run() {
+                         result[0] = getOcl().evaluate(context, finalQuery);
+                }
+            };
+
+            queryThread.start();
+
+            if (getOcl().isInvalid(result[0])) {
                 queryStatus = QueryStatus.INVALID_OCL;
             }
         }
-        return result;
+        return result[0];
     }
 
     /**

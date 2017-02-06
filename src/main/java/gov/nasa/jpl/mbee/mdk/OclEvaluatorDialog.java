@@ -45,6 +45,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
+
 /**
  *
  */
@@ -328,6 +329,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         if ("Evaluate".equals(e.getActionCommand())) {
             editableListPanel.queryTextArea.setEnabled(false);
             runQuery();
+
             SwingUtilities.invokeLater(new Runnable() {
 
                 @Override
