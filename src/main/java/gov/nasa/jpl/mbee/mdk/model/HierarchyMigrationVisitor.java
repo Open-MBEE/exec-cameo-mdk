@@ -87,8 +87,8 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
     private void setId(Element old, Element neww) {
         if (old.isEditable()) {
             if (!(old instanceof Diagram)) {
-                String oldId = old.getLocalID();
-                String newId = neww.getLocalID();
+                String oldId = old.getID();
+                String newId = neww.getID();
                 neww.setID(oldId);
                 old.setID(newId);
             }

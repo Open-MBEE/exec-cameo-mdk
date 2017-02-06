@@ -103,7 +103,7 @@ public class Image extends Query {
                     if (getCaptions() != null && getCaptions().size() > i && getShowCaptions()) {
                         im.setCaption(getCaptions().get(i));
                     }
-                    im.setId(diagram.getLocalID());
+                    im.setId(diagram.getID());
                     res.add(im);
 
                     String doc = ModelHelper.getComment(diagram);

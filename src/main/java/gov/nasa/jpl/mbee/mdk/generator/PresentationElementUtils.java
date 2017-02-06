@@ -115,7 +115,7 @@ public class PresentationElementUtils {
                         try {
                             JSONObject ob = (JSONObject) (new JSONParser()).parse(((LiteralString) is.getSpecification()).getValue());
                             //TODO sourceProperty json key migration? @donbot
-                            if (view.getLocalID().equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
+                            if (view.getID().equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
                                 viewinstance = false; //a view doc instance
                                 res.setViewDocHack(is);
                             }
@@ -291,7 +291,7 @@ public class PresentationElementUtils {
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            is.setLocalID(MDKConstants.HIDDEN_ID_PREFIX + is.getLocalID() + ID_SUFFIX);
+            is.setID(MDKConstants.HIDDEN_ID_PREFIX + is.getID() + ID_SUFFIX);
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);
@@ -316,10 +316,10 @@ public class PresentationElementUtils {
         String name;
         if (pe.isViewDocHack()) {
             newspec = new JSONObject();
-            newspec.put("source", is.getLocalID());
+            newspec.put("source", is.getID());
             newspec.put("type", "Paragraph");
             newspec.put("sourceProperty", "documentation");
-            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getLocalID() + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
+            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
             ModelHelper.setComment(is, transclude);
             name = "View Documentation";
             classifier = tparaC;
@@ -396,7 +396,7 @@ public class PresentationElementUtils {
         }
         c = ef.createConstraintInstance();
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        c.setID(view.getLocalID() + "_vc");
+        c.setID(view.getID() + "_vc");
         c.setOwner(view);
         c.getConstrainedElement().add(view);
         return c;
@@ -406,7 +406,7 @@ public class PresentationElementUtils {
         Constraint c = getOrCreateViewConstraint(view);
         Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : ef.createExpressionInstance();
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        expression.setID(view.getLocalID() + "_vc_expression");
+        expression.setID(view.getID() + "_vc_expression");
         expression.setOwner(c);
         List<InstanceValue> instanceValues = new ArrayList<>(instanceSpecifications.size());
         Iterator<ValueSpecification> operandIterator = expression.getOperand().iterator();

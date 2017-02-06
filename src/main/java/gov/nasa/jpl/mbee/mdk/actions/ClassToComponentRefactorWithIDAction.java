@@ -45,7 +45,7 @@ public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
             if (!(element instanceof Class)) {
                 continue;
             }
-            String elementID = element.getLocalID();
+            String elementID = element.getID();
 
 
             // Converts the element to an interface.

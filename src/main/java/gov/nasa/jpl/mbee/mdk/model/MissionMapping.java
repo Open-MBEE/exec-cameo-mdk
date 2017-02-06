@@ -529,7 +529,7 @@ public class MissionMapping extends Query {
     }
 
     private Node<String, MissionComponent> fillMission(NamedElement cur) {
-        Node<String, MissionComponent> node = new Node<String, MissionComponent>(cur.getLocalID(),
+        Node<String, MissionComponent> node = new Node<String, MissionComponent>(cur.getID(),
                 new MissionComponent(cur.getName(), cur));
         if (cur instanceof Package) {
             if (IMCEPresent) {

@@ -206,7 +206,7 @@ public class MDKValidationWindow {
             return id;
         }
         else if (vrve != null) {
-            return vrve.getLocalID();
+            return vrve.getID();
         }
         return "";
     }

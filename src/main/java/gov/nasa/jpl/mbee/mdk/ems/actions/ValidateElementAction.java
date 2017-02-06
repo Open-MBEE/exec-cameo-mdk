@@ -52,12 +52,6 @@ public class ValidateElementAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-//        Element element = (Element)start.toArray()[0];
-//        Utils.guilog(element.getID());
-//        Utils.guilog(element.getLocalID());
-//        Utils.guilog(element.sGetID());
-//        Utils.guilog(element.sGetLocalID());
-
         ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), false, 0);
         ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
         if (manualSyncRunner.getValidationSuite() == null) {

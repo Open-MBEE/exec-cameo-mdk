@@ -45,7 +45,7 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
             if (!(element instanceof Component)) {
                 continue;
             }
-            String elementID = element.getLocalID();
+            String elementID = element.getID();
             // Converts the element to an interface.
             ConvertElementInfo info = new ConvertElementInfo(
                     com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class);

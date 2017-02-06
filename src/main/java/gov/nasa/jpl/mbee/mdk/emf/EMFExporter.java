@@ -217,8 +217,8 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 }
         ),
         SYNC(
-                (element, project, objectNode) -> element == null || element.getLocalID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
-                        element.getOwner() != null && element.getOwner().getLocalID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
+                (element, project, objectNode) -> element == null || element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
+                        element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
         ),
         ATTACHED_PROJECT(
                 (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && !(element instanceof Model) ? null : objectNode

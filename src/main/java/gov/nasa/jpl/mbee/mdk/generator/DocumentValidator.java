@@ -806,7 +806,7 @@ public class DocumentValidator {
             result = OclEvaluator.evaluateQuery(context, expression);
         } catch (ParserException e) {
             if (violationIfInconsistent) {
-                String id = context instanceof Element ? ((Element) context).getLocalID() : context.toString();
+                String id = context instanceof Element ? ((Element) context).getID() : context.toString();
                 String errorMessage = e.getLocalizedMessage() + " for OCL query \"" + expression + "\" on "
                         + Utils.getName(context) + (showElementIds ? "[" + id + "]" : "");
                 if (rule != null && context instanceof Element) {
@@ -934,7 +934,7 @@ public class DocumentValidator {
         List<Constraint> constraints = getConstraints(constrainedObject, actionOutput, context);
         if (constrainedObject instanceof Element) {
             Element e = (Element) constrainedObject;
-            Debug.outln("constraints for " + e.getHumanName() + ", " + e.getLocalID() + ": "
+            Debug.outln("constraints for " + e.getHumanName() + ", " + e.getID() + ": "
                     + MoreToString.Helper.toString(constraints));
         }
         else {

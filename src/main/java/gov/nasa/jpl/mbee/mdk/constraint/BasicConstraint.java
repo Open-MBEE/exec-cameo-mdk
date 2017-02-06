@@ -633,7 +633,7 @@ public class BasicConstraint implements Constraint {
     }
 
     protected static String toString(Element e, boolean showElementId) {
-        return Utils.getName(e) + (showElementId ? "[" + e.getLocalID() + "]" : "");
+        return Utils.getName(e) + (showElementId ? "[" + e.getID() + "]" : "");
     }
 
     protected static String toString(Collection<? extends Object> coll, boolean showElementId) {
