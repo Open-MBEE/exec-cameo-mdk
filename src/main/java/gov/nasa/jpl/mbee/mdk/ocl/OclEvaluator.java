@@ -273,7 +273,7 @@ public class OclEvaluator {
 
     public Object evaluateQueryNoSetup(Object context, String queryString, boolean verbose)
             throws ParserException {
-        final Object[] result = {null};
+        Object result = null;
         OCLExpression<EClassifier> query = null;
         try {
             query = getHelper().createQuery(queryString);
@@ -310,22 +310,30 @@ public class OclEvaluator {
             throw e;// new ParserException( getBasicDiagnostic() );
         } catch (NullPointerException ignored) {
         }
-
-        if (query != null) {
-            final OCLExpression<EClassifier> finalQuery = query;
-            Thread queryThread = new Thread() {
-                public void run() {
-                         result[0] = getOcl().evaluate(context, finalQuery);
-                }
-            };
-
-            queryThread.start();
-
-            if (getOcl().isInvalid(result[0])) {
-                queryStatus = QueryStatus.INVALID_OCL;
-            }
+        result = getOcl().evaluate(context, query);
+        System.out.println(query.toString());
+        if (getOcl().isInvalid(result)) {
+            queryStatus = QueryStatus.INVALID_OCL;
         }
-        return result[0];
+        // Code for potentially
+//        Object[] result2 = new Object[1];
+//        if (query != null) {
+//            final OCLExpression<EClassifier> finalQuery = query;
+//            Thread queryThread = new Thread() {
+//                public void run() {
+//
+//                    result2[0] = getOcl().evaluate(context, finalQuery);
+//                }
+//            };
+//            queryThread.setName("MDK OCL Evaluator");
+//            queryThread.start();
+//
+//            if (getOcl().isInvalid(result2[0])) {
+//                queryStatus = QueryStatus.INVALID_OCL;
+//            }
+//        }
+//        return result2[0];
+        return result;
     }
 
     /**
