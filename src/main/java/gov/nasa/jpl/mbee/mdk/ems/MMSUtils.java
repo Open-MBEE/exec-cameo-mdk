@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -690,24 +692,33 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        String descriptor = (project.isRemote() ? project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString() : "local");
-        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), descriptor);
+        String categoryId = "local";
+        String sysmlId;
+        if (project.isRemote()) {
+            sysmlId = ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI()).toString();
+            // TODO @DONBOT enable for 18.5GA when the method is usable, remove the branch assignment placeholder
+//            categoryId = EsiUtils.getCategoryID(resourceId);
+            categoryId = EsiUtils.getBranchID(project.getPrimaryProject().getLocationURI()).toString();
+        }
+        else {
+            sysmlId = project.getPrimaryProject().getProjectID();
+        }
+        return getProjectObjectNode(project.getPrimaryProject().getName(), sysmlId, categoryId);
     }
 
     public static ObjectNode getProjectObjectNode(IProject project) {
         return getProjectObjectNode(project.getName(), project.getProjectID(), null);
     }
 
-    private static ObjectNode getProjectObjectNode(String name, String projId, String descId) {
-
+    private static ObjectNode getProjectObjectNode(String name, String projectId, String categoryId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projId);
+        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projectId);
         if (name != null && !name.isEmpty()) {
             projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }
-        if (descId != null && !descId.isEmpty()) {
-            projectObjectNode.put(MDKConstants.DESCRIPTOR_ID, descId);
+        if (categoryId != null && !categoryId.isEmpty()) {
+            projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
         }
         return projectObjectNode;
     }

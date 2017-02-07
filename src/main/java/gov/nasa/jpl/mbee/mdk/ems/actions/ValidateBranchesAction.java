@@ -27,6 +27,7 @@ public class ValidateBranchesAction extends MMSAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        // branchId = EsiUtils.getBranchID(Project.getProject(element).getPrimaryProject().getLocationURI()).toString();
         ProgressStatusRunner.runWithProgressStatus(new ValidationRunner(), "Validating Branches", true, 0);
     }
 
