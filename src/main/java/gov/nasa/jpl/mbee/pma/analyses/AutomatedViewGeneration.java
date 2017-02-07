@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.pma.analyses;
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
@@ -60,7 +61,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private static InterruptTrap cancelHandler;
 
-    protected static final Object lock = new Object();
+    private static final Object lock = new Object();
 
     /*//////////////////////////////////////////////////////////////
      *
@@ -70,58 +71,67 @@ public class AutomatedViewGeneration extends CommandLine {
 
     @Override
     protected byte execute() {
-        // send output back to stdout
-        System.setOut(AutomatedViewGeneration.stdout);
-        System.setErr(AutomatedViewGeneration.stdout);
-
-        // disable logJson, in case it's on, to make the logs not hideous
-        MDKOptionsGroup.getMDKOptions().setLogJson(false);
-
-        // start the cancel handler so we don't terminate in the middle of a view sync operation
-        // and so we can force logout if logged in to teamwork
-        cancelHandler = new InterruptTrap();
-        Runtime.getRuntime().addShutdownHook(cancelHandler);
-
-        running = true;
         try {
+            // send output back to stdout
+            System.setOut(AutomatedViewGeneration.stdout);
+
+            // disable logJson, in case it's on, to make the logs not hideous
+            MDKOptionsGroup.getMDKOptions().setLogJson(false);
+
+            // start the cancel handler so we don't terminate in the middle of a view sync operation
+            // and so we can force logout if logged in to teamwork
+            cancelHandler = new InterruptTrap();
+            Runtime.getRuntime().addShutdownHook(cancelHandler);
+
+//            System.out.println("Waiting 20s...");
+//            Thread.sleep(20000);
+
             String msg = "Performing automated view generation";
             System.out.println(msg);
             messageLog.add(msg);
-            // login TeamworkCloud, set MMS credentials
-            loginTeamwork();
-            // open project
-            loadTeamworkProject();
-            // confirm MMS write permissions
-            checkSiteEditPermission();
-            // generate views and commit images
-            generateViewsForDocList();
-            // logout in finally
-        } catch (Error err) {
-            error = 99;
-            System.out.println(err.toString());
-            err.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (twLoaded) {
-                // close project
-                System.out.println("[OPERATION] Closing open project");
-                Application.getInstance().getProjectsManager().closeProject();
-            }
-            if (twLogin) {
-                // logout
-                System.out.println("[OPERATION] Logging out of teamwork");
-                EsiUtils.getTeamworkService().logout();
-            }
-
+            running = true;
             try {
-                checkFailure();
-            } catch (IOException e) {
+                // login TeamworkCloud, set MMS credentials
+                loginTeamwork();
+                // open project
+                loadTeamworkProject();
+                // confirm MMS write permissions
+                checkSiteEditPermission();
+                // generate views and commit images
+                generateViewsForDocList();
+                // logout in finally
+            } catch (Error err) {
+                error = 99;
+                System.out.println(err.toString());
+                err.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
-            }
+            } finally {
+                if (twLoaded) {
+                    // close project
+                    System.out.println("[OPERATION] Closing open project");
+                    Application.getInstance().getProjectsManager().closeProject();
+                }
+                if (twLogin) {
+                    // logout
+                    System.out.println("[OPERATION] Logging out of teamwork");
+                    EsiUtils.getTeamworkService().logout();
+                }
 
+                try {
+                    checkFailure();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            return error;
         }
-        return error;
+        catch (Exception exception) {
+            System.out.println("Unhandled exception thrown: " + exception.toString());
+            exception.printStackTrace();
+            return 98;
+        }
     }
 
     /*////////////////////////////////////////////////////////////////
@@ -205,7 +215,7 @@ public class AutomatedViewGeneration extends CommandLine {
      * @throws RemoteException error getting the projectDescriptor back from the twUtil
      */
     private void loadTeamworkProject()
-            throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, InterruptedException {
+            throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, InterruptedException, URISyntaxException {
         String message;
         ProjectDescriptor projectDescriptor;
 
@@ -216,6 +226,9 @@ public class AutomatedViewGeneration extends CommandLine {
         if (index > 0) {
             teamworkProject = teamworkProject.substring(index);
         }
+
+//        ProjectDescriptor descriptor = ProjectDescriptorsFactory.createProjectDescriptor(new java.net.URI(teamworkProject));
+//        Application.getInstance().getProjectsManager().loadProject(descriptor, false);
 
         // get the descriptor of the project trunk
         try {
@@ -354,39 +367,32 @@ public class AutomatedViewGeneration extends CommandLine {
     protected void parseArgs(String[] args) {
         // iteration of argIndex is handled by following code to account for
         // variable length arguments with whitespace
-        for (argIndex = 0; argIndex < args.length; ) {
+        for (argIndex = 0; argIndex < args.length; argIndex++) {
             if (args[argIndex].startsWith("-")) {
                 switch (args[argIndex]) {
-                    case "-crdlc":
+                    case "-CredentialsLocation":
                         credentialsLocation = buildArgString(args);
                         break;
-                    case "-debug":
+                    case "-Debug":
                         debug = true;
-                        argIndex++;
+                        System.out.println(Arrays.toString(args));
                         break;
-                    case "-doclist":
+                    case "-DocumentList":
                         String csvDocumentList = buildArgString(args);
                         Collections.addAll(viewList, csvDocumentList.split(" && "));
-                        System.out.println();
                         break;
-                    case "-tstrt":
+                    case "-RunRoot":
                         testRoot = buildArgString(args);
                         testRoot = testRoot + (testRoot.length() > 0 && testRoot.charAt(testRoot.length() - 1) == '/' ? "" : "/");
                         if (testRoot.equals("/")) {
                             testRoot = "";
                         }
                         break;
-                    case "-twbrn":
-                        teamworkBranchName = buildArgString(args);
-                        break;
-                    case "-twprj":
+                    case "-TeamworkProject":
                         teamworkProject = buildArgString(args);
-                        if (teamworkProject.startsWith("twcloud:/")) {
-                            teamworkProject = teamworkProject.substring(9);
-                        }
-                        break;
-                    case "-wkspc":
-                        teamworkBranchName = buildArgString(args);
+//                        if (teamworkProject.startsWith("twcloud:/")) {
+//                            teamworkProject = teamworkProject.substring(9);
+//                        }
                         break;
                     default:
                         System.out.println("Invalid flag passed: " + argIndex + " " + args[argIndex++]);
@@ -395,7 +401,12 @@ public class AutomatedViewGeneration extends CommandLine {
             else {
                 System.out.println("Invalid parameter passed: " + argIndex + " " + args[argIndex]);
             }
-            argIndex++;
+        }
+        if (debug) {
+            System.out.println("RunRoot: " + testRoot);
+            System.out.println("TeamworkProject: " + teamworkProject);
+            System.out.println("ViewList: " + viewList);
+            System.out.println("CredentialsLocation: " + credentialsLocation);
         }
         if (!Paths.get(credentialsLocation).toFile().exists()) {
             credentialsLocation = testRoot + credentialsLocation;
@@ -442,6 +453,12 @@ public class AutomatedViewGeneration extends CommandLine {
                 teamworkUsername = prop.getProperty("tw.user") + append;
                 teamworkPassword = prop.getProperty("tw.pass") + append;
             }
+            if (debug) {
+                System.out.println("TeamworkUsername: " + teamworkUsername);
+                System.out.println("TeamworkPassword: " + teamworkPassword);
+                System.out.println("TeamworkServer: " + teamworkServer);
+                System.out.println("TeamworkPort: " + teamworkPort);
+            }
         }
     }
 
@@ -477,8 +494,8 @@ public class AutomatedViewGeneration extends CommandLine {
     private void logMessage(String msg) throws FileNotFoundException, UnsupportedEncodingException {
         if (messageLog.size() > 0) {
             if (!msg.isEmpty()) {
-                messageLog.add(msg);
                 System.out.println(msg);
+                messageLog.add(msg);
             }
             exportMessageLog();
         }
