@@ -122,7 +122,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         }
         Project project;
         if (eObject instanceof Model && (project = Project.getProject((Model) eObject)).getPrimaryModel() == eObject) {
-            return project.getPrimaryProject().getProjectID() + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
+            if (project.isRemote()) {
+                return ProjectUtilities.getResourceID(project.getPrimaryProject().getProjectDescriptor().getLocationUri()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
+            }
+            else {
+                return project.getPrimaryProject().getProjectID() + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
+            }
         }
         if (eObject instanceof InstanceSpecification && ((InstanceSpecification) eObject).getStereotypedElement() != null) {
             return getEID(((InstanceSpecification) eObject).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
