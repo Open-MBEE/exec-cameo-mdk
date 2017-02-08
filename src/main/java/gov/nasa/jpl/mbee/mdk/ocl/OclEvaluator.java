@@ -315,25 +315,7 @@ public class OclEvaluator {
         if (getOcl().isInvalid(result)) {
             queryStatus = QueryStatus.INVALID_OCL;
         }
-        // Code for potentially
-//        Object[] result2 = new Object[1];
-//        if (query != null) {
-//            final OCLExpression<EClassifier> finalQuery = query;
-//            Thread queryThread = new Thread() {
-//                public void run() {
-//
-//                    result2[0] = getOcl().evaluate(context, finalQuery);
-//                }
-//            };
-//            queryThread.setName("MDK OCL Evaluator");
-//            queryThread.start();
-//
-//            if (getOcl().isInvalid(result2[0])) {
-//                queryStatus = QueryStatus.INVALID_OCL;
-//            }
-//        }
-//        return result2[0];
-        return result;
+         return result;
     }
 
     /**
