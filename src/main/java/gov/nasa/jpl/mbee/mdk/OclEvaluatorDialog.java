@@ -34,16 +34,18 @@ import gov.nasa.jpl.mbee.mdk.actions.OclQueryAction.ProcessOclQuery;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MoreToString;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import org.eclipse.emf.ecore.EClassifier;
+import org.eclipse.ocl.expressions.OCLExpression;
 import org.eclipse.ocl.util.CollectionUtil;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+
 
 /**
  *
@@ -59,7 +61,8 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
     //protected static HashSet<Object>                             pastInputs        = new HashSet<Object>();
     protected static LinkedList<String> choices = new LinkedList<String>();
     protected static int maxChoices = 20;
-
+    protected boolean isPressed = false;
+    private volatile boolean isThreadRunning = false;
     /**
      * callback for processing input
      */
@@ -73,7 +76,8 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
 
     public JCheckBox diagramCB, browserCB;
     public JRadioButton objectRadioButton, eachRadioButton;
-    public JButton evalButton;
+    public JToggleButton evalButton;
+    private Thread queryThread;
 
     /**
      * @param owner
@@ -95,7 +99,8 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         closeButton.setActionCommand("Close");
         closeButton.addActionListener(this);
         //
-        evalButton = new JButton("Evaluate (Ctrl+Enter)");
+        String evaluateButtonText = "Evaluate (Shift+Enter)";
+        evalButton = new JToggleButton(evaluateButtonText);
         evalButton.setActionCommand("Evaluate");
         evalButton.addActionListener(this);
         evalButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Evaluate");
@@ -117,7 +122,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
                 }
         );
 
-        getRootPane().setDefaultButton(evalButton);
+    //    getRootPane().setDefaultButton(evalButton);
 
         //Lay out the buttons from left to right.
         JPanel buttonPane = new JPanel();
@@ -186,6 +191,74 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         if (owner != null) {
             setLocationRelativeTo(owner);
         }
+
+        ItemListener itemListener = new ItemListener() {
+    public void itemStateChanged(ItemEvent itemEvent) {
+        int state = itemEvent.getStateChange();
+        if (state == ItemEvent.SELECTED) {
+            evalButton.setText("Stop evaluation");
+         } else {
+            evalButton.setText(evaluateButtonText);
+         }
+    }
+};
+    evalButton.addItemListener(itemListener);
+      }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if ("Evaluate".equals(e.getActionCommand())) {
+            if(isPressed){
+                //evalButton.setText("Stop evaluation!");
+                isPressed = false;
+                if(isThreadRunning) {
+                    queryThread.stop();
+                }
+            }else {
+                isPressed = true;
+                editableListPanel.queryTextArea.setEnabled(false);
+                //  evalButton.setText("Stop evaluation");
+                queryThread = new Thread() {
+                    public void run() {
+                        runQuery();
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                               // evalButton.setText("Evaluate");
+                                isThreadRunning = false;
+                                evalButton.doClick();
+                                isPressed = false;
+                            }
+                        });
+                    }
+                };
+                isThreadRunning = true;
+                queryThread.start();
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        editableListPanel.queryTextArea.setEnabled(true);
+                        editableListPanel.queryTextArea.requestFocusInWindow();
+                    }
+                });
+            }
+            evalButton.requestFocus();
+        }
+        else if ("Close".equals(e.getActionCommand())) {
+            SwingUtilities.invokeLater(new Runnable() {
+
+                @Override
+                public void run() {
+                    evalButton.requestFocusInWindow();
+                }
+
+            });
+            setVisible(false);
+        }
+        else {
+            // BAD
+        }
     }
 
     protected void runQuery() {
@@ -214,11 +287,16 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
                 processor = new OclQueryAction.ProcessOclQuery(context);
                 result = processor.process(query);
                 String processedResult = processResults(result);
-                editableListPanel.setResult(processedResult);
-                editableListPanel.setCompletions(processor.getCompletionChoices(),
-                        ProcessOclQuery.toString(processor.getSourceOfCompletion())
-                                + " : "
-                                + ProcessOclQuery.getTypeName(processor.getSourceOfCompletion()));
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        editableListPanel.setResult(processedResult);
+                        editableListPanel.setCompletions(processor.getCompletionChoices(),
+                                ProcessOclQuery.toString(processor.getSourceOfCompletion())
+                                        + " : "
+                                        + ProcessOclQuery.getTypeName(processor.getSourceOfCompletion()));
+                    }
+                });
             }
             else {
                 final List<Object> resultList = new ArrayList<Object>();
@@ -237,18 +315,27 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
                         classList.add(result.getClass());
                     }
                 }
-                editableListPanel.setResult(MoreToString.Helper.toString(resultList, false, true, null, null, "<ol><li>", "<li>", "</ol>", false));
-                editableListPanel.setCompletions(completionList,
-                        ProcessOclQuery.toString(processor.getSourceOfCompletion())
-                                + " : "
-                                + ProcessOclQuery.getTypeName(processor.getSourceOfCompletion()));
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        editableListPanel.setResult(MoreToString.Helper.toString(resultList, false, true, null, null, "<ol><li>", "<li>", "</ol>", false));
+                        editableListPanel.setCompletions(completionList,
+                            ProcessOclQuery.toString(processor.getSourceOfCompletion())
+                            + " : " + ProcessOclQuery.getTypeName(processor.getSourceOfCompletion()));
+                    }
+                });
                 //System.out.println("Completion List: " + completionList);
             }
-            choices.push(query);
-            while (choices.size() > maxChoices) {
-                choices.pollLast();
-            }
-            editableListPanel.setItems(choices.toArray());
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    choices.push(query);
+                    while (choices.size() > maxChoices) {
+                        choices.pollLast();
+                    }
+                    editableListPanel.setItems(choices.toArray());
+                }
+            });
         }
         /*inputHistory.push(query);
         if (pastInputs.contains(query)) {
@@ -323,37 +410,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         return oclObject.toString();
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if ("Evaluate".equals(e.getActionCommand())) {
-            editableListPanel.queryTextArea.setEnabled(false);
-            runQuery();
-            SwingUtilities.invokeLater(new Runnable() {
 
-                @Override
-                public void run() {
-                    editableListPanel.queryTextArea.setEnabled(true);
-                    editableListPanel.queryTextArea.requestFocusInWindow();
-                }
-
-            });
-            //evalButton.requestFocus();
-        }
-        else if ("Close".equals(e.getActionCommand())) {
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    evalButton.requestFocusInWindow();
-                }
-
-            });
-            setVisible(false);
-        }
-        else {
-            // BAD
-        }
-    }
 
     public static OclEvaluatorDialog getInstance() {
         return instance;

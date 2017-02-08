@@ -168,9 +168,6 @@ public class MDKPlugin extends Plugin {
                 extensions.add(file.toURI().toURL());
             } catch (MalformedURLException e) {
                 e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
             }
         }
         extensionsClassloader = new URLClassLoader(extensions.toArray(new URL[]{}),
