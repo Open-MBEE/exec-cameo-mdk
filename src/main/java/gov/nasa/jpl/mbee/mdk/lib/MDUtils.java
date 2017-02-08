@@ -243,12 +243,14 @@ public class MDUtils {
 
     public static String getRemoteBranchPath(Project project) {
         if (!project.isRemote()) {
-            return null;
+            return "master";
         }
-        return getRemoteBranchPath(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+        return EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
+//        return getRemoteBranchPath(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
     }
 
     public static String getRemoteBranchPath(URI uri) {
+
         return ProjectDescriptorsFactory.getProjectBranchPath(uri);
     }
 
@@ -276,6 +278,13 @@ public class MDUtils {
         final int[] version = new int[]{-1};
         EsiUtils.getVersions(projectDescriptor).stream().max(ProjectUtilities::compareVersions).ifPresent(iVersionDescriptor -> version[0] = ProjectUtilities.versionToInt(iVersionDescriptor.getName()));
         return version[0];
+    }
+
+    public static String getProjectID(Project project) {
+        if (project.isRemote()) {
+            return ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI());
+        }
+        return project.getID();
     }
 
 
