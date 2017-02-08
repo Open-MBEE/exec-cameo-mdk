@@ -32,6 +32,7 @@ import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 
@@ -60,8 +61,10 @@ public class EMSLogoutAction extends MMSAction {
         TicketUtils.clearUsernameAndPassword();
         Application.getInstance().getGUILog().log("[INFO] MMS logout complete.");
         for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
-            Application.getInstance().getGUILog().log("[WARNING] " + p.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
+            if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(p).getJmsMessageListener().isDisabled()) {
+                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
+                Application.getInstance().getGUILog().log("[WARNING] " + p.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
+            }
         }
         SyncStatusConfigurator.getSyncStatusAction().update();
         ActionsStateUpdater.updateActionsState();

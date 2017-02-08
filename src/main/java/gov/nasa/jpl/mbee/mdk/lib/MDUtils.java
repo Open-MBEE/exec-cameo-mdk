@@ -28,13 +28,12 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
 
-import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
-import com.nomagic.magicdraw.teamwork2.ProjectVersion;
-import com.nomagic.magicdraw.teamwork2.TeamworkService;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.uml.BaseElement;
@@ -43,10 +42,10 @@ import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import java.awt.event.ActionEvent;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A collection of utility functions for accessing the MagicDraw (MD)
@@ -191,38 +190,7 @@ public class MDUtils {
         return selectedElements;
     }
 
-    // /**
-    // * THIS DOESN'T WORK!!
-    // * @param event
-    // * @return
-    // */
-    // public static boolean eventInDiagram( ActionEvent event ) {
-    // Assert.fail();
-    // Object source = event.getSource();
-    // if ( source instanceof ActionsMenuCreator.CustomJMenuItem ) {
-    // ActionsMenuCreator.CustomJMenuItem item =
-    // (ActionsMenuCreator.CustomJMenuItem)source;
-    // // ((MDAction)item.getAction()).
-    // }
-    // boolean calledFromDiagram =
-    // ( source != null &&
-    // source.getClass().getSimpleName().toLowerCase().contains( "diagram" ) );
-    // return calledFromDiagram;
-    // }
 
-    // public gov.nasa.jpl.ae.event.Expression<?> toAeExpression(
-    // ValueSpecification mdValueSpec ) {
-    // Assert.assertFalse( true ); // TODO
-    // return null;
-    // }
-    //
-    // public gov.nasa.jpl.ae.event.Expression<?> toAeExpression( Expression
-    // mdExpression ) {
-    // Assert.assertFalse( true ); // TODO
-    // gov.nasa.jpl.ae.event.Expression<?> aeExpr = null;
-    // List< ValueSpecification > args = mdExpression.getOperand();
-    // return aeExpr;
-    // }
 
     public static Class<?> getType(BaseElement elem) {
         Class<?> type = elem.getClassType();
@@ -246,12 +214,12 @@ public class MDUtils {
     // }
 
     public static String getWorkspace(Project project) {
-        String twbranch = getTeamworkBranch(project);
+        String twbranch = getRemoteBranchPath(project);
         if (twbranch == null) {
             return "master";
         }
         twbranch = "master/" + twbranch;
-        String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+      //  String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
 
         //TODO @donbot imported from ExportUtility, update to finish the import
 //        Map<String, String> wsmap = wsIdMapping.get(projId);
@@ -273,25 +241,42 @@ public class MDUtils {
         return "master";
     }
 
-    public static String getTeamworkBranch(Project project) {
-        String branch = null;
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
-            branch = ProjectDescriptorsFactory.getProjectBranchPath(ProjectDescriptorsFactory.createRemoteProjectDescriptor(project).getURI());
+    public static String getRemoteBranchPath(Project project) {
+        if (!project.isRemote()) {
+            return null;
         }
-        return branch;
+        return getRemoteBranchPath(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
     }
 
-    public static Integer getProjectVersion(Project proj) {
-        Integer ver = null;
-        if (ProjectUtilities.isFromTeamworkServer(proj.getPrimaryProject())) {
-            IVersionDescriptor iVersionDescriptor = TeamworkService.getInstance(proj).getVersion(proj);
-            if (iVersionDescriptor instanceof ProjectVersion) {
-                ver = ((ProjectVersion) iVersionDescriptor).getNumber();
-            }
-        }
-        return ver;
+    public static String getRemoteBranchPath(URI uri) {
+        return ProjectDescriptorsFactory.getProjectBranchPath(uri);
     }
 
+    public static int getRemoteVersion(Project project) {
+        if (!project.isRemote()) {
+            return -1;
+        }
+        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+    }
+
+    public static int getRemoteVersion(URI uri) {
+        return ProjectDescriptorsFactory.getRemoteVersion(uri);
+    }
+
+    public static int getLatestEsiVersion(Project project) {
+        if (!project.isRemote()) {
+            return -1;
+        }
+        return getLatestEsiVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project));
+    }
+
+
+    // TODO Switch to convenience method in 18.5 @donbot
+    public static int getLatestEsiVersion(ProjectDescriptor projectDescriptor) {
+        final int[] version = new int[]{-1};
+        EsiUtils.getVersions(projectDescriptor).stream().max(ProjectUtilities::compareVersions).ifPresent(iVersionDescriptor -> version[0] = ProjectUtilities.versionToInt(iVersionDescriptor.getName()));
+        return version[0];
+    }
 
 
 }

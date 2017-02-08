@@ -18,6 +18,9 @@ import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import org.eclipse.emf.common.util.TreeIterator;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -66,6 +69,8 @@ public class EMFBulkImporter implements BulkImportFunction {
             progressStatus.setMax(objectNodes.size() * 3);
             progressStatus.setCurrent(0);
         }
+
+        project.getModels().forEach(EMFBulkImporter::preloadRecursively);
 
         try {
             objectNodes = new ArrayList<>(objectNodes);
@@ -281,6 +286,12 @@ public class EMFBulkImporter implements BulkImportFunction {
             }
         }
         return changelog;
+    }
+
+    private static void preloadRecursively(EObject eObject) {
+        for (final TreeIterator<Object> allProperContents = EcoreUtil.getAllProperContents(eObject, true); allProperContents.hasNext(); allProperContents.next()) {
+            // just iterate to load contents
+        }
     }
 
     public String getSessionName() {

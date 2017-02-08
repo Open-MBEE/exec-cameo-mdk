@@ -24,7 +24,7 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
 
     // ConcurrentHashMap was decided against as it doesn't accept null values (or keys) and while we could fill it with junk we don't expect
     // too much concurrency with Changelogs, so just syncing it shouldn't be an issue.
-    public Map<K, V> getNewMap() {
+    public Map<K, V> createMap() {
         return Collections.synchronizedMap(new LinkedHashMap<K, V>());
     }
 
@@ -32,7 +32,7 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
     public Map<K, V> get(Object key) {
         Map<K, V> map = super.get(key);
         if (map == null && key instanceof ChangeType) {
-            super.put((ChangeType) key, map = getNewMap());
+            super.put((ChangeType) key, map = createMap());
         }
         return map;
     }

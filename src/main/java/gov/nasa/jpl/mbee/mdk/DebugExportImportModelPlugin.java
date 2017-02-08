@@ -79,26 +79,26 @@ public class DebugExportImportModelPlugin extends MDPlugin {
         // rid of
         // method argument in addConfiguration calls below.
         Method method = getNmActionMethod();
-
+        String diagramContext = "BaseDiagramContext";
         String category = "MDK";
         addConfiguration("MainMenu", "", "Debug Export/Import1", category, method, this);
         addConfiguration("ContainmentBrowserContext", "", "(Debug Export/Import)", category, method,
                 this);
-        addConfiguration("BaseDiagramContext", "Class Diagram", "Debug Export/Improt3", category,
+        addConfiguration(diagramContext, "Class Diagram", "Debug Export/Improt3", category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "Activity Diagram", "Debug Export/Improt4", category,
+        addConfiguration(diagramContext, "Activity Diagram", "Debug Export/Improt4", category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "SysML Block Definition Diagram",
+        addConfiguration(diagramContext, "SysML Block Definition Diagram",
                 "Debug Export/Improt5", category, method, this);
         addConfiguration("BaseDiagramContext6", "SysML Internal Block Diagram",
                 "Debug Export/Improt", category, method, this);
-        addConfiguration("BaseDiagramContext", "DocGen 3 View Diagram", "Debug Export/Improt7",
+        addConfiguration(diagramContext, "DocGen 3 View Diagram", "Debug Export/Improt7",
                 category, method, this);
-        addConfiguration("BaseDiagramContext", "DocGen 3 Diagram", "Debug Export/Improt8",
+        addConfiguration(diagramContext, "DocGen 3 Diagram", "Debug Export/Improt8",
                 category, method, this);
-        addConfiguration("BaseDiagramContext", "View Diagram", "Debug Export/Improt9",
+        addConfiguration(diagramContext, "View Diagram", "Debug Export/Improt9",
                 category, method, this);
-        addConfiguration("BaseDiagramContext", "DocumentView", "Debug Export/Improt`0",
+        addConfiguration(diagramContext, "DocumentView", "Debug Export/Improt`0",
                 category, method, this);
     }
 

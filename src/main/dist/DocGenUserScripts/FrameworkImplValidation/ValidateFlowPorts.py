@@ -19,7 +19,7 @@ from com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdinformationflows impor
 from com.nomagic.uml2.ext.magicdraw.compositestructures.mdports import *
 from com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime import *
 from com.nomagic.uml2.ext.magicdraw.classes.mdpowertypes import GeneralizationSet
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 from javax.swing import *
 from java.lang import Object
 from java.lang import String

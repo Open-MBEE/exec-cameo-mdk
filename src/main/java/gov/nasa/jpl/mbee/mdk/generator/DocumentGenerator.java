@@ -439,7 +439,7 @@ public class DocumentGenerator {
                             if (titles != null && titles.size() > 0) {
                                 sec.setTitle(titles.get(0));
                             }
-                            else if (!next.getName().equals("")) {
+                            else if (!next.getName().isEmpty()) {
                                 sec.setTitle(next.getName());
                             }
                             sec.setUseContextNameAsTitle(useContextNameAsTitle);
@@ -565,9 +565,9 @@ public class DocumentGenerator {
         }
         String title = (String) GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype,
                 "title", "");
-        if (title == null || title.equals("")) {
+        if (title == null || title.isEmpty()) {
             title = cba.getName();
-            if (title.equals("") && cba.getBehavior() != null) {
+            if (title.isEmpty() && cba.getBehavior() != null) {
                 title = cba.getBehavior().getName();
             }
         }
@@ -682,10 +682,10 @@ public class DocumentGenerator {
                     if (titles.size() > 0) {
                         sec.setTitle(titles.get(0));
                     }
-                    else if (!an.getName().equals("")) {
+                    else if (!an.getName().isEmpty()) {
                         sec.setTitle(an.getName());
                     }
-                    else if (!((CallBehaviorAction) an).getBehavior().getName().equals("")) {
+                    else if (!((CallBehaviorAction) an).getBehavior().getName().isEmpty()) {
                         sec.setTitle(((CallBehaviorAction) an).getBehavior().getName());
                     }
                     sec.setUseContextNameAsTitle(useContextNameAsTitle);

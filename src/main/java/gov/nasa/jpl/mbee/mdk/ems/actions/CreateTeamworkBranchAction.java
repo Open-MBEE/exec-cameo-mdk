@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
+// TODO Update me @donbot
+@Deprecated
 public class CreateTeamworkBranchAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private final String branchName;
     private final String workspace;
@@ -57,7 +59,7 @@ public class CreateTeamworkBranchAction extends RuleViolationAction implements A
         }
         ProjectDescriptor parentBranchPd = branchDescriptors.get(parentBranch);
         if (parentBranchPd == null) {
-            Utils.guilog("[ERROR] The parent Teamwork branch doesn't exist for branch \"" + branchName +"\". Create the parent branch first. Aborting.");
+            Utils.guilog("[ERROR] The parent branch does not exist for branch \"" + branchName +"\". Create the parent branch first. Aborting.");
             return;
         }
         ProjectDescriptor child = createBranch(branches[branches.length - 1], parentBranchPd);
