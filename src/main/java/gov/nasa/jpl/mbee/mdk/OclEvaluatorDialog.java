@@ -99,7 +99,8 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         closeButton.setActionCommand("Close");
         closeButton.addActionListener(this);
         //
-        evalButton = new JToggleButton("Evaluate (Ctrl+Enter)");
+        String evaluateButtonText = "Evaluate (Ctrl+Enter)";
+        evalButton = new JToggleButton(evaluateButtonText);
         evalButton.setActionCommand("Evaluate");
         evalButton.addActionListener(this);
         evalButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Evaluate");
@@ -197,7 +198,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
         if (state == ItemEvent.SELECTED) {
             evalButton.setText("Stop evaluation");
          } else {
-            evalButton.setText("Evaluate (Shift+Enter)");
+            evalButton.setText(evaluateButtonText);
          }
     }
 };
