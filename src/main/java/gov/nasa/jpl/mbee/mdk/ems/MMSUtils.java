@@ -519,7 +519,7 @@ public class MMSUtils {
         }
 
         if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
-            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS Site");
+            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS Org");
         }
         else {
             Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
