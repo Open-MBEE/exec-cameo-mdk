@@ -2129,7 +2129,7 @@ public class Utils {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
             for (Constraint constraint : constraints) {
-                if (constraint != null && constraint.getID().endsWith(("_vc"))) {
+                if (constraint != null && constraint.getLocalID().endsWith(("_vc"))) {
                     return constraint;
                 }
             }
@@ -3640,6 +3640,7 @@ public class Utils {
         else {
             s = type;
         }
+        // TODO verify that these work with TWC as BaseElements with .getID instead of as Elements with .getLocalID
         if (includeId && o instanceof BaseElement) {
             if (!Utils2.isNullOrEmpty(s)) {
                 s = s + ":" + ((BaseElement) o).getID();
@@ -3744,6 +3745,7 @@ public class Utils {
         } catch (Exception ex) {
             Utils.guilog("[ERROR] Unexpected exception occurred when trying to verify Teamwork Cloud state.");
             ex.printStackTrace();
+            System.out.println(ex.getMessage());
             return false;
         }
         String[] buttons = {"Update", "Ignore"};

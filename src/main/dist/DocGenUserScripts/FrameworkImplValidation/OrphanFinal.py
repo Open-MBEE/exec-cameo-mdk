@@ -72,7 +72,7 @@ def ProxyFinish(proxyMan, fileStereoMap):
         if True==proxyMan.isGhostProxy(proxy):
             disposeOrphanProxy=False
             #(need to build in cases here of things we want to dispose)
-            ids=proxy.getID()
+            ids=proxy.getLocalID()
             elementProxy=project.getElementByID(ids)
             #gl.log("what up what up the id of the proxy is===>"+str(ids))
             if isinstance(proxy,Generalization):  #this works
@@ -80,7 +80,7 @@ def ProxyFinish(proxyMan, fileStereoMap):
                 disposeOrphanProxy=True
                 #gl.log("Removing orphan generalizations")
             if isinstance(proxy,Stereotype):
-                proxyId=proxy.getID()
+                proxyId=proxy.getLocalID()
                 ####the name of the proxy gotten by element
                 #gl.log("Name of proxy gotten by element ID====>"+elementProxy.getQualifiedName())
                 #gl.log("The name of the orphaned stereotype=====>"+proxy.getQualifiedName())
@@ -96,7 +96,7 @@ def ProxyFinish(proxyMan, fileStereoMap):
                         #gl.log("This is the stereocollect ID====>"+StereoCollect[proxyId])
                         stereo=project.getElementByID(StereoCollect[proxyId])
                     if stereo is not None:
-                        #StereoCollect[proxyID]=stereo.getID()
+                        #StereoCollect[proxyID]=stereo.getLocalID()
                         gl.log("***************************")
                         gl.log("This element is using an orphaned stereotype====>"+elem.getQualifiedName()+ "  and will be replaced with selected Stereotype===>"+stereo.getQualifiedName())
                         StereotypesHelper.removeStereotype(elem,proxy)
@@ -110,7 +110,7 @@ def ProxyFinish(proxyMan, fileStereoMap):
 #------------------------------------------------------------------------
             if isinstance(proxy,Port):
                 portSelect=None
-                proxyId=proxy.getID()
+                proxyId=proxy.getLocalID()
                 portRedef=proxy.get_portOfRedefinedPort()
                 portNew=list(portRedef)
                 #portSelect=MDUtils.getUserSelections([Port], CSAF, False,'Select Port to Replace Orphan Port (used in redefintion)==>'+proxy.getQualifiedName(),[Port,Package,Class,Interface])
@@ -122,10 +122,10 @@ def ProxyFinish(proxyMan, fileStereoMap):
                     redefList=port.getRedefinedPort()
                     redefList.remove(proxy)   
                     if portSelect is not None:
-                        #StereoCollect[proxyID]=stereo.getID()
+                        #StereoCollect[proxyID]=stereo.getLocalID()
                         gl.log("This port is using an orphaned port for redefinition====>"+port.getQualifiedName()+ "  and will be replaced with selected port===>"+portSelect.getQualifiedName())
                         redefList.add(portSelect)
-                        #filePort.write(str(ProxyId)+","+str(portSelect.getID())+"\n")
+                        #filePort.write(str(ProxyId)+","+str(portSelect.getLocalID())+"\n")
                     else:
                         #StereoCollect[proxyID]=None
                         gl.log("Cancel was selected for the Port Selection, so the port will be deleted======>"+port.getQualifiedName())
@@ -142,7 +142,7 @@ def ProxyFinish(proxyMan, fileStereoMap):
 #------------------------------------------------------------------------  
             if isinstance(proxy,Property) and not isinstance(proxy,Port):
                 propSelect=None
-                proxyId=proxy.getID()
+                proxyId=proxy.getLocalID()
                 propertyRedef=proxy.get_propertyOfRedefinedProperty()
                 propNew=list(propertyRedef)
                 #propSelect=MDUtils.getUserSelections([Property], CSAF, False,'Select Property to Replace Orphan Property (used in redefinition)==>'+proxy.getQualifiedName(),[Property,Package,Class,Interface])
@@ -155,10 +155,10 @@ def ProxyFinish(proxyMan, fileStereoMap):
                     redefList=prop.getRedefinedProperty()
                     redefList.remove(proxy)   
                     if propSelect is not None:
-                        #StereoCollect[proxyID]=stereo.getID()
+                        #StereoCollect[proxyID]=stereo.getLocalID()
                         gl.log("This property is using an orphaned property for redefinition====>"+prop.getQualifiedName()+ "  and will be replaced with selected property===>"+propSelect.getQualifiedName())
                         redefList.add(propSelect)
-                        #fileProperty.write(str(ProxyId)+","+str(propSelect.getID())+"\n")
+                        #fileProperty.write(str(ProxyId)+","+str(propSelect.getLocalID())+"\n")
                     else:
                         #StereoCollect[proxyID]=None
                         gl.log("Cancel was selected for the Port Selection, so the port will be deleted======>"+prop.getQualifiedName())

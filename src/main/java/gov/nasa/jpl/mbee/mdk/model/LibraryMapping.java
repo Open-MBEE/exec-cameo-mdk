@@ -344,7 +344,7 @@ public class LibraryMapping extends Query {
     }
 
     private Node<String, LibraryComponent> fillComponent(NamedElement cur) {
-        Node<String, LibraryComponent> node = new Node<String, LibraryComponent>(cur.getID(),
+        Node<String, LibraryComponent> node = new Node<String, LibraryComponent>(cur.getLocalID(),
                 new LibraryComponent(cur.getName(), cur));
         if (cur instanceof Package) {
             for (Element e : cur.getOwnedElement()) {

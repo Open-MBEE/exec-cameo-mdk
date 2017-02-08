@@ -92,7 +92,7 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
     @Test
     public void executeTest() throws IOException, ServerException, URISyntaxException {
         String updatedMMSDocumentation = "Changed documentation.";
-        String targetSysmlID = targetElement.getID();
+        String targetSysmlID = targetElement.getLocalID();
 
         //update mms element without md session so it's not tracked in model, export its json to mms to update it and trigger pending
         MDKHelper.setSyncTransactionListenerDisabled(true);
@@ -121,7 +121,7 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
             JsonNode value = null;
             for (JsonNode val : returnedElements) {
                 if (val.get(MDKConstants.SYSML_ID_KEY) != null && val.get(MDKConstants.SYSML_ID_KEY).isTextual()
-                        && val.get(MDKConstants.SYSML_ID_KEY).asText().equals(targetElement.getID())) {
+                        && val.get(MDKConstants.SYSML_ID_KEY).asText().equals(targetElement.getLocalID())) {
                     value = val;
                     break;
                 }
@@ -146,7 +146,7 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
             MagicDrawHelper.deleteMDElement(targetElement);
         } catch (ReadOnlyElementException e) {
             MagicDrawHelper.cancelSession();
-            throw new IOException("Unable to delete element id " + targetElement.getID());
+            throw new IOException("Unable to delete element id " + targetElement.getLocalID());
         }
         MagicDrawHelper.closeSession();
 

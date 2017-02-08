@@ -48,7 +48,7 @@ public class TimeQueryUtil {
         Utils.guilog("[INFO] Getting elements from server...");
 
         for (Element elem : elementsToQuery) {
-            String id = elem.getID();
+            String id = elem.getLocalID();
             if (elem == project) {
                 id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
             }

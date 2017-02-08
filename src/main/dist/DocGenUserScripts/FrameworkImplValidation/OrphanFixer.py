@@ -65,7 +65,7 @@ def ProxyResolver(profile):
         if True==proxyMan.isGhostProxy(proxy):
             disposeOrphanProxy=False
             #(need to build in cases here of things we want to dispose)
-            ProxyId=proxy.getID()
+            ProxyId=proxy.getLocalID()
             #gl.log("what up what up the id of the proxy is===>"+str(ProxyId))
             if isinstance(proxy,Generalization):  #this works
                 count+=1
@@ -81,11 +81,11 @@ def ProxyResolver(profile):
                 stereo=MDUtils.getUserSelections([Stereotype], wModel, False,'Select Stereotype to Replace Orphan Stereotype==>'+proxy.getName(),[Stereotype,Package,Profile])
                 for elem in elemSt:
                     if stereo is not None:
-                        #StereoCollect[proxyID]=stereo.getID()
+                        #StereoCollect[proxyID]=stereo.getLocalID()
                         gl.log("This element is using an orphaned stereotype====>"+elem.getQualifiedName()+ "  and will be replaced with selected Stereotype===>"+stereo.getQualifiedName())
                         StereotypesHelper.removeStereotype(elem,proxy)
                         StereotypesHelper.addStereotype(elem,stereo)
-                        fileStereo.write(str(ProxyId)+","+str(stereo.getID())+"\n")
+                        fileStereo.write(str(ProxyId)+","+str(stereo.getLocalID())+"\n")
                     else:
                         #StereoCollect[proxyID]=None
                         gl.log("Cancel was selected for the Stereotype, so the element will be left alone======>"+elem.getQualifiedName())
@@ -106,10 +106,10 @@ def ProxyResolver(profile):
                     redefList=port.getRedefinedPort()
                     redefList.remove(proxy)   
                     if portSelect is not None:
-                        #StereoCollect[proxyID]=stereo.getID()
+                        #StereoCollect[proxyID]=stereo.getLocalID()
                         gl.log("This port is using an orphaned port for redefinition====>"+port.getQualifiedName()+ "  and will be replaced with selected port===>"+portSelect.getQualifiedName())
                         redefList.add(portSelect)
-                        filePort.write(str(ProxyId)+","+str(portSelect.getID())+"\n")
+                        filePort.write(str(ProxyId)+","+str(portSelect.getLocalID())+"\n")
                     else:
                         #StereoCollect[proxyID]=None
                         gl.log("Cancel was selected for the Port Selection, so the port will be deleted======>"+port.getQualifiedName())
@@ -134,10 +134,10 @@ def ProxyResolver(profile):
                     redefList=prop.getRedefinedProperty()
                     redefList.remove(proxy)   
                     if propSelect is not None:
-                        #StereoCollect[proxyID]=stereo.getID()
+                        #StereoCollect[proxyID]=stereo.getLocalID()
                         gl.log("This property is using an orphaned property for redefinition====>"+prop.getQualifiedName()+ "  and will be replaced with selected property===>"+propSelect.getQualifiedName())
                         redefList.add(propSelect)
-                        fileProperty.write(str(ProxyId)+","+str(propSelect.getID())+"\n")
+                        fileProperty.write(str(ProxyId)+","+str(propSelect.getLocalID())+"\n")
                     else:
                         #StereoCollect[proxyID]=None
                         gl.log("Cancel was selected for the Port Selection, so the port will be deleted======>"+prop.getQualifiedName())
@@ -154,10 +154,10 @@ def ProxyResolver(profile):
                 p=proxy
                 packSelect=MDUtils.getUserSelections([Package], wModel, False,'Select Package to Replace Orphan Package (used in redefinition)==>'+proxy.getQualifiedName(),[Package,Package,Class,Interface,Profile])
                 if packSelect is not None:
-                    #StereoCollect[proxyID]=stereo.getID()
+                    #StereoCollect[proxyID]=stereo.getLocalID()
                     gl.log("This package is orphaned"+proxy.getName()+ "  and will be replaced with selected package===>"+packSelect.getQualifiedName())
                     redefList.add(packSelect)
-                    fileProperty.write(str(ProxyId)+","+str(packSelect.getID())+"\n")
+                    fileProperty.write(str(ProxyId)+","+str(packSelect.getLocalID())+"\n")
                     proxy.dispose()
                 else:
                     #StereoCollect[proxyID]=None

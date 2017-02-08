@@ -32,7 +32,7 @@ public class GenerateViewPresentationAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Utils.recommendUpdateFromRemote(Application.getInstance().getProject());
+//        Utils.recommendUpdateFromRemote(Application.getInstance().getProject());
         updateAction();
     }
 
@@ -47,7 +47,7 @@ public class GenerateViewPresentationAction extends MDAction {
         while (!queuedElements.isEmpty()) {
             Element element = queuedElements.remove();
             if (processedElements.contains(element)) {
-                Application.getInstance().getGUILog().log("Detected duplicate element reference. Skipping generation for " + element.getID() + ".");
+                Application.getInstance().getGUILog().log("Detected duplicate element reference. Skipping generation for " + element.getLocalID() + ".");
                 continue;
             }
             if (StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {

@@ -271,7 +271,7 @@ public class EditableTable extends JDialog {
                     }
 
                     if (e != null) {
-                        if (el instanceof Element && ((Element) el).getID().equals(props[c])) {
+                        if (el instanceof Element && ((Element) el).getLocalID().equals(props[c])) {
                             if (e.isEditable()) {
                                 try {
                                     String curValue = (String) ntable.getValueAt(row, col);
@@ -443,7 +443,7 @@ public class EditableTable extends JDialog {
                 for (int j = 0; j < cols; j++) {
                     Object mdo = m.get(i).get(j);
                     if (mdo != null && mdo instanceof Element) {
-                        s.add(((Element) mdo).getID());
+                        s.add(((Element) mdo).getLocalID());
                     }
                     else {
                         s.add("");

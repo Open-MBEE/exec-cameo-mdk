@@ -310,7 +310,7 @@ public class DocumentGenerator {
             }
         }
         viewSection.setDgElement(view);
-        viewSection.setId(view.getID());
+        viewSection.setId(view.getLocalID());
         viewSection.setTitle(((NamedElement) view).getName());
         return viewSection;
     }
@@ -332,7 +332,7 @@ public class DocumentGenerator {
         if (a == null || parent == null) {
             return null;
         }
-        Debug.outln("parseActivityOrStructuredNode( " + a.getHumanName() + ", " + a.getID() + ", "
+        Debug.outln("parseActivityOrStructuredNode( " + a.getHumanName() + ", " + a.getLocalID() + ", "
                 + parent.getStringIfEmpty() + ")");
         InitialNode in = GeneratorUtils.findInitialNode(a);
         if (in == null) {
@@ -346,7 +346,7 @@ public class DocumentGenerator {
         while (outs != null && outs.size() == 1) {
             parseResults = null;
             ActivityNode next = outs.iterator().next().getTarget();
-            Debug.outln("next = " + next.getHumanName() + ", " + next.getID());
+            Debug.outln("next = " + next.getHumanName() + ", " + next.getLocalID());
             next2 = null;
             boolean evaluatedConstraintsForNext = false;
             if (next instanceof CallBehaviorAction
@@ -481,7 +481,7 @@ public class DocumentGenerator {
             }
             outs = next2.getOutgoing();
             Debug.outln("outs = " + MoreToString.Helper.toLongString(outs) + " for next2 = "
-                    + next2.getHumanName() + ", " + next2.getID());
+                    + next2.getHumanName() + ", " + next2.getLocalID());
         }
         while (pushed > 0) {
             this.context.popTargets();

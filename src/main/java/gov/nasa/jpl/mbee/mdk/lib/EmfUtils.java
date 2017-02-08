@@ -106,7 +106,7 @@ public final class EmfUtils {
                 repText = ":" + repText;
             }
             result = name + // e.getHumanType() + ":" +
-                    (Debug.isOn() ? e.getID() : "") + repText;
+                    (Debug.isOn() ? e.getLocalID() : "") + repText;
             result = result.replaceFirst("::", ":");
             result = result.trim().replaceAll("^:", "");
             result = result.trim().replaceAll(":$", "");
