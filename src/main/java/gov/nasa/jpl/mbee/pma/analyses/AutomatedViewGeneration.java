@@ -160,6 +160,7 @@ public class AutomatedViewGeneration extends CommandLine {
         logMessage(message);
 
         ITeamworkService twcService = EsiUtils.getTeamworkService();
+        boolean reported = false;
         for (int i = 1; i <= applicationAccounts; i++) {
             try {
                 String appendage = (i == 1 ? "" : Integer.toString(i));
@@ -171,11 +172,13 @@ public class AutomatedViewGeneration extends CommandLine {
                 logMessage(message);
                 throw new IllegalStateException(message, e);
             }
-            if (i == 1) {
+            if (!reported) {
+                // TODO revisit this permissions check
                 try {
                     reportStatus("running", debug);
-                } catch (IOException e) {
-                    throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not edit site (check Alfresco site membership).");
+                    reported = true;
+                } catch (IOException ignored) {
+                    // these will be dealt with later in the permission checking stage
                 }
             }
 
