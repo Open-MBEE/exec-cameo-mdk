@@ -310,14 +310,12 @@ public class OclEvaluator {
             throw e;// new ParserException( getBasicDiagnostic() );
         } catch (NullPointerException ignored) {
         }
-
-        if (query != null) {
-            result = getOcl().evaluate(context, query);
-            if (getOcl().isInvalid(result)) {
-                queryStatus = QueryStatus.INVALID_OCL;
-            }
+        result = getOcl().evaluate(context, query);
+        System.out.println(query.toString());
+        if (getOcl().isInvalid(result)) {
+            queryStatus = QueryStatus.INVALID_OCL;
         }
-        return result;
+         return result;
     }
 
     /**

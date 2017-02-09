@@ -113,10 +113,10 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     public static CoordinatedSyncProjectMapping getProjectMapping(Project project) {
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(project.getID());
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(MDUtils.getProjectID(project));
         if (coordinatedSyncProjectMapping == null) {
-            projectMappings.put(project.getID(), coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
-            projectMappings.get(project.getID()).setDisabled(!project.isRemote());
+            projectMappings.put(MDUtils.getProjectID(project), coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
+            projectMappings.get(MDUtils.getProjectID(project)).setDisabled(!project.isRemote());
         }
         return coordinatedSyncProjectMapping;
     }

@@ -55,7 +55,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
             project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
         }
-        //projectMappings.remove(project.getID());
+        //projectMappings.remove(MDUtils.getProjectID(project));
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
