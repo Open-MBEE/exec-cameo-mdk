@@ -46,6 +46,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.Constraint;
 import gov.nasa.jpl.mbee.mdk.lib.Debug;
@@ -806,7 +807,7 @@ public class DocumentValidator {
             result = OclEvaluator.evaluateQuery(context, expression);
         } catch (ParserException e) {
             if (violationIfInconsistent) {
-                String id = context instanceof Element ? ((Element) context).getID() : context.toString();
+                String id = context instanceof Element ? Converters.getElementToIdConverter().apply((Element) context) : context.toString();
                 String errorMessage = e.getLocalizedMessage() + " for OCL query \"" + expression + "\" on "
                         + Utils.getName(context) + (showElementIds ? "[" + id + "]" : "");
                 if (rule != null && context instanceof Element) {
@@ -934,7 +935,7 @@ public class DocumentValidator {
         List<Constraint> constraints = getConstraints(constrainedObject, actionOutput, context);
         if (constrainedObject instanceof Element) {
             Element e = (Element) constrainedObject;
-            Debug.outln("constraints for " + e.getHumanName() + ", " + e.getID() + ": "
+            Debug.outln("constraints for " + e.getHumanName() + ", " + Converters.getElementToIdConverter().apply(e) + ": "
                     + MoreToString.Helper.toString(constraints));
         }
         else {

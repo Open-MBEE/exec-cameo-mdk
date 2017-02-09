@@ -142,7 +142,7 @@ public class ElementValidator implements RunnableWithProgress {
                 validationRuleViolation.addAction(copyActionsCategory);
                 copyActionsCategory.addAction(new ClipboardAction("ID", id));
                 if (clientElementElement != null) {
-                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElementElement.getID()));
+                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + Converters.getElementToIdConverter().apply(clientElementElement)));
                 }
                 if (clientElementObjectNode != null) {
                     try {

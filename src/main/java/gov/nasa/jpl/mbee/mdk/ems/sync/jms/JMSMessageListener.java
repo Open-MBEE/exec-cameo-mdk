@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
@@ -89,7 +90,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            System.out.println("MMS TextMessage for " + project.getPrimaryProject().getProjectID() + " -" + System.lineSeparator() + text);
+            System.out.println("MMS TextMessage for " + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + " -" + System.lineSeparator() + text);
         }
         JsonNode messageJsonNode;
         try {

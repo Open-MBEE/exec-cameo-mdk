@@ -148,7 +148,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 }
 
                 if (depth > 0 || recurse) {
-                    String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
+                    String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
                     boolean found = false;
                     // check to see if the holding bin was returned
                     for (ObjectNode elem : serverElements) {
@@ -180,7 +180,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if (requestUri == null) {
             return false;
         }
-        requestUri.setPath(requestUri.getPath() + "/" + project.getPrimaryProject().getProjectID());
+        requestUri.setPath(requestUri.getPath() + "/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
 
         // do request for site element
         ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();

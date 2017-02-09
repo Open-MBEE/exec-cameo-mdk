@@ -172,8 +172,8 @@ public class MMSUtils {
         if (depth > 0) {
             requestUri.setParameter("depth", java.lang.Integer.toString(depth));
         }
-        else {
-            requestUri.setParameter("recurse", java.lang.Boolean.toString(recurse));
+        else if (recurse) {
+            requestUri.setParameter("depth", java.lang.Integer.toString(9999));
         }
 
         // do request in cancellable thread
@@ -669,7 +669,7 @@ public class MMSUtils {
         if (projectUri == null) {
             return null;
         }
-        String projectId = project.getPrimaryProject().getProjectID();
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         projectUri.setPath(projectUri.getPath() + "/projects/" + projectId);
         return projectUri;
     }
@@ -715,21 +715,16 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        String categoryId = null;
-        String sysmlId;
-        if (project.isRemote()) {
-            sysmlId = ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI()).toString();
-            // TODO @DONBOT enable for 18.5GA when the method is usable, remove the branch assignment placeholder
-//            categoryId = EsiUtils.getCategoryID(resourceId);
-        }
-        else {
-            sysmlId = project.getPrimaryProject().getProjectID();
-        }
-        return getProjectObjectNode(project.getPrimaryProject().getName(), sysmlId, categoryId);
+        return getProjectObjectNode(project.getPrimaryProject());
     }
 
-    public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(project.getName(), project.getProjectID(), null);
+    public static ObjectNode getProjectObjectNode(IProject iProject) {
+        String categoryId = null;
+        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject) {
+            // TODO @donbot enable full version below after 18.5GA
+//            String categoryId = (project.isRemote() ? EsiUtils.getCategoryID(resourceId) : "local" );
+        }
+        return getProjectObjectNode(iProject.getName(), Converters.getIProjectToIdConverter().apply(iProject), categoryId);
     }
 
     private static ObjectNode getProjectObjectNode(String name, String projectId, String categoryId) {

@@ -258,8 +258,11 @@ public class MDUtils {
         if (!project.isRemote()) {
             return -1;
         }
-        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+//        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+        // TODO @donbot this returns a long, not an int. decide if we should migrate
+        return Integer.valueOf(ProjectUtilities.getVersion(project.getPrimaryProject()).getName());
     }
+
 
     public static int getRemoteVersion(URI uri) {
         return ProjectDescriptorsFactory.getRemoteVersion(uri);
@@ -279,13 +282,5 @@ public class MDUtils {
         EsiUtils.getVersions(projectDescriptor).stream().max(ProjectUtilities::compareVersions).ifPresent(iVersionDescriptor -> version[0] = ProjectUtilities.versionToInt(iVersionDescriptor.getName()));
         return version[0];
     }
-
-    public static String getProjectID(Project project) {
-        if (project.isRemote()) {
-            return ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI());
-        }
-        return project.getID();
-    }
-
 
 }

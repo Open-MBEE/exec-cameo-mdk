@@ -67,6 +67,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTableModel;
@@ -2129,7 +2130,7 @@ public class Utils {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
             for (Constraint constraint : constraints) {
-                if (constraint != null && constraint.getID().endsWith(("_vc"))) {
+                if (constraint != null && Converters.getElementToIdConverter().apply(constraint).endsWith(("_vc"))) {
                     return constraint;
                 }
             }
@@ -3640,6 +3641,8 @@ public class Utils {
         else {
             s = type;
         }
+
+        // TODO @donbot BaseElement doesn't have getLocalID(), confirm that this doesn't need to be migrated to getElementToIDConverter
         if (includeId && o instanceof BaseElement) {
             if (!Utils2.isNullOrEmpty(s)) {
                 s = s + ":" + ((BaseElement) o).getID();
