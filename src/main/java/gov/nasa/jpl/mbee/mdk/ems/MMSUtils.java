@@ -721,7 +721,6 @@ public class MMSUtils {
             sysmlId = ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI()).toString();
             // TODO @DONBOT enable for 18.5GA when the method is usable, remove the branch assignment placeholder
 //            categoryId = EsiUtils.getCategoryID(resourceId);
-            categoryId = EsiUtils.getBranchID(project.getPrimaryProject().getLocationURI()).toString();
         }
         else {
             sysmlId = project.getPrimaryProject().getProjectID();
