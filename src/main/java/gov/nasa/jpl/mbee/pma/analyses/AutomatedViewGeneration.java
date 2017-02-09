@@ -136,6 +136,7 @@ public class AutomatedViewGeneration extends CommandLine {
         String message = "[OPERATION] Logging in to Teamwork";
         logMessage(message);
         SessionInfo sessionInfo = null;
+        boolean reported = false;
         for (int i = 1; i <= applicationAccounts; i++) {
             try {
                 String appendage = (i == 1 ? "" : Integer.toString(i));
@@ -147,11 +148,12 @@ public class AutomatedViewGeneration extends CommandLine {
                 logMessage(message);
                 throw new IllegalStateException(message, e);
             }
-            if (i == 1) {
+            if (!reported) {
                 try {
                     reportStatus("running", debug);
-                } catch (IOException e) {
-                    throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not edit site (check Alfresco site membership).");
+                    reported = true;
+                } catch (IOException ignored) {
+                    // these will be dealt with later in the permission checking stage
                 }
             }
 
@@ -236,7 +238,7 @@ public class AutomatedViewGeneration extends CommandLine {
             if (Application.getInstance().getProject() == null) {
                 message = "[FAILURE] User does not have access to " + teamworkProject;
                 logMessage(message);
-                error = 102;
+                error = 103;
                 throw new IllegalAccessException(message);
             }
             twLoaded = true;
@@ -262,14 +264,14 @@ public class AutomatedViewGeneration extends CommandLine {
             String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
             logMessage(message);
             error = 103;
-            throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not log in to MMS server.");
+            throw new IllegalAccessException(message);
             // LOG: Invalid account
         }
         if (!MDKHelper.hasSiteEditPermission()) {
             String message = "[FAILURE] User " + teamworkUsername + " does not have permission to MMS site or MMS is unsupported version.";
             logMessage(message);
             error = 103;
-            throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not edit site (check Alfresco site membership) or MMS version < 2.3.8.");
+            throw new IllegalAccessException(message);
             // LOG: Account lacks write permissions or mms < v2.3.8
         }
         checkCancel();
@@ -289,7 +291,7 @@ public class AutomatedViewGeneration extends CommandLine {
         for (String elementID : viewList) {
             NamedElement document = (NamedElement) Application.getInstance().getProject().getElementByID(elementID);
             if (document == null) {
-                msg = "[FAILURE] Unable to find element \"" + elementID + "\"";
+                msg = "[WARNING] Unable to find element \"" + elementID + "\"";
                 logMessage(msg);
                 // LOG: the element which caused a failure and didnd't generate
                 failedDocs = true;
@@ -308,7 +310,7 @@ public class AutomatedViewGeneration extends CommandLine {
         }
         if (failedDocs) {
             error = 104;
-            throw new FileNotFoundException("Automated View Generation Failed - Unable to find Document(s)");
+            throw new FileNotFoundException("[FAILURE] Automated View Generation Failed - Unable to find Document(s)");
             // LOG: AVG FAILED AT THIS POINT
         }
         checkCancel();
