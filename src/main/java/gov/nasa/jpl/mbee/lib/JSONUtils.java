@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.lib;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,6 +43,10 @@ public class JSONUtils {
 			return compareJSONObject((JSONObject) dirtyMod, (JSONObject) dirtyWeb);
 		} else if (dirtyMod instanceof JSONArray && dirtyWeb instanceof JSONArray) {
 			return compareJSONArray((JSONArray) dirtyMod, (JSONArray) dirtyWeb);
+		} else if (dirtyMod instanceof Number && dirtyWeb instanceof Number) {
+			BigDecimal decimalMod = new BigDecimal(dirtyMod.toString());
+			BigDecimal decimalWeb = new BigDecimal(dirtyWeb.toString());
+			return decimalMod.compareTo(decimalWeb) == 0;
 		} else {
 			return dirtyMod.equals(dirtyWeb);
 		}
