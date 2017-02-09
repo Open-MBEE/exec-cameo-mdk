@@ -230,32 +230,34 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     JsonNode viewOperandJsonNode = JacksonUtils.getAtPath(elementObjectNode, "/" + MDKConstants.CONTENTS_KEY + "/operand"),
                             sysmlIdJson = elementObjectNode.get(MDKConstants.SYSML_ID_KEY);
                     String sysmlId;
-                    if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()
-                            && sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
-                        // store returned ids so we can exclude view generation for elements that aren't on the mms yet
+                    if (sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
                         viewIDs.add(sysmlId);
-                        List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
-                        for (JsonNode viewOperandJson : viewOperandJsonNode) {
-                            JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
-                            String instanceId;
-                            if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
+                        if (viewOperandJsonNode != null && viewOperandJsonNode.isArray()) {
+                            // store returned ids so we can exclude view generation for elements that aren't on the mms yet
+
+                            List<String> viewInstanceIDs = new ArrayList<>(viewOperandJsonNode.size());
+                            for (JsonNode viewOperandJson : viewOperandJsonNode) {
+                                JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
+                                String instanceId;
+                                if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
                                 /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
                                     continue;
                                 }*/
-                                if (generatedFromViewProperty != null) {
-                                    slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getID());
+                                    if (generatedFromViewProperty != null) {
+                                        slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromViewProperty.getID());
+                                    }
+                                    if (generatedFromElementProperty != null) {
+                                        slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getID());
+                                    }
+                                    instanceIDs.add(instanceId);
+                                    viewInstanceIDs.add(instanceId);
                                 }
-                                if (generatedFromElementProperty != null) {
-                                    slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + generatedFromElementProperty.getID());
-                                }
-                                instanceIDs.add(instanceId);
-                                viewInstanceIDs.add(instanceId);
                             }
+                            ViewMapping viewMapping = viewMap.containsKey(sysmlId) ? viewMap.get(sysmlId) : new ViewMapping();
+                            viewMapping.setObjectNode(elementObjectNode);
+                            viewMapping.setInstanceIDs(viewInstanceIDs);
+                            viewMap.put(sysmlId, viewMapping);
                         }
-                        ViewMapping viewMapping = viewMap.containsKey(sysmlId) ? viewMap.get(sysmlId) : new ViewMapping();
-                        viewMapping.setObjectNode(elementObjectNode);
-                        viewMapping.setInstanceIDs(viewInstanceIDs);
-                        viewMap.put(sysmlId, viewMapping);
                     }
                 }
 
