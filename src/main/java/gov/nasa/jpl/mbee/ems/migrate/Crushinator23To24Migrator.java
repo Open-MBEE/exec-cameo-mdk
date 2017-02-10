@@ -563,7 +563,7 @@ public class Crushinator23To24Migrator extends Migrator {
             Path path = Paths.get(System.getProperty("user.home"), "md_notification_window_" + System.currentTimeMillis() + ".html");
             Files.write(path, Application.getInstance().getGUILog().getLoggedMessages().getBytes());
             return path.toFile();
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             e.printStackTrace();
             return null;
         }
