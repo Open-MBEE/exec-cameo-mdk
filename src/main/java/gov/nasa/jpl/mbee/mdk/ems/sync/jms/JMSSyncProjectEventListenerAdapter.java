@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
@@ -98,11 +99,11 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         } catch (JMSException e) {
             e.printStackTrace();
         }
-        projectMappings.remove(project.getPrimaryProject().getProjectID());
+        projectMappings.remove(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
     }
 
     public boolean initDurable(Project project) {
-        String projectID = project.getPrimaryProject().getProjectID();
+        String projectID = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         String workspaceID = MDUtils.getWorkspace(project);
 
         // verify logged in to appropriate places
@@ -211,9 +212,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     public static JMSSyncProjectMapping getProjectMapping(Project project) {
-        JMSSyncProjectMapping JMSSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
+        JMSSyncProjectMapping JMSSyncProjectMapping = projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
         if (JMSSyncProjectMapping == null) {
-            projectMappings.put(project.getPrimaryProject().getProjectID(), JMSSyncProjectMapping = new JMSSyncProjectMapping(project));
+            projectMappings.put(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), JMSSyncProjectMapping = new JMSSyncProjectMapping(project));
         }
         return JMSSyncProjectMapping;
     }

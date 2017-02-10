@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.mdk.viewedit;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.model.AbstractModelVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.Section;
@@ -63,7 +64,7 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
         }
         visitChildren(doc);
         if (doc.getDgElement() != null) {
-            result.put(doc.getDgElement().getID(), curChildren.pop());
+            result.put(Converters.getElementToIdConverter().apply(doc.getDgElement()), curChildren.pop());
             resultElements.put(doc.getDgElement(), curChildrenElements.pop());
         }
     }
@@ -73,18 +74,18 @@ public class ViewHierarchyVisitor extends AbstractModelVisitor {
     public void visit(Section sec) {
         if (sec.isView()) {
             if (sec.isNoSection()) {
-                nosections.add(sec.getDgElement().getID());
+                nosections.add(Converters.getElementToIdConverter().apply(sec.getDgElement()));
             }
             if (!curChildren.isEmpty()) {
-                curChildren.peek().add(sec.getDgElement().getID());
+                curChildren.peek().add(Converters.getElementToIdConverter().apply(sec.getDgElement()));
                 curChildrenElements.peek().add(sec.getDgElement());
             }
             curChildren.push(new JSONArray());
-            curChildrenElements.push(new ArrayList<Element>());
+            curChildrenElements.push(new ArrayList<>());
         }
         visitChildren(sec);
         if (sec.isView()) {
-            result.put(sec.getDgElement().getID(), curChildren.pop());
+            result.put(Converters.getElementToIdConverter().apply(sec.getDgElement()), curChildren.pop());
             resultElements.put(sec.getDgElement(), curChildrenElements.pop());
         }
     }

@@ -8,6 +8,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.actions.ui.MMSViewLinkForm;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -112,9 +113,9 @@ public class MMSViewLinkAction extends MDAction {
                         label = "Documents containing " + element.getHumanName() + ":";
                         for (Element doc : documents) {
                             if (doc.equals(element)) {
-                                link = new URI(uriBasePath + "/documents/" + element.getID());
+                                link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(element));
                             } else {
-                                link = new URI(uriBasePath + "/documents/" + doc.getID() + "/views/" + element.getID());
+                                link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element));
                             }
                             JButton button = new ViewButton(doc.getHumanName(), link);
                             linkButtons.add(button);
@@ -131,7 +132,7 @@ public class MMSViewLinkAction extends MDAction {
             }else {
                 // build single link
                 try {
-                    link = new URI(uriBasePath + "/documents/" + element.getID() + "/views/" + element.getID());
+                    link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element));
                 }
                 catch (URISyntaxException se) {
                     Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");

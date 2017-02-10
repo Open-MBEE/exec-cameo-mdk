@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 
@@ -198,7 +199,7 @@ public class JMSUtils {
     }
 
     public static void initializeDurableQueue(Project project, String workspace) {
-        String projectId = project.getPrimaryProject().getProjectID();
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         Connection connection = null;
         Session session = null;
         MessageConsumer consumer = null;

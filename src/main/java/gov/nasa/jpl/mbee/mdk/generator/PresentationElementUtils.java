@@ -12,6 +12,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -115,7 +116,7 @@ public class PresentationElementUtils {
                         try {
                             JSONObject ob = (JSONObject) (new JSONParser()).parse(((LiteralString) is.getSpecification()).getValue());
                             //TODO sourceProperty json key migration? @donbot
-                            if (view.getID().equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
+                            if (Converters.getElementToIdConverter().apply(view).equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
                                 viewinstance = false; //a view doc instance
                                 res.setViewDocHack(is);
                             }
@@ -291,7 +292,7 @@ public class PresentationElementUtils {
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            is.setID(MDKConstants.HIDDEN_ID_PREFIX + is.getID() + ID_SUFFIX);
+            is.setID(MDKConstants.HIDDEN_ID_PREFIX + Converters.getElementToIdConverter().apply(is) + ID_SUFFIX);
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);
@@ -316,10 +317,10 @@ public class PresentationElementUtils {
         String name;
         if (pe.isViewDocHack()) {
             newspec = new JSONObject();
-            newspec.put("source", is.getID());
+            newspec.put("source", Converters.getElementToIdConverter().apply(is));
             newspec.put("type", "Paragraph");
             newspec.put("sourceProperty", "documentation");
-            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
+            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + Converters.getElementToIdConverter().apply(pe.getView()) + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
             ModelHelper.setComment(is, transclude);
             name = "View Documentation";
             classifier = tparaC;
@@ -396,7 +397,7 @@ public class PresentationElementUtils {
         }
         c = ef.createConstraintInstance();
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        c.setID(view.getID() + "_vc");
+        c.setID(Converters.getElementToIdConverter().apply(view) + "_vc");
         c.setOwner(view);
         c.getConstrainedElement().add(view);
         return c;
@@ -406,7 +407,7 @@ public class PresentationElementUtils {
         Constraint c = getOrCreateViewConstraint(view);
         Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : ef.createExpressionInstance();
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        expression.setID(view.getID() + "_vc_expression");
+        expression.setID(Converters.getElementToIdConverter().apply(view) + "_vc_expression");
         expression.setOwner(c);
         List<InstanceValue> instanceValues = new ArrayList<>(instanceSpecifications.size());
         Iterator<ValueSpecification> operandIterator = expression.getOperand().iterator();

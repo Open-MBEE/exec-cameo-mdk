@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -48,9 +49,9 @@ public class TimeQueryUtil {
         Utils.guilog("[INFO] Getting elements from server...");
 
         for (Element elem : elementsToQuery) {
-            String id = elem.getID();
+            String id = Converters.getElementToIdConverter().apply(elem);
             if (elem == project) {
-                id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+                id = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
             }
             id = id.replace(".", "%2E");
             requestUri.setPath(basePath + "/" + id);

@@ -15,6 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
@@ -489,7 +490,7 @@ public class MMSUtils {
                 JsonNode value;
                 for (JsonNode projectJson : projectsJson) {
                     if ((value = projectJson.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
-                            && value.asText().equals(project.getPrimaryProject().getProjectID())) {
+                            && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                         return true;
                     }
                 }
@@ -661,7 +662,7 @@ public class MMSUtils {
         if (refsUri == null) {
             return null;
         }
-        refsUri.setPath(refsUri.getPath() + "/" + project.getPrimaryProject().getProjectID() + "/refs");
+        refsUri.setPath(refsUri.getPath() + "/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/refs");
         return refsUri;
     }
 
@@ -692,21 +693,16 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        String categoryId = "local";
-        String sysmlId;
-        if (project.isRemote()) {
-            sysmlId = ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI()).toString();
-            // TODO @DONBOT enable for 18.5GA when the method is usable, remove the branch assignment placeholder
-//            categoryId = EsiUtils.getCategoryID(resourceId);
-        }
-        else {
-            sysmlId = project.getPrimaryProject().getProjectID();
-        }
-        return getProjectObjectNode(project.getPrimaryProject().getName(), sysmlId, categoryId);
+        return getProjectObjectNode(project.getPrimaryProject());
     }
 
-    public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(project.getName(), project.getProjectID(), null);
+    public static ObjectNode getProjectObjectNode(IProject iProject) {
+        String categoryId = null;
+        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject) {
+            // TODO @donbot enable full version below after 18.5GA
+//            String categoryId = (project.isRemote() ? EsiUtils.getCategoryID(resourceId) : "local" );
+        }
+        return getProjectObjectNode(iProject.getName(), Converters.getIProjectToIdConverter().apply(iProject), categoryId);
     }
 
     private static ObjectNode getProjectObjectNode(String name, String projectId, String categoryId) {

@@ -22,7 +22,6 @@ import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -148,7 +147,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                                 .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
                     }
 
-                    String holdingBinId = "holding_bin_" + project.getPrimaryProject().getProjectID();
+                    String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
                     boolean found = false;
                     // check to see if the holding bin was returned
                     for (ObjectNode elem : serverElements) {
@@ -175,12 +174,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Make common across all sync types @donbot
     private boolean checkProject() {
-//        String branch = MDUtils.getWorkspace(project);
-        String branch = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
-        Utils.guilog(branch);
-        if (branch.equals("trunk")) {
-            branch = "master";
-        }
+        String branch = MDUtils.getWorkspace(project);
 
         // process response for project element, missing projects will return {}
         if (!MMSUtils.isProjectOnMms(project)) {

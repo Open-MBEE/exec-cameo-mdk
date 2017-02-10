@@ -34,6 +34,7 @@ package gov.nasa.jpl.mbee.mdk.lib;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import junit.framework.Assert;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.ENamedElement;
@@ -106,7 +107,7 @@ public final class EmfUtils {
                 repText = ":" + repText;
             }
             result = name + // e.getHumanType() + ":" +
-                    (Debug.isOn() ? e.getID() : "") + repText;
+                    (Debug.isOn() ? Converters.getElementToIdConverter().apply(e) : "") + repText;
             result = result.replaceFirst("::", ":");
             result = result.trim().replaceAll("^:", "");
             result = result.trim().replaceAll(":$", "");

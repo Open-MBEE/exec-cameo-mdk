@@ -214,13 +214,19 @@ public class MDUtils {
     // }
 
     public static String getWorkspace(Project project) {
-        String twbranch = getRemoteBranchPath(project);
-        if (twbranch == null) {
+        if (!project.isRemote()) {
             return "master";
         }
-        twbranch = "master/" + twbranch;
-      //  String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        String twcBranch = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
+        return (twcBranch.equals("trunk") ? "master" : twcBranch);
 
+//        String twbranch = getRemoteBranchPath(project);
+//        if (twbranch == null) {
+//            return "master";
+//        }
+//        twbranch = "master/" + twbranch;
+//      //  String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+//
         //TODO @donbot imported from ExportUtility, update to finish the import
 //        Map<String, String> wsmap = wsIdMapping.get(projId);
 //        if (wsmap == null) {
@@ -238,7 +244,7 @@ public class MDUtils {
 //            }
 //        }
 //        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
-        return twbranch;
+//        return twbranch;
     }
 
     public static String getRemoteBranchPath(Project project) {
@@ -258,8 +264,11 @@ public class MDUtils {
         if (!project.isRemote()) {
             return -1;
         }
-        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+//        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+        // TODO @donbot this returns a long, not an int. decide if we should migrate
+        return Integer.valueOf(ProjectUtilities.getVersion(project.getPrimaryProject()).getName());
     }
+
 
     public static int getRemoteVersion(URI uri) {
         return ProjectDescriptorsFactory.getRemoteVersion(uri);
@@ -279,13 +288,5 @@ public class MDUtils {
         EsiUtils.getVersions(projectDescriptor).stream().max(ProjectUtilities::compareVersions).ifPresent(iVersionDescriptor -> version[0] = ProjectUtilities.versionToInt(iVersionDescriptor.getName()));
         return version[0];
     }
-
-    public static String getProjectID(Project project) {
-        if (project.isRemote()) {
-            return ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI());
-        }
-        return project.getID();
-    }
-
 
 }
