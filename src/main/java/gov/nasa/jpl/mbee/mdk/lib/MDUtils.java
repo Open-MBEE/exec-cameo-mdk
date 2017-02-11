@@ -245,8 +245,8 @@ public class MDUtils {
         if (!project.isRemote()) {
             return "master";
         }
-        return EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
 //        return getRemoteBranchPath(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+        return EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
     }
 
     public static String getRemoteBranchPath(URI uri) {
@@ -254,13 +254,12 @@ public class MDUtils {
         return ProjectDescriptorsFactory.getProjectBranchPath(uri);
     }
 
-    public static int getRemoteVersion(Project project) {
+    public static long getRemoteVersion(Project project) {
         if (!project.isRemote()) {
             return -1;
         }
 //        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
-        // TODO @donbot this returns a long, not an int. decide if we should migrate
-        return Integer.valueOf(ProjectUtilities.getVersion(project.getPrimaryProject()).getName());
+        return Long.valueOf(ProjectUtilities.getVersion(project.getPrimaryProject()).getName());
     }
 
 
@@ -268,7 +267,7 @@ public class MDUtils {
         return ProjectDescriptorsFactory.getRemoteVersion(uri);
     }
 
-    public static int getLatestEsiVersion(Project project) {
+    public static long getLatestEsiVersion(Project project) {
         if (!project.isRemote()) {
             return -1;
         }
@@ -277,8 +276,9 @@ public class MDUtils {
 
 
     // TODO Switch to convenience method in 18.5 @donbot
-    public static int getLatestEsiVersion(ProjectDescriptor projectDescriptor) {
-        final int[] version = new int[]{-1};
+    // note that this only converts version to int, despite being compared with a long from the getRemoteVersion methods
+    public static long getLatestEsiVersion(ProjectDescriptor projectDescriptor) {
+        final long[] version = new long[]{-1};
         EsiUtils.getVersions(projectDescriptor).stream().max(ProjectUtilities::compareVersions).ifPresent(iVersionDescriptor -> version[0] = ProjectUtilities.versionToInt(iVersionDescriptor.getName()));
         return version[0];
     }

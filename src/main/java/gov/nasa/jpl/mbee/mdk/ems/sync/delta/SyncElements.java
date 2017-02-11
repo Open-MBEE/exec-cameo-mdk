@@ -215,7 +215,7 @@ public class SyncElements {
         if (!ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
             return Collections.emptyList();
         }
-        String folderId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "_sync";
+        String folderId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.SYNC_SYSML_ID_SUFFIX;
         Element folder = Converters.getIdToElementConverter().apply(folderId, project);
         if (folder == null) {
             return Collections.emptyList();

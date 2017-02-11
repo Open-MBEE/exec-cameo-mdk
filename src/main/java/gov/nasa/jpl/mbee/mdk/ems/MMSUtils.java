@@ -173,7 +173,7 @@ public class MMSUtils {
             requestUri.setParameter("depth", java.lang.Integer.toString(depth));
         }
         else if (recurse) {
-            requestUri.setParameter("depth", java.lang.Integer.toString(9999));
+            requestUri.setParameter("recurse", java.lang.Boolean.toString(recurse));
         }
 
         // do request in cancellable thread
@@ -306,10 +306,11 @@ public class MMSUtils {
             throws IOException, ServerException {
         // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
         if (!bypassTicketCheck && !TicketUtils.isTicketValid()) {
-            // if new login credentials fail, logout and terminal jms sync;
+            // if new login credentials fail, logout and terminate jms sync;
             // 403 exception should already be thrown by failed credentials acquisition attempt
             if (!TicketUtils.loginToMMS()) {
                 new EMSLogoutAction().logoutAction();
+                throw new ServerException("Invalid credentials", 403);
             }
         }
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
