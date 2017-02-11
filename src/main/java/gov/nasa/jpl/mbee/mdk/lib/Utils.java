@@ -67,6 +67,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
@@ -2130,7 +2131,7 @@ public class Utils {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
             for (Constraint constraint : constraints) {
-                if (constraint != null && Converters.getElementToIdConverter().apply(constraint).endsWith(("_vc"))) {
+                if (constraint != null && Converters.getElementToIdConverter().apply(constraint).endsWith((MDKConstants.VIEW_CONSTRAINT_SYSML_ID_SUFFIX))) {
                     return constraint;
                 }
             }
@@ -2138,6 +2139,23 @@ public class Utils {
         }
         return null;
     }
+
+    public static Constraint getWarningConstraint() {
+        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+    }
+
+    public static Constraint getErrorConstraint() {
+        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
+    }
+
+    public static Constraint getFatalConstraint() {
+        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
+    }
+
+    public static Constraint getInfoConstraint() {
+        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
+    }
+
     /********************************************* User interaction ****************************************************/
 
     /**
@@ -2383,8 +2401,7 @@ public class Utils {
                                                               Constraint cons) {
         List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
         // Project project = getProject();
-        // Constraint cons =
-        // (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        // Constraint cons = Utils.getWarningConstraint();
 
         EnumerationLiteral severity;
         /*
@@ -2396,19 +2413,19 @@ public class Utils {
         switch (vr.getSeverity()) {
             case WARNING:
                 severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-                cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+                cons = Utils.getWarningConstraint();
                 break;
             case ERROR:
                 severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
-                cons = (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
+                cons = Utils.getErrorConstraint();
                 break;
             case FATAL:
                 severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
-                cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
+                cons = Utils.getFatalConstraint();
                 break;
             case INFO:
                 severity = Annotation.getSeverityLevel(project, Annotation.INFO);
-                cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
+                cons = Utils.getInfoConstraint();
                 break;
             default:
                 severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
@@ -2445,7 +2462,7 @@ public class Utils {
     public static List<RuleViolationResult> getRuleViolations(Collection<ValidationSuite> vss) {
         List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
         Project project = getProject();
-        Constraint cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        Constraint cons = Utils.getWarningConstraint();
         for (ValidationSuite vs : vss) {
             for (ValidationRule vr : vs.getValidationRules()) {
                 results.addAll(getRuleViolations(vr, project, cons));
@@ -2474,7 +2491,7 @@ public class Utils {
         // Collection<RuleViolationResult> results = new
         // ArrayList<RuleViolationResult>();
         Package dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
-        //Constraint cons = (Constraint)project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        //Constraint cons = Utils.getWarningConstraint();
         if (dummyvs == null) {
             //Utils.showPopupMessage("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
             Application.getInstance().getGUILog().log("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
@@ -3737,7 +3754,7 @@ public class Utils {
         }
         String user = EsiUtils.getLoggedUserName();
         try {
-            int lastVersion = MDUtils.getLatestEsiVersion(project);
+            long lastVersion = MDUtils.getLatestEsiVersion(project);
             if (user == null || lastVersion < 0) {
                 Utils.guilog("[ERROR] You must be logged into Teamwork Cloud first.");
                 return false;

@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.actions.LockAction;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
@@ -80,7 +81,8 @@ public class DetailedSyncStatusAction extends SRAction {
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                     for (String key : changelog.get(changeType).keySet()) {
                         String comment = "[" + syncElementType.name() + "] [" + changeType.name() + "]";
-                        BaseElement baseElement = project.getElementByID(key);
+                        BaseElement baseElement = Converters.getIdToElementConverter()
+                                .apply(key, project);
                         Element element = null;
                         if (baseElement instanceof Element) {
                             element = (Element) baseElement;
@@ -106,7 +108,8 @@ public class DetailedSyncStatusAction extends SRAction {
             if (jmsMessageListener != null) {
                 ValidationRule validationRule = validationRuleMap.get(SyncElement.Type.MMS).get(changeType);
                 for (Map.Entry<String, ObjectNode> entry : jmsMessageListener.getInMemoryJMSChangelog().get(changeType).entrySet()) {
-                    BaseElement baseElement = project.getElementByID(entry.getKey());
+                    BaseElement baseElement = Converters.getIdToElementConverter()
+                            .apply(entry.getKey(), project);
                     validationRule.addViolation(new ValidationRuleViolation(baseElement instanceof Element ? (Element) baseElement : null, "[" + SyncElement.Type.MMS.name() + "] [" + changeType.name() + "]" + (baseElement instanceof Element ? "" : " " + entry.getKey())));
                 }
             }

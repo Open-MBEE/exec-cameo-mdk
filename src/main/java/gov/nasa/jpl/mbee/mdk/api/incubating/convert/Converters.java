@@ -54,8 +54,7 @@ public class Converters {
                 if (id == null) {
                     return null;
                 }
-                if (id.equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                        || id.equals(Converters.getProjectToIdConverter().apply(project))) {
+                if (id.equals(project.getID()) || id.equals(project.getPrimaryProject().getProjectID())) {
                     return null;
                 }
                 BaseElement baseElement = project.getElementByID(id);

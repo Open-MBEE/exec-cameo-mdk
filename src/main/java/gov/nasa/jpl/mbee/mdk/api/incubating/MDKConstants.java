@@ -12,6 +12,7 @@ public class MDKConstants {
             SYNC_SYSML_ID_SUFFIX = "_sync",
             PRIMARY_MODEL_ID_SUFFIX = "_pm",
             APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX = "_asi",
+            VIEW_CONSTRAINT_SYSML_ID_SUFFIX = "_vc",
             ID_KEY_SUFFIX = "Id",
             IDS_KEY_SUFFIX = ID_KEY_SUFFIX + "s",
             SLOT_ID_SEPARATOR = "-slot-",
