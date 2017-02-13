@@ -16,6 +16,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
@@ -234,11 +235,6 @@ public class MMSUtils {
         return buildRequest(type, requestUri, null);
     }
 
-    public static ObjectNode sendMMSRequest(HttpRequestBase request)
-            throws IOException, ServerException {
-        return sendMMSRequest(request, false);
-    }
-
         /**
          * General purpose method for sending a constructed http request via http client.
          *
@@ -247,17 +243,8 @@ public class MMSUtils {
          * @throws IOException
          * @throws ServerException
          */
-    public static ObjectNode sendMMSRequest(HttpRequestBase request, boolean bypassTicketCheck)
+    public static ObjectNode sendMMSRequest(HttpRequestBase request)
             throws IOException, ServerException {
-        // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
-        if (!bypassTicketCheck && !TicketUtils.isTicketValid()) {
-            // if new login credentials fail, logout and terminate jms sync;
-            // 403 exception should already be thrown by failed credentials acquisition attempt
-            if (!TicketUtils.loginToMMS()) {
-                new EMSLogoutAction().logoutAction();
-                throw new ServerException("Invalid credentials", 403);
-            }
-        }
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest
                 && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null)
@@ -278,7 +265,6 @@ public class MMSUtils {
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
                 CloseableHttpResponse response = httpclient.execute(request);
                 InputStream inputStream = response.getEntity().getContent()) {
-
             // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
             String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : null);
@@ -314,30 +300,38 @@ public class MMSUtils {
             // note that furtherProcessing == true means we will throw a ServerException and NOT return any JSON
             boolean furtherProcessing = false;
             if (responseCode < 200 || responseCode >= 300) {
-                // check for single target 404s that still returned properly, and check before warning popup
-                furtherProcessing = true;
+                // server error
                 if (responseCode >= 500) {
+                    furtherProcessing = true;
                     Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                } else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
-                    // TODO @donbot block this check when we've migrated to bulk calls only
-                    Application.getInstance().getGUILog().log("[WARNING] Targetted 404 processed.");
+                }
+                // resource missing 404 should have json
+                else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
+                    // TODO @donbot remove this check when we've migrated to bulk calls only
                     // do nothing
-                    furtherProcessing = false;
-                } else if (responseCode == 404) {
-                    // because we're using bulk get targets for operations, this should only happen on an invalid endpoint
-                    Application.getInstance().getGUILog().log("[ERROR] Target URL for operation was invalid. Server code: " + responseCode);
-                } else if (responseCode == 403) {
+                    System.out.println("[WARNING] Resource missing 404 processed.");
+                }
+                // invalid endpoint 404 shouldn't have any json
+                else if (responseCode == 404) {
+                    Application.getInstance().getGUILog().log("[ERROR] Invalid target URL. Server code: " + responseCode);
+                }
+                // permissions error. don't allow to login again, since they're valid just insufficient
+                else if (responseCode == 403) {
                     Utils.guilog("[ERROR] You do not have sufficient permissions to one or more elements in the project to complete this operation. Server code: " + responseCode);
-                } else if (responseCode == 401) {
-                    Utils.guilog("[ERROR] Authentication is required to utilize MMS functions. Please log in before trying again. Server code: " + responseCode);
-                    TicketUtils.clearUsernameAndPassword();
-                } else if (responseCode == 400) {
-                    // missing username code. display of server message covers informing the user
-                    TicketUtils.clearUsernameAndPassword();
-                } else {
+                }
+                // invalid or expired ticket. present option to log in again, and if successful re-submit request
+                else if (responseCode == 401) {
+                    Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be before trying again. Server code: " + responseCode);
+                    EMSLogoutAction.logoutAction();
+                    if (EMSLoginAction.loginAction()) {
+                        sendMMSRequest(request);
+                    }
+                }
+                // something else
+                else {
+                    furtherProcessing = true;
                     Utils.guilog("[ERROR] Unexpected server response. Server code: " + responseCode);
                 }
-//                }
             }
             if (furtherProcessing) {
                 // big flashing red letters that the action failed, or as close as we're going to get
@@ -348,24 +342,18 @@ public class MMSUtils {
         return responseJson;
     }
 
-    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
-            throws IOException, ServerException {
-        return sendCancellableMMSRequest(request, progressStatus, false);
-    }
-
     /**
      * General purpose method for running a cancellable request. Builds a new thread to run the request, and passes
      * any relevant exception information back out via atomic references and generates new exceptions in calling thread
      *
      * @param request
      * @param progressStatus
-     * @param bypassTicketCheck
      * @return
      * @throws IOException
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus, final boolean bypassTicketCheck)
+    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
             throws IOException, ServerException {
         final AtomicReference<ObjectNode> resp = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
@@ -374,7 +362,7 @@ public class MMSUtils {
         Thread t = new Thread(() -> {
             ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
             try {
-                response = sendMMSRequest(request, bypassTicketCheck);
+                response = sendMMSRequest(request);
                 etype.set(null);
                 ecode.set(200);
                 emsg.set("");
