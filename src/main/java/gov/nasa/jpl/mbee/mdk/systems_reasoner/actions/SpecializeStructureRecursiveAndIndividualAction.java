@@ -15,7 +15,10 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Region;
 import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.State;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.validation.actions.RedefineAttributeAction;
+import gov.nasa.jpl.mbee.mdk.validation.actions.SetRedefinitionAction;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -23,18 +26,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CreateSpecificAction extends SRAction {
+public class SpecializeStructureRecursiveAndIndividualAction extends SRAction {
 
     /**
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String DEFAULT_ID = "Specialize Structure";
+    public static final String DEFAULT_ID = "Specialize Recursive & Individual";
     private Classifier classifier;
     private ArrayList<Namespace> recursionList;
     private boolean isValidationMode = false;
 
-    public CreateSpecificAction(final Classifier classifier, boolean isValidationMode) {
+    public SpecializeStructureRecursiveAndIndividualAction(final Classifier classifier, boolean isValidationMode) {
         super(DEFAULT_ID, classifier);
         this.classifier = classifier;
         recursionList = new ArrayList<>();
@@ -61,7 +64,7 @@ public class CreateSpecificAction extends SRAction {
             dlg.setVisible(true);
         }
         if (isValidationMode || dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
-            SessionManager.getInstance().createSession("create specific");
+            SessionManager.getInstance().createSession("Create BST");
             Namespace container;
             if (isValidationMode) {
                 container = (Namespace) classifier.getOwner();
@@ -69,60 +72,27 @@ public class CreateSpecificAction extends SRAction {
             else {
                 container = (Namespace) dlg.getSelectedElement();
             }
-            ArrayList<Element> generals = new ArrayList<>();
-            generals.add(classifier);
-            getAllSubElementsRecursive(generals, classifier);
 
-            // List<BaseElement> specifics = CopyPasting.copyPasteElements(copyList, container);
-            List<BaseElement> specifics = CopyPasting.copyPasteElements(generals, container, null, true, true);
-            /*System.out.println("Copy List  _  _  _ |   specifics");
-            for (int jj = 0; jj < generals.size(); jj++) {
-                System.out.println(generals.get(jj) + "_  _  _ |" + specifics.get(jj));
-            }*/
+            Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
+            specific.getOwnedMember().clear();
+            Utils.createGeneralization(classifier, specific);
+            for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
+                if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
+                    final RedefinableElement redefEl = (RedefinableElement) ne;
+                            if (ne instanceof Property) {
+                                if (redefEl instanceof TypedElement) {
+                                    RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, true, "Redefine Attribute & Specialize Types Recursively");
+                                    action.run();
+                                }
+                            }
+                    }
 
-            int i = 0;
-            for (BaseElement specific : specifics) {
-                if (specific instanceof Classifier) {
-                    //System.out.println(((Classifier) specific).getName());
-                    Collection<NamedElement> redefElements = new ArrayList<>();
-                    ((Classifier) specific).getGeneralization().retainAll(redefElements);
-                    for (NamedElement ne : ((Namespace) specific).getOwnedMember()) {
-                        if (ne instanceof RedefinableElement) {
-                            // Dont throw away those we want to redefine.
-                            redefElements.add(ne);
-                        }
-                    }
-                    ((Namespace) specific).getOwnedMember().retainAll(redefElements);
-                    Utils.createGeneralization((Classifier) generals.get(i), (Classifier) specific);
-                }
-                else if (specific instanceof RedefinableElement) {
-                    if (specific instanceof Property) {
-                        if (generals.get(i) instanceof Property) {
-                            ((Property) specific).getRedefinedProperty().add((Property) generals.get(i));
-                        }
-                    }
-                    else if (specific instanceof State) {
-                        if (generals.get(i) instanceof State) {
-                            ((State) specific).setRedefinedState((State) generals.get(i));
-                        }
-                    }
-                    else if (specific instanceof Region) {
-                        if (generals.get(i) instanceof Region) {
-                            ((Region) specific).getRedefinedElement().add(((Region) generals.get(i)));
-                        }
-                    }
-                    else if (specific instanceof Action) {
-                        if (generals.get(i) instanceof Action) {
-                            ((Action) specific).getRedefinedElement().add(((Action) generals.get(i)));
-                        }
-                    }
-                }
-
-                i++;
             }
+
+
+
             SessionManager.getInstance().closeSession();
-            // ValidateAction.validate((Element) specifics);
-        }
+         }
     }
 
     private void getAllSubElementsRecursive(ArrayList<Element> copyList, Namespace currentElement) {
@@ -149,7 +119,7 @@ public class CreateSpecificAction extends SRAction {
             else if (feat instanceof Namespace) {
                 copyList.add(feat);
                 for (NamedElement ne : ((Namespace) feat).getOwnedMember()) {
-                    if (ne instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace) {
+                    if (ne instanceof Namespace) {
                         if (!recursionList.contains(ne)) {
                             copyList.add(ne);
                             recursionList.add((Namespace) ne);
