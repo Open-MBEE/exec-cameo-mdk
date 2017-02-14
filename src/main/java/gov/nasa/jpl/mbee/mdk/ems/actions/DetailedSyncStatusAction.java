@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.actions.LockAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -81,15 +80,7 @@ public class DetailedSyncStatusAction extends SRAction {
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                     for (String key : changelog.get(changeType).keySet()) {
                         String comment = "[" + syncElementType.name() + "] [" + changeType.name() + "]";
-                        BaseElement baseElement = Converters.getIdToElementConverter()
-                                .apply(key, project);
-                        Element element = null;
-                        if (baseElement instanceof Element) {
-                            element = (Element) baseElement;
-                        }
-                        else {
-                            comment += " " + key;
-                        }
+                        Element element = Converters.getIdToElementConverter().apply(key, project);
                         validationRuleMap.get(syncElementType).get(changeType).addViolation(new ValidationRuleViolation(element, comment));
                     }
                 }
@@ -108,9 +99,8 @@ public class DetailedSyncStatusAction extends SRAction {
             if (jmsMessageListener != null) {
                 ValidationRule validationRule = validationRuleMap.get(SyncElement.Type.MMS).get(changeType);
                 for (Map.Entry<String, ObjectNode> entry : jmsMessageListener.getInMemoryJMSChangelog().get(changeType).entrySet()) {
-                    BaseElement baseElement = Converters.getIdToElementConverter()
-                            .apply(entry.getKey(), project);
-                    validationRule.addViolation(new ValidationRuleViolation(baseElement instanceof Element ? (Element) baseElement : null, "[" + SyncElement.Type.MMS.name() + "] [" + changeType.name() + "]" + (baseElement instanceof Element ? "" : " " + entry.getKey())));
+                    Element element = Converters.getIdToElementConverter().apply(entry.getKey(), project);
+                    validationRule.addViolation(new ValidationRuleViolation(element, "[" + SyncElement.Type.MMS.name() + "] [" + changeType.name() + "]"));
                 }
             }
         }

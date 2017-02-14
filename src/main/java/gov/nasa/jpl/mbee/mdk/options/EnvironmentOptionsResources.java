@@ -21,5 +21,4 @@ public class EnvironmentOptionsResources {
     public static String getString(String key) {
         return ResourceManager.getStringFor(key, BUNDLE_NAME, EnvironmentOptionsResources.class.getClassLoader());
     }
-
 }
