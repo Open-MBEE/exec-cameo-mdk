@@ -66,7 +66,7 @@ public class EMSLoginAction extends MDAction {
             return false;
         }
         if (project.isRemote() && (TeamworkUtils.getLoggedUserName() == null && EsiUtils.getTeamworkService().getConnectedUser() == null)) {
-            Utils.showPopupMessage("You need to be logged in to TeamworkCloud first!");
+            Utils.showPopupMessage("You need to be logged in to Teamwork Cloud first!");
             return false;
         }
 
