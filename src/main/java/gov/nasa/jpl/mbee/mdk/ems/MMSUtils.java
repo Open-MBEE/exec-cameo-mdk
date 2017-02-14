@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -170,7 +172,7 @@ public class MMSUtils {
         if (depth > 0) {
             requestUri.setParameter("depth", java.lang.Integer.toString(depth));
         }
-        else {
+        else if (recurse) {
             requestUri.setParameter("recurse", java.lang.Boolean.toString(recurse));
         }
 
@@ -304,10 +306,11 @@ public class MMSUtils {
             throws IOException, ServerException {
         // if not bypassing ticket check and ticket invalid, attempt to get new login credentials
         if (!bypassTicketCheck && !TicketUtils.isTicketValid()) {
-            // if new login credentials fail, logout and terminal jms sync;
+            // if new login credentials fail, logout and terminate jms sync;
             // 403 exception should already be thrown by failed credentials acquisition attempt
             if (!TicketUtils.loginToMMS()) {
                 new EMSLogoutAction().logoutAction();
+                throw new ServerException("Invalid credentials", 403);
             }
         }
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
@@ -667,7 +670,7 @@ public class MMSUtils {
         if (projectUri == null) {
             return null;
         }
-        String projectId = project.getPrimaryProject().getProjectID();
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         projectUri.setPath(projectUri.getPath() + "/projects/" + projectId);
         return projectUri;
     }
@@ -713,22 +716,27 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject().getName(), project.getPrimaryProject().getProjectID(), project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString());
+        return getProjectObjectNode(project.getPrimaryProject());
     }
 
-    public static ObjectNode getProjectObjectNode(IProject project) {
-        return getProjectObjectNode(project.getName(), project.getProjectID(), null);
+    public static ObjectNode getProjectObjectNode(IProject iProject) {
+        String categoryId = null;
+        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject) {
+            // TODO @donbot enable full version below after 18.5GA
+//            String categoryId = (project.isRemote() ? EsiUtils.getCategoryID(resourceId) : "local" );
+        }
+        return getProjectObjectNode(iProject.getName(), Converters.getIProjectToIdConverter().apply(iProject), categoryId);
     }
 
-    private static ObjectNode getProjectObjectNode(String name, String projId, String descId) {
+    private static ObjectNode getProjectObjectNode(String name, String projectId, String categoryId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projId);
+        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projectId);
         if (name != null && !name.isEmpty()) {
             projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }
-        if (descId != null && !descId.isEmpty()) {
-            projectObjectNode.put(MDKConstants.DESCRIPTOR_ID, descId);
+        if (categoryId != null && !categoryId.isEmpty()) {
+            projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
         }
         return projectObjectNode;
     }

@@ -40,6 +40,7 @@ import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import javax.swing.*;
@@ -256,7 +257,8 @@ public class EditableTable extends JDialog {
                         continue;
                     }
                     PropertyEnum whatToChange = null;
-                    BaseElement e = prj.getElementByID(props[c]);
+                    BaseElement e = Converters.getIdToElementConverter()
+                            .apply(props[c], prj);
                     String value = props[c + 1];
                     if (what != null && what.size() > row && what.get(row).size() > col) {
                         whatToChange = what.get(row).get(col);
@@ -271,7 +273,7 @@ public class EditableTable extends JDialog {
                     }
 
                     if (e != null) {
-                        if (el instanceof Element && ((Element) el).getID().equals(props[c])) {
+                        if (el instanceof Element && Converters.getElementToIdConverter().apply((Element) el).equals(props[c])) {
                             if (e.isEditable()) {
                                 try {
                                     String curValue = (String) ntable.getValueAt(row, col);
@@ -443,7 +445,7 @@ public class EditableTable extends JDialog {
                 for (int j = 0; j < cols; j++) {
                     Object mdo = m.get(i).get(j);
                     if (mdo != null && mdo instanceof Element) {
-                        s.add(((Element) mdo).getID());
+                        s.add(Converters.getElementToIdConverter().apply((Element) mdo));
                     }
                     else {
                         s.add("");

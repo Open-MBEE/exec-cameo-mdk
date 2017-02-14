@@ -243,27 +243,31 @@ public class MDUtils {
 
     public static String getRemoteBranchPath(Project project) {
         if (!project.isRemote()) {
-            return null;
+            return "master";
         }
-        return getRemoteBranchPath(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+//        return getRemoteBranchPath(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+        return EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
     }
 
     public static String getRemoteBranchPath(URI uri) {
+
         return ProjectDescriptorsFactory.getProjectBranchPath(uri);
     }
 
-    public static int getRemoteVersion(Project project) {
+    public static long getRemoteVersion(Project project) {
         if (!project.isRemote()) {
             return -1;
         }
-        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+//        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
+        return Long.valueOf(ProjectUtilities.getVersion(project.getPrimaryProject()).getName());
     }
+
 
     public static int getRemoteVersion(URI uri) {
         return ProjectDescriptorsFactory.getRemoteVersion(uri);
     }
 
-    public static int getLatestEsiVersion(Project project) {
+    public static long getLatestEsiVersion(Project project) {
         if (!project.isRemote()) {
             return -1;
         }
@@ -272,11 +276,11 @@ public class MDUtils {
 
 
     // TODO Switch to convenience method in 18.5 @donbot
-    public static int getLatestEsiVersion(ProjectDescriptor projectDescriptor) {
-        final int[] version = new int[]{-1};
+    // note that this only converts version to int, despite being compared with a long from the getRemoteVersion methods
+    public static long getLatestEsiVersion(ProjectDescriptor projectDescriptor) {
+        final long[] version = new long[]{-1};
         EsiUtils.getVersions(projectDescriptor).stream().max(ProjectUtilities::compareVersions).ifPresent(iVersionDescriptor -> version[0] = ProjectUtilities.versionToInt(iVersionDescriptor.getName()));
         return version[0];
     }
-
 
 }

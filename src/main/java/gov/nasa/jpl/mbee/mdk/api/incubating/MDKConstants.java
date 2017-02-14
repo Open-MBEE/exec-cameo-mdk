@@ -12,6 +12,7 @@ public class MDKConstants {
             SYNC_SYSML_ID_SUFFIX = "_sync",
             PRIMARY_MODEL_ID_SUFFIX = "_pm",
             APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX = "_asi",
+            VIEW_CONSTRAINT_SYSML_ID_SUFFIX = "_vc",
             ID_KEY_SUFFIX = "Id",
             IDS_KEY_SUFFIX = ID_KEY_SUFFIX + "s",
             SLOT_ID_SEPARATOR = "-slot-",
@@ -23,7 +24,7 @@ public class MDKConstants {
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
             DIAGRAM_TYPE_KEY = DERIVED_KEY_PREFIX + "diagramType",
-            DESCRIPTOR_ID = DERIVED_KEY_PREFIX + "descriptorId",
+            CATEGORY_ID_KEY = DERIVED_KEY_PREFIX + "category" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_ID_KEY = "mountedElement" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_PROJECT_ID_KEY = "mountedElementProject" + ID_KEY_SUFFIX,
             REF_ID = "ref" + ID_KEY_SUFFIX;

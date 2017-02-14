@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.ems.sync.local;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,13 +56,13 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
             project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
         }
-        //projectMappings.remove(project.getID());
+        //projectMappings.remove(MDUtils.getProjectID(project));
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
-        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
+        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
         if (localSyncProjectMapping == null) {
-            projectMappings.put(project.getPrimaryProject().getProjectID(), localSyncProjectMapping = new LocalSyncProjectMapping(project));
+            projectMappings.put(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), localSyncProjectMapping = new LocalSyncProjectMapping(project));
         }
         return localSyncProjectMapping;
     }

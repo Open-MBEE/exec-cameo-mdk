@@ -12,6 +12,7 @@ import com.nomagic.teamwork.common.users.SessionInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
@@ -366,7 +367,8 @@ public class AutomatedViewGeneration extends CommandLine {
         logMessage(msg);
         boolean failedDocs = false;
         for (String elementID : viewList) {
-            NamedElement document = (NamedElement) Application.getInstance().getProject().getElementByID(elementID);
+            NamedElement document = (NamedElement) Converters.getIdToElementConverter()
+                    .apply(elementID, Application.getInstance().getProject());
             if (document == null) {
                 msg = "[FAILURE] Unable to find element \"" + elementID + "\"";
                 logMessage(msg);

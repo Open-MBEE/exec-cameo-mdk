@@ -54,7 +54,7 @@ public class ElementFinder {
      * @param parent The top level element whose owned elements you want to select
      */
     public static List<Element> findElements(Element parent) {
-        List<Element> elements = new ArrayList<Element>();
+        List<Element> elements = new ArrayList<>();
         elements.add(parent);
         elements.addAll(parent.getOwnedElement());
         Element current;
@@ -143,7 +143,7 @@ public class ElementFinder {
                 retrievedElements.add((NamedElement) elem);
             }
         }
-        System.out.println("Found " + retrievedElements.size() + " NamedElement(s) conaining name " + elementName);
+        System.out.println("Found " + retrievedElements.size() + " NamedElement(s) containing name " + elementName);
         if (retrievedElements.size() > 0) {
             return retrievedElements;
         }
@@ -188,7 +188,7 @@ public class ElementFinder {
         if (elements == null) {
             return null;
         }
-        List<Element> retrievedElements = new ArrayList<Element>();
+        List<Element> retrievedElements = new ArrayList<>();
         for (Element elem : elements) {
             if (elem.getHumanType().equals(elementType)) {
                 retrievedElements.add(elem);
@@ -226,7 +226,7 @@ public class ElementFinder {
         if (owner == null) {
             owner = getModelRoot();
         }
-        ArrayList<Element> elements = new ArrayList<Element>();
+        ArrayList<Element> elements = new ArrayList<>();
         elements.add(owner);
         elements.addAll(owner.getOwnedElement());
         Element current;
@@ -251,17 +251,6 @@ public class ElementFinder {
      */
     public static Element getElement(String type, String name) {
         return getElement(type, name, getModelRoot());
-    }
-
-    /**
-     * Finds the indicated element based on the ID
-     *
-     * @param targetID String containing target ID in project
-     * @return
-     */
-    public static Element getElementByID(String targetID, Project project) {
-        Element target = (Element) project.getElementByID(targetID);
-        return target;
     }
 
     /**

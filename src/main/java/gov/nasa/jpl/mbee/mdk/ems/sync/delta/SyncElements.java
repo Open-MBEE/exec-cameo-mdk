@@ -34,7 +34,7 @@ public class SyncElements {
     private static final DateFormat NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
 
     private static String getSyncPackageID(Project project) {
-        return project.getPrimaryProject().getProjectID() + MDKConstants.SYNC_SYSML_ID_SUFFIX;
+        return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.SYNC_SYSML_ID_SUFFIX;
     }
 
     public static Package getSyncPackage(Project project) {
@@ -215,7 +215,7 @@ public class SyncElements {
         if (!ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
             return Collections.emptyList();
         }
-        String folderId = project.getPrimaryProject().getProjectID() + "_sync";
+        String folderId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.SYNC_SYSML_ID_SUFFIX;
         Element folder = Converters.getIdToElementConverter().apply(folderId, project);
         if (folder == null) {
             return Collections.emptyList();

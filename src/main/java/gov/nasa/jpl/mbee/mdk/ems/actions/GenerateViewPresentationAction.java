@@ -7,6 +7,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.generator.ViewPresentationGenerator;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
@@ -47,7 +48,7 @@ public class GenerateViewPresentationAction extends MDAction {
         while (!queuedElements.isEmpty()) {
             Element element = queuedElements.remove();
             if (processedElements.contains(element)) {
-                Application.getInstance().getGUILog().log("Detected duplicate element reference. Skipping generation for " + element.getID() + ".");
+                Application.getInstance().getGUILog().log("Detected duplicate element reference. Skipping generation for " + Converters.getElementToIdConverter().apply(element) + ".");
                 continue;
             }
             if (StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
