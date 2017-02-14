@@ -9,19 +9,14 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
-import com.nomagic.magicdraw.uml.BaseElement;
-import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.Action;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Region;
-import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.State;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.actions.RedefineAttributeAction;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class SpecializeStructureAction extends SRAction {
@@ -70,12 +65,7 @@ public class SpecializeStructureAction extends SRAction {
             else {
                 container = (Namespace) dlg.getSelectedElement();
             }
-            ArrayList<Element> generals = new ArrayList<>();
-            generals.add(classifier);
-            getAllSubElementsRecursive(generals, classifier);
             Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
-          //  System.out.println(specific.getName() );
-          //  specific.getGeneral().forEach(item -> System.out.println(item.getName()));
             specific.getOwnedMember().clear();
             Utils.createGeneralization(classifier, specific);
             for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
@@ -90,50 +80,7 @@ public class SpecializeStructureAction extends SRAction {
                 }
 
             }
-
-
-
-
             SessionManager.getInstance().closeSession();
-
-            // ValidateAction.validate((Element) specifics);
         }
-    }
-
-    private void getAllSubElementsRecursive(ArrayList<Element> copyList, Namespace currentElement) {
-        for (NamedElement feat : currentElement.getOwnedMember()) {
-            if (feat instanceof Property) {
-                Property prop = (Property) feat;
-                if (!copyList.contains(prop)) {
-                    copyList.add(prop);
-                }
-                if (prop.getAssociation() != null && !copyList.contains(prop.getAssociation())) {
-                    copyList.add(prop.getAssociation());
-                }
-                if (prop.isComposite() && prop.getType() != null) {
-                    Type targ = prop.getType();
-                    if (targ instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class) {
-                        if (!recursionList.contains(targ)) {
-                            copyList.add(targ);
-                            recursionList.add((Classifier) targ);
-                            getAllSubElementsRecursive(copyList, (Classifier) targ);
-                        }
-                    }
-                }
-            }
-            else if (feat instanceof Namespace) {
-                copyList.add(feat);
-                for (NamedElement ne : ((Namespace) feat).getOwnedMember()) {
-                    if (ne instanceof Namespace) {
-                        if (!recursionList.contains(ne)) {
-                            copyList.add(ne);
-                            recursionList.add((Namespace) ne);
-                            getAllSubElementsRecursive(copyList, (Namespace) ne);
-                        }
-                    }
-                }
-            }
-        }
-
     }
 }

@@ -75,10 +75,7 @@ public class SpecializeStructureRecursiveAction extends SRAction {
 
             // List<BaseElement> specifics = CopyPasting.copyPasteElements(copyList, container);
             List<BaseElement> specifics = CopyPasting.copyPasteElements(generals, container, null, true, true);
-            /*System.out.println("Copy List  _  _  _ |   specifics");
-            for (int jj = 0; jj < generals.size(); jj++) {
-                System.out.println(generals.get(jj) + "_  _  _ |" + specifics.get(jj));
-            }*/
+
 
             int i = 0;
             for (BaseElement specific : specifics) {

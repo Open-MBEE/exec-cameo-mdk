@@ -9,21 +9,14 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
-import com.nomagic.magicdraw.uml.BaseElement;
-import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.Action;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.Region;
-import com.nomagic.uml2.ext.magicdraw.statemachines.mdbehaviorstatemachines.State;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.actions.RedefineAttributeAction;
-import gov.nasa.jpl.mbee.mdk.validation.actions.SetRedefinitionAction;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class SpecializeStructureRecursiveAndIndividualAction extends SRAction {
@@ -93,42 +86,5 @@ public class SpecializeStructureRecursiveAndIndividualAction extends SRAction {
 
             SessionManager.getInstance().closeSession();
          }
-    }
-
-    private void getAllSubElementsRecursive(ArrayList<Element> copyList, Namespace currentElement) {
-        for (NamedElement feat : currentElement.getOwnedMember()) {
-            if (feat instanceof Property) {
-                Property prop = (Property) feat;
-                if (!copyList.contains(prop)) {
-                    copyList.add(prop);
-                }
-                if (prop.getAssociation() != null && !copyList.contains(prop.getAssociation())) {
-                    copyList.add(prop.getAssociation());
-                }
-                if (prop.isComposite() && prop.getType() != null) {
-                    Type targ = prop.getType();
-                    if (targ instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class) {
-                        if (!recursionList.contains(targ)) {
-                            copyList.add(targ);
-                            recursionList.add((Classifier) targ);
-                            getAllSubElementsRecursive(copyList, (Classifier) targ);
-                        }
-                    }
-                }
-            }
-            else if (feat instanceof Namespace) {
-                copyList.add(feat);
-                for (NamedElement ne : ((Namespace) feat).getOwnedMember()) {
-                    if (ne instanceof Namespace) {
-                        if (!recursionList.contains(ne)) {
-                            copyList.add(ne);
-                            recursionList.add((Namespace) ne);
-                            getAllSubElementsRecursive(copyList, (Namespace) ne);
-                        }
-                    }
-                }
-            }
-        }
-
     }
 }
