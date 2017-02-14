@@ -60,6 +60,7 @@ public class EMSLogoutAction extends MMSAction {
     public static void logoutAction() {
         TicketUtils.clearUsernameAndPassword();
         Application.getInstance().getGUILog().log("[INFO] MMS logout complete.");
+        ActionsStateUpdater.updateActionsState();
         for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
             if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(p).getJmsMessageListener().isDisabled()) {
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
@@ -67,7 +68,6 @@ public class EMSLogoutAction extends MMSAction {
             }
         }
         SyncStatusConfigurator.getSyncStatusAction().update();
-        ActionsStateUpdater.updateActionsState();
     }
 
 }

@@ -32,7 +32,6 @@ import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
@@ -58,7 +57,6 @@ public class EMSLoginAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         loginAction();
-        ActionsStateUpdater.updateActionsState();
     }
 
     public static boolean loginAction() {
@@ -68,7 +66,7 @@ public class EMSLoginAction extends MDAction {
             return false;
         }
         if (project.isRemote() && (TeamworkUtils.getLoggedUserName() == null && EsiUtils.getTeamworkService().getConnectedUser() == null)) {
-            Utils.showPopupMessage("You need to be logged in to Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "first!");
+            Utils.showPopupMessage("You need to be logged in to Teamwork Cloud first!");
             return false;
         }
 
@@ -76,11 +74,13 @@ public class EMSLoginAction extends MDAction {
 //            Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
             return false;
         }
+        ActionsStateUpdater.updateActionsState();
         Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
         for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
             MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
             MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
         }
+
         return true;
     }
 
