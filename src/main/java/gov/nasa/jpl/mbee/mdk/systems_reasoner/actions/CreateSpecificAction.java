@@ -83,11 +83,11 @@ public class CreateSpecificAction extends SRAction {
             int i = 0;
             for (BaseElement specific : specifics) {
                 if (specific instanceof Classifier) {
-                    //System.out.println(((Classifier) specific).getName());
+                    System.out.println(((Classifier) specific).getName());
                     Collection<NamedElement> redefElements = new ArrayList<>();
                     ((Classifier) specific).getGeneralization().retainAll(redefElements);
                     for (NamedElement ne : ((Namespace) specific).getOwnedMember()) {
-                        if (ne instanceof RedefinableElement) {
+                        if (ne instanceof RedefinableElement || ne instanceof Constraint) {
                             // Dont throw away those we want to redefine.
                             redefElements.add(ne);
                         }
