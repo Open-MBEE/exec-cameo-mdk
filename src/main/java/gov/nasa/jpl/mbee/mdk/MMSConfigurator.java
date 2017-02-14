@@ -32,7 +32,6 @@ import com.nomagic.actions.AMConfigurator;
 import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import gov.nasa.jpl.mbee.mdk.ems.actions.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
@@ -41,7 +40,6 @@ public class MMSConfigurator implements AMConfigurator {
 
     @Override
     public int getPriority() {
-        // TODO Auto-generated method stub
         return 0;
     }
 
@@ -50,35 +48,27 @@ public class MMSConfigurator implements AMConfigurator {
         NMAction category = manager.getActionFor("MMSMAIN");
         if (category == null) {
             category = new MDActionsCategory("MMSMAIN", "MMS");
-            ((ActionsCategory) category).setNested(true);
-            manager.addCategory((ActionsCategory) category);
-
-            EMSLoginAction login = new EMSLoginAction();
-            EMSLogoutAction logout = new EMSLogoutAction();
-            login.setLogoutAction(logout);
-            logout.setLoginAction(login);
-
-            category.addAction(login);
-            category.addAction(logout);
-            if(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-                MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
-                validateCategory.setNested(true);
-                category.addAction(validateCategory);
-                validateCategory.addAction(new ValidateModulesAction());
-                validateCategory.addAction(new ValidateBranchesAction());
-            }
-            /*MDActionsCategory sync = new MDActionsCategory("MMSMAINSYNC", "Update and Commit");
-            sync.setNested(true);
-            category.addAction(sync);
-            sync.addAction(new UpdateFromJMS(false));
-            sync.addAction(new UpdateFromJMS(true));
-            sync.addAction(new UpdateFromJMSAndCommitWithDelete());
-            sync.addAction(new UpdateAllDocumentsAction());*/
-
-            category.addAction(new UpdateAllDocumentsAction());
-
-            //category.addAction(new SendProjectVersionAction());
         }
-        ActionsStateUpdater.updateActionsState();
+        ((ActionsCategory) category).setNested(true);
+        manager.addCategory((ActionsCategory) category);
+
+        EMSLoginAction login = new EMSLoginAction();
+        EMSLogoutAction logout = new EMSLogoutAction();
+        login.setLogoutAction(logout);
+        logout.setLoginAction(login);
+
+        category.addAction(login);
+        category.addAction(logout);
+        category.addAction(new UpdateAllDocumentsAction());
+
+        if (MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
+            MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
+            validateCategory.setNested(true);
+            category.addAction(validateCategory);
+            validateCategory.addAction(new ValidateModulesAction());
+            validateCategory.addAction(new ValidateBranchesAction());
+            System.out.println(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
+        }
     }
+
 }
