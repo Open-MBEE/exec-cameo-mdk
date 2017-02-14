@@ -31,6 +31,7 @@ package gov.nasa.jpl.mbee.mdk.model;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
@@ -103,7 +104,7 @@ public class Image extends Query {
                     if (getCaptions() != null && getCaptions().size() > i && getShowCaptions()) {
                         im.setCaption(getCaptions().get(i));
                     }
-                    im.setId(diagram.getID());
+                    im.setId(Converters.getElementToIdConverter().apply(diagram));
                     res.add(im);
 
                     String doc = ModelHelper.getComment(diagram);

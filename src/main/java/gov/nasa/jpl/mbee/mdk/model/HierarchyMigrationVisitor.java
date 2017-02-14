@@ -8,6 +8,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.util.List;
@@ -87,8 +88,8 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
     private void setId(Element old, Element neww) {
         if (old.isEditable()) {
             if (!(old instanceof Diagram)) {
-                String oldId = old.getID();
-                String newId = neww.getID();
+                String oldId = Converters.getElementToIdConverter().apply(old);
+                String newId = Converters.getElementToIdConverter().apply(neww);
                 neww.setID(oldId);
                 old.setID(newId);
             }

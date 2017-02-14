@@ -40,6 +40,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
 import gov.nasa.jpl.mbee.mdk.model.ui.CharacterizationChooserUI;
@@ -529,7 +530,7 @@ public class MissionMapping extends Query {
     }
 
     private Node<String, MissionComponent> fillMission(NamedElement cur) {
-        Node<String, MissionComponent> node = new Node<String, MissionComponent>(cur.getID(),
+        Node<String, MissionComponent> node = new Node<>(Converters.getElementToIdConverter().apply(cur),
                 new MissionComponent(cur.getName(), cur));
         if (cur instanceof Package) {
             if (IMCEPresent) {

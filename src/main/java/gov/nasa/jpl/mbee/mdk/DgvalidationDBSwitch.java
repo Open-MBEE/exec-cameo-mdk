@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.dgvalidation.Rule;
 import gov.nasa.jpl.mbee.mdk.dgvalidation.Severity;
 import gov.nasa.jpl.mbee.mdk.dgvalidation.Suite;
@@ -70,8 +71,7 @@ public class DgvalidationDBSwitch extends DgvalidationSwitch<Object> {
     @Override
     public Object caseViolation(Violation object) {
         if (object.getElementId() != null) {
-            ValidationRuleViolation res = new ValidationRuleViolation((Element) Application.getInstance()
-                    .getProject().getElementByID(object.getElementId()), object.getComment());
+            ValidationRuleViolation res = new ValidationRuleViolation(Converters.getIdToElementConverter().apply(object.getElementId(), Application.getInstance().getProject()), object.getComment());
             return res;
         }
         return null;

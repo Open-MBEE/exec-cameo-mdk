@@ -102,7 +102,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         wsIdMapping.put(id, name);
         ProjectDescriptor newBranch = branchDescriptors.get(name);
         // TODO Test this version stuff @donbot
-        int version = MDUtils.getLatestEsiVersion(newBranch);
+        long version = MDUtils.getLatestEsiVersion(newBranch);
         try {
             CreateMMSWorkspaceAction.initializeWorkspace(project, id);
         } catch (IOException | URISyntaxException | ServerException e1) {

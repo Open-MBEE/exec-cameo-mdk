@@ -1,7 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.api.incubating.convert;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -22,6 +24,8 @@ public class Converters {
     private static JsonToElementFunction JSON_TO_ELEMENT_CONVERTER;
     private static Function<Element, String> ELEMENT_TO_ID_CONVERTER;
     private static BiFunction<String, Project, Element> ID_TO_ELEMENT_CONVERTER;
+    private static Function<Project, String> PROJECT_TO_ID_CONVERTER;
+    private static Function<IProject, String> IPROJECT_TO_ID_CONVERTER;
 
     public static BiFunction<Element, Project, ObjectNode> getElementToJsonConverter() {
         if (ELEMENT_TO_JSON_CONVERTER == null) {
@@ -50,13 +54,13 @@ public class Converters {
                 if (id == null) {
                     return null;
                 }
-                if (id.equals(project.getPrimaryProject().getProjectID())) {
+                if (id.equals(project.getID()) || id.equals(project.getPrimaryProject().getProjectID())) {
                     return null;
                 }
                 BaseElement baseElement = project.getElementByID(id);
                 if (baseElement == null && id.endsWith(MDKConstants.PRIMARY_MODEL_ID_SUFFIX)) {
                     String projectId = id.substring(0, id.length() - MDKConstants.PRIMARY_MODEL_ID_SUFFIX.length());
-                    if (projectId.equals(project.getPrimaryProject().getProjectID())) {
+                    if (projectId.equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                         return project.getPrimaryModel();
                     }
                 }
@@ -116,5 +120,35 @@ public class Converters {
             };
         }
         return ID_TO_ELEMENT_CONVERTER;
+    }
+
+    public static Function<Project, String> getProjectToIdConverter() {
+        if (PROJECT_TO_ID_CONVERTER == null) {
+            PROJECT_TO_ID_CONVERTER = (project) -> {
+                if (project == null) {
+                    return null;
+                }
+                if (!project.isRemote()) {
+                    return project.getID();
+                }
+                return ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI());
+            };
+        }
+        return PROJECT_TO_ID_CONVERTER;
+    }
+
+    public static Function<IProject, String> getIProjectToIdConverter() {
+        if (IPROJECT_TO_ID_CONVERTER == null) {
+            IPROJECT_TO_ID_CONVERTER = (iProject) -> {
+                if (iProject == null) {
+                    return null;
+                }
+                if (iProject.getLocationURI().isFile()) {
+                    return iProject.getProjectID();
+                }
+                return ProjectUtilities.getResourceID(iProject.getLocationURI());
+            };
+        }
+        return IPROJECT_TO_ID_CONVERTER;
     }
 }

@@ -10,6 +10,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
@@ -95,7 +96,7 @@ public class ModuleValidator {
                 if (projectUriBuilder == null) {
                     continue;
                 }
-                projectUriBuilder.setPath(projectUriBuilder.getPath() + "/projects/" + module.getProjectID());
+                projectUriBuilder.setPath(projectUriBuilder.getPath() + "/projects/" + Converters.getIProjectToIdConverter().apply(module));
                 ObjectNode responseObjectNode;
                 try {
                     responseObjectNode = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, projectUriBuilder));

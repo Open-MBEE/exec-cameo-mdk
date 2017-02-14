@@ -33,6 +33,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
@@ -206,7 +207,7 @@ public class MDKValidationWindow {
             return id;
         }
         else if (vrve != null) {
-            return vrve.getID();
+            return Converters.getElementToIdConverter().apply(vrve);
         }
         return "";
     }

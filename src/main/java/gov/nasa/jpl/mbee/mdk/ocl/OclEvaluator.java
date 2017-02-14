@@ -38,6 +38,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.generator.ViewParser;
@@ -568,7 +569,8 @@ public class OclEvaluator {
                 String nameOrId = (String) args[0];
 
                 // try id
-                BaseElement e = Application.getInstance().getProject().getElementByID(nameOrId);
+                BaseElement e = Converters.getIdToElementConverter()
+                        .apply(nameOrId, Application.getInstance().getProject());
                 if (e != null) {
                     return e;
                 }
