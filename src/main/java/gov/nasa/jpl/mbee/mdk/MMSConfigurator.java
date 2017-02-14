@@ -67,7 +67,6 @@ public class MMSConfigurator implements AMConfigurator {
             category.addAction(validateCategory);
             validateCategory.addAction(new ValidateModulesAction());
             validateCategory.addAction(new ValidateBranchesAction());
-            System.out.println(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
         }
     }
 
