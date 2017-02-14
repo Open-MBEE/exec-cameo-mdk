@@ -443,17 +443,4 @@ public class MDKHelper {
         return MMSUtils.sendMMSRequest(request);
     }
 
-    /**
-     * Convenience method for confirmSiteWritePermissions(string, string) to check if a project
-     * is editable by the logged in user. Uses the url and site information stored in the currently
-     * open project.
-     *
-     * @return true if the site lists "editable":"true" for the logged in user, false otherwise
-     * or when no project is open or project lacks url and site specifications
-     */
-    public static boolean isSiteEditable() throws ServerException, IOException, URISyntaxException {
-        Project project = Application.getInstance().getProject();
-        return MMSUtils.isSiteEditable(project, project.getName());
-    }
-
 }

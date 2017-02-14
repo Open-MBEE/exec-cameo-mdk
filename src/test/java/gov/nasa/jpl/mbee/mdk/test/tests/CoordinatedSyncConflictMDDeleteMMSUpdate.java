@@ -62,10 +62,6 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
 
         MagicDrawHelper.openProject(testProjectFile);
 
-        if (!MDKHelper.isSiteEditable()) {
-            throw new IOException("User does not have permissions to site");
-        }
-
         //clean and prepare test environment
         MagicDrawHelper.createSession();
         try {

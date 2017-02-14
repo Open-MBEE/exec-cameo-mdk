@@ -117,6 +117,11 @@ public class MMSUtils {
      */
     public static ObjectNode getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
+        // verify elements
+        if (elementIds == null || elementIds.isEmpty()) {
+            return JacksonUtils.getObjectMapper().createObjectNode();
+        }
+
         // build uri
         URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
         if (requestUri == null) {
@@ -124,11 +129,6 @@ public class MMSUtils {
         }
         if (depth == -1 || depth > 0) {
             requestUri.setParameter("depth", java.lang.Integer.toString(depth));
-        }
-
-        // verify and convert elements
-        if (elementIds == null || elementIds.isEmpty()) {
-            return null;
         }
 
         // create requests json
@@ -235,14 +235,14 @@ public class MMSUtils {
         return buildRequest(type, requestUri, null);
     }
 
-        /**
-         * General purpose method for sending a constructed http request via http client.
-         *
-         * @param request
-         * @return
-         * @throws IOException
-         * @throws ServerException
-         */
+    /**
+     * General purpose method for sending a constructed http request via http client.
+     *
+     * @param request
+     * @return
+     * @throws IOException
+     * @throws ServerException
+     */
     public static ObjectNode sendMMSRequest(HttpRequestBase request)
             throws IOException, ServerException {
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
@@ -267,75 +267,63 @@ public class MMSUtils {
                 InputStream inputStream = response.getEntity().getContent()) {
             // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : null);
+            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
             // debug / logging output from response
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
             if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                if (!responseBody.isEmpty() && !responseType.equals("application/json;charset=UTF-8")) {
+                    responseBody = "<span>" + responseBody + "</span>";
+                }
                 System.out.println(" - Body:"  + responseBody);
                 Utils.guilog("Server response: " + responseBody);
             }
 
-            if (responseBody != null && !responseBody.isEmpty()) {
+            // try to handle response codes at this level
+            boolean throwServerException = false;
+            if (responseCode == 401) {
+                Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
+                EMSLogoutAction.logoutAction();
+                if (EMSLoginAction.loginAction()) {
+                    return sendMMSRequest(request);
+                }
+                else {
+                    throwServerException = true;
+                }
+            }
+            else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
+                // do nothing, note in log
+                System.out.println("[WARNING] \"Missing Resource\" 404 processed.");
+            }
+            else if (responseCode < 200 || responseCode >= 300) {
+                Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
+                throwServerException = true;
+            }
+
+            // print server message if possible
+            if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
                 responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
-                // NOTE: not disabling popup messages locally. it's handled by Utils, which will redirect them to the GUILog if disabled
                 JsonNode value;
                 // display single response message
                 if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                    Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
                 }
                 // display multiple response messages
                 if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
                     ArrayNode msgs = (ArrayNode) value;
                     for (JsonNode msg : msgs) {
                         if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                            Utils.guilog("[SERVER MESSAGE] " + value.asText());
+                            Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
                         }
                     }
                 }
             }
 
-            // try to handle response codes at this level, throw them if it makes sense.
-            // note that furtherProcessing == true means we will throw a ServerException and NOT return any JSON
-            boolean furtherProcessing = false;
-            if (responseCode < 200 || responseCode >= 300) {
-                // server error
-                if (responseCode >= 500) {
-                    furtherProcessing = true;
-                    Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                }
-                // resource missing 404 should have json
-                else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
-                    // TODO @donbot remove this check when we've migrated to bulk calls only
-                    // do nothing
-                    System.out.println("[WARNING] Resource missing 404 processed.");
-                }
-                // invalid endpoint 404 shouldn't have any json
-                else if (responseCode == 404) {
-                    Application.getInstance().getGUILog().log("[ERROR] Invalid target URL. Server code: " + responseCode);
-                }
-                // permissions error. don't allow to login again, since they're valid just insufficient
-                else if (responseCode == 403) {
-                    Utils.guilog("[ERROR] You do not have sufficient permissions to one or more elements in the project to complete this operation. Server code: " + responseCode);
-                }
-                // invalid or expired ticket. present option to log in again, and if successful re-submit request
-                else if (responseCode == 401) {
-                    Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be before trying again. Server code: " + responseCode);
-                    EMSLogoutAction.logoutAction();
-                    if (EMSLoginAction.loginAction()) {
-                        sendMMSRequest(request);
-                    }
-                }
-                // something else
-                else {
-                    furtherProcessing = true;
-                    Utils.guilog("[ERROR] Unexpected server response. Server code: " + responseCode);
-                }
-            }
-            if (furtherProcessing) {
+            if (throwServerException) {
                 // big flashing red letters that the action failed, or as close as we're going to get
                 Utils.showPopupMessage("Action failed. See notification window for details.");
+                // throw is done last, after printing the error and any messages that might have been returned
                 throw new ServerException(responseBody, responseCode);
             }
         }
@@ -421,18 +409,17 @@ public class MMSUtils {
         }
         else {
             Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
+            return null;
         }
         if ((urlString == null || urlString.isEmpty())) {
-            if (!MDUtils.isDeveloperMode()) {
-                Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
-            }
-            else {
+            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
+            if (MDUtils.isDeveloperMode()) {
                 urlString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the server URL:", developerUrl);
                 developerUrl = urlString;
             }
         }
         if (urlString == null || urlString.isEmpty()) {
-            throw new IllegalStateException("MMS URL is null or empty.");
+            return null;
         }
         return urlString.trim();
     }
@@ -440,15 +427,6 @@ public class MMSUtils {
     public static String getProjectOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-//        // create requests json
-//        ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
-//        // put elements array inside request json, keep reference
-//        ArrayNode idsArrayNode = requests.putArray("elements");
-//        ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
-//        element.put(MDKConstants.SYSML_ID_KEY, project.getID());
-//        idsArrayNode.add(element);
-
-//        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder, requests));
         ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder));
         JsonNode arrayNode;
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
@@ -521,60 +499,6 @@ public class MMSUtils {
     }
 
     /**
-     * Method to check if the currently logged in user has permissions to edit the specified site on
-     * the specified server.
-     *
-     * @param project The project containing the mms url to check against.
-     * @param site    Site name (sysmlid) of the site you are querying for. If empty or null, will use the site from the
-     *                project parameter.
-     * @return true if the site lists "editable":"true" for the logged in user, false otherwise
-     * @throws ServerException
-     */
-    // TODO update for orgs / projects / refs instead of site, then remove deprecation
-    @Deprecated
-    public static boolean isSiteEditable(Project project, String site)
-            throws IOException, URISyntaxException, ServerException {
-        return true;
-
-//        if (site == null || site.isEmpty()) {
-//            //site = getSiteName(project);
-//            site = project.getName();
-//        }
-//
-//        // configure request
-//        //https://cae-ems.jpl.nasa.gov/alfresco/service/refs/master/sites
-//        URIBuilder requestUri = getServiceProjectsUri(project);
-//        if (requestUri == null) {
-//            return false;
-//        }
-//        requestUri.setPath(requestUri.getPath() + "/sites");
-//
-//        // do request
-//        ObjectNode response;
-//        try {
-//            response = sendMMSRequest(buildRequest(HttpRequestType.GET, requestUri));
-//        } catch (IOException | URISyntaxException | ServerException e) {
-//            Application.getInstance().getGUILog().log("[ERROR] Unable to query site permissions");
-//            //TODO @donbot
-//            e.printStackTrace();
-//            return false;
-//        }
-//
-//        // parse response
-//        JsonNode arrayNode;
-//        if ((arrayNode = response.get("sites")) != null && arrayNode instanceof ArrayNode) {
-//            JsonNode value, boolValue;
-//            for (JsonNode node : arrayNode) {
-//                if ((value = node.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual() && value.asText().equals(site)
-//                        && (boolValue = node.get("_editable")) != null && boolValue.isBoolean()) {
-//                    return boolValue.asBoolean();
-//                }
-//            }
-//        }
-//        return false;
-    }
-
-    /**
      * Returns a URIBuilder object with a path = "/alfresco/service". Used as the base for all of the rest of the
      * URIBuilder generating convenience classes.
      *
@@ -583,12 +507,10 @@ public class MMSUtils {
      * @throws URISyntaxException
      */
     public static URIBuilder getServiceUri(Project project) {
-        Model primaryModel = project.getModel();
-        if (project == null || primaryModel == null) {
+        String urlString = getServerUrl(project);
+        if (urlString == null) {
             return null;
         }
-
-        String urlString = getServerUrl(project);
 
         // [scheme:][//host][path][?query][#fragment]
         String uriPath = "/alfresco/service";

@@ -109,20 +109,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
 
-        // TODO @DONBOT restore this functionality (remove false) after updating isSiteEditable()
-        try {
-            if (false || !MMSUtils.isSiteEditable(project, "")) {
-                Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Skipping sync. All changes will be re-attempted in the next sync.");
-                return;
-            }
-        } catch (ServerException e) {
-            e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] An error occurred while verifying site permissions. Skipping sync. All changes will be re-attempted in the next sync. Error: " + e.getMessage());
-            return;
-        } catch (URISyntaxException | IOException e) {
-            e.printStackTrace();
-        }
-
         // LOCK SYNC FOLDER
 
         listener.setDisabled(true);
