@@ -2,17 +2,17 @@ package gov.nasa.jpl.mbee.pma.analyses;
 
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
@@ -60,6 +60,8 @@ public class AutomatedViewGeneration extends CommandLine {
             teamworkPort = "",
             teamworkProject = "",
             teamworkBranchName = "master";
+
+    private static Project project;
 
     private static final List<String> viewList = new ArrayList<>(),
             messageLog = new ArrayList<>();
@@ -263,6 +265,7 @@ public class AutomatedViewGeneration extends CommandLine {
             throw new IllegalAccessException(message);
         }
         twLoaded = true;
+        project = Application.getInstance().getProject();
 
         // move the stored message log into the MD notification window. This will mess up the time stamps, but will
         // keep all of the messages in the same place
@@ -287,9 +290,9 @@ public class AutomatedViewGeneration extends CommandLine {
      */
     private void generateViewsForDocList()
             throws FileNotFoundException, IllegalAccessException, InterruptedException, UnsupportedEncodingException {
-        if (!TicketUtils.isTicketSet()) {
+        if (!TicketUtils.isTicketSet(project)) {
             TicketUtils.setUsernameAndPassword(teamworkUsername, teamworkPassword);
-            if (!EMSLoginAction.loginAction()) {
+            if (!MMSLoginAction.loginAction(project)) {
                 String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
                 logMessage(message);
                 error = 103;

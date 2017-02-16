@@ -80,7 +80,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
 
         ObjectNode responseObjectNode;
         try {
-            responseObjectNode = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
+            responseObjectNode = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
         } catch (IOException | ServerException | URISyntaxException e1) {
             e1.printStackTrace();
             return;
@@ -125,6 +125,6 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
         objectNode.putArray("elements").add(MMSUtils.getProjectObjectNode(project));
         objectNode.put("source", "magicdraw").put("mdkVersion", MDKPlugin.VERSION);
-        return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
     }
 }

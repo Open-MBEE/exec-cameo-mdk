@@ -4,7 +4,6 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.*;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
@@ -149,7 +148,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         //manager.addCategory(refactorWithIDActionCat);
 
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (TicketUtils.isTicketSet() && !MMSAction.isDisabled()) {
+        if (TicketUtils.isTicketSet(project) && !MMSAction.isDisabled()) {
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
@@ -174,8 +173,8 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         }
         else {
             ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
-            if (manager.getActionFor(EMSLoginAction.DEFAULT_ID) == null) {
-                login.addAction(new EMSLoginAction());
+            if (manager.getActionFor(MMSLoginAction.DEFAULT_ID) == null) {
+                login.addAction(new MMSLoginAction());
             }
             // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
             //final MDAction mda = new MDAction(null, null, null, "null");
@@ -241,7 +240,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
 
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            if (TicketUtils.isTicketSet() && !MMSAction.isDisabled()) {
+            if (TicketUtils.isTicketSet(project) && !MMSAction.isDisabled()) {
 
                 ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
                 NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
@@ -267,8 +266,8 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
             else {
                 ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
-                if (manager.getActionFor(EMSLoginAction.DEFAULT_ID) == null) {
-                    login.addAction(new EMSLoginAction());
+                if (manager.getActionFor(MMSLoginAction.DEFAULT_ID) == null) {
+                    login.addAction(new MMSLoginAction());
                 }
                 // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
                 //final MDAction mda = new MDAction(null, null, null, "null");
@@ -304,9 +303,9 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             act = manager.getActionFor(DeleteProjectAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new DeleteProjectAction(e));
-            act = manager.getActionFor(EMSLogoutAction.DEFAULT_ID);
+            act = manager.getActionFor(MMSLogoutAction.DEFAULT_ID);
             if (act == null)
-                c.addAction(new EMSLogoutAction());
+                c.addAction(new MMSLogoutAction());
         }
         if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.volume)) { // REVIEW
                                                                         // --
@@ -315,9 +314,9 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             NMAction act = manager.getActionFor(DeleteVolumeAction.DEFAULT_ID);
             if (act == null)
                 c.addAction(new DeleteVolumeAction(e));
-            act = manager.getActionFor(EMSLogoutAction.DEFAULT_ID);
+            act = manager.getActionFor(MMSLogoutAction.DEFAULT_ID);
             if (act == null)
-                c.addAction(new EMSLogoutAction());
+                c.addAction(new MMSLogoutAction());
         }
         if (StereotypesHelper.hasStereotype(e, ViewEditorProfile.document)
                 || StereotypesHelper.hasStereotypeOrDerived(e, documentView)) {

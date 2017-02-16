@@ -118,7 +118,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         if (org == null || org.isEmpty()) {
             ObjectNode response = null;
             try {
-                response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+                response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             } catch (IOException | URISyntaxException | ServerException e1) {
                 Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
                 e1.printStackTrace();
@@ -173,7 +173,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // do post request
         ObjectNode response = null;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
         } catch (IOException | URISyntaxException | ServerException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Reason: " + e1.getMessage());
             e1.printStackTrace();

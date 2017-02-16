@@ -24,7 +24,7 @@ public class OutputSyncRunner implements Runnable {
 
         public void run() {
             try {
-                MMSUtils.sendMMSRequest(r.getRequest());
+                MMSUtils.sendMMSRequest(r.getProject(), r.getRequest());
             } catch (IOException | ServerException | URISyntaxException e) {
                 log.info("[ERROR] Exception occurred during request processing. Reason: " + e.getMessage());
                 e.printStackTrace();

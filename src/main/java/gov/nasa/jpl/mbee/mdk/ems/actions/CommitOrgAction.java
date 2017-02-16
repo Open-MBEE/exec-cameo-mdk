@@ -99,7 +99,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
 
         ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             JsonNode arrayNode;
             if ((arrayNode = response.get("elements")) != null && arrayNode.isArray()) {
                 for (JsonNode orgNode : arrayNode) {
@@ -130,7 +130,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
 
         // do post request
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[WARNING] Exception occurred while posting org. Reason: " + e.getMessage());
             e.printStackTrace();
