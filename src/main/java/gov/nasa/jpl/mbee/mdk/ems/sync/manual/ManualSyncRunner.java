@@ -61,13 +61,20 @@ public class ManualSyncRunner implements RunnableWithProgress {
     public void run(ProgressStatus progressStatus) {
         progressStatus.setDescription("Validating sync pre-conditions");
         progressStatus.setIndeterminate(true);
-        if (!checkProject()) {
-            if (validationSuite.hasErrors()) {
-                validationSuite.setName("Sync Pre-Condition Validation");
+        try {
+            if (!checkProject()) {
+                if (validationSuite.hasErrors()) {
+                    validationSuite.setName("Sync Pre-Condition Validation");
+                }
+                else {
+                    Application.getInstance().getGUILog().log("[ERROR] Project does not exist but no validation errors generated.");
+                }
+                return;
             }
-            else {
-                Application.getInstance().getGUILog().log("[ERROR] Project does not exist but no validation errors generated.");
-            }
+        }  catch (IOException | URISyntaxException | ServerException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while locating project on MMS. Reason: " + e.getMessage());
+            e.printStackTrace();
+            validationSuite = null;
             return;
         }
 
@@ -83,21 +90,20 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Collection<ObjectNode> jsonObjects = null;
             try {
                 jsonObjects = collectServerElementsRecursively(project, element, depth, progressStatus);
-            } catch (ServerException e) {
-                //TODO @donbot process errors for recursive server element get
+            } catch (ServerException | URISyntaxException | IOException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting elements from the server. Aborting manual sync.");
+                e.printStackTrace();
                 validationSuite = null;
-                e.printStackTrace();
-            } catch (URISyntaxException | IOException e) {
-                e.printStackTrace();
+                return;
             }
             if (jsonObjects == null) {
                 if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Failed to get elements from the server. Aborting manual sync.");
                 }
+                validationSuite = null;
                 return;
             }
             serverElements.addAll(jsonObjects);
-
             progressStatus.increase();
         }
         elementValidator = new ElementValidator(clientElements, serverElements, project);
@@ -173,7 +179,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     // TODO Make common across all sync types @donbot
-    private boolean checkProject() {
+    private boolean checkProject() throws ServerException, IOException, URISyntaxException {
         String branch = MDUtils.getWorkspace(project);
 
         // process response for project element, missing projects will return {}

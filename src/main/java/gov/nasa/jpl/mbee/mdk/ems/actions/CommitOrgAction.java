@@ -82,9 +82,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
     }
 
     public String commitAction() {
-        if (!MDUtils.isDeveloperMode()) {
-            return null;
-        }
+        // '{"elements": [{"sysmlId": "vetest", "name": "vetest"}]}' -X POST "http://localhost:8080/alfresco/service/orgs"
 
         // check for existing org
         URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
@@ -93,7 +91,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         }
 
         JFrame selectionDialog = new JFrame();
-        String org = JOptionPane.showInputDialog(selectionDialog, "[DEVELOPER] Input MMS org below");
+        String org = JOptionPane.showInputDialog(selectionDialog, "Input MMS org below");
         if (org == null || org.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit org without name.");
             return null;
@@ -108,15 +106,16 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                     JsonNode value;
                     if ((value = orgNode.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()) {
                         if (value.asText() == org) {
-                            Application.getInstance().getGUILog().log("[WARNING] Org already exists. Creation will not proceed.");
+                            Application.getInstance().getGUILog().log("[WARNING] Org already exists. Skipping creation.");
                             return org;
                         }
                     }
                 }
             }
-        } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs. Attempting to create without checking.");
-            e1.printStackTrace();
+        } catch (IOException | URISyntaxException | ServerException e) {
+            Application.getInstance().getGUILog().log("[WARNING] Exception occurred while querrying MMS orgs. Aborting org creation. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
 
         // build post data
@@ -130,16 +129,16 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         elementsArrayNode.add(orgObjectNode);
 
         // do post request
-        response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
-        } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while committing org. Reason: " + e1.getMessage());
-            e1.printStackTrace();
+        } catch (IOException | ServerException | URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[WARNING] Exception occurred while posting org. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
         JsonNode value;
         if (response == null || (((value = response.get("message" )) != null) && value.isTextual()
-                && value.asText().equals("Site was not created"))) {
+                && (value.asText().equals("Site was not created") || value.asText().equals("Org was not created") ))) {
             return null;
         }
         return org;

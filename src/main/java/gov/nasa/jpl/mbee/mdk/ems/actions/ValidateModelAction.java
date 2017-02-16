@@ -54,11 +54,13 @@ public class ValidateModelAction extends MDAction {
     public void actionPerformed(ActionEvent e) {
         ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), -1);
         ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
-        if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
-            Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), manualSyncRunner.getValidationSuite().getName());
-        }
-        else {
-            Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");
+        if (manualSyncRunner.getValidationSuite() != null) {
+            if (manualSyncRunner.getValidationSuite().hasErrors()) {
+                Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), manualSyncRunner.getValidationSuite().getName());
+            }
+            else {
+                Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");
+            }
         }
     }
 }

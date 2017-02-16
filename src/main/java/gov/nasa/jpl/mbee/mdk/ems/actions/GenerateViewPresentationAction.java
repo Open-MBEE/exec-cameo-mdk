@@ -24,7 +24,6 @@ public class GenerateViewPresentationAction extends MDAction {
     private List<Element> elements;
     private boolean recurse;
 
-
     public GenerateViewPresentationAction(List<Element> elements, boolean recurse) {
         super(recurse ? RECURSE_DEFAULT_ID : DEFAULT_ID, "Generate View" + (recurse ? "s Recursively" : ""), null, null);
         this.elements = elements;

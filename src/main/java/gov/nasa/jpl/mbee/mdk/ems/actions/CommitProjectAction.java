@@ -96,6 +96,8 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
     }
 
     public String commitAction() {
+        // '{"elements": [{"sysmlId": "123456", "name": "vetest", "type": "Project"}]}' -X POST "http://localhost:8080/alfresco/service/orgs/vetest/projects"
+
         // check for existing org
         URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
         if (requestUri == null) {
@@ -146,7 +148,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 Application.getInstance().getGUILog().log("[ERROR] No orgs were returned from MMS.");
             }
             if ((org == null || org.isEmpty()) && MDUtils.isDeveloperMode()) {
-                org = new CommitOrgAction(project).commitAction();
+                try {
+                    org = new CommitOrgAction(project).commitAction();
+                } catch (IOException | URISyntaxException | ServerException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected exception while posting org to MMS. Reason: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
+                }
             }
         }
 
@@ -169,7 +177,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking if project was initialized. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Reason: " + e1.getMessage());
             e1.printStackTrace();
         }
         if (response == null) {

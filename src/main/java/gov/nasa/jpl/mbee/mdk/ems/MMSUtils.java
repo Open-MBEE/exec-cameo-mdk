@@ -8,10 +8,8 @@ import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -66,7 +64,7 @@ public class MMSUtils {
     }
 
     public enum ThreadRequestExceptionType {
-        IO_EXCEPTION, SERVER_EXCEPTION
+        IO_EXCEPTION, SERVER_EXCEPTION, URI_SYNTAX_EXCEPTION
     }
 
     public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
@@ -244,7 +242,7 @@ public class MMSUtils {
      * @throws ServerException
      */
     public static ObjectNode sendMMSRequest(HttpRequestBase request)
-            throws IOException, ServerException {
+            throws IOException, ServerException, URISyntaxException {
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest
                 && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null)
@@ -262,6 +260,7 @@ public class MMSUtils {
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
                 CloseableHttpResponse response = httpclient.execute(request);
                 InputStream inputStream = response.getEntity().getContent()) {
@@ -277,25 +276,31 @@ public class MMSUtils {
                     responseBody = "<span>" + responseBody + "</span>";
                 }
                 System.out.println(" - Body:"  + responseBody);
-                Utils.guilog("Server response: " + responseBody);
             }
 
-            // try to handle response codes at this level
+            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
             boolean throwServerException = false;
-            if (responseCode == 401) {
+
+            // assume that 404s with json response bodies are "missing resource" 404s, which are expected for some cases and should not break normal execution flow
+            if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
+                // do nothing, note in log
+                System.out.println("[INFO] \"Missing Resource\" 404 processed.");
+            }
+            // allow re-attempt of request if credentials have expired or are invalid
+            else if (responseCode == 401) {
                 Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
                 EMSLogoutAction.logoutAction();
                 if (EMSLoginAction.loginAction()) {
+                    URIBuilder newRequestUri = new URIBuilder(request.getURI());
+                    newRequestUri.setParameter("alf_ticket", TicketUtils.getTicket());
+                    request.setURI(newRequestUri.build());
                     return sendMMSRequest(request);
                 }
                 else {
                     throwServerException = true;
                 }
             }
-            else if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
-                // do nothing, note in log
-                System.out.println("[WARNING] \"Missing Resource\" 404 processed.");
-            }
+            // if it's anything else outside of the 200 range, assume failure and break normal flow
             else if (responseCode < 200 || responseCode >= 300) {
                 Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 throwServerException = true;
@@ -342,7 +347,7 @@ public class MMSUtils {
      * @throws ServerException    contains both response code and response body
      */
     public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
-            throws IOException, ServerException {
+            throws IOException, ServerException, URISyntaxException {
         final AtomicReference<ObjectNode> resp = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
@@ -363,7 +368,12 @@ public class MMSUtils {
                 etype.set(ThreadRequestExceptionType.IO_EXCEPTION);
                 emsg.set(e.getMessage());
                 e.printStackTrace();
+            } catch (URISyntaxException e) {
+                etype.set(ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION);
+                emsg.set(e.getMessage());
+                e.printStackTrace();
             }
+
             resp.set(response);
         });
         t.start();
@@ -385,6 +395,9 @@ public class MMSUtils {
         }
         else if (etype.get() == ThreadRequestExceptionType.IO_EXCEPTION) {
             throw new IOException(emsg.get());
+        }
+        else if (etype.get() == ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION) {
+            throw new URISyntaxException("", emsg.get());
         }
         return resp.get();
     }
@@ -424,6 +437,51 @@ public class MMSUtils {
         return urlString.trim();
     }
 
+    public static boolean isProjectOnMms(Project project) throws IOException, URISyntaxException, ServerException {
+        // build request for bulk project GET
+        URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
+        if (requestUri == null) {
+            return false;
+        }
+
+        // do request, check return for project
+        ObjectNode response;
+        response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        JsonNode projectsJson;
+        if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
+            JsonNode value;
+            for (JsonNode projectJson : projectsJson) {
+                if ((value = projectJson.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
+                        && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isBranchOnMms(Project project, String branch) throws IOException, URISyntaxException, ServerException {
+        // build request for project element
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
+        if (requestUri == null) {
+            return false;
+        }
+
+        // do request for ref element
+        ObjectNode response;
+        response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        JsonNode projectsJson;
+        if ((projectsJson = response.get("refs")) != null && projectsJson.isArray()) {
+            JsonNode value;
+            for (JsonNode projectJson : projectsJson) {
+                if ((value = projectJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual() && value.asText().equals(branch)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static String getProjectOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
@@ -438,64 +496,7 @@ public class MMSUtils {
                 }
             }
         }
-        return "";
-    }
-
-    public static boolean isProjectOnMms(Project project) {
-        // build request for bulk project GET
-        URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-
-        // do request, check return for project
-        ObjectNode response;
-        try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-            JsonNode projectsJson;
-            if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
-                JsonNode value;
-                for (JsonNode projectJson : projectsJson) {
-                    if ((value = projectJson.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
-                            && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
-                        return true;
-                    }
-                }
-            }
-        } catch (ServerException | IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while verifying project existence on MMS. " +
-                    "Reason: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public static boolean isBranchOnMms(Project project, String branch) {
-        // build request for project element
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-
-        // do request for ref element
-        ObjectNode response;
-        try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-            JsonNode projectsJson;
-            if ((projectsJson = response.get("refs")) != null && projectsJson.isArray()) {
-                JsonNode value;
-                for (JsonNode projectJson : projectsJson) {
-                    if ((value = projectJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual() && value.asText().equals(branch)) {
-                        return true;
-                    }
-                }
-            }
-        } catch (ServerException | IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while verifying ref existence on MMS. " +
-                    "Reason: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return false;
+        return null;
     }
 
     /**
