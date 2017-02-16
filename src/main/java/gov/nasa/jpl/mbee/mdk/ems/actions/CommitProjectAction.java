@@ -148,11 +148,9 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 Application.getInstance().getGUILog().log("[ERROR] No orgs were returned from MMS.");
             }
             if ((org == null || org.isEmpty()) && MDUtils.isDeveloperMode()) {
-                try {
-                    org = new CommitOrgAction(project).commitAction();
-                } catch (IOException | URISyntaxException | ServerException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected exception while posting org to MMS. Reason: " + e.getMessage());
-                    e.printStackTrace();
+                org = new CommitOrgAction(project).commitAction();
+                if (org == null || org.isEmpty()) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org.");
                     return null;
                 }
             }
