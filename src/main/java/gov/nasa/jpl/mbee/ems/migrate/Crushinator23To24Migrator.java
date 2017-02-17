@@ -31,6 +31,12 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -96,10 +102,10 @@ public class Crushinator23To24Migrator extends Migrator {
                 Application.getInstance().getGUILog().log("[ERROR] Model has locks from " + NumberFormat.getInstance().format(lockedElementUsers.size()) + " other users. Aborting.");
                 return;
             }
-        }
-        if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
-            Application.getInstance().getGUILog().log("[ERROR] Failed to lock model recursively. Aborting.");
-            return;
+            if (!TeamworkUtils.lockElement(project, project.getModel(), true)) {
+                Application.getInstance().getGUILog().log("[ERROR] Failed to lock model recursively. Aborting.");
+                return;
+            }
         }
 
         String postUrl = ExportUtility.getPostElementsUrl();
@@ -124,6 +130,11 @@ public class Crushinator23To24Migrator extends Migrator {
         } catch (ServerException e) {
             e.printStackTrace();
         }
+
+        boolean segmented = JOptionPane.showConfirmDialog(null,
+                "Would you like the migration to pause between each stage? This will allow \n" +
+                        "the opportunity to review the results of each stage independently, but will \n" +
+                        "require manual intervention to proceed.", "Segmented Migration", JOptionPane.YES_NO_OPTION, JOptionPane.NO_OPTION) == JOptionPane.YES_OPTION;
 
         List<InstanceSpecification> presentationElements = new ArrayList<>();
         for (PresentationElementEnum presentationElementEnum : PresentationElementEnum.values()) {
@@ -272,6 +283,10 @@ public class Crushinator23To24Migrator extends Migrator {
             Application.getInstance().getGUILog().log("[INFO] Updated " + elementJsonObjects.size() + " element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS.");
         }
 
+        if (segmented) {
+            pause();
+        }
+
         Map<String, JSONObject> hiddenViewInstancePackageJsonObjects = new LinkedHashMap<>(viewInstancePackages.size());
         for (Package viewInstancePackage : viewInstancePackages) {
             if (ProjectUtilities.isElementInAttachedProject(viewInstancePackage)) {
@@ -296,6 +311,10 @@ public class Crushinator23To24Migrator extends Migrator {
             if (ps.isCancel()) {
                 return;
             }
+        }
+
+        if (segmented) {
+            pause();
         }
 
         List<JSONObject> presentationElementJsonObjects = new ArrayList<>(presentationElements.size());
@@ -328,6 +347,10 @@ public class Crushinator23To24Migrator extends Migrator {
             if (ps.isCancel()) {
                 return;
             }
+        }
+
+        if (segmented) {
+            pause();
         }
 
         Iterator<Element> elementsToDeleteRemotelyIterator = elementsToDeleteRemotely.iterator();
@@ -435,6 +458,8 @@ public class Crushinator23To24Migrator extends Migrator {
             Application.getInstance().getGUILog().log("[INFO] Please review the contents of the notification window to verify and then " + (project.isTeamworkServerProject() ? "commit to Teamwork" : "save") + " without making further modification.");
             Application.getInstance().getGUILog().log("[INFO] In the case that an error occurred, close the project abandoning all changes. Then re-open the project and restart the migration.");
         }
+
+        saveLoggedMessages();
     }
 
     private JSONObject transform(JSONObject originalJsonObject, List<String[]> keyPaths) {
@@ -526,9 +551,27 @@ public class Crushinator23To24Migrator extends Migrator {
                 progressStatus.increase();
                 total += jsonArray.size();
             }
+
             progressStatus.setDescription(null);
             progressStatus.setIndeterminate(true);
             Application.getInstance().getGUILog().log("[INFO] Updated " + jsonObjects.size() + " " + (jsonObjects.size() != 1 ? elementTypePlural : elementType) + " on the MMS.");
         }
+    }
+
+    private File saveLoggedMessages() {
+        try {
+            Path path = Paths.get(System.getProperty("user.home"), "md_notification_window_" + System.currentTimeMillis() + ".html");
+            Files.write(path, Application.getInstance().getGUILog().getLoggedMessages().getBytes());
+            return path.toFile();
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void pause() {
+        File log = saveLoggedMessages();
+        JOptionPane.showConfirmDialog(null, "Migration paused. Press OK or close window to continue. " +
+                (log != null ? "\nLogged messages: " + log.getAbsolutePath() : ""), "Migration", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
     }
 }
