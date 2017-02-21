@@ -63,7 +63,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             }
             String org;
             try {
-                org = MMSUtils.getProjectOrg(project);
+                org = MMSUtils.getOrg(project);
             } catch (IOException | URISyntaxException | ServerException e) {
                 e.printStackTrace();
                 return;

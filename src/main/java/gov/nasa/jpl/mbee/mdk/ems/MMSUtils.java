@@ -437,6 +437,30 @@ public class MMSUtils {
         return urlString.trim();
     }
 
+    public static String getOrg(Project project)
+            throws IOException, URISyntaxException, ServerException {
+
+        String siteString = "";
+        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS Org");
+        }
+        return siteString;
+
+//        URIBuilder uriBuilder = getServiceProjectsUri(project);
+//        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder));
+//        JsonNode arrayNode;
+//        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+//            JsonNode value;
+//            for (JsonNode projectNode : arrayNode) {
+//                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+//                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
+//                    return value.asText();
+//                }
+//            }
+//        }
+//        return "";
+    }
+
     public static boolean isProjectOnMms(Project project) throws IOException, URISyntaxException, ServerException {
         // build request for bulk project GET
         URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
@@ -457,6 +481,7 @@ public class MMSUtils {
                 }
             }
         }
+
         return false;
     }
 
