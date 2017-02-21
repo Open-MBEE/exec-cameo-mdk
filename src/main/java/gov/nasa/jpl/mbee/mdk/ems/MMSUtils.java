@@ -8,7 +8,6 @@ import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -451,28 +450,26 @@ public class MMSUtils {
 
     public static String getOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
-        URIBuilder uriBuilder = getServiceProjectsUri(project);
-//        // create requests json
-//        ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
-//        // put elements array inside request json, keep reference
-//        ArrayNode idsArrayNode = requests.putArray("elements");
-//        ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
-//        element.put(MDKConstants.SYSML_ID_KEY, project.getID());
-//        idsArrayNode.add(element);
 
-//        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder, requests));
-        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder));
-        JsonNode arrayNode;
-        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-            JsonNode value;
-            for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
-                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
-                    return value.asText();
-                }
-            }
+        String siteString = "";
+        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS Org");
         }
-        return "";
+        return siteString;
+
+//        URIBuilder uriBuilder = getServiceProjectsUri(project);
+//        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder));
+//        JsonNode arrayNode;
+//        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+//            JsonNode value;
+//            for (JsonNode projectNode : arrayNode) {
+//                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+//                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
+//                    return value.asText();
+//                }
+//            }
+//        }
+//        return "";
     }
 
     public static boolean isProjectOnMms(Project project) {
@@ -501,6 +498,7 @@ public class MMSUtils {
                     "Reason: " + e.getMessage());
             e.printStackTrace();
         }
+
         return false;
     }
 
