@@ -449,7 +449,7 @@ public class MMSUtils {
         return urlString.trim();
     }
 
-    public static String getProjectOrg(Project project)
+    public static String getOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
 //        // create requests json

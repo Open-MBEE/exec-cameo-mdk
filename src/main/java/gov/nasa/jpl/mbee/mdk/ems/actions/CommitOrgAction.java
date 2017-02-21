@@ -62,7 +62,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
     }
 
     public CommitOrgAction(Project project, boolean isDeveloperAction) {
-        super(DEFAULT_ID, "Commit Org" + (isDeveloperAction ? " [DEVELOPER]" : ""), null, null);
+        super(DEFAULT_ID, (isDeveloperAction ? "[DEVELOPER] " : "") + "Commit Org", null, null);
         this.project = project;
     }
 
@@ -93,9 +93,13 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         }
 
         JFrame selectionDialog = new JFrame();
-        String org = JOptionPane.showInputDialog(selectionDialog, "[DEVELOPER] Input MMS org below");
-        if (org == null || org.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to commit org without name.");
+        String org = JOptionPane.showInputDialog(selectionDialog, "[DEVELOPER] Input MMS org.");
+        if (org == null) {
+            Application.getInstance().getGUILog().log("[INFO] Org commit cancelled.");
+            return null;
+        }
+        if (org.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to commit org without name. Org commit cancelled.");
             return null;
         }
 
@@ -108,14 +112,14 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                     JsonNode value;
                     if ((value = orgNode.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()) {
                         if (value.asText() == org) {
-                            Application.getInstance().getGUILog().log("[WARNING] Org already exists. Creation will not proceed.");
+                            Application.getInstance().getGUILog().log("[WARNING] Org already exists. Org commit cancelled.");
                             return org;
                         }
                     }
                 }
             }
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs. Attempting to create without checking.");
+            Application.getInstance().getGUILog().log("[WARNING] Unable to query MMS orgs. Attempting to create org without checking.");
             e1.printStackTrace();
         }
 
@@ -138,6 +142,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             e1.printStackTrace();
         }
         JsonNode value;
+        // TODO @donbot work with MMS team to find an alternate failed action check
         if (response == null || (((value = response.get("message" )) != null) && value.isTextual()
                 && value.asText().equals("Site was not created"))) {
             return null;
