@@ -391,7 +391,7 @@ public class MDKHelper {
         }
 
         //do cancellable request if progressStatus exists
-        Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
+        Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
         if (progressStatus != null) {
             return MMSUtils.sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests), progressStatus);
         }

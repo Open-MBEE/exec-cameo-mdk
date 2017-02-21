@@ -106,9 +106,9 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         String org = null;
         try {
-            org = MMSUtils.getProjectOrg(project);
+            org = MMSUtils.getOrg(project);
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs.");
             e1.printStackTrace();
             if (!MDUtils.isDeveloperMode()) {
                 return null;
@@ -120,7 +120,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             try {
                 response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             } catch (IOException | URISyntaxException | ServerException e1) {
-                Application.getInstance().getGUILog().log("[ERROR] Unable to query MMS orgs.");
+                Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs.");
                 e1.printStackTrace();
                 if (!MDUtils.isDeveloperMode()) {
                     return null;
@@ -141,11 +141,11 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             String[] mmsOrgs = mmsOrgsList.toArray(new String[mmsOrgsList.size()]);
             if (mmsOrgs.length > 0) {
                 JFrame selectionDialog = new JFrame();
-                org = (String) JOptionPane.showInputDialog(selectionDialog, "Select a MMS org from the list below",
+                org = (String) JOptionPane.showInputDialog(selectionDialog, "Select MMS org:",
                         "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
             }
             else {
-                Application.getInstance().getGUILog().log("[ERROR] No orgs were returned from MMS.");
+                Application.getInstance().getGUILog().log("[WARNING] No orgs were returned from MMS.");
             }
             if ((org == null || org.isEmpty()) && MDUtils.isDeveloperMode()) {
                 org = new CommitOrgAction(project).commitAction();
@@ -157,7 +157,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         }
 
         if (org == null || org.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org.");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org. Org commit cancelled.");
             return null;
         }
         requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
