@@ -138,15 +138,11 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while committing org. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while committing org. Org commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
-        }
-        JsonNode value;
-        // TODO @donbot work with MMS team to find an alternate failed action check
-        if (response == null || (((value = response.get("message" )) != null) && value.isTextual()
-                && value.asText().equals("Site was not created"))) {
             return null;
         }
+        //TODO possible response processing
         return org;
     }
 }
