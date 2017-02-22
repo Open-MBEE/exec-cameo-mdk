@@ -9,9 +9,11 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.validation.actions.AddInheritanceToAssociationAction;
 import gov.nasa.jpl.mbee.mdk.validation.actions.RedefineAttributeAction;
 
 import java.awt.*;
@@ -19,23 +21,29 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SpecializeStructureAction extends SRAction {
+public class SpecializeStructuresAction extends SRAction {
 
     /**
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String DEFAULT_ID = "Specialize Structure";
+
+    private final boolean recursionMode;
+    private final boolean individualMode;
     private Classifier classifier;
     private ArrayList<Namespace> recursionList;
     private boolean isValidationMode = false;
 
-    public SpecializeStructureAction(final Classifier classifier, boolean isValidationMode) {
-        super(DEFAULT_ID, classifier);
+    public SpecializeStructuresAction(final Classifier classifier, boolean isValidationMode, String id, boolean isRecursive, boolean isIndividual) {
+        super(id, classifier);
         this.classifier = classifier;
         recursionList = new ArrayList<>();
         this.isValidationMode = isValidationMode;
+        this.recursionMode = isRecursive;
+        this.individualMode = isIndividual;
     }
+
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -65,14 +73,13 @@ public class SpecializeStructureAction extends SRAction {
             else {
                 container = (Namespace) dlg.getSelectedElement();
             }
+
             Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
 
             ArrayList<NamedElement> members = new ArrayList<>();
             for(NamedElement ne : specific.getOwnedMember()){
                 members.add(ne);
             }
-
-
             // specific.getOwnedMember().clear();
             for(NamedElement member : members){
                 if(member instanceof RedefinableElement) {
@@ -81,27 +88,71 @@ public class SpecializeStructureAction extends SRAction {
                     member.dispose();
                 }
             }
+
+
             Utils.createGeneralization(classifier, specific);
             for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
                 if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                     final RedefinableElement redefEl = (RedefinableElement) ne;
-                    //if (ne instanceof Property) {
-                        if (redefEl instanceof TypedElement) {
-                            System.out.println("Redefining " + ne.getName() + redefEl.getName());
-                            RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, false, null, false);
-                            action.run();
-                        }
-                    //}else{
-                    //    System.out.println("Not redefining " + ne.getName());
-                    //}
-                }else{
-                    System.out.println("Also not redefining " +  ne.getName());
-                }
-
+                                     RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, recursionMode, null, individualMode);
+                                    action.run();
+                    }
             }
-
-
             SessionManager.getInstance().closeSession();
+            checkAssociationsForInheritance(specific, classifier);
+         }
+    }
+
+
+    private void checkAssociationsForInheritance(Classifier classifier, Classifier general) {
+        assocRule:
+        for (Element child : classifier.getOwnedElement()) {
+            if (child instanceof Property) {
+                Type partType = ((Property) child).getType();
+                for (Element superChild : general.getOwnedElement()) {
+                    if (superChild instanceof Property) {
+                        Type superPartType = ((Property) superChild).getType();
+                         if (partType != null) {
+                            if (partType.equals(superPartType)) {
+                                if (hasAnAssociation(superChild)) {
+                                    if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
+                                        break assocRule;
+                                    }
+                                    else {
+                                        AddInheritanceToAssociationAction action = new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation());
+                                        action.actionPerformed(null);
+                                    }
+                                }
+                            }
+                            else if (partType instanceof Classifier) {
+                                if (((Classifier) partType).getGeneral().contains(superPartType)) {
+                                    if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
+                                        break assocRule;
+                                    }
+                                    else {
+                                        AddInheritanceToAssociationAction action = new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation());
+                                        action.actionPerformed(null);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
+
+    private boolean hasAnAssociation(Element superChild) {
+        return ((Property) superChild).getAssociation() != null;
+
+    }
+    private boolean hasInheritanceFromTo(Classifier classifier, Classifier general) {
+        if (classifier != null) {
+            return ModelHelper.getGeneralClassifiersRecursivelly(classifier).contains(general);
+        }
+        else {
+            return false;
+        }
+    }
+
 }
