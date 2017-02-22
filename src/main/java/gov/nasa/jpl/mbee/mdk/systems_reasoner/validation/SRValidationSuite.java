@@ -123,11 +123,11 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if (ne instanceof Property) {
                                     // why was this a requirement? One should be able to redefine any property regardless of aggregation, by my understanding.
                                     //if (!((Property) ne).isComposite()) {
-                                    v.addAction(new RedefineAttributeAction(classifier, redefEl));
+                                    v.addAction(new RedefineAttributeAction(classifier, redefEl, false));
                                     if (redefEl instanceof TypedElement) { // && ((TypedElement) redefEl).getType() != null
                                         // intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
                                         // grouping them separately to validate. It will just ignore and log if a type isn't specializable.
-                                        v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively & Individually"));
+                                        v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively & Individually", true));
                                     }
                                 }
                                 attributeMissingRule.addViolation(v);

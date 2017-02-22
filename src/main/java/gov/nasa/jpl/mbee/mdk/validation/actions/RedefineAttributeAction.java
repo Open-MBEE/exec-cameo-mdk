@@ -18,11 +18,12 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 
     private Classifier subClassifier;
     private RedefinableElement re;
-    private boolean createSpecializedType;
+    private boolean createSpecial;
     private String name;
+    private boolean isIndividual;
 
-    public RedefineAttributeAction(final Classifier clazz, final RedefinableElement re) {
-        this(clazz, re, false, DEFAULT_NAME);
+    public RedefineAttributeAction(final Classifier clazz, final RedefinableElement re, boolean isIndividually) {
+        this(clazz, re, false, DEFAULT_NAME, isIndividually);
     }
 
     /**
@@ -30,20 +31,22 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
      * @param elementToBeRedefined
      * @param createSpecializedType
      * @param name
+     * @param isIndividually
      */
-    public RedefineAttributeAction(final Classifier targetForRedefEl, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final String name) {
+    public RedefineAttributeAction(final Classifier targetForRedefEl, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final String name, boolean isIndividually) {
         super(name);
         this.subClassifier = targetForRedefEl;
         this.re = elementToBeRedefined;
-        this.createSpecializedType = createSpecializedType;
+        this.createSpecial = createSpecializedType;
         this.name = name;
+        this.isIndividual = isIndividually;
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType) {
-        return redefineAttribute(subClassifier, re, createSpecializedType, new ArrayList<Property>());
+    public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType, boolean isIndividual) {
+        return redefineAttribute(subClassifier, re, createSpecializedType, new ArrayList<RedefinableElement>(), isIndividual);
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final List<Property> traveled) {
+    public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final List<RedefinableElement> traveled, boolean isIndividual) {
         if (elementToBeRedefined.isLeaf()) {
             Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " is a leaf. Cannot redefine further.");
         }
@@ -67,8 +70,10 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 //				((Namespace) redefinedElement).getOwnedMember().retainAll(emptyCollection); 
 //			}
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
-            if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
-                CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, true, traveled);
+            if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
+
+                    CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, true, traveled, isIndividual);
+
             }
             return redefinedElement;
         }
@@ -80,7 +85,7 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 
     @Override
     public void run() {
-        redefineAttribute(subClassifier, re, createSpecializedType);
+        redefineAttribute(subClassifier, re, createSpecial, isIndividual);
     }
 
     @Override

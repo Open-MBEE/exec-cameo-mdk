@@ -17,8 +17,6 @@ import gov.nasa.jpl.mbee.mdk.validation.actions.RedefineAttributeAction;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class SpecializeStructureAction extends SRAction {
@@ -74,7 +72,7 @@ public class SpecializeStructureAction extends SRAction {
                 members.add(ne);
             }
 
-           //
+
             // specific.getOwnedMember().clear();
             for(NamedElement member : members){
                 if(member instanceof RedefinableElement) {
@@ -90,7 +88,7 @@ public class SpecializeStructureAction extends SRAction {
                     //if (ne instanceof Property) {
                         if (redefEl instanceof TypedElement) {
                             System.out.println("Redefining " + ne.getName() + redefEl.getName());
-                            RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, false, null);
+                            RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, false, null, false);
                             action.run();
                         }
                     //}else{
