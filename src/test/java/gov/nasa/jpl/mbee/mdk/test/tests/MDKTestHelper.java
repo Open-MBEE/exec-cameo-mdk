@@ -381,24 +381,4 @@ public abstract class MDKTestHelper {
         // do something with response if you want
     }
 
-    /**
-     * Convenience method for confirmSiteWritePermissions(string, string) to check if a project
-     * is editable by the logged in user. Uses the url and site information stored in the currently
-     * open project.
-     *
-     * @return true if the site lists "editable":"true" for the logged in user, false otherwise
-     * or when no project is open or project lacks url and site specifications
-     */
-    @Deprecated
-    //TODO @DONBOT migrate off of site
-    public static boolean hasSiteEditPermission() {
-        try {
-            Project proj = Application.getInstance().getProject();
-            return MMSUtils.isSiteEditable(proj, proj.getName());
-        } catch (ServerException | URISyntaxException | IOException e) {
-            MagicDrawHelper.generalMessage("[ERROR] Unable to check site permissions. Reason:" + e.getMessage());
-            return false;
-        }
-    }
-
 }

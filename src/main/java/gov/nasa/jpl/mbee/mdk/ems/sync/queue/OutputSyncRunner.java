@@ -2,11 +2,13 @@ package gov.nasa.jpl.mbee.mdk.ems.sync.queue;
 
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 public class OutputSyncRunner implements Runnable {
     public static Logger log = Logger.getLogger(OutputSyncRunner.class);
@@ -23,9 +25,11 @@ public class OutputSyncRunner implements Runnable {
         public void run() {
             try {
                 MMSUtils.sendMMSRequest(r.getRequest());
-            } catch (IOException | ServerException e) {
+            } catch (IOException | ServerException | URISyntaxException e) {
                 log.info("[ERROR] Exception occurred during request processing. Reason: " + e.getMessage());
                 e.printStackTrace();
+                OutputQueue q = OutputQueue.getInstance();
+                q.logExceptionPair(new Pair<>(r, e));
             }
         }
     }

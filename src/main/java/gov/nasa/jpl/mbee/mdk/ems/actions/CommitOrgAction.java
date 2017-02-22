@@ -82,9 +82,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
     }
 
     public String commitAction() {
-        if (!MDUtils.isDeveloperMode()) {
-            return null;
-        }
+        // '{"elements": [{"sysmlId": "vetest", "name": "vetest"}]}' -X POST "http://localhost:8080/alfresco/service/orgs"
 
         // check for existing org
         URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
@@ -118,9 +116,10 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                     }
                 }
             }
-        } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[WARNING] Unable to query MMS orgs. Attempting to create org without checking.");
-            e1.printStackTrace();
+        } catch (IOException | URISyntaxException | ServerException e) {
+            Application.getInstance().getGUILog().log("[WARNING] Exception occurred while getting MMS orgs. Aborting org creation. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
 
         // build post data
@@ -134,11 +133,10 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         elementsArrayNode.add(orgObjectNode);
 
         // do post request
-        response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while committing org. Org commit cancelled. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;
         }

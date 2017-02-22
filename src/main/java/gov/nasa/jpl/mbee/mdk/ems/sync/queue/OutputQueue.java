@@ -1,9 +1,12 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.queue;
 
+import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class
@@ -11,6 +14,7 @@ OutputQueue extends LinkedBlockingQueue<Request> {
     private Logger log = Logger.getLogger(OutputQueue.class);
     private final static OutputQueue instance = new OutputQueue();
     private volatile Request current = null;
+    private final Deque<Pair<Request, Exception>> exceptionQueue = new LinkedList<>();
 
     private OutputQueue() {
         super();
@@ -44,6 +48,21 @@ OutputQueue extends LinkedBlockingQueue<Request> {
             }
             super.remove(toBeRemoved);
         }
+    }
+
+    public void logExceptionPair(Pair last) {
+        exceptionQueue.addLast(last);
+    }
+
+    public Pair<Request, Exception> nextExceptionPair() {
+        if (hasExceptionPair()) {
+            return exceptionQueue.removeFirst();
+        }
+        return null;
+    }
+
+    public boolean hasExceptionPair() {
+        return exceptionQueue.size() > 0;
     }
 
 }

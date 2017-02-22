@@ -6,17 +6,22 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
+import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -92,8 +97,6 @@ public class AutomatedViewGeneration extends CommandLine {
             loginTeamwork();
             // open project
             loadTeamworkProject();
-            // confirm MMS write permissions
-            checkSiteEditPermission();
             // generate views and commit images
             generateViewsForDocList();
             // logout in finally
@@ -274,34 +277,6 @@ public class AutomatedViewGeneration extends CommandLine {
     }
 
     /**
-     * Checks to ensure that the logged in user has edit permissions to site.
-     *
-     * @throws IOException either a logMessage failure or a isSiteEditable failure
-     * @throws InterruptedException cancel triggered and caught by cancel handler
-     * @throws IllegalAccessException access failure with loaded credentials
-     * @throws ServerException server error
-     * @throws URISyntaxException uri addressing error
-     */
-    private void checkSiteEditPermission()
-            throws IllegalAccessException, InterruptedException, ServerException, URISyntaxException, IOException {
-        if (!MDKHelper.loginToMMS(teamworkUsername, teamworkPassword)) {
-            String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
-            logMessage(message);
-            error = 103;
-            throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not log in to MMS server.");
-            // LOG: Invalid account
-        }
-        if (!MDKHelper.isSiteEditable()) {
-            String message = "[FAILURE] User " + teamworkUsername + " does not have permission to MMS site or MMS is unsupported version.";
-            logMessage(message);
-            error = 103;
-            throw new IllegalAccessException("Automated View Generation failed - User " + teamworkUsername + " can not edit site (check Alfresco site membership) or MMS version < 2.3.8.");
-            // LOG: Account lacks write permissions or mms < v2.3.8
-        }
-        checkCancel();
-    }
-
-    /**
      * Generates views and commits images for each document / view in the docList
      * sequentially. If an element is not found, skips generation and continues
      * through list, and will throw an exception at the end.
@@ -311,31 +286,62 @@ public class AutomatedViewGeneration extends CommandLine {
      * @throws UnsupportedEncodingException logMessage failure
      */
     private void generateViewsForDocList()
-            throws FileNotFoundException, InterruptedException, UnsupportedEncodingException {
+            throws FileNotFoundException, IllegalAccessException, InterruptedException, UnsupportedEncodingException {
+        if (!TicketUtils.isTicketSet()) {
+            TicketUtils.setUsernameAndPassword(teamworkUsername, teamworkPassword);
+            if (!EMSLoginAction.loginAction()) {
+                String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
+                logMessage(message);
+                error = 103;
+                throw new IllegalAccessException("[FAILURE] Automated View Generation failed - User " + teamworkUsername + " can not log in to MMS server.");
+            }
+        }
+
+        OutputQueue q = OutputQueue.getInstance();
+        // empty exception queue just in case
+        while (q.hasExceptionPair()) {
+            q.nextExceptionPair();
+        }
+
         String msg = "[OPERATION] Triggering view generation on MMS";
         logMessage(msg);
         boolean failedDocs = false;
         for (String elementID : viewList) {
-            NamedElement document = (NamedElement) Converters.getIdToElementConverter()
-                    .apply(elementID, Application.getInstance().getProject());
+            Element document = Converters.getIdToElementConverter().apply(elementID, Application.getInstance().getProject());
             if (document == null) {
-                msg = "[FAILURE] Unable to find element \"" + elementID + "\"";
+                msg = "[ERROR] Unable to find element \"" + elementID + "\"";
                 logMessage(msg);
-                // LOG: the element which caused a failure and didnd't generate
+                // LOG: the element which caused a failure and didn't generate
                 failedDocs = true;
             }
             else {
-                msg = "Generating views for \"" + document.getName() + "\".";
+                msg = "Generating views for \"" + document.getHumanName() + "\".";
                 logMessage(msg);
                 // LOG: the element which is being generated currently
                 MDKHelper.generateViews(document, true);
-                // required for the auto-image commit wait, and probably not harmful in other circumstances
+                // wait is required for the auto-image commit, and it helps tie exceptions in output queue to their document
                 MDKHelper.mmsUploadWait();
+                if (q.hasExceptionPair()) {
+                    failedDocs = true;
+                    Pair<Request, Exception> current = q.nextExceptionPair();
+                    Exception e = current.getSecond();
+                    if (e instanceof ServerException && ((ServerException) e).getCode() == 403) {
+                        msg = "[ERROR] Unable to generate " + document.getHumanName() + ". User " + teamworkUsername + " does not have permission to write to the MMS in this branch.";
+                        logMessage(msg);
+                    }
+                    else {
+                        msg = "[ERROR] Unexpected error while generating " + document.getHumanName() + ". Reason: " + e.getMessage();
+                        logMessage(msg);
+                    }
+                }
+
             }
         }
+
+        // check for exceptions after running
         if (failedDocs) {
             error = 104;
-            throw new FileNotFoundException("Automated View Generation Failed - Unable to find Document(s)");
+            throw new FileNotFoundException("[FAILURE] Automated View Generation Failed - Unable to find or write document(s)");
             // LOG: AVG FAILED AT THIS POINT
         }
         checkCancel();
