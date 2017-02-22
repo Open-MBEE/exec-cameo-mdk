@@ -7,13 +7,13 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
@@ -297,12 +297,6 @@ public class AutomatedViewGeneration extends CommandLine {
             }
         }
 
-        OutputQueue q = OutputQueue.getInstance();
-        // empty exception queue just in case
-        while (q.hasExceptionPair()) {
-            q.nextExceptionPair();
-        }
-
         String msg = "[OPERATION] Triggering view generation on MMS";
         logMessage(msg);
         boolean failedDocs = false;
@@ -321,9 +315,9 @@ public class AutomatedViewGeneration extends CommandLine {
                 MDKHelper.generateViews(document, true);
                 // wait is required for the auto-image commit, and it helps tie exceptions in output queue to their document
                 MDKHelper.mmsUploadWait();
-                if (q.hasExceptionPair()) {
+                if (OutputSyncRunner.getLastExceptionPair() != null) {
                     failedDocs = true;
-                    Pair<Request, Exception> current = q.nextExceptionPair();
+                    Pair<Request, Exception> current = OutputSyncRunner.getLastExceptionPair();
                     Exception e = current.getSecond();
                     if (e instanceof ServerException && ((ServerException) e).getCode() == 403) {
                         msg = "[ERROR] Unable to generate " + document.getHumanName() + ". User " + teamworkUsername + " does not have permission to write to the MMS in this branch.";

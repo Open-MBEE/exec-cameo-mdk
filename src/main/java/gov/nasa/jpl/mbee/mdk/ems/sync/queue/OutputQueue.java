@@ -14,7 +14,6 @@ OutputQueue extends LinkedBlockingQueue<Request> {
     private Logger log = Logger.getLogger(OutputQueue.class);
     private final static OutputQueue instance = new OutputQueue();
     private volatile Request current = null;
-    private final Deque<Pair<Request, Exception>> exceptionQueue = new LinkedList<>();
 
     private OutputQueue() {
         super();
@@ -48,21 +47,6 @@ OutputQueue extends LinkedBlockingQueue<Request> {
             }
             super.remove(toBeRemoved);
         }
-    }
-
-    public void logExceptionPair(Pair last) {
-        exceptionQueue.addLast(last);
-    }
-
-    public Pair<Request, Exception> nextExceptionPair() {
-        if (hasExceptionPair()) {
-            return exceptionQueue.removeFirst();
-        }
-        return null;
-    }
-
-    public boolean hasExceptionPair() {
-        return exceptionQueue.size() > 0;
     }
 
 }
