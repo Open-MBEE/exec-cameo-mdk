@@ -70,18 +70,34 @@ public class SpecializeStructureRecursiveAndIndividualAction extends SRAction {
             }
 
             Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
-            specific.getOwnedMember().clear();
+            //specific.getOwnedMember().clear();
+            ArrayList<NamedElement> members = new ArrayList<>();
+            for(NamedElement ne : specific.getOwnedMember()){
+                members.add(ne);
+            }
+
+            //
+            // specific.getOwnedMember().clear();
+            for(NamedElement member : members){
+                if(member instanceof RedefinableElement) {
+                    System.out.println(member.getClassType().getName() + " removing " + member.getName());
+                    specific.getOwnedMember().remove(member);
+                    member.dispose();
+                }
+            }
+
+
             Utils.createGeneralization(classifier, specific);
             for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
                 if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                     final RedefinableElement redefEl = (RedefinableElement) ne;
-                            if (ne instanceof Property) {
+
                                 if (redefEl instanceof TypedElement) {
                                     RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, true, null);
                                     action.run();
 
                                 }
-                            }
+
                     }
 
             }
