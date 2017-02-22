@@ -21,7 +21,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
     public static final String NAME = "Systems Reasoner";
 
-    private SRAction validateAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
+    private SRAction validateAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
 
     @Override
     public int getPriority() {
@@ -54,7 +54,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         // refresh the actions for every new click (or selection)
         validateAction = null;
         ontoBehaviorAction = null;
-        createSpecificAction = null;
+        specializeStructureRecursiveAction = null;
+        specializeStructureAction = null;
+        createBSTAction = null;
         createInstanceMenuAction = null;
         instance2BSTAction = null;
         aspectAction = null;
@@ -90,7 +92,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             }
         }
         category.addAction(copyAction);
-        category.addAction(createSpecificAction);
+        category.addAction(specializeStructureAction);
+        category.addAction(specializeStructureRecursiveAction);
+        category.addAction(createBSTAction);
         category.addAction(createInstanceMenuAction);
         category.addAction(instance2BSTAction);
         category.addAction(aspectAction);
@@ -157,7 +161,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             final Classifier classifier = (Classifier) element;
             validateAction = new ValidateAction(classifier);
             ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
-            createSpecificAction = new CreateSpecificAction(classifier, false);
+            specializeStructureAction = new SpecializeStructureAction(classifier, false);
+            specializeStructureRecursiveAction = new SpecializeStructureRecursiveAction(classifier, false);
+            createBSTAction = new SpecializeStructureRecursiveAndIndividualAction(classifier, false);
             createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
             aspectAction = new AspectAction(classifier);
             copyAction = new CopyAction(element);
