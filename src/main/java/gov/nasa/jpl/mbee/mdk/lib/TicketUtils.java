@@ -252,13 +252,12 @@ public class TicketUtils {
         // do request
         ObjectNode response = null;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials), true);
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
         } catch (IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
             e.printStackTrace();
         } catch (ServerException e) {
             // messaging handled at lower level
-            e.printStackTrace();
         }
 
         // parse response
@@ -301,15 +300,11 @@ public class TicketUtils {
         // do request
         ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri), true);
+            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
         } catch (ServerException | IOException | URISyntaxException e) {
-            // don't want to throw this one. any function that would cause this should have already caused it in the
-            // initial request that was built, which should have stopped it before it even got to the ticket check point.
-            // included here for safety
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for " +
-                    "project. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained for now). Reason: " + e.getMessage());
             e.printStackTrace();
-            // can't confirm invalid if can't check site at all
+            // can't confirm invalid if can't check ticket at all
             return true;
         }
 
