@@ -124,8 +124,8 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
 
     private void addElementActions(ActionsManager manager, Element e, List<Element> es) {
         //manager.getCategories().forEach(category -> dumpCategory(category, 0));
-        Project prj = Project.getProject(e);
-        if (prj == null) {
+        Project project = Project.getProject(e);
+        if (project == null) {
             return;
         }
         Stereotype sysmlview = Utils.getViewStereotype();
@@ -153,18 +153,18 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
             if (MDUtils.isDeveloperMode()) {
                 if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
-                    models.addAction(new CommitProjectAction(Application.getInstance().getProject(), false, true));
-                    models.addAction(new CommitProjectAction(Application.getInstance().getProject(), true, true));
+                    models.addAction(new CommitProjectAction(project, false, true));
+                    models.addAction(new CommitProjectAction(project, true, true));
                 }
             }
             if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateModelAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models" : "Validate Models"));
+                models.addAction(new ValidateModelAction(es, (project.getPrimaryModel() == e) ? "Validate Models" : "Validate Models"));
             }
             if (manager.getActionFor(ValidateElementAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateElementAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Element" : "Validate Element"));
+                models.addAction(new ValidateElementAction(es, (project.getPrimaryModel() == e) ? "Validate Element" : "Validate Element"));
             }
             if (manager.getActionFor(ValidateElementDepthAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateElementDepthAction(es, (Application.getInstance().getProject().getModel() == e) ? "Validate Models (specified depth)" : "Validate Models (specified depth)"));
+                models.addAction(new ValidateElementDepthAction(es, (project.getPrimaryModel() == e) ? "Validate Models (specified depth)" : "Validate Models (specified depth)"));
             }
 
             /*if (e instanceof Package) {
@@ -332,7 +332,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
         }*/
 
-        if (e == Application.getInstance().getProject().getModel()) {
+        if (e == project.getPrimaryModel()) {
             NMAction act = null;
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
             // DefaultPropertyResourceProvider pp = new

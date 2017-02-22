@@ -31,14 +31,14 @@ public class TimeQueryUtil {
     // compare elements
 
     public static ObjectNode getHistoryOfElement(Project project, Element elementToQuery, Date compareToTime) {
-        ArrayList<Element> elementsToQuery = new ArrayList<Element>();
+        ArrayList<Element> elementsToQuery = new ArrayList<>();
         elementsToQuery.add(elementToQuery);
 
         result = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elements = result.putArray("elements");
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
         if (requestUri == null) {
             return null;
         }

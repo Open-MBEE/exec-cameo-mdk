@@ -107,7 +107,7 @@ public class ValidateElementDepthAction extends MDAction {
         }
 
         if (!cancel) {
-            ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), false, depth);
+            ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), depth);
             ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync (depth: " + Integer.toString(depth) + ")", true, 0);
             if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
                 Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(),manualSyncRunner.getValidationSuite().getName());

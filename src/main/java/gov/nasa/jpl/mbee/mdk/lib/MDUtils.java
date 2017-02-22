@@ -214,13 +214,19 @@ public class MDUtils {
     // }
 
     public static String getWorkspace(Project project) {
-        String twbranch = getRemoteBranchPath(project);
-        if (twbranch == null) {
+        if (!project.isRemote()) {
             return "master";
         }
-        twbranch = "master/" + twbranch;
-      //  String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+        String twcBranch = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
+        return (twcBranch.equals("trunk") ? "master" : twcBranch);
 
+//        String twbranch = getRemoteBranchPath(project);
+//        if (twbranch == null) {
+//            return "master";
+//        }
+//        twbranch = "master/" + twbranch;
+//      //  String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+//
         //TODO @donbot imported from ExportUtility, update to finish the import
 //        Map<String, String> wsmap = wsIdMapping.get(projId);
 //        if (wsmap == null) {
@@ -238,7 +244,7 @@ public class MDUtils {
 //            }
 //        }
 //        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
-        return "master";
+//        return twbranch;
     }
 
     public static String getRemoteBranchPath(Project project) {

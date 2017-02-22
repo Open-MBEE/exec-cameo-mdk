@@ -71,7 +71,8 @@ public class DgvalidationDBSwitch extends DgvalidationSwitch<Object> {
     @Override
     public Object caseViolation(Violation object) {
         if (object.getElementId() != null) {
-            ValidationRuleViolation res = new ValidationRuleViolation(Converters.getIdToElementConverter().apply(object.getElementId(), Application.getInstance().getProject()), object.getComment());
+            ValidationRuleViolation res = new ValidationRuleViolation(Converters.getIdToElementConverter()
+                    .apply(object.getElementId(), Application.getInstance().getProject()), object.getComment());
             return res;
         }
         return null;

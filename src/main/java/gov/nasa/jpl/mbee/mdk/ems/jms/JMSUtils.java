@@ -206,7 +206,7 @@ public class JMSUtils {
         try {
             JMSUtils.JMSInfo jmsInfo = null;
             try {
-                jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
+                jmsInfo = JMSUtils.getJMSInfo(project);
             } catch (ServerException e) {
                 e.printStackTrace();
             }

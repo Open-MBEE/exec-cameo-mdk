@@ -57,7 +57,7 @@ public class BranchValidator {
         }
         Set<String> seenTasks = new HashSet<>();
         Map<String, ProjectDescriptor> branchDescriptors = new HashMap<>();
-        String currentBranch = MDUtils.getRemoteBranchPath(project);
+        String currentBranch = MDUtils.getWorkspace(project);
         try {
             ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(project);
             ProjectDescriptor trunk = currentProj;
@@ -68,12 +68,6 @@ public class BranchValidator {
                 trunkBranch = ProjectDescriptorsFactory.getProjectBranchPath(trunk.getURI());
             }
 
-            if (currentBranch == null) {
-                currentBranch = "master";
-            }
-            else {
-                currentBranch = "master/" + currentBranch;
-            }
             branchDescriptors.put(currentBranch, currentProj);
             fillBranchData(trunk, branchDescriptors);
             //Set<BranchData> branches = TeamworkUtils.getBranches(currentProj);

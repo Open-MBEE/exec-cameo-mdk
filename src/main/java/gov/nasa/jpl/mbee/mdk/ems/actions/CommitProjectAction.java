@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -37,17 +38,22 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import org.apache.http.client.utils.URIBuilder;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -86,19 +92,79 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        commitAction();
+    }
+
+    public String commitAction() {
+        // check for existing org
+        URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
+        String org = null;
+        try {
+            org = MMSUtils.getOrg(project);
+        } catch (IOException | URISyntaxException | ServerException e1) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs.");
+            e1.printStackTrace();
+            if (!MDUtils.isDeveloperMode()) {
+                return null;
+            }
+        }
+
+        if (org == null || org.isEmpty()) {
+            ObjectNode response = null;
+            try {
+                response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            } catch (IOException | URISyntaxException | ServerException e1) {
+                Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs.");
+                e1.printStackTrace();
+                if (!MDUtils.isDeveloperMode()) {
+                    return null;
+                }
+            }
+            ArrayList<String> mmsOrgsList = new ArrayList<>();
+            if (response != null) {
+                JsonNode arrayNode;
+                if ((arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
+                    for (JsonNode orgNode : arrayNode) {
+                        JsonNode value;
+                        if ((value = orgNode.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
+                            mmsOrgsList.add(value.asText());
+                        }
+                    }
+                }
+            }
+            String[] mmsOrgs = mmsOrgsList.toArray(new String[mmsOrgsList.size()]);
+            if (mmsOrgs.length > 0) {
+                JFrame selectionDialog = new JFrame();
+                org = (String) JOptionPane.showInputDialog(selectionDialog, "Select MMS org:",
+                        "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
+            }
+            else {
+                Application.getInstance().getGUILog().log("[WARNING] No orgs were returned from MMS.");
+            }
+            if ((org == null || org.isEmpty()) && MDUtils.isDeveloperMode()) {
+                org = new CommitOrgAction(project).commitAction();
+            }
+        }
+
+        if (org == null || org.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org. Org commit cancelled.");
+            return null;
+        }
+        requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
+
+        // build post data
         ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elementsArrayNode = requestData.putArray("elements");
         requestData.put("source", "magicdraw");
         requestData.put("mdkVersion", MDKPlugin.VERSION);
-
         ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
-        if (requestUri == null) {
-            return;
-        }
-        requestUri.setPath(requestUri.getPath() + "/projects");
 
+        // do post request
         ObjectNode response = null;
         try {
             response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
@@ -107,16 +173,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             e1.printStackTrace();
         }
         if (response == null) {
-            return;
+            return null;
         }
         if (shouldCommitModel) {
-            requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
-            if (requestUri == null) {
-                return;
-            }
-            RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, true, -1);
+            RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }
+        return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
     }
 }
 

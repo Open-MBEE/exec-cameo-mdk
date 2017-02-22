@@ -210,7 +210,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             ObjectNode viewResponse;
             try {
-                viewResponse = MMSUtils.getElementsById(viewMap.keySet(), project, progressStatus);
+                viewResponse = MMSUtils.getElements(project, viewMap.keySet(), progressStatus);
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
@@ -277,7 +277,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     ObjectNode instanceAndSlotResponse;
                     try {
-                        instanceAndSlotResponse = MMSUtils.getElementsById(elementIDs, project, progressStatus);
+                        instanceAndSlotResponse = MMSUtils.getElements(project, elementIDs, progressStatus);
                     } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
@@ -644,8 +644,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 requestData.put("mdkVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
 
-                URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
-                requestUri.setPath(requestUri.getPath() + "/elements");
+                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, requestUri, requestData, true, elementsArrayNode.size(), "Sync Changes"));
                 changed = true;
             }
@@ -674,7 +673,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 requestData.put("mdkVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
-                URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, requestData, true, elementsArrayNode.size(), "View Generation"));
                 changed = true;
             }

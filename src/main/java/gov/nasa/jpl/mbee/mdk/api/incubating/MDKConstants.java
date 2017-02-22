@@ -27,5 +27,8 @@ public class MDKConstants {
             CATEGORY_ID_KEY = DERIVED_KEY_PREFIX + "category" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_ID_KEY = "mountedElement" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_PROJECT_ID_KEY = "mountedElementProject" + ID_KEY_SUFFIX,
-            REF_ID = "ref" + ID_KEY_SUFFIX;
+            QUALIFIED_NAME_KEY = "qualifiedName",
+            QUALIFIED_ID_KEY = "qualified"  + ID_KEY_SUFFIX,
+            ORG_KEY = "org",
+            ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX;
 }

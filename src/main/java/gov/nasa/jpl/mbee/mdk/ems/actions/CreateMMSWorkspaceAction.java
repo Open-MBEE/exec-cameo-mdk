@@ -107,7 +107,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
             CreateMMSWorkspaceAction.initializeWorkspace(project, id);
         } catch (IOException | URISyntaxException | ServerException e1) {
             e1.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected exception occurred while attempting to initialize task on MMS. Aborting.");
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected exception occurred while attempting to initialize branch on MMS. Aborting.");
             return;
         }
         if (version == 0) {
@@ -115,10 +115,12 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         }
     }
 
-    public static ObjectNode initializeWorkspace(Project project, String taskId) throws IOException, URISyntaxException, ServerException {
-        String site = MMSUtils.getSiteName(project);
-        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesUri(project);
-        uriBuilder.setPath(uriBuilder.getPath() + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true");
+    public static ObjectNode initializeWorkspace(Project project, String branchId) throws IOException, URISyntaxException, ServerException {
+        //TODO @donbot confirm
+//        String site = MMSUtils.getSiteName(project);
+//        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesUri(project);
+//        uriBuilder.setPath(uriBuilder.getPath() + "/workspaces/" + branchId + "/sites/" + site + "/projects?createSite=true");
+        URIBuilder uriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
 
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
         objectNode.putArray("elements").add(MMSUtils.getProjectObjectNode(project));

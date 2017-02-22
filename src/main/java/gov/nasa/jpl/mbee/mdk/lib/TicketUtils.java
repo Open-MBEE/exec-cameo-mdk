@@ -226,7 +226,7 @@ public class TicketUtils {
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
     private static boolean acquireTicket(String pass) {
-        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
+        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H "Content-Type:application/json" -d '{"username":"username", "password":"password"}'
         if (username == null || username.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username");
             return false;

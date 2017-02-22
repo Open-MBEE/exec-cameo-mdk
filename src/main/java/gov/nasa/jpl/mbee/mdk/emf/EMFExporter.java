@@ -267,6 +267,9 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                             || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY) ) {
                         return objectNode;
                     }
+                    if (!(element instanceof Model)) {
+                        return objectNode;
+                    }
                     Model model = (Model) element;
                     IAttachedProject attachedProject = ProjectUtilities.getAttachedProjects(project.getPrimaryProject()).stream().filter(ap -> ProjectUtilities.isAttachedProjectRoot(model, ap)).findAny().orElse(null);
                     if (attachedProject == null) {
@@ -277,7 +280,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     }
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject.getPrimaryProject()));
-                    objectNode.put(MDKConstants.REF_ID, EsiUtilsInternal.getCurrentBranch(attachedProject).getName());
+                    objectNode.put(MDKConstants.NAME_KEY, EsiUtilsInternal.getCurrentBranch(attachedProject).getName());
                     objectNode.put("teamworkCloudVersion", ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
                     //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
                     return objectNode;

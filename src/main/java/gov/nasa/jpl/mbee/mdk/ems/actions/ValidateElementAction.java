@@ -52,7 +52,7 @@ public class ValidateElementAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), false, 0);
+        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), 0);
         ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
         if (manualSyncRunner.getValidationSuite() == null) {
             // if it's null, there was an error in processing that was already displayed

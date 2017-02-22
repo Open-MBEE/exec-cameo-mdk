@@ -2503,10 +2503,11 @@ public class Utils {
         // elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
         // provider.dispose();
         // provider.init();
+        // TODO @donbot change the id here from ms to the action name - this will cause windows to be reused
         String id = "" + System.currentTimeMillis();
         // provider.setValidationResults(id, results);
         // provider.update();
-        Map<Annotation, RuleViolationResult> mapping = new HashMap<Annotation, RuleViolationResult>();
+        Map<Annotation, RuleViolationResult> mapping = new HashMap<>();
         ValidationWindowRun vwr = new ValidationWindowRun(id, title, runData, results, mapping);
         for (RuleViolationResult rvr : results) {
             for (NMAction action : rvr.getAnnotation().getActions()) {
