@@ -65,10 +65,7 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
         }
         if (redefinedElement == null) {
             redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
-//			if (redefinedElement instanceof Namespace) {
-//				Collection<?> emptyCollection = new ArrayList<String>();
-//				((Namespace) redefinedElement).getOwnedMember().retainAll(emptyCollection); 
-//			}
+
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
             if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
 

@@ -94,10 +94,8 @@ public class SpecializeStructureRecursiveAndIndividualAction extends SRAction {
             for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
                 if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                     final RedefinableElement redefEl = (RedefinableElement) ne;
-                                if (redefEl instanceof TypedElement) {
-                                    RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, recursionMode, null, individualMode);
+                                     RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, recursionMode, null, individualMode);
                                     action.run();
-                                }
                     }
             }
             SessionManager.getInstance().closeSession();
