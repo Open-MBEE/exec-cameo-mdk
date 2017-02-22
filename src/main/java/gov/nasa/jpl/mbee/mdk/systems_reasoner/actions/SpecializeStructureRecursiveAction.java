@@ -23,18 +23,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CreateSpecificAction extends SRAction {
+public class SpecializeStructureRecursiveAction extends SRAction {
 
     /**
      *
      */
     private static final long serialVersionUID = 1L;
-    public static final String DEFAULT_ID = "Specialize Structure";
+    public static final String DEFAULT_ID = "Specialize Structure Recursive";
     private Classifier classifier;
     private ArrayList<Namespace> recursionList;
     private boolean isValidationMode = false;
 
-    public CreateSpecificAction(final Classifier classifier, boolean isValidationMode) {
+    public SpecializeStructureRecursiveAction(final Classifier classifier, boolean isValidationMode) {
         super(DEFAULT_ID, classifier);
         this.classifier = classifier;
         recursionList = new ArrayList<>();
@@ -75,10 +75,7 @@ public class CreateSpecificAction extends SRAction {
 
             // List<BaseElement> specifics = CopyPasting.copyPasteElements(copyList, container);
             List<BaseElement> specifics = CopyPasting.copyPasteElements(generals, container, null, true, true);
-            /*System.out.println("Copy List  _  _  _ |   specifics");
-            for (int jj = 0; jj < generals.size(); jj++) {
-                System.out.println(generals.get(jj) + "_  _  _ |" + specifics.get(jj));
-            }*/
+
 
             int i = 0;
             for (BaseElement specific : specifics) {
