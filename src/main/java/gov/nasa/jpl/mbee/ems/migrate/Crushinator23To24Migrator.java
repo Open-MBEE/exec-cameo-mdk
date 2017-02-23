@@ -17,6 +17,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.DocGenPlugin;
+import gov.nasa.jpl.mbee.actions.systemsreasoner.SRAction;
 import gov.nasa.jpl.mbee.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.ems.ExportUtility;
 import gov.nasa.jpl.mbee.ems.ServerException;
@@ -24,6 +25,8 @@ import gov.nasa.jpl.mbee.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.ems.validation.ModelValidator;
 import gov.nasa.jpl.mbee.generator.PresentationElementUtils;
@@ -31,7 +34,9 @@ import gov.nasa.jpl.mbee.lib.Utils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import javax.annotation.CheckForNull;
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -573,5 +578,102 @@ public class Crushinator23To24Migrator extends Migrator {
         File log = saveLoggedMessages();
         JOptionPane.showConfirmDialog(null, "Migration paused. Press OK or close window to continue. " +
                 (log != null ? "\nLogged messages: " + log.getAbsolutePath() : ""), "Migration", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public Crushinator23to24DocumentMigratorAction createAction(Element element) {
+        return new Crushinator23to24DocumentMigratorAction(element);
+    }
+
+    public class Crushinator23to24DocumentMigratorAction extends SRAction {
+
+        public static final String NAME = "Migrate Document (C-3 to C-4)";
+
+        public Crushinator23to24DocumentMigratorAction(Element element) {
+            super(NAME, element);
+        }
+
+        @Override
+        public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
+            Stereotype productStereotype = Utils.getProductStereotype();
+            if (productStereotype == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Product stereotype not found. Cancelling document migraiton.");
+                return;
+            }
+            Stereotype viewStereotype = Utils.getViewStereotype();
+            if (viewStereotype == null) {
+                Application.getInstance().getGUILog().log("[ERROR] View stereotype not found. Cancelling document migration.");
+                return;
+            }
+
+            Collection<Property> properties = new LinkedHashSet<>();
+            Collection<Association> associations = new LinkedHashSet<>();
+            Collection<Classifier> views = new LinkedHashSet<>();
+            collectRelatedElementsRecursively(element, viewStereotype, properties, associations, views);
+
+            List<JSONObject> elementJsonObjects = new ArrayList<>(views.size() + properties.size() + associations.size());
+            for (Classifier view : views) {
+                boolean isDocument = StereotypesHelper.checkForDerivedStereotype(StereotypesHelper.getStereotypes(view), productStereotype) != null;
+                JSONObject jsonObject = convertElementToPartialJson(view, isDocument ? DOCUMENT_JSON_KEYS : VIEW_JSON_KEYS);
+                Object o;
+                if (isDocument) {
+                    if (jsonObject != null && (o = jsonObject.get("specialization")) instanceof JSONObject) {
+                        ((JSONObject) o).put("view2view", null);
+                    }
+                }
+                if (jsonObject != null) {
+                    elementJsonObjects.add(jsonObject);
+                }
+            }
+            for (Property property : properties) {
+                JSONObject jsonObject = convertElementToPartialJson(property, PROPERTY_JSON_KEYS);
+                if (jsonObject != null) {
+                    elementJsonObjects.add(jsonObject);
+                }
+            }
+            for (Association association : associations) {
+                JSONObject jsonObject = convertElementToPartialJson(association, ASSOCIATION_JSON_KEYS);
+                if (jsonObject != null) {
+                    elementJsonObjects.add(jsonObject);
+                }
+            }
+
+            if (!elementJsonObjects.isEmpty()) {
+                JSONArray jsonArray = new JSONArray();
+                jsonArray.addAll(elementJsonObjects);
+                JSONObject body = new JSONObject();
+                body.put("elements", jsonArray);
+                body.put("source", "magicdraw");
+                body.put("mmsVersion", DocGenPlugin.VERSION);
+                //ExportUtility.send(postUrl, body.toJSONString(), false, false);
+                OutputQueue.getInstance().offer(new Request(ExportUtility.getPostElementsUrl(), body.toJSONString(), "Migrate Document"));
+                Application.getInstance().getGUILog().log("[INFO] Updating " + elementJsonObjects.size() + " element" + (elementJsonObjects.size() != 1 ? "s" : "") + " on the MMS.");
+            }
+        }
+
+        private void collectRelatedElementsRecursively(Element element, Stereotype viewStereotype, Collection<Property> properties, Collection<Association> associations, Collection<Classifier> views) {
+            List<Stereotype> stereotypes = StereotypesHelper.getStereotypes(element);
+            if (!(element instanceof Classifier) || StereotypesHelper.checkForDerivedStereotype(stereotypes, viewStereotype) == null) {
+                Application.getInstance().getGUILog().log("[INFO] " + element.getHumanName() + " - " + element.getID() + " - is not a view. Skipping view in document migration.");
+                return;
+            }
+            Classifier view = (Classifier) element;
+            if (views.contains(view)) {
+                Application.getInstance().getGUILog().log("[WARNING] Detected circular reference in view structure to " + view.getHumanName() + " - " + element.getID() + ". Skipping view in document migration.");
+                return;
+            }
+            views.add(view);
+            for (Property property : view.getAttribute()) {
+                properties.add(property);
+                Association association = property.getAssociation();
+                if (association != null) {
+                    associations.add(association);
+                    properties.addAll(association.getMemberEnd());
+                }
+                Type type = property.getType();
+                if (type != null) {
+                    collectRelatedElementsRecursively(type, viewStereotype, properties, associations, views);
+                }
+            }
+        }
     }
 }

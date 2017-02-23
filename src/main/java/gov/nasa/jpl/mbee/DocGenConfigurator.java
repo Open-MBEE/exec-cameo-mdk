@@ -49,6 +49,7 @@ import gov.nasa.jpl.mbee.actions.ClassToComponentRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.ComponentToClassRefactorWithIDAction;
 import gov.nasa.jpl.mbee.actions.docgen.*;
 import gov.nasa.jpl.mbee.actions.ems.*;
+import gov.nasa.jpl.mbee.ems.migrate.Crushinator23To24Migrator;
 import gov.nasa.jpl.mbee.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.lib.MDUtils;
@@ -276,6 +277,14 @@ public class DocGenConfigurator implements BrowserContextAMConfigurator, Diagram
                 if (action == null) {
                     viewInstances.addAction(new GenerateViewPresentationAction(es, true));
                 }
+                if (es.size() == 1 && areAllDocuments) {
+                    action = manager.getActionFor(Crushinator23To24Migrator.Crushinator23to24DocumentMigratorAction.NAME);
+                    Crushinator23To24Migrator migrator = new Crushinator23To24Migrator();
+                    if (action == null) {
+                        viewInstances.addAction(migrator.createAction(es.get(0)));
+                    }
+                }
+
                 /*action = manager.getActionFor(OrganizeViewInstancesAction.actionid);
                 if (action == null) {
                     viewInstances.addAction(new OrganizeViewInstancesAction(es, false));
