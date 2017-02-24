@@ -12,8 +12,17 @@ import java.net.URISyntaxException;
 
 public class OutputSyncRunner implements Runnable {
     public static Logger log = Logger.getLogger(OutputSyncRunner.class);
-
     public static int id = 0; //used as thread id(counter)
+
+    private static Pair<Request, Exception> lastException = null;
+
+    public static Pair<Request, Exception> getLastExceptionPair() {
+        return lastException;
+    }
+
+    public static void clearLastExceptionPair() {
+        lastException = null;
+    }
 
     public class SendThread extends Thread {
         Request r;
@@ -26,10 +35,9 @@ public class OutputSyncRunner implements Runnable {
             try {
                 MMSUtils.sendMMSRequest(r.getProject(), r.getRequest());
             } catch (IOException | ServerException | URISyntaxException e) {
+                lastException = new Pair<>(r, e);
                 log.info("[ERROR] Exception occurred during request processing. Reason: " + e.getMessage());
                 e.printStackTrace();
-                OutputQueue q = OutputQueue.getInstance();
-                q.logExceptionPair(new Pair<>(r, e));
             }
         }
     }

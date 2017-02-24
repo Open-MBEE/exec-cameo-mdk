@@ -8,12 +8,13 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
@@ -68,7 +69,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private static InterruptTrap cancelHandler;
 
-    protected static final Object lock = new Object();
+    private static final Object lock = new Object();
 
     /*//////////////////////////////////////////////////////////////
      *
@@ -245,7 +246,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
             // if updated projectDescriptor is now null, error out and indicate branch problem
             if (projectDescriptor == null) {
-                message = "[FAILURE] Unable to find TeamworkCloud project branch " + projectDescriptor.getRepresentationString() + "/" + teamworkBranchName;;
+                message = "[FAILURE] Unable to find TeamworkCloud project branch " + projectDescriptor.getRepresentationString() + "/" + teamworkBranchName;
                 logMessage(message);
                 error = 102;
                 throw new FileNotFoundException(message);
@@ -300,12 +301,6 @@ public class AutomatedViewGeneration extends CommandLine {
             }
         }
 
-        OutputQueue q = OutputQueue.getInstance();
-        // empty exception queue just in case
-        while (q.hasExceptionPair()) {
-            q.nextExceptionPair();
-        }
-
         String msg = "[OPERATION] Triggering view generation on MMS";
         logMessage(msg);
         boolean failedDocs = false;
@@ -318,15 +313,16 @@ public class AutomatedViewGeneration extends CommandLine {
                 failedDocs = true;
             }
             else {
+                OutputSyncRunner.clearLastExceptionPair();
                 msg = "Generating views for \"" + document.getHumanName() + "\".";
                 logMessage(msg);
                 // LOG: the element which is being generated currently
                 MDKHelper.generateViews(document, true);
                 // wait is required for the auto-image commit, and it helps tie exceptions in output queue to their document
                 MDKHelper.mmsUploadWait();
-                if (q.hasExceptionPair()) {
+                if (OutputSyncRunner.getLastExceptionPair() != null) {
                     failedDocs = true;
-                    Pair<Request, Exception> current = q.nextExceptionPair();
+                    Pair<Request, Exception> current = OutputSyncRunner.getLastExceptionPair();
                     Exception e = current.getSecond();
                     if (e instanceof ServerException && ((ServerException) e).getCode() == 403) {
                         msg = "[ERROR] Unable to generate " + document.getHumanName() + ". User " + teamworkUsername + " does not have permission to write to the MMS in this branch.";
