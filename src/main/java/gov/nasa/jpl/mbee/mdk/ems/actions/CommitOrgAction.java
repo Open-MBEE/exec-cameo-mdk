@@ -31,10 +31,12 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
@@ -42,7 +44,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -136,7 +138,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         try {
             response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
         } catch (IOException | ServerException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
         }

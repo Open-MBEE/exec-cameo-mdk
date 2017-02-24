@@ -97,34 +97,34 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
     public String commitAction() {
         // '{"elements": [{"sysmlId": "123456", "name": "vetest", "type": "Project"}]}' -X POST "http://localhost:8080/alfresco/service/orgs/vetest/projects"
+        String org = null;
 
-        // check for existing org
+        // get orgs uri to check orgs / post project
         URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
         if (requestUri == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs url. Project commit cancelled.");
             return null;
         }
 
-        String org = null;
+        // check for existing org, use that if it exists instead of prompting to select one
         try {
             org = MMSUtils.getOrg(project);
+            // a null result here just means the project isn't on mms
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs.");
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
-            if (!MDUtils.isDeveloperMode()) {
-                return null;
-            }
+            return null;
         }
 
+        // check for org options if one isn't specified in the project already
+        ObjectNode response;
         if (org == null || org.isEmpty()) {
-            ObjectNode response = null;
             try {
                 response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             } catch (IOException | URISyntaxException | ServerException e1) {
-                Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs.");
+                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
-                if (!MDUtils.isDeveloperMode()) {
-                    return null;
-                }
+                return null;
             }
             ArrayList<String> mmsOrgsList = new ArrayList<>();
             if (response != null) {
@@ -149,17 +149,15 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             }
             if ((org == null || org.isEmpty()) && MDUtils.isDeveloperMode()) {
                 org = new CommitOrgAction(project).commitAction();
-                if (org == null || org.isEmpty()) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org.");
-                    return null;
-                }
             }
         }
 
         if (org == null || org.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org. Org commit cancelled.");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org. Project commit cancelled.");
             return null;
         }
+
+        // update request with project post path
         requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
 
         // build post data
@@ -170,15 +168,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
 
-        // do post request
-        ObjectNode response = null;
+        // do project post request
         try {
             response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+            // we don't need to process this response, just make sure the request comes back without exception
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
-        }
-        if (response == null) {
             return null;
         }
         if (shouldCommitModel) {

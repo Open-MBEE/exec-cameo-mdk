@@ -57,7 +57,7 @@ public class MMSUtils {
 
     private static String developerUrl = "";
 
-    private static final Pattern CENSORED_PATTERN = Pattern.compile(".*password.*");
+    private static final Pattern CENSORED_PATTERN = Pattern.compile(".*\"password\" :.*");
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
@@ -257,6 +257,7 @@ public class MMSUtils {
                 System.out.println(" - Body:" + requestBody);
             }
         }
+        
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
@@ -440,25 +441,25 @@ public class MMSUtils {
     public static String getOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
 
-        String siteString = "";
-        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
-            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS Org");
-        }
-        return siteString;
-
-//        URIBuilder uriBuilder = getServiceProjectsUri(project);
-//        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder));
-//        JsonNode arrayNode;
-//        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-//            JsonNode value;
-//            for (JsonNode projectNode : arrayNode) {
-//                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
-//                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
-//                    return value.asText();
-//                }
-//            }
+//        String siteString = "";
+//        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+//            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS Org");
 //        }
-//        return "";
+//        return siteString;
+
+        URIBuilder uriBuilder = getServiceProjectsUri(project);
+        ObjectNode response = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        JsonNode arrayNode;
+        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+            JsonNode value;
+            for (JsonNode projectNode : arrayNode) {
+                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
+                    return value.asText();
+                }
+            }
+        }
+        return null;
     }
 
     public static boolean isProjectOnMms(Project project) throws IOException, URISyntaxException, ServerException {
