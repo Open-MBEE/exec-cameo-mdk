@@ -125,7 +125,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
         for (final Class<? extends Classifier> c : UNSPECIALIZABLE_CLASSIFIERS) {
             if (c.isAssignableFrom(general.getClass())) {
                 Application.getInstance().getGUILog()
-                        .log("[WARNING]: " + (structuralFeature != null ? structuralFeature.getQualifiedName() : "< >") + " is a " + c.getSimpleName() + ", which is not specializable.");
+                        .log("[WARNING] " + (structuralFeature != null ? structuralFeature.getQualifiedName() : "< >") + " is a " + c.getSimpleName() + ", which is not specializable.");
                 return null;
             }
         }
