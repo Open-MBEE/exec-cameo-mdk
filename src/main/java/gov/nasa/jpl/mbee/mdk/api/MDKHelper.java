@@ -45,8 +45,8 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
@@ -62,7 +62,6 @@ import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -168,9 +167,9 @@ public class MDKHelper {
      * @param username Username for MMS login
      * @param password Password for MMS login
      */
-    public static boolean loginToMMS(final String username, final String password) {
+    public static boolean loginToMMS(Project project, String username, String password) {
         TicketUtils.setUsernameAndPassword(username, password);
-        return new EMSLoginAction().loginAction();
+        return MMSLoginAction.loginAction(project);
     }
 
     /**
@@ -178,8 +177,8 @@ public class MDKHelper {
      * or interact with mmslogin dialog window
      *
      */
-    public static void logoutOfMMS() {
-        new EMSLogoutAction().logoutAction();
+    public static void logoutOfMMS(Project project) {
+        MMSLogoutAction.logoutAction(project);
     }
 
     /************************************************************
@@ -393,9 +392,9 @@ public class MDKHelper {
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
         if (progressStatus != null) {
-            return MMSUtils.sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests), progressStatus);
+            return MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests), progressStatus);
         }
-        return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests));
     }
 
 
@@ -408,6 +407,11 @@ public class MDKHelper {
      */
     public static ObjectNode deleteMmsElements(Collection<Element> elementsToDelete, Project project)
             throws IOException, URISyntaxException, ServerException {
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
         ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elements = requestBody.putArray("elements");
         for (Element delTarget : elementsToDelete) {
@@ -417,9 +421,7 @@ public class MDKHelper {
         }
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE,
-                MMSUtils.getServiceProjectsRefsElementsUri(project), requestBody);
-        return MMSUtils.sendMMSRequest(request);
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, requestBody));
     }
 
     /**
@@ -430,6 +432,11 @@ public class MDKHelper {
      */
     public static ObjectNode postMmsElements(Collection<Element> elementsToPost, Project project)
             throws IOException, URISyntaxException, ServerException {
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
         ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elementJson = requestBody.putArray("elements");
         for (Element target : elementsToPost) {
@@ -438,9 +445,7 @@ public class MDKHelper {
         }
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
-                MMSUtils.getServiceProjectsRefsElementsUri(project), requestBody);
-        return MMSUtils.sendMMSRequest(request);
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestBody));
     }
 
 }

@@ -57,7 +57,7 @@ public class JMSUtils {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         requestUri.setPath(requestUri.getPath() + "/connection/jms");
 
-        return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
     }
 
     // Varies by current project

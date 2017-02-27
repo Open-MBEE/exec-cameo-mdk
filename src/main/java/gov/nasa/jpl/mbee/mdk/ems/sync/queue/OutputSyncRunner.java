@@ -20,6 +20,10 @@ public class OutputSyncRunner implements Runnable {
         return lastException;
     }
 
+    public static void clearLastExceptionPair() {
+        lastException = null;
+    }
+
     public class SendThread extends Thread {
         Request r;
 
@@ -29,8 +33,7 @@ public class OutputSyncRunner implements Runnable {
 
         public void run() {
             try {
-                MMSUtils.sendMMSRequest(r.getRequest());
-                lastException = null;
+                MMSUtils.sendMMSRequest(r.getProject(), r.getRequest());
             } catch (IOException | ServerException | URISyntaxException e) {
                 lastException = new Pair<>(r, e);
                 log.info("[ERROR] Exception occurred during request processing. Reason: " + e.getMessage());

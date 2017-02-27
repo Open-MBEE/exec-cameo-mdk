@@ -82,7 +82,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
             try {
-                ObjectNode response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+                ObjectNode response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
             } catch (IOException | URISyntaxException | ServerException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected error occurred when initializing module.");
                 e.printStackTrace();

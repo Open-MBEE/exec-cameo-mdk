@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.pma.analyses;
 
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
@@ -12,7 +13,7 @@ import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
@@ -61,12 +62,14 @@ public class AutomatedViewGeneration extends CommandLine {
             teamworkProject = "",
             teamworkBranchName = "master";
 
+    private static Project project;
+
     private static final List<String> viewList = new ArrayList<>(),
             messageLog = new ArrayList<>();
 
     private static InterruptTrap cancelHandler;
 
-    protected static final Object lock = new Object();
+    private static final Object lock = new Object();
 
     /*//////////////////////////////////////////////////////////////
      *
@@ -243,7 +246,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
             // if updated projectDescriptor is now null, error out and indicate branch problem
             if (projectDescriptor == null) {
-                message = "[FAILURE] Unable to find TeamworkCloud project branch " + projectDescriptor.getRepresentationString() + "/" + teamworkBranchName;;
+                message = "[FAILURE] Unable to find TeamworkCloud project branch " + projectDescriptor.getRepresentationString() + "/" + teamworkBranchName;
                 logMessage(message);
                 error = 102;
                 throw new FileNotFoundException(message);
@@ -263,6 +266,7 @@ public class AutomatedViewGeneration extends CommandLine {
             throw new IllegalAccessException(message);
         }
         twLoaded = true;
+        project = Application.getInstance().getProject();
 
         // move the stored message log into the MD notification window. This will mess up the time stamps, but will
         // keep all of the messages in the same place
@@ -287,9 +291,9 @@ public class AutomatedViewGeneration extends CommandLine {
      */
     private void generateViewsForDocList()
             throws FileNotFoundException, IllegalAccessException, InterruptedException, UnsupportedEncodingException {
-        if (!TicketUtils.isTicketSet()) {
+        if (!TicketUtils.isTicketSet(project)) {
             TicketUtils.setUsernameAndPassword(teamworkUsername, teamworkPassword);
-            if (!EMSLoginAction.loginAction()) {
+            if (!MMSLoginAction.loginAction(project)) {
                 String message = "[FAILURE] User " + teamworkUsername + " failed to login to MMS.";
                 logMessage(message);
                 error = 103;
@@ -309,6 +313,7 @@ public class AutomatedViewGeneration extends CommandLine {
                 failedDocs = true;
             }
             else {
+                OutputSyncRunner.clearLastExceptionPair();
                 msg = "Generating views for \"" + document.getHumanName() + "\".";
                 logMessage(msg);
                 // LOG: the element which is being generated currently

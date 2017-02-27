@@ -40,27 +40,26 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.awt.event.ActionEvent;
 
-public class EMSLoginAction extends MDAction {
+public class MMSLoginAction extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "Login";
 
-    private EMSLogoutAction logout;
+    private MMSLogoutAction logout;
 
-    public EMSLoginAction() {
+    public MMSLoginAction() {
         super(DEFAULT_ID, "Login", null, null);
     }
 
-    public void setLogoutAction(EMSLogoutAction logout) {
+    public void setLogoutAction(MMSLogoutAction logout) {
         this.logout = logout;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        loginAction();
+        loginAction(Application.getInstance().getProject());
     }
 
-    public static boolean loginAction() {
-        Project project = Application.getInstance().getProject();
+    public static boolean loginAction(Project project) {
         if (project == null) {
             Utils.showPopupMessage("You need to have a project open first!");
             return false;
@@ -70,17 +69,14 @@ public class EMSLoginAction extends MDAction {
             return false;
         }
 
-        if (!TicketUtils.loginToMMS()) {
+        if (!TicketUtils.acquireMmsTicket(project)) {
 //            Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
             return false;
         }
         ActionsStateUpdater.updateActionsState();
         Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
-        for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
-            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(p);
-        }
-
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
         return true;
     }
 
