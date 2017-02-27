@@ -381,7 +381,7 @@ public class MDKHelper {
         for (String id : elementIds) {
             // create json for id strings, add to request array
             ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
-            element.put(MDKConstants.SYSML_ID_KEY, id);
+            element.put(MDKConstants.ID_KEY, id);
             idsArrayNode.add(element);
         }
 
@@ -412,7 +412,7 @@ public class MDKHelper {
         ArrayNode elements = requestBody.putArray("elements");
         for (Element delTarget : elementsToDelete) {
             ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
-            curElement.put(MDKConstants.SYSML_ID_KEY, Converters.getElementToIdConverter().apply(delTarget));
+            curElement.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(delTarget));
             elements.add(curElement);
         }
         requestBody.put("source", "magicdraw");

@@ -124,7 +124,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                 Iterator<ObjectNode> iterator = objectNodes.iterator();
                 while (iterator.hasNext()) {
                     ObjectNode objectNode = iterator.next();
-                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                     String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : null;
                     if (MDUtils.isDeveloperMode()) {
                         System.out.println("[ATTEMPT 1] Attempting " + sysmlId);
@@ -140,7 +140,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                         }
                         // Element may fail to create on first pass, ex: Diagram (because owner doesn't exist yet + custom creation), so we need to retry after everything else.
                         retryObjectNodes.add(objectNode);
-                        //failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), importException);
+                        //failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.ID_KEY).asText(), project), objectNode), importException);
                         //iterator.remove();
                         //continue bulkImport;
                     }
@@ -161,7 +161,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                 }
 
                 for (ObjectNode objectNode : retryObjectNodes) {
-                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                     String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : null;
                     if (MDUtils.isDeveloperMode()) {
                         System.out.println("[ATTEMPT 1.5] Attempting " + sysmlId);
@@ -177,7 +177,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                         if (MDUtils.isDeveloperMode()) {
                             System.err.println("[FAILED 1.5] Could not create " + sysmlId);
                         }
-                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), exception);
+                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.ID_KEY).asText(), project), objectNode), exception);
                         objectNodes.remove(objectNode);
                         continue bulkImport;
                     }
@@ -195,7 +195,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                 iterator = objectNodes.iterator();
                 while (iterator.hasNext()) {
                     ObjectNode objectNode = iterator.next();
-                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                     String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
                     if (MDUtils.isDeveloperMode()) {
                         System.out.println("[ATTEMPT 2] Attempting " + sysmlId);
@@ -211,7 +211,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                         if (MDUtils.isDeveloperMode()) {
                             System.err.println("[FAILED 2] Could not import " + sysmlId);
                         }
-                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), exception);
+                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.ID_KEY).asText(), project), objectNode), exception);
                         iterator.remove();
                         continue bulkImport;
                     }
@@ -250,7 +250,7 @@ public class EMFBulkImporter implements BulkImportFunction {
 
                         if (element.isInvalid()) {
                             if (MDUtils.isDeveloperMode()) {
-                                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                                 String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
                                 System.err.println("[FAILED 4] Could not create " + sysmlId);
                             }

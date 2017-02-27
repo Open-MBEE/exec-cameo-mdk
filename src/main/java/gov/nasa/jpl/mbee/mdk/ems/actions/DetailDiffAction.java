@@ -159,7 +159,7 @@ public class DetailDiffAction extends RuleViolationAction implements AnnotationA
         }
 
         // reassign value if it is an id (but not value for sysmlid)
-        if (!current.hasKey() || (current.hasKey() && !current.getKey().equals(MDKConstants.SYSML_ID_KEY))) {
+        if (!current.hasKey() || (current.hasKey() && !current.getKey().equals(MDKConstants.ID_KEY))) {
             Element target = Converters.getIdToElementConverter().apply(value.toString(), project);
             if (target instanceof NamedElement) {
                 value = ((NamedElement) target).getQualifiedName();

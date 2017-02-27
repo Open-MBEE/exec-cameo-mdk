@@ -131,7 +131,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             ArrayNode elements = request.putArray("elements");
             for (String id : elementsToDelete) {
                 ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
-                curElement.put(MDKConstants.SYSML_ID_KEY, id);
+                curElement.put(MDKConstants.ID_KEY, id);
                 elements.add(curElement);
             }
             request.put("source", "magicdraw");

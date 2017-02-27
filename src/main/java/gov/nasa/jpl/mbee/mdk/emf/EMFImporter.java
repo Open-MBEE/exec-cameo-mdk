@@ -50,7 +50,7 @@ public class EMFImporter implements JsonToElementFunction {
         UMLFactory.eINSTANCE.setRepository(project.getRepository());
         project.getCounter().setCanResetIDForObject(true);
 
-        JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+        JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
         /*if (jsonNode == null || !jsonNode.isTextual()) {
             return null;
         }*/
@@ -109,7 +109,7 @@ public class EMFImporter implements JsonToElementFunction {
                 ),
                 SYSML_ID_VALIDATION = new PreProcessor(
                         (objectNode, project, strict, element) -> {
-                            JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                            JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
                             if (jsonNode == null || !jsonNode.isTextual()) {
                                 return element;
                             }
@@ -363,7 +363,7 @@ public class EMFImporter implements JsonToElementFunction {
                 ID = new EStructuralFeatureOverride(
                     (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
                     (objectNode, eStructuralFeature, project, strict, element) -> {
-                        JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                        JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
                         if (jsonNode == null || !jsonNode.isTextual()) {
                             /*if (strict) {
                                 throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
@@ -412,7 +412,7 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         if (element instanceof Package
-                                && (jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith("holding_bin")
+                                && (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith("holding_bin")
                                 && (jsonNode = objectNode.get(MDKConstants.OWNER_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                             ((Package) element).setOwningPackage(project.getPrimaryModel());
                             return element;
@@ -420,7 +420,7 @@ public class EMFImporter implements JsonToElementFunction {
                         Element owningElement = idToElementConverter.apply(jsonNode.asText(), project);
                         if (owningElement == null) {
                             if (strict) {
-                                JsonNode sysmlIdNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                                JsonNode sysmlIdNode = objectNode.get(MDKConstants.ID_KEY);
                                 throw new ImportException(element, objectNode, "Owner for element " + (sysmlIdNode != null && sysmlIdNode.isTextual() ? sysmlIdNode.asText("<>") : "<>") + " not found: " + jsonNode + ".");
                             }
                         }
@@ -437,7 +437,7 @@ public class EMFImporter implements JsonToElementFunction {
                             }
                             else if (element instanceof InstanceSpecification
                                     && ((jsonNode = objectNode.get(KEY_FUNCTION.apply(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT))) != null && jsonNode.isTextual()
-                                    || (jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
+                                    || (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
                                 ((InstanceSpecification) element).setStereotypedElement(owningElement);
                                 //System.out.println("[STEREOTYPED ELEMENT] " + Converters.getElementToIdConverter().apply(element) + " -> " + Converters.getElementToIdConverter().apply(owningElement));
                             }

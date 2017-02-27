@@ -36,10 +36,7 @@ import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.esi.EsiUtilsInternal;
-import com.nomagic.magicdraw.foundation.MDObject;
-import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -397,7 +394,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     /*if (element instanceof ValueSpecification && !(element instanceof TimeExpression)) {
                         return objectNode;
                     }*/
-                    objectNode.put(MDKConstants.SYSML_ID_KEY, getEID(element));
+                    objectNode.put(MDKConstants.ID_KEY, getEID(element));
                     return objectNode;
                 }
         ),

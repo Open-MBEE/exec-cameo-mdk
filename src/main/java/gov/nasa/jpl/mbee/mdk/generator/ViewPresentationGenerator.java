@@ -229,7 +229,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     ObjectNode elementObjectNode = (ObjectNode) elementJsonNode;
                     // Resolve current instances in the view constraint expression
                     JsonNode viewOperandJsonNode = JacksonUtils.getAtPath(elementObjectNode, "/" + MDKConstants.CONTENTS_KEY + "/operand"),
-                            sysmlIdJson = elementObjectNode.get(MDKConstants.SYSML_ID_KEY);
+                            sysmlIdJson = elementObjectNode.get(MDKConstants.ID_KEY);
                     String sysmlId;
                     if (sysmlIdJson != null && sysmlIdJson.isTextual() && !(sysmlId = sysmlIdJson.asText()).isEmpty()) {
                         viewIDs.add(sysmlId);
@@ -381,7 +381,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             Utils.printException(e);
                             SessionManager.getInstance().cancelSession();
                             return;*/
-                            Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + instanceObjectNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                            Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + instanceObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             instanceObjectNodesIterator.remove();
                         }
                     }
@@ -409,7 +409,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             Utils.printException(e);
                             SessionManager.getInstance().cancelSession();
                             return;*/
-                            Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotObjectNode.get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                            Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             slotObjectNodesIterator.remove();
                         }
                     }
@@ -478,7 +478,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;* /
-                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                     }
                 }
                 for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
@@ -494,7 +494,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         Utils.printException(e);
                         SessionManager.getInstance().cancelSession();
                         return;* /
-                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for slot " + pair.getFirst().get(MDKConstants.SYSML_ID_KEY) + ": " + e.getMessage());
+                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for slot " + pair.getFirst().get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                     }
                 }*/
             }
@@ -662,7 +662,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         continue;
                     }
                     ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-                    elementObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
+                    elementObjectNode.put(MDKConstants.ID_KEY, id);
                     elementsArrayNode.add(elementObjectNode);
                 }
             }

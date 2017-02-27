@@ -79,7 +79,7 @@ public class ElementValidator implements RunnableWithProgress {
             serverElements = new ArrayList<>(0);
         }
         Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getFirst()), Function.identity()));
-        Map<String, ObjectNode> serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.SYSML_ID_KEY) && json.get(MDKConstants.SYSML_ID_KEY).isTextual()).collect(Collectors.toMap(json -> json.get(MDKConstants.SYSML_ID_KEY).asText(), Function.identity()));
+        Map<String, ObjectNode> serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual()).collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
 
         LinkedHashSet<String> elementKeySet = new LinkedHashSet<>();
         elementKeySet.addAll(clientElementMap.keySet());
