@@ -29,13 +29,11 @@ public class BranchValidator {
     private ValidationSuite suite = new ValidationSuite("structure");
     private ValidationRule alfrescoTask = new ValidationRule("Task on alfresco", "Task on alfresco not in teamwork", ViolationSeverity.WARNING);
     private ValidationRule teamworkBranch = new ValidationRule("Teamwork branch", "Branch on teamwork not on alfresco", ViolationSeverity.WARNING);
-    private ValidationRule versionMatch = new ValidationRule("Version", "Version", ViolationSeverity.INFO);
     private ValidationSuite siteSuite = null;
 
     public BranchValidator() {
         suite.addValidationRule(alfrescoTask);
         suite.addValidationRule(teamworkBranch);
-        suite.addValidationRule(versionMatch);
     }
 
     public void validate(ProgressStatus ps) {

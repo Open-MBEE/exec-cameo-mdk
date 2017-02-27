@@ -251,10 +251,11 @@ public class MMSUtils {
         if (logBody) {
             try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
                 String requestBody = IOUtils.toString(inputStream);
-                if (CENSORED_PATTERN.matcher(requestBody).find()) {
+//                if (CENSORED_PATTERN.matcher(requestBody).find()) {
+                if (request.getURI().getPath().contains("/api/login")) {
                     requestBody = "--- Censored ---";
                 }
-                System.out.println(" - Body:" + requestBody);
+                System.out.println(" - Body: " + requestBody);
             }
         }
         
@@ -276,7 +277,7 @@ public class MMSUtils {
                 if (!responseBody.isEmpty() && !responseType.equals("application/json;charset=UTF-8")) {
                     responseBody = "<span>" + responseBody + "</span>";
                 }
-                System.out.println(" - Body:"  + responseBody);
+                System.out.println(" - Body: "  + responseBody);
             }
 
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
