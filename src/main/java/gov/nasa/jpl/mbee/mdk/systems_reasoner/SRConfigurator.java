@@ -20,9 +20,9 @@ import java.util.List;
 public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
     public static final String NAME = "Systems Reasoner";
-    public static final String ID_NONRECURSIVE = "Specialize Structure";
-    public static final String ID_RECURSIVE = "Specialize Structure Recursive";
-    public static final String ID_RECURSIVE_INDIVIDUALLY = "Specialize Recursively & Individually";
+    public static final String ID = "Specialize Structure";
+    public static final String ID_RECURSIVE = "Specialize Structure Recursively";
+    public static final String ID_RECURSIVE_INDIVIDUAL = "Specialize Recursively & Individually";
     private SRAction validateAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
 
     @Override
@@ -164,9 +164,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             validateAction = new ValidateAction(classifier);
             ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
 
-            specializeStructureAction = new SpecializeStructuresAction(classifier, false, ID_NONRECURSIVE, false, false);
-            specializeStructureRecursiveAction = new SpecializeStructuresAction(classifier, false, ID_RECURSIVE, true, false);
-            createBSTAction = new SpecializeStructuresAction(classifier, false, ID_RECURSIVE_INDIVIDUALLY, true, true);
+            specializeStructureAction = new SpecializeStructureAction(classifier, false, ID, false, false);
+            specializeStructureRecursiveAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE, true, false);
+            createBSTAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE_INDIVIDUAL, true, true);
             createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
             aspectAction = new AspectAction(classifier);
             copyAction = new CopyAction(element);

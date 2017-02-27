@@ -18,12 +18,12 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 
     private Classifier subClassifier;
     private RedefinableElement re;
-    private boolean createSpecial;
+    private boolean createSpecializedType;
     private String name;
     private boolean isIndividual;
 
-    public RedefineAttributeAction(final Classifier clazz, final RedefinableElement re, boolean isIndividually) {
-        this(clazz, re, false, DEFAULT_NAME, isIndividually);
+    public RedefineAttributeAction(final Classifier clazz, final RedefinableElement re, boolean isIndividual) {
+        this(clazz, re, false, DEFAULT_NAME, isIndividual);
     }
 
     /**
@@ -31,15 +31,15 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
      * @param elementToBeRedefined
      * @param createSpecializedType
      * @param name
-     * @param isIndividually
+     * @param isIndividual
      */
-    public RedefineAttributeAction(final Classifier targetForRedefEl, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final String name, boolean isIndividually) {
+    public RedefineAttributeAction(final Classifier targetForRedefEl, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final String name, boolean isIndividual) {
         super(name);
         this.subClassifier = targetForRedefEl;
         this.re = elementToBeRedefined;
-        this.createSpecial = createSpecializedType;
+        this.createSpecializedType = createSpecializedType;
         this.name = name;
-        this.isIndividual = isIndividually;
+        this.isIndividual = isIndividual;
     }
 
     public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType, boolean isIndividual) {
@@ -82,7 +82,7 @@ public class RedefineAttributeAction extends GenericRuleViolationAction {
 
     @Override
     public void run() {
-        redefineAttribute(subClassifier, re, createSpecial, isIndividual);
+        redefineAttribute(subClassifier, re, createSpecializedType, isIndividual);
     }
 
     @Override

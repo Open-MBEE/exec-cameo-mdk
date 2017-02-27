@@ -21,7 +21,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SpecializeStructuresAction extends SRAction {
+public class SpecializeStructureAction extends SRAction {
 
     /**
      *
@@ -34,7 +34,7 @@ public class SpecializeStructuresAction extends SRAction {
     private ArrayList<Namespace> recursionList;
     private boolean isValidationMode = false;
 
-    public SpecializeStructuresAction(final Classifier classifier, boolean isValidationMode, String id, boolean isRecursive, boolean isIndividual) {
+    public SpecializeStructureAction(final Classifier classifier, boolean isValidationMode, String id, boolean isRecursive, boolean isIndividual) {
         super(id, classifier);
         this.classifier = classifier;
         recursionList = new ArrayList<>();

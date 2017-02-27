@@ -28,13 +28,13 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 
 
 
-    public CreateSpecializedTypeAction(final Property property, final Classifier parent, final boolean redefineAttributes, final String name, boolean isIndividualß) {
+    public CreateSpecializedTypeAction(final Property property, final Classifier parent, final boolean redefineAttributes, final String name, boolean isIndividual) {
         super(name);
         this.property = property;
         this.parent = parent;
         this.redefineAttributes = redefineAttributes;
         this.name = name;
-        this.isIndividual = isIndividualß;
+        this.isIndividual = isIndividual;
     }
 
     public static final void createSpecializedType(final Property property, final Classifier parent, final boolean redefineAttributes, boolean isIndividual) {
@@ -100,7 +100,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
         for(RedefinableElement redef : structuralFeature.getRedefinedElement()){
             if(redef instanceof TypedElement){
                 types.add(((TypedElement) redef).getType());
-                System.out.println("Found type: "+((TypedElement) redef).getType().getName() +" id  "+ ((TypedElement) redef).getType().toString() + " for SF " + structuralFeature.getName() + "  " + structuralFeature.toString());
+                //System.out.println("Found type: "+((TypedElement) redef).getType().getName() +" id  "+ ((TypedElement) redef).getType().toString() + " for SF " + structuralFeature.getName() + "  " + structuralFeature.toString());
             }
         }
         for(Element oe : owner.getOwnedElement()){
@@ -109,8 +109,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
                 for(RedefinableElement redef : ((Property) oe).getRedefinedElement()){
                     if(redef instanceof TypedElement) {
                         if (types.contains(((TypedElement) redef).getType())) {
-                            System.out.println("Found type: "+((TypedElement) oe).getType().getName() +" id  "+ ((TypedElement) oe).getType().toString() + " for SF " + redef.getName() + "  " + redef.toString());
-
+                            //System.out.println("Found type: "+((TypedElement) oe).getType().getName() +" id  "+ ((TypedElement) oe).getType().toString() + " for SF " + redef.getName() + "  " + redef.toString());
                             return ((Property) oe).getType();
                         }
                     }
@@ -126,7 +125,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
         for (final Class<? extends Classifier> c : UNSPECIALIZABLE_CLASSIFIERS) {
             if (c.isAssignableFrom(general.getClass())) {
                 Application.getInstance().getGUILog()
-                        .log("Warning: " + (structuralFeature != null ? structuralFeature.getQualifiedName() : "< >") + " is a " + c.getSimpleName() + ", which is not specializable.");
+                        .log("[WARNING]: " + (structuralFeature != null ? structuralFeature.getQualifiedName() : "< >") + " is a " + c.getSimpleName() + ", which is not specializable.");
                 return null;
             }
         }
@@ -146,7 +145,6 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
         }
          for(NamedElement member : members){
             if(member instanceof RedefinableElement) {
-                System.out.println(member.getClassType().getName() + " removing " + member.getName());
                 specific.getOwnedMember().remove(member);
                 member.dispose();
             }
