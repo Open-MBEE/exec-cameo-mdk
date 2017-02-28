@@ -84,42 +84,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                 for (final Classifier general : classifier.getGeneral()) {
 
                     // Inheritance on Associations Rule
-                    assocRule:
-                    for (Element child : classifier.getOwnedElement()) {
-                        if (child instanceof Property) {
-                            Type partType = ((Property) child).getType();
-                            for (Element superChild : general.getOwnedElement()) {
-                                if (superChild instanceof Property) {
-                                    Type superPartType = ((Property) superChild).getType();
-                                    final ValidationRuleViolation v = new ValidationRuleViolation(classifier, associationInheritanceRule.getDescription() + ": [GENERAL] " + general.getName() + " - [SPECIFIC] " + classifier.getName());
-                                    if (partType != null) {
-                                        if (partType.equals(superPartType)) {
-                                            if (hasAnAssociation(superChild)) {
-                                                if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
-                                                    break assocRule;
-                                                }
-                                                else {
-                                                    v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
-                                                    associationInheritanceRule.addViolation(v);
-                                                }
-                                            }
-                                        }
-                                        else if (partType instanceof Classifier) {
-                                            if (((Classifier) partType).getGeneral().contains(superPartType)) {
-                                                if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
-                                                    break assocRule;
-                                                }
-                                                else {
-                                                    v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
-                                                    associationInheritanceRule.addViolation(v);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    checkAssociationsForInheritance(classifier, general);
                     checkForAspects(classifier, general);
                 }
 
@@ -158,11 +123,11 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if (ne instanceof Property) {
                                     // why was this a requirement? One should be able to redefine any property regardless of aggregation, by my understanding.
                                     //if (!((Property) ne).isComposite()) {
-                                    v.addAction(new RedefineAttributeAction(classifier, redefEl));
+                                    v.addAction(new RedefineAttributeAction(classifier, redefEl, false));
                                     if (redefEl instanceof TypedElement) { // && ((TypedElement) redefEl).getType() != null
                                         // intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
                                         // grouping them separately to validate. It will just ignore and log if a type isn't specializable.
-                                        v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively (if applicable)"));
+                                        v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively & Individually", true));
                                     }
                                 }
                                 attributeMissingRule.addViolation(v);
@@ -258,6 +223,45 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                     v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, true, false, true, "[R] Recreate Slots"), "Systems Reasoner"));
                     v.addAction(IndeterminateProgressMonitorProxy.doubleWrap(new CreateSlotsAction(instance, true, true, true, "[R] Delete Child Instances & Recreate Slots"), "Systems Reasoner"));
                     missingSlotsRule.addViolation(v);
+                }
+            }
+        }
+    }
+
+    private void checkAssociationsForInheritance(Classifier classifier, Classifier general) {
+        assocRule:
+        for (Element child : classifier.getOwnedElement()) {
+            if (child instanceof Property) {
+                Type partType = ((Property) child).getType();
+                for (Element superChild : general.getOwnedElement()) {
+                    if (superChild instanceof Property) {
+                        Type superPartType = ((Property) superChild).getType();
+                        final ValidationRuleViolation v = new ValidationRuleViolation(classifier, associationInheritanceRule.getDescription() + ": [GENERAL] " + general.getName() + " - [SPECIFIC] " + classifier.getName());
+                        if (partType != null) {
+                            if (partType.equals(superPartType)) {
+                                if (hasAnAssociation(superChild)) {
+                                    if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
+                                        break assocRule;
+                                    }
+                                    else {
+                                        v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
+                                        associationInheritanceRule.addViolation(v);
+                                    }
+                                }
+                            }
+                            else if (partType instanceof Classifier) {
+                                if (((Classifier) partType).getGeneral().contains(superPartType)) {
+                                    if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
+                                        break assocRule;
+                                    }
+                                    else {
+                                        v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
+                                        associationInheritanceRule.addViolation(v);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

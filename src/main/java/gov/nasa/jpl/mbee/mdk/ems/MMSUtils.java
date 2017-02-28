@@ -14,8 +14,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
@@ -141,9 +141,9 @@ public class MMSUtils {
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
         if (progressStatus != null) {
-            return sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests), progressStatus);
+            return sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests), progressStatus);
         }
-        return sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests));
+        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests));
     }
 
     /**
@@ -239,7 +239,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static ObjectNode sendMMSRequest(HttpRequestBase request)
+    public static ObjectNode sendMMSRequest(Project project, HttpRequestBase request)
             throws IOException, ServerException, URISyntaxException {
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest
@@ -255,6 +255,7 @@ public class MMSUtils {
                 System.out.println(" - Body: " + requestBody);
             }
         }
+        
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
@@ -287,12 +288,12 @@ public class MMSUtils {
             // allow re-attempt of request if credentials have expired or are invalid
             else if (responseCode == 401) {
                 Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
-                EMSLogoutAction.logoutAction();
-                if (EMSLoginAction.loginAction()) {
+                MMSLogoutAction.logoutAction(project);
+                if (MMSLoginAction.loginAction(project)) {
                     URIBuilder newRequestUri = new URIBuilder(request.getURI());
-                    newRequestUri.setParameter("alf_ticket", TicketUtils.getTicket());
+                    newRequestUri.setParameter("alf_ticket", TicketUtils.getTicket(project));
                     request.setURI(newRequestUri.build());
-                    return sendMMSRequest(request);
+                    return sendMMSRequest(project, request);
                 }
                 else {
                     throwServerException = true;
@@ -344,7 +345,7 @@ public class MMSUtils {
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static ObjectNode sendCancellableMMSRequest(HttpRequestBase request, ProgressStatus progressStatus)
+    public static ObjectNode sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         final AtomicReference<ObjectNode> resp = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
@@ -353,7 +354,7 @@ public class MMSUtils {
         Thread t = new Thread(() -> {
             ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
             try {
-                response = sendMMSRequest(request);
+                response = sendMMSRequest(project, request);
                 etype.set(null);
                 ecode.set(200);
                 emsg.set("");
@@ -445,7 +446,7 @@ public class MMSUtils {
 //        return siteString;
 
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder));
+        ObjectNode response = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         JsonNode arrayNode;
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
@@ -456,7 +457,7 @@ public class MMSUtils {
                 }
             }
         }
-        return "";
+        return null;
     }
 
     public static boolean isProjectOnMms(Project project) throws IOException, URISyntaxException, ServerException {
@@ -468,7 +469,7 @@ public class MMSUtils {
 
         // do request, check return for project
         ObjectNode response;
-        response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
         JsonNode projectsJson;
         if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
             JsonNode value;
@@ -492,7 +493,7 @@ public class MMSUtils {
 
         // do request for ref element
         ObjectNode response;
-        response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
         JsonNode projectsJson;
         if ((projectsJson = response.get("refs")) != null && projectsJson.isArray()) {
             JsonNode value;
@@ -508,7 +509,7 @@ public class MMSUtils {
     public static String getProjectOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        ObjectNode response = sendMMSRequest(buildRequest(HttpRequestType.GET, uriBuilder));
+        ObjectNode response = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         JsonNode arrayNode;
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
@@ -537,23 +538,22 @@ public class MMSUtils {
         }
 
         // [scheme:][//host][path][?query][#fragment]
-        String uriPath = "/alfresco/service";
-        String uriTicket = TicketUtils.getTicket();
 
         URIBuilder uri;
         try {
             uri = new URIBuilder(urlString);
-            uri.setPath(uriPath);
-            if (!uriTicket.isEmpty()) {
-                uri.setParameter("alf_ticket", uriTicket);
-            }
-            return uri;
         } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for " +
-                    "project. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
+
+        uri.setPath("/alfresco/service");
+        if (TicketUtils.isTicketSet(project)) {
+            uri.setParameter("alf_ticket", TicketUtils.getTicket(project));
+        }
+        return uri;
+
     }
 
     /**

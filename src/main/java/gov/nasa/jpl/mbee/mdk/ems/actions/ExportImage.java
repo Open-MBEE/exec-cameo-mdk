@@ -96,7 +96,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
 
         File imageFile = new File(filename);
         try {
-            Request imageRequest = new Request(requestUri, imageFile, "Image");
+            Request imageRequest = new Request(project, requestUri, imageFile, "Image");
             imageRequest.getRequest().setHeader("Content-Type", "image/" + extension);
             OutputQueue.getInstance().offer(imageRequest);
         } catch (IOException | URISyntaxException e) {

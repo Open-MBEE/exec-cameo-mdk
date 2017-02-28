@@ -52,8 +52,8 @@ public class MMSConfigurator implements AMConfigurator {
         ((ActionsCategory) category).setNested(true);
         manager.addCategory((ActionsCategory) category);
 
-        EMSLoginAction login = new EMSLoginAction();
-        EMSLogoutAction logout = new EMSLogoutAction();
+        MMSLoginAction login = new MMSLoginAction();
+        MMSLogoutAction logout = new MMSLogoutAction();
         login.setLogoutAction(logout);
         logout.setLoginAction(login);
 

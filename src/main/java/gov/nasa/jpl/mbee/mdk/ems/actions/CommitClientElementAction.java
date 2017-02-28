@@ -119,7 +119,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             request.put("mdkVersion", MDKPlugin.VERSION);
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST, requestUri, request, true, elements.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, request, true, elements.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();
@@ -138,7 +138,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             request.put("mdkVersion", MDKPlugin.VERSION);
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();

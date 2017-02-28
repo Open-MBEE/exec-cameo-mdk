@@ -38,34 +38,32 @@ import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 
 import java.awt.event.ActionEvent;
 
-public class EMSLogoutAction extends MMSAction {
+public class MMSLogoutAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "Logout";
 
-    private EMSLoginAction login;
+    private MMSLoginAction login;
 
-    public EMSLogoutAction() {
+    public MMSLogoutAction() {
         super(DEFAULT_ID, "Logout", null, null);
     }
 
-    public void setLoginAction(EMSLoginAction login) {
+    public void setLoginAction(MMSLoginAction login) {
         this.login = login;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        logoutAction();
+        logoutAction(Application.getInstance().getProject());
     }
 
-    public static void logoutAction() {
-        TicketUtils.clearUsernameAndPassword();
+    public static void logoutAction(Project project) {
+        TicketUtils.clearTicket(project);
         Application.getInstance().getGUILog().log("[INFO] MMS logout complete.");
         ActionsStateUpdater.updateActionsState();
-        for (Project p : Application.getInstance().getProjectsManager().getProjects()) {
-            if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(p).getJmsMessageListener().isDisabled()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(p);
-                Application.getInstance().getGUILog().log("[WARNING] " + p.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
-            }
+        if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
         }
         SyncStatusConfigurator.getSyncStatusAction().update();
     }

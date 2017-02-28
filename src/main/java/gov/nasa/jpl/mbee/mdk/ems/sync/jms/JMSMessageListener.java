@@ -10,7 +10,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
@@ -201,7 +201,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
         else {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Failed to reconnect to MMS after dropped connection. Please manually login to MMS, or close and re-open the project, to re-initiate.");
-            EMSLogoutAction.logoutAction();
+            MMSLogoutAction.logoutAction(project);
         }
         reconnectionAttempts = 0;
         exceptionHandlerRunning.set(false);
@@ -209,7 +209,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     }
 
     private boolean shouldAttemptToReconnect() {
-        return !project.isProjectClosed() && TicketUtils.isTicketSet()
+        return !project.isProjectClosed() && TicketUtils.isTicketSet(project)
                 && JMSSyncProjectEventListenerAdapter.shouldEnableJMS(project)
                 && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled();
     }

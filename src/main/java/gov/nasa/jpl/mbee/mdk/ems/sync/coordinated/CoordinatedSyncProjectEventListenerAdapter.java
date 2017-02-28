@@ -8,7 +8,7 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
@@ -61,9 +61,9 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             // skip csync
             return;
         }
-        if (!TicketUtils.isTicketValid()) {
+        if (!TicketUtils.isTicketValid(project)) {
             Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS or login has expired. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
-            EMSLoginAction.loginAction();
+            MMSLoginAction.loginAction(project);
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);

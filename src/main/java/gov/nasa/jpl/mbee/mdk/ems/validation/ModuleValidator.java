@@ -59,7 +59,7 @@ public class ModuleValidator {
         }
         JsonNode responseJsonNode;
         try {
-            responseJsonNode = MMSUtils.sendCancellableMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, uriBuilder), ps);
+            responseJsonNode = MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, uriBuilder), ps);
         } catch (IOException | ServerException | URISyntaxException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation. "
@@ -104,7 +104,7 @@ public class ModuleValidator {
                 projectUriBuilder.setPath(projectUriBuilder.getPath() + "/" + Converters.getIProjectToIdConverter().apply(module));
                 ObjectNode responseObjectNode;
                 try {
-                    responseObjectNode = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, projectUriBuilder));
+                    responseObjectNode = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, projectUriBuilder));
                 } catch (IOException | ServerException | URISyntaxException e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected server error occurred. Aborting module validation. "

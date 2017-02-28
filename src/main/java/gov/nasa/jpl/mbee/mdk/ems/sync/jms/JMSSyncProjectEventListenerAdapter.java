@@ -8,11 +8,10 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.jms.*;
@@ -36,10 +35,10 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (shouldEnableJMS(project)) {
             new Thread() {
                 public void run() {
-                    if (TicketUtils.isTicketValid()) {
+                    if (TicketUtils.isTicketValid(project)) {
                         initializeJMS(project);
                     } else {
-                        EMSLoginAction.loginAction();
+                        MMSLoginAction.loginAction(project);
                         // loginAction contains a call to initializeJMS on a successful ticket get
                     }
                 }
@@ -107,7 +106,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         String workspaceID = MDUtils.getWorkspace(project);
 
         // verify logged in to appropriate places
-        if (!TicketUtils.isTicketSet()) {
+        if (!TicketUtils.isTicketSet(project)) {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into MMS.");
             return false;
         }
