@@ -115,8 +115,8 @@ public class CoordinatedSyncConflictMDDeleteMMSUpdate {
         if ((returnedElements = jo.get("elements")) != null && returnedElements.isArray()) {
             JsonNode value = null;
             for (JsonNode val : returnedElements) {
-                if (val.get(MDKConstants.SYSML_ID_KEY) != null && val.get(MDKConstants.SYSML_ID_KEY).isTextual()
-                        && val.get(MDKConstants.SYSML_ID_KEY).asText().equals(targetElement.getID())) {
+                if (val.get(MDKConstants.ID_KEY) != null && val.get(MDKConstants.ID_KEY).isTextual()
+                        && val.get(MDKConstants.ID_KEY).asText().equals(targetElement.getID())) {
                     value = val;
                     break;
                 }

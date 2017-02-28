@@ -119,7 +119,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (elementJsonNode == null || !elementJsonNode.isObject()) {
                         continue;
                     }
-                    JsonNode sysmlIdJsonNode = elementJsonNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = elementJsonNode.get(MDKConstants.ID_KEY);
                     if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                         continue;
                     }

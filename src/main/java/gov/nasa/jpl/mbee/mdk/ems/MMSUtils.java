@@ -57,8 +57,6 @@ public class MMSUtils {
 
     private static String developerUrl = "";
 
-    private static final Pattern CENSORED_PATTERN = Pattern.compile(".*\"password\" :.*");
-
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
     }
@@ -136,7 +134,7 @@ public class MMSUtils {
         for (String id : elementIds) {
             // create json for id strings, add to request array
             ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
-            element.put(MDKConstants.SYSML_ID_KEY, id);
+            element.put(MDKConstants.ID_KEY, id);
             idsArrayNode.add(element);
         }
 
@@ -251,10 +249,10 @@ public class MMSUtils {
         if (logBody) {
             try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
                 String requestBody = IOUtils.toString(inputStream);
-                if (CENSORED_PATTERN.matcher(requestBody).find()) {
+                if (request.getURI().getPath().contains("alfresco/service/api/login")) {
                     requestBody = "--- Censored ---";
                 }
-                System.out.println(" - Body:" + requestBody);
+                System.out.println(" - Body: " + requestBody);
             }
         }
         
@@ -276,7 +274,7 @@ public class MMSUtils {
                 if (!responseBody.isEmpty() && !responseType.equals("application/json;charset=UTF-8")) {
                     responseBody = "<span>" + responseBody + "</span>";
                 }
-                System.out.println(" - Body:"  + responseBody);
+                System.out.println(" - Body: "  + responseBody);
             }
 
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
@@ -453,7 +451,7 @@ public class MMSUtils {
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
             for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
                         && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
                     return value.asText();
                 }
@@ -476,7 +474,7 @@ public class MMSUtils {
         if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
             JsonNode value;
             for (JsonNode projectJson : projectsJson) {
-                if ((value = projectJson.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
+                if ((value = projectJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()
                         && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                     return true;
                 }
@@ -516,7 +514,7 @@ public class MMSUtils {
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
             for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
                         && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
                     return value.asText();
                 }
@@ -645,7 +643,7 @@ public class MMSUtils {
     private static ObjectNode getProjectObjectNode(String name, String projectId, String categoryId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projectId);
+        projectObjectNode.put(MDKConstants.ID_KEY, projectId);
         if (name != null && !name.isEmpty()) {
             projectObjectNode.put(MDKConstants.NAME_KEY, name);
         }

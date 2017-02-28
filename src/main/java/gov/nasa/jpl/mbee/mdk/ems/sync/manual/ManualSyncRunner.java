@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -21,7 +20,6 @@ import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -157,7 +155,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     boolean found = false;
                     // check to see if the holding bin was returned
                     for (ObjectNode elem : serverElements) {
-                        if ((value = elem.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
+                        if ((value = elem.get(MDKConstants.ID_KEY)) != null && value.isTextual()
                                 && value.asText().equals(holdingBinId)) {
                             found = true;
                             break;

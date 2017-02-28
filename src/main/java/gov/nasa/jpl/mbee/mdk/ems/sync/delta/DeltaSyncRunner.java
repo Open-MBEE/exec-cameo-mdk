@@ -207,7 +207,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 if (!jsonNode.isObject()) {
                     continue;
                 }
-                String webId = jsonNode.get(MDKConstants.SYSML_ID_KEY).asText();
+                String webId = jsonNode.get(MDKConstants.ID_KEY).asText();
                 jmsJsons.put(webId, (ObjectNode) jsonNode);
             }
         }
@@ -355,7 +355,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (String id : localElementsToDelete) {
                 ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-                elementObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
+                elementObjectNode.put(MDKConstants.ID_KEY, id);
                 elementsArrayNode.add(elementObjectNode);
             }
             ObjectNode body = JacksonUtils.getObjectMapper().createObjectNode();

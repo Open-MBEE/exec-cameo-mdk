@@ -19,7 +19,7 @@ public class MDKConstants {
             SLOT_VALUE_ID_SEPARATOR = SLOT_ID_SEPARATOR.substring(0, SLOT_ID_SEPARATOR.length() - 1) + "value-",
             TYPE_KEY = "type",
             NAME_KEY = "name",
-            SYSML_ID_KEY = "sysml" + ID_KEY_SUFFIX,
+            ID_KEY = "id",
             OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_KEY_SUFFIX,
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
