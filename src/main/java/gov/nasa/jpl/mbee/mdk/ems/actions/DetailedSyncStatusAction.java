@@ -116,7 +116,7 @@ public class DetailedSyncStatusAction extends SRAction {
         }
 
         if (validationSuite.hasErrors()) {
-            Utils.displayValidationWindow(validationSuite, "Sync Status");
+            Utils.displayValidationWindow(project, validationSuite, "Sync Status");
         }
         else {
             Application.getInstance().getGUILog().log("[INFO] No unsynced elements detected.");

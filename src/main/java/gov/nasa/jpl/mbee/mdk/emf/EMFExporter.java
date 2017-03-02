@@ -205,7 +205,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         return objectNode;
                     }
                     if (element instanceof Package) {
-                        objectNode.put("_isSite", Utils.isSiteChar((Package) element));
+                        objectNode.put("_isSite", Utils.isSiteChar(Project.getProject(element), (Package) element));
                     }
                     return objectNode;
                 }
@@ -237,7 +237,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         VIEW(
                 (element, project, objectNode) -> {
-                    Stereotype viewStereotype = Utils.getViewStereotype();
+                    Stereotype viewStereotype = Utils.getViewStereotype(project);
                     if (viewStereotype == null || !StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
                         return objectNode;
                     }

@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -208,22 +209,31 @@ public class DocumentValidator {
     private List<Set<ActivityNode>> cycles;       // cycles for activities and structured nodes
     private ActivityEdgeFactory aef;
     private boolean fatal;
-    private Stereotype sysmlview = Utils.getViewStereotype();
-    private Stereotype conforms = Utils.getConformsStereotype();
-    private Stereotype conforms14 = Utils.getSysML14ConformsStereotype();
-    private Stereotype md18expose = Utils.get18ExposeStereotype();
-    private Stereotype ourExpose = Utils.getExposeStereotype();
+    private Stereotype sysmlview;
+    private Stereotype conforms;
+    private Stereotype conforms14;
+    private Stereotype md18expose;
+    private Stereotype ourExpose;
+    private Project project;
 
     public DocumentValidator(Element e) {
         start = e;
+        project = Project.getProject(e);
+
+        sysmlview = Utils.getViewStereotype(project);
+        conforms = Utils.getConformsStereotype(project);
+        conforms14 = Utils.getSysML14ConformsStereotype(project);
+        md18expose = Utils.get18ExposeStereotype(project);
+        ourExpose = Utils.getExposeStereotype(project);
+
 
         log = Application.getInstance().getGUILog();
 
-        cycles = new ArrayList<Set<ActivityNode>>();
+        cycles = new ArrayList<>();
         fatal = false;
-        done = new HashSet<Behavior>();
+        done = new HashSet<>();
         aef = new ActivityEdgeFactory();
-        dg = new DefaultDirectedGraph<NamedElement, Element>(Element.class);
+        dg = new DefaultDirectedGraph<>(Element.class);
 
         // Ensure user-defined shortcut functions are updated
         OclEvaluator.resetEnvironment();
@@ -617,7 +627,7 @@ public class DocumentValidator {
             log.log("Validation done.");
         }
         if (showWindow) {
-            Utils.displayValidationWindow(validationOutput, "Document Validation Results");
+            Utils.displayValidationWindow(project, validationOutput, "Document Validation Results");
         }
     }
 

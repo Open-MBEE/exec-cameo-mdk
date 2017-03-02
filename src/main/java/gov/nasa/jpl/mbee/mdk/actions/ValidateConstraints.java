@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.mdk.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.Configurator;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint.Type;
@@ -85,6 +86,7 @@ public class ValidateConstraints extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Collection<Element> selectedElements = MDUtils.getSelection(e, Configurator.isLastContextDiagram());
+        Project project = Project.getProject(selectedElements.iterator().next());
         // for ( Element elem : new ArrayList<Element>( selectedElements ) ) {
         // if ( elem instanceof Package ) {
         // selectedElements.addAll( Utils.collectOwnedElements( elem, 0 ) );
@@ -97,8 +99,8 @@ public class ValidateConstraints extends MDAction {
 
         // ConstraintValidationRule rule = new ConstraintValidationRule();
         constraintRule.constraintType = Type.STATIC;
-        constraintRule.init(Utils.getProject(), null);
-        constraintRule.run(Utils.getProject(), null, selectedElements);
+        constraintRule.init(project, null);
+        constraintRule.run(project, null, selectedElements);
         // RunnableSessionWrapperWithResult< Boolean > checkForRepairs =
         // new
         // RunnableSessionWrapperWithResult<Boolean>(String.format("%s - (iteration=%d)",
@@ -109,7 +111,7 @@ public class ValidateConstraints extends MDAction {
         //
         // }
         // };
-        Utils.displayValidationWindow(validationOutput, "User Validation Script Results");
+        Utils.displayValidationWindow(project, validationOutput, "User Validation Script Results");
     }
 
     @Override

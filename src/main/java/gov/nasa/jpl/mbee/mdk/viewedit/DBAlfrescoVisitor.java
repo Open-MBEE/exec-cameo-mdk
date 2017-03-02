@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.viewedit;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -416,6 +417,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     public void startView(Element e) {
         JSONObject view = new JSONObject();
+        Project project = Project.getProject(e);
 //        JSONObject specialization = new JSONObject();
 
         //MDEV #673
@@ -423,7 +425,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //object and then insert appropriate
         //sub-elements in that specialization object.
         //
-        if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype())) {
+        if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype(project))) {
             view.put("type", "Product");
         }
         else {

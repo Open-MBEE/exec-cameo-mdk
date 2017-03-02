@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
@@ -24,31 +25,40 @@ import java.util.*;
 public class PresentationElementUtils {
     public static final String ID_SUFFIX = "_pei";
 
-    private Classifier paraC = PresentationElementEnum.OPAQUE_PARAGRAPH.get().apply(Application.getInstance().getProject()),
-            tparaC = PresentationElementEnum.PARAGRAPH.get().apply(Application.getInstance().getProject()),
-            tableC = PresentationElementEnum.OPAQUE_TABLE.get().apply(Application.getInstance().getProject()),
-            listC = PresentationElementEnum.OPAQUE_LIST.get().apply(Application.getInstance().getProject()),
-            imageC = PresentationElementEnum.OPAQUE_IMAGE.get().apply(Application.getInstance().getProject()),
-            sectionC = PresentationElementEnum.OPAQUE_SECTION.get().apply(Application.getInstance().getProject()),
-            tsectionC = PresentationElementEnum.SECTION.get().apply(Application.getInstance().getProject());
-    private Stereotype presentsStereotype = Utils.getPresentsStereotype(),
-            productStereotype = Utils.getProductStereotype(),
-            viewClassStereotype = Utils.getViewClassStereotype();
-    private Property generatedFromView = Utils.getGeneratedFromViewProperty(),
-            generatedFromElement = Utils.getGeneratedFromElementProperty();
+    private Project project;
 
-    private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+    private Classifier paraC,
+                tparaC,
+                tableC,
+                listC,
+                imageC,
+                sectionC,
+                tsectionC;
 
-    public Stereotype getPresentsStereotype() {
-        return presentsStereotype;
-    }
+    private Stereotype presentsStereotype,
+                productStereotype,
+                viewClassStereotype;
 
-    public Stereotype getProductStereotype() {
-        return productStereotype;
-    }
+    private Property generatedFromView,
+                generatedFromElement;
 
-    public Stereotype getViewClassStereotype() {
-        return viewClassStereotype;
+    private ElementsFactory ef;
+
+    {
+        this.project = Application.getInstance().getProject();
+        this.paraC = PresentationElementEnum.OPAQUE_PARAGRAPH.get().apply(project);
+        this.tparaC = PresentationElementEnum.PARAGRAPH.get().apply(project);
+        this.tableC = PresentationElementEnum.OPAQUE_TABLE.get().apply(project);
+        this.listC = PresentationElementEnum.OPAQUE_LIST.get().apply(project);
+        this.imageC = PresentationElementEnum.OPAQUE_IMAGE.get().apply(project);
+        this.sectionC = PresentationElementEnum.OPAQUE_SECTION.get().apply(project);
+        this.tsectionC = PresentationElementEnum.SECTION.get().apply(project);
+        this.presentsStereotype = Utils.getPresentsStereotype(project);
+        this.productStereotype = Utils.getProductStereotype(project);
+        this.viewClassStereotype = Utils.getViewClassStereotype(project);
+        this.generatedFromView = Utils.getGeneratedFromViewProperty(project);
+        this.generatedFromElement = Utils.getGeneratedFromElementProperty(project);
+        this.ef = project.getElementsFactory();
     }
 
     public static Expression getViewOrSectionExpression(Element viewOrSection) {

@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -22,11 +23,13 @@ public class GenerateViewPresentationAction extends MDAction {
 
     private List<ValidationSuite> vss = new ArrayList<>();
     private List<Element> elements;
+    private Project project;
     private boolean recurse;
 
     public GenerateViewPresentationAction(List<Element> elements, boolean recurse) {
         super(recurse ? RECURSE_DEFAULT_ID : DEFAULT_ID, "Generate View" + (recurse ? "s Recursively" : ""), null, null);
         this.elements = elements;
+        this.project = Project.getProject(elements.iterator().next());
         this.recurse = recurse;
     }
 
@@ -37,9 +40,8 @@ public class GenerateViewPresentationAction extends MDAction {
     }
 
     public List<ValidationSuite> updateAction() {
-        Stereotype viewStereotype = Utils.getViewStereotype(),
-                elementGroupStereotype = Utils.getElementGroupStereotype();
-
+        Stereotype viewStereotype = Utils.getViewStereotype(project),
+                elementGroupStereotype = Utils.getElementGroupStereotype(project);
 
         Set<Element> processedElements = new HashSet<>(elements.size());
         Queue<Element> queuedElements = new LinkedList<>(elements);
