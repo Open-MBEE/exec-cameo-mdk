@@ -7,17 +7,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateClientElementAction;
@@ -29,10 +27,7 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Pair;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -88,46 +83,30 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     public void run(ProgressStatus progressStatus) {
         progressStatus.setDescription("Initializing");
         // TODO Abstract to common sync checks @donbot
-        if (ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject()) && TeamworkUtils.getLoggedUserName() == null) {
-            Utils.guilog("[ERROR] You need to be logged in to Teamwork first.");
+        if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) && EsiUtils.getLoggedUserName() == null) {
+            Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be re-attempted in the next sync.");
+            return;
+        }
+        if (!TicketUtils.isTicketSet(project)) {
+            Utils.guilog("[WARNING] You need to be logged in to MMS first. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
 
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-        if (listener == null) {
-            Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener.");
-            return;
-        }
+//        if (listener == null) {
+//            Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener. Skipping sync. All changes will be re-attempted in the next sync.");
+//            return;
+//        }
 
         String url;
         try {
             url = MMSUtils.getServerUrl(project);
+            if (url == null || url.isEmpty()) {
+                throw new IllegalStateException("");
+            }
         } catch (IllegalStateException e) {
             Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
-        }
-        if (url == null || url.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
-        String site = MMSUtils.getSiteName(project);
-        if (site == null || site.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
-        try {
-            if (!MMSUtils.isSiteEditable(project, site)) {
-                Application.getInstance().getGUILog().log("[ERROR] User does not have sufficient permissions on MMS or the site/url is misconfigured. Skipping sync. All changes will be re-attempted in the next sync.");
-                return;
-            }
-        } catch (ServerException e) {
-            e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] An error occurred while verifying site permissions. Skipping sync. All changes will be re-attempted in the next sync. Error: " + e.getMessage());
-            return;
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         // LOCK SYNC FOLDER
@@ -146,6 +125,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
             return;
         }
+
         /*if (jmsSyncProjectMapping.isDisabled()) {
             jmsSyncProjectMapping.setDisabled(!JMSSyncProjectEventListenerAdapter.initDurable(project, jmsSyncProjectMapping));
             List<TextMessage> textMessages = jmsSyncProjectMapping.getAllTextMessages(true);
@@ -203,7 +183,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             progressStatus.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
             ObjectNode response = null;
             try {
-                response = MMSUtils.getElementsById(elementIdsToGet, project, progressStatus);
+                response = MMSUtils.getElements(project, elementIdsToGet, progressStatus);
             } catch (ServerException | IOException | URISyntaxException e) {
                 if (e instanceof ServerException && ((ServerException) e).getCode() == 404) {
                     (response = JacksonUtils.getObjectMapper().createObjectNode()).putArray("elements");
@@ -227,7 +207,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 if (!jsonNode.isObject()) {
                     continue;
                 }
-                String webId = jsonNode.get(MDKConstants.SYSML_ID_KEY).asText();
+                String webId = jsonNode.get(MDKConstants.ID_KEY).asText();
                 jmsJsons.put(webId, (ObjectNode) jsonNode);
             }
         }
@@ -352,8 +332,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 body.put("source", "magicdraw");
                 body.put("mdkVersion", MDKPlugin.VERSION);
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
+                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
-                    OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.POST, MMSUtils.getServiceWorkspacesSitesElementsUri(project), body, true, elementsArrayNode.size(), "Sync Changes"));
+                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, body, true, elementsArrayNode.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -374,7 +355,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (String id : localElementsToDelete) {
                 ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-                elementObjectNode.put(MDKConstants.SYSML_ID_KEY, id);
+                elementObjectNode.put(MDKConstants.ID_KEY, id);
                 elementsArrayNode.add(elementObjectNode);
             }
             ObjectNode body = JacksonUtils.getObjectMapper().createObjectNode();
@@ -382,9 +363,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             body.put("source", "magicdraw");
             body.put("mdkVersion", MDKPlugin.VERSION);
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
-            URIBuilder uri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, uri, body, true, elementsArrayNode.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, body, true, elementsArrayNode.size(), "Sync Changes"));
             } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                 e.printStackTrace();

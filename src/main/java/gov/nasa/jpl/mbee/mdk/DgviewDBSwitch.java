@@ -32,6 +32,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.dgview.*;
 import gov.nasa.jpl.mbee.mdk.dgview.util.DgviewSwitch;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -56,8 +57,9 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
     }
 
     private void setVe(ViewElement ve, DocumentElement de) {
-        if (ve.getFromElementId() != null && !ve.getFromElementId().equals("")) {
-            de.setFrom((Element) Application.getInstance().getProject().getElementByID(ve.getFromElementId()));
+        if (ve.getFromElementId() != null && !ve.getFromElementId().isEmpty()) {
+            de.setFrom(Converters.getIdToElementConverter()
+                    .apply(ve.getFromElementId(), Application.getInstance().getProject()));
             if (ve.getFromProperty() != null) {
                 if (ve.getFromProperty() == FromProperty.NAME) {
                     de.setFromProperty(From.NAME);
@@ -79,7 +81,7 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         DBColSpec res = new DBColSpec();
         res.setColname(object.getColname());
         res.setColnum(object.getColnum());
-        if (object.getColwidth() != null && !object.getColwidth().equals("")) {
+        if (object.getColwidth() != null && !object.getColwidth().isEmpty()) {
             res.setColwidth(object.getColwidth());
         }
         setVe(object, res);
@@ -89,12 +91,13 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
     @Override
     public DocumentElement caseImage(Image object) {
         DBImage res = new DBImage();
-        if (object.getCaption() != null && !object.getCaption().equals("")) {
+        if (object.getCaption() != null && !object.getCaption().isEmpty()) {
             res.setCaption(object.getCaption());
         }
         res.setDoNotShow(object.isDoNotShow());
         res.setGennew(object.isGennew());
-        BaseElement i = Application.getInstance().getProject().getElementByID(object.getDiagramId());
+        BaseElement i = Converters.getIdToElementConverter()
+                .apply(object.getDiagramId(), Application.getInstance().getProject());
         if (i instanceof Diagram) {
             res.setImage((Diagram) i);
         }
@@ -185,10 +188,10 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
         if (object.getMorerows() != 0) {
             res.setMorerows(object.getMorerows());
         }
-        if (object.getNameend() != null && !object.getNameend().equals("")) {
+        if (object.getNameend() != null && !object.getNameend().isEmpty()) {
             res.setNameend(object.getNameend());
         }
-        if (object.getNamest() != null && !object.getNamest().equals("")) {
+        if (object.getNamest() != null && !object.getNamest().isEmpty()) {
             res.setNamest(object.getNamest());
         }
         for (ViewElement ve : object.getChildren()) {
@@ -243,9 +246,9 @@ public class DgviewDBSwitch extends DgviewSwitch<DocumentElement> {
             java.util.List<Object> row = new ArrayList<Object>();
             java.util.List<PropertyEnum> rowe = new ArrayList<PropertyEnum>();
             for (ViewElement ve : tr.getChildren()) {
-                if (ve.getFromElementId() != null && !ve.getFromElementId().equals("")) {
-                    Element element = (Element) Application.getInstance().getProject()
-                            .getElementByID(ve.getFromElementId());
+                if (ve.getFromElementId() != null && !ve.getFromElementId().isEmpty()) {
+                    Element element = Converters.getIdToElementConverter()
+                            .apply(ve.getFromElementId(), Application.getInstance().getProject());
                     row.add(element);
                     if (ve.getFromProperty() == FromProperty.DOCUMENTATION) {
                         rowe.add(PropertyEnum.DOC);

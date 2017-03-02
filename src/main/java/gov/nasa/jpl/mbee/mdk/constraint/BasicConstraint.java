@@ -33,6 +33,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 
@@ -633,7 +634,7 @@ public class BasicConstraint implements Constraint {
     }
 
     protected static String toString(Element e, boolean showElementId) {
-        return Utils.getName(e) + (showElementId ? "[" + e.getID() + "]" : "");
+        return Utils.getName(e) + (showElementId ? "[" + Converters.getElementToIdConverter().apply(e) + "]" : "");
     }
 
     protected static String toString(Collection<? extends Object> coll, boolean showElementId) {

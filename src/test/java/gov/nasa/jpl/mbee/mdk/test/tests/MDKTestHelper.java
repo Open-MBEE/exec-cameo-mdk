@@ -341,58 +341,44 @@ public abstract class MDKTestHelper {
      *
      **********************************************************************************/
 
-    public static ObjectNode getMmsElement(Element e)
-            throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElement(e, Application.getInstance().getProject());
-    }
-
-    public static ObjectNode getMmsElementByID(String s)
-            throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElementById(s, Application.getInstance().getProject());
-    }
-
-    public static ObjectNode getMmsElements(Collection<Element> elements)
-            throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElements(elements, Application.getInstance().getProject(), null);
-    }
-
-    public static ObjectNode getMmsElementsByID(Collection<String> cs)
-            throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElementsById(cs, Application.getInstance().getProject(), null);
-    }
+//    public static ObjectNode getMmsElement(Element e)
+//            throws ServerException, IOException, URISyntaxException {
+//        return MMSUtils.getElement(Project.getProject(e), e.getID());
+//    }
+//
+//    public static ObjectNode getMmsElementByID(String s)
+//            throws ServerException, IOException, URISyntaxException {
+//        return MMSUtils.getElementById(s, Application.getInstance().getProject());
+//    }
+//
+//    public static ObjectNode getMmsElements(Collection<Element> elements)
+//            throws ServerException, IOException, URISyntaxException {
+//        return MMSUtils.getElements(elements, Application.getInstance().getProject(), null);
+//    }
+//
+//    public static ObjectNode getMmsElementsByID(Collection<String> cs)
+//            throws ServerException, IOException, URISyntaxException {
+//        return MMSUtils.getElementsById(cs, Application.getInstance().getProject(), null);
+//    }
 
     public static void deleteMmsElements(Collection<Element> deleteTargets) {
+        ObjectNode response = null;
         try {
-            MDKHelper.deleteMmsElements(deleteTargets, Application.getInstance().getProject());
+            response = MDKHelper.deleteMmsElements(deleteTargets, Application.getInstance().getProject());
         } catch (IOException | URISyntaxException | ServerException e) {
             e.printStackTrace();
         }
+        // do something with response if you want
     }
 
-    public static void postMmsElemens(Collection<Element> postTargets) {
+    public static void postMmsElements(Collection<Element> postTargets) {
+        ObjectNode response = null;
         try {
-            MDKHelper.postMmsElements(postTargets, Application.getInstance().getProject());
+            response = MDKHelper.postMmsElements(postTargets, Application.getInstance().getProject());
         } catch (IOException | URISyntaxException | ServerException e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Convenience method for confirmSiteWritePermissions(string, string) to check if a project
-     * is editable by the logged in user. Uses the url and site information stored in the currently
-     * open project.
-     *
-     * @return true if the site lists "editable":"true" for the logged in user, false otherwise
-     * or when no project is open or project lacks url and site specifications
-     */
-    public static boolean hasSiteEditPermission() {
-        try {
-            Project proj = Application.getInstance().getProject();
-            return MMSUtils.isSiteEditable(proj, MMSUtils.getSiteName(proj));
-        } catch (ServerException | URISyntaxException | IOException e) {
-            MagicDrawHelper.generalMessage("[ERROR] Unable to check site permissions. Reason:" + e.getMessage());
-            return false;
-        }
+        // do something with response if you want
     }
 
 }

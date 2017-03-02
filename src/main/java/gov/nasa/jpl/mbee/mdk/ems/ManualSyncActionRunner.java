@@ -53,10 +53,10 @@ public class ManualSyncActionRunner<A extends NMAction & AnnotationAction> imple
     private final Project project;
     private final ManualSyncRunner manualSyncRunner;
 
-    public ManualSyncActionRunner(Class<A> actionClass, Collection<Element> rootElements, Project project, boolean recurse, int depth) {
+    public ManualSyncActionRunner(Class<A> actionClass, Collection<Element> rootElements, Project project, int depth) {
         this.actionClass = actionClass;
         this.project = project;
-        manualSyncRunner = new ManualSyncRunner(rootElements, project, recurse, depth);
+        manualSyncRunner = new ManualSyncRunner(rootElements, project, depth);
     }
 
     @Override

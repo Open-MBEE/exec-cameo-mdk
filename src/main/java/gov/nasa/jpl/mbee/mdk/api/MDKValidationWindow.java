@@ -33,6 +33,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
@@ -206,7 +207,7 @@ public class MDKValidationWindow {
             return id;
         }
         else if (vrve != null) {
-            return vrve.getID();
+            return Converters.getElementToIdConverter().apply(vrve);
         }
         return "";
     }
@@ -255,7 +256,7 @@ public class MDKValidationWindow {
             MagicDrawHelper.generalMessage("[INFO] There are no instances of " + violationRuleName + " to " + (commit ? "commit" : "accept") + ".");
             return;
         }
-        else if (className.equals("")) {
+        else if (className.isEmpty()) {
             MagicDrawHelper.generalMessage("[INFO] There is no " + (commit ? "commit" : "accept") + " action for instances of " + violationRuleName + " to process.");
             return;
         }

@@ -32,8 +32,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
@@ -84,19 +86,21 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             extension = value.asText();
         }
 
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+
         if (requestUri == null) {
             return false;
         }
-        requestUri.setPath(requestUri.getPath() + "/artifacts/" + key);
         requestUri.setParameter("cs", cs);
         requestUri.setParameter("extension", extension);
 
         File imageFile = new File(filename);
         try {
-            OutputQueue.getInstance().offer(new Request(requestUri, imageFile, "Image"));
+            Request imageRequest = new Request(project, requestUri, imageFile, "Image");
+            imageRequest.getRequest().setHeader("Content-Type", "image/" + extension);
+            OutputQueue.getInstance().offer(imageRequest);
         } catch (IOException | URISyntaxException e) {
-            Utils.printException(e);
+            Application.getInstance().getGUILog().log("[ERROR] Unable to commit image " + filename + ". Reason: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -107,7 +111,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
     public void execute(Collection<Annotation> annos) {
         for (Annotation anno : annos) {
             Element e = (Element) anno.getTarget();
-            String key = e.getID();
+            String key = Converters.getElementToIdConverter().apply(e);
             postImage(Project.getProject(e), key, images);
         }
         Utils.guilog("[INFO] Requests are added to queue.");
@@ -116,7 +120,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        String key = element.getID();
+        String key = Converters.getElementToIdConverter().apply(element);
         if (postImage(Project.getProject(element), key, images)) {
             Utils.guilog("[INFO] Request is added to queue.");
         }

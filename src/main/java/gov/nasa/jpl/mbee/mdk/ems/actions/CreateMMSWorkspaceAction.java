@@ -7,7 +7,6 @@ import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
@@ -15,6 +14,7 @@ import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 import org.joda.time.DateTime;
@@ -22,7 +22,6 @@ import org.joda.time.DateTime;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -81,7 +80,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
 
         ObjectNode responseObjectNode;
         try {
-            responseObjectNode = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
+            responseObjectNode = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
         } catch (IOException | ServerException | URISyntaxException e1) {
             e1.printStackTrace();
             return;
@@ -102,17 +101,13 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         wsMapping.put(name, id);
         wsIdMapping.put(id, name);
         ProjectDescriptor newBranch = branchDescriptors.get(name);
-        int version;
-        try {
-            version = TeamworkUtils.getLastVersion(newBranch);
-        } catch (RemoteException e1) {
-            version = -1;
-        }
+        // TODO Test this version stuff @donbot
+        long version = MDUtils.getLatestEsiVersion(newBranch);
         try {
             CreateMMSWorkspaceAction.initializeWorkspace(project, id);
         } catch (IOException | URISyntaxException | ServerException e1) {
             e1.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected exception occurred while attempting to initialize task on MMS. Aborting.");
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected exception occurred while attempting to initialize branch on MMS. Aborting.");
             return;
         }
         if (version == 0) {
@@ -120,14 +115,16 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         }
     }
 
-    public static ObjectNode initializeWorkspace(Project project, String taskId) throws IOException, URISyntaxException, ServerException {
-        String site = MMSUtils.getSiteName(project);
-        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesUri(project);
-        uriBuilder.setPath(uriBuilder.getPath() + "/workspaces/" + taskId + "/sites/" + site + "/projects?createSite=true");
+    public static ObjectNode initializeWorkspace(Project project, String branchId) throws IOException, URISyntaxException, ServerException {
+        //TODO @donbot confirm
+//        String site = MMSUtils.getSiteName(project);
+//        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesUri(project);
+//        uriBuilder.setPath(uriBuilder.getPath() + "/workspaces/" + branchId + "/sites/" + site + "/projects?createSite=true");
+        URIBuilder uriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
 
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
         objectNode.putArray("elements").add(MMSUtils.getProjectObjectNode(project));
         objectNode.put("source", "magicdraw").put("mdkVersion", MDKPlugin.VERSION);
-        return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
     }
 }

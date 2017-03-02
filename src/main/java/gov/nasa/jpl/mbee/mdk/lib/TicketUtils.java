@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
  *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
@@ -35,7 +35,7 @@ import com.nomagic.magicdraw.core.Project;
 
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -48,14 +48,20 @@ import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import java.util.HashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class TicketUtils {
     
     private static String username = "";
     private static String password = "";
-    private static String ticket = "";
+    private static final int TICKET_RENEWAL_INTERVAL = 1800; //seconds
+    private static final HashMap<Project, TicketMapping> ticketMappings = new HashMap<>();
 
     /**
-     * Accessor for username field. Will attempt to display the login dialog to acquire a username if the field is empty.
+     * Accessor for stored username.
      *
      * @return username
      */
@@ -64,21 +70,25 @@ public class TicketUtils {
     }
 
     /**
-     * Accessor for ticket field. Will attempt to acquire a new ticket if the field is empty.
-     *
-     * @return ticket
-     */
-    public static String getTicket() {
-        return ticket;
-    }
-
-    /**
      * Convenience method for checking if ticket is non-empty. Used as a shorthand to verify that a user is logged in to MMS
      *
      * @return ticket exists and is non-empty.
      */
-    public static boolean isTicketSet() {
-        return ticket != null && !ticket.isEmpty();
+    public static boolean isTicketSet(Project project) {
+        TicketMapping ticketMap = ticketMappings.get(project);
+        return ticketMap != null && ticketMap.getTicket() != null && !ticketMap.getTicket().isEmpty();
+    }
+
+    /**
+     * Accessor for ticket field.
+     *
+     * @return ticket string
+     */
+    public static String getTicket(Project project) {
+        if (isTicketSet(project)) {
+            return ticketMappings.get(project).getTicket();
+        }
+        return null;
     }
 
     /**
@@ -90,12 +100,12 @@ public class TicketUtils {
      * @return TRUE if successfully logged in to MMS, FALSE otherwise.
      *         Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
-    public static boolean loginToMMS() {
+    public static boolean acquireMmsTicket(Project project) {
         if (!username.isEmpty() && !password.isEmpty()) {
-            return acquireTicket(password);
+            return acquireTicket(project, password);
         }
         else if (!Utils.isPopupsDisabled()) {
-            return acquireTicket(getUserCredentialsDialog());
+            return acquireTicket(project, getUserCredentialsDialog());
         }
         else {
             Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
@@ -109,6 +119,7 @@ public class TicketUtils {
      */
     private static String getUserCredentialsDialog() {
         // Pop up dialog for logging into Alfresco
+
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new GridLayout(2, 2));
 
@@ -129,14 +140,16 @@ public class TicketUtils {
         }
         passwordFld.setText("");
         makeSureUserGetsFocus(usernameFld);
+//        isDisplayed = true;
         int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), userPanel,
                 "MMS Credentials", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+//        isDisplayed = false;
         if (response == JOptionPane.OK_OPTION) {
             username = usernameFld.getText();
             String pass = new String(passwordFld.getPassword());
             return pass;
         }
-        else if (response == JOptionPane.CANCEL_OPTION) {
+        else if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION) {
             Application.getInstance().getGUILog().log("[INFO] MMS login has been cancelled.");
         }
         return null;
@@ -194,10 +207,13 @@ public class TicketUtils {
     /**
      * Clears username, password, and ticket
      */
-    public static void clearUsernameAndPassword() {
-        username = "";
+    public static void clearTicket(Project project) {
         password = "";
-        ticket = "";
+        TicketMapping removed = ticketMappings.remove(project);
+        // kill auto-renewal in removed
+        if (removed != null) {
+            removed.getTicketRenewer().shutdown();
+        }
     }
 
     /**
@@ -209,25 +225,25 @@ public class TicketUtils {
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
-    private static boolean acquireTicket(String pass) {
-        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H Content-Type:application/json -d '{"username":"username", "password":"password"}'
-        password = "";
+    private static boolean acquireTicket(Project project, String pass) {
+        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H "Content-Type:application/json" -d '{"username":"username", "password":"password"}'
+        if (username == null || username.isEmpty()) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username");
+            return false;
+        }
         if (pass == null) {
             return false;
         }
 
-        //ticket is invalid, clear it and re-attempt;
-        ticket = "";
+        //ensure ticket is cleared in case of failure
+        ticketMappings.remove(project);
 
         // build request
-        // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
-        //         log in to the currently opening project
-        Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return false;
         }
-        requestUri.setPath(requestUri.getPath() + "/api/login" + ticket);
+        requestUri.setPath(requestUri.getPath() + "/api/login");
         requestUri.clearParameters();
         ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
         credentials.put("username", username);
@@ -236,24 +252,22 @@ public class TicketUtils {
         // do request
         ObjectNode response = null;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
-        } catch (IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Log in failed. Reason: " + e.getMessage());
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
+        } catch (ServerException | IOException | URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
             e.printStackTrace();
-        } catch (ServerException e) {
-            if (!showErrorMessage(e.getCode())) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected server error while acquiring credentials. Log in failed. Reason: " + e.getMessage());
-                e.printStackTrace();
-            }
+            return false;
         }
 
         // parse response
         JsonNode value;
         if (response != null && (value = response.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
-            ticket = value.asText();
+            password = "";
+            ticketMappings.put(project, new TicketMapping(project, value.asText()));
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
+        password = "";
         return false;
     }
 
@@ -262,72 +276,66 @@ public class TicketUtils {
      *
      * @return True if ticket is still valid and matches the currently stored username
      */
-    public static boolean isTicketValid() {
+    public static boolean isTicketValid(Project project) {
         //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service//mms/login/ticket/${TICKET}
-        if (ticket == null || ticket.isEmpty()) {
+        if (!isTicketSet(project)) {
             return false;
         }
 
         // build request
-        // @donbot retained Application.getInstance().getProject() instead of making project agnostic because you can only
-        // log in to the currently opening project
-        Project project = Application.getInstance().getProject();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return false;
         }
-        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticket);
+        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticketMappings.get(project).getTicket());
         requestUri.clearParameters();
 
         // do request
-        ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
-        boolean invalidCredentials = false;
+        ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (ServerException se) {
-            if (se.getCode() == 404) {
-                invalidCredentials = true;
-            }
-            else {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking credentials. Reason: " + se.getMessage());
-                se.printStackTrace();
-            }
-        } catch (IOException | URISyntaxException e ) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while checking credentials. Reason: " + e.getMessage());
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        } catch (ServerException | IOException | URISyntaxException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained for now). Reason: " + e.getMessage());
             e.printStackTrace();
+            // can't confirm invalid if can't check ticket at all
+            return true;
         }
 
-        // parse response
+        // parse response, clearing ticket if appropriate
         JsonNode value;
-        if (invalidCredentials || ((value = response.get("username")) == null) || !value.isTextual() || !value.asText().equals(username)) {
-            Application.getInstance().getGUILog().log("[WARNING] Stored credentials are invalid. You will be logged out of MMS, and will need to log in again.");
-            EMSLogoutAction.logoutAction();
+        if ((((value = response.get("message")) != null) && value.isTextual() && value.asText().equals("Ticket not found"))) {
+            Application.getInstance().getGUILog().log("[WARNING] Authentication has expired. Please log in to the MMS again.");
+            MMSLogoutAction.logoutAction(project);
             return false;
         }
+        // no exceptions and not confirmed invalid
         return true;
     }
 
-    /**
-     * Error handling for common server codes.
-     *
-     * @param code Server code
-     * @return True if a popup/log has been displayed for the user for the message, false otherwise (which implies that
-     * we need to do additional error dumping)
-     */
-    // @donbot - consider merging with MMSUtils.DisplayErrors thing
-    private static boolean showErrorMessage(int code) {
-        if (code == 400 || code == 401 || code == 403) {
-            Utils.showPopupMessage("[ERROR] You could not be logged in, and may have entered the wrong credentials. Please again.");
-            clearUsernameAndPassword();
+    private static class TicketMapping {
+        private String ticket;
+        private ScheduledExecutorService ticketRenewer;
+
+        TicketMapping(final Project project, String ticket) {
+            this.ticket = ticket;
+            this.ticketRenewer = Executors.newScheduledThreadPool(1);
+            // intentionally catching exceptions here, to avoid scheduled thread suspension
+            final Runnable renewTicket = () -> {
+                // try/catching here to prevent service being disabled for future calls
+                try {
+                    TicketUtils.isTicketValid(project);
+                } catch (Exception ignored) {}
+            };
+            this.ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS);
         }
-        else if (code == 500) {
-            Utils.showPopupMessage("[ERROR] Server error occured, you may not have permission to modify view(s) or their contents");
+
+        public String getTicket() {
+            return this.ticket;
         }
-        else if (code == 404) {
-            Utils.showPopupMessage("[ERROR] Some elements or views are not found on the server, export them first");
+
+        public ScheduledExecutorService getTicketRenewer() {
+            return this.ticketRenewer;
         }
-        return (code == 400 || code == 401 || code == 403 || code == 500);
+
     }
-
-
 }

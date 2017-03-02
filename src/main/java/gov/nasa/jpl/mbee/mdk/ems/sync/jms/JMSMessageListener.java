@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.ems.ImportException;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -22,6 +24,7 @@ import javax.jms.*;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JMSMessageListener implements MessageListener, ExceptionListener {
     private static final Map<String, Changelog.ChangeType> CHANGE_MAPPING = new LinkedHashMap<>(4);
@@ -33,8 +36,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         CHANGE_MAPPING.put("movedElements", Changelog.ChangeType.UPDATED);
     }
 
-
-    private volatile boolean exceptionHandlerRunning;
+    private final AtomicBoolean disabled = new AtomicBoolean();
+    private final AtomicBoolean exceptionHandlerRunning = new AtomicBoolean();
     private int reconnectionAttempts = 0;
 
     private final Project project;
@@ -46,10 +49,24 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
     }
 
+    public void setDisabled(boolean disabled) {
+        synchronized (this.disabled) {
+            this.disabled.set(disabled);
+        }
+    }
+
+    public boolean isDisabled() {
+        synchronized (this.disabled) {
+            return (disabled.get() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
+        }
+    }
+
     private Message lastMessage;
 
     public boolean isExceptionHandlerRunning() {
-        return exceptionHandlerRunning;
+        synchronized (this.exceptionHandlerRunning) {
+            return exceptionHandlerRunning.get();
+        }
     }
 
     JMSMessageListener(Project project) {
@@ -58,7 +75,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     @Override
     public void onMessage(Message message) {
-        if (!MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
+        if (isDisabled()) {
             return;
         }
         lastMessage = message;
@@ -73,7 +90,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            System.out.println("MMS TextMessage for " + project.getPrimaryProject().getProjectID() + " -" + System.lineSeparator() + text);
+            System.out.println("MMS TextMessage for " + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + " -" + System.lineSeparator() + text);
         }
         JsonNode messageJsonNode;
         try {
@@ -102,7 +119,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     if (elementJsonNode == null || !elementJsonNode.isObject()) {
                         continue;
                     }
-                    JsonNode sysmlIdJsonNode = elementJsonNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = elementJsonNode.get(MDKConstants.ID_KEY);
                     if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                         continue;
                     }
@@ -156,12 +173,13 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
 
     @Override
     public void onException(JMSException exception) {
-        if (exceptionHandlerRunning) {
+        if (exceptionHandlerRunning.get()) {
             return;
         }
-        exceptionHandlerRunning = true;
+        exceptionHandlerRunning.set(true);
+        MMSAction.setDisabled(exceptionHandlerRunning.get());
         Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
-        JMSSyncProjectEventListenerAdapter.getProjectMapping(project).setDisabled(true);
+        JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().setDisabled(true);
         while (shouldAttemptToReconnect()) {
             int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
             Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reconnect to MMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
@@ -169,7 +187,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                 Thread.sleep(delay * 1000);
             } catch (InterruptedException ignored) {
             }
-            if (!exceptionHandlerRunning) {
+            if (!exceptionHandlerRunning.get()) {
                 return;
             }
             if (shouldAttemptToReconnect()) {
@@ -177,20 +195,22 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                 MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
             }
         }
-        if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
+        if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
             reconnectionAttempts = 0;
             Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Successfully reconnected to MMS after dropped connection.");
         }
         else {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Failed to reconnect to MMS after dropped connection. Please manually login to MMS, or close and re-open the project, to re-initiate.");
+            MMSLogoutAction.logoutAction(project);
         }
         reconnectionAttempts = 0;
-        exceptionHandlerRunning = false;
+        exceptionHandlerRunning.set(false);
+        MMSAction.setDisabled(exceptionHandlerRunning.get());
     }
 
     private boolean shouldAttemptToReconnect() {
-        return !project.isProjectClosed() && TicketUtils.isTicketSet()
+        return !project.isProjectClosed() && TicketUtils.isTicketSet(project)
                 && JMSSyncProjectEventListenerAdapter.shouldEnableJMS(project)
-                && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled();
+                && JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled();
     }
 }

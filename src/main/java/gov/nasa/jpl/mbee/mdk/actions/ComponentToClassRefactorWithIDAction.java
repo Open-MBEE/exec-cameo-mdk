@@ -8,6 +8,7 @@ import com.nomagic.magicdraw.uml.ConvertElementInfo;
 import com.nomagic.magicdraw.uml.Refactoring;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
@@ -27,9 +28,9 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
     }
 
     public void actionPerformed(ActionEvent e) {
-        Boolean con = Utils.getUserYesNoAnswer("Warning! Refactor with ID action is best used with an immediate commit to"
-                + " teamwork \nand no other active teamwork users on this project, else data loss may \n"
-                + "happen on update from teamwork. Do you want to continue?");
+        Boolean con = Utils.getUserYesNoAnswer("Warning! Refactor with ID action is best used with an immediate commit/save"
+                + "\nand no remote users on this project. Otherwise, data loss may \n"
+                + "happen on remote update. Do you want to continue?");
         if (con == null || !con) {
             return;
         }
@@ -45,7 +46,7 @@ public class ComponentToClassRefactorWithIDAction extends DefaultBrowserAction {
             if (!(element instanceof Component)) {
                 continue;
             }
-            String elementID = element.getID();
+            String elementID = Converters.getElementToIdConverter().apply(element);
             // Converts the element to an interface.
             ConvertElementInfo info = new ConvertElementInfo(
                     com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class);

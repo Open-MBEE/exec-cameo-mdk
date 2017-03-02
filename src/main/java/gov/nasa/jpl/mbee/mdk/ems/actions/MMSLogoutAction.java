@@ -26,24 +26,46 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.mdk.web;
+package gov.nasa.jpl.mbee.mdk.ems.actions;
 
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 
-import java.security.Security;
+import java.awt.event.ActionEvent;
 
-public class HttpsUtils {
+public class MMSLogoutAction extends MMSAction {
+    private static final long serialVersionUID = 1L;
+    public static final String DEFAULT_ID = "Logout";
 
-    public static void allowSelfSignedCertificates() {
-        // Remove a security provider installed by MagicDraw
-        // that throws weird exceptions when using SSL.
-        Security.removeProvider("Certicom");
+    private MMSLoginAction login;
 
-        // Register an HTTPS factory that allows self-signed SSL certificates.
-        Protocol easyhttps = new Protocol("https", (ProtocolSocketFactory) new EasySSLProtocolSocketFactory(),
-                443);
-        Protocol.registerProtocol("https", easyhttps);
+    public MMSLogoutAction() {
+        super(DEFAULT_ID, "Logout", null, null);
+    }
+
+    public void setLoginAction(MMSLoginAction login) {
+        this.login = login;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        logoutAction(Application.getInstance().getProject());
+    }
+
+    public static void logoutAction(Project project) {
+        TicketUtils.clearTicket(project);
+        Application.getInstance().getGUILog().log("[INFO] MMS logout complete.");
+        ActionsStateUpdater.updateActionsState();
+        if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
+        }
+        SyncStatusConfigurator.getSyncStatusAction().update();
     }
 
 }

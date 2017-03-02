@@ -50,7 +50,7 @@ public class EMFImporter implements JsonToElementFunction {
         UMLFactory.eINSTANCE.setRepository(project.getRepository());
         project.getCounter().setCanResetIDForObject(true);
 
-        JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+        JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
         /*if (jsonNode == null || !jsonNode.isTextual()) {
             return null;
         }*/
@@ -88,37 +88,38 @@ public class EMFImporter implements JsonToElementFunction {
     }
 
     public static class PreProcessor {
-        public static final PreProcessor CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
-        EDITABLE = new PreProcessor(
-                (objectNode, project, strict, element) -> {
-                    if (!element.isEditable()) {
-                        throw new ReadOnlyElementException(element);
-                    }
-                    return element;
-                }
-        ),
-        DOCUMENTATION = new PreProcessor(
-                (objectNode, project, strict, element) -> {
-                    JsonNode jsonNode = objectNode.get("documentation");
-                    if (jsonNode != null && jsonNode.isTextual()) {
-                        ModelHelper.setComment(element, jsonNode.asText());
-                    }
-                    return element;
-                }
-        ),
-        SYSML_ID_VALIDATION = new PreProcessor(
-                (objectNode, project, strict, element) -> {
-                    JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-                    if (jsonNode == null || !jsonNode.isTextual()) {
-                        return element;
-                    }
-                    String id = jsonNode.asText();
-                    if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
-                        return null;
-                    }
-                    return element;
-                }
-        );
+        public static final PreProcessor
+                CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
+                EDITABLE = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            if (!element.isEditable()) {
+                                throw new ReadOnlyElementException(element);
+                            }
+                            return element;
+                        }
+                ),
+                DOCUMENTATION = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            JsonNode jsonNode = objectNode.get("documentation");
+                            if (jsonNode != null && jsonNode.isTextual()) {
+                                ModelHelper.setComment(element, jsonNode.asText());
+                            }
+                            return element;
+                        }
+                ),
+                SYSML_ID_VALIDATION = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
+                            if (jsonNode == null || !jsonNode.isTextual()) {
+                                return element;
+                            }
+                            String id = jsonNode.asText();
+                            if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
+                                return null;
+                            }
+                            return element;
+                        }
+                );
 
         static PreProcessor getCreatePreProcessor(BiFunction<String, Project, Element> idToElementConverter) {
             return new PreProcessor(
@@ -358,26 +359,27 @@ public class EMFImporter implements JsonToElementFunction {
     private static final ImportFunction EMPTY_E_STRUCTURAL_FEATURE_FUNCTION = (objectNode, eStructuralFeature, project, strict, element) -> element;
 
     protected static class EStructuralFeatureOverride {
-        public static final EStructuralFeatureOverride ID = new EStructuralFeatureOverride(
-                (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
-                (objectNode, eStructuralFeature, project, strict, element) -> {
-                    JsonNode jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
-                    if (jsonNode == null || !jsonNode.isTextual()) {
-                        /*if (strict) {
-                            throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
+        public static final EStructuralFeatureOverride
+                ID = new EStructuralFeatureOverride(
+                    (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
+                    (objectNode, eStructuralFeature, project, strict, element) -> {
+                        JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
+                        if (jsonNode == null || !jsonNode.isTextual()) {
+                            /*if (strict) {
+                                throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
+                            }
+                            return null;*/
+                            return element;
                         }
-                        return null;*/
+                        try {
+                            UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
+                        } catch (IllegalArgumentException e) {
+                            throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
+                        }
                         return element;
                     }
-                    try {
-                        UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
-                    } catch (IllegalArgumentException e) {
-                        throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
-                    }
-                    return element;
-                }
-        ),
-        OWNER = getOwnerEStructuralFeatureOverride(Converters.getIdToElementConverter());
+                ),
+                OWNER = getOwnerEStructuralFeatureOverride(Converters.getIdToElementConverter());
 
         private ImportPredicate importPredicate;
         private ImportFunction importFunction;
@@ -410,15 +412,15 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         if (element instanceof Package
-                                && (jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith("holding_bin")
-                                && (jsonNode = objectNode.get(MDKConstants.OWNER_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().equals(project.getPrimaryProject().getProjectID())) {
+                                && (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith("holding_bin")
+                                && (jsonNode = objectNode.get(MDKConstants.OWNER_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                             ((Package) element).setOwningPackage(project.getPrimaryModel());
                             return element;
                         }
                         Element owningElement = idToElementConverter.apply(jsonNode.asText(), project);
                         if (owningElement == null) {
                             if (strict) {
-                                JsonNode sysmlIdNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                                JsonNode sysmlIdNode = objectNode.get(MDKConstants.ID_KEY);
                                 throw new ImportException(element, objectNode, "Owner for element " + (sysmlIdNode != null && sysmlIdNode.isTextual() ? sysmlIdNode.asText("<>") : "<>") + " not found: " + jsonNode + ".");
                             }
                         }
@@ -435,7 +437,7 @@ public class EMFImporter implements JsonToElementFunction {
                             }
                             else if (element instanceof InstanceSpecification
                                     && ((jsonNode = objectNode.get(KEY_FUNCTION.apply(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT))) != null && jsonNode.isTextual()
-                                    || (jsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
+                                    || (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
                                 ((InstanceSpecification) element).setStereotypedElement(owningElement);
                                 //System.out.println("[STEREOTYPED ELEMENT] " + Converters.getElementToIdConverter().apply(element) + " -> " + Converters.getElementToIdConverter().apply(owningElement));
                             }

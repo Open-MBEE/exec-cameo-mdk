@@ -40,7 +40,7 @@ import java.io.IOException;
 public class Graphviz {
     public static <VertexType, EdgeType extends DirectedEdge<VertexType>> String directedGraph2DotString(
             DirectedGraph<VertexType, EdgeType> G) {
-        String string = new String("digraph G {");
+        String string = "digraph G {";
         for (VertexType v : G.getVertices()) {
             string = string.concat("\n\t" + v.toString());
         }
@@ -53,7 +53,7 @@ public class Graphviz {
 
     public static <VertexType, EdgeType extends UndirectedEdge<VertexType>> String undirectedGraph2DotString(
             UndirectedGraph<VertexType, EdgeType> G) {
-        String string = new String("graph G {");
+        String string = "graph G {";
         for (VertexType v : G.getVertices()) {
             string = string.concat("\n\t" + v.toString());
         }

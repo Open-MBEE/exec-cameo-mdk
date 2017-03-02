@@ -39,6 +39,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint.Type;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
@@ -153,7 +154,8 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         // Collection< String > ids = paramProject.getAllIDS();
         //
         // for ( String id : ids ) {
-        // BaseElement elem = paramProject.getElementByID( id );
+        // BaseElement elem = Converters.getIdToElementConverter()
+        //         .apply(id, paramProject);
 
         for (Element elemt : paramCollection) {
             if (elemt == null) {
@@ -310,7 +312,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             }
         }
         Project project = Utils.getProject();
-        Constraint cons = (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+        Constraint cons = Utils.getWarningConstraint();
         result = Utils.getAnnotations(this, project, cons);
         annotations = result;
 

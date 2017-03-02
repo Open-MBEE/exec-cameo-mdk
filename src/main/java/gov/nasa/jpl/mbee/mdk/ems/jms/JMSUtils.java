@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 
@@ -55,9 +56,8 @@ public class JMSUtils {
             throws IOException, ServerException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         requestUri.setPath(requestUri.getPath() + "/connection/jms");
-        ObjectNode response = null;
 
-        return MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
     }
 
     // Varies by current project
@@ -199,14 +199,14 @@ public class JMSUtils {
     }
 
     public static void initializeDurableQueue(Project project, String workspace) {
-        String projectId = project.getPrimaryProject().getProjectID();
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         Connection connection = null;
         Session session = null;
         MessageConsumer consumer = null;
         try {
             JMSUtils.JMSInfo jmsInfo = null;
             try {
-                jmsInfo = JMSUtils.getJMSInfo(Application.getInstance().getProject());
+                jmsInfo = JMSUtils.getJMSInfo(project);
             } catch (ServerException e) {
                 e.printStackTrace();
             }

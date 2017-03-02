@@ -81,25 +81,25 @@ public class ValidateConstraintsPlugin extends MDPlugin {
         Method method = getNmActionMethod();
 
         String category = "MDK";
-
+        String diagramContext = "BaseDiagramContext";
         addConfiguration("MainMenu", "", ValidateConstraints.actionText, category, method, this);
         addConfiguration("ContainmentBrowserContext", "", ValidateConstraints.actionText, category, method,
                 this);
-        addConfiguration("BaseDiagramContext", "Class Diagram", ValidateConstraints.actionText, category,
+        addConfiguration(diagramContext, "Class Diagram", ValidateConstraints.actionText, category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "Activity Diagram", ValidateConstraints.actionText, category,
+        addConfiguration(diagramContext, "Activity Diagram", ValidateConstraints.actionText, category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "SysML Block Definition Diagram",
+        addConfiguration(diagramContext, "SysML Block Definition Diagram",
                 ValidateConstraints.actionText, category, method, this);
-        addConfiguration("BaseDiagramContext", "SysML Internal Block Diagram",
+        addConfiguration(diagramContext, "SysML Internal Block Diagram",
                 ValidateConstraints.actionText, category, method, this);
-        addConfiguration("BaseDiagramContext", "DocGen 3 View Diagram", ValidateConstraints.actionText,
+        addConfiguration(diagramContext, "DocGen 3 View Diagram", ValidateConstraints.actionText,
                 category, method, this);
-        addConfiguration("BaseDiagramContext", "DocGen 3 Diagram", ValidateConstraints.actionText, category,
+        addConfiguration(diagramContext, "DocGen 3 Diagram", ValidateConstraints.actionText, category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "View Diagram", ValidateConstraints.actionText, category,
+        addConfiguration(diagramContext, "View Diagram", ValidateConstraints.actionText, category,
                 method, this);
-        addConfiguration("BaseDiagramContext", "DocumentView", ValidateConstraints.actionText, category,
+        addConfiguration(diagramContext, "DocumentView", ValidateConstraints.actionText, category,
                 method, this);
 
         Debug.outln("finished initializing TestPlugin!");

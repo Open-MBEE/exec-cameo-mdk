@@ -1,5 +1,6 @@
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.zip.ZipFile
 
 String buildBranch = project.getProperties().get('buildBranch');
 if (buildBranch == null || buildBranch != 'master' && !buildBranch.matches('support/[0-9.]+')) {
@@ -23,10 +24,6 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
-if (buildAccess == 'internal') {
-    apply plugin: 'com.jfrog.artifactory'
-}
-apply plugin: 'maven-publish'
 apply plugin: 'rebel'
 
 // In this section you declare where to find the dependencies of your project
@@ -36,14 +33,20 @@ repositories {
     if (buildAccess == 'internal') {
         maven {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
+            credentials {
+                username project.getProperties().get('artifactory_user')
+                password project.getProperties().get('artifactory_password')
+            }
         }
     }
     else {
         ivy {
-            // http://d1g91r27pzl568.cloudfront.net/magicdraw184sp1/MagicDraw_184_sp1_no_install.zip
+            // http://d1g91r27pzl568.cloudfront.net/magicdraw185/MagicDraw_185_no_install.zip
+            // http://d1g91r27pzl568.cloudfront.net/sysml185/SysML_Plugin_185_bundle.zip
+            // http://d1g91r27pzl568.cloudfront.net/cst185/Cameo_Simulation_Toolkit_185.zip
             url 'http://d1g91r27pzl568.cloudfront.net/'
             layout 'pattern', {
-                artifact '/[module]184sp1/MagicDraw_[revision]_[classifier].[ext]'
+                artifact '/[module][revision]/[classifier].[ext]'
             }
         }
     }
@@ -60,7 +63,9 @@ dependencies {
         preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0-SNAPSHOT', ext: 'zip'
     }
     else {
-        preCompile group: 'nomagic', name: 'magicdraw', version: '184_sp1', classifier: 'no_install', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'magicdraw', version: '185', classifier: 'MagicDraw_185_no_install', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'sysml', version: '185', classifier: 'SysML_Plugin_185_bundle', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'cst', version: '185', classifier: 'Cameo_Simulation_Toolkit_185', ext: 'zip'
     }
     
     // SLF4J API
@@ -121,7 +126,7 @@ dependencies {
 task extractDependencies {
     configurations.preCompile.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         inputs.file artifact.file
-        def zipFile = new java.util.zip.ZipFile(artifact.file)
+        def zipFile = new ZipFile(artifact.file)
         zipFile.entries().each { entry ->
             if (!entry.isDirectory()) {
                 outputs.file 'build/dependency-cache/extracted/' + entry.getName()
@@ -130,6 +135,12 @@ task extractDependencies {
     }
     doLast {
         inputs.files.each { archive ->
+            copy {
+                from zipTree(archive)
+                into 'build/dependency-cache/extracted'
+            }
+        }
+        fileTree(dir: 'build/dependency-cache/extracted', include: '*.zip').each { archive ->
             copy {
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted'
@@ -269,6 +280,9 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 if (buildAccess == 'internal') {
+    apply plugin: 'maven-publish'
+    apply plugin: 'com.jfrog.artifactory'
+
     publishing {
         // Reference to Gradle publications defined in the build script.
         // This is how we tell the Artifactory Plugin which artifacts should be

@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
-import com.nomagic.magicdraw.teamwork2.locks.LockService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -24,8 +24,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-//@donbot migrate simple to Jackson
-
 /**
  * Created by igomes on 7/25/16.
  */
@@ -36,7 +34,7 @@ public class SyncElements {
     private static final DateFormat NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
 
     private static String getSyncPackageID(Project project) {
-        return project.getPrimaryProject().getProjectID() + MDKConstants.SYNC_SYSML_ID_SUFFIX;
+        return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.SYNC_SYSML_ID_SUFFIX;
     }
 
     public static Package getSyncPackage(Project project) {
@@ -214,15 +212,15 @@ public class SyncElements {
     }
 
     public static List<Element> lockSyncFolder(Project project) {
-        if (!ProjectUtilities.isFromTeamworkServer(project.getPrimaryProject())) {
+        if (!ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
             return Collections.emptyList();
         }
-        String folderId = project.getPrimaryProject().getProjectID() + "_sync";
+        String folderId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.SYNC_SYSML_ID_SUFFIX;
         Element folder = Converters.getIdToElementConverter().apply(folderId, project);
         if (folder == null) {
             return Collections.emptyList();
         }
-        ILockProjectService lockService = LockService.getLockService(project);
+        ILockProjectService lockService = EsiUtils.getLockService(project);
         if (lockService == null) {
             return Collections.emptyList();
         }
@@ -231,7 +229,6 @@ public class SyncElements {
         for (Element element : folder.getOwnedElement()) {
             if (element instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class && !lockService.isLocked(element) && lockService.canBeLocked(element)) {
                 lockedElements.add(element);
-                //Utils.tryToLock(project, element, project.isTeamworkServerProject());
             }
         }
         if (!lockService.lockElements(lockedElements, false, null)) {

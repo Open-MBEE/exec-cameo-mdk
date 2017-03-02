@@ -230,7 +230,7 @@ public class Paragraph extends Query {
         if (getIgnore()) {
             return res;
         }
-        boolean gotText = getText() != null;// && !getText().equals("");
+        boolean gotText = getText() != null;// && !getText().isEmpty();
         boolean gotTargets = getTargets() != null && !getTargets().isEmpty();
         boolean gotStereotypeProperties =
                 !Utils2.isNullOrEmpty(getStereotypeProperties());
@@ -244,7 +244,7 @@ public class Paragraph extends Query {
             // case 4: return a paragraph of the text, tied to the "body" slot
             // of dgElement or the documentation of the dgElement if dgElement
             // is something other than a Paragraph
-            if (forViewEditor || !getText().trim().equals("")) {
+            if (forViewEditor || !getText().trim().isEmpty()) {
                 //GeneratorUtils.getObjectProperty( getDgElement(), DocGen3Profile.paragraphStereotype, "body", null );
                 Stereotype paragraphStereotype = Utils.getStereotype(DocGen3Profile.paragraphStereotype);
                 Slot s = Utils.getSlot(getDgElement(), Utils.getStereotypePropertyByName(paragraphStereotype, "body"));

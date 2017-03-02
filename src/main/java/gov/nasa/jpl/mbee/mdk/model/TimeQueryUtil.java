@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -30,14 +31,14 @@ public class TimeQueryUtil {
     // compare elements
 
     public static ObjectNode getHistoryOfElement(Project project, Element elementToQuery, Date compareToTime) {
-        ArrayList<Element> elementsToQuery = new ArrayList<Element>();
+        ArrayList<Element> elementsToQuery = new ArrayList<>();
         elementsToQuery.add(elementToQuery);
 
         result = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elements = result.putArray("elements");
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
         if (requestUri == null) {
             return null;
         }
@@ -48,9 +49,9 @@ public class TimeQueryUtil {
         Utils.guilog("[INFO] Getting elements from server...");
 
         for (Element elem : elementsToQuery) {
-            String id = elem.getID();
+            String id = Converters.getElementToIdConverter().apply(elem);
             if (elem == project) {
-                id = Application.getInstance().getProject().getPrimaryProject().getProjectID();
+                id = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
             }
             id = id.replace(".", "%2E");
             requestUri.setPath(basePath + "/" + id);
@@ -58,7 +59,7 @@ public class TimeQueryUtil {
 
             ObjectNode partialResponse = null;
             try {
-                partialResponse = MMSUtils.sendMMSRequest(MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+                partialResponse = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             } catch (IOException | ServerException | URISyntaxException e) {
                 //TODO add exception handling for partial element returns?
                 e.printStackTrace();

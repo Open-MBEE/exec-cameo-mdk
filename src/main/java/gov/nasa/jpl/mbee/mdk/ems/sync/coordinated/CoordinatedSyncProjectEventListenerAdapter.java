@@ -4,11 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.ems.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElements;
@@ -28,8 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by igomes on 6/22/16.
  */
-
-//@donbot update json simple to jackson
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<String, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
     private DeltaSyncRunner deltaSyncRunner;
@@ -40,7 +38,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (coordinatedSyncProjectMapping.isDisabled()) {
             return;
         }
-        projectMappings.remove(project.getPrimaryProject().getProjectID());
+        projectMappings.remove(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
     }
 
     @Override
@@ -56,24 +54,16 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (tempDisabled) {
             return;
         }*/
-        boolean enabled = MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled();
-        if (!enabled) {
+        if ( (project.isRemote() && !savedInServer)
+                || !StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")
+                || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
+                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled() ) {
+            // skip csync
             return;
         }
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled()) {
-            return;
-        }
-        if (!StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
-            return;
-        }
-        if (!TicketUtils.isTicketSet()) {
-            Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
-            EMSLoginAction.loginAction(project);
-            return;
-        }
-        if ((ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) || project.isTeamworkServerProject()) && !savedInServer) {
-            Application.getInstance().getGUILog().log("[INFO] Teamwork " + (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) ? "Cloud " : "") + "project is being saved locally. Coordinated sync skipped.");
+        if (!TicketUtils.isTicketValid(project)) {
+            Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS or login has expired. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
+            MMSLoginAction.loginAction(project);
             return;
         }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
@@ -88,7 +78,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             // CSync isn't running, so return
             return;
         }
-        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject());
+        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(project);
         JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
         // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE
@@ -111,7 +101,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             teamworkCommittedMessage.set("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
             try {
                 TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));
-                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, project.getPrimaryProject().getProjectID());
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
                 successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, MDUtils.getWorkspace(project) + "_mdk");
                 jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
                 int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
@@ -124,10 +114,10 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     public static CoordinatedSyncProjectMapping getProjectMapping(Project project) {
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(project.getID());
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
         if (coordinatedSyncProjectMapping == null) {
-            projectMappings.put(project.getID(), coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
-            projectMappings.get(project.getID()).setDisabled(!project.isRemote());
+            projectMappings.put(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
+            projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())).setDisabled(!project.isRemote());
         }
         return coordinatedSyncProjectMapping;
     }
@@ -140,7 +130,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         private boolean disabled;
 
         public synchronized boolean isDisabled() {
-            return disabled;
+            return (disabled || !MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
         }
 
         public synchronized void setDisabled(boolean disabled) {

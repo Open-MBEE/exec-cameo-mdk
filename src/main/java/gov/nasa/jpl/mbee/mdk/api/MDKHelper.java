@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
@@ -44,8 +45,8 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.EMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
@@ -61,15 +62,15 @@ import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This class exposes MDK operations for use in external programs.
@@ -166,9 +167,9 @@ public class MDKHelper {
      * @param username Username for MMS login
      * @param password Password for MMS login
      */
-    public static boolean loginToMMS(final String username, final String password) {
+    public static boolean loginToMMS(Project project, String username, String password) {
         TicketUtils.setUsernameAndPassword(username, password);
-        return new EMSLoginAction().loginAction(Application.getInstance().getProject());
+        return MMSLoginAction.loginAction(project);
     }
 
     /**
@@ -176,8 +177,8 @@ public class MDKHelper {
      * or interact with mmslogin dialog window
      *
      */
-    public static void logoutOfMMS() {
-        new EMSLogoutAction().logoutAction();
+    public static void logoutOfMMS(Project project) {
+        MMSLogoutAction.logoutAction(project);
     }
 
     /************************************************************
@@ -315,9 +316,9 @@ public class MDKHelper {
      * @param validateTarget element that the validation is to be performed upon
      */
     public static void manualValidateElement(Element validateTarget) {
-        Collection<Element> sync = new ArrayList<Element>();
+        Collection<Element> sync = new ArrayList<>();
         sync.add(validateTarget);
-        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), true, 0);
+        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), -1);
         ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
         Application.getInstance().getGUILog().log("Validated");
         validationWindow = new MDKValidationWindow(manualSyncRunner.getValidationSuite());
@@ -336,24 +337,69 @@ public class MDKHelper {
      *
      **********************************************************************************/
 
-    public static ObjectNode getMmsElement(Element e, Project project) throws IOException, ServerException, URISyntaxException {
-        return MMSUtils.getElement(e, project);
+    public static ObjectNode getElement(Element element, Project project)
+            throws IOException, ServerException, URISyntaxException {
+        if (element == null) {
+            return null;
+        }
+        Collection<String> collection = new ArrayList<>(1);
+        collection.add(Converters.getElementToIdConverter().apply(element));
+        return getElementsById(collection, project, null);
     }
 
-    public static ObjectNode getMmsElementByID(String s, Project project) throws IOException, ServerException, URISyntaxException {
-        return MMSUtils.getElementById(s, project);
+    public static ObjectNode getElementById(String elementId, Project project)
+            throws IOException, ServerException, URISyntaxException {
+        // build request
+        if (elementId == null) {
+            return null;
+        }
+        Collection<String> collection = new ArrayList<>(1);
+        collection.add(elementId);
+        return getElementsById(collection, project, null);
     }
 
-    public static ObjectNode getMmsElements(Collection<Element> elements, Project project) throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElements(elements, project, null);
+    public static ObjectNode getElements(Collection<Element> elements, Project project, ProgressStatus ps)
+            throws IOException, ServerException, URISyntaxException {
+        if (elements == null || elements.size() == 0) {
+            return null;
+        }
+        return getElementsById(elements.stream().map(Converters.getElementToIdConverter())
+                .filter(id -> id != null).collect(Collectors.toList()), project, ps);
     }
 
-    public static ObjectNode getMmsElementsByID(Collection<String> cs, Project project) throws ServerException, IOException, URISyntaxException {
-        return MMSUtils.getElementsById(cs, project, null);
+    public static ObjectNode getElementsById(Collection<String> elementIds, Project project, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException {
+        if (elementIds == null || elementIds.isEmpty()) {
+            return null;
+        }
+
+        // create requests json
+        final ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
+        // put elements array inside request json, keep reference
+        ArrayNode idsArrayNode = requests.putArray("elements");
+        for (String id : elementIds) {
+            // create json for id strings, add to request array
+            ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
+            element.put(MDKConstants.ID_KEY, id);
+            idsArrayNode.add(element);
+        }
+
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
+        //do cancellable request if progressStatus exists
+        Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
+        if (progressStatus != null) {
+            return MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests), progressStatus);
+        }
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests));
     }
+
 
     /**
-     * Sends a DELETE request to MMS for the indicated element.
+     * Sends a DELETE request to MMS for the indicated elements.
      *
      * @param elementsToDelete Collection of elements you want to directly delete on the MMS
      * @throws IllegalStateException
@@ -361,38 +407,21 @@ public class MDKHelper {
      */
     public static ObjectNode deleteMmsElements(Collection<Element> elementsToDelete, Project project)
             throws IOException, URISyntaxException, ServerException {
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
         ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elements = requestBody.putArray("elements");
         for (Element delTarget : elementsToDelete) {
             ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
-            curElement.put(MDKConstants.SYSML_ID_KEY, Converters.getElementToIdConverter().apply(delTarget));
+            curElement.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(delTarget));
             elements.add(curElement);
         }
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE,
-                MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
-        return MMSUtils.sendMMSRequest(request);
-    }
-
-    /**
-     * Sends a POST request to MMS with the element JSON, creating or updating the element as appropriate.
-     *
-     * @param elementsToPost Collection of elements you want to directly post on the MMS
-     * @throws IllegalStateException
-     */
-    public static ObjectNode postMmsElementJson(Collection<ObjectNode> elementsToPost, Project project)
-            throws IOException, URISyntaxException, ServerException {
-        ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elements = requestBody.putArray("elements");
-        for (ObjectNode postTarget : elementsToPost) {
-            elements.add(postTarget);
-        }
-        requestBody.put("source", "magicdraw");
-        requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
-                MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
-        return MMSUtils.sendMMSRequest(request);
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, requestBody));
     }
 
     /**
@@ -403,29 +432,20 @@ public class MDKHelper {
      */
     public static ObjectNode postMmsElements(Collection<Element> elementsToPost, Project project)
             throws IOException, URISyntaxException, ServerException {
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
         ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elements = requestBody.putArray("elements");
-        for (Element postTarget : elementsToPost) {
-            elements.add(Converters.getElementToJsonConverter().apply(postTarget, project));
+        ArrayNode elementJson = requestBody.putArray("elements");
+        for (Element target : elementsToPost) {
+            ObjectNode elemJson = Converters.getElementToJsonConverter().apply(target, project);
+            elementJson.add(elemJson);
         }
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST,
-                MMSUtils.getServiceWorkspacesSitesElementsUri(project), requestBody);
-        return MMSUtils.sendMMSRequest(request);
-    }
-
-    /**
-     * Convenience method for confirmSiteWritePermissions(string, string) to check if a project
-     * is editable by the logged in user. Uses the url and site information stored in the currently
-     * open project.
-     *
-     * @return true if the site lists "editable":"true" for the logged in user, false otherwise
-     * or when no project is open or project lacks url and site specifications
-     */
-    public static boolean isSiteEditable() throws ServerException, IOException, URISyntaxException {
-        Project project = Application.getInstance().getProject();
-        return MMSUtils.isSiteEditable(project, MMSUtils.getSiteName(project));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestBody));
     }
 
 }

@@ -26,63 +26,58 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-package gov.nasa.jpl.mbee.mdk.stylesaver.validationfixes;
+package gov.nasa.jpl.mbee.mdk.ems.actions;
 
-import com.nomagic.actions.NMAction;
-import com.nomagic.magicdraw.annotation.Annotation;
-import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
+import com.nomagic.magicdraw.actions.ActionsStateUpdater;
+import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
+import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
+import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
+import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.awt.event.ActionEvent;
-import java.util.Collection;
 
-/**
- * Class for providing a separator action in the validation menu that does
- * nothing. Not the prettiest, but it works.
- *
- * @author Benjamin Inada, JPL/Caltech
- */
-public class FixNone extends NMAction implements AnnotationAction {
+public class MMSLoginAction extends MDAction {
     private static final long serialVersionUID = 1L;
+    public static final String DEFAULT_ID = "Login";
 
-    /**
-     * Initializes this instance and adds a description to the fix.
-     *
-     * @param diag the diagram to fix.
-     */
-    public FixNone(DiagramPresentationElement diag) {
-        super("FIX_NONE", "", 0);
+    private MMSLogoutAction logout;
+
+    public MMSLoginAction() {
+        super(DEFAULT_ID, "Login", null, null);
     }
 
-    /**
-     * Executes the action.
-     *
-     * @param e event caused execution.
-     */
+    public void setLogoutAction(MMSLogoutAction logout) {
+        this.logout = logout;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        // do nothing, this is just used as a separator in menu
+        loginAction(Application.getInstance().getProject());
     }
 
-    /**
-     * Executes the action on specified targets.
-     *
-     * @param annotations action targets.
-     */
-    @Override
-    public void execute(Collection<Annotation> annotations) {
-        // do nothing
-    }
+    public static boolean loginAction(Project project) {
+        if (project == null) {
+            Utils.showPopupMessage("You need to have a project open first!");
+            return false;
+        }
+        if (project.isRemote() && (TeamworkUtils.getLoggedUserName() == null && EsiUtils.getTeamworkService().getConnectedUser() == null)) {
+            Utils.showPopupMessage("You need to be logged in to Teamwork Cloud first!");
+            return false;
+        }
 
-    /**
-     * Checks if possible to execute action together on all specified
-     * annotations.
-     *
-     * @param annotations target annotations.
-     * @return true if the action can be executed.
-     */
-    @Override
-    public boolean canExecute(Collection<Annotation> annotations) {
+        if (!TicketUtils.acquireMmsTicket(project)) {
+//            Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
+            return false;
+        }
+        ActionsStateUpdater.updateActionsState();
+        Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
         return true;
     }
+
 }

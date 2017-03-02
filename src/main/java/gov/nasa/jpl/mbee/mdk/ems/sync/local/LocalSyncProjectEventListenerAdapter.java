@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.ems.sync.local;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,22 +21,17 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectOpened(Project project) {
-        projectClosed(project);
+        closeLocalCommitListener(project);
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null ? localSyncProjectMapping.getLocalSyncTransactionCommitListener() : new gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener(project);
+        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
         if (project.isRemote()) {
             ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
         }
-        localSyncProjectMapping.setLocalSyncTransactionCommitListener(listener);
     }
 
     @Override
     public void projectClosed(Project project) {
-        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
-            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
-        }
-        //projectMappings.remove(project.getPrimaryProject().getProjectID());
+        closeLocalCommitListener(project);
     }
 
     @Override
@@ -47,19 +43,26 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
         LocalSyncProjectMapping localSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
-
-        gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener localSyncTransactionCommitListener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
-        if (localSyncTransactionCommitListener == null) {
+        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
+        if (listener == null) {
             projectOpened(project);
-            localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+            listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
         }
-        localSyncTransactionCommitListener.getInMemoryLocalChangelog().clear();
+        listener.getInMemoryLocalChangelog().clear();
+    }
+
+    private static void closeLocalCommitListener(Project project) {
+        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
+        if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
+            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
+        }
+        //projectMappings.remove(MDUtils.getProjectID(project));
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
-        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project.getPrimaryProject().getProjectID());
+        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
         if (localSyncProjectMapping == null) {
-            projectMappings.put(project.getPrimaryProject().getProjectID(), localSyncProjectMapping = new LocalSyncProjectMapping());
+            projectMappings.put(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), localSyncProjectMapping = new LocalSyncProjectMapping(project));
         }
         return localSyncProjectMapping;
     }
@@ -67,12 +70,13 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public static class LocalSyncProjectMapping {
         private LocalSyncTransactionCommitListener localSyncTransactionCommitListener;
 
+        public LocalSyncProjectMapping (Project project) {
+            localSyncTransactionCommitListener = new LocalSyncTransactionCommitListener(project);
+        }
+
         public LocalSyncTransactionCommitListener getLocalSyncTransactionCommitListener() {
             return localSyncTransactionCommitListener;
         }
 
-        public void setLocalSyncTransactionCommitListener(LocalSyncTransactionCommitListener localSyncTransactionCommitListener) {
-            this.localSyncTransactionCommitListener = localSyncTransactionCommitListener;
-        }
     }
 }

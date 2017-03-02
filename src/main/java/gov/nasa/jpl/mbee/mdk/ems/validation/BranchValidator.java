@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork.application.BranchData;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import com.nomagic.task.ProgressStatus;
@@ -21,6 +22,8 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import java.rmi.RemoteException;
 import java.util.*;
 
+// TODO Figure me out @donbot
+@Deprecated
 public class BranchValidator {
 
     private ValidationSuite suite = new ValidationSuite("structure");
@@ -39,11 +42,11 @@ public class BranchValidator {
         Project project = Application.getInstance().getProject();
         IPrimaryProject primaryProject = project.getPrimaryProject();
 
-        if (!ProjectUtilities.isFromTeamworkServer(primaryProject)) {
+        if (!ProjectUtilities.isRemote(primaryProject)) {
             return;
         }
-        if (TeamworkUtils.getLoggedUserName() == null) {
-            Utils.guilog("You need to log in to teamwork first to do branches validation.");
+        if (EsiUtils.getLoggedUserName() == null) {
+            Utils.guilog("[INFO] You need to logged in to Teamwork Cloud first to do branch validation. Aborting.");
             return;
         }
         // TODO Fix me @donbot
@@ -54,7 +57,7 @@ public class BranchValidator {
         }
         Set<String> seenTasks = new HashSet<>();
         Map<String, ProjectDescriptor> branchDescriptors = new HashMap<>();
-        String currentBranch = MDUtils.getTeamworkBranch(project);
+        String currentBranch = MDUtils.getWorkspace(project);
         try {
             ProjectDescriptor currentProj = ProjectDescriptorsFactory.getDescriptorForProject(project);
             ProjectDescriptor trunk = currentProj;
@@ -65,12 +68,6 @@ public class BranchValidator {
                 trunkBranch = ProjectDescriptorsFactory.getProjectBranchPath(trunk.getURI());
             }
 
-            if (currentBranch == null) {
-                currentBranch = "master";
-            }
-            else {
-                currentBranch = "master/" + currentBranch;
-            }
             branchDescriptors.put(currentBranch, currentProj);
             fillBranchData(trunk, branchDescriptors);
             //Set<BranchData> branches = TeamworkUtils.getBranches(currentProj);
@@ -111,9 +108,9 @@ public class BranchValidator {
     }
 
     private void fillBranchData(ProjectDescriptor currentProj, Map<String, ProjectDescriptor> branchDescriptors) throws RemoteException {
-        Set<BranchData> branches = TeamworkUtils.getBranches(currentProj);
-        for (BranchData bd : branches) {
-            ProjectDescriptor rpd = TeamworkUtils.getRemoteProjectDescriptor(bd.getBranchId());
+        Collection<EsiUtils.EsiBranchInfo> branches = EsiUtils.getBranches(currentProj);
+        for (EsiUtils.EsiBranchInfo bd : branches) {
+            ProjectDescriptor rpd = EsiUtils.getDescriptorForBranch(currentProj, bd.getName());
             String branchName = "master/" + ProjectDescriptorsFactory.getProjectBranchPath(rpd.getURI());
             branchDescriptors.put(branchName, rpd);
             fillBranchData(rpd, branchDescriptors);

@@ -45,6 +45,7 @@ import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
 import gov.nasa.jpl.mbee.mdk.model.*;
@@ -310,7 +311,7 @@ public class DocumentGenerator {
             }
         }
         viewSection.setDgElement(view);
-        viewSection.setId(view.getID());
+        viewSection.setId(Converters.getElementToIdConverter().apply(view));
         viewSection.setTitle(((NamedElement) view).getName());
         return viewSection;
     }
@@ -332,7 +333,7 @@ public class DocumentGenerator {
         if (a == null || parent == null) {
             return null;
         }
-        Debug.outln("parseActivityOrStructuredNode( " + a.getHumanName() + ", " + a.getID() + ", "
+        Debug.outln("parseActivityOrStructuredNode( " + a.getHumanName() + ", " + Converters.getElementToIdConverter().apply(a) + ", "
                 + parent.getStringIfEmpty() + ")");
         InitialNode in = GeneratorUtils.findInitialNode(a);
         if (in == null) {
@@ -346,7 +347,7 @@ public class DocumentGenerator {
         while (outs != null && outs.size() == 1) {
             parseResults = null;
             ActivityNode next = outs.iterator().next().getTarget();
-            Debug.outln("next = " + next.getHumanName() + ", " + next.getID());
+            Debug.outln("next = " + next.getHumanName() + ", " + Converters.getElementToIdConverter().apply(next));
             next2 = null;
             boolean evaluatedConstraintsForNext = false;
             if (next instanceof CallBehaviorAction
@@ -439,7 +440,7 @@ public class DocumentGenerator {
                             if (titles != null && titles.size() > 0) {
                                 sec.setTitle(titles.get(0));
                             }
-                            else if (!next.getName().equals("")) {
+                            else if (!next.getName().isEmpty()) {
                                 sec.setTitle(next.getName());
                             }
                             sec.setUseContextNameAsTitle(useContextNameAsTitle);
@@ -481,7 +482,7 @@ public class DocumentGenerator {
             }
             outs = next2.getOutgoing();
             Debug.outln("outs = " + MoreToString.Helper.toLongString(outs) + " for next2 = "
-                    + next2.getHumanName() + ", " + next2.getID());
+                    + next2.getHumanName() + ", " + Converters.getElementToIdConverter().apply(next2));
         }
         while (pushed > 0) {
             this.context.popTargets();
@@ -565,9 +566,9 @@ public class DocumentGenerator {
         }
         String title = (String) GeneratorUtils.getObjectProperty(cba, DocGen3Profile.sectionStereotype,
                 "title", "");
-        if (title == null || title.equals("")) {
+        if (title == null || title.isEmpty()) {
             title = cba.getName();
-            if (title.equals("") && cba.getBehavior() != null) {
+            if (title.isEmpty() && cba.getBehavior() != null) {
                 title = cba.getBehavior().getName();
             }
         }
@@ -682,10 +683,10 @@ public class DocumentGenerator {
                     if (titles.size() > 0) {
                         sec.setTitle(titles.get(0));
                     }
-                    else if (!an.getName().equals("")) {
+                    else if (!an.getName().isEmpty()) {
                         sec.setTitle(an.getName());
                     }
-                    else if (!((CallBehaviorAction) an).getBehavior().getName().equals("")) {
+                    else if (!((CallBehaviorAction) an).getBehavior().getName().isEmpty()) {
                         sec.setTitle(((CallBehaviorAction) an).getBehavior().getName());
                     }
                     sec.setUseContextNameAsTitle(useContextNameAsTitle);

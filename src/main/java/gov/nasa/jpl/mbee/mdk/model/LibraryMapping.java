@@ -41,6 +41,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
 import gov.nasa.jpl.mbee.mdk.model.ui.LibraryChooserUI;
@@ -344,7 +345,7 @@ public class LibraryMapping extends Query {
     }
 
     private Node<String, LibraryComponent> fillComponent(NamedElement cur) {
-        Node<String, LibraryComponent> node = new Node<String, LibraryComponent>(cur.getID(),
+        Node<String, LibraryComponent> node = new Node<>(Converters.getElementToIdConverter().apply(cur),
                 new LibraryComponent(cur.getName(), cur));
         if (cur instanceof Package) {
             for (Element e : cur.getOwnedElement()) {

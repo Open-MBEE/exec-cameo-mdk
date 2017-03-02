@@ -117,8 +117,9 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             elements.addAll(elementsToUpdate);
             request.put("source", "magicdraw");
             request.put("mdkVersion", MDKPlugin.VERSION);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer((new Request(MMSUtils.HttpRequestType.POST , MMSUtils.getServiceWorkspacesSitesElementsUri(project), request, true, elements.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, request, true, elements.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();
@@ -130,14 +131,14 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             ArrayNode elements = request.putArray("elements");
             for (String id : elementsToDelete) {
                 ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
-                curElement.put(MDKConstants.SYSML_ID_KEY, id);
+                curElement.put(MDKConstants.ID_KEY, id);
                 elements.add(curElement);
             }
             request.put("source", "magicdraw");
             request.put("mdkVersion", MDKPlugin.VERSION);
-            URIBuilder requestUri = MMSUtils.getServiceWorkspacesSitesElementsUri(project);
+            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();

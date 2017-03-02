@@ -22,7 +22,7 @@ from com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities import *
 from com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdinformationflows import *
 from com.nomagic.uml2.ext.magicdraw.compositestructures.mdports import *
 from com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdsimpletime import *
-from com.nomagic.magicdraw.teamwork.application import TeamworkUtils
+
 import sys
 import traceback
 import os
