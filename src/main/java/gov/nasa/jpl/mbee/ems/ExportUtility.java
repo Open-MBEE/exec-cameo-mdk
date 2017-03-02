@@ -618,7 +618,12 @@ public class ExportUtility {
         url = addTicketToUrl(url);
         EntityEnclosingMethod pm = null;
         //if (method == null)
-        pm = new PostMethod(url);
+        try {
+            pm = new PostMethod(url);
+        } catch (Exception e) {
+            Utils.guilog("[ERROR] Exception occurred while building MMS URL. Reason :" + e.getMessage());
+            return null;
+        }
         //else
         //pm = new PutMethod(url);
         //GUILog gl = Application.getInstance().getGUILog();
@@ -876,7 +881,13 @@ public class ExportUtility {
             return null;
         }
         // url = "https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login";
-        PostMethod postMethod = new PostMethod(url);
+        PostMethod postMethod;
+        try {
+            postMethod = new PostMethod(url);
+        } catch (Exception e) {
+            Utils.guilog("[ERROR] Exception occurred while building MMS URL. Reason :" + e.getMessage());
+            return null;
+        }
         String userpasswordJsonString = "";
         try {
             if (username != null && !username.equals("")) {
