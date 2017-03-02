@@ -602,31 +602,31 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             // Delete unused presentation elements
 
-            elementsJsonArray = new JSONArray();
-            for (List<PresentationElementInstance> presentationElementInstances : view2unused.values()) {
-                for (PresentationElementInstance presentationElementInstance : presentationElementInstances) {
-                    if (presentationElementInstance.getInstance() == null) {
-                        continue;
-                    }
-                    String id = ExportUtility.getElementID(presentationElementInstance.getInstance());
-                    if (id == null) {
-                        continue;
-                    }
-                    JSONObject elementJsonObject = new JSONObject();
-                    elementJsonObject.put("sysmlid", id);
-                    elementsJsonArray.add(elementJsonObject);
-                }
-            }
-            if (!elementsJsonArray.isEmpty()) {
-                JSONObject body = new JSONObject();
-                body.put("elements", elementsJsonArray);
-                body.put("source", "magicdraw");
-                body.put("mmsVersion", DocGenPlugin.VERSION);
-                Application.getInstance().getGUILog().log("Deleting " + elementsJsonArray.size() + " unused presentation element" + (elementsJsonArray.size() != 1 ? "s" : "") + ".");
-
-                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, elementsJsonArray.size(), "View Generation"));
-                changed = true;
-            }
+//            elementsJsonArray = new JSONArray();
+//            for (List<PresentationElementInstance> presentationElementInstances : view2unused.values()) {
+//                for (PresentationElementInstance presentationElementInstance : presentationElementInstances) {
+//                    if (presentationElementInstance.getInstance() == null) {
+//                        continue;
+//                    }
+//                    String id = ExportUtility.getElementID(presentationElementInstance.getInstance());
+//                    if (id == null) {
+//                        continue;
+//                    }
+//                    JSONObject elementJsonObject = new JSONObject();
+//                    elementJsonObject.put("sysmlid", id);
+//                    elementsJsonArray.add(elementJsonObject);
+//                }
+//            }
+//            if (!elementsJsonArray.isEmpty()) {
+//                JSONObject body = new JSONObject();
+//                body.put("elements", elementsJsonArray);
+//                body.put("source", "magicdraw");
+//                body.put("mmsVersion", DocGenPlugin.VERSION);
+//                Application.getInstance().getGUILog().log("Deleting " + elementsJsonArray.size() + " unused presentation element" + (elementsJsonArray.size() != 1 ? "s" : "") + ".");
+//
+//                OutputQueue.getInstance().offer(new Request(ExportUtility.getUrlWithWorkspace() + "/elements", body.toJSONString(), "DELETEALL", true, elementsJsonArray.size(), "View Generation"));
+//                changed = true;
+//            }
 
             if (!changed) {
                 Application.getInstance().getGUILog().log("No changes required to generate views.");
