@@ -61,7 +61,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
                 }
             }
             if (hasTraveled) {
-                Application.getInstance().getGUILog().log("Warning: Detected circular reference at " + structuralFeature.getQualifiedName() + ". Stopping recursion.");
+                Application.getInstance().getGUILog().log("[WARNING] Detected circular reference at " + structuralFeature.getQualifiedName() + ". Stopping recursion.");
                 return;
             }
             traveled.add(structuralFeature);
