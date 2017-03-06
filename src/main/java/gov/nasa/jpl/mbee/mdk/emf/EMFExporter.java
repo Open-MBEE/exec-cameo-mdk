@@ -92,7 +92,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 objectNode = preProcessor.getFunction().apply(element, project, objectNode);
             } catch (RuntimeException e) {
                 e.printStackTrace();
-                System.err.println(element);
+                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getID() + " in " + project.getName());
             }
             if (objectNode == null) {
                 return null;
@@ -278,7 +278,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject.getPrimaryProject()));
                     objectNode.put(MDKConstants.NAME_KEY, EsiUtils.getCurrentBranch(attachedProject).getName());
-                    objectNode.put("teamworkCloudVersion", ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
+//                    String branchName = EsiUtils.getCurrentBranch(attachedProject).getName();
+//                    if (branchName == null) {
+//                        branchName = "master";
+//                    }
+//                    objectNode.put(MDKConstants.NAME_KEY, branchName);
+                    objectNode.put(MDKConstants.TWC_VERSION, ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
                     //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
                     return objectNode;
                 }

@@ -30,5 +30,6 @@ public class MDKConstants {
             QUALIFIED_NAME_KEY = "qualifiedName",
             QUALIFIED_ID_KEY = "qualified"  + ID_KEY_SUFFIX,
             ORG_KEY = "org",
-            ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX;
+            ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
+            TWC_VERSION = "teamworkCloudVersion";
 }
