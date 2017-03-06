@@ -81,13 +81,13 @@ public class SpecializeStructureAction extends SRAction {
                 members.add(ne);
             }
             // specific.getOwnedMember().clear();
-            for(NamedElement member : members){
-                if(member instanceof RedefinableElement) {
-                    System.out.println(member.getClassType().getName() + " removing " + member.getName());
-                    specific.getOwnedMember().remove(member);
-                    member.dispose();
-                }
-            }
+//            for(NamedElement member : members){
+//                if(member instanceof RedefinableElement) {
+//                  //  System.out.println(member.getClassType().getName() + " removing " + member.getName());
+//                    specific.getOwnedMember().remove(member);
+//                    member.dispose();
+//                }
+//            }
 
 
             Utils.createGeneralization(classifier, specific);
