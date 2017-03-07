@@ -119,39 +119,45 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (eObject == null) {
             return null;
         }
-        if (eObject instanceof InstanceSpecification && ((InstanceSpecification) eObject).getStereotypedElement() != null) {
-            return getEID(((InstanceSpecification) eObject).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
+        if ( !(eObject instanceof Element)) {
+            return EcoreUtil.getID(eObject);
         }
-        /*if (eObject instanceof TimeExpression && ((TimeExpression) eObject).get_timeEventOfWhen() != null) {
-            return getEID(((TimeExpression) eObject).get_timeEventOfWhen()) + MDKConstants.TIME_EXPRESSION_ID_SUFFIX;
-        }*/
-        if (eObject instanceof ValueSpecification && ((ValueSpecification) eObject).getOwningSlot() != null) {
-            ValueSpecification slotValue = (ValueSpecification) eObject;
-            return getEID(slotValue.getOwningSlot()) + MDKConstants.SLOT_VALUE_ID_SEPARATOR + slotValue.getOwningSlot().getValue().indexOf(slotValue) + "-" + slotValue.eClass().getName().toLowerCase();
-        }
-        if (eObject instanceof Slot) {
-            Slot slot = (Slot) eObject;
-            if (slot.getOwningInstance() != null && ((Slot) eObject).getDefiningFeature() != null) {
-                return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
-            }
-        }
-        if (eObject instanceof Element) {
-            Element element = (Element) eObject;
-            Project project = Project.getProject(element);
-            if (eObject instanceof Model && project.getPrimaryModel() == element) {
+        Element element = (Element) eObject;
+        Project project = Project.getProject(element);
+
+        // custom handling of elements in local projects with non-fixed ids
+//        if (!(project.isRemote())) {
+            if (element instanceof Model && project.getPrimaryModel() == element) {
                 return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
             }
-            IProject iProject = ProjectUtilities.getAttachedProject(element);
-            // eObject is in local primary model OR TWC online copy of a local mount
-            if ((iProject == null && !project.isRemote())
-                    || (iProject != null && iProject.getLocationURI().isFile())) {
-                return element.getLocalID();
+            if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
+                return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
             }
-            // eObject is in TWC primary model OR online mount
-            // NOTE: assumes that project.getLocationURI().isFile() === !project.isRemote()
-            return element.getID();
+            /*if (eObject instanceof TimeExpression && ((TimeExpression) eObject).get_timeEventOfWhen() != null) {
+                return getEID(((TimeExpression) eObject).get_timeEventOfWhen()) + MDKConstants.TIME_EXPRESSION_ID_SUFFIX;
+            }*/
+            if (element instanceof ValueSpecification && ((ValueSpecification) element).getOwningSlot() != null) {
+                ValueSpecification slotValue = (ValueSpecification) element;
+                return getEID(slotValue.getOwningSlot()) + MDKConstants.SLOT_VALUE_ID_SEPARATOR + slotValue.getOwningSlot().getValue().indexOf(slotValue) + "-" + slotValue.eClass().getName().toLowerCase();
+            }
+            if (element instanceof Slot) {
+                Slot slot = (Slot) element;
+                if (slot.getOwningInstance() != null && ((Slot) element).getDefiningFeature() != null) {
+                    return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
+                }
+            }
+//        }
+
+        // eObject is in local primary model OR TWC online copy of a local mount
+        // NOTE: assumes that project.getLocationURI().isFile() === !project.isRemote()
+        IProject iProject = ProjectUtilities.getAttachedProject(element);
+        if ((iProject == null && !project.isRemote())
+                || (iProject != null && iProject.getLocationURI().isFile())) {
+            return element.getLocalID();
         }
-        return EcoreUtil.getID(eObject);
+
+        // eObject is in TWC primary model OR online mount
+        return element.getID();
     }
 
     private static void dumpUMLPackageLiterals() {
