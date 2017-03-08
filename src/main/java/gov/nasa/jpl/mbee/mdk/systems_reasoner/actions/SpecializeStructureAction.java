@@ -14,10 +14,11 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.actions.AddInheritanceToAssociationAction;
-import gov.nasa.jpl.mbee.mdk.validation.actions.RedefineAttributeAction;
+import gov.nasa.jpl.mbee.mdk.validation.actions.SetOrCreateRedefinableElementAction;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.lang.Class;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,12 @@ public class SpecializeStructureAction extends SRAction {
      *
      */
     private static final long serialVersionUID = 1L;
+    public static final List<Class<? extends Classifier>> UNSPECIALIZABLE_CLASSIFIERS = new ArrayList<Class<? extends Classifier>>();
 
+    static {
+        UNSPECIALIZABLE_CLASSIFIERS.add(DataType.class);
+        UNSPECIALIZABLE_CLASSIFIERS.add(PrimitiveType.class);
+    }
     private final boolean recursionMode;
     private final boolean individualMode;
     private Classifier classifier;
@@ -74,33 +80,50 @@ public class SpecializeStructureAction extends SRAction {
                 container = (Namespace) dlg.getSelectedElement();
             }
 
-            Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
-
-            ArrayList<NamedElement> members = new ArrayList<>();
-            for(NamedElement ne : specific.getOwnedMember()){
-                members.add(ne);
-            }
-            // specific.getOwnedMember().clear();
-//            for(NamedElement member : members){
-//                if(member instanceof RedefinableElement) {
-//                  //  System.out.println(member.getClassType().getName() + " removing " + member.getName());
-//                    specific.getOwnedMember().remove(member);
-//                    member.dispose();
-//                }
-//            }
-
-
-            Utils.createGeneralization(classifier, specific);
-            for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
-                if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
-                    final RedefinableElement redefEl = (RedefinableElement) ne;
-                                     RedefineAttributeAction action = new RedefineAttributeAction(specific, redefEl, recursionMode, null, individualMode);
-                                    action.run();
-                    }
-            }
+            Classifier specific = createSpecialClassifier(container, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>());
             SessionManager.getInstance().closeSession();
-            checkAssociationsForInheritance(specific, classifier);
+
+            checkAssociationsForInheritance(specific,classifier);
          }
+    }
+
+    public Classifier createSpecialClassifier(Namespace container, List<RedefinableElement> traveled, List<Classifier> visited) {
+
+        for (final Class<? extends Classifier> c : UNSPECIALIZABLE_CLASSIFIERS) {
+            if (c.isAssignableFrom(classifier.getClass())) {
+//                Application.getInstance().getGUILog()
+//                        .log("[WARNING] " + (structuralFeature != null ? structuralFeature.getQualifiedName() : "< >") + " is a " + c.getSimpleName() + ", which is not specializable.");
+                return null;
+            }
+        }
+        if(visited.contains(classifier)){
+
+        }
+        Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
+        visited.add(specific);
+        visited.add(classifier);
+        Utils.createGeneralization(classifier, specific);
+        for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
+            if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
+                final RedefinableElement redefEl = (RedefinableElement) ne;
+                                 SetOrCreateRedefinableElementAction action = new SetOrCreateRedefinableElementAction(specific, redefEl, traveled, recursionMode, null, individualMode);
+                                action.redefineAttribute(specific, redefEl, recursionMode, traveled,visited, individualMode);
+                }
+        }
+        return specific;
+    }
+
+    private void deleteDiagrams(Namespace specific, ArrayList<Diagram> diagrams) {
+        for(NamedElement ne : specific.getOwnedMember()){
+            if(ne instanceof Diagram){
+                diagrams.add((Diagram) ne);
+            }
+            else if(ne instanceof Namespace){
+                for(NamedElement nam : ((Namespace) ne).getOwnedMember()){
+                    deleteDiagrams((Namespace) nam, diagrams);
+                }
+            }
+        }
     }
 
 
