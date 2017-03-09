@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.test.tests;
 
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.plugins.PluginUtils;
+import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.test.framework.ApplicationStartClassRunner;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,6 +30,7 @@ public class JUnit4Example {
         System.out.println("Plugin Count - " + PluginUtils.getPlugins().size());
         PluginUtils.getPlugins().stream().map(Plugin::getDescriptor).forEach(descriptor -> System.out.println(descriptor.getName() + " v" + descriptor.getVersion() + " by " + descriptor.getProvider()));
         //setDoNotUseSilentMode(true);
+        System.out.println("MDK Version: " + MDKPlugin.VERSION);
         Assert.assertTrue(true);
     }
 }

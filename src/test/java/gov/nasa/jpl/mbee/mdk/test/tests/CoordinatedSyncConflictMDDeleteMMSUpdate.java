@@ -15,6 +15,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.test.framework.ApplicationStartClassRunner;
 import org.junit.Assert;
 
 import java.io.File;
@@ -35,14 +36,14 @@ import org.junit.runner.RunWith;
  * @JIRA MAGICDRAW-263
  *
  */
-@RunWith(MagicDrawTestRunner.class)
+@RunWith(ApplicationStartClassRunner.class)
 public class CoordinatedSyncConflictMDDeleteMMSUpdate {
 
     private static Element targetElement;
     private static Element targetPackage;
     private static String filename = "/CSyncTest.mdzip";
     private static File testProjectFile;
-    private static File credentials = new File(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResource("/mms.properties").getPath());
+    private static File credentials = /*new File(CoordinatedSyncConflictMDDeleteMMSUpdate.class.getResource("/mms.properties").getPath())*/ null;
 
     public CoordinatedSyncConflictMDDeleteMMSUpdate() {
     }

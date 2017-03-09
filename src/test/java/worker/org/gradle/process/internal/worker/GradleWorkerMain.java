@@ -93,12 +93,13 @@ public class GradleWorkerMain {
         FilteringClassLoader filteringClassLoader = new FilteringClassLoader(getClass().getClassLoader(), filteringClassLoaderSpec);
         URLClassLoader classLoader = new URLClassLoader(implementationClassPath, filteringClassLoader);*/
 
-        Field systemClassLoaderField = ClassLoader.class.getDeclaredField("scl");
-        systemClassLoaderField.setAccessible(true);
-        systemClassLoaderField.set(null, getClass().getClassLoader());
+        //Field systemClassLoaderField = ClassLoader.class.getDeclaredField("scl");
+        //systemClassLoaderField.setAccessible(true);
+        //systemClassLoaderField.set(null, getClass().getClassLoader());
 
         //Class<? extends Callable> workerClass = ClassLoader.loadClass("org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker").asSubclass(Callable.class);
-        Class<? extends Callable> workerClass = Class.forName("org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker", false, getClass().getClassLoader()).asSubclass(Callable.class);
+        //Class<? extends Callable> workerClass = Class.forName("org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker", false, getClass().getClassLoader()).asSubclass(Callable.class);
+        Class<? extends Callable> workerClass = Class.forName("gov.nasa.jpl.mbee.mdk.test.framework.MagicDrawClassLoaderWorker", false, getClass().getClassLoader()).asSubclass(Callable.class);
         Callable<Void> main = workerClass.getConstructor(DataInputStream.class).newInstance(instr);
         main.call();
     }
