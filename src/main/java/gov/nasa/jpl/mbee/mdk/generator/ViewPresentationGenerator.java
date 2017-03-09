@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -221,7 +222,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (viewResponse != null && (viewElementsJsonArray = viewResponse.get("elements")) != null && viewElementsJsonArray.isArray()) {
                 Queue<String> instanceIDs = new LinkedList<>();
                 Queue<String> slotIDs = new LinkedList<>();
-                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
+                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(),
+                        generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
                 for (JsonNode elementJsonNode : viewElementsJsonArray) {
                     if (!elementJsonNode.isObject()) {
                         continue;
@@ -522,11 +524,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ValidationRuleViolation violation = new ValidationRuleViolation(view, "[IN MODULE] This view is in a module and was not processed.");
                 viewInProject.addViolation(violation);
                 skippedViews.add(view);
+                continue;
             }
             if (!viewIDs.contains(Converters.getElementToIdConverter().apply(view))) {
                 ValidationRuleViolation violation = new ValidationRuleViolation(view, "View does not exist on MMS. Generation skipped.");
                 viewDoesNotExist.addViolation(violation);
                 skippedViews.add(view);
+                continue;
             }
         }
 
@@ -543,9 +547,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (skippedViews.contains(view)) {
                     continue;
                 }
+
                 // Using null package with intention to cancel session and delete instances to prevent model validation error.
                 handlePes(view2pe.get(view), null);
                 instanceUtils.updateOrCreateConstraintFromPresentationElements(view, view2pe.get(view));
+
             }
 
             if (handleCancel(progressStatus)) {
@@ -751,6 +757,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
         ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);
         // this checks images generated from the local generation against what's on the web based on checksum
+        // TODO @DONBOT restore the image checking functionality after MMS endpoint and handling is in place
+        /*
         iv.validate(project);
         // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
         for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
@@ -760,7 +768,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
-        /*vss.add(iv.getSuite());*/
+        */
         if (showValidation) {
             if (suite.hasErrors() || iv.getSuite().hasErrors()) {
                 Utils.displayValidationWindow(vss, "View Generation Validation");

@@ -161,7 +161,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                             break;
                         }
                     }
-                    // if no holding bin in server collection && model was element && (depth > 0 || depth == -1)
+                    // if no holding bin in server collection && model was element && (depth != 0), check holding bin too
                     if (!found) {
                         response = MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
                         if (response != null && (value = response.get("elements")) != null && value.isArray()) {
@@ -171,6 +171,21 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                 }
             }
+
+            // TODO @donbot insert this into filtering to prevent manual syncback
+            ArrayList<ObjectNode> viewGen = new ArrayList<>();
+            String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+            for (ObjectNode binElement : serverElements) {
+                if ((value = binElement.get("ownerId")) != null && value.isTextual() && value.asText().equals(holdingBinId)
+                        && (value = binElement.get("type")) != null && value.isTextual() && value.asText().equals("InstanceSpecification") ) {
+                    viewGen.add(binElement);
+                }
+                else if ((value = binElement.get("id")) != null && value.isTextual() && value.asText().contains("-slot-_17_0_5_1_407019f_1430628276506_565_12080") ) {
+                    viewGen.add(binElement);
+                }
+            }
+            serverElements.removeAll(viewGen);
+
             return serverElements;
         }
         return new ArrayList<>();
