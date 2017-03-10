@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.jms;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
@@ -115,22 +116,17 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                 if (changeJsonNode == null || !changeJsonNode.isArray()) {
                     continue;
                 }
-                for (JsonNode elementJsonNode : changeJsonNode) {
-                    if (elementJsonNode == null || !elementJsonNode.isObject()) {
-                        continue;
-                    }
-                    JsonNode sysmlIdJsonNode = elementJsonNode.get(MDKConstants.ID_KEY);
-                    if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
-                        continue;
-                    }
+                for (JsonNode sysmlIdJsonNode : changeJsonNode) {
                     try {
-                        if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply((ObjectNode) elementJsonNode, project, false, project.getModel()) == null) {
+                        ObjectNode elementJsonNode = JacksonUtils.getObjectMapper().createObjectNode();
+                        elementJsonNode.put(MDKConstants.ID_KEY, sysmlIdJsonNode.asText());
+                        if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply(elementJsonNode, project, false, project.getPrimaryModel()) == null) {
                             continue;
                         }
                     } catch (ImportException | ReadOnlyElementException ignored) {
                         continue;
                     }
-                    inMemoryJMSChangelog.addChange(sysmlIdJsonNode.asText(), (ObjectNode) elementJsonNode, entry.getValue());
+                    inMemoryJMSChangelog.addChange(sysmlIdJsonNode.asText(), null, entry.getValue());
                 }
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
