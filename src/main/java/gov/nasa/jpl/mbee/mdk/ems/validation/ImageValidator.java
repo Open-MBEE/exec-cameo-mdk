@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk.ems.validation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -40,6 +41,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -66,60 +68,41 @@ public class ImageValidator {
     }
 
     public void validate(Project project) {
-        URIBuilder requestUri;
-        String basePath = "";
-        requestUri = MMSUtils.getServiceUri(project);
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
         if (requestUri == null) {
             return;
         }
-        basePath = requestUri.getPath() + "/artifacts/";
         for (String key : images.keySet()) {
             // customize request
             Element e = Converters.getIdToElementConverter().apply(key, project);
+
             JsonNode value;
+
             String cs = "";
-            String extension = "";
-            if ((value = images.get(key).get("cs")) != null && value.isTextual())
-                cs = value.asText(); 
-            if ((value = images.get(key).get("extension")) != null && value.isTextual())
-                extension = value.asText(); 
-            String id = key.replace(".", "%2E");
-            requestUri.setPath(basePath + id);
+            if ((value = images.get(key).get("cs")) != null && value.isTextual()) {
+                cs = value.asText();
+            }
             requestUri.setParameter("cs", cs);
+
+            String extension = "";
+            if ((value = images.get(key).get("extension")) != null && value.isTextual()) {
+                extension = value.asText();
+            }
             requestUri.setParameter("extension", extension);
 
             // do request
             try {
-                MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-            } catch (IOException e1) {
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
+                request.setHeader("Accept", "image/" + extension);
+                MMSUtils.sendMMSRequest(project, request);
+            } catch (IOException | URISyntaxException e1) {
+                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while validating images. Image validation cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
-            } catch (URISyntaxException e1) {
-                e1.printStackTrace();
+                return;
             } catch (ServerException e1) {
-                if (e1.getCode() != HttpURLConnection.HTTP_OK) {
-                    ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web");
-                    v.addAction(new ExportImage(e, allImages));
-                }
-                //TODO more error handling, if necessary
-//                e1.printStackTrace();
+                ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web.");
+                v.addAction(new ExportImage(e, allImages));
             }
-
-//            GetMethod get = new GetMethod(baseurl);
-//            int status = 0;
-//            try {
-//                HttpClient client = new HttpClient();
-//                ViewEditUtils.setCredentials(client, baseurl, get);
-//                client.executeMethod(get);
-//                status = get.getStatusCode();
-//            } catch (Exception ex) {
-//                //printStackTrace(ex, gl);
-//            } finally {
-//                get.releaseConnection();
-//            }
-//
-//            if (status != HttpURLConnection.HTTP_OK) {
-//                rule.addViolation(v);
-//            }
         }
     }
 
