@@ -641,13 +641,13 @@ public class MMSUtils {
         if (ProjectUtilities.getProject(iProject).isRemote()) {
             resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
         }
-        projectObjectNode.put(MDKConstants.TWC_ID, resourceId);
+        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
         String categoryId = "";
         if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject && !resourceId.isEmpty()) {
             categoryId = EsiUtils.getCategoryID(resourceId);
         }
         projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        projectObjectNode.put(MDKConstants.PROJECT_URI, iProject.getProjectDescriptor().getLocationUri().toString());
+        projectObjectNode.put(MDKConstants.PROJECT_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
     }
 
