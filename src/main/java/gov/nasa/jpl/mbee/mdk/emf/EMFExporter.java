@@ -33,7 +33,6 @@ package gov.nasa.jpl.mbee.mdk.emf;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.nomagic.ci.persistence.IAttachedProject;
-import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
@@ -260,7 +259,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         TWC_ID(
                 (element, project, objectNode) -> {
                     if (project.isRemote()) {
-                        objectNode.put(MDKConstants.TWC_ID, element.getID());
+                        objectNode.put(MDKConstants.TWC_ID_KEY, element.getID());
                     }
                     return objectNode;
                 }
