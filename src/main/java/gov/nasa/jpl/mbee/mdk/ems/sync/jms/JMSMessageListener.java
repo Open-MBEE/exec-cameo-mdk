@@ -128,8 +128,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     }
                     inMemoryJMSChangelog.addChange(sysmlIdJsonNode.asText(), null, entry.getValue());
                 }
+                SyncStatusConfigurator.getSyncStatusAction().update();
             }
-            SyncStatusConfigurator.getSyncStatusAction().update();
         }
         else if ((syncedJsonNode = messageJsonNode.get("synced")) != null && syncedJsonNode.isObject()) {
             JsonNode sourceJsonNode = messageJsonNode.get("source");
