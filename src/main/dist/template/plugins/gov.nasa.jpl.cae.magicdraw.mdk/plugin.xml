@@ -1,6 +1,6 @@
 <plugin
         id="gov.nasa.jpl.mbee.mdk"
-        name="MDK"
+        name="Model Development Kit"
         internalVersion="${internal.version}"
         version="${human.version}"
         provider-name="NASA / Jet Propulsion Laboratory / Caltech"

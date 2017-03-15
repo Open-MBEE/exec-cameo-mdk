@@ -266,7 +266,7 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     include 'gov/nasa/jpl/mbee/mdk/test/framework/**'
     include 'org/**'
     include 'worker/**'
-    exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
+    //exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
         attributes(
