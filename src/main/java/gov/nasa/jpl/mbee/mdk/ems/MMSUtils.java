@@ -451,8 +451,25 @@ public class MMSUtils {
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
             for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
                         && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
+                    return value.asText();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static String getUri(Project project)
+            throws IOException, URISyntaxException, ServerException {
+        URIBuilder uriBuilder = getServiceProjectsUri(project);
+        ObjectNode response = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        JsonNode arrayNode;
+        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+            JsonNode value;
+            for (JsonNode projectNode : arrayNode) {
+                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                        && ((value = projectNode.get(MDKConstants.TWC_URI_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
                     return value.asText();
                 }
             }
@@ -504,23 +521,6 @@ public class MMSUtils {
             }
         }
         return false;
-    }
-
-    public static String getProjectOrg(Project project)
-            throws IOException, URISyntaxException, ServerException {
-        URIBuilder uriBuilder = getServiceProjectsUri(project);
-        ObjectNode response = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
-        JsonNode arrayNode;
-        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-            JsonNode value;
-            for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
-                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
-                    return value.asText();
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -646,8 +646,28 @@ public class MMSUtils {
             categoryId = EsiUtils.getCategoryID(resourceId);
         }
         projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        projectObjectNode.put(MDKConstants.PROJECT_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
+        projectObjectNode.put(MDKConstants.TWC_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
+    }
+
+    public static ObjectNode getRefObjectNode(Project project) {
+        ObjectNode refObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
+        /*
+            "id": "master",
+            "name": "master",
+            "twcId" : ""
+            "uri" : ""
+            "qualifiedId": "master",
+            "qualifiedName": "master",
+         */
+        String name = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
+        refObjectNode.put(MDKConstants.ID_KEY, name);
+        refObjectNode.put(MDKConstants.NAME_KEY, name);
+        refObjectNode.put(MDKConstants.TWC_ID_KEY, EsiUtils.getBranchID(project.getPrimaryProject().getLocationURI()).toString());
+        refObjectNode.put(MDKConstants.TWC_URI_KEY, project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString());
+//        refObjectNode.put(MDKConstants.QUALIFIED_ID_KEY, "");
+//        refObjectNode.put(MDKConstants.QUALIFIED_NAME_KEY, "");
+        return refObjectNode;
     }
 
 }
