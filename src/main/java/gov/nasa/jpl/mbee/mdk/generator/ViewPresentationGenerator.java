@@ -593,6 +593,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 */
             }
 
+            String viewInstanceBinId = "view_instances_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
             while (!instanceToView.isEmpty()) {
                 Pair<InstanceSpecification, Element> pair = instanceToView.remove();
                 InstanceSpecification instance = pair.getFirst();
@@ -606,6 +607,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (clientInstanceSpecificationJson == null) {
                     continue;
                 }
+                // override owner of pei to store parallel to the model
+                clientInstanceSpecificationJson.put(MDKConstants.OWNER_ID_KEY, viewInstanceBinId);
                 ObjectNode serverInstanceSpecificationJson = instanceSpecificationMap.containsKey(Converters.getElementToIdConverter().apply(instance)) ?
                         instanceSpecificationMap.get(Converters.getElementToIdConverter().apply(instance)).getFirst() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
@@ -614,6 +617,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                     elementsArrayNode.add(clientInstanceSpecificationJson);
                 }
+
                 for (Slot slot : instance.getSlot()) {
                     JsonNode clientSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
                     if (clientSlotJson == null) {
@@ -753,8 +757,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 localSyncTransactionCommitListener.setDisabled(false);
             }
         }
-        // TODO re-enable after fixing images
-        /*
         ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);
         // this checks images generated from the local generation against what's on the web based on checksum
         iv.validate(project);
@@ -766,9 +768,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
-        if (showValidation) {
-            if (suite.hasErrors() || iv.getSuite().hasErrors()) {
-        */
         if (showValidation) {
             if (suite.hasErrors()) {
                 Utils.displayValidationWindow(vss, "View Generation Validation");

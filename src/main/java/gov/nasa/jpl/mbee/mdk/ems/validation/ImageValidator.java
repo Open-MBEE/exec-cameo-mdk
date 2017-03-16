@@ -72,9 +72,16 @@ public class ImageValidator {
         if (requestUri == null) {
             return;
         }
+        // TODO @donbot remove these three lines to switch to the elements endpoint
+        String path = requestUri.getPath();
+        path = path.replace("element", "artifact");
+        requestUri.setPath(path);
+
         for (String key : images.keySet()) {
             // customize request
             Element e = Converters.getIdToElementConverter().apply(key, project);
+            String id = key.replace(".", "%2E");
+            requestUri.setPath(requestUri.getPath() + id);
 
             JsonNode value;
 
