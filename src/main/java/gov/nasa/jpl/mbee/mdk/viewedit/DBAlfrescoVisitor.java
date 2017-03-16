@@ -196,7 +196,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #674 -- Update the type and id: was hard coded.
         //
         entry.put("type", "Image");
-        entry.put(MDKConstants.SYSML_ID_KEY, Converters.getElementToIdConverter().apply(image.getImage()));
+        entry.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(image.getImage()));
         entry.put("title", image.getTitle());
         curContains.peek().add(entry);
 
@@ -430,7 +430,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             view.put("type", "View");
         }
         String id = Converters.getElementToIdConverter().apply(e);
-        view.put(MDKConstants.SYSML_ID_KEY, id);
+        view.put(MDKConstants.ID_KEY, id);
         views.put(id, view);
         Set<String> viewE = new HashSet<String>();
         viewElements.push(viewE);

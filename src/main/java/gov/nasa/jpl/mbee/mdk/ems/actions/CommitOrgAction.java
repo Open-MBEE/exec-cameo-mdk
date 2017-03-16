@@ -110,7 +110,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             if ((arrayNode = response.get("elements")) != null && arrayNode.isArray()) {
                 for (JsonNode orgNode : arrayNode) {
                     JsonNode value;
-                    if ((value = orgNode.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()) {
+                    if ((value = orgNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
                         if (value.asText() == org) {
                             Application.getInstance().getGUILog().log("[WARNING] Org already exists. Org commit cancelled.");
                             return org;
@@ -130,7 +130,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         requestData.put("source", "magicdraw");
         requestData.put("mdkVersion", MDKPlugin.VERSION);
         ObjectNode orgObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        orgObjectNode.put(MDKConstants.SYSML_ID_KEY, org);
+        orgObjectNode.put(MDKConstants.ID_KEY, org);
         orgObjectNode.put(MDKConstants.NAME_KEY, org);
         elementsArrayNode.add(orgObjectNode);
 

@@ -57,7 +57,7 @@ public class AspectRemedyAction extends GenericRuleViolationAction {
             }
             for (NamedElement aspectProps : aspect.getOwnedMember()) {
                 if (aspectProps instanceof RedefinableElement) {
-                    RedefineAttributeAction raa = new RedefineAttributeAction(special, (RedefinableElement) aspectProps);
+                    SetOrCreateRedefinableElementAction raa = new SetOrCreateRedefinableElementAction(special, (RedefinableElement) aspectProps, false);
                     raa.run();
                 }
             }

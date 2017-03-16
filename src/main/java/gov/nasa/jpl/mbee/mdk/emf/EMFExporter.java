@@ -33,13 +33,9 @@ package gov.nasa.jpl.mbee.mdk.emf;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.nomagic.ci.persistence.IAttachedProject;
-import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
-import com.nomagic.magicdraw.esi.EsiUtilsInternal;
-import com.nomagic.magicdraw.foundation.MDObject;
-import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -122,39 +118,40 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (eObject == null) {
             return null;
         }
-        if (eObject instanceof InstanceSpecification && ((InstanceSpecification) eObject).getStereotypedElement() != null) {
-            return getEID(((InstanceSpecification) eObject).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
+        if ( !(eObject instanceof Element)) {
+            return EcoreUtil.getID(eObject);
+        }
+        Element element = (Element) eObject;
+        Project project = Project.getProject(element);
+
+        // custom handling of elements with non-fixed ids in local projects
+        if (element instanceof Model && project.getPrimaryModel() == element) {
+            return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
+        }
+        if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
+            return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
         }
         /*if (eObject instanceof TimeExpression && ((TimeExpression) eObject).get_timeEventOfWhen() != null) {
             return getEID(((TimeExpression) eObject).get_timeEventOfWhen()) + MDKConstants.TIME_EXPRESSION_ID_SUFFIX;
         }*/
-        if (eObject instanceof ValueSpecification && ((ValueSpecification) eObject).getOwningSlot() != null) {
-            ValueSpecification slotValue = (ValueSpecification) eObject;
+        if (element instanceof ValueSpecification && ((ValueSpecification) element).getOwningSlot() != null) {
+            ValueSpecification slotValue = (ValueSpecification) element;
             return getEID(slotValue.getOwningSlot()) + MDKConstants.SLOT_VALUE_ID_SEPARATOR + slotValue.getOwningSlot().getValue().indexOf(slotValue) + "-" + slotValue.eClass().getName().toLowerCase();
         }
-        if (eObject instanceof Slot) {
-            Slot slot = (Slot) eObject;
-            if (slot.getOwningInstance() != null && ((Slot) eObject).getDefiningFeature() != null) {
+        if (element instanceof Slot) {
+            Slot slot = (Slot) element;
+            if (slot.getOwningInstance() != null && ((Slot) element).getDefiningFeature() != null) {
                 return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
             }
         }
-        if (eObject instanceof Element) {
-            Element element = (Element) eObject;
-            Project project = Project.getProject(element);
-            if (eObject instanceof Model && project.getPrimaryModel() == element) {
-                return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
-            }
-            IProject iProject = ProjectUtilities.getAttachedProject(element);
-            // eObject is in local primary model OR TWC online copy of a local mount
-            if ((iProject == null && !project.isRemote())
-                    || (iProject != null && iProject.getLocationURI().isFile())) {
-                return element.getLocalID();
-            }
-            // eObject is in TWC primary model OR online mount
-            // NOTE: assumes that project.getLocationURI().isFile() === !project.isRemote()
-            return element.getID();
-        }
-        return EcoreUtil.getID(eObject);
+//        // eObject is in local primary model OR TWC online copy of a local mount
+//        // NOTE: assumes that project.getLocationURI().isFile() === !project.isRemote()
+//        IProject iProject = ProjectUtilities.getAttachedProject(element);
+//        if ((iProject == null && !project.isRemote())
+//                || (iProject != null && iProject.getLocationURI().isFile())) {
+//            return element.getLocalID();
+//        }
+        return element.getLocalID();
     }
 
     private static void dumpUMLPackageLiterals() {
@@ -176,10 +173,39 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     }
 
     private enum PreProcessor {
-        TYPE(
+        APPLIED_STEREOTYPE(
                 (element, project, objectNode) -> {
-                    String type = element instanceof Model && !element.equals(project.getPrimaryModel()) ? "Mount" : element.eClass().getName();
-                    objectNode.put(MDKConstants.TYPE_KEY, type);
+                    if (element instanceof Model && !element.equals(project.getPrimaryModel())) {
+                        return objectNode;
+                    }
+                    ArrayNode applied = StereotypesHelper.getStereotypes(element).stream().map(stereotype -> TextNode.valueOf(getEID(stereotype))).collect(MDKCollectors.toArrayNode());
+                    objectNode.set("_appliedStereotypeIds", applied);
+                    return objectNode;
+                }
+        ),
+        ATTACHED_PROJECT(
+                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && !(element instanceof Model) ? null : objectNode
+        ),
+        COMMENT(
+                (element, project, objectNode) -> {
+                    if (!(element instanceof Comment)) {
+                        return objectNode;
+                    }
+                    Comment comment = (Comment) element;
+                    return comment.getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner() ? null : objectNode;
+                }
+        ),
+        /*CONNECTOR_END(
+                (element, project, objectNode) -> element instanceof ConnectorEnd ? null : objectNode
+        ),
+        DIAGRAM(
+                (element, project, objectNode) -> element instanceof Diagram ? null : objectNode
+        ),*/
+        DIAGRAM_TYPE(
+                (element, project, objectNode) -> {
+                    if (element instanceof Diagram) {
+                        objectNode.put(MDKConstants.DIAGRAM_TYPE_KEY, ((Diagram) element).get_representation() != null ? ((Diagram) element).get_representation().getType() : null);
+                    }
                     return objectNode;
                 }
         ),
@@ -192,13 +218,26 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     return objectNode;
                 }
         ),
-        APPLIED_STEREOTYPE(
+        MOUNT(
                 (element, project, objectNode) -> {
-                    if (element instanceof Model && !element.equals(project.getPrimaryModel())) {
+                    if (!(element instanceof Model)
+                            || element.equals(project.getPrimaryModel())
+                            || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY) ) {
                         return objectNode;
                     }
-                    ArrayNode applied = StereotypesHelper.getStereotypes(element).stream().map(stereotype -> TextNode.valueOf(getEID(stereotype))).collect(MDKCollectors.toArrayNode());
-                    objectNode.set("_appliedStereotypeIds", applied);
+                    Model model = (Model) element;
+                    IAttachedProject attachedProject = ProjectUtilities.getAttachedProjects(project.getPrimaryProject()).stream().filter(ap -> ProjectUtilities.isAttachedProjectRoot(model, ap)).findAny().orElse(null);
+                    if (attachedProject == null) {
+                        return null;
+                    }
+                    if (!ProjectUtilities.isRemote(attachedProject) || attachedProject.getLocationURI().isFile()) {
+                        return null;
+                    }
+                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
+                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject.getPrimaryProject()));
+                    objectNode.put(MDKConstants.NAME_KEY, EsiUtils.getCurrentBranch(attachedProject).getName());
+                    objectNode.put("teamworkCloudVersion", ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
+                    //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
                     return objectNode;
                 }
         ),
@@ -213,30 +252,27 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     return objectNode;
                 }
         ),
-        VALUE_SPECIFICATION(
-                (element, project, objectNode) -> element instanceof ValueSpecification ? null : objectNode
-        ),
-        /*CONNECTOR_END(
-                (element, project, objectNode) -> element instanceof ConnectorEnd ? null : objectNode
-        ),
-        DIAGRAM(
-                (element, project, objectNode) -> element instanceof Diagram ? null : objectNode
-        ),*/
-        COMMENT(
-                (element, project, objectNode) -> {
-                    if (!(element instanceof Comment)) {
-                        return objectNode;
-                    }
-                    Comment comment = (Comment) element;
-                    return comment.getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner() ? null : objectNode;
-                }
-        ),
         SYNC(
                 (element, project, objectNode) -> element == null || Converters.getElementToIdConverter().apply(element).endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
                         element.getOwner() != null && Converters.getElementToIdConverter().apply(element.getOwner()).endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
         ),
-        ATTACHED_PROJECT(
-                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && !(element instanceof Model) ? null : objectNode
+        TWC_ID(
+                (element, project, objectNode) -> {
+                    if (project.isRemote()) {
+                        objectNode.put(MDKConstants.TWC_ID_KEY, element.getID());
+                    }
+                    return objectNode;
+                }
+        ),
+        TYPE(
+                (element, project, objectNode) -> {
+                    String type = element instanceof Model && !element.equals(project.getPrimaryModel()) ? "Mount" : element.eClass().getName();
+                    objectNode.put(MDKConstants.TYPE_KEY, type);
+                    return objectNode;
+                }
+        ),
+        VALUE_SPECIFICATION(
+                (element, project, objectNode) -> element instanceof ValueSpecification ? null : objectNode
         ),
         VIEW(
                 (element, project, objectNode) -> {
@@ -249,40 +285,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         return objectNode;
                     }
                     objectNode.set(MDKConstants.CONTENTS_KEY, DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null));
-                    return objectNode;
-                }
-        ),
-        DIAGRAM_TYPE(
-                (element, project, objectNode) -> {
-                    if (element instanceof Diagram) {
-                        objectNode.put(MDKConstants.DIAGRAM_TYPE_KEY, ((Diagram) element).get_representation() != null ? ((Diagram) element).get_representation().getType() : null);
-                    }
-                    return objectNode;
-                }
-        ),
-        MOUNT(
-                (element, project, objectNode) -> {
-                    if (!(element instanceof Model)
-                            || element.equals(project.getPrimaryModel())
-                            || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY) ) {
-                        return objectNode;
-                    }
-                    if (!(element instanceof Model)) {
-                        return objectNode;
-                    }
-                    Model model = (Model) element;
-                    IAttachedProject attachedProject = ProjectUtilities.getAttachedProjects(project.getPrimaryProject()).stream().filter(ap -> ProjectUtilities.isAttachedProjectRoot(model, ap)).findAny().orElse(null);
-                    if (attachedProject == null) {
-                        return null;
-                    }
-                    if (!ProjectUtilities.isRemote(attachedProject) || attachedProject.getLocationURI().isFile()) {
-                        return null;
-                    }
-                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
-                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject.getPrimaryProject()));
-                    objectNode.put(MDKConstants.NAME_KEY, EsiUtilsInternal.getCurrentBranch(attachedProject).getName());
-                    objectNode.put("teamworkCloudVersion", ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
-                    //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
                     return objectNode;
                 }
         );
@@ -397,7 +399,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     /*if (element instanceof ValueSpecification && !(element instanceof TimeExpression)) {
                         return objectNode;
                     }*/
-                    objectNode.put(MDKConstants.SYSML_ID_KEY, getEID(element));
+                    objectNode.put(MDKConstants.ID_KEY, getEID(element));
                     return objectNode;
                 }
         ),

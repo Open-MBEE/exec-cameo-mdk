@@ -37,10 +37,10 @@ public class RedefineActionAction extends GenericRuleViolationAction {
     }
 
     public static RedefinableElement redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType) {
-        return redefineAttribute(clazz, re, createSpecializedType, new ArrayList<Property>());
+        return redefineAttribute(clazz, re, createSpecializedType, new ArrayList<RedefinableElement>());
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final List<Property> traveled) {
+    public static RedefinableElement redefineAttribute(final Classifier clazz, final RedefinableElement re, final boolean createSpecializedType, final List<RedefinableElement> traveled) {
         if (re.isLeaf()) {
             Application.getInstance().getGUILog().log(re.getQualifiedName() + " is a leaf. Cannot redefine further.");
         }
@@ -67,7 +67,7 @@ public class RedefineActionAction extends GenericRuleViolationAction {
                 }
                 redefinedElement.getRedefinedElement().add(re);
                 if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
-                    CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true, traveled);
+                    CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true, traveled, null, false);
                 }
                 return redefinedElement;
             }

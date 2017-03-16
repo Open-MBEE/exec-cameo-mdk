@@ -19,7 +19,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.*;
 import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -33,7 +32,6 @@ import java.awt.event.ActionEvent;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -151,7 +149,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 Element element = entry.getKey().getFirst();
                 ObjectNode objectNode = entry.getKey().getSecond();
                 Exception exception = entry.getValue();
-                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                 if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                     continue;
                 }

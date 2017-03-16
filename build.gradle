@@ -1,5 +1,6 @@
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.stream.Collectors
 import java.util.zip.ZipFile
 
 String buildBranch = project.getProperties().get('buildBranch');
@@ -41,9 +42,9 @@ repositories {
     }
     else {
         ivy {
-            // http://d1g91r27pzl568.cloudfront.net/magicdraw184sp1/MagicDraw_184_sp1_no_install.zip
-            // http://d1g91r27pzl568.cloudfront.net/sysml184sp1/SysML_Plugin_184_sp1_bundle.zip
-            // http://d1g91r27pzl568.cloudfront.net/cst184sp1/Cameo_Simulation_Toolkit_184_sp1.zip
+            // http://d1g91r27pzl568.cloudfront.net/magicdraw185/MagicDraw_185_no_install.zip
+            // http://d1g91r27pzl568.cloudfront.net/sysml185/SysML_Plugin_185_bundle.zip
+            // http://d1g91r27pzl568.cloudfront.net/cst185/Cameo_Simulation_Toolkit_185.zip
             url 'http://d1g91r27pzl568.cloudfront.net/'
             layout 'pattern', {
                 artifact '/[module][revision]/[classifier].[ext]'
@@ -63,9 +64,9 @@ dependencies {
         preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0-SNAPSHOT', ext: 'zip'
     }
     else {
-        preCompile group: 'com.nomagic', name: 'magicdraw', version: '184sp1', classifier: 'MagicDraw_184_sp1_no_install', ext: 'zip'
-        preCompile group: 'com.nomagic', name: 'sysml', version: '184sp1', classifier: 'SysML_Plugin_184_sp1_bundle', ext: 'zip'
-        preCompile group: 'com.nomagic', name: 'cst', version: '184sp1', classifier: 'Cameo_Simulation_Toolkit_184_sp1', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'magicdraw', version: '185', classifier: 'MagicDraw_185_no_install', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'sysml', version: '185', classifier: 'SysML_Plugin_185_bundle', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'cst', version: '185', classifier: 'Cameo_Simulation_Toolkit_185', ext: 'zip'
     }
     
     // SLF4J API
@@ -120,7 +121,7 @@ dependencies {
     
 	// Test Dependencies
     //testCompile 'junit:junit:4.11'
-    //compile 'junit:junit:4.11'
+    testCompile group: 'org.gradle', name: 'gradle-core', version: '3.1'
 }
 
 task extractDependencies {
@@ -265,7 +266,7 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     include 'gov/nasa/jpl/mbee/mdk/test/framework/**'
     include 'org/**'
     include 'worker/**'
-    exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
+    //exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
         attributes(
@@ -352,7 +353,7 @@ task runJava(type: JavaExec) {
     errorOutput = System.err
 
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx4000M', '-Xss1024M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
@@ -425,7 +426,15 @@ test {
      * @author igomes
      */
     classpath = files()
-    jvmArgs = ['-jar', testsHackJar.outputs.files.singleFile, '-cp', fileTree(dir: 'build/generated-dist', include: '**/*.jar').asPath + /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */fileTree(dir: 'build/install', include: ['lib/**/*.jar']).asPath + File.pathSeparator + testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
+    def arguments = ['-jar', testsHackJar.outputs.files.singleFile, '-cp',
+            fileTree(dir: 'build/generated-dist', include: '**/*.jar').getFiles().stream().map{i -> i.getAbsolutePath()}.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+                    /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */
+                    fileTree(dir: 'build/install', include: ['lib/**/*.jar']).getFiles().stream().map{i -> i.getAbsolutePath()}.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+                    testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
+    if (buildAccess == 'internal') {
+        arguments.addAll(['-DFL_FORCE_USAGE=true', '-DFL_SERVER_ADDRESS=cae-license-uat.jpl.nasa.gov', '-DFL_SERVER_PORT=1101', '-DFL_EDITION=18.5'])
+    }
+    jvmArgs = arguments
 }
 
 test.dependsOn testsJar

@@ -8,6 +8,7 @@ import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -43,7 +44,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 
 /**
  * Created by igomes on 9/26/16.
@@ -56,8 +56,6 @@ public class MMSUtils {
     private static final int CHECK_CANCEL_DELAY = 100;
 
     private static String developerUrl = "";
-
-    private static final Pattern CENSORED_PATTERN = Pattern.compile(".*\"password\" :.*");
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
@@ -136,7 +134,7 @@ public class MMSUtils {
         for (String id : elementIds) {
             // create json for id strings, add to request array
             ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
-            element.put(MDKConstants.SYSML_ID_KEY, id);
+            element.put(MDKConstants.ID_KEY, id);
             idsArrayNode.add(element);
         }
 
@@ -251,8 +249,7 @@ public class MMSUtils {
         if (logBody) {
             try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
                 String requestBody = IOUtils.toString(inputStream);
-//                if (CENSORED_PATTERN.matcher(requestBody).find()) {
-                if (request.getURI().getPath().contains("/api/login")) {
+                if (request.getURI().getPath().contains("alfresco/service/api/login")) {
                     requestBody = "--- Censored ---";
                 }
                 System.out.println(" - Body: " + requestBody);
@@ -454,7 +451,7 @@ public class MMSUtils {
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
             for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
                         && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
                     return value.asText();
                 }
@@ -477,7 +474,7 @@ public class MMSUtils {
         if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
             JsonNode value;
             for (JsonNode projectJson : projectsJson) {
-                if ((value = projectJson.get(MDKConstants.SYSML_ID_KEY)) != null && value.isTextual()
+                if ((value = projectJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()
                         && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                     return true;
                 }
@@ -517,7 +514,7 @@ public class MMSUtils {
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
             for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.SYSML_ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
+                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
                         && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
                     return value.asText();
                 }
@@ -635,24 +632,21 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(IProject iProject) {
-        String categoryId = null;
-        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject) {
-            // TODO @donbot enable full version below after 18.5GA
-//            String categoryId = (project.isRemote() ? EsiUtils.getCategoryID(resourceId) : "local" );
-        }
-        return getProjectObjectNode(iProject.getName(), Converters.getIProjectToIdConverter().apply(iProject), categoryId);
-    }
-
-    private static ObjectNode getProjectObjectNode(String name, String projectId, String categoryId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.SYSML_ID_KEY, projectId);
-        if (name != null && !name.isEmpty()) {
-            projectObjectNode.put(MDKConstants.NAME_KEY, name);
+        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
+        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
+        String resourceId = "";
+        if (ProjectUtilities.getProject(iProject).isRemote()) {
+            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
         }
-        if (categoryId != null && !categoryId.isEmpty()) {
-            projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
+        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
+        String categoryId = "";
+        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject && !resourceId.isEmpty()) {
+            categoryId = EsiUtils.getCategoryID(resourceId);
         }
+        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
+        projectObjectNode.put(MDKConstants.PROJECT_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
     }
 
