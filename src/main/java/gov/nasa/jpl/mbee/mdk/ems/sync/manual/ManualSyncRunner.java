@@ -151,7 +151,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                                 .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
                     }
 
-                    String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+                    String holdingBinId = MDKConstants.HOLDING_BIN_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
                     boolean found = false;
                     // check to see if the holding bin was returned
                     for (ObjectNode elem : serverElements) {

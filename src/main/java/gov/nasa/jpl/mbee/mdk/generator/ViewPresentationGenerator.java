@@ -593,7 +593,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 */
             }
 
-            String viewInstanceBinId = "view_instances_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+            String viewInstanceBinId = MDKConstants.VIEW_INSTANCES_BIN_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
             while (!instanceToView.isEmpty()) {
                 Pair<InstanceSpecification, Element> pair = instanceToView.remove();
                 InstanceSpecification instance = pair.getFirst();
