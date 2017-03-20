@@ -68,7 +68,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private Element start;
     private boolean failure = false;
 
-    private Project project = Application.getInstance().getProject();
+    private Project project;
     private boolean showValidation;
 
     private final List<ValidationSuite> vss = new ArrayList<>();
@@ -77,6 +77,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
     public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, ObjectNode> images, Set<Element> processedElements) {
         this.start = start;
+        this.project = Project.getProject(start);
         this.images = images != null ? images : new HashMap<>();
         this.processedElements = processedElements != null ? processedElements : new HashSet<>();
         this.recurse = recurse;
@@ -98,8 +99,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         progressStatus.init("Initializing", 6);
         // Ensure no existing session so we have full control of whether to close/cancel further sessions.
         // no wild sessions spotted as of 06/05/16
-        if (SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().closeSession();
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession(project);
         }
 
         // STAGE 1: Calculating view structure
@@ -159,7 +160,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         if (!constraintsToBeDeleted.isEmpty()) {
-            SessionManager.getInstance().createSession("Legacy View Constraint Purge");
+            SessionManager.getInstance().createSession(project,"Legacy View Constraint Purge");
             for (Constraint constraint : constraintsToBeDeleted) {
                 if (constraint.isEditable()) {
                     Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + Converters.getElementToIdConverter().apply(constraint));
@@ -175,7 +176,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     failure = true;
                 }
             }
-            SessionManager.getInstance().closeSession();
+            SessionManager.getInstance().closeSession(project);
         }
 
         if (failure) {
@@ -193,10 +194,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
 
         // Create the session you intend to cancel to revert all temporary elements.
-        if (SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().closeSession();
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession(project);
         }
-        SessionManager.getInstance().createSession("View Presentation Generation - Cancelled");
+        SessionManager.getInstance().createSession(project,"View Presentation Generation - Cancelled");
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
         }
@@ -282,7 +283,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         failure = true;
                         Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
                         e.printStackTrace();
-                        SessionManager.getInstance().cancelSession();
+                        SessionManager.getInstance().cancelSession(project);
                         return;
                     }
                     instanceIDs.clear();
@@ -321,12 +322,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setDescription("Importing existing view instances");
                 progressStatus.setCurrent(3);
 
-                for (ObjectNode instanceObjectNode : instanceObjectNodes) {
-                    instanceObjectNode.putNull(MDKConstants.OWNER_ID_KEY);
-                    //instanceObjectNode.put(MDKConstants.OWNER_ID_KEY, Converters.getElementToIdConverter().apply(project.getModel()));
-                    //System.out.println("[SWAP] Owner -> " + Converters.getElementToIdConverter().apply(project.getModel()));
-                    //System.out.println(instanceObjectNode);
-                }
+//                for (ObjectNode instanceObjectNode : instanceObjectNodes) {
+//                    instanceObjectNode.putNull(MDKConstants.OWNER_ID_KEY);
+//                    //instanceObjectNode.put(MDKConstants.OWNER_ID_KEY, Converters.getElementToIdConverter().apply(project.getModel()));
+//                    //System.out.println("[SWAP] Owner -> " + Converters.getElementToIdConverter().apply(project.getModel()));
+//                    //System.out.println(instanceObjectNode);
+//                }
 
                 EMFImporter emfImporter = new EMFImporter() {
                     @Override
@@ -348,7 +349,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                     (objectNode, eStructuralFeature, project, strict, element) -> {
                                         if (element instanceof InstanceSpecification) {
                                             // TODO @donbot confirm that this doesn't set owner to null
-                                            element.setOwner(getIdToElementConverter().apply(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), project));
+                                            element.setOwner(project.getPrimaryModel());
+                                            if (element.getOwner() == null) {
+                                                System.out.println("null owner import for " + element.getLocalID());
+                                            }
                                             return element;
                                         }
                                         return EStructuralFeatureOverride.OWNER.getFunction().apply(objectNode, eStructuralFeature, project, strict, element);
@@ -534,7 +538,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (showValidation) {
                 Utils.displayValidationWindow(vss, "View Generation Validation");
             }
-            SessionManager.getInstance().cancelSession();
+            SessionManager.getInstance().cancelSession(project);
             return;
         }
 
@@ -589,6 +593,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 */
             }
 
+            String viewInstanceBinId = MDKConstants.VIEW_INSTANCES_BIN_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
             while (!instanceToView.isEmpty()) {
                 Pair<InstanceSpecification, Element> pair = instanceToView.remove();
                 InstanceSpecification instance = pair.getFirst();
@@ -602,6 +607,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (clientInstanceSpecificationJson == null) {
                     continue;
                 }
+                // override owner of pei to store parallel to the model
+                clientInstanceSpecificationJson.put(MDKConstants.OWNER_ID_KEY, viewInstanceBinId);
                 ObjectNode serverInstanceSpecificationJson = instanceSpecificationMap.containsKey(Converters.getElementToIdConverter().apply(instance)) ?
                         instanceSpecificationMap.get(Converters.getElementToIdConverter().apply(instance)).getFirst() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
@@ -610,6 +617,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                     elementsArrayNode.add(clientInstanceSpecificationJson);
                 }
+
                 for (Slot slot : instance.getSlot()) {
                     JsonNode clientSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
                     if (clientSlotJson == null) {
@@ -742,8 +750,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             Utils.printException(e);
         } finally {
             // cancel session so all elements created get deleted automatically
-            if (SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().cancelSession();
+            if (SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().cancelSession(project);
             }
             if (localSyncTransactionCommitListener != null) {
                 localSyncTransactionCommitListener.setDisabled(false);
@@ -760,9 +768,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
-        /*vss.add(iv.getSuite());*/
         if (showValidation) {
-            if (suite.hasErrors() || iv.getSuite().hasErrors()) {
+            if (suite.hasErrors()) {
                 Utils.displayValidationWindow(vss, "View Generation Validation");
             }
         }
@@ -780,8 +787,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private boolean handleCancel(ProgressStatus progressStatus) {
         if (progressStatus.isCancel()) {
             failure = true;
-            if (SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().cancelSession();
+            if (SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().cancelSession(project);
             }
             Application.getInstance().getGUILog().log("View generation cancelled.");
             return true;

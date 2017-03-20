@@ -9,6 +9,8 @@ public class MDKConstants {
     public static final String
             HIDDEN_ID_PREFIX = "_hidden_",
             DERIVED_KEY_PREFIX = "_",
+            HOLDING_BIN_PREFIX = "holding_bin_",
+            VIEW_INSTANCES_BIN_PREFIX = "view_instances_bin_",
             SYNC_SYSML_ID_SUFFIX = "_sync",
             PRIMARY_MODEL_ID_SUFFIX = "_pm",
             APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX = "_asi",

@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -281,12 +282,12 @@ public class MMSUtils {
             boolean throwServerException = false;
 
             // assume that 404s with json response bodies are "missing resource" 404s, which are expected for some cases and should not break normal execution flow
-            if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
+            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8")) {
                 // do nothing, note in log
                 System.out.println("[INFO] \"Missing Resource\" 404 processed.");
             }
             // allow re-attempt of request if credentials have expired or are invalid
-            else if (responseCode == 401) {
+            else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
                 MMSLogoutAction.logoutAction(project);
                 if (MMSLoginAction.loginAction(project)) {
@@ -300,7 +301,7 @@ public class MMSUtils {
                 }
             }
             // if it's anything else outside of the 200 range, assume failure and break normal flow
-            else if (responseCode < 200 || responseCode >= 300) {
+            else if (responseCode != HttpURLConnection.HTTP_OK) {
                 Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 throwServerException = true;
             }
@@ -671,4 +672,3 @@ public class MMSUtils {
     }
 
 }
-
