@@ -117,6 +117,9 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                     continue;
                 }
                 for (JsonNode sysmlIdJsonNode : changeJsonNode) {
+                    if (sysmlIdJsonNode.asText().isEmpty()) {
+                        continue;
+                    }
                     try {
                         ObjectNode elementJsonNode = JacksonUtils.getObjectMapper().createObjectNode();
                         elementJsonNode.put(MDKConstants.ID_KEY, sysmlIdJsonNode.asText());
