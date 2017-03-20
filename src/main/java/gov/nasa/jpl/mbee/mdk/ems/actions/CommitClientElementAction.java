@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -49,8 +50,8 @@ public class CommitClientElementAction extends RuleViolationAction implements An
 
     @Override
     public void execute(Collection<Annotation> annotations) {
-        List<ObjectNode> elementsToUpdate = new ArrayList<>(annotations.size());
-        List<String> elementsToDelete = new ArrayList<>(annotations.size());
+        List<ObjectNode> elementsToUpdate = new LinkedList<>();
+        List<String> elementsToDelete = new LinkedList<>();
 
         for (Annotation annotation : annotations) {
             for (NMAction action : annotation.getActions()) {
