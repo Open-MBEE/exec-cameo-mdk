@@ -8,6 +8,7 @@ import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -649,26 +650,6 @@ public class MMSUtils {
         projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
         projectObjectNode.put(MDKConstants.TWC_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
-    }
-
-    public static ObjectNode getRefObjectNode(Project project) {
-        ObjectNode refObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        /*
-            "id": "master",
-            "name": "master",
-            "twcId" : ""
-            "uri" : ""
-            "qualifiedId": "master",
-            "qualifiedName": "master",
-         */
-        String name = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
-        refObjectNode.put(MDKConstants.ID_KEY, name);
-        refObjectNode.put(MDKConstants.NAME_KEY, name);
-        refObjectNode.put(MDKConstants.TWC_ID_KEY, EsiUtils.getBranchID(project.getPrimaryProject().getLocationURI()).toString());
-        refObjectNode.put(MDKConstants.TWC_URI_KEY, project.getPrimaryProject().getProjectDescriptor().getLocationUri().toString());
-//        refObjectNode.put(MDKConstants.QUALIFIED_ID_KEY, "");
-//        refObjectNode.put(MDKConstants.QUALIFIED_NAME_KEY, "");
-        return refObjectNode;
     }
 
 }

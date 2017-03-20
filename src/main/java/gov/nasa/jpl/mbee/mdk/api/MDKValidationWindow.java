@@ -266,10 +266,11 @@ public class MDKValidationWindow {
 
         // there is only one initialization violation with a commit action, so check for it.
         // if it's not an actionable initialization violation, there is nothing to do so return.
+        // TODO fix project initialization checks
         if (violationRuleName.equals(VALIDATION_RULE_OPTIONS[INITIALIZATION_RULE][VIOLATION_RULE_NAME])) {
-            if (!commit || !violationList.get(0).getComment().equals(ManualSyncRunner.INITIALIZE_PROJECT_COMMENT)) {
+//            if (!commit || !violationList.get(0).getComment().equals(ManualSyncRunner.INITIALIZE_PROJECT_COMMENT)) {
                 return;
-            }
+//            }
         }
 
         // find the index of the relevant action type within the vrv; throw exception if it's not found

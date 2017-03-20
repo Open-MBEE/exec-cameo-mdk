@@ -35,6 +35,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
@@ -177,6 +178,9 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             e1.printStackTrace();
             return null;
         }
+        // update master ref
+        new CommitBranchAction("master", project, EsiUtils.getCurrentBranch(project.getPrimaryProject()), false).commitAction();
+        // do model post
         if (shouldCommitModel) {
             RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
