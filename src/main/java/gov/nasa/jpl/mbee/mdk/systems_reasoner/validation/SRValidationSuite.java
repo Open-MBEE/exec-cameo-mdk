@@ -79,6 +79,14 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                         iterator.previous();
                     }
                 }
+                for (Property property : classifier.getAttribute()) {
+                    if (!elements.contains(property.getType())) {
+                        iterator.add(property.getType());
+                        iterator.previous();
+                    }
+                }
+
+
                 checkForAspects(classifier, classifier);
 
                 for (final Classifier general : classifier.getGeneral()) {
@@ -147,8 +155,10 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if ((redefingTypdEl.getType() == null && redefableTypdEl.getType() != null) || (redefingTypdEl.getType() != null && redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier
                                         && !doesEventuallyGeneralizeTo((Classifier) redefingTypdEl.getType(), (Classifier) redefableTypdEl.getType()))) {
                                     if (redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier && ((Classifier) redefingTypdEl.getType()).getGeneral().contains(redefableTypdEl.getType())) {
-                                        iterator.add(redefingTypdEl.getType());
-                                        iterator.previous();
+                                        if(!elements.contains(redefableTypdEl.getType())) {
+                                            iterator.add(redefingTypdEl.getType());
+                                            iterator.previous();
+                                        }
                                     }
                                     else {
                                         final ValidationRuleViolation v = new ValidationRuleViolation(redefingTypdEl,
