@@ -15,6 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -25,7 +26,9 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.ems.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
+import gov.nasa.jpl.mbee.mdk.ems.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
@@ -82,35 +85,34 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     @Override
     public void run(ProgressStatus progressStatus) {
         progressStatus.setDescription("Initializing");
-        // TODO Abstract to common sync checks @donbot
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) && EsiUtils.getLoggedUserName() == null) {
             Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
-        if (!TicketUtils.isTicketSet(project)) {
+        if (!TicketUtils.isTicketValid(project)) {
             Utils.guilog("[WARNING] You need to be logged in to MMS first. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
 
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-//        if (listener == null) {
-//            Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener. Skipping sync. All changes will be re-attempted in the next sync.");
-//            return;
-//        }
-
-        String url;
-        try {
-            url = MMSUtils.getServerUrl(project);
-            if (url == null || url.isEmpty()) {
-                throw new IllegalStateException("");
-            }
-        } catch (IllegalStateException e) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+        ProjectValidator pv = new ProjectValidator();
+        pv.validate();
+        if (pv.getValidationSuite().hasErrors()) {
+            Application.getInstance().getGUILog().log("[WARNING] Project has not been committed to MMS, skipping sync. You must commit the project and model to MMS before Coordinated Sync can complete.");
+            Utils.displayValidationWindow(pv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
             return;
         }
 
-        // LOCK SYNC FOLDER
+        BranchValidator bv = new BranchValidator();
+        bv.validate(null, false);
+        if (bv.getValidationSuite().hasErrors()) {
+            Application.getInstance().getGUILog().log("[WARNING] Branch has not been committed to MMS, skipping sync. You must commit the branch to MMS and sync the model before Coordinated Sync can complete.");
+            Utils.displayValidationWindow(bv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
+            return;
+        }
 
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+
+        // LOCK SYNC FOLDER
         listener.setDisabled(true);
         SyncElements.lockSyncFolder(project);
         listener.setDisabled(false);

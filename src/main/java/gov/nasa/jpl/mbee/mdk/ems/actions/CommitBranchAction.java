@@ -5,6 +5,7 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
  */
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -13,6 +14,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
+import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
@@ -72,10 +74,18 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs url. Project commit cancelled.");
             return;
         }
+
+
+        ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
+        ArrayNode elementsArrayNode = requestData.putArray("refs");
+        requestData.put("source", "magicdraw");
+        requestData.put("mdkVersion", MDKPlugin.VERSION);
         ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo);
+        elementsArrayNode.add(branchNode);
+
         ObjectNode response;
         try {
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, branchNode);
+            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData);
             response = MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | URISyntaxException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting branch. Reason: " + e.getMessage());

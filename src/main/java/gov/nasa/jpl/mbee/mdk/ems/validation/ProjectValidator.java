@@ -41,6 +41,7 @@ public class ProjectValidator {
             Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Project validation cancelled.");
             return;
         }
+        requestUri.setPath(requestUri.getPath() + "/" + Converters.getProjectToIdConverter().apply(project));
         ObjectNode response;
         try {
             response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
