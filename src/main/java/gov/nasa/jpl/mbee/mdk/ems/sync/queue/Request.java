@@ -1,14 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.queue;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
-import org.omg.CORBA.Object;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +28,7 @@ public class Request {
     private boolean background = false;
 
 
-    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, ObjectNode data, boolean feedback)
+    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, Object data, boolean feedback)
             throws IOException, URISyntaxException {
         this.project = project;
         this.request = MMSUtils.buildRequest(method, uri, data);
@@ -51,7 +46,7 @@ public class Request {
     }
     */
 
-    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, ObjectNode data, boolean feedback, int wait, String type)
+    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, Object data, boolean feedback, int wait, String type)
             throws IOException, URISyntaxException {
         this.project = project;
         this.request = MMSUtils.buildRequest(method, uri, data);
@@ -75,7 +70,7 @@ public class Request {
     }
     */
 
-    public Request(Project project, URIBuilder requestUri, ObjectNode data, String type)
+    public Request(Project project, URIBuilder requestUri, Object data, String type)
             throws IOException, URISyntaxException {
         this.project = project;
         this.request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, data);
@@ -97,7 +92,7 @@ public class Request {
     }
     */
 
-    public Request(Project project, URIBuilder requestUri, ObjectNode data, int wait, String type, Boolean background)
+    public Request(Project project, URIBuilder requestUri, Object data, int wait, String type, Boolean background)
             throws IOException, URISyntaxException {
         this.project = project;
         if (background != null && background) {

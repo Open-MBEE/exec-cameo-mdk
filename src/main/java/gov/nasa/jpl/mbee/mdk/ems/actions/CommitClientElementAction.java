@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,6 +22,7 @@ import org.apache.http.client.utils.URIBuilder;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -113,14 +115,24 @@ public class CommitClientElementAction extends RuleViolationAction implements An
     private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) throws JsonProcessingException {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
-            ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
-            ArrayNode elements = request.putArray("elements");
-            elements.addAll(elementsToUpdate);
-            request.put("source", "magicdraw");
-            request.put("mdkVersion", MDKPlugin.VERSION);
-            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+
             try {
-                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, request, true, elements.size(), "Sync Changes")));
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream);
+                jsonGenerator.writeStartObject();
+                jsonGenerator.writeArrayFieldStart("elements");
+                for (ObjectNode objectNode : elementsToUpdate) {
+                    jsonGenerator.writeObject(objectNode);
+                }
+                jsonGenerator.writeEndArray();
+                jsonGenerator.writeStringField("source", "magicdraw");
+                jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
+                jsonGenerator.writeEndObject();
+                jsonGenerator.close();
+
+                String request = outputStream.toString();
+                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, request, true, elementsToUpdate.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();
