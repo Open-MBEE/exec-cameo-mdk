@@ -73,9 +73,9 @@ public class ImageValidator {
             return;
         }
         // TODO @donbot remove these three lines to switch to the elements endpoint
-        String path = requestUri.getPath();
-        path = path.replace("element", "artifact");
-        requestUri.setPath(path);
+//        String path = requestUri.getPath();
+//        path = path.replace("element", "artifact");
+//        requestUri.setPath(path);
 
         for (String key : images.keySet()) {
             // customize request
@@ -97,18 +97,21 @@ public class ImageValidator {
             }
             requestUri.setParameter("extension", extension);
 
+            ObjectNode response;
             // do request
             try {
                 HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
                 request.setHeader("Accept", "image/" + extension);
-                MMSUtils.sendMMSRequest(project, request);
-            } catch (IOException | URISyntaxException e1) {
+                response = MMSUtils.sendMMSRequest(project, request);
+            } catch (ServerException | IOException | URISyntaxException e1) {
                 Application.getInstance().getGUILog().log("[ERROR] Exception occurred while validating images. Image validation cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
                 return;
-            } catch (ServerException e1) {
+            }
+            if ((value = response.get("message")) != null && value.isTextual() && value.asText().contains("not found")) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web.");
                 v.addAction(new ExportImage(e, allImages));
+                rule.addViolation(v);
             }
         }
     }

@@ -737,13 +737,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     }
                 }
             }
-//            for (Element element : elementsToDelete) {
-//                try {
-//                    ModelElementsManager.getInstance().removeElement(element);
-//                } catch (ReadOnlyElementException ignored) {
-//                    System.out.println("Could not clean up " + element.getLocalID());
-//                }
-//            }
+            for (Element element : elementsToDelete) {
+                try {
+                    ModelElementsManager.getInstance().removeElement(element);
+                } catch (ReadOnlyElementException ignored) {
+                    System.out.println("Could not clean up " + element.getLocalID());
+                }
+            }
             // used to skip redundant view generation attempts when using multi-select or ElementGroups; see GenerateViewPresentationAction
             processedElements.addAll(views);
         } catch (Exception e) {

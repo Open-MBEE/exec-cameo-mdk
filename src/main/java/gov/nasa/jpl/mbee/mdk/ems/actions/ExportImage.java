@@ -78,9 +78,9 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             return false;
         }
         // TODO @donbot remove these three lines to switch to the elements endpoint
-        String path = requestUri.getPath();
-        path = path.replace("element", "artifact");
-        requestUri.setPath(path);
+//        String path = requestUri.getPath();
+//        path = path.replace("element", "artifact");
+//        requestUri.setPath(path);
 
         String id = key.replace(".", "%2E");
         requestUri.setPath(requestUri.getPath() + id);
