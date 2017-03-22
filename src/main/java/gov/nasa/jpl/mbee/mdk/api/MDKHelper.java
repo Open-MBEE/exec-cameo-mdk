@@ -65,11 +65,13 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -377,13 +379,7 @@ public class MDKHelper {
         // create requests json
         final ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
         // put elements array inside request json, keep reference
-        ArrayNode idsArrayNode = requests.putArray("elements");
-        for (String id : elementIds) {
-            // create json for id strings, add to request array
-            ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
-            element.put(MDKConstants.ID_KEY, id);
-            idsArrayNode.add(element);
-        }
+        File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementIds, MMSUtils.JsonBlobType.ELEMENT_ID);
 
         URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
         if (requestUri == null) {
@@ -393,9 +389,9 @@ public class MDKHelper {
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
         if (progressStatus != null) {
-            return MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests, ContentType.APPLICATION_JSON), progressStatus);
+            return MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests, ContentType.APPLICATION_JSON));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
 
 
@@ -413,16 +409,8 @@ public class MDKHelper {
             return null;
         }
 
-        ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elements = requestBody.putArray("elements");
-        for (Element delTarget : elementsToDelete) {
-            ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
-            curElement.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(delTarget));
-            elements.add(curElement);
-        }
-        requestBody.put("source", "magicdraw");
-        requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, requestBody, ContentType.APPLICATION_JSON));
+        File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
 
     /**
@@ -438,15 +426,13 @@ public class MDKHelper {
             return null;
         }
 
-        ObjectNode requestBody = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elementJson = requestBody.putArray("elements");
+        LinkedList<ObjectNode> elementJson = new LinkedList<>();
         for (Element target : elementsToPost) {
             ObjectNode elemJson = Converters.getElementToJsonConverter().apply(target, project);
             elementJson.add(elemJson);
         }
-        requestBody.put("source", "magicdraw");
-        requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestBody, ContentType.APPLICATION_JSON));
+        File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementJson, MMSUtils.JsonBlobType.ELEMENT_JSON);
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
 
 }

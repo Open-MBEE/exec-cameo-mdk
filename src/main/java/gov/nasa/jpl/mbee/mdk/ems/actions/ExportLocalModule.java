@@ -21,9 +21,11 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Set;
 
 public class ExportLocalModule extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -72,18 +74,16 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             if (org == null || org.isEmpty()) {
                 return;
             }
-            requestUri.setPath(requestUri.getPath() + "/orgs/" + org + "/projects");
+            requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
 
             Utils.guilog("Initializing module");
-            ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-            ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
-            requestData.set("elements", elementsArrayNode);
-            requestData.put("source", "magicdraw");
-            requestData.put("mdkVersion", MDKPlugin.VERSION);
-            ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
-            elementsArrayNode.add(projectObjectNode);
+
+            LinkedList<ObjectNode> modules = new LinkedList<>();
+            modules.add(MMSUtils.getProjectObjectNode(module));
+            ObjectNode response;
             try {
-                ObjectNode response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData, ContentType.APPLICATION_JSON));
+                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, modules, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
             } catch (IOException | URISyntaxException | ServerException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected error occurred when initializing module.");
                 e.printStackTrace();

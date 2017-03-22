@@ -29,7 +29,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -37,7 +36,6 @@ import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 
-import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
@@ -50,14 +48,15 @@ import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.LinkedList;
 
 public class CommitOrgAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
     public static final String DEFAULT_ID = CommitOrgAction.class.getSimpleName();
-    public static final String COMMIT_MODEL_DEFAULT_ID = DEFAULT_ID + "_Commit_Org";
     private final Project project;
 
     public CommitOrgAction(Project project) {
@@ -126,18 +125,13 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         }
 
         // build post data
-        ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elementsArrayNode = requestData.putArray("elements");
-        requestData.put("source", "magicdraw");
-        requestData.put("mdkVersion", MDKPlugin.VERSION);
-        ObjectNode orgObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        orgObjectNode.put(MDKConstants.ID_KEY, org);
-        orgObjectNode.put(MDKConstants.NAME_KEY, org);
-        elementsArrayNode.add(orgObjectNode);
+        LinkedList<ObjectNode> orgs = new LinkedList<>();
+        orgs.add(JacksonUtils.getObjectMapper().createObjectNode());
 
         // do post request
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData, ContentType.APPLICATION_JSON));
+            File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();

@@ -52,11 +52,13 @@ import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 
 public class CommitProjectAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -161,17 +163,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // update request with project post path
         requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
 
-        // build post data
-        ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elementsArrayNode = requestData.putArray("elements");
-        requestData.put("source", "magicdraw");
-        requestData.put("mdkVersion", MDKPlugin.VERSION);
-        ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
-        elementsArrayNode.add(projectObjectNode);
+        Collection<ObjectNode> projects = new LinkedList<>();
+        projects.add(MMSUtils.getProjectObjectNode(project));
 
         // do project post request
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData, ContentType.APPLICATION_JSON));
+            File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
             // we don't need to process this response, just make sure the request comes back without exception
         } catch (IOException | URISyntaxException | ServerException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());

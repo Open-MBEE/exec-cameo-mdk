@@ -21,9 +21,11 @@ import org.apache.http.entity.ContentType;
 import org.joda.time.DateTime;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class CreateMMSWorkspaceAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -79,13 +81,13 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
                 .put("name", branches[branches.length - 1]).put("parent", parentId).put("branched", new DateTime().toString())
                 .put("description", "Created from MagicDraw.");
 
-        ObjectNode responseObjectNode;
-        try {
-            responseObjectNode = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode, ContentType.APPLICATION_JSON));
-        } catch (IOException | ServerException | URISyntaxException e1) {
-            e1.printStackTrace();
-            return;
-        }
+        ObjectNode responseObjectNode = null;
+//        try {
+//            responseObjectNode = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode, ContentType.APPLICATION_JSON));
+//        } catch (IOException | ServerException | URISyntaxException e1) {
+//            e1.printStackTrace();
+//            return;
+//        }
 
         JsonNode jsonNode;
         if (responseObjectNode == null || (jsonNode = responseObjectNode.get("workspaces")) == null || !jsonNode.isArray() || jsonNode.size() == 0) {
@@ -122,10 +124,9 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
 //        URIBuilder uriBuilder = MMSUtils.getServiceWorkspacesUri(project);
 //        uriBuilder.setPath(uriBuilder.getPath() + "/workspaces/" + branchId + "/sites/" + site + "/projects?createSite=true");
         URIBuilder uriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
-
-        ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        objectNode.putArray("elements").add(MMSUtils.getProjectObjectNode(project));
-        objectNode.put("source", "magicdraw").put("mdkVersion", MDKPlugin.VERSION);
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode, ContentType.APPLICATION_JSON));
+        LinkedList<ObjectNode> projectNodes = new LinkedList<>();
+        projectNodes.add(MMSUtils.getProjectObjectNode(project));
+        File sendData = MMSUtils.createEntityFile(CreateMMSWorkspaceAction.class, ContentType.APPLICATION_JSON, projectNodes, MMSUtils.JsonBlobType.ELEMENT_JSON);
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, sendData, ContentType.APPLICATION_JSON));
     }
 }

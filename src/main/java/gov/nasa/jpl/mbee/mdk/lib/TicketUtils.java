@@ -251,9 +251,9 @@ public class TicketUtils {
         credentials.put("password", pass);
 
         // do request
-        ObjectNode response;
+        String ticket;
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials, ContentType.APPLICATION_JSON));
+            ticket = MMSUtils.sendCredentials(project, username, pass);
         } catch (ServerException | IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
             e.printStackTrace();
@@ -261,10 +261,9 @@ public class TicketUtils {
         }
 
         // parse response
-        JsonNode value;
-        if (response != null && (value = response.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
+        if (ticket != null) {
             password = "";
-            ticketMappings.put(project, new TicketMapping(project, value.asText()));
+            ticketMappings.put(project, new TicketMapping(project, ticket));
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");

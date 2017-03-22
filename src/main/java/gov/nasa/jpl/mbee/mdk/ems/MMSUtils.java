@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -13,6 +14,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
+import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
@@ -43,6 +45,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -61,8 +64,12 @@ public class MMSUtils {
         GET, POST, PUT, DELETE
     }
 
-    public enum ThreadRequestExceptionType {
+    private enum ThreadRequestExceptionType {
         IO_EXCEPTION, SERVER_EXCEPTION, URI_SYNTAX_EXCEPTION
+    }
+
+    public enum JsonBlobType {
+        ELEMENT_JSON, ELEMENT_ID, PROJECT, REF, ORG
     }
 
     public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
@@ -127,23 +134,15 @@ public class MMSUtils {
             requestUri.setParameter("depth", java.lang.Integer.toString(depth));
         }
 
-        // create requests json
-        final ObjectNode requests = JacksonUtils.getObjectMapper().createObjectNode();
-        // put elements array inside request json, keep reference
-        ArrayNode idsArrayNode = requests.putArray("elements");
-        for (String id : elementIds) {
-            // create json for id strings, add to request array
-            ObjectNode element = JacksonUtils.getObjectMapper().createObjectNode();
-            element.put(MDKConstants.ID_KEY, id);
-            idsArrayNode.add(element);
-        }
+        // create request file
+        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
         if (progressStatus != null) {
-            return sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests, ContentType.APPLICATION_JSON), progressStatus);
+            return sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
-        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests, ContentType.APPLICATION_JSON));
+        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
 
     /**
@@ -182,7 +181,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, Object sendData, ContentType contentType)
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType)
             throws IOException, URISyntaxException {
         // build specified request type
         // assume that any request can have a body, and just build the appropriate one
@@ -212,18 +211,7 @@ public class MMSUtils {
             if (contentType != null) {
                 request.addHeader("Content-Type", contentType.getMimeType());
             }
-            File file;
-            if (sendData instanceof File) {
-                file = (File) sendData;
-            }
-            else {
-                String data = sendData instanceof String ? (String) sendData : JacksonUtils.getObjectMapper().writeValueAsString(sendData);
-                file = MMSUtils.createEntityFile(MMSUtils.class, contentType);
-                try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
-                    writer.write(data);
-                }
-            }
-            InputStreamEntity reqEntity = new InputStreamEntity(new FileInputStream(file), file.length(), contentType);
+            InputStreamEntity reqEntity = new InputStreamEntity(new FileInputStream(sendData), sendData.length(), contentType);
             //reqEntity.setChunked(true);
             ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
         }
@@ -245,9 +233,42 @@ public class MMSUtils {
         return buildRequest(type, requestUri, null, null);
     }
 
-    public static File createEntityFile(Class<?> clazz, ContentType contentType) throws IOException {
-        File file = File.createTempFile(clazz.getSimpleName(), "-" + contentType.getMimeType().replace('/', '.'));
+    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
+            throws IOException {
+        File file = File.createTempFile(new java.util.Date().toString() + clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '.'), null);
         file.deleteOnExit();
+
+        String arrayName = "elements";
+        if (jsonBlobType == JsonBlobType.PROJECT) {
+            arrayName = "projects";
+        }
+        else if (jsonBlobType == JsonBlobType.REF) {
+            arrayName = "refs";
+        }
+        FileOutputStream outputStream = new FileOutputStream(file);
+        JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream);
+        jsonGenerator.writeStartObject();
+        jsonGenerator.writeArrayFieldStart(arrayName);
+        for (Object node : nodes) {
+            if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON) {
+                jsonGenerator.writeObject((ObjectNode) node);
+            }
+            else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
+                jsonGenerator.writeStartObject();
+                jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
+                jsonGenerator.writeEndObject();
+            }
+            else {
+                // unsupported collection type
+                return null;
+            }
+        }
+        jsonGenerator.writeEndArray();
+        jsonGenerator.writeStringField("source", "magicdraw");
+        jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
+        jsonGenerator.writeEndObject();
+        jsonGenerator.close();
+
         return file;
     }
 
@@ -265,14 +286,12 @@ public class MMSUtils {
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest
                 && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null)
                 && httpEntityEnclosingRequest.getEntity().isRepeatable();
+        System.out.println(logBody);
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
         if (logBody) {
             try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
                 String requestBody = IOUtils.toString(inputStream);
-                if (request.getURI().getPath().contains("alfresco/service/api/login")) {
-                    requestBody = "--- Censored ---";
-                }
-                System.out.println(" - Body: " + requestBody);
+                System.out.println(requestBody);
             }
         }
         
@@ -419,6 +438,92 @@ public class MMSUtils {
             throw new URISyntaxException("", emsg.get());
         }
         return resp.get();
+    }
+
+    public static String sendCredentials(Project project, String username, String password)
+            throws ServerException, IOException, URISyntaxException {
+        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+        requestUri.setPath(requestUri.getPath() + "/api/login");
+        requestUri.clearParameters();
+        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
+        credentials.put("username", username);
+        credentials.put("password", password);
+
+        //build request
+        ContentType contentType = ContentType.APPLICATION_JSON;
+        URI requestDest = requestUri.build();
+        HttpRequestBase request = new HttpPost(requestDest);
+
+        request.addHeader("Content-Type", "application/json");
+        request.addHeader("charset", (Consts.UTF_8).displayName());
+
+        String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
+        ((HttpEntityEnclosingRequest)request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
+
+        // do request
+        System.out.println("MMS Request [POST] " + requestUri.toString());
+        ObjectNode responseJson = null;
+        try (CloseableHttpClient httpclient = HttpClients.createDefault();
+             CloseableHttpResponse response = httpclient.execute(request);
+             InputStream inputStream = response.getEntity().getContent()) {
+            // get data out of the response
+            int responseCode = response.getStatusLine().getStatusCode();
+            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
+            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
+
+            // debug / logging output from response
+            System.out.println("MMS Response [POST] " + requestUri.toString() + " - Code: " + responseCode);
+//            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+//                if (!responseBody.isEmpty() && !responseType.equals("application/json;charset=UTF-8")) {
+//                    responseBody = "<span>" + responseBody + "</span>";
+//                }
+//                System.out.println(" - Body: "  + responseBody);
+//            }
+
+            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
+            boolean throwServerException = false;
+
+            // if it's anything else outside of the 200 range, assume failure and break normal flow
+            if (responseCode != 200) {
+                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
+                throwServerException = true;
+            }
+
+            // print server message if possible
+            if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
+                responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+                JsonNode value;
+                // display single response message
+                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
+                }
+                // display multiple response messages
+                if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
+                    ArrayNode msgs = (ArrayNode) value;
+                    for (JsonNode msg : msgs) {
+                        if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                            Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
+                        }
+                    }
+                }
+            }
+
+            if (throwServerException) {
+                // big flashing red letters that the action failed, or as close as we're going to get
+                Utils.showPopupMessage("Action failed. See notification window for details.");
+                // throw is done last, after printing the error and any messages that might have been returned
+                throw new ServerException(responseBody, responseCode);
+            }
+        }
+        // parse response
+        JsonNode value;
+        if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
+            return value.asText();
+        }
+        return null;
     }
 
     /**

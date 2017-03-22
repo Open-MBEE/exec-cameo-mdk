@@ -32,6 +32,7 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
@@ -223,7 +224,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // MAP CHANGES TO ACTIONABLE GROUPS
 
         Map<String, Element> localElementsToPost = new LinkedHashMap<>(localCreated.size() + localUpdated.size());
-        Set<String> localElementsToDelete = new HashSet<>(localDeleted.size());
+        Set<String> deleteElements = new HashSet<>(localDeleted.size());
 
         Map<String, ObjectNode> jmsElementsToCreateLocally = new LinkedHashMap<>(jmsCreated.size());
         Map<String, Pair<ObjectNode, Element>> jmsElementsToUpdateLocally = new LinkedHashMap<>(jmsUpdated.size());
@@ -252,7 +253,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " from the MMS, but it still exists locally. Skipping.");
                             continue;
                         }
-                        localElementsToDelete.add(id);
+                        deleteElements.add(id);
                         break;
                 }
             }
@@ -320,22 +321,19 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         if (shouldCommit && !localElementsToPost.isEmpty()) {
             progressStatus.setDescription("Committing creations and updates to MMS");
 
-            ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
+            LinkedList<ObjectNode> postElements = new LinkedList<>();
             for (Element element : localElementsToPost.values()) {
                 ObjectNode elementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
                 if (elementObjectNode != null) {
-                    elementsArrayNode.add(elementObjectNode);
+                    postElements.add(elementObjectNode);
                 }
             }
-            if (elementsArrayNode.size() > 0) {
-                ObjectNode body = JacksonUtils.getObjectMapper().createObjectNode();
-                body.set("elements", elementsArrayNode);
-                body.put("source", "magicdraw");
-                body.put("mdkVersion", MDKPlugin.VERSION);
-                Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
+            if (postElements.size() > 0) {
+                Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
-                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, body, ContentType.APPLICATION_JSON, true, elementsArrayNode.size(), "Sync Changes"));
+                    File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, true, postElements.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -350,23 +348,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // COMMIT UNCONFLICTED DELETIONS TO MMS
         // NEEDS TO BE AFTER LOCAL; EX: MOVE ELEMENT OUT ON MMS, DELETE OWNER LOCALLY, WHAT HAPPENS?
 
-        if (shouldCommit && shouldCommitDeletes && !localElementsToDelete.isEmpty()) {
+        if (shouldCommit && shouldCommitDeletes && !deleteElements.isEmpty()) {
             progressStatus.setDescription("Committing deletions to MMS");
-
-            ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
-            for (String id : localElementsToDelete) {
-                ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-                elementObjectNode.put(MDKConstants.ID_KEY, id);
-                elementsArrayNode.add(elementObjectNode);
-            }
-            ObjectNode body = JacksonUtils.getObjectMapper().createObjectNode();
-            body.set("elements", elementsArrayNode);
-            body.put("source", "magicdraw");
-            body.put("mdkVersion", MDKPlugin.VERSION);
-            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(deleteElements.size()) + " local element" + (deleteElements.size() != 1 ? "s" : "") + " on the MMS.");
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, body, ContentType.APPLICATION_JSON, true, elementsArrayNode.size(), "Sync Changes"));
+                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, true, deleteElements.size(), "Sync Changes"));
             } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                 e.printStackTrace();
