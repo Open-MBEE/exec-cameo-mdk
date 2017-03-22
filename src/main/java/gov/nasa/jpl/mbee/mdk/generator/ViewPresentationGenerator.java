@@ -42,6 +42,7 @@ import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -645,7 +646,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, requestData, true, elementsArrayNode.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, requestData, ContentType.APPLICATION_JSON, true, elementsArrayNode.size(), "Sync Changes"));
                 changed = true;
             }
 
@@ -674,7 +675,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, requestData, true, elementsArrayNode.size(), "View Generation"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, requestData, ContentType.APPLICATION_JSON, true, elementsArrayNode.size(), "View Generation"));
                 changed = true;
             }
 

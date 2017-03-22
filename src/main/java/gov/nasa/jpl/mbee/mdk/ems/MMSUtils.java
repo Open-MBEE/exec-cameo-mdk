@@ -24,23 +24,23 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
@@ -141,9 +141,9 @@ public class MMSUtils {
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
         if (progressStatus != null) {
-            return sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests), progressStatus);
+            return sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests, ContentType.APPLICATION_JSON), progressStatus);
         }
-        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests));
+        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, requests, ContentType.APPLICATION_JSON));
     }
 
     /**
@@ -182,7 +182,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, Object sendData)
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, Object sendData, ContentType contentType)
             throws IOException, URISyntaxException {
         // build specified request type
         // assume that any request can have a body, and just build the appropriate one
@@ -207,11 +207,25 @@ public class MMSUtils {
                 request = new HttpPut(requestDest);
                 break;
         }
-        request.addHeader("charset", "utf-8");
+        request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
         if (sendData != null) {
-            request.addHeader("Content-Type", "application/json");
-            String data = sendData instanceof String ? (String) sendData : JacksonUtils.getObjectMapper().writeValueAsString(sendData);
-            ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
+            if (contentType != null) {
+                request.addHeader("Content-Type", contentType.getMimeType());
+            }
+            File file;
+            if (sendData instanceof File) {
+                file = (File) sendData;
+            }
+            else {
+                String data = sendData instanceof String ? (String) sendData : JacksonUtils.getObjectMapper().writeValueAsString(sendData);
+                file = MMSUtils.createEntityFile(MMSUtils.class, contentType);
+                try (BufferedWriter writer = Files.newBufferedWriter(file.toPath())) {
+                    writer.write(data);
+                }
+            }
+            InputStreamEntity reqEntity = new InputStreamEntity(new FileInputStream(file), file.length(), contentType);
+            //reqEntity.setChunked(true);
+            ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
         }
         return request;
     }
@@ -228,7 +242,13 @@ public class MMSUtils {
      */
     public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri)
             throws IOException, URISyntaxException {
-        return buildRequest(type, requestUri, null);
+        return buildRequest(type, requestUri, null, null);
+    }
+
+    public static File createEntityFile(Class<?> clazz, ContentType contentType) throws IOException {
+        File file = File.createTempFile(clazz.getSimpleName(), "-" + contentType.getMimeType().replace('/', '.'));
+        file.deleteOnExit();
+        return file;
     }
 
     /**

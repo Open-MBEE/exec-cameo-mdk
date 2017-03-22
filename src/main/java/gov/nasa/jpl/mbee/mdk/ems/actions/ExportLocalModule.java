@@ -18,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.ems.*;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -82,7 +83,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
             try {
-                ObjectNode response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+                ObjectNode response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData, ContentType.APPLICATION_JSON));
             } catch (IOException | URISyntaxException | ServerException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected error occurred when initializing module.");
                 e.printStackTrace();

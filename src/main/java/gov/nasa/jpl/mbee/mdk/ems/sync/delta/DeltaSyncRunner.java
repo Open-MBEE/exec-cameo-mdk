@@ -30,6 +30,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -334,7 +335,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
-                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, body, true, elementsArrayNode.size(), "Sync Changes"));
+                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, body, ContentType.APPLICATION_JSON, true, elementsArrayNode.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -365,7 +366,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsArrayNode.size()) + " local element" + (elementsArrayNode.size() != 1 ? "s" : "") + " on the MMS.");
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, body, true, elementsArrayNode.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, body, ContentType.APPLICATION_JSON, true, elementsArrayNode.size(), "Sync Changes"));
             } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                 e.printStackTrace();

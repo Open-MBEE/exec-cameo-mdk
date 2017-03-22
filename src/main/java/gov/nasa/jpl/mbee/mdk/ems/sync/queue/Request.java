@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,10 +29,10 @@ public class Request {
     private boolean background = false;
 
 
-    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, Object data, boolean feedback)
+    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, Object data, ContentType contentType, boolean feedback)
             throws IOException, URISyntaxException {
         this.project = project;
-        this.request = MMSUtils.buildRequest(method, uri, data);
+        this.request = MMSUtils.buildRequest(method, uri, data, contentType);
         this.feedback = feedback;
         this.suppressGui = !feedback;
     }
@@ -46,10 +47,10 @@ public class Request {
     }
     */
 
-    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, Object data, boolean feedback, int wait, String type)
+    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, Object data, ContentType contentType, boolean feedback, int wait, String type)
             throws IOException, URISyntaxException {
         this.project = project;
-        this.request = MMSUtils.buildRequest(method, uri, data);
+        this.request = MMSUtils.buildRequest(method, uri, data, contentType);
         this.feedback = feedback;
         this.suppressGui = !feedback;
         this.wait = wait * 1000 + 120000;
@@ -70,10 +71,10 @@ public class Request {
     }
     */
 
-    public Request(Project project, URIBuilder requestUri, Object data, String type)
+    public Request(Project project, URIBuilder requestUri, Object data, ContentType contentType, String type)
             throws IOException, URISyntaxException {
         this.project = project;
-        this.request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, data);
+        this.request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, data, contentType);
         this.type = type;
     }
 
@@ -92,13 +93,13 @@ public class Request {
     }
     */
 
-    public Request(Project project, URIBuilder requestUri, Object data, int wait, String type, Boolean background)
+    public Request(Project project, URIBuilder requestUri, Object data, ContentType contentType, int wait, String type, Boolean background)
             throws IOException, URISyntaxException {
         this.project = project;
         if (background != null && background) {
             requestUri.setParameter("background", "true");
         }
-        this.request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, data);
+        this.request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, data, contentType);
         this.wait = wait * 1000 + 120000;
         this.type = type;
         this.numElements = wait;

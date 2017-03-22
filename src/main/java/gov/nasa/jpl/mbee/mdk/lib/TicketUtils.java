@@ -38,6 +38,7 @@ import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -250,9 +251,9 @@ public class TicketUtils {
         credentials.put("password", pass);
 
         // do request
-        ObjectNode response = null;
+        ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials, ContentType.APPLICATION_JSON));
         } catch (ServerException | IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
             e.printStackTrace();

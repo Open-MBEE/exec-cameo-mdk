@@ -48,6 +48,7 @@ import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -170,7 +171,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // do project post request
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData, ContentType.APPLICATION_JSON));
             // we don't need to process this response, just make sure the request comes back without exception
         } catch (IOException | URISyntaxException | ServerException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());

@@ -46,6 +46,7 @@ import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -136,7 +137,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
 
         // do post request
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData, ContentType.APPLICATION_JSON));
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();

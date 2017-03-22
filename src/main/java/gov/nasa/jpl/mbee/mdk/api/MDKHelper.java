@@ -63,6 +63,7 @@ import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -392,9 +393,9 @@ public class MDKHelper {
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
         if (progressStatus != null) {
-            return MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests), progressStatus);
+            return MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests, ContentType.APPLICATION_JSON), progressStatus);
         }
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, requests, ContentType.APPLICATION_JSON));
     }
 
 
@@ -421,7 +422,7 @@ public class MDKHelper {
         }
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, requestBody));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, requestBody, ContentType.APPLICATION_JSON));
     }
 
     /**
@@ -445,7 +446,7 @@ public class MDKHelper {
         }
         requestBody.put("source", "magicdraw");
         requestBody.put("mdkVersion", MDKPlugin.VERSION);
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestBody));
+        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestBody, ContentType.APPLICATION_JSON));
     }
 
 }
