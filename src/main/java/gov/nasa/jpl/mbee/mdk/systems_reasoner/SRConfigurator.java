@@ -23,7 +23,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     public static final String ID = "Specialize Structure";
     public static final String ID_RECURSIVE = "Specialize Structure Recursively";
     public static final String ID_RECURSIVE_INDIVIDUAL = "Specialize Recursively & Individually";
-    private SRAction validateAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
+    private SRAction validateAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, selectAspectAction = null;
 
     @Override
     public int getPriority() {
@@ -62,7 +62,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         createInstanceMenuAction = null;
         instance2BSTAction = null;
         aspectAction = null;
-        copyAction = null;
+        selectAspectAction = null;
 
         ActionsCategory category = (ActionsCategory) manager.getActionFor("SRMain");
         if (category == null) {
@@ -93,7 +93,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
                 category.addAction(ontoBehaviorAction);
             }
         }
-        category.addAction(copyAction);
+        category.addAction(selectAspectAction);
         category.addAction(specializeStructureAction);
         category.addAction(specializeStructureRecursiveAction);
         category.addAction(createBSTAction);
@@ -157,7 +157,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             return null;
         }
         if (element instanceof Package) {
-            copyAction = new CopyAction(element);
+            selectAspectAction = new CopyAction(element);
         }
         if (element instanceof Classifier) {
             final Classifier classifier = (Classifier) element;
@@ -169,7 +169,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             createBSTAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE_INDIVIDUAL, true, true);
             createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
             aspectAction = new AspectAction(classifier);
-            copyAction = new CopyAction(element);
+            selectAspectAction = new AspectSelectionAction(classifier);
 
             if (classifier instanceof Behavior) {
 
