@@ -16,6 +16,7 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.actions.AddInheritanceToAssociationAction;
 import gov.nasa.jpl.mbee.mdk.validation.actions.SetOrCreateRedefinableElementAction;
 
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.lang.Class;
@@ -80,7 +81,7 @@ public class SpecializeStructureAction extends SRAction {
                 container = (Namespace) dlg.getSelectedElement();
             }
 
-            Classifier specific = createSpecialClassifier(container, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>());
+           Classifier specific = createSpecialClassifier(container, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>());
             SessionManager.getInstance().closeSession();
 
             checkAssociationsForInheritance(specific,classifier);
@@ -96,12 +97,12 @@ public class SpecializeStructureAction extends SRAction {
                 return null;
             }
         }
-        if(visited.contains(classifier)){
 
-        }
+
         Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
         visited.add(specific);
         visited.add(classifier);
+        specific.getGeneralization().clear();
         Utils.createGeneralization(classifier, specific);
         for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
