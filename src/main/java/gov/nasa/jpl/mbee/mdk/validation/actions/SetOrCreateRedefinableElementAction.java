@@ -7,6 +7,7 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAction {
@@ -43,32 +44,25 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         this.isIndividual = isIndividual;
     }
 
-    public SetOrCreateRedefinableElementAction(Classifier specific, RedefinableElement elementToBeRedefined, List<RedefinableElement> traveled, boolean recursionMode, String name, boolean individualMode) {
-        super(name);
-        this.subClassifier = specific;
-        this.re = elementToBeRedefined;
-        this.recursion = recursionMode;
-        this.name = name;
-        this.isIndividual = individualMode;
+    public SetOrCreateRedefinableElementAction() {
+        super(DEFAULT_NAME);
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType, boolean isIndividual) {
-        return redefineAttribute(subClassifier, re, createSpecializedType, new ArrayList<RedefinableElement>(),new ArrayList<Classifier>(), isIndividual);
+    public static RedefinableElement redefineRedefinableElement(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType, boolean isIndividual) {
+        return redefineRedefinableElement(subClassifier, re, createSpecializedType, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual);
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier classifierOfProp, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final List<RedefinableElement> traveled,  List<Classifier> visited, boolean isIndividual) {
+    public static RedefinableElement redefineRedefinableElement(final Classifier subClassifier, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual) {
         if (elementToBeRedefined.isLeaf()) {
             Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " is a leaf. Cannot redefine further.");
         }
-
-        if (!classifierOfProp.isEditable()) {
-            Application.getInstance().getGUILog().log(classifierOfProp.getQualifiedName() + " is not editable. Skipping redefinition.");
+        if (!subClassifier.isEditable()) {
+            Application.getInstance().getGUILog().log(subClassifier.getQualifiedName() + " is not editable. Skipping redefinition.");
             return null;
         }
 
         RedefinableElement redefinedElement = null;
-        for (NamedElement p : classifierOfProp.getOwnedMember()) {
-            System.out.println("Handling: " + p.getName() + " and " + elementToBeRedefined.getName());
+        for (NamedElement p : subClassifier.getOwnedMember()) {
             if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(elementToBeRedefined)) {
                 redefinedElement = (RedefinableElement) p;
                 break;
@@ -97,19 +91,17 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
             }
         }
         if (redefinedElement == null) {
-            redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, classifierOfProp, false);
+            redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
         }
 
         if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
-//            SpecializeStructureAction speca = new SpecializeStructureAction(classifierOfProp, false, "", isIndividual, isIndividual);
-//            speca.createSpecialClassifier()
-            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, classifierOfProp, true, traveled,visited, isIndividual);
+                 CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, true, traveled, visited, isIndividual);
         }
         return redefinedElement;
 
 //        else {
-//            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " has already been redefined in " + classifierOfProp.getQualifiedName() + ".");
+//            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " has already been redefined in " + subClassifier.getQualifiedName() + ".");
 //            return null;
 //        }
     }
@@ -117,11 +109,11 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     private static boolean isMatchingStructuralFeature(NamedElement p, NamedElement elementToBeRedefined) {
         if (p.getName().equals(elementToBeRedefined.getName())) {
             if (p instanceof TypedElement && elementToBeRedefined instanceof TypedElement) {
-                if(((TypedElement) p).getType()!=null) {
+                if (((TypedElement) p).getType() != null) {
                     if (((TypedElement) p).getType().equals(((TypedElement) elementToBeRedefined).getType())) {
                         return true;
                     }
-                }else if (((TypedElement) elementToBeRedefined).getType() == null){
+                } else if (((TypedElement) elementToBeRedefined).getType() == null) {
                     return true;
                 }
             }
@@ -131,7 +123,7 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
 
     @Override
     public void run() {
-        redefineAttribute(subClassifier, re, recursion, isIndividual);
+        redefineRedefinableElement(subClassifier, re, recursion, isIndividual);
     }
 
     @Override

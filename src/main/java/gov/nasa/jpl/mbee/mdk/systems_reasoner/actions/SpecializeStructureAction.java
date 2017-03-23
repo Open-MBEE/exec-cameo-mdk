@@ -98,7 +98,6 @@ public class SpecializeStructureAction extends SRAction {
             }
         }
 
-
         Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
         visited.add(specific);
         visited.add(classifier);
@@ -107,8 +106,8 @@ public class SpecializeStructureAction extends SRAction {
         for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                 final RedefinableElement redefEl = (RedefinableElement) ne;
-                                 SetOrCreateRedefinableElementAction action = new SetOrCreateRedefinableElementAction(specific, redefEl, traveled, recursionMode, null, individualMode);
-                                action.redefineAttribute(specific, redefEl, recursionMode, traveled,visited, individualMode);
+                    SetOrCreateRedefinableElementAction action = new SetOrCreateRedefinableElementAction();
+                    action.redefineRedefinableElement(specific, redefEl, recursionMode, traveled,visited, individualMode);
                 }
         }
         return specific;
