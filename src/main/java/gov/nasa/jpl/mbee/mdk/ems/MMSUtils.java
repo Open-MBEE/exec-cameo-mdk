@@ -235,7 +235,7 @@ public class MMSUtils {
 
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
             throws IOException {
-        File file = File.createTempFile(new java.util.Date().toString() + clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '.'), null);
+        File file = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '.'), null);
         file.deleteOnExit();
 
         String arrayName = "elements";
@@ -268,7 +268,7 @@ public class MMSUtils {
         jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
         jsonGenerator.writeEndObject();
         jsonGenerator.close();
-
+        System.out.println(file.getPath());
         return file;
     }
 
@@ -283,10 +283,10 @@ public class MMSUtils {
     public static ObjectNode sendMMSRequest(Project project, HttpRequestBase request)
             throws IOException, ServerException, URISyntaxException {
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
-        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson() && request instanceof HttpEntityEnclosingRequest
-                && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null)
-                && httpEntityEnclosingRequest.getEntity().isRepeatable();
-        System.out.println(logBody);
+        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson();
+        logBody = logBody && request instanceof HttpEntityEnclosingRequest;
+        logBody = logBody && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null);
+        logBody = logBody && httpEntityEnclosingRequest.getEntity().isRepeatable();
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
         if (logBody) {
             try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
