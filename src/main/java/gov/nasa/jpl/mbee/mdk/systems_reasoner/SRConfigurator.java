@@ -143,7 +143,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         validateAction = new ValidateAction(validatableElements);
         category.addAction(validateAction);
         if (!classifiers.isEmpty()) {
-            aspectAction = new AspectAction(classifiers);
+         //   aspectAction = new AspectAction(classifiers);
         }
         if (!instances.isEmpty()) {
             instance2BSTAction = new Instance2BSTAction(instances);
@@ -168,7 +168,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             specializeStructureRecursiveAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE, true, false);
             createBSTAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE_INDIVIDUAL, true, true);
             createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
-            aspectAction = new AspectAction(classifier);
+          //  aspectAction = new AspectAction(classifier);
             selectAspectAction = new AspectSelectionAction(classifier);
 
             if (classifier instanceof Behavior) {
