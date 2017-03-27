@@ -19,6 +19,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.*;
 import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
+import gov.nasa.jpl.mbee.mdk.ems.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -186,7 +187,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             }
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                 for (Map.Entry<String, Pair<Element, ObjectNode>> entry : changelog.get(changeType).entrySet()) {
-                    successfulChangeValidationRule.addViolation(new ValidationRuleViolation(entry.getValue().getFirst(), "[" + changeType.name() + "]"));
+                    successfulChangeValidationRule.addViolation(new ValidationRuleViolation(entry.getValue().getFirst(), "Source: [" + SyncElement.Type.MMS.name() + " | Type: [" + changeType.name() + "] | Target: [" + SyncElement.Type.LOCAL.name() + "]"));
                 }
             }
 

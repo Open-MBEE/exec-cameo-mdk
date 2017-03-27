@@ -79,7 +79,7 @@ public class DetailedSyncStatusAction extends SRAction {
                 Changelog<String, Void> changelog = SyncElements.buildChangelog(syncElement);
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                     for (String key : changelog.get(changeType).keySet()) {
-                        String comment = "[" + syncElementType.name() + "] [" + changeType.name() + "]";
+                        String comment = "Source: [" + syncElementType.name() + "] | Type: [" + changeType.name() + "]";
                         Element element = Converters.getIdToElementConverter().apply(key, project);
                         validationRuleMap.get(syncElementType).get(changeType).addViolation(new ValidationRuleViolation(element, comment));
                     }
@@ -92,7 +92,7 @@ public class DetailedSyncStatusAction extends SRAction {
                 ValidationRule validationRule = validationRuleMap.get(SyncElement.Type.LOCAL).get(changeType);
                 for (Map.Entry<String, Element> entry : localSyncTransactionCommitListener.getInMemoryLocalChangelog().get(changeType).entrySet()) {
                     Element element = entry.getValue();
-                    validationRule.addViolation(element, "[" + SyncElement.Type.LOCAL.name() + "] [" + changeType.name() + "]" + (element != null && !project.isDisposed(element) ? "" : " " + entry.getKey()));
+                    validationRule.addViolation(element, "Source: [" + SyncElement.Type.LOCAL.name() + "] | Type: [" + changeType.name() + "]" + (element != null && !project.isDisposed(element) ? "" : " | " + entry.getKey()));
                 }
             }
             JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
@@ -100,7 +100,7 @@ public class DetailedSyncStatusAction extends SRAction {
                 ValidationRule validationRule = validationRuleMap.get(SyncElement.Type.MMS).get(changeType);
                 for (Map.Entry<String, ObjectNode> entry : jmsMessageListener.getInMemoryJMSChangelog().get(changeType).entrySet()) {
                     Element element = Converters.getIdToElementConverter().apply(entry.getKey(), project);
-                    validationRule.addViolation(new ValidationRuleViolation(element, "[" + SyncElement.Type.MMS.name() + "] [" + changeType.name() + "]"));
+                    validationRule.addViolation(new ValidationRuleViolation(element, "Source: [" + SyncElement.Type.MMS.name() + "] | Type: [" + changeType.name() + "]"));
                 }
             }
         }
@@ -108,7 +108,6 @@ public class DetailedSyncStatusAction extends SRAction {
         if (project.isRemote()) {
             for (ValidationRule validationRule : validationSuite.getValidationRules()) {
                 for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
-                    // TODO Add CopyActions/diff/etc. @donbot
                     validationRuleViolation.addAction(new LockAction(validationRuleViolation.getElement(), false));
                     validationRuleViolation.addAction(new LockAction(validationRuleViolation.getElement(), true));
                 }
@@ -116,7 +115,7 @@ public class DetailedSyncStatusAction extends SRAction {
         }
 
         if (validationSuite.hasErrors()) {
-            Utils.displayValidationWindow(validationSuite, "Sync Status");
+            Utils.displayValidationWindow(validationSuite, validationSuite.getName());
         }
         else {
             Application.getInstance().getGUILog().log("[INFO] No unsynced elements detected.");
