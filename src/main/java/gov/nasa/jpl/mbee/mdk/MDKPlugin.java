@@ -8,6 +8,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
+import com.nomagic.magicdraw.plugins.PluginDescriptor;
+import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 
@@ -26,18 +28,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MDKPlugin extends Plugin {
-    public static final String VERSION = "3.0",
-            MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
-    public static ClassLoader extensionsClassloader = null;
+    public static final String MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
+
+    public static String VERSION;
+    public static ClassLoader extensionsClassloader;
     public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
-    private OclEvaluatorPlugin oclPlugin = null;
-    private ValidateConstraintsPlugin vcPlugin = null;
-    private DebugExportImportModelPlugin debugExportImportModelPlugin = null;
-    private EnvironmentOptions.EnvironmentChangeListener mdkEnvOptionsListener;
+
+    private OclEvaluatorPlugin oclPlugin;
+    private ValidateConstraintsPlugin vcPlugin;
+    private DebugExportImportModelPlugin debugExportImportModelPlugin;
 
     public MDKPlugin() {
         super();
-        Debug.outln("constructed MDKPlugin!");
+    }
+
+    public static String getVersion() {
+        if (VERSION == null) {
+            VERSION = PluginUtils.getPlugins().stream().map(Plugin::getDescriptor).filter(descriptor -> descriptor.getName().equals("Model Development Kit")).map(PluginDescriptor::getVersion).findAny().orElse(null);
+        }
+        return VERSION;
     }
 
     public static void updateMainToolbarCategory() {
@@ -64,6 +73,7 @@ public class MDKPlugin extends Plugin {
 
     @Override
     public void init() {
+        getVersion();
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
         System.setProperty("jsse.enableSNIExtension", "false");
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
@@ -151,14 +161,11 @@ public class MDKPlugin extends Plugin {
     private void configureEnvironmentOptions() {
         EnvironmentOptions mdkOptions = Application.getInstance().getEnvironmentOptions();
         mdkOptions.addGroup(new MDKOptionsGroup());
-        mdkEnvOptionsListener = new EnvironmentOptions.EnvironmentChangeListener() {
-            @Override
-            public void updateByEnvironmentProperties(List<Property> list) {
-                Property advancedOptions = MDKOptionsGroup.getMDKOptions().getProperty(MDKOptionsGroup.SHOW_ADVANCED_OPTIONS_ID);
-                for (Property p : list) {
-                    if (p.equals(advancedOptions) && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-                        Application.getInstance().getGUILog().log("[INFO] You must restart MagicDraw to show advanced MDK options.");
-                    }
+        EnvironmentOptions.EnvironmentChangeListener mdkEnvOptionsListener = list -> {
+            Property advancedOptions = MDKOptionsGroup.getMDKOptions().getProperty(MDKOptionsGroup.SHOW_ADVANCED_OPTIONS_ID);
+            for (Property p : list) {
+                if (p.equals(advancedOptions) && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
+                    Application.getInstance().getGUILog().log("[INFO] You must restart MagicDraw to show advanced MDK options.");
                 }
             }
         };

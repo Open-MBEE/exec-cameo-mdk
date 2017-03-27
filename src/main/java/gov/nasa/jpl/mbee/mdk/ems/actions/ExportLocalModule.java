@@ -78,7 +78,7 @@ public class ExportLocalModule extends RuleViolationAction implements Annotation
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             requestData.set("elements", elementsArrayNode);
             requestData.put("source", "magicdraw");
-            requestData.put("mdkVersion", MDKPlugin.VERSION);
+            requestData.put("mdkVersion", MDKPlugin.getVersion());
             ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(module);
             elementsArrayNode.add(projectObjectNode);
             try {

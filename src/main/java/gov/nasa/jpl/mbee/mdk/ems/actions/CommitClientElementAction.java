@@ -126,7 +126,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 }
                 jsonGenerator.writeEndArray();
                 jsonGenerator.writeStringField("source", "magicdraw");
-                jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
+                jsonGenerator.writeStringField("mdkVersion", MDKPlugin.getVersion());
                 jsonGenerator.writeEndObject();
                 jsonGenerator.close();
 
@@ -148,7 +148,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 elements.add(curElement);
             }
             request.put("source", "magicdraw");
-            request.put("mdkVersion", MDKPlugin.VERSION);
+            request.put("mdkVersion", MDKPlugin.getVersion());
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
