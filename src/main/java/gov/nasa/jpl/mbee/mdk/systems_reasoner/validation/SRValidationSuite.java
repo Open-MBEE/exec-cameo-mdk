@@ -7,6 +7,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SubsetRedefinedProperty;
 import gov.nasa.jpl.mbee.mdk.validation.IndeterminateProgressMonitorProxy;
 import gov.nasa.jpl.mbee.mdk.validation.actions.*;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
@@ -28,6 +29,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
             attributeMissingRule = new ValidationRule("Missing Owned Redefinable Element", "Owned RedefinableElement is missing", ViolationSeverity.ERROR),
             aspectMissingRule = new ValidationRule("Missing Defined Aspect", "An aspect is defined but not realized", ViolationSeverity.ERROR),
             nameRule = new ValidationRule("Naming Inconsistency", "Names are inconsistent", ViolationSeverity.WARNING),
+            subsetsRule = new ValidationRule("Redefined Property Subset Missing.", "Subset missing.", ViolationSeverity.WARNING),
             attributeTypeRule = new ValidationRule("Attribute Type Inconsistency", "Attribute types are inconsistent", ViolationSeverity.WARNING),
             generalSpecificNameRule = new ValidationRule("General Specific Name Inconsistency", "General and specific names are inconsistent", ViolationSeverity.INFO),
     // orphanAttributeRule = new ValidationRule("Potential Orphan", "First degree attribute is never redefined", ViolationSeverity.WARNING);
@@ -47,6 +49,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
         this.addValidationRule(instanceClassifierExistenceRule);
         this.addValidationRule(missingSlotsRule);
         this.addValidationRule(associationInheritanceRule);
+        this.addValidationRule(subsetsRule);
     }
 
     public SRValidationSuite(final List<Element> elements) {
@@ -106,7 +109,14 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if (doesEventuallyRedefine((RedefinableElement) p, redefEl)) {
                                     // if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
                                     redefingEl = (RedefinableElement) p;
-                                    break;
+                                    if(redefingEl instanceof Property && redefEl instanceof Property) {
+                                        if(!((Property) redefEl).getSubsettedProperty().isEmpty()) {
+                                            final ValidationRuleViolation v = new ValidationRuleViolation(classifier, subsetsRule.getDescription() + ": " + redefEl.getQualifiedName());
+                                            v.addAction(new SubsetRedefinedProperty((Property) redefEl, (Property) redefingEl));
+                                            attributeTypeRule.addViolation(v);
+                                        }
+                                        break;
+                                    }
                                 }
                             }
                         }
