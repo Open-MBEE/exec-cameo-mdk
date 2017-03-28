@@ -420,7 +420,7 @@ public class MDKHelper {
             elements.add(curElement);
         }
         requestBody.put("source", "magicdraw");
-        requestBody.put("mdkVersion", MDKPlugin.VERSION);
+        requestBody.put("mdkVersion", MDKPlugin.getVersion());
         return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, requestBody));
     }
 
@@ -444,7 +444,7 @@ public class MDKHelper {
             elementJson.add(elemJson);
         }
         requestBody.put("source", "magicdraw");
-        requestBody.put("mdkVersion", MDKPlugin.VERSION);
+        requestBody.put("mdkVersion", MDKPlugin.getVersion());
         return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestBody));
     }
 

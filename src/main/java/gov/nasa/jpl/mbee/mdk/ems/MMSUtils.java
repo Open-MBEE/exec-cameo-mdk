@@ -184,7 +184,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, JsonNode sendData)
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, Object sendData)
             throws IOException, URISyntaxException {
         // build specified request type
         // assume that any request can have a body, and just build the appropriate one
@@ -212,7 +212,7 @@ public class MMSUtils {
         request.addHeader("charset", "utf-8");
         if (sendData != null) {
             request.addHeader("Content-Type", "application/json");
-            String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
+            String data = sendData instanceof String ? (String) sendData : JacksonUtils.getObjectMapper().writeValueAsString(sendData);
             ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
         }
         return request;
