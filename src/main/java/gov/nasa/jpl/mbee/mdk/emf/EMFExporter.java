@@ -241,7 +241,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
 //                        branchName = "master";
 //                    }
 //                    objectNode.put(MDKConstants.NAME_KEY, branchName);
-                    objectNode.put(MDKConstants.TWC_VERSION, ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
+                    objectNode.put(MDKConstants.TWC_ID_KEY, ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
                     //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
                     return objectNode;
                 }
@@ -252,7 +252,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         return objectNode;
                     }
                     if (element instanceof Package) {
-                        objectNode.put("_isSite", Utils.isSiteChar((Package) element));
+                        objectNode.put("_isSite", Utils.isSiteChar(project, (Package) element));
                     }
                     return objectNode;
                 }
@@ -281,7 +281,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         VIEW(
                 (element, project, objectNode) -> {
-                    Stereotype viewStereotype = Utils.getViewStereotype();
+                    Stereotype viewStereotype = Utils.getViewStereotype(project);
                     if (viewStereotype == null || !StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
                         return objectNode;
                     }
