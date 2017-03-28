@@ -769,6 +769,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
+//        vss.add(iv.getSuite());
         if (showValidation) {
             if (suite.hasErrors()) {
                 Utils.displayValidationWindow(vss, "View Generation Validation");
