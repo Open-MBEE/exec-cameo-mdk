@@ -73,7 +73,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
         uriBuilder.setPath(uriBuilder.getPath() + "/workspaces");
 
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode()
-                .put("source", "magicdraw").put("mdkVersion", MDKPlugin.VERSION)
+                .put("source", "magicdraw").put("mdkVersion", MDKPlugin.getVersion())
                 .putArray("workspaces").addObject()
                 .put("name", branches[branches.length - 1]).put("parent", parentId).put("branched", new DateTime().toString())
                 .put("description", "Created from MagicDraw.");
@@ -124,7 +124,7 @@ public class CreateMMSWorkspaceAction extends RuleViolationAction implements Ann
 
         ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
         objectNode.putArray("elements").add(MMSUtils.getProjectObjectNode(project));
-        objectNode.put("source", "magicdraw").put("mdkVersion", MDKPlugin.VERSION);
+        objectNode.put("source", "magicdraw").put("mdkVersion", MDKPlugin.getVersion());
         return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, uriBuilder, objectNode));
     }
 }

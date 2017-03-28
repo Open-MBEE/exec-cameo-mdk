@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.json;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
@@ -16,6 +17,7 @@ import java.util.function.Function;
  */
 public class JacksonUtils {
     private static ObjectMapper OBJECT_MAPPER_INSTANCE;
+    private static JsonFactory JSON_FACTORY_INSTANCE;
 
     public static ObjectMapper getObjectMapper() {
         if (OBJECT_MAPPER_INSTANCE == null) {
@@ -26,6 +28,14 @@ public class JacksonUtils {
             }
         }
         return OBJECT_MAPPER_INSTANCE;
+    }
+
+    public static JsonFactory getJsonFactory() {
+        if (JSON_FACTORY_INSTANCE == null) {
+            JSON_FACTORY_INSTANCE = new JsonFactory();
+            JSON_FACTORY_INSTANCE.setCodec(JacksonUtils.getObjectMapper());
+        }
+        return JSON_FACTORY_INSTANCE;
     }
 
     public static JsonNode getAtPath(JsonNode json, String path) {

@@ -649,7 +649,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
                 requestData.set("elements", elementsArrayNode);
                 requestData.put("source", "magicdraw");
-                requestData.put("mdkVersion", MDKPlugin.VERSION);
+                requestData.put("mdkVersion", MDKPlugin.getVersion());
                 Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
@@ -678,7 +678,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
                 requestData.set("elements", elementsArrayNode);
                 requestData.put("source", "magicdraw");
-                requestData.put("mdkVersion", MDKPlugin.VERSION);
+                requestData.put("mdkVersion", MDKPlugin.getVersion());
                 Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);

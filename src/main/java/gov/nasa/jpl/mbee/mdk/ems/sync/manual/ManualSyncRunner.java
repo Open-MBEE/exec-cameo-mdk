@@ -104,6 +104,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
             serverElements.addAll(jsonObjects);
             progressStatus.increase();
         }
+        if (progressStatus.isCancel()) {
+            Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
+            return;
+        }
         elementValidator = new ElementValidator(clientElements, serverElements, project);
         elementValidator.run(progressStatus);
     }

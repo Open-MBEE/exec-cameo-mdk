@@ -4,7 +4,7 @@ import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import gov.nasa.jpl.mbee.mdk.validation.actions.RedefineAttributeAction;
+import gov.nasa.jpl.mbee.mdk.validation.actions.SetOrCreateRedefinableElementAction;
 import gov.nasa.jpl.mbee.mdk.validation.actions.SpecializeClassifierAction;
 
 import java.awt.event.ActionEvent;
@@ -75,7 +75,7 @@ public class Instance2BSTAction extends SRAction {
         for (final Slot slot : instance.getSlot()) {
             if (slot.getDefiningFeature() instanceof Property) {
                 final Property property = (Property) slot.getDefiningFeature();
-                final Property redefinedAttribute = (Property) RedefineAttributeAction.redefineAttribute(specific, property, false, true);
+                final Property redefinedAttribute = (Property) SetOrCreateRedefinableElementAction.redefineAttribute(specific, property, false, true);
 
                 if (!slot.hasValue()) {
                     continue;

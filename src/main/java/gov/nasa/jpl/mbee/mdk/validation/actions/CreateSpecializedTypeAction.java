@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.validation.actions;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SpecializeStructureAction;
 import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
 import java.util.*;
@@ -38,22 +39,21 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
     }
 
     public static final void createSpecializedType(final Property property, final Classifier parent, final boolean redefineAttributes, boolean isIndividual) {
-        createSpecializedType(property, parent, redefineAttributes, new ArrayList<RedefinableElement>(), isIndividual);
+        createSpecializedType(property, parent, redefineAttributes, new ArrayList<RedefinableElement>(),new ArrayList<Classifier>(), isIndividual);
     }
 
-    // NEEDS BETTER CIRCULAR DETECTION
-    public static final void createSpecializedType(final StructuralFeature structuralFeature, final Classifier parent, final boolean redefineAttributes, final List<RedefinableElement> traveled, boolean isIndividual) {
+     public static final void createSpecializedType(final StructuralFeature redefinedAttribute, final Classifier parent, final boolean redefineAttributes, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual) {
         if (!parent.isEditable()) {
             Application.getInstance().getGUILog().log(parent.getQualifiedName() + " is not editable. Skipping creating specialization.");
             return;
         }
-        if (structuralFeature.getType() instanceof Classifier && !(structuralFeature.getType() instanceof Property)) {
+        if (redefinedAttribute.getType() instanceof Classifier && !(redefinedAttribute.getType() instanceof Property)) {
             boolean hasTraveled = false;
-            if (traveled.contains(structuralFeature)) {
+            if (traveled.contains(redefinedAttribute)) {
                 hasTraveled = true;
             }
             else {
-                for (final RedefinableElement redefinedProperty : structuralFeature.getRedefinedElement()){
+                for (final RedefinableElement redefinedProperty : redefinedAttribute.getRedefinedElement()){
                      if (traveled.contains(redefinedProperty)) {
                         hasTraveled = true;
                         break;
@@ -61,32 +61,34 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
                 }
             }
             if (hasTraveled) {
-                Application.getInstance().getGUILog().log("Warning: Detected circular reference at " + structuralFeature.getQualifiedName() + ". Stopping recursion.");
+                Application.getInstance().getGUILog().log("[WARNING] Detected circular reference at " + redefinedAttribute.getQualifiedName() + ". Stopping recursion.");
                 return;
             }
-            traveled.add(structuralFeature);
-            for (final RedefinableElement re : structuralFeature.getRedefinedElement()) {
+            traveled.add(redefinedAttribute);
+            for (final RedefinableElement re : redefinedAttribute.getRedefinedElement()) {
                 if (re instanceof RedefinableElement) {
                     traveled.add(re);
                 }
             }
-            final Classifier general = (Classifier) structuralFeature.getType();
+            final Classifier general = (Classifier) redefinedAttribute.getType();
             Type special = null;
-            if(!isIndividual && getExistingSpecial(structuralFeature)!=null) {
-               special = getExistingSpecial(structuralFeature);
+            if(!isIndividual && getExistingSpecial(redefinedAttribute)!=null) {
+               special = getExistingSpecial(redefinedAttribute);
             }else{
-                special = createSpecializedClassifier(general, parent, structuralFeature);
+               // special = createSpecializedClassifier(general, parent, redefinedAttribute);
+                SpecializeStructureAction speca = new SpecializeStructureAction(general, false, "", redefineAttributes, isIndividual);
+                special = speca.createSpecialClassifier(parent, traveled, visited);
             }
             if (special == null) {
                 return;
             }
 
-            structuralFeature.setType(special);
+            redefinedAttribute.setType(special);
             if (redefineAttributes) {
                 if(special instanceof Classifier) {
                     for (final NamedElement ne : ((Classifier) special).getInheritedMember()) {
                         if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-                            RedefineAttributeAction.redefineAttribute((Classifier) special, (RedefinableElement) ne, true, traveled, isIndividual);
+                            SetOrCreateRedefinableElementAction.redefineAttribute((Classifier) special, (RedefinableElement) ne, true, traveled,visited ,isIndividual);
                         }
                     }
                 }

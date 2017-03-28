@@ -1,6 +1,5 @@
 bin
 build
-dist
 javadoc
 out
 target
@@ -14,3 +13,4 @@ target
 *.jresult
 *.diff
 rebel.xml
+.DS_Store
