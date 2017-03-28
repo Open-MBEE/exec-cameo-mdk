@@ -7,6 +7,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SubsetRedefinedProperty;
 import gov.nasa.jpl.mbee.mdk.validation.IndeterminateProgressMonitorProxy;
 import gov.nasa.jpl.mbee.mdk.validation.actions.*;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
@@ -25,9 +26,10 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
 
     private static final ValidationRule generalMissingRule = new ValidationRule("Missing General", "General is missing in generalization", ViolationSeverity.ERROR),
             generalNotClassRule = new ValidationRule("General Not Class", "General is not of type class", ViolationSeverity.ERROR),
-            attributeMissingRule = new ValidationRule("Missing Owned Attribute", "Owned attribute is missing", ViolationSeverity.ERROR),
+            attributeMissingRule = new ValidationRule("Missing Owned Redefinable Element", "Owned RedefinableElement is missing", ViolationSeverity.ERROR),
             aspectMissingRule = new ValidationRule("Missing Defined Aspect", "An aspect is defined but not realized", ViolationSeverity.ERROR),
             nameRule = new ValidationRule("Naming Inconsistency", "Names are inconsistent", ViolationSeverity.WARNING),
+            subsetsRule = new ValidationRule("Redefined Property Subset Missing.", "Subset missing.", ViolationSeverity.WARNING),
             attributeTypeRule = new ValidationRule("Attribute Type Inconsistency", "Attribute types are inconsistent", ViolationSeverity.WARNING),
             generalSpecificNameRule = new ValidationRule("General Specific Name Inconsistency", "General and specific names are inconsistent", ViolationSeverity.INFO),
     // orphanAttributeRule = new ValidationRule("Potential Orphan", "First degree attribute is never redefined", ViolationSeverity.WARNING);
@@ -47,6 +49,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
         this.addValidationRule(instanceClassifierExistenceRule);
         this.addValidationRule(missingSlotsRule);
         this.addValidationRule(associationInheritanceRule);
+        this.addValidationRule(subsetsRule);
     }
 
     public SRValidationSuite(final List<Element> elements) {
@@ -79,6 +82,14 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                         iterator.previous();
                     }
                 }
+                for (Property property : classifier.getAttribute()) {
+                    if (!elements.contains(property.getType())) {
+                        iterator.add(property.getType());
+                        iterator.previous();
+                    }
+                }
+
+
                 checkForAspects(classifier, classifier);
 
                 for (final Classifier general : classifier.getGeneral()) {
@@ -98,7 +109,14 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if (doesEventuallyRedefine((RedefinableElement) p, redefEl)) {
                                     // if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
                                     redefingEl = (RedefinableElement) p;
-                                    break;
+                                    if(redefingEl instanceof Property && redefEl instanceof Property) {
+                                        if(!((Property) redefEl).getSubsettedProperty().isEmpty()) {
+                                            final ValidationRuleViolation v = new ValidationRuleViolation(classifier, subsetsRule.getDescription() + ": " + redefEl.getQualifiedName());
+                                            v.addAction(new SubsetRedefinedProperty((Property) redefEl, (Property) redefingEl));
+                                            attributeTypeRule.addViolation(v);
+                                        }
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -120,14 +138,14 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                         v.addAction(new SetRedefinitionAction(p, redefEl, "Redefine by Name Collision"));
                                     }
                                 }
-                                if (ne instanceof Property) {
+                                if (ne instanceof RedefinableElement) {
                                     // why was this a requirement? One should be able to redefine any property regardless of aggregation, by my understanding.
                                     //if (!((Property) ne).isComposite()) {
-                                    v.addAction(new RedefineAttributeAction(classifier, redefEl, false));
+                                    v.addAction(new SetOrCreateRedefinableElementAction(classifier, redefEl, false));
                                     if (redefEl instanceof TypedElement) { // && ((TypedElement) redefEl).getType() != null
                                         // intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
                                         // grouping them separately to validate. It will just ignore and log if a type isn't specializable.
-                                        v.addAction(new RedefineAttributeAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively & Individually", true));
+                                        v.addAction(new SetOrCreateRedefinableElementAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively & Individually", true));
                                     }
                                 }
                                 attributeMissingRule.addViolation(v);
@@ -147,8 +165,10 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if ((redefingTypdEl.getType() == null && redefableTypdEl.getType() != null) || (redefingTypdEl.getType() != null && redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier
                                         && !doesEventuallyGeneralizeTo((Classifier) redefingTypdEl.getType(), (Classifier) redefableTypdEl.getType()))) {
                                     if (redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier && ((Classifier) redefingTypdEl.getType()).getGeneral().contains(redefableTypdEl.getType())) {
-                                        iterator.add(redefingTypdEl.getType());
-                                        iterator.previous();
+                                        if(!elements.contains(redefableTypdEl.getType())) {
+                                            iterator.add(redefingTypdEl.getType());
+                                            iterator.previous();
+                                        }
                                     }
                                     else {
                                         final ValidationRuleViolation v = new ValidationRuleViolation(redefingTypdEl,

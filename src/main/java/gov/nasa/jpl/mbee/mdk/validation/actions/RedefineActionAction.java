@@ -67,7 +67,7 @@ public class RedefineActionAction extends GenericRuleViolationAction {
                 }
                 redefinedElement.getRedefinedElement().add(re);
                 if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {
-                    CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true, traveled, false);
+                    CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, clazz, true, traveled, null, false);
                 }
                 return redefinedElement;
             }

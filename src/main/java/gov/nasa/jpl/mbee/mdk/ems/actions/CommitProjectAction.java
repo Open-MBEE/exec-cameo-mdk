@@ -164,7 +164,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
         ArrayNode elementsArrayNode = requestData.putArray("elements");
         requestData.put("source", "magicdraw");
-        requestData.put("mdkVersion", MDKPlugin.VERSION);
+        requestData.put("mdkVersion", MDKPlugin.getVersion());
         ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
         elementsArrayNode.add(projectObjectNode);
 

@@ -58,20 +58,23 @@ public class Converters {
                     return null;
                 }
                 BaseElement baseElement = project.getElementByID(id);
-                if (baseElement == null && id.endsWith(MDKConstants.PRIMARY_MODEL_ID_SUFFIX)) {
+                if (baseElement == null) {
+                    return null;
+                }
+                if (id.endsWith(MDKConstants.PRIMARY_MODEL_ID_SUFFIX)) {
                     String projectId = id.substring(0, id.length() - MDKConstants.PRIMARY_MODEL_ID_SUFFIX.length());
                     if (projectId.equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                         return project.getPrimaryModel();
                     }
                 }
-                if (baseElement == null && id.endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX)) {
+                if (id.endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX)) {
                     String stereotypedElementId = id.substring(0, id.length() - MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX.length());
                     Element stereotypedElement = ID_TO_ELEMENT_CONVERTER.apply(stereotypedElementId, project);
                     if (stereotypedElement != null) {
                         return stereotypedElement.getAppliedStereotypeInstance();
                     }
                 }
-                if (baseElement == null && id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
+                if (id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
                     String[] sections = id.split(MDKConstants.SLOT_VALUE_ID_SEPARATOR);
                     Element element = Converters.getIdToElementConverter().apply(sections[0], project);
                     if (element == null || !(element instanceof Slot)) {
@@ -100,14 +103,14 @@ public class Converters {
                     }
                     return value;
                 }
-                /*if (baseElement == null && id.endsWith(MDKConstants.TIME_EXPRESSION_ID_SUFFIX)) {
+                /*if (id.endsWith(MDKConstants.TIME_EXPRESSION_ID_SUFFIX)) {
                     String timeEventId = id.substring(0, id.length() - MDKConstants.TIME_EXPRESSION_ID_SUFFIX.length());
                     Element timeEvent = ID_TO_ELEMENT_CONVERTER.apply(timeEventId, project);
                     if (timeEvent != null && timeEvent instanceof TimeEvent) {
                         return ((TimeEvent) timeEvent).getWhen();
                     }
                 }*/
-                if (baseElement == null && id.contains(MDKConstants.SLOT_ID_SEPARATOR) && !id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
+                if (id.contains(MDKConstants.SLOT_ID_SEPARATOR) && !id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
                     String[] sections = id.split(MDKConstants.SLOT_ID_SEPARATOR);
                     Element owningInstance = Converters.getIdToElementConverter().apply(sections[0], project);
                     Element definingFeature = Converters.getIdToElementConverter().apply(sections[1], project);
@@ -123,15 +126,13 @@ public class Converters {
     }
 
     public static Function<Project, String> getProjectToIdConverter() {
+        // this returns the primary project ID intentionally, as that is the tracked id in mms
         if (PROJECT_TO_ID_CONVERTER == null) {
             PROJECT_TO_ID_CONVERTER = (project) -> {
                 if (project == null) {
                     return null;
                 }
-                if (!project.isRemote()) {
-                    return project.getID();
-                }
-                return ProjectUtilities.getResourceID(project.getPrimaryProject().getLocationURI());
+                return project.getPrimaryProject().getProjectID();
             };
         }
         return PROJECT_TO_ID_CONVERTER;
@@ -143,10 +144,7 @@ public class Converters {
                 if (iProject == null) {
                     return null;
                 }
-                if (iProject.getLocationURI().isFile()) {
-                    return iProject.getProjectID();
-                }
-                return ProjectUtilities.getResourceID(iProject.getLocationURI());
+                return iProject.getProjectID();
             };
         }
         return IPROJECT_TO_ID_CONVERTER;

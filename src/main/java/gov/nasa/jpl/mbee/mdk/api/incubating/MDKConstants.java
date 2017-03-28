@@ -24,12 +24,13 @@ public class MDKConstants {
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
             DIAGRAM_TYPE_KEY = DERIVED_KEY_PREFIX + "diagramType",
-            CATEGORY_ID_KEY = DERIVED_KEY_PREFIX + "category" + ID_KEY_SUFFIX,
+            CATEGORY_ID_KEY = "category" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_ID_KEY = "mountedElement" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_PROJECT_ID_KEY = "mountedElementProject" + ID_KEY_SUFFIX,
             QUALIFIED_NAME_KEY = "qualifiedName",
             QUALIFIED_ID_KEY = "qualified"  + ID_KEY_SUFFIX,
+            PROJECT_URI_KEY = "uri",
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
-            TWC_VERSION = "teamworkCloudVersion";
+            TWC_ID_KEY = "twc" + ID_KEY_SUFFIX;
 }

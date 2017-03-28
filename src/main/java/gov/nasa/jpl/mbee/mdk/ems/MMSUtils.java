@@ -8,6 +8,7 @@ import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -43,7 +44,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Pattern;
 
 /**
  * Created by igomes on 9/26/16.
@@ -182,7 +182,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, JsonNode sendData)
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, Object sendData)
             throws IOException, URISyntaxException {
         // build specified request type
         // assume that any request can have a body, and just build the appropriate one
@@ -210,7 +210,7 @@ public class MMSUtils {
         request.addHeader("charset", "utf-8");
         if (sendData != null) {
             request.addHeader("Content-Type", "application/json");
-            String data = JacksonUtils.getObjectMapper().writeValueAsString(sendData);
+            String data = sendData instanceof String ? (String) sendData : JacksonUtils.getObjectMapper().writeValueAsString(sendData);
             ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
         }
         return request;
@@ -632,24 +632,21 @@ public class MMSUtils {
     }
 
     public static ObjectNode getProjectObjectNode(IProject iProject) {
-        String categoryId = null;
-        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject) {
-            // TODO @donbot enable full version below after 18.5GA
-//            String categoryId = (project.isRemote() ? EsiUtils.getCategoryID(resourceId) : "local" );
-        }
-        return getProjectObjectNode(iProject.getName(), Converters.getIProjectToIdConverter().apply(iProject), categoryId);
-    }
-
-    private static ObjectNode getProjectObjectNode(String name, String projectId, String categoryId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.ID_KEY, projectId);
-        if (name != null && !name.isEmpty()) {
-            projectObjectNode.put(MDKConstants.NAME_KEY, name);
+        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
+        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
+        String resourceId = "";
+        if (ProjectUtilities.getProject(iProject).isRemote()) {
+            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
         }
-        if (categoryId != null && !categoryId.isEmpty()) {
-            projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
+        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
+        String categoryId = "";
+        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject && !resourceId.isEmpty()) {
+            categoryId = EsiUtils.getCategoryID(resourceId);
         }
+        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
+        projectObjectNode.put(MDKConstants.PROJECT_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
     }
 

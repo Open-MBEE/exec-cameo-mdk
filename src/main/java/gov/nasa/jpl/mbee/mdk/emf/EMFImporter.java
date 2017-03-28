@@ -439,11 +439,9 @@ public class EMFImporter implements JsonToElementFunction {
                                     && ((jsonNode = objectNode.get(KEY_FUNCTION.apply(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT))) != null && jsonNode.isTextual()
                                     || (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
                                 ((InstanceSpecification) element).setStereotypedElement(owningElement);
-                                //System.out.println("[STEREOTYPED ELEMENT] " + Converters.getElementToIdConverter().apply(element) + " -> " + Converters.getElementToIdConverter().apply(owningElement));
                             }
                             else {
                                 element.setOwner(owningElement);
-                                //System.out.println("[OWNER] " + element + " " + Converters.getElementToIdConverter().apply(element) + " -> " + owningElement + " " + Converters.getElementToIdConverter().apply(owningElement));
                             }
                         } catch (IllegalArgumentException e) {
                             System.out.println("ELEMENT: " + element + (element != null ? " " + Converters.getElementToIdConverter().apply(element) : ""));
