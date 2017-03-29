@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.systems_reasoner.actions;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
@@ -32,8 +33,9 @@ public class AspectAction extends SRAction {
      */
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "Add Aspect";
-    public List<Classifier> classifiers;
-    private static Generalization createdGeneralization = null;
+    private List<Classifier> classifiers;
+    private Project project;
+    private static Generalization createdGeneralization;
 
     public AspectAction(Classifier classifier) {
         this(Utils2.newList(classifier));
@@ -42,6 +44,7 @@ public class AspectAction extends SRAction {
     public AspectAction(List<Classifier> classifiers) {
         super(DEFAULT_ID);
         this.classifiers = classifiers;
+        this.project = Project.getProject(classifiers.iterator().next());
     }
 
     @Override
@@ -53,8 +56,7 @@ public class AspectAction extends SRAction {
         final ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
         SessionManager.getInstance().createSession("Creating aspect.");
         final SelectElementTypes set = new SelectElementTypes(types, types, null, null);
-        final SelectElementInfo sei = new SelectElementInfo(true, false,
-                Application.getInstance().getProject().getModel().getOwner(), true);
+        final SelectElementInfo sei = new SelectElementInfo(true, false, project.getPrimaryModel().getOwner(), true);
         boolean aspectDefinitionFound = false;
         for (Classifier aspected : classifiers) {
             for (Dependency d : aspected.getClientDependency()) {
@@ -98,13 +100,13 @@ public class AspectAction extends SRAction {
             if (dlg != null) {
                 dlg.setVisible(true);
                 if (dlg.isOkClicked() && dlg.getSelectedElements() != null && !dlg.getSelectedElements().isEmpty()) {
-                    final List<Classifier> aspectedClasses = new ArrayList<Classifier>();
+                    final List<Classifier> aspectedClasses = new ArrayList<>();
 
                     for (final BaseElement be : dlg.getSelectedElements()) {
                         if (be instanceof Classifier) {
                             final Classifier aspect = (Classifier) be;
                             for (final Classifier aspected : classifiers) {
-                                Stereotype aspectSt = Utils.getStereotype("aspect");
+                                Stereotype aspectSt = Utils.getStereotype(project, "aspect");
                                 Utils.createDependencyWithStereotype(aspected, aspect, aspectSt);
                                 aspectedClasses.add(aspected);
                                 AspectRemedyAction ara = new AspectRemedyAction(aspected, aspect);

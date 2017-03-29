@@ -42,14 +42,8 @@ public class MMSLogoutAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "Logout";
 
-    private MMSLoginAction login;
-
     public MMSLogoutAction() {
         super(DEFAULT_ID, "Logout", null, null);
-    }
-
-    public void setLoginAction(MMSLoginAction login) {
-        this.login = login;
     }
 
     @Override

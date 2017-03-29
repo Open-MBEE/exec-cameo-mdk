@@ -233,7 +233,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             }
         }
         if (validationSuite.hasErrors()) {
-            Utils.displayValidationWindow(validationSuite, validationSuite.getName());
+            Utils.displayValidationWindow(project, validationSuite, validationSuite.getName());
         }
     }
 

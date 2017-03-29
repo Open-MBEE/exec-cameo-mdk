@@ -444,7 +444,7 @@ public class MagicDrawHelper {
 
     public static Class createDocument(String name, Element owner) {
         Class newDocument = createClass(name, owner);
-        Stereotype sysmlDocument = Utils.getDocumentStereotype();
+        Stereotype sysmlDocument = Utils.getDocumentStereotype(Project.getProject(owner));
         StereotypesHelper.addStereotype(newDocument, sysmlDocument);
         return newDocument;
     }
@@ -533,7 +533,7 @@ public class MagicDrawHelper {
 
     public static Component createSiteCharComponent(String name, Element owner) {
         Component comp = createComponent(name, owner);
-        Component genTarget = Utils.getSiteCharacterizationComponent();
+        Component genTarget = Utils.getSiteCharacterizationComponent(Project.getProject(owner));
         createGeneralization("", comp, comp, genTarget);
         createDependency("", comp, comp, owner);
         return comp;
@@ -547,7 +547,7 @@ public class MagicDrawHelper {
 
     public static Class createView(String name, Element owner) {
         Class newView = createClass(name, owner);
-        Stereotype sysmlView = Utils.getViewStereotype();
+        Stereotype sysmlView = Utils.getViewStereotype(Project.getProject(owner));
         StereotypesHelper.addStereotype(newView, sysmlView);
         return newView;
     }

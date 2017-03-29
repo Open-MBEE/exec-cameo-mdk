@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
@@ -44,19 +45,22 @@ public class ValidateElementDepthAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Collection<Element> start;
+    private Project project;
     public static final String DEFAULT_ID = "ValidateElementDepth";
     private int depth = -2;
     private boolean cancel = false;
 
     public ValidateElementDepthAction(Element e, String name, int depth) {
         super(DEFAULT_ID, name, null, null);
-        start = new ArrayList<Element>();
-        start.add(e);
+        this.start = new ArrayList<Element>();
+        this.start.add(e);
+        this.project = Project.getProject(e);
     }
 
     public ValidateElementDepthAction(Collection<Element> e, String name, int depth) {
         super(DEFAULT_ID, name, null, null);
-        start = e;
+        this.start = e;
+        this.project = Project.getProject(e.iterator().next());
     }
 
     public ValidateElementDepthAction(Element e, String name) {
@@ -110,7 +114,7 @@ public class ValidateElementDepthAction extends MDAction {
             ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), depth);
             ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync (depth: " + Integer.toString(depth) + ")", true, 0);
             if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
-                Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(),manualSyncRunner.getValidationSuite().getName());
+                Utils.displayValidationWindow(project, manualSyncRunner.getValidationSuite(),manualSyncRunner.getValidationSuite().getName());
             }
             else {
                 Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");

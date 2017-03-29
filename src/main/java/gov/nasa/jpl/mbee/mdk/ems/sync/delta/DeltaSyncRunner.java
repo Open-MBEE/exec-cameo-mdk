@@ -430,7 +430,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         if (!elementValidator.getInvalidElements().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + elementValidator.getInvalidElements().size() + " element" + (elementValidator.getInvalidElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");
             vss.add(elementValidator.getValidationSuite());
-            Utils.displayValidationWindow(elementValidator.getValidationSuite(), "Delta Sync Conflict Validation");
+            Utils.displayValidationWindow(project, elementValidator.getValidationSuite(), "Delta Sync Conflict Validation");
 
             for (Map.Entry<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedEntry : conflictedChanges.entrySet()) {
                 String id = conflictedEntry.getKey();

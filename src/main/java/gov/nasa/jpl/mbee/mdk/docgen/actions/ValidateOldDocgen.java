@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk.docgen.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
@@ -60,16 +61,17 @@ public class ValidateOldDocgen extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        Project project = Application.getInstance().getProject();
         ValidationSuite vs = new ValidationSuite("Old DocGen Documents");
         ValidationRule vr = new ValidationRule("Old DocGen Document", "Old DocGen Document", ViolationSeverity.ERROR);
         vs.addValidationRule(vr);
-        Stereotype ps = Utils.getProductStereotype();
+        Stereotype ps = Utils.getProductStereotype(project);
         if (ps == null) {
             return;
         }
-        List<Element> elements = Utils.collectOwnedElements(Application.getInstance().getProject().getModel(), 0);
+        List<Element> elements = Utils.collectOwnedElements(project.getPrimaryModel(), 0);
         List<Element> docs = Utils.filterElementsByStereotype(elements, ps, true, true);
-        List<Element> projDocs = new ArrayList<Element>();
+        List<Element> projDocs = new ArrayList<>();
         for (Element doc : docs) {
             if (!ProjectUtilities.isElementInAttachedProject(doc) && doc instanceof Package) {
                 projDocs.add(doc);
@@ -84,8 +86,8 @@ public class ValidateOldDocgen extends MDAction {
             v.addAction(new MigrateOldDocgen(doc));
             vr.addViolation(v);
         }
-        List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+        List<ValidationSuite> vss = new ArrayList<>();
         vss.add(vs);
-        Utils.displayValidationWindow(vss, "Old DocGen Documents");
+        Utils.displayValidationWindow(project, vss, "Old DocGen Documents");
     }
 }

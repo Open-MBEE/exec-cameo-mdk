@@ -124,14 +124,17 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
     private void addElementActions(ActionsManager manager, Element e, List<Element> es) {
         //manager.getCategories().forEach(category -> dumpCategory(category, 0));
         Project project = Project.getProject(e);
+        if (project == null && !es.isEmpty()) {
+            project = Project.getProject(es.iterator().next());
+        }
         if (project == null) {
             return;
         }
-        Stereotype sysmlview = Utils.getViewStereotype();
-        Stereotype sysmlviewpoint = Utils.getViewpointStereotype();
-        Stereotype documentView = Utils.getProductStereotype();
-        Stereotype classview = Utils.getViewClassStereotype();
-        Stereotype elementGroupStereotype = Utils.getElementGroupStereotype();
+        Stereotype sysmlview = Utils.getViewStereotype(project);
+        Stereotype sysmlviewpoint = Utils.getViewpointStereotype(project);
+        Stereotype documentView = Utils.getProductStereotype(project);
+        Stereotype classview = Utils.getViewClassStereotype(project);
+        Stereotype elementGroupStereotype = Utils.getElementGroupStereotype(project);
 
         // top-level context menu: Refactor With ID
         ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");
