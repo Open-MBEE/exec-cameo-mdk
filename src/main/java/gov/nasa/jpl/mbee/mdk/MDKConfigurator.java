@@ -126,9 +126,9 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         Project project = Project.getProject(e);
         if (project == null && !es.isEmpty()) {
             project = Project.getProject(es.iterator().next());
-            if (project == null) {
-                return;
-            }
+        }
+        if (project == null) {
+            return;
         }
         Stereotype sysmlview = Utils.getViewStereotype(project);
         Stereotype sysmlviewpoint = Utils.getViewpointStereotype(project);
