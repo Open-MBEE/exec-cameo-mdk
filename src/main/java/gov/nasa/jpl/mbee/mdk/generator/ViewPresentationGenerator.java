@@ -322,13 +322,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setDescription("Importing existing view instances");
                 progressStatus.setCurrent(3);
 
-//                for (ObjectNode instanceObjectNode : instanceObjectNodes) {
-//                    instanceObjectNode.putNull(MDKConstants.OWNER_ID_KEY);
-//                    //instanceObjectNode.put(MDKConstants.OWNER_ID_KEY, Converters.getElementToIdConverter().apply(project.getModel()));
-//                    //System.out.println("[SWAP] Owner -> " + Converters.getElementToIdConverter().apply(project.getModel()));
-//                    //System.out.println(instanceObjectNode);
-//                }
-
                 EMFImporter emfImporter = new EMFImporter() {
                     @Override
                     public List<PreProcessor> getPreProcessors() {
@@ -348,11 +341,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                     EStructuralFeatureOverride.OWNER.getPredicate(),
                                     (objectNode, eStructuralFeature, project, strict, element) -> {
                                         if (element instanceof InstanceSpecification) {
-                                            // TODO @donbot confirm that this doesn't set owner to null
                                             element.setOwner(project.getPrimaryModel());
-                                            if (element.getOwner() == null) {
-                                                System.out.println("null owner import for " + element.getLocalID());
-                                            }
                                             return element;
                                         }
                                         return EStructuralFeatureOverride.OWNER.getFunction().apply(objectNode, eStructuralFeature, project, strict, element);
