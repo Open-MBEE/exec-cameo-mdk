@@ -31,11 +31,12 @@ public class UpdateAllDocumentsAction extends MMSAction {
     @SuppressWarnings("unchecked")
     @Override
     public void actionPerformed(ActionEvent ae) {
-        Utils.recommendUpdateFromRemote(Application.getInstance().getProject());
-        updateAction();
+        Project project = Application.getInstance().getProject();
+        Utils.recommendUpdateFromRemote(project);
+        updateAction(project);
     }
 
-    public List<ValidationSuite> updateAction() {
+    public List<ValidationSuite> updateAction(Project project) {
         /*DeltaSyncRunner msr = new DeltaSyncRunner(false, false);
         ProgressStatusRunner.runWithProgressStatus(msr, "Updating project from MMS", true, 0);
         vss.addAll(msr.getValidations());
@@ -44,33 +45,33 @@ public class UpdateAllDocumentsAction extends MMSAction {
             return vss;
         }*/
 
-        Set<Element> docs = getProjectDocuments();
+        Set<Element> docs = getProjectDocuments(project);
         PresentationElementUtils viu = new PresentationElementUtils();
-        Map<String, ObjectNode> images = new HashMap<String, ObjectNode>();
+        Map<String, ObjectNode> images = new HashMap<>();
         for (Element doc : docs) {
             ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement) doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.isFailure()) {
                 Utils.guilog("[ERROR] Document generation was not completed");
-                Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+                Utils.displayValidationWindow(project, vss, "View Generation and Images Validation");
                 return vss;
             }
         }
-        Utils.displayValidationWindow(vss, "View Generation and Images Validation");
+        Utils.displayValidationWindow(project, vss, "View Generation and Images Validation");
         return vss;
     }
 
-    private Set<Element> getProjectDocuments() {
-        Stereotype documentView = Utils.getProductStereotype();
-        List<Stereotype> products = new ArrayList<Stereotype>();
+    private Set<Element> getProjectDocuments(Project project) {
+        Stereotype documentView = Utils.getProductStereotype(project);
+        List<Stereotype> products = new ArrayList<>();
         for (Element el : Utils.collectDirectedRelatedElementsByRelationshipJavaClass(documentView, Generalization.class, 2, 0)) {
             if (el instanceof Stereotype) {
                 products.add((Stereotype) el);
             }
         }
         products.add(documentView);
-        Set<Element> projDocs = new HashSet<Element>();
+        Set<Element> projDocs = new HashSet<>();
         for (Stereotype product : products) {
             for (InstanceSpecification is : product.get_instanceSpecificationOfClassifier()) {
                 Element owner = is.getOwner();

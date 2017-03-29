@@ -246,7 +246,8 @@ public class Paragraph extends Query {
             // is something other than a Paragraph
             if (forViewEditor || !getText().trim().isEmpty()) {
                 //GeneratorUtils.getObjectProperty( getDgElement(), DocGen3Profile.paragraphStereotype, "body", null );
-                Stereotype paragraphStereotype = Utils.getStereotype(DocGen3Profile.paragraphStereotype);
+                // TODO @donbot find a way to remove this getProject() call
+                Stereotype paragraphStereotype = Utils.getStereotype(Application.getInstance().getProject(), DocGen3Profile.paragraphStereotype);
                 Slot s = Utils.getSlot(getDgElement(), Utils.getStereotypePropertyByName(paragraphStereotype, "body"));
                 //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
                 DBParagraph dbParagraph;

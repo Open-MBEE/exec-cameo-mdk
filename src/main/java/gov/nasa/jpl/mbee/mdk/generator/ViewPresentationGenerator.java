@@ -181,7 +181,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation Validation");
+                Utils.displayValidationWindow(project, vss, "View Generation Validation");
             }
             return;
         }
@@ -222,7 +222,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (viewResponse != null && (viewElementsJsonArray = viewResponse.get("elements")) != null && viewElementsJsonArray.isArray()) {
                 Queue<String> instanceIDs = new LinkedList<>();
                 Queue<String> slotIDs = new LinkedList<>();
-                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
+                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(project),
+                        generatedFromElementProperty = Utils.getGeneratedFromElementProperty(project);
                 for (JsonNode elementJsonNode : viewElementsJsonArray) {
                     if (!elementJsonNode.isObject()) {
                         continue;
@@ -525,7 +526,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation Validation");
+                Utils.displayValidationWindow(project, vss, "View Generation Validation");
             }
             SessionManager.getInstance().cancelSession(project);
             return;
@@ -761,7 +762,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 //        vss.add(iv.getSuite());
         if (showValidation) {
             if (suite.hasErrors()) {
-                Utils.displayValidationWindow(vss, "View Generation Validation");
+                Utils.displayValidationWindow(project, vss, "View Generation Validation");
             }
         }
     }

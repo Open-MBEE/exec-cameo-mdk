@@ -58,6 +58,7 @@ public class InstanceViewpointAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element viewpoint;
+    private Project project;
     private Stereotype sysmlView;
     private ElementsFactory ef;
     private Stereotype sysmlViewpoint;
@@ -66,14 +67,15 @@ public class InstanceViewpointAction extends MDAction {
 
     public InstanceViewpointAction(Element e) {
         super(DEFAULT_ID, "Instance Viewpoint", null, null);
-        viewpoint = e;
+        this.viewpoint = e;
+        this.project = Project.getProject(e);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        sysmlView = Utils.getViewClassStereotype();
-        sysmlViewpoint = Utils.getViewpointStereotype();
+        sysmlView = Utils.getViewClassStereotype(project);
+        sysmlViewpoint = Utils.getViewpointStereotype(project);
         ef = Project.getProject(viewpoint).getElementsFactory();
         if (sysmlView == null) {
             gl.log("The view stereotype cannot be found");
@@ -83,7 +85,7 @@ public class InstanceViewpointAction extends MDAction {
             gl.log("The sysml viewpoint stereotype cannot be found");
             return;
         }
-        List<java.lang.Class<?>> types = new ArrayList<java.lang.Class<?>>();
+        List<java.lang.Class<?>> types = new ArrayList<>();
         types.add(Package.class);
         Element pack = (Element) Utils.getUserSelection(types, "Choose where the instanced views should go");
         if (pack == null || !(pack instanceof Package)) {
@@ -109,7 +111,7 @@ public class InstanceViewpointAction extends MDAction {
         view.setName(name);
         StereotypesHelper.addStereotype(view, sysmlView);
         Generalization conforms = ef.createGeneralizationInstance();
-        StereotypesHelper.addStereotype(conforms, Utils.getSysML14ConformsStereotype());
+        StereotypesHelper.addStereotype(conforms, Utils.getSysML14ConformsStereotype(project));
         ModelHelper.setClientElement(conforms, view);
         ModelHelper.setSupplierElement(conforms, vp);
         conforms.setOwner(view);

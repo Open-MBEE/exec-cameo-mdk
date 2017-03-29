@@ -31,15 +31,16 @@ public class BranchValidator {
     private ValidationRule teamworkBranch = new ValidationRule("Teamwork branch", "Branch on teamwork not on alfresco", ViolationSeverity.WARNING);
     private ValidationRule versionMatch = new ValidationRule("Version", "Version", ViolationSeverity.INFO);
     private ValidationSuite siteSuite = null;
+    private Project project;
 
-    public BranchValidator() {
+    public BranchValidator(Project project) {
+        this.project = project;
         suite.addValidationRule(alfrescoTask);
         suite.addValidationRule(teamworkBranch);
         suite.addValidationRule(versionMatch);
     }
 
     public void validate(ProgressStatus ps) {
-        Project project = Application.getInstance().getProject();
         IPrimaryProject primaryProject = project.getPrimaryProject();
 
         if (!ProjectUtilities.isRemote(primaryProject)) {
@@ -123,7 +124,7 @@ public class BranchValidator {
         if (siteSuite != null) {
             vss.add(siteSuite);
         }
-        Utils.displayValidationWindow(vss, "Branch Differences");
+        Utils.displayValidationWindow(project, vss, "Branch Differences");
     }
 
     public ValidationSuite getSuite() {

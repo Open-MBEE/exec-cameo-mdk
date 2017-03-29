@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.AggregationKindEnum;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
@@ -49,13 +50,17 @@ import java.util.Set;
  */
 public class ViewStructureValidator {
 
-    private Stereotype sysmlViewpoint = Utils.getViewpointStereotype();
-    private Stereotype sysmlConforms = Utils.getSysML14ConformsStereotype();
-    private Stereotype sysmlView = Utils.getViewStereotype();
-    private GUILog gl = Application.getInstance().getGUILog();
-    private List<Element> missing = new ArrayList<Element>();
+    private Stereotype sysmlViewpoint;
+    private Stereotype sysmlConforms;
+    private Stereotype sysmlView;
+    private List<Element> missing = new ArrayList<>();
 
     public void validate(Element curView) {
+        Project project = Project.getProject(curView);
+        sysmlViewpoint = Utils.getViewpointStereotype(project);
+        sysmlConforms = Utils.getSysML14ConformsStereotype(project);
+        sysmlView = Utils.getViewStereotype(project);
+
         List<Element> childrenViews = getChildrenViews(curView);
         Element curViewpoint = getConforms(curView);
         if (curViewpoint == null) {
@@ -75,7 +80,7 @@ public class ViewStructureValidator {
 
     public void printErrors() {
         for (Element e : missing) {
-            gl.log("Viewpoint " + ((NamedElement) e).getQualifiedName() + " is missing from view structure.");
+            Application.getInstance().getGUILog().log("Viewpoint " + ((NamedElement) e).getQualifiedName() + " is missing from view structure.");
         }
     }
 
@@ -100,7 +105,7 @@ public class ViewStructureValidator {
     }
 
     private Set<Element> getChildrenConforms(List<Element> views) {
-        Set<Element> res = new HashSet<Element>();
+        Set<Element> res = new HashSet<>();
         for (Element e : views) {
             res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e,
                     sysmlConforms, 1, false, 1));

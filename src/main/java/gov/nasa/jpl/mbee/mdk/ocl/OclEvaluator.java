@@ -591,7 +591,7 @@ public class OclEvaluator {
                 }
 
                 // try searching everything
-                List<Element> results = Utils.findByName(nameOrId, true);
+                List<Element> results = Utils.findByName(Application.getInstance().getProject(), nameOrId, true);
                 if (!Utils2.isNullOrEmpty(results)) {
                     return results.get(0);
                 }
@@ -892,7 +892,7 @@ public class OclEvaluator {
             // get reference to entire model, and
             // find packages with the ExpressionLibrary stereotype
             List<Package> pkgs = Utils.getPackagesOfType(DocGen3Profile.expressionLibrary);// getPkgs();
-            Stereotype exprStereotype = Utils.getStereotype(DocGen3Profile.expressionChoosable);
+            Stereotype exprStereotype = Utils.getStereotype(Application.getInstance().getProject(), DocGen3Profile.expressionChoosable);
             for (Package pkg : pkgs) {
                 List<Element> owned = Utils.collectOwnedElements(pkg, 0);
                 List<Element> moreExprs = Utils.filterElementsByStereotype(owned, exprStereotype, true, true);

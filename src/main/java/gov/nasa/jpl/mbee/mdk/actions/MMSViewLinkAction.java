@@ -27,23 +27,26 @@ public class MMSViewLinkAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Collection<Element> targetElements;
+    private Project project;
     public static final String DEFAULT_ID = "ViewLink";
 
     public MMSViewLinkAction(Collection<Element> elements) {
         super(DEFAULT_ID, "Open in View Editor", null, null);
-        targetElements = elements;
+        this.targetElements = elements;
+        this.project = Project.getProject(elements.iterator().next());
     }
 
     public MMSViewLinkAction(Element element) {
         super(DEFAULT_ID, "Open in View Editor", null, null);
-        targetElements = new ArrayList<>();
-        targetElements.add(element);
+        this.targetElements = new ArrayList<>();
+        this.targetElements.add(element);
+        this.project = Project.getProject(element);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Stereotype documentStereotype = Utils.getDocumentStereotype();
-        Stereotype viewStereotype = Utils.getViewStereotype();
+        Stereotype documentStereotype = Utils.getDocumentStereotype(project);
+        Stereotype viewStereotype = Utils.getViewStereotype(project);
 
         for (Element element: targetElements) {
             if (!StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)
