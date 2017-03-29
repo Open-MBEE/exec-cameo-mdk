@@ -42,7 +42,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Map<String, ObjectNode> images = new HashMap<>();
     protected boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
-    private static String FILE_EXTENSION = ".svg";
+    private static String FILE_EXTENSION = "svg";
 
     private Map<From, String> sourceMapping = new HashMap<>();
     private JSONObject view2view = new JSONObject(); //parent view id to array of children view ids (from sibviews)

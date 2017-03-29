@@ -99,12 +99,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 //        }
 
         String url;
-        try {
-            url = MMSUtils.getServerUrl(project);
-            if (url == null || url.isEmpty()) {
-                throw new IllegalStateException("");
-            }
-        } catch (IllegalStateException e) {
+        url = MMSUtils.getServerUrl(project);
+        if (url == null || url.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
@@ -354,6 +350,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (String id : localElementsToDelete) {
+                if (id.isEmpty()) {
+                    continue;
+                }
                 ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
                 elementObjectNode.put(MDKConstants.ID_KEY, id);
                 elementsArrayNode.add(elementObjectNode);
@@ -396,7 +395,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
             UpdateClientElementAction updateClientElementAction = new UpdateClientElementAction(project);
             updateClientElementAction.setElementsToUpdate(jmsElementsToCreateOrUpdateLocally);
-            updateClientElementAction.setElementsToDelete(jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()));
+            updateClientElementAction.setElementsToDelete(jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).filter(id -> !id.isEmpty()).collect(Collectors.toList()));
             updateClientElementAction.run(progressStatus);
 
             failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
