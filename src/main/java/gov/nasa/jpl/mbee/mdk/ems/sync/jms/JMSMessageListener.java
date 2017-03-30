@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -33,8 +34,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
     static {
         CHANGE_MAPPING.put("addedElements", Changelog.ChangeType.CREATED);
         CHANGE_MAPPING.put("deletedElements", Changelog.ChangeType.DELETED);
-        CHANGE_MAPPING.put("updatedElements", Changelog.ChangeType.UPDATED);
         CHANGE_MAPPING.put("movedElements", Changelog.ChangeType.UPDATED);
+        CHANGE_MAPPING.put("updatedElements", Changelog.ChangeType.UPDATED);
     }
 
     private final AtomicBoolean disabled = new AtomicBoolean();
@@ -100,56 +101,46 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             e.printStackTrace();
             return;
         }
-        if (!messageJsonNode.isObject()) {
+        JsonNode sourceJsonNode;
+        if (!messageJsonNode.isObject() || ((sourceJsonNode = messageJsonNode.get("source")) != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw"))) {
             return;
         }
-        // Changed elements are encapsulated in the "workspace2" JSONObject.
-        JsonNode workspaceJsonNode = messageJsonNode.get("refs");
-        JsonNode syncedJsonNode;
-        if (workspaceJsonNode != null && workspaceJsonNode.isObject()) {
-            JsonNode sourceJsonNode = messageJsonNode.get("source");
-            if (sourceJsonNode != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().equalsIgnoreCase("magicdraw")) {
-                return;
-            }
+        JsonNode refsJsonNode = messageJsonNode.get("refs");
+        JsonNode syncedJsonNode = messageJsonNode.get("synced");
+        if (refsJsonNode != null && refsJsonNode.isObject()) {
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
-                JsonNode changeJsonNode = workspaceJsonNode.get(entry.getKey());
+                JsonNode changeJsonNode = refsJsonNode.get(entry.getKey());
                 if (changeJsonNode == null || !changeJsonNode.isArray()) {
                     continue;
                 }
                 for (JsonNode sysmlIdJsonNode : changeJsonNode) {
-                    if (sysmlIdJsonNode.asText().isEmpty()) {
+                    if (!sysmlIdJsonNode.isTextual() || sysmlIdJsonNode.asText().isEmpty()) {
                         continue;
                     }
+                    String id = sysmlIdJsonNode.asText();
                     try {
                         ObjectNode elementJsonNode = JacksonUtils.getObjectMapper().createObjectNode();
-                        elementJsonNode.put(MDKConstants.ID_KEY, sysmlIdJsonNode.asText());
+                        elementJsonNode.put(MDKConstants.ID_KEY, id);
                         if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply(elementJsonNode, project, false, project.getPrimaryModel()) == null) {
                             continue;
                         }
                     } catch (ImportException | ReadOnlyElementException ignored) {
                         continue;
                     }
-                    inMemoryJMSChangelog.addChange(sysmlIdJsonNode.asText(), null, entry.getValue());
+                    inMemoryJMSChangelog.addChange(id, null, entry.getValue());
                 }
                 SyncStatusConfigurator.getSyncStatusAction().update();
             }
         }
-        else if ((syncedJsonNode = messageJsonNode.get("synced")) != null && syncedJsonNode.isObject()) {
-            JsonNode sourceJsonNode = messageJsonNode.get("source");
-            if (sourceJsonNode == null || !sourceJsonNode.isTextual() || !sourceJsonNode.asText().equals("magicdraw")) {
-                return;
-            }
-
+        else if (syncedJsonNode != null && syncedJsonNode.isObject()) {
             JsonNode senderJsonNode = messageJsonNode.get("sender");
             if (senderJsonNode != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername())) {
                 return;
             }
-
             Changelog<String, Void> syncedChangelog = SyncElements.buildChangelog((ObjectNode) syncedJsonNode);
             if (syncedChangelog.isEmpty()) {
                 return;
             }
-
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                 Map<String, ObjectNode> inMemoryJMSChanges = inMemoryJMSChangelog.get(changeType);
                 syncedChangelog.get(changeType).keySet().forEach(inMemoryJMSChanges::remove);
