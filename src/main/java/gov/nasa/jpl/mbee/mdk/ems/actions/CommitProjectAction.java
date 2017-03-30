@@ -108,7 +108,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // check for existing org, use that if it exists instead of prompting to select one
         try {
-            org = MMSUtils.getOrgOnMms(project);
+            org = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
         } catch (IOException | URISyntaxException | ServerException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
@@ -172,6 +172,10 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             e1.printStackTrace();
             return null;
         }
+        // update master ref
+        // TODO @donbot enable this ref post after master is updatable
+//        new CommitBranchAction("master", project, EsiUtils.getCurrentBranch(project.getPrimaryProject()), false).commitAction();
+        // do model post
         if (shouldCommitModel) {
             RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);

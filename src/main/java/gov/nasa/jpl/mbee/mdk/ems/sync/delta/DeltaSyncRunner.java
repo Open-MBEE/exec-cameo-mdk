@@ -25,7 +25,9 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter
 import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.ems.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
+import gov.nasa.jpl.mbee.mdk.ems.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
@@ -46,33 +48,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
     private boolean failure = true;
 
-//    private ValidationSuite changelogSuite = new ValidationSuite("Updated Elements/Failed Updates");
-//    private ValidationRule locallyChangedValidationRule = new ValidationRule("Updated Locally", "updated", ViolationSeverity.INFO);
-//    private ValidationRule cannotUpdate = new ValidationRule("Cannot Update", "cannotUpdate", ViolationSeverity.ERROR);
-//    private ValidationRule cannotRemove = new ValidationRule("Cannot Delete", "cannotDelete", ViolationSeverity.WARNING);
-//    private ValidationRule cannotCreate = new ValidationRule("Cannot Create", "cannotCreate", ViolationSeverity.ERROR);
-
     private Changelog<String, Element> failedLocalChangelog = new Changelog<>();
     private Changelog<String, Void> failedJmsChangelog = new Changelog<>(), successfulJmsChangelog = new Changelog<>();
 
     private List<ValidationSuite> vss = new ArrayList<>();
-//    {
-//        changelogSuite.addValidationRule(locallyChangedValidationRule);
-//        changelogSuite.addValidationRule(cannotUpdate);
-//        changelogSuite.addValidationRule(cannotRemove);
-//        changelogSuite.addValidationRule(cannotCreate);
-//    }
-
-    /*public DeltaSyncRunner(boolean shouldCommit, boolean skipUpdate, boolean shouldDelete) {
-        this.shouldCommit = shouldCommit;
-        this.skipUpdate = skipUpdate;
-        this.shouldDelete = shouldDelete;
-    }*/
-
-//    @Deprecated
-//    public DeltaSyncRunner(boolean shouldCommit, boolean shouldCommitDeletes) {
-//        this(shouldCommit, shouldCommitDeletes, true);
-//    }
 
     public DeltaSyncRunner(boolean shouldCommmit, boolean shouldCommitDeletes, boolean shouldUpdate) {
         this.shouldCommit = shouldCommmit;
@@ -84,31 +63,33 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     @Override
     public void run(ProgressStatus progressStatus) {
         progressStatus.setDescription("Initializing");
-        // TODO Abstract to common sync checks @donbot
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) && EsiUtils.getLoggedUserName() == null) {
             Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
-        if (!TicketUtils.isTicketSet(project)) {
+        if (!TicketUtils.isTicketValid(project)) {
             Utils.guilog("[WARNING] You need to be logged in to MMS first. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
 
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-//        if (listener == null) {
-//            Utils.guilog("[ERROR] Unexpected error occurred. Cannot get commit listener. Skipping sync. All changes will be re-attempted in the next sync.");
-//            return;
-//        }
-
-        String url;
-        url = MMSUtils.getServerUrl(project);
-        if (url == null || url.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
+        ProjectValidator pv = new ProjectValidator(project);
+        pv.validate();
+        if (pv.getValidationSuite().hasErrors()) {
+            Application.getInstance().getGUILog().log("[WARNING] Project has not been committed to MMS. Skipping sync. You must commit the project and model to MMS before Coordinated Sync can complete.");
+            Utils.displayValidationWindow(project, pv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
             return;
         }
 
-        // LOCK SYNC FOLDER
+        BranchValidator bv = new BranchValidator(project);
+        bv.validate(null, false);
+        if (bv.getValidationSuite().hasErrors()) {
+            Application.getInstance().getGUILog().log("[WARNING] Branch has not been committed to MMS. Skipping sync. You must commit the branch to MMS and sync the model before Coordinated Sync can complete.");
+            Utils.displayValidationWindow(project, bv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
+        }
 
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+
+        // LOCK SYNC FOLDER
         listener.setDisabled(true);
         SyncElements.lockSyncFolder(project);
         listener.setDisabled(false);

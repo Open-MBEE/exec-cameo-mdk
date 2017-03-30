@@ -104,7 +104,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         // Changed elements are encapsulated in the "workspace2" JSONObject.
-        JsonNode workspaceJsonNode = messageJsonNode.get("workspace2");
+        JsonNode workspaceJsonNode = messageJsonNode.get("refs");
         JsonNode syncedJsonNode;
         if (workspaceJsonNode != null && workspaceJsonNode.isObject()) {
             JsonNode sourceJsonNode = messageJsonNode.get("source");
