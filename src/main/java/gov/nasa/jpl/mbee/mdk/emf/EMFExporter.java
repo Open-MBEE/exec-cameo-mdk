@@ -261,14 +261,15 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 (element, project, objectNode) -> element == null || Converters.getElementToIdConverter().apply(element).endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
                         element.getOwner() != null && Converters.getElementToIdConverter().apply(element.getOwner()).endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
         ),
-        TWC_ID(
-                (element, project, objectNode) -> {
-                    if (project.isRemote()) {
-                        objectNode.put(MDKConstants.TWC_ID_KEY, element.getID());
-                    }
-                    return objectNode;
-                }
-        ),
+        // TWC_ID is disabled indefinitely, due to our inability to update the ID and associated issues
+//        TWC_ID(
+//                (element, project, objectNode) -> {
+//                    if (project.isRemote()) {
+//                        objectNode.put(MDKConstants.TWC_ID_KEY, element.getID());
+//                    }
+//                    return objectNode;
+//                }
+//        ),
         TYPE(
                 (element, project, objectNode) -> {
                     String type = element instanceof Model && !element.equals(project.getPrimaryModel()) ? "Mount" : element.eClass().getName();
