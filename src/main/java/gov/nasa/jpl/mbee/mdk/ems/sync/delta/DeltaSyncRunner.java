@@ -73,7 +73,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         ProjectValidator pv = new ProjectValidator(project);
         pv.validate();
         if (pv.getValidationSuite().hasErrors()) {
-            Application.getInstance().getGUILog().log("[WARNING] Project has not been committed to MMS, skipping sync. You must commit the project and model to MMS before Coordinated Sync can complete.");
+            Application.getInstance().getGUILog().log("[WARNING] Project has not been committed to MMS. Skipping sync. You must commit the project and model to MMS before Coordinated Sync can complete.");
             Utils.displayValidationWindow(project, pv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
             return;
         }
@@ -81,7 +81,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         BranchValidator bv = new BranchValidator(project);
         bv.validate(null, false);
         if (bv.getValidationSuite().hasErrors()) {
-            Application.getInstance().getGUILog().log("[WARNING] Branch has not been committed to MMS, skipping sync. You must commit the branch to MMS and sync the model before Coordinated Sync can complete.");
+            Application.getInstance().getGUILog().log("[WARNING] Branch has not been committed to MMS. Skipping sync. You must commit the branch to MMS and sync the model before Coordinated Sync can complete.");
             Utils.displayValidationWindow(project, bv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
         }
 
