@@ -22,6 +22,7 @@ public class MDKConstants {
             TYPE_KEY = "type",
             NAME_KEY = "name",
             ID_KEY = "id",
+            PARENT_REF_ID_KEY = "parentRef" + ID_KEY_SUFFIX,
             OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_KEY_SUFFIX,
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
@@ -31,7 +32,7 @@ public class MDKConstants {
             MOUNTED_ELEMENT_PROJECT_ID_KEY = "mountedElementProject" + ID_KEY_SUFFIX,
             QUALIFIED_NAME_KEY = "qualifiedName",
             QUALIFIED_ID_KEY = "qualified"  + ID_KEY_SUFFIX,
-            PROJECT_URI_KEY = "uri",
+            TWC_URI_KEY = "uri",
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
             TWC_ID_KEY = "twc" + ID_KEY_SUFFIX;

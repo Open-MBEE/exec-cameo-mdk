@@ -17,7 +17,9 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
+import gov.nasa.jpl.mbee.mdk.ems.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
+import gov.nasa.jpl.mbee.mdk.ems.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
 
@@ -34,19 +36,12 @@ import java.util.stream.StreamSupport;
  */
 public class ManualSyncRunner implements RunnableWithProgress {
 
-    public static final String INITIALIZE_PROJECT_COMMENT = "The project doesn't exist on the web.";
     private final Collection<Element> rootElements;
     private final Project project;
-    private int depth;
+    private final int depth;
 
     // TODO Move me to common sync pre-conditions @donbot
     private ValidationSuite validationSuite = new ValidationSuite("Manual Sync Validation");
-    private ValidationRule projectExistenceValidationRule = new ValidationRule("Project Existence", "The project shall exist in the specified site.", ViolationSeverity.ERROR);
-
-    {
-        validationSuite.addValidationRule(projectExistenceValidationRule);
-    }
-
     private ElementValidator elementValidator;
 
     public ManualSyncRunner(Collection<Element> rootElements, Project project, int depth) {
@@ -75,6 +70,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
             validationSuite = null;
             return;
         }
+
+
 
         progressStatus.setDescription("Processing and querying for " + rootElements.size() + " " + ((depth != 0) ? "root " : "") + "element" + (rootElements.size() != 1 ? "s" : ""));
         progressStatus.setIndeterminate(false);
@@ -182,28 +179,24 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Make common across all sync types @donbot
     private boolean checkProject() throws ServerException, IOException, URISyntaxException {
-        String branch = MDUtils.getWorkspace(project);
-
-        // process response for project element, missing projects will return {}
-        if (!MMSUtils.isProjectOnMms(project)) {
-            ValidationRuleViolation v;
-
-            if (branch.equals("master")) {
-                v = new ValidationRuleViolation(project.getPrimaryModel(), INITIALIZE_PROJECT_COMMENT);
-                v.addAction(new CommitProjectAction(project, true));
-            } else {
-                v = new ValidationRuleViolation(project.getPrimaryModel(), "The trunk project doesn't exist on the web. Export the trunk first.");
+        ProjectValidator pv = new ProjectValidator(project);
+        pv.validate();
+        if (pv.getValidationSuite().hasErrors()) {
+            for (ValidationRule vr : pv.getValidationSuite().getValidationRules()) {
+                validationSuite.addValidationRule(vr);
             }
-            projectExistenceValidationRule.addViolation(v);
             return false;
         }
 
-        if (!branch.equals("master") && !MMSUtils.isBranchOnMms(project, branch)) {
-            ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "The branch doesn't exist on the web. Export the trunk first.");
-            // TODO @donbot re-add branch creation
-//            v.addAction(new CommitBranchAction(project, true));
-            projectExistenceValidationRule.addViolation(v);
-            return false;
+        if (project.isRemote()) {
+            BranchValidator bv = new BranchValidator(project);
+            bv.validate(null, false);
+            if (bv.getValidationSuite().hasErrors()) {
+                for (ValidationRule vr : bv.getValidationSuite().getValidationRules()) {
+                    validationSuite.addValidationRule(vr);
+                }
+                return false;
+            }
         }
 
         return true;
