@@ -169,14 +169,14 @@ public class Utils {
      * @param include  whether to include the diagram type or not
      * @return
      */
-    public static List<Diagram> filterDiagramsByDiagramTypes(Collection<Element> diagrams,
-                                                             List<String> types, boolean include) {
+    public static List<Diagram> filterDiagramsByDiagramTypes(Collection<Element> diagrams, List<String> types, boolean include) {
         List<Diagram> res = new ArrayList<>();
         for (Element d : diagrams) {
+            Project project = Project.getProject(d);
             if (!(d instanceof Diagram)) {
                 continue;
             }
-            DiagramPresentationElement dpe = Application.getInstance().getProject().getDiagram((Diagram) d);
+            DiagramPresentationElement dpe = project.getDiagram((Diagram) d);
             if (types.contains(dpe.getDiagramType().getType())) {
                 if (include) {
                     res.add((Diagram) d);
@@ -962,7 +962,7 @@ public class Utils {
      * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
-    public static List<Element> collectRelatedElementsByStereotypeString(Element e, String stereotype,
+    public static List<Element> collectRelatedElementsByStereotypeString(Project project, Element e, String stereotype,
                                                                          int direction, boolean derived, int depth) {
         if (e == null) {
             return Utils2.newList();
@@ -971,7 +971,7 @@ public class Utils {
             badDirectionError(direction, "collectRelatedElementsByStereotypeString()");
             direction = 0;
         }
-        Stereotype s = StereotypesHelper.getStereotype(Application.getInstance().getProject(), stereotype);
+        Stereotype s = StereotypesHelper.getStereotype(project, stereotype);
         if (s != null) {
             return collectRelatedElementsByStereotype(e, s, direction, derived, depth);
         }
@@ -1055,8 +1055,7 @@ public class Utils {
      * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
-    public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClass(Element e,
-                                                                                      java.lang.Class<?> c, int direction, int depth) {
+    public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClass(Element e, java.lang.Class<?> c, int direction, int depth) {
         if (e == null) {
             return Utils2.newList();
         }
@@ -1064,7 +1063,7 @@ public class Utils {
             badDirectionError(direction, "collectDirectedRelatedElementsByRelationshipJavaClass()");
             direction = 0;
         }
-        List<java.lang.Class<?>> classes = new ArrayList<java.lang.Class<?>>();
+        List<java.lang.Class<?>> classes = new ArrayList<>();
         classes.add(c);
         return collectDirectedRelatedElementsByRelationshipJavaClasses(e, classes, direction, depth);
     }
@@ -1172,9 +1171,7 @@ public class Utils {
         return res;
     }
 
-    private static void collectDirectedRelatedElementsByRelationshipStereotypesRecursive(Element e,
-                                                                                         Collection<Stereotype> stereotypes, int direction, boolean derived, int depth, int curdepth,
-                                                                                         List<Element> res) {
+    private static void collectDirectedRelatedElementsByRelationshipStereotypesRecursive(Element e, Collection<Stereotype> stereotypes, int direction, boolean derived, int depth, int curdepth, List<Element> res) {
         if (e == null) {
             return;
         }
@@ -1223,8 +1220,7 @@ public class Utils {
      * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
-    public static List<Element> collectDirectedRelatedElementsByRelationshipStereotype(Element e,
-                                                                                       Stereotype stereotype, int direction, boolean derived, int depth) {
+    public static List<Element> collectDirectedRelatedElementsByRelationshipStereotype(Element e, Stereotype stereotype, int direction, boolean derived, int depth) {
         if (e == null) {
             return Utils2.newList();
         }
@@ -1276,8 +1272,8 @@ public class Utils {
      * @param depth collect to what level of depth - 0 is infinite
      * @return
      */
-    public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypeString(Element e,
-                                                                                             String stereotype, int direction, boolean derived, int depth) {
+    public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypeString(Element e, String stereotype, int direction, boolean derived, int depth) {
+        Project project = Project.getProject(e);
         if (e == null) {
             return Utils2.newList();
         }
@@ -1285,7 +1281,7 @@ public class Utils {
             badDirectionError(direction, "collectDirectedRelatedElementsByRelationshipStereotype()");
             direction = 0;
         }
-        Stereotype s = StereotypesHelper.getStereotype(Application.getInstance().getProject(), stereotype);
+        Stereotype s = StereotypesHelper.getStereotype(project, stereotype);
         if (s != null) {
             return collectDirectedRelatedElementsByRelationshipStereotype(e, s, direction, derived, depth);
         }
@@ -1812,12 +1808,8 @@ public class Utils {
     /**
      * @return the element at the top of the MagicDraw containment tree
      */
-    public static Package getRootElement() {
-//      return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
-
-        return Application.getInstance() != null && Application.getInstance().getProject() != null ? Application.getInstance().getProject().getModel() : null;
-        //Package root = Application.getInstance().getProject().getModel();
-        //return root;
+    public static Package getRootElement(Project project) {
+        return project.getPrimaryModel();
     }
 
     public static List<Package> getPackagesOfType(String typeName) {
@@ -1828,8 +1820,8 @@ public class Utils {
         return getPackagesOfType(root, typeName, null);
     }
 
-    public static boolean isSiteChar(Package e) {
-        Stereotype characterizes = Utils.getCharacterizesStereotype();
+    public static boolean isSiteChar(Project project, Package e) {
+        Stereotype characterizes = Utils.getCharacterizesStereotype(project);
         if (characterizes != null) {
             List<Element> sites = Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1);
             boolean found = false;
@@ -1864,8 +1856,9 @@ public class Utils {
      * (exactly or as a pattern)
      */
     public static List<Package> getPackagesOfType(Element root, String typeName, Set<Element> seen) {
+        Project project = Project.getProject(root);
         if (root == null) {
-            root = getRootElement();
+            root = getRootElement(project);
         }
         if (root == null) {
             return null; // REVIEW -- error?
@@ -1878,7 +1871,7 @@ public class Utils {
             return Utils2.getEmptyList();
         }
         seen = p.second;
-        List<Package> pkgs = new ArrayList<Package>();
+        List<Package> pkgs = new ArrayList<>();
         for (Element elmt : root.getOwnedElement()) {
             pkgs.addAll(getPackagesOfType(elmt, typeName, seen));
         }
@@ -1926,8 +1919,7 @@ public class Utils {
     public static Map<Element, Map<String, Element>> nameOrIdSingleElementSearchOwnerCache =
             new HashMap<Element, Map<String, Element>>();
 
-    public static List<Element> findByName(String pattern,
-                                           boolean getJustFirst) {
+    public static List<Element> findByName(Project project, String pattern, boolean getJustFirst) {
         // check cache
         if (getJustFirst) {
             Element e = nameOrIdSingleElementSearchCache.get(pattern);
@@ -1944,7 +1936,7 @@ public class Utils {
         if (Utils2.isNullOrEmpty(pattern)) {
             return null;
         }
-        Element root = getRootElement();
+        Element root = getRootElement(project);
         List<Element> results = findByName(root, pattern, getJustFirst);
         nameOrIdSearchCache.put(pattern, results);
         return results;
@@ -1995,135 +1987,131 @@ public class Utils {
         return results;
     }
 
-    public static Project getProject() {
-        return Application.getInstance().getProject();
-    }
-
-    public static Stereotype getStereotype(String stereotypeName) {
-        return StereotypesHelper.getStereotype(getProject(), stereotypeName);
+    public static Stereotype getStereotype(Project project, String stereotypeName) {
+        return StereotypesHelper.getStereotype(project, stereotypeName);
     }
 
     /********************************************** Direct Stereotype Utils **********************************************/
 
     /*** SysML::Model Elements ***/
-    public static Stereotype getConformsStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
+    public static Stereotype getConformsStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
 
-    public static Stereotype get18ExposeStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5beta_17530432_1382587480303_325976_12505");
+    public static Stereotype get18ExposeStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_5beta_17530432_1382587480303_325976_12505");
     }
 
-    public static Stereotype getElementGroupStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5beta_17530432_1382588727729_600191_12925");
+    public static Stereotype getElementGroupStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_5beta_17530432_1382588727729_600191_12925");
     }
 
-    public static Stereotype getViewStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_11_5EAPbeta_be00301_1147420760998_43940_227");
+    public static Stereotype getViewStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420760998_43940_227");
     }
 
-    public static Stereotype getViewpointStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
+    public static Stereotype getViewpointStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
     }
 
     /*** SysML Extensions::_Stereotypes ***/
-    public static Stereotype getAccountableForStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_e9f034d_1371599170030_696081_43276");
+    public static Stereotype getAccountableForStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1371599170030_696081_43276");
     }
 
-    public static Stereotype getApprovesStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_e9f034d_1375464433330_503144_31131");
+    public static Stereotype getApprovesStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1375464433330_503144_31131");
     }
 
-    public static Stereotype getAspectStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_18_0_2_407019f_1449688347122_736579_14412");
+    public static Stereotype getAspectStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_18_0_2_407019f_1449688347122_736579_14412");
     }
 
-    public static Stereotype getCharacterizesStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_8660276_1407362513794_939259_26181");
+    public static Stereotype getCharacterizesStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_5_1_8660276_1407362513794_939259_26181");
     }
 
-    public static Stereotype getConcursStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_e9f034d_1375464334580_276276_31083");
+    public static Stereotype getConcursStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1375464334580_276276_31083");
     }
 
-    public static Stereotype getDirectedConnectorStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1404149304683_834035_15551");
+    public static Stereotype getDirectedConnectorStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1404149304683_834035_15551");
     }
 
-    public static Stereotype getDocumentStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_87b0275_1371477871400_792964_43374");
+    public static Stereotype getDocumentStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_87b0275_1371477871400_792964_43374");
     }
 
-    public static Stereotype getJobStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_18_0_5_407019f_1458258829038_313297_14086");
+    public static Stereotype getJobStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_18_0_5_407019f_1458258829038_313297_14086");
     }
 
-    public static Stereotype getPrecedesStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1404148746390_373063_15528");
+    public static Stereotype getPrecedesStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1404148746390_373063_15528");
     }
 
-    public static Stereotype getProjectStaffStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_8850274_1368737927790_384872_57206");
+    public static Stereotype getProjectStaffStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_8850274_1368737927790_384872_57206");
     }
 
-    public static Stereotype getRoleStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_8850274_1368582235157_5746_56799");
+    public static Stereotype getRoleStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_8850274_1368582235157_5746_56799");
     }
 
-    public static Stereotype getTicketStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_18_0_5_407019f_1462145965413_380403_14076");
+    public static Stereotype getTicketStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_18_0_5_407019f_1462145965413_380403_14076");
     }
 
     /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile ***/
-    public static Stereotype getCommentStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_407019f_1337877314051_474317_11891");
+    public static Stereotype getCommentStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_5_407019f_1337877314051_474317_11891");
     }
 
-    public static Stereotype getSysML14ConformsStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_2_3_407019f_1389807639137_860750_29082");
+    public static Stereotype getSysML14ConformsStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_407019f_1389807639137_860750_29082");
     }
 
-    public static Stereotype getExposeStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_16_5_4_409a058d_1259862803278_226185_1083");
+    public static Stereotype getExposeStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_16_5_4_409a058d_1259862803278_226185_1083");
     }
 
     /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers ***/
-    public static Stereotype getProductStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
+    public static Stereotype getProductStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
     }
 
     @Deprecated
-    public static Stereotype getViewClassStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_1_232f03dc_1325612611695_581988_21583");
+    public static Stereotype getViewClassStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_1_232f03dc_1325612611695_581988_21583");
     }
 
     /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements ***/
-    public static Stereotype getPresentsStereotype() {
-        return (Stereotype) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1430628469999_419411_12119");
+    public static Stereotype getPresentsStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1430628469999_419411_12119");
     }
 
     /********************************************** Direct Property Utils **********************************************/
 
     /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement ***/
-    public static Property getGeneratedFromViewProperty() {
-        return (Property) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1430628276506_565_12080");
+    public static Property getGeneratedFromViewProperty(Project project) {
+        return (Property) project.getElementByID("_17_0_5_1_407019f_1430628276506_565_12080");
     }
 
     /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection ***/
-    public static Property getGeneratedFromElementProperty() {
-        return (Property) Application.getInstance().getProject().getElementByID("_17_0_5_1_407019f_1430628376067_525763_12104");
+    public static Property getGeneratedFromElementProperty(Project project) {
+        return (Property) project.getElementByID("_17_0_5_1_407019f_1430628376067_525763_12104");
     }
 
-    public static Property getViewElementsProperty() {
-        return (Property) Application.getInstance().getProject().getElementByID("_18_0_2_407019f_1433361787467_278914_14410");
+    public static Property getViewElementsProperty(Project project) {
+        return (Property) project.getElementByID("_18_0_2_407019f_1433361787467_278914_14410");
     }
 
     /********************************************** Direct Component Utils **********************************************/
 
     /*** SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library ***/
-    public static Component getSiteCharacterizationComponent() {
-        return (Component) Application.getInstance().getProject().getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
+    public static Component getSiteCharacterizationComponent(Project project) {
+        return (Component) project.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
     }
 
     /********************************************** Constraint Utils **********************************************/
@@ -2140,20 +2128,20 @@ public class Utils {
         return null;
     }
 
-    public static Constraint getWarningConstraint() {
-        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
+    public static Constraint getWarningConstraint(Project project) {
+        return (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957024690_702520_27755");
     }
 
-    public static Constraint getErrorConstraint() {
-        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
+    public static Constraint getErrorConstraint(Project project) {
+        return (Constraint) project.getElementByID("_17_0_2_407019f_1354058024392_224770_12910");
     }
 
-    public static Constraint getFatalConstraint() {
-        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
+    public static Constraint getFatalConstraint(Project project) {
+        return (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957445325_901851_27756");
     }
 
-    public static Constraint getInfoConstraint() {
-        return (Constraint) Application.getInstance().getProject().getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
+    public static Constraint getInfoConstraint(Project project) {
+        return (Constraint) project.getElementByID("_17_0_2_2_f4a035d_1360957474351_901777_27765");
     }
 
     /********************************************* User interaction ****************************************************/
@@ -2179,8 +2167,7 @@ public class Utils {
     @SuppressWarnings("unchecked")
     public static List<BaseElement> getUserSelections(List<java.lang.Class<?>> types, String title) {
         SelectElementTypes a = new SelectElementTypes(null, types);
-        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
-                .getModel(), true);
+        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getPrimaryModel(), true);
         Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
         ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
         ElementSelectionDlgFactory.initMultiple(dlg, a, b, new ArrayList());
@@ -2231,7 +2218,7 @@ public class Utils {
      */
     public static BaseElement getUserSelection(List<java.lang.Class<?>> types, String title) {
         SelectElementTypes a = new SelectElementTypes(null, types);
-        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getModel(), true);
+        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getPrimaryModel(), true);
         Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
         ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
         ElementSelectionDlgFactory.initSingle(dlg, a, b, null);
@@ -2388,17 +2375,16 @@ public class Utils {
         return annotations;
     }
 
-    public static Set<Annotation> getAnnotations(Collection<ValidationSuite> vss) {
-        Set<Annotation> annotations = new LinkedHashSet<Annotation>();
-        List<RuleViolationResult> results = getRuleViolations(vss);
+    public static Set<Annotation> getAnnotations(Project project, Collection<ValidationSuite> vss) {
+        Set<Annotation> annotations = new LinkedHashSet<>();
+        List<RuleViolationResult> results = getRuleViolations(project, vss);
         for (RuleViolationResult violation : results) {
             annotations.add(violation.getAnnotation());
         }
         return annotations;
     }
 
-    public static List<RuleViolationResult> getRuleViolations(ValidationRule vr, Project project,
-                                                              Constraint cons) {
+    public static List<RuleViolationResult> getRuleViolations(ValidationRule vr, Project project, Constraint cons) {
         List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
         // Project project = getProject();
         // Constraint cons = Utils.getWarningConstraint();
@@ -2413,19 +2399,19 @@ public class Utils {
         switch (vr.getSeverity()) {
             case WARNING:
                 severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
-                cons = Utils.getWarningConstraint();
+                cons = Utils.getWarningConstraint(project);
                 break;
             case ERROR:
                 severity = Annotation.getSeverityLevel(project, Annotation.ERROR);
-                cons = Utils.getErrorConstraint();
+                cons = Utils.getErrorConstraint(project);
                 break;
             case FATAL:
                 severity = Annotation.getSeverityLevel(project, Annotation.FATAL);
-                cons = Utils.getFatalConstraint();
+                cons = Utils.getFatalConstraint(project);
                 break;
             case INFO:
                 severity = Annotation.getSeverityLevel(project, Annotation.INFO);
-                cons = Utils.getInfoConstraint();
+                cons = Utils.getInfoConstraint(project);
                 break;
             default:
                 severity = Annotation.getSeverityLevel(project, Annotation.WARNING);
@@ -2459,10 +2445,9 @@ public class Utils {
 
     }
 
-    public static List<RuleViolationResult> getRuleViolations(Collection<ValidationSuite> vss) {
-        List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
-        Project project = getProject();
-        Constraint cons = Utils.getWarningConstraint();
+    public static List<RuleViolationResult> getRuleViolations(Project project, Collection<ValidationSuite> vss) {
+        List<RuleViolationResult> results = new ArrayList<>();
+        Constraint cons = Utils.getWarningConstraint(project);
         for (ValidationSuite vs : vss) {
             for (ValidationRule vr : vs.getValidationRules()) {
                 results.addAll(getRuleViolations(vr, project, cons));
@@ -2472,20 +2457,19 @@ public class Utils {
         return results;
     }
 
-    public static void displayValidationWindow(ValidationSuite vs, String title) {
-        final List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    public static void displayValidationWindow(Project project, ValidationSuite vs, String title) {
+        final List<ValidationSuite> vss = new ArrayList<>();
         vss.add(vs);
-        displayValidationWindow(vss, title);
+        displayValidationWindow(project, vss, title);
     }
 
-    public static void displayValidationWindow(Collection<ValidationSuite> vss, String title) {
-        List<RuleViolationResult> results = getRuleViolations(vss);
+    public static void displayValidationWindow(Project project, Collection<ValidationSuite> vss, String title) {
+        List<RuleViolationResult> results = getRuleViolations(project, vss);
         Set<Element> elements = new LinkedHashSet<>();
         for (RuleViolationResult violation : results) {
             elements.add((Element) violation.getElement());
         }
 
-        Project project = getProject();
         // //ValidationResultProvider provider =
         // project.getValidationResultProvider();
         // Collection<RuleViolationResult> results = new
@@ -2625,8 +2609,9 @@ public class Utils {
      * @param value
      */
     public static void setPropertyValue(Property p, String value) {
+        Project project = Project.getProject(p);
         ValueSpecification valueSpec = p.getDefaultValue();
-        ValueSpecification v = makeValueSpecification(value, valueSpec);
+        ValueSpecification v = makeValueSpecification(project, value, valueSpec);
         p.setDefaultValue(v);
     }
 
@@ -2640,6 +2625,7 @@ public class Utils {
      * @param value
      */
     public static void setSlotValue(Slot slot, Object value) {
+        Project project = Project.getProject(slot);
         List<ValueSpecification> valueSpecs = slot.getValue();
         ValueSpecification v = null;
         if (value instanceof ValueSpecification) {
@@ -2647,7 +2633,7 @@ public class Utils {
         }
         else {
             for (ValueSpecification valueSpec : valueSpecs) {
-                v = makeValueSpecification(value.toString(), valueSpec);
+                v = makeValueSpecification(project, value.toString(), valueSpec);
                 break;
             }
         }
@@ -2667,8 +2653,8 @@ public class Utils {
      * @param valueSpec
      * @return
      */
-    public static ValueSpecification makeValueSpecification(String value, ValueSpecification valueSpec) {
-        ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+    public static ValueSpecification makeValueSpecification(Project project, String value, ValueSpecification valueSpec) {
+        ElementsFactory ef = project.getElementsFactory();
         ValueSpecification v;
         try {
             if (valueSpec instanceof LiteralBoolean) {
@@ -2707,7 +2693,7 @@ public class Utils {
             // subclasses of ValueSpecification and supportive factory methods
             // in
             // ElementFactory can guide the addition of types.
-            v = makeValueSpecification(value, ef.createLiteralStringInstance());
+            v = makeValueSpecification(project, value, ef.createLiteralStringInstance());
         }
 
         return v;

@@ -15,7 +15,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
@@ -47,33 +46,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
     private boolean failure = true;
 
-//    private ValidationSuite changelogSuite = new ValidationSuite("Updated Elements/Failed Updates");
-//    private ValidationRule locallyChangedValidationRule = new ValidationRule("Updated Locally", "updated", ViolationSeverity.INFO);
-//    private ValidationRule cannotUpdate = new ValidationRule("Cannot Update", "cannotUpdate", ViolationSeverity.ERROR);
-//    private ValidationRule cannotRemove = new ValidationRule("Cannot Delete", "cannotDelete", ViolationSeverity.WARNING);
-//    private ValidationRule cannotCreate = new ValidationRule("Cannot Create", "cannotCreate", ViolationSeverity.ERROR);
-
     private Changelog<String, Element> failedLocalChangelog = new Changelog<>();
     private Changelog<String, Void> failedJmsChangelog = new Changelog<>(), successfulJmsChangelog = new Changelog<>();
 
     private List<ValidationSuite> vss = new ArrayList<>();
-//    {
-//        changelogSuite.addValidationRule(locallyChangedValidationRule);
-//        changelogSuite.addValidationRule(cannotUpdate);
-//        changelogSuite.addValidationRule(cannotRemove);
-//        changelogSuite.addValidationRule(cannotCreate);
-//    }
-
-    /*public DeltaSyncRunner(boolean shouldCommit, boolean skipUpdate, boolean shouldDelete) {
-        this.shouldCommit = shouldCommit;
-        this.skipUpdate = skipUpdate;
-        this.shouldDelete = shouldDelete;
-    }*/
-
-//    @Deprecated
-//    public DeltaSyncRunner(boolean shouldCommit, boolean shouldCommitDeletes) {
-//        this(shouldCommit, shouldCommitDeletes, true);
-//    }
 
     public DeltaSyncRunner(boolean shouldCommmit, boolean shouldCommitDeletes, boolean shouldUpdate) {
         this.shouldCommit = shouldCommmit;
@@ -94,20 +70,19 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
 
-        ProjectValidator pv = new ProjectValidator();
+        ProjectValidator pv = new ProjectValidator(project);
         pv.validate();
         if (pv.getValidationSuite().hasErrors()) {
             Application.getInstance().getGUILog().log("[WARNING] Project has not been committed to MMS, skipping sync. You must commit the project and model to MMS before Coordinated Sync can complete.");
-            Utils.displayValidationWindow(pv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
+            Utils.displayValidationWindow(project, pv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
             return;
         }
 
-        BranchValidator bv = new BranchValidator();
+        BranchValidator bv = new BranchValidator(project);
         bv.validate(null, false);
         if (bv.getValidationSuite().hasErrors()) {
             Application.getInstance().getGUILog().log("[WARNING] Branch has not been committed to MMS, skipping sync. You must commit the branch to MMS and sync the model before Coordinated Sync can complete.");
-            Utils.displayValidationWindow(bv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
-            return;
+            Utils.displayValidationWindow(project, bv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
         }
 
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
@@ -356,6 +331,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
             ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             for (String id : localElementsToDelete) {
+                if (id.isEmpty()) {
+                    continue;
+                }
                 ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
                 elementObjectNode.put(MDKConstants.ID_KEY, id);
                 elementsArrayNode.add(elementObjectNode);
@@ -398,7 +376,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
             UpdateClientElementAction updateClientElementAction = new UpdateClientElementAction(project);
             updateClientElementAction.setElementsToUpdate(jmsElementsToCreateOrUpdateLocally);
-            updateClientElementAction.setElementsToDelete(jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()));
+            updateClientElementAction.setElementsToDelete(jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).filter(id -> !id.isEmpty()).collect(Collectors.toList()));
             updateClientElementAction.run(progressStatus);
 
             failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
@@ -432,7 +410,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         if (!elementValidator.getInvalidElements().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + elementValidator.getInvalidElements().size() + " element" + (elementValidator.getInvalidElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");
             vss.add(elementValidator.getValidationSuite());
-            Utils.displayValidationWindow(elementValidator.getValidationSuite(), "Delta Sync Conflict Validation");
+            Utils.displayValidationWindow(project, elementValidator.getValidationSuite(), "Delta Sync Conflict Validation");
 
             for (Map.Entry<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedEntry : conflictedChanges.entrySet()) {
                 String id = conflictedEntry.getKey();

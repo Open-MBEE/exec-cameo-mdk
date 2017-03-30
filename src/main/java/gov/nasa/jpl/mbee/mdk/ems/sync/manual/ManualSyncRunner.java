@@ -179,7 +179,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     // TODO Make common across all sync types @donbot
     private boolean checkProject() throws ServerException, IOException, URISyntaxException {
-        ProjectValidator pv = new ProjectValidator();
+        ProjectValidator pv = new ProjectValidator(project);
         pv.validate();
         if (pv.getValidationSuite().hasErrors()) {
             for (ValidationRule vr : pv.getValidationSuite().getValidationRules()) {
@@ -189,7 +189,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
 
         if (project.isRemote()) {
-            BranchValidator bv = new BranchValidator();
+            BranchValidator bv = new BranchValidator(project);
             bv.validate(null, false);
             if (bv.getValidationSuite().hasErrors()) {
                 for (ValidationRule vr : bv.getValidationSuite().getValidationRules()) {

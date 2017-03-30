@@ -80,7 +80,7 @@ public class Request {
     public Request(Project project, URIBuilder requestUri, File uploadFile, String type)
             throws IOException, URISyntaxException {
         this.project = project;
-        this.request = MMSUtils.buildRequest(requestUri, uploadFile);
+        this.request = MMSUtils.buildImageRequest(requestUri, uploadFile);
         this.type = type;
     }
 

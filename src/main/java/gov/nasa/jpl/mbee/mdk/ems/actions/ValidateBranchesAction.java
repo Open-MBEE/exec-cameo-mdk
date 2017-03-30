@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -19,7 +21,7 @@ public class ValidateBranchesAction extends MMSAction {
 
         @Override
         public void run(ProgressStatus arg0) {
-            BranchValidator v = new BranchValidator();
+            BranchValidator v = new BranchValidator(Application.getInstance().getProject());
             v.validate(arg0, false);
             v.showWindow();
         }

@@ -181,7 +181,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation Validation");
+                Utils.displayValidationWindow(project, vss, "View Generation Validation");
             }
             return;
         }
@@ -222,7 +222,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (viewResponse != null && (viewElementsJsonArray = viewResponse.get("elements")) != null && viewElementsJsonArray.isArray()) {
                 Queue<String> instanceIDs = new LinkedList<>();
                 Queue<String> slotIDs = new LinkedList<>();
-                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(), generatedFromElementProperty = Utils.getGeneratedFromElementProperty();
+                Property generatedFromViewProperty = Utils.getGeneratedFromViewProperty(project),
+                        generatedFromElementProperty = Utils.getGeneratedFromElementProperty(project);
                 for (JsonNode elementJsonNode : viewElementsJsonArray) {
                     if (!elementJsonNode.isObject()) {
                         continue;
@@ -322,13 +323,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setDescription("Importing existing view instances");
                 progressStatus.setCurrent(3);
 
-//                for (ObjectNode instanceObjectNode : instanceObjectNodes) {
-//                    instanceObjectNode.putNull(MDKConstants.OWNER_ID_KEY);
-//                    //instanceObjectNode.put(MDKConstants.OWNER_ID_KEY, Converters.getElementToIdConverter().apply(project.getModel()));
-//                    //System.out.println("[SWAP] Owner -> " + Converters.getElementToIdConverter().apply(project.getModel()));
-//                    //System.out.println(instanceObjectNode);
-//                }
-
                 EMFImporter emfImporter = new EMFImporter() {
                     @Override
                     public List<PreProcessor> getPreProcessors() {
@@ -348,11 +342,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                     EStructuralFeatureOverride.OWNER.getPredicate(),
                                     (objectNode, eStructuralFeature, project, strict, element) -> {
                                         if (element instanceof InstanceSpecification) {
-                                            // TODO @donbot confirm that this doesn't set owner to null
                                             element.setOwner(project.getPrimaryModel());
-                                            if (element.getOwner() == null) {
-                                                System.out.println("null owner import for " + element.getLocalID());
-                                            }
                                             return element;
                                         }
                                         return EStructuralFeatureOverride.OWNER.getFunction().apply(objectNode, eStructuralFeature, project, strict, element);
@@ -536,7 +526,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (failure) {
             if (showValidation) {
-                Utils.displayValidationWindow(vss, "View Generation Validation");
+                Utils.displayValidationWindow(project, vss, "View Generation Validation");
             }
             SessionManager.getInstance().cancelSession(project);
             return;
@@ -741,6 +731,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 try {
                     ModelElementsManager.getInstance().removeElement(element);
                 } catch (ReadOnlyElementException ignored) {
+                    System.out.println("Could not clean up " + element.getLocalID());
                 }
             }
             // used to skip redundant view generation attempts when using multi-select or ElementGroups; see GenerateViewPresentationAction
@@ -768,9 +759,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
+//        vss.add(iv.getSuite());
         if (showValidation) {
             if (suite.hasErrors()) {
-                Utils.displayValidationWindow(vss, "View Generation Validation");
+                Utils.displayValidationWindow(project, vss, "View Generation Validation");
             }
         }
     }

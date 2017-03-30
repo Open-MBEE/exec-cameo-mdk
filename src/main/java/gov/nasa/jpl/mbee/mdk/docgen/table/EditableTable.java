@@ -238,7 +238,7 @@ public class EditableTable extends JDialog {
 
         private void importFromCsv(CSVReader reader) throws IOException {
             GUILog gl = Application.getInstance().getGUILog();
-            Project prj = Application.getInstance().getProject();
+            Project project = Application.getInstance().getProject();
             List<List<PropertyEnum>> what = ntable.getWhatToChange();
             List<PropertyEnum> whatCol = ntable.getWhatToChangeCol();
             String[] line = reader.readNext(); // ignore header
@@ -258,7 +258,7 @@ public class EditableTable extends JDialog {
                     }
                     PropertyEnum whatToChange = null;
                     BaseElement e = Converters.getIdToElementConverter()
-                            .apply(props[c], prj);
+                            .apply(props[c], project);
                     String value = props[c + 1];
                     if (what != null && what.size() > row && what.get(row).size() > col) {
                         whatToChange = what.get(row).get(col);

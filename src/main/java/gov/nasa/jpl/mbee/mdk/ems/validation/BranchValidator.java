@@ -32,12 +32,14 @@ import java.util.*;
 
 public class BranchValidator {
 
+    private final Project project;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
 //    private ValidationRule twcMissingBranchValidationRule = new ValidationRule("Missing in Client", "Branch shall exist in TWC if it exists in MMS.", ViolationSeverity.WARNING);
     private ValidationRule mmsMissingBranchValidationRule = new ValidationRule("Missing on Server", "Branch shall exist in MMS if it exists in TeamworkCloud.", ViolationSeverity.WARNING);
     private ValidationRule branchEquivalenceValidationRule = new ValidationRule("Branch Equivalence", "Branch shall be represented in MagicDraw and MMS equivalently.", ViolationSeverity.WARNING);
 
-    public BranchValidator() {
+    public BranchValidator(Project project) {
+        this.project = project;
 //        validationSuite.addValidationRule(twcMissingBranchValidationRule);
         validationSuite.addValidationRule(mmsMissingBranchValidationRule);
         validationSuite.addValidationRule(branchEquivalenceValidationRule);
@@ -203,7 +205,7 @@ public class BranchValidator {
         List<ValidationSuite> vss = new ArrayList<>();
         vss.add(validationSuite);
         if (validationSuite.hasErrors()) {
-            Utils.displayValidationWindow(vss, "Branch Differences");
+            Utils.displayValidationWindow(project, vss, "Branch Differences");
         }
     }
 

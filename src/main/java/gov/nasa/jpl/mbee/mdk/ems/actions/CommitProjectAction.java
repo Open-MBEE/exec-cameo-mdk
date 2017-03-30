@@ -85,7 +85,6 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         return false;
     }
 
-
     @Override
     public void execute(Collection<Annotation> annos) {
 
