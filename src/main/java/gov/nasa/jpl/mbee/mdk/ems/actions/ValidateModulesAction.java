@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -19,7 +21,7 @@ public class ValidateModulesAction extends MMSAction {
 
         @Override
         public void run(ProgressStatus arg0) {
-            ModuleValidator v = new ModuleValidator();
+            ModuleValidator v = new ModuleValidator(Application.getInstance().getProject());
             v.validate(arg0);
             v.showWindow();
         }

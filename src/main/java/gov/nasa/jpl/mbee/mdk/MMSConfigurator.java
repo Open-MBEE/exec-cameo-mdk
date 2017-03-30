@@ -33,6 +33,7 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import com.nomagic.magicdraw.core.Application;
 import gov.nasa.jpl.mbee.mdk.ems.actions.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
@@ -53,20 +54,26 @@ public class MMSConfigurator implements AMConfigurator {
         manager.addCategory((ActionsCategory) category);
 
         MMSLoginAction login = new MMSLoginAction();
-        MMSLogoutAction logout = new MMSLogoutAction();
-        login.setLogoutAction(logout);
-        logout.setLoginAction(login);
-
         category.addAction(login);
+
+        MMSLogoutAction logout = new MMSLogoutAction();
         category.addAction(logout);
-        category.addAction(new UpdateAllDocumentsAction());
+
+        UpdateAllDocumentsAction uada = new UpdateAllDocumentsAction();
+        category.addAction(uada);
 
         if (MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
             MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
             validateCategory.setNested(true);
             category.addAction(validateCategory);
-            validateCategory.addAction(new ValidateModulesAction());
-            validateCategory.addAction(new ValidateBranchesAction());
+
+            ValidateModulesAction vma = new ValidateModulesAction();
+            vma.setEnabled(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
+            validateCategory.addAction(vma);
+
+            ValidateBranchesAction vba = new ValidateBranchesAction();
+            vma.setEnabled(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
+            validateCategory.addAction(vba);
         }
     }
 

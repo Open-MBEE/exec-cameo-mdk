@@ -308,9 +308,9 @@ public class MDKHelper {
         validationWindow = new MDKValidationWindow(gvpa.updateAction());
     }
 
-    public static void generateAllDocuments() {
+    public static void generateAllDocuments(Project project) {
         UpdateAllDocumentsAction uad = new UpdateAllDocumentsAction();
-        validationWindow = new MDKValidationWindow(uad.updateAction());
+        validationWindow = new MDKValidationWindow(uad.updateAction(project));
     }
 
     /**

@@ -147,7 +147,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         constraintElementToViolationMap.clear();
 
         if (Utils2.isNullOrEmpty(paramCollection)) {
-            paramCollection = Utils2.newList(Utils.getRootElement());
+            paramCollection = Utils2.newList(Utils.getRootElement(paramProject));
         }
 
         // // collect all constraints and the objects they constrain
@@ -264,8 +264,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
      * java.util.Collection)
      */
     @Override
-    public Set<Annotation> run(Project paramProject, Constraint paramConstraint,
-                               Collection<? extends Element> paramCollection) {
+    public Set<Annotation> run(Project paramProject, Constraint paramConstraint, Collection<? extends Element> paramCollection) {
         Set<Annotation> result = new HashSet<Annotation>();
 
         MdDebug.logForce("*** Starting MDK Validate Constraints: " + constraintType + " ***");
@@ -311,9 +310,8 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                 e.printStackTrace();
             }
         }
-        Project project = Utils.getProject();
-        Constraint cons = Utils.getWarningConstraint();
-        result = Utils.getAnnotations(this, project, cons);
+        Constraint cons = Utils.getWarningConstraint(paramProject);
+        result = Utils.getAnnotations(this, paramProject, cons);
         annotations = result;
 
         MdDebug.logForce("*** Finished MDK Validate Constraints: " + constraintType + " ***");

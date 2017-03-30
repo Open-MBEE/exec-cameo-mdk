@@ -27,25 +27,23 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 import javax.swing.*;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -154,19 +152,14 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(URIBuilder requestUri, File sendFile)
+    public static HttpRequestBase buildImageRequest(URIBuilder requestUri, File sendFile)
             throws IOException, URISyntaxException {
         URI requestDest = requestUri.build();
         HttpPost requestUpload = new HttpPost(requestDest);
-        MultipartEntityBuilder uploadBuilder = MultipartEntityBuilder.create();
-        uploadBuilder.addBinaryBody(
-                "file",
-                new FileInputStream(sendFile),
-                ContentType.APPLICATION_OCTET_STREAM,
-                sendFile.getName()
-        );
-        HttpEntity multiPart = uploadBuilder.build();
-        requestUpload.setEntity(multiPart);
+        EntityBuilder uploadBuilder = EntityBuilder.create();
+        uploadBuilder.setFile(sendFile);
+        requestUpload.setEntity(uploadBuilder.build());
+        requestUpload.addHeader("Content-Type", "image/svg");
         return requestUpload;
     }
 
@@ -294,7 +287,7 @@ public class MMSUtils {
                 System.out.println(requestBody);
             }
         }
-        
+
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
@@ -309,6 +302,7 @@ public class MMSUtils {
 
             // debug / logging output from response
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
+            // TODO @donbot replace this logging with saving of the response file
             if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
                 if (!responseBody.isEmpty() && !responseType.equals("application/json;charset=UTF-8")) {
                     responseBody = "<span>" + responseBody + "</span>";
@@ -320,12 +314,12 @@ public class MMSUtils {
             boolean throwServerException = false;
 
             // assume that 404s with json response bodies are "missing resource" 404s, which are expected for some cases and should not break normal execution flow
-            if (responseCode == 404 && responseType.equals("application/json;charset=UTF-8")) {
+            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8")) {
                 // do nothing, note in log
                 System.out.println("[INFO] \"Missing Resource\" 404 processed.");
             }
             // allow re-attempt of request if credentials have expired or are invalid
-            else if (responseCode == 401) {
+            else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
                 MMSLogoutAction.logoutAction(project);
                 if (MMSLoginAction.loginAction(project)) {
@@ -339,7 +333,7 @@ public class MMSUtils {
                 }
             }
             // if it's anything else outside of the 200 range, assume failure and break normal flow
-            else if (responseCode < 200 || responseCode >= 300) {
+            else if (responseCode != HttpURLConnection.HTTP_OK) {
                 Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 throwServerException = true;
             }
@@ -435,7 +429,7 @@ public class MMSUtils {
             throw new IOException(emsg.get());
         }
         else if (etype.get() == ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION) {
-            throw new URISyntaxException("", emsg.get());
+            throw new URISyntaxException(request.getURI().toString(), emsg.get());
         }
         return resp.get();
     }
@@ -776,4 +770,3 @@ public class MMSUtils {
     }
 
 }
-

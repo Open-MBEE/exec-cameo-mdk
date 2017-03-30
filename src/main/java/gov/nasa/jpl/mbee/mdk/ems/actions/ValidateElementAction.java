@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
@@ -43,11 +44,13 @@ public class ValidateElementAction extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Collection<Element> start;
+    private Project project;
     public static final String DEFAULT_ID = "ValidateElement";
 
     public ValidateElementAction(Collection<Element> e, String name) {
         super(DEFAULT_ID, name, null, null);
-        start = e;
+        this.start = e;
+        this.project = Project.getProject(e.iterator().next());
     }
 
     @Override
@@ -60,7 +63,7 @@ public class ValidateElementAction extends MDAction {
         }
         else if (manualSyncRunner.getValidationSuite().hasErrors()) {
             // not null, has errors, display for processing
-            Utils.displayValidationWindow(manualSyncRunner.getValidationSuite(), manualSyncRunner.getValidationSuite().getName());
+            Utils.displayValidationWindow(project, manualSyncRunner.getValidationSuite(), manualSyncRunner.getValidationSuite().getName());
         }
         else {
             // not null, no errors, all fine

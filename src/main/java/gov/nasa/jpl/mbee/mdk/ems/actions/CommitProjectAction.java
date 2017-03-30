@@ -87,7 +87,6 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         return false;
     }
 
-
     @Override
     public void execute(Collection<Annotation> annos) {
 
@@ -162,7 +161,6 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // update request with project post path
         requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
-
         Collection<ObjectNode> projects = new LinkedList<>();
         projects.add(MMSUtils.getProjectObjectNode(project));
 

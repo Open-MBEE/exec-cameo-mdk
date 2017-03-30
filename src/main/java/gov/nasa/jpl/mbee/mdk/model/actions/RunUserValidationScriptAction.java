@@ -79,12 +79,13 @@ public class RunUserValidationScriptAction extends MDAction {
          * Map<String, Object> inputs = new HashMap<String, Object>();
          * inputs.put("FixMode", fix);
          */
-        Map<String, Object> inputs = new HashMap<String, Object>();
+        Map<String, Object> inputs = new HashMap<>();
         Map<?, ?> o = scripti.getScriptOutput(inputs);
         if (o != null && o.containsKey("DocGenValidationOutput")) {
             Object l = o.get("DocGenValidationOutput");
             if (l instanceof List) {
-                Utils.displayValidationWindow((List<ValidationSuite>) l, "User Validation Script Results");
+                // TODO @donbot remove Application.getProject() call
+                Utils.displayValidationWindow(Application.getInstance().getProject(), (List<ValidationSuite>) l, "User Validation Script Results");
             }
         }
         else if (o != null && o.containsKey("docgenValidationOutput")) {
@@ -97,7 +98,8 @@ public class RunUserValidationScriptAction extends MDAction {
                         vs.add((ValidationSuite) s.doSwitch((Suite) object));
                     }
                 }
-                Utils.displayValidationWindow(vs, "User Validation Script Results");
+                // TODO @donbot remove Application.getProject() call S
+                Utils.displayValidationWindow(Application.getInstance().getProject(), vs, "User Validation Script Results");
             }
         }
         else {

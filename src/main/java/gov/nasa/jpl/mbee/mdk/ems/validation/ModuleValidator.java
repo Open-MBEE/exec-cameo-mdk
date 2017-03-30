@@ -37,15 +37,16 @@ public class ModuleValidator {
     private ValidationRule siteExist = new ValidationRule("Site Existence", "Site Existence", ViolationSeverity.ERROR);
     private ValidationRule projectSiteExist = new ValidationRule("Site", "Project Site", ViolationSeverity.ERROR);
     private ValidationSuite siteSuite = null;
+    private Project project;
 
-    public ModuleValidator() {
+    public ModuleValidator(Project project) {
         suite.addValidationRule(unexportedModule);
         suite.addValidationRule(siteExist);
         suite.addValidationRule(projectSiteExist);
+        this.project = project;
     }
 
     public void validate(ProgressStatus ps) {
-        Project project = Application.getInstance().getProject();
         IPrimaryProject primaryProject = project.getPrimaryProject();
         Collection<IAttachedProject> modules = ProjectUtilities.getAllAttachedProjects(primaryProject);
         String baseUrl = MMSUtils.getServerUrl(project);
@@ -141,7 +142,7 @@ public class ModuleValidator {
         if (siteSuite != null) {
             vss.add(siteSuite);
         }
-        Utils.displayValidationWindow(vss, "Module Differences");
+        Utils.displayValidationWindow(project, vss, "Module Differences");
     }
 
     public ValidationSuite getSuite() {

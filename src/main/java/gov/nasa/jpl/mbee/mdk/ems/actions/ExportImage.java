@@ -72,32 +72,37 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             Utils.guilog("[ERROR] Image data with id " + key + " not found.");
             return false;
         }
-        JsonNode value;
-        String filename = "";
-        String cs = "";
-        String extension = "";
-        if ((value = is.get(key).get("abspath")) != null && value.isTextual()) {
-            filename = value.asText();
-        }
-        if ((value = is.get(key).get("cs")) != null && value.isTextual()) {
-            cs = value.asText();
-        }
-        if ((value = is.get(key).get("extension")) != null && value.isTextual()) {
-            extension = value.asText();
-        }
 
         URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-
         if (requestUri == null) {
             return false;
         }
+
+        String id = key.replace(".", "%2E");
+        requestUri.setPath(requestUri.getPath() + "/" + id);
+
+        JsonNode value;
+
+        String cs = "";
+        if ((value = is.get(key).get("cs")) != null && value.isTextual()) {
+            cs = value.asText();
+        }
         requestUri.setParameter("cs", cs);
+
+        String extension = "";
+        if ((value = is.get(key).get("extension")) != null && value.isTextual()) {
+            extension = value.asText();
+        }
         requestUri.setParameter("extension", extension);
 
+        String filename = "";
+        if ((value = is.get(key).get("abspath")) != null && value.isTextual()) {
+            filename = value.asText();
+        }
         File imageFile = new File(filename);
+
         try {
             Request imageRequest = new Request(project, requestUri, imageFile, "Image");
-            imageRequest.getRequest().setHeader("Content-Type", "image/" + extension);
             OutputQueue.getInstance().offer(imageRequest);
         } catch (IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit image " + filename + ". Reason: " + e.getMessage());

@@ -29,6 +29,7 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -69,36 +70,42 @@ import gov.nasa.jpl.mbee.mdk.model.Simulate;
 public class DocumentGenerator {
 
     private GenerationContext context;
+    private Project project;
     private Element start;
     private Document doc;
-    private Stereotype sysmlview = Utils.getViewStereotype();
-    private Stereotype product;
-    private Stereotype conforms = Utils.getConformsStereotype();
-    private Stereotype ourConforms = Utils.getSysML14ConformsStereotype();//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
-    private Stereotype md18expose = Utils.get18ExposeStereotype();
-    private Stereotype ourExpose = Utils.getExposeStereotype();
+    private Stereotype sysmlview,
+                product,
+                conforms,
+                ourConforms,
+                md18expose,
+                ourExpose;
     private boolean hierarchyOnly;
     private boolean addViewDoc = true; //whether to add default view doc 
+
+    public DocumentGenerator(Element e, PrintWriter wlog) {
+        this(e, null, wlog, true);
+//        start = e;
+//        product = Utils.getProductStereotype();
+//        doc = new Document();
+//        context = new GenerationContext(new Stack<>(), null, Application.getInstance().getGUILog());
+    }
 
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
         this(e, dv, wlog, true);
     }
 
     public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog, boolean addViewDoc) {
-        start = e;
-        product = Utils.getProductStereotype();
-        doc = new Document();
-        context = new GenerationContext(new Stack<List<Object>>(), null, dv, Application.getInstance()
-                .getGUILog());
+        this.start = e;
+        this.project = Project.getProject(e);
+        this.product = Utils.getProductStereotype(project);
+        this.sysmlview = Utils.getViewStereotype(project);
+        this.conforms = Utils.getConformsStereotype(project);
+        this.ourConforms = Utils.getSysML14ConformsStereotype(project);//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
+        this.md18expose = Utils.get18ExposeStereotype(project);
+        this.ourExpose = Utils.getExposeStereotype(project);
+        this.doc = new Document();
+        this.context = new GenerationContext(new Stack<>(), null, dv, Application.getInstance().getGUILog());
         this.addViewDoc = addViewDoc;
-    }
-
-    public DocumentGenerator(Element e, PrintWriter wlog) {
-        start = e;
-        product = Utils.getProductStereotype();
-        doc = new Document();
-        context = new GenerationContext(new Stack<List<Object>>(), null, Application.getInstance()
-                .getGUILog());
     }
 
     public Document parseDocument() {

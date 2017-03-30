@@ -101,12 +101,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 //        }
 
         String url;
-        try {
-            url = MMSUtils.getServerUrl(project);
-            if (url == null || url.isEmpty()) {
-                throw new IllegalStateException("");
-            }
-        } catch (IllegalStateException e) {
+        url = MMSUtils.getServerUrl(project);
+        if (url == null || url.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] MMS URL not specified. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
@@ -385,7 +381,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
             UpdateClientElementAction updateClientElementAction = new UpdateClientElementAction(project);
             updateClientElementAction.setElementsToUpdate(jmsElementsToCreateOrUpdateLocally);
-            updateClientElementAction.setElementsToDelete(jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).collect(Collectors.toList()));
+            updateClientElementAction.setElementsToDelete(jmsElementsToDeleteLocally.values().stream().map(Converters.getElementToIdConverter()).filter(id -> id != null).filter(id -> !id.isEmpty()).collect(Collectors.toList()));
             updateClientElementAction.run(progressStatus);
 
             failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
@@ -419,7 +415,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         if (!elementValidator.getInvalidElements().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + elementValidator.getInvalidElements().size() + " element" + (elementValidator.getInvalidElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");
             vss.add(elementValidator.getValidationSuite());
-            Utils.displayValidationWindow(elementValidator.getValidationSuite(), "Delta Sync Conflict Validation");
+            Utils.displayValidationWindow(project, elementValidator.getValidationSuite(), "Delta Sync Conflict Validation");
 
             for (Map.Entry<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedEntry : conflictedChanges.entrySet()) {
                 String id = conflictedEntry.getKey();
