@@ -248,8 +248,8 @@ public class MMSUtils {
         jsonGenerator.writeStartObject();
         jsonGenerator.writeArrayFieldStart(arrayName);
         for (Object node : nodes) {
-            if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON) {
-                jsonGenerator.writeObject((ObjectNode) node);
+            if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
+                jsonGenerator.writeObject(node);
             }
             else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
                 jsonGenerator.writeStartObject();
