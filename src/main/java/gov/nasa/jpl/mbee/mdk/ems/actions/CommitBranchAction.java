@@ -40,17 +40,19 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
     private final EsiUtils.EsiBranchInfo branchInfo;
     private final String branchName;
     private final boolean shouldCommitModel;
+    private final boolean updateBranch;
 
     public CommitBranchAction(String branchName, Project project, EsiUtils.EsiBranchInfo branchInfo) {
-        this(branchName, project, branchInfo, false);
+        this(branchName, project, branchInfo, false, false);
     }
 
-    public CommitBranchAction(String branchName, Project project, EsiUtils.EsiBranchInfo branchInfo, boolean shouldCommitModel) {
+    public CommitBranchAction(String branchName, Project project, EsiUtils.EsiBranchInfo branchInfo, boolean shouldCommitModel, boolean updateBranch) {
         super(shouldCommitModel ? COMMIT_MODEL_DEFAULT_ID : DEFAULT_ID, "Commit Branch" + (shouldCommitModel ? " and Sync Model" : ""), null, null);
         this.branchName = branchName;
         this.project = project;
         this.branchInfo = branchInfo;
         this.shouldCommitModel = shouldCommitModel;
+        this.updateBranch = false;
     }
 
     @Override
@@ -80,7 +82,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         ArrayNode elementsArrayNode = requestData.putArray("refs");
         requestData.put("source", "magicdraw");
         requestData.put("mdkVersion", MDKPlugin.VERSION);
-        ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo);
+        ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo, updateBranch);
         elementsArrayNode.add(branchNode);
 
         ObjectNode response;

@@ -178,7 +178,8 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             return null;
         }
         // update master ref
-        new CommitBranchAction("master", project, EsiUtils.getCurrentBranch(project.getPrimaryProject()), false).commitAction();
+        // TODO @donbot enable this ref post after master is updatable
+//        new CommitBranchAction("master", project, EsiUtils.getCurrentBranch(project.getPrimaryProject()), false).commitAction();
         // do model post
         if (shouldCommitModel) {
             RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);

@@ -22,6 +22,7 @@ public class MDKConstants {
             TYPE_KEY = "type",
             NAME_KEY = "name",
             ID_KEY = "id",
+            PARENT_REF_ID_KEY = "parentRef" + ID_KEY_SUFFIX,
             OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_KEY_SUFFIX,
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",

@@ -86,7 +86,7 @@ public class BranchValidator {
             targetBranches.add(EsiUtils.getCurrentBranch(primaryProject));
         }
         for (EsiUtils.EsiBranchInfo branch : targetBranches) {
-            ObjectNode branchJson = getRefObjectNode(project, branch);
+            ObjectNode branchJson = getRefObjectNode(project, branch, true);
             JsonNode value;
             String entryKey;
             if ((value = branchJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
@@ -144,6 +144,10 @@ public class BranchValidator {
         }
 
         for (String key : keySet) {
+
+            // TODO @DONBOT remove this check/skip for master branch after master is updatable
+            if (key.equals("master")) { continue; }
+
             Pair<EsiUtils.EsiBranchInfo, ObjectNode> clientBranch = clientBranches.get(key);
             ObjectNode serverBranch = serverBranches.get(key);
 
@@ -155,8 +159,8 @@ public class BranchValidator {
             }
             else if (serverBranch == null) {
                 ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH MISSING ON MMS] The Teamwork Cloud branch \"" + key + "\" does not have a corresponding MMS branch.");
-                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), false));
-                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), true));
+                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), false, false));
+                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), true, false));
                 mmsMissingBranchValidationRule.addViolation(v);
 
             }
@@ -166,8 +170,8 @@ public class BranchValidator {
                     continue;
                 }
                 ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + key + "\" is not equivalent to the corresponding MMS branch.");
-                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), false));
-                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), true));
+                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), false, true));
+                v.addAction(new CommitBranchAction(key, project, clientBranch.getFirst(), true, true));
                 branchEquivalenceValidationRule.addViolation(v);
             }
             if (progressStatus != null) {
@@ -176,7 +180,7 @@ public class BranchValidator {
         }
     }
 
-    public static ObjectNode getRefObjectNode(Project project, EsiUtils.EsiBranchInfo branchInfo) {
+    public static ObjectNode getRefObjectNode(Project project, EsiUtils.EsiBranchInfo branchInfo, boolean update) {
         ObjectNode refObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         /*  "id": "master",
             "name": "master",
@@ -191,13 +195,16 @@ public class BranchValidator {
         if (name.equals("trunk")) {
             name = "master";
         }
-        refObjectNode.put(MDKConstants.ID_KEY, name);
+        if (update) {
+            refObjectNode.put(MDKConstants.ID_KEY, name);
+        }
         refObjectNode.put(MDKConstants.NAME_KEY, name);
-        refObjectNode.put(MDKConstants.QUALIFIED_ID_KEY, name);
-        refObjectNode.put(MDKConstants.QUALIFIED_NAME_KEY, name);
         refObjectNode.put(MDKConstants.TWC_ID_KEY, branchInfo.getID().toString());
         refObjectNode.put(MDKConstants.TWC_URI_KEY,
                 EsiUtils.getDescriptorByBranchID(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project), branchInfo.getID()).getURI().toString());
+        // TODO unlink this from "master" when we support non-head branching
+        refObjectNode.put(MDKConstants.PARENT_REF_ID_KEY, "master");
+//        refObjectNode.put("commitId", "c7513a67-0543-4a9c-b978-a40ba65a2d07");
         return refObjectNode;
     }
 
