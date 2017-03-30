@@ -14,6 +14,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class ProjectValidator {
         requestUri.setPath(requestUri.getPath() + "/" + Converters.getProjectToIdConverter().apply(project));
         ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
         } catch (IOException | ServerException | URISyntaxException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS projects. Project validation cancelled. Reason: " + e.getMessage());

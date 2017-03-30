@@ -38,6 +38,7 @@ import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -250,9 +251,9 @@ public class TicketUtils {
         credentials.put("password", pass);
 
         // do request
-        ObjectNode response = null;
+        String ticket;
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, credentials));
+            ticket = MMSUtils.sendCredentials(project, username, pass);
         } catch (ServerException | IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
             e.printStackTrace();
@@ -260,10 +261,9 @@ public class TicketUtils {
         }
 
         // parse response
-        JsonNode value;
-        if (response != null && (value = response.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
+        if (ticket != null) {
             password = "";
-            ticketMappings.put(project, new TicketMapping(project, value.asText()));
+            ticketMappings.put(project, new TicketMapping(project, ticket));
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
@@ -281,35 +281,15 @@ public class TicketUtils {
         if (!isTicketSet(project)) {
             return false;
         }
-
-        // build request
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticketMappings.get(project).getTicket());
-        requestUri.clearParameters();
-
-        // do request
-        ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (ServerException | IOException | URISyntaxException e) {
+            return MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket());
+        }
+        catch (ServerException | IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained for now). Reason: " + e.getMessage());
             e.printStackTrace();
             // can't confirm invalid if can't check ticket at all
             return true;
         }
-
-        // parse response, clearing ticket if appropriate
-        JsonNode value;
-        if ((((value = response.get("message")) != null) && value.isTextual() && value.asText().equals("Ticket not found"))) {
-            Application.getInstance().getGUILog().log("[WARNING] Authentication has expired. Please log in to the MMS again.");
-            MMSLogoutAction.logoutAction(project);
-            return false;
-        }
-        // no exceptions and not confirmed invalid
-        return true;
     }
 
     private static class TicketMapping {

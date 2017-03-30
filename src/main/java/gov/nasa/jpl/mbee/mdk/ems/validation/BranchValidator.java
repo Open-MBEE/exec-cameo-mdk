@@ -111,7 +111,7 @@ public class BranchValidator {
         }
         try {
             HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
-            ObjectNode response = MMSUtils.sendMMSRequest(project, request);
+            ObjectNode response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, request));
             JsonNode refsArray, value;
             if ((refsArray = response.get("refs")) != null && refsArray.isArray()) {
                 for (JsonNode refJson : refsArray) {

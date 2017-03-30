@@ -6,6 +6,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.ems.validation.BranchValidator;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import java.awt.event.ActionEvent;
 
@@ -31,5 +32,11 @@ public class ValidateBranchesAction extends MMSAction {
     public void actionPerformed(ActionEvent e) {
         ProgressStatusRunner.runWithProgressStatus(new ValidationRunner(), "Validating Branches", true, 0);
     }
+
+    @Override
+    public void updateState() {
+        setEnabled(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
+    }
+
 
 }

@@ -11,6 +11,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -57,7 +58,7 @@ public class JMSUtils {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         requestUri.setPath(requestUri.getPath() + "/connection/jms");
 
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
     }
 
     // Varies by current project

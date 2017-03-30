@@ -29,16 +29,13 @@
 package gov.nasa.jpl.mbee.mdk.ems.actions;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
-import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
@@ -49,14 +46,17 @@ import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 
 public class CommitProjectAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -108,7 +108,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // check for existing org, use that if it exists instead of prompting to select one
         try {
-            org = MMSUtils.getOrg(project);
+            org = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
         } catch (IOException | URISyntaxException | ServerException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
@@ -120,7 +120,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode response;
         if (org == null || org.isEmpty()) {
             try {
-                response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+                response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
             } catch (IOException | URISyntaxException | ServerException e1) {
                 Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
@@ -159,18 +159,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // update request with project post path
         requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
-
-        // build post data
-        ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elementsArrayNode = requestData.putArray("elements");
-        requestData.put("source", "magicdraw");
-        requestData.put("mdkVersion", MDKPlugin.getVersion());
-        ObjectNode projectObjectNode = MMSUtils.getProjectObjectNode(project);
-        elementsArrayNode.add(projectObjectNode);
+        Collection<ObjectNode> projects = new LinkedList<>();
+        projects.add(MMSUtils.getProjectObjectNode(project));
 
         // do project post request
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData));
+            File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
+            response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON)));
             // we don't need to process this response, just make sure the request comes back without exception
         } catch (IOException | URISyntaxException | ServerException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());

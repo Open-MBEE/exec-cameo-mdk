@@ -19,16 +19,15 @@ import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by igomes on 9/27/16.
@@ -115,46 +114,26 @@ public class CommitClientElementAction extends RuleViolationAction implements An
     private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) throws JsonProcessingException {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
-
             try {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream);
-                jsonGenerator.writeStartObject();
-                jsonGenerator.writeArrayFieldStart("elements");
-                for (ObjectNode objectNode : elementsToUpdate) {
-                    jsonGenerator.writeObject(objectNode);
-                }
-                jsonGenerator.writeEndArray();
-                jsonGenerator.writeStringField("source", "magicdraw");
-                jsonGenerator.writeStringField("mdkVersion", MDKPlugin.getVersion());
-                jsonGenerator.writeEndObject();
-                jsonGenerator.close();
-
-                String request = outputStream.toString();
+                File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, request, true, elementsToUpdate.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToUpdate.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();
+                return;
             }
         }
         if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queueing request to delete " + elementsToDelete.size() + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
-            ObjectNode request = JacksonUtils.getObjectMapper().createObjectNode();
-            ArrayNode elements = request.putArray("elements");
-            for (String id : elementsToDelete) {
-                ObjectNode curElement = JacksonUtils.getObjectMapper().createObjectNode();
-                curElement.put(MDKConstants.ID_KEY, id);
-                elements.add(curElement);
-            }
-            request.put("source", "magicdraw");
-            request.put("mdkVersion", MDKPlugin.getVersion());
-            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, request, true, elements.size(), "Sync Deletes"));
+                File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToDelete.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();
+                return;
             }
         }
     }

@@ -4,6 +4,7 @@ package gov.nasa.jpl.mbee.mdk.ems.actions;
  * Created by ablack on 3/16/17.
  */
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -24,16 +25,19 @@ import gov.nasa.jpl.mbee.mdk.ems.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 
 public class CommitBranchAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
-    public static final String DEFAULT_ID = CreateMMSWorkspaceAction.class.getSimpleName();
+    public static final String DEFAULT_ID = CommitBranchAction.class.getSimpleName();
     public static final String COMMIT_MODEL_DEFAULT_ID = DEFAULT_ID + "_Commit_Model";
 
     private final Project project;
@@ -77,17 +81,14 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             return;
         }
 
-
-        ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-        ArrayNode elementsArrayNode = requestData.putArray("refs");
-        requestData.put("source", "magicdraw");
-        requestData.put("mdkVersion", MDKPlugin.VERSION);
+        Collection<ObjectNode> refsNodes = new LinkedList<>();
         ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo, updateBranch);
-        elementsArrayNode.add(branchNode);
+        refsNodes.add(branchNode);
 
-        ObjectNode response;
+        JsonParser response;
         try {
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, requestData);
+            File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
+            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
             response = MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | URISyntaxException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting branch. Reason: " + e.getMessage());

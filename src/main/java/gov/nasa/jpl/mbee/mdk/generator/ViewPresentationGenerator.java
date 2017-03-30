@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -13,7 +12,6 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
@@ -42,7 +40,9 @@ import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -211,7 +211,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             ObjectNode viewResponse;
             try {
-                viewResponse = MMSUtils.getElements(project, viewMap.keySet(), progressStatus);
+                viewResponse = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, viewMap.keySet(), progressStatus));
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
@@ -279,7 +279,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     ObjectNode instanceAndSlotResponse;
                     try {
-                        instanceAndSlotResponse = MMSUtils.getElements(project, elementIDs, progressStatus);
+                        instanceAndSlotResponse = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, elementIDs, progressStatus));
                     } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
@@ -547,7 +547,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
 
             // commit to MMS
-            ArrayNode elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
+            LinkedList<ObjectNode> elementsToCommit = new LinkedList<>();
             Queue<Pair<InstanceSpecification, Element>> instanceToView = new LinkedList<>();
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
@@ -566,7 +566,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (MDUtils.isDeveloperMode()) {
                         Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonDiffFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
                     }
-                    elementsArrayNode.add(clientViewJson);
+                    elementsToCommit.add(clientViewJson);
                 }
                 for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
                     if (presentationElementInstance.getInstance() != null) {
@@ -605,18 +605,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (MDUtils.isDeveloperMode()) {
                         Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonDiffFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
                     }
-                    elementsArrayNode.add(clientInstanceSpecificationJson);
+                    elementsToCommit.add(clientInstanceSpecificationJson);
                 }
 
                 for (Slot slot : instance.getSlot()) {
-                    JsonNode clientSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
+                    ObjectNode clientSlotJson = Converters.getElementToJsonConverter().apply(slot, project);
                     if (clientSlotJson == null) {
                         continue;
                     }
                     JsonNode serverSlotJson = slotMap.containsKey(Converters.getElementToIdConverter().apply(slot)) ?
                             slotMap.get(Converters.getElementToIdConverter().apply(slot)).getFirst() : null;
                     if (!JsonEquivalencePredicate.getInstance().test(clientSlotJson, serverSlotJson)) {
-                        elementsArrayNode.add(clientSlotJson);
+                        elementsToCommit.add(clientSlotJson);
                         if (MDUtils.isDeveloperMode()) {
                             Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonDiffFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
                         }
@@ -631,25 +631,21 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             boolean changed = false;
 
-            if (elementsArrayNode.size() > 0) {
+            if (elementsToCommit.size() > 0) {
                 // STAGE 5: Queueing upload of generated view instances
                 progressStatus.setDescription("Queueing upload of generated view instances");
                 progressStatus.setCurrent(5);
-
-                ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-                requestData.set("elements", elementsArrayNode);
-                requestData.put("source", "magicdraw");
-                requestData.put("mdkVersion", MDKPlugin.getVersion());
-                Application.getInstance().getGUILog().log("Updating/creating " + elementsArrayNode.size() + " element" + (elementsArrayNode.size() != 1 ? "s" : "") + " to generate views.");
+                Application.getInstance().getGUILog().log("Updating/creating " + elementsToCommit.size() + " element" + (elementsToCommit.size() != 1 ? "s" : "") + " to generate views.");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, requestData, true, elementsArrayNode.size(), "Sync Changes"));
+                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, true, elementsToCommit.size(), "Sync Changes"));
                 changed = true;
             }
 
             // Delete unused presentation elements
 
-            elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
+            Set<String> mmsElementsToDelete = new HashSet<>();
             for (List<PresentationElementInstance> presentationElementInstances : view2unused.values()) {
                 for (PresentationElementInstance presentationElementInstance : presentationElementInstances) {
                     if (presentationElementInstance.getInstance() == null) {
@@ -659,20 +655,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (id == null) {
                         continue;
                     }
-                    ObjectNode elementObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-                    elementObjectNode.put(MDKConstants.ID_KEY, id);
-                    elementsArrayNode.add(elementObjectNode);
+                    mmsElementsToDelete.add(id);
                 }
             }
-            if (elementsArrayNode.size() > 0) {
-                ObjectNode requestData = JacksonUtils.getObjectMapper().createObjectNode();
-                requestData.set("elements", elementsArrayNode);
-                requestData.put("source", "magicdraw");
-                requestData.put("mdkVersion", MDKPlugin.getVersion());
-                Application.getInstance().getGUILog().log("Deleting " + elementsArrayNode.size() + " unused presentation element" + (elementsArrayNode.size() != 1 ? "s" : "") + ".");
+            if (elementsToCommit.size() > 0) {
+                Application.getInstance().getGUILog().log("Deleting " + mmsElementsToDelete.size() + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, requestData, true, elementsArrayNode.size(), "View Generation"));
+                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, true, elementsToCommit.size(), "View Generation"));
                 changed = true;
             }
 
