@@ -1809,7 +1809,7 @@ public class Utils {
      * @return the element at the top of the MagicDraw containment tree
      */
     public static Package getRootElement(Project project) {
-        return project.getPrimaryModel();
+        return project == null ? null : project.getPrimaryModel();
     }
 
     public static List<Package> getPackagesOfType(String typeName) {
@@ -1861,7 +1861,7 @@ public class Utils {
             root = getRootElement(project);
         }
         if (root == null) {
-            return null; // REVIEW -- error?
+            return Utils2.getEmptyList(); // REVIEW -- error?
         }
         if (root instanceof Package) {
             return getPackagesOfType((Package) root, typeName, seen);
