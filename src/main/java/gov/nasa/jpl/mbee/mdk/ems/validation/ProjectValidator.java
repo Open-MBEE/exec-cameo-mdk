@@ -70,7 +70,7 @@ public class ProjectValidator {
             v.addAction(new CommitProjectAction(project, true));
         }
         else {
-            v = new ValidationRuleViolation(project.getPrimaryModel(), "[PROJECT TRUNK MISSING ON MMS] The trunk project does not exist in the MMS. You must export the trunk first.");
+            v = new ValidationRuleViolation(project.getPrimaryModel(), "[PROJECT MISSING ON MMS] The project does not exist in the MMS. You must initialize the project from the master branch first.");
         }
         projectExistenceValidationRule.addViolation(v);
     }
