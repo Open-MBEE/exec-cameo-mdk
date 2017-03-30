@@ -59,7 +59,7 @@ public class TimeQueryUtil {
 
             ObjectNode partialResponse = null;
             try {
-                partialResponse = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+                partialResponse = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
             } catch (IOException | ServerException | URISyntaxException e) {
                 //TODO add exception handling for partial element returns?
                 e.printStackTrace();

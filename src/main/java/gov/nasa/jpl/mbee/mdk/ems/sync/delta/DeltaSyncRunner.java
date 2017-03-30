@@ -181,7 +181,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             progressStatus.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
             ObjectNode response = null;
             try {
-                response = MMSUtils.getElements(project, elementIdsToGet, progressStatus);
+                response = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, elementIdsToGet, progressStatus));
             } catch (ServerException | IOException | URISyntaxException e) {
                 if (e instanceof ServerException && ((ServerException) e).getCode() == 404) {
                     (response = JacksonUtils.getObjectMapper().createObjectNode()).putArray("elements");

@@ -13,6 +13,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -69,7 +70,7 @@ public class ImageValidator {
             try {
                 HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
                 request.setHeader("Accept", "image/" + extension);
-                response = MMSUtils.sendMMSRequest(project, request);
+                response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, request));
             } catch (ServerException | IOException | URISyntaxException e1) {
                 Application.getInstance().getGUILog().log("[ERROR] Exception occurred while validating images. Image validation cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();

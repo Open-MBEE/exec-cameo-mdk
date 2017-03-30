@@ -1,6 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.ems;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -74,7 +77,8 @@ public class MMSUtils {
             throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
-        ObjectNode response = getElementsRecursively(project, elementIds, 0, progressStatus);
+        JsonParser responseParser = getElementsRecursively(project, elementIds, 0, progressStatus);
+        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
         JsonNode value;
         if (((value = response.get("elements")) != null) && value.isArray()
                 && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
@@ -83,7 +87,7 @@ public class MMSUtils {
         return response;
     }
 
-    public static ObjectNode getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
+    public static JsonParser getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
@@ -100,7 +104,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static ObjectNode getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
+    public static JsonParser getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
@@ -116,11 +120,11 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static ObjectNode getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
+    public static JsonParser getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
-            return JacksonUtils.getObjectMapper().createObjectNode();
+            return null;
         }
 
         // build uri
@@ -252,8 +256,7 @@ public class MMSUtils {
                 jsonGenerator.writeEndObject();
             }
             else {
-                // unsupported collection type
-                return null;
+                throw new IOException("Unsupported collection type for entity file.");
             }
         }
         jsonGenerator.writeEndArray();
@@ -273,20 +276,17 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static ObjectNode sendMMSRequest(Project project, HttpRequestBase request)
+    public static JsonParser sendMMSRequest(Project project, HttpRequestBase request)
             throws IOException, ServerException, URISyntaxException {
+        File targetFile = File.createTempFile("Response-", null);
+        System.out.println(targetFile.getPath());
+        targetFile.deleteOnExit();
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson();
         logBody = logBody && request instanceof HttpEntityEnclosingRequest;
         logBody = logBody && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null);
         logBody = logBody && httpEntityEnclosingRequest.getEntity().isRepeatable();
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
-        if (logBody) {
-            try (InputStream inputStream = httpEntityEnclosingRequest.getEntity().getContent()) {
-                String requestBody = IOUtils.toString(inputStream);
-                System.out.println(requestBody);
-            }
-        }
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
@@ -294,29 +294,22 @@ public class MMSUtils {
 
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
                 CloseableHttpResponse response = httpclient.execute(request);
-                InputStream inputStream = response.getEntity().getContent()) {
+                InputStream inputStream = response.getEntity().getContent();
+                OutputStream outputStream = new FileOutputStream(targetFile)
+            ) {
             // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
             // debug / logging output from response
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
-            // TODO @donbot replace this logging with saving of the response file
-            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                if (!responseBody.isEmpty() && !responseType.equals("application/json;charset=UTF-8")) {
-                    responseBody = "<span>" + responseBody + "</span>";
-                }
-                System.out.println(" - Body: "  + responseBody);
-            }
 
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
             boolean throwServerException = false;
 
             // assume that 404s with json response bodies are "missing resource" 404s, which are expected for some cases and should not break normal execution flow
-            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8")) {
-                // do nothing, note in log
-                System.out.println("[INFO] \"Missing Resource\" 404 processed.");
+            if (responseCode == HttpURLConnection.HTTP_OK || (responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8"))) {
+                // continue
             }
             // allow re-attempt of request if credentials have expired or are invalid
             else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -332,28 +325,28 @@ public class MMSUtils {
                     throwServerException = true;
                 }
             }
-            // if it's anything else outside of the 200 range, assume failure and break normal flow
-            else if (responseCode != HttpURLConnection.HTTP_OK) {
+            // if it's anything else, assume failure and break normal flow
+            else {
                 Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 throwServerException = true;
             }
 
-            // print server message if possible
-            if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
-                responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
-                JsonNode value;
-                // display single response message
-                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
+            // dump to temp response file, build jsonParser and print server message if possible
+            if (inputStream != null && responseType.equals("application/json;charset=UTF-8")) {
+                byte[] buffer = new byte[8 * 1024];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
                 }
-                // display multiple response messages
-                if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
-                    ArrayNode msgs = (ArrayNode) value;
-                    for (JsonNode msg : msgs) {
-                        if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                            Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
-                        }
-                    }
+
+                JsonFactory jasonFactory = JacksonUtils.getJsonFactory();
+                JsonParser jsonParser = jasonFactory.createParser(targetFile);
+                while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
+                    // spin until we find message
+                }
+                if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
+                    jsonParser.nextToken();
+                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
                 }
             }
 
@@ -361,10 +354,12 @@ public class MMSUtils {
                 // big flashing red letters that the action failed, or as close as we're going to get
                 Utils.showPopupMessage("Action failed. See notification window for details.");
                 // throw is done last, after printing the error and any messages that might have been returned
-                throw new ServerException(responseBody, responseCode);
+                throw new ServerException((inputStream != null ? inputStream.toString() : ""), responseCode);
             }
         }
-        return responseJson;
+        JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(targetFile);
+        jsonParser.nextToken();
+        return jsonParser;
     }
 
     /**
@@ -378,14 +373,14 @@ public class MMSUtils {
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static ObjectNode sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
+    public static JsonParser sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
-        final AtomicReference<ObjectNode> resp = new AtomicReference<>();
+        final AtomicReference<JsonParser> responseJsonParser = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
         final AtomicReference<String> emsg = new AtomicReference<>();
         Thread t = new Thread(() -> {
-            ObjectNode response = JacksonUtils.getObjectMapper().createObjectNode();
+            JsonParser response = null;
             try {
                 response = sendMMSRequest(project, request);
                 etype.set(null);
@@ -405,8 +400,7 @@ public class MMSUtils {
                 emsg.set(e.getMessage());
                 e.printStackTrace();
             }
-
-            resp.set(response);
+            responseJsonParser.set(response);
         });
         t.start();
         try {
@@ -431,7 +425,7 @@ public class MMSUtils {
         else if (etype.get() == ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION) {
             throw new URISyntaxException(request.getURI().toString(), emsg.get());
         }
-        return resp.get();
+        return responseJsonParser.get();
     }
 
     public static String sendCredentials(Project project, String username, String password)
@@ -470,12 +464,6 @@ public class MMSUtils {
 
             // debug / logging output from response
             System.out.println("MMS Response [POST] " + requestUri.toString() + " - Code: " + responseCode);
-//            if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-//                if (!responseBody.isEmpty() && !responseType.equals("application/json;charset=UTF-8")) {
-//                    responseBody = "<span>" + responseBody + "</span>";
-//                }
-//                System.out.println(" - Body: "  + responseBody);
-//            }
 
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
             boolean throwServerException = false;
@@ -520,6 +508,64 @@ public class MMSUtils {
         return null;
     }
 
+    public static boolean validateCredentials(Project project, String ticket)
+            throws ServerException, IOException, URISyntaxException {
+        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        if (requestUri == null) {
+            return false;
+        }
+        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticket);
+        requestUri.clearParameters();
+
+        //build request
+        URI requestDest = requestUri.build();
+        HttpRequestBase request = new HttpGet(requestDest);
+
+        // do request
+        System.out.println("MMS Request [GET] " + requestUri.toString());
+        String message = "";
+        try (CloseableHttpClient httpclient = HttpClients.createDefault();
+             CloseableHttpResponse response = httpclient.execute(request);
+             InputStream inputStream = response.getEntity().getContent()) {
+            // get data out of the response
+            int responseCode = response.getStatusLine().getStatusCode();
+            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
+            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
+
+            // debug / logging output from response
+            System.out.println("MMS Response [GET] " + requestUri.toString() + " - Code: " + responseCode);
+
+            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
+            boolean throwServerException = false;
+
+            // if it's anything  200 range, assume failure and break normal flow
+            if (responseCode != 200) {
+                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
+                throwServerException = true;
+            }
+
+            // print server message if possible
+            if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
+                ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+                JsonNode value;
+                // display single response message
+                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                    message = value.asText();
+                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
+                }
+            }
+
+            if (throwServerException) {
+                // big flashing red letters that the action failed, or as close as we're going to get
+                Utils.showPopupMessage("Action failed. See notification window for details.");
+                // throw is done last, after printing the error and any messages that might have been returned
+                throw new ServerException(responseBody, responseCode);
+            }
+        }
+        // parse response
+        return message.equals("Ticket not found");
+    }
+
     /**
      * @param project
      * @return
@@ -555,7 +601,7 @@ public class MMSUtils {
         return urlString.trim();
     }
 
-    public static String getOrg(Project project)
+    public static String getOrgOnMms(Project project)
             throws IOException, URISyntaxException, ServerException {
 
 //        String siteString = "";
@@ -565,7 +611,8 @@ public class MMSUtils {
 //        return siteString;
 
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        ObjectNode response = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        JsonParser responseParser = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
         JsonNode arrayNode;
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
@@ -587,8 +634,7 @@ public class MMSUtils {
         }
 
         // do request, check return for project
-        ObjectNode response;
-        response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        ObjectNode response = JacksonUtils.parseJsonObject(sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
         JsonNode projectsJson;
         if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
             JsonNode value;
@@ -611,8 +657,8 @@ public class MMSUtils {
         }
 
         // do request for ref element
-        ObjectNode response;
-        response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        JsonParser responseParser = sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
         JsonNode projectsJson;
         if ((projectsJson = response.get("refs")) != null && projectsJson.isArray()) {
             JsonNode value;
@@ -623,23 +669,6 @@ public class MMSUtils {
             }
         }
         return false;
-    }
-
-    public static String getProjectOrg(Project project)
-            throws IOException, URISyntaxException, ServerException {
-        URIBuilder uriBuilder = getServiceProjectsUri(project);
-        ObjectNode response = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
-        JsonNode arrayNode;
-        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-            JsonNode value;
-            for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null ) && value.isTextual() && value.asText().equals(project.getID())
-                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null ) && value.isTextual() && !value.asText().isEmpty()) {
-                    return value.asText();
-                }
-            }
-        }
-        return null;
     }
 
     /**

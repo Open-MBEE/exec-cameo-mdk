@@ -66,14 +66,7 @@ public class MMSConfigurator implements AMConfigurator {
             MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
             validateCategory.setNested(true);
             category.addAction(validateCategory);
-
-            ValidateModulesAction vma = new ValidateModulesAction();
-            vma.setEnabled(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
-            validateCategory.addAction(vma);
-
-            ValidateBranchesAction vba = new ValidateBranchesAction();
-            vma.setEnabled(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
-            validateCategory.addAction(vba);
+            validateCategory.addAction(new ValidateBranchesAction());
         }
     }
 

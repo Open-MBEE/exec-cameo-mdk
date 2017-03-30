@@ -29,11 +29,14 @@
 
 package gov.nasa.jpl.mbee.mdk.api;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -43,6 +46,7 @@ import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.ems.ImportException;
 import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
@@ -340,7 +344,7 @@ public class MDKHelper {
      *
      **********************************************************************************/
 
-    public static ObjectNode getElement(Element element, Project project)
+    public static Collection<Element> getElement(Element element, Project project)
             throws IOException, ServerException, URISyntaxException {
         if (element == null) {
             return null;
@@ -350,7 +354,7 @@ public class MDKHelper {
         return getElementsById(collection, project, null);
     }
 
-    public static ObjectNode getElementById(String elementId, Project project)
+    public static Collection<Element> getElementById(String elementId, Project project)
             throws IOException, ServerException, URISyntaxException {
         // build request
         if (elementId == null) {
@@ -361,7 +365,7 @@ public class MDKHelper {
         return getElementsById(collection, project, null);
     }
 
-    public static ObjectNode getElements(Collection<Element> elements, Project project, ProgressStatus ps)
+    public static Collection<Element> getElements(Collection<Element> elements, Project project, ProgressStatus ps)
             throws IOException, ServerException, URISyntaxException {
         if (elements == null || elements.size() == 0) {
             return null;
@@ -370,7 +374,7 @@ public class MDKHelper {
                 .filter(id -> id != null).collect(Collectors.toList()), project, ps);
     }
 
-    public static ObjectNode getElementsById(Collection<String> elementIds, Project project, ProgressStatus progressStatus)
+    public static Collection<Element> getElementsById(Collection<String> elementIds, Project project, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         if (elementIds == null || elementIds.isEmpty()) {
             return null;
@@ -388,10 +392,21 @@ public class MDKHelper {
 
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
+        JsonParser jsonParser;
         if (progressStatus != null) {
-            return MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+            jsonParser = MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));
+        else {
+            jsonParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));
+        }
+        LinkedList<Element> elementsList = new LinkedList<>();
+        for (ObjectNode elementJson : JacksonUtils.parseJsonResponseToObjectList(jsonParser, null)) {
+            JsonNode value;
+            if ((value = elementJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+                elementsList.add(Converters.getIdToElementConverter().apply(value.asText(), project));
+            }
+        }
+        return elementsList;
     }
 
 
@@ -408,9 +423,8 @@ public class MDKHelper {
         if (requestUri == null) {
             return null;
         }
-
         File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON));
+        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON)));
     }
 
     /**
@@ -432,7 +446,7 @@ public class MDKHelper {
             elementJson.add(elemJson);
         }
         File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementJson, MMSUtils.JsonBlobType.ELEMENT_JSON);
-        return MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON)));
     }
 
 }

@@ -281,35 +281,15 @@ public class TicketUtils {
         if (!isTicketSet(project)) {
             return false;
         }
-
-        // build request
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticketMappings.get(project).getTicket());
-        requestUri.clearParameters();
-
-        // do request
-        ObjectNode response;
         try {
-            response = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        } catch (ServerException | IOException | URISyntaxException e) {
+            return MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket());
+        }
+        catch (ServerException | IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained for now). Reason: " + e.getMessage());
             e.printStackTrace();
             // can't confirm invalid if can't check ticket at all
             return true;
         }
-
-        // parse response, clearing ticket if appropriate
-        JsonNode value;
-        if ((((value = response.get("message")) != null) && value.isTextual() && value.asText().equals("Ticket not found"))) {
-            Application.getInstance().getGUILog().log("[WARNING] Authentication has expired. Please log in to the MMS again.");
-            MMSLogoutAction.logoutAction(project);
-            return false;
-        }
-        // no exceptions and not confirmed invalid
-        return true;
     }
 
     private static class TicketMapping {

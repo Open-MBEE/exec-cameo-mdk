@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ems.sync.manual;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
@@ -18,8 +19,10 @@ import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ems.ServerException;
 import gov.nasa.jpl.mbee.mdk.ems.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.ems.validation.ElementValidator;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import io.vertx.core.json.Json;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -82,33 +85,46 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setCurrent(0);
 
         List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
-        List<ObjectNode> serverElements = new ArrayList<>(rootElements.size());
+        Collection<JsonParser> jsonParsers = new ArrayList<>(3);
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
-            Collection<ObjectNode> jsonObjects = null;
             try {
-                jsonObjects = collectServerElementsRecursively(project, element, depth, progressStatus);
+                jsonParsers.add(collectServerElementsRecursively(project, element, depth, progressStatus));
+                if (element == project.getPrimaryModel() && depth != 0) {
+                    // scan of initial return for holding bin is expensive. assume it's not there and request anyway
+                    if (progressStatus.isCancel()) {
+                        Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
+                        return;
+                    }
+                    jsonParsers.add(collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus));
+
+                    if (progressStatus.isCancel()) {
+                        Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
+                        return;
+                    }
+                    //TODO confirm depth 0 for modules
+                    jsonParsers.add(collectServerModuleElementsRecursively(project, 0, progressStatus));
+                }
             } catch (ServerException | URISyntaxException | IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting elements from the server. Aborting manual sync.");
                 e.printStackTrace();
                 validationSuite = null;
                 return;
             }
-            if (jsonObjects == null) {
+            if (jsonParsers.isEmpty()) {
                 if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Failed to get elements from the server. Aborting manual sync.");
                 }
                 validationSuite = null;
                 return;
             }
-            serverElements.addAll(jsonObjects);
             progressStatus.increase();
         }
         if (progressStatus.isCancel()) {
             Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
             return;
         }
-        elementValidator = new ElementValidator(clientElements, serverElements, project);
+        elementValidator = new ElementValidator(clientElements, null, jsonParsers, project);
         elementValidator.run(progressStatus);
     }
 
@@ -118,66 +134,88 @@ public class ManualSyncRunner implements RunnableWithProgress {
             return;
         }
         elements.add(new Pair<>(element, jsonObject));
+        if (depth != 0) {
+            for (Element elementChild : element.getOwnedElement()) {
+                collectClientElementsRecursively(project, elementChild, --depth, elements);
+            }
+        }
         if (element.equals(project.getPrimaryModel())) {
             List<Package> attachedModels = project.getModels();
             attachedModels.remove(project.getPrimaryModel());
+//            final int moduleDepth = depth;
+            // TODO why depth 0?!?!?!
             attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements));
-        }
-        if (depth != 0) {
-            for (Element e : element.getOwnedElement()) {
-                collectClientElementsRecursively(project, e, --depth, elements);
-            }
         }
     }
 
-    private static Collection<ObjectNode> collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
+    private static /*Collection<ObjectNode>*/ JsonParser collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         String id = Converters.getElementToIdConverter().apply(element);
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(id);
-        ObjectNode response = MMSUtils.getElementsRecursively(project, elementIds, depth, progressStatus);
-        // process response
-        JsonNode value;
-        if (response != null && (value = response.get("elements")) != null && value.isArray()) {
-            Collection<ObjectNode> serverElements = StreamSupport.stream(value.spliterator(), false)
-                    .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
+        return MMSUtils.getElementsRecursively(project, elementIds, depth, progressStatus);
+//        // TODO @donbot stream this better
+//        ObjectNode response = JacksonUtils.parseJsonObject(MMSUtils.getElementsRecursively(project, elementIds, depth, progressStatus));
+//        // process response
+//        JsonNode value;
+//        if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+//            Collection<ObjectNode> serverElements = StreamSupport.stream(value.spliterator(), false)
+//                    .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList());
+//
+//            // check if we're validating the model root
+//            if (id.equals(Converters.getElementToIdConverter().apply(project.getPrimaryModel()))) {
+//                if (depth != 0) {
+//                    Collection<Element> attachedModels = new ArrayList<>(project.getModels());
+//                    attachedModels.remove(project.getPrimaryModel());
+//                    Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter())
+//                            .filter(amId -> amId != null).collect(Collectors.toList());
+//                    // TODO @donbot stream this better
+//                    // TODO why depth 0?!?!?!
+//                    response = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, attachedModelIds, null));
+//                    if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+//                        serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
+//                                .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
+//                    }
+//
+//                    String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+//                    boolean found = false;
+//                    // check to see if the holding bin was returned
+//                    for (ObjectNode elem : serverElements) {
+//                        if ((value = elem.get(MDKConstants.ID_KEY)) != null && value.isTextual()
+//                                && value.asText().equals(holdingBinId)) {
+//                            found = true;
+//                            break;
+//                        }
+//                    }
+//                    // if no holding bin in server collection && model was element && (depth > 0 || depth == -1)
+//                    if (!found) {
+//                        // TODO @donbot stream this better
+//                        response = JacksonUtils.parseJsonObject(MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus));
+//                        if (response != null && (value = response.get("elements")) != null && value.isArray()) {
+//                            serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
+//                                    .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
+//                        }
+//                    }
+//                }
+//            }
+//            return serverElements;
+//        }
+//        return new ArrayList<>();
+    }
 
-            // check if we're validating the model root
-            if (id.equals(Converters.getElementToIdConverter().apply(project.getPrimaryModel()))) {
-                if (depth != 0) {
-                    Collection<Element> attachedModels = new ArrayList<>(project.getModels());
-                    attachedModels.remove(project.getPrimaryModel());
-                    Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter())
-                            .filter(amId -> amId != null).collect(Collectors.toList());
-                    response = MMSUtils.getElements(project, attachedModelIds, null);
-                    if (response != null && (value = response.get("elements")) != null && value.isArray()) {
-                        serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
-                                .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
-                    }
+    private static JsonParser collectServerModuleElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        Collection<Element> attachedModels = new ArrayList<>(project.getModels());
+        attachedModels.remove(project.getPrimaryModel());
+        Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter()).filter(amId -> amId != null).collect(Collectors.toList());
+        // TODO why depth 0?!?!?!
+        return MMSUtils.getElements(project, attachedModelIds, null);
+    }
 
-                    String holdingBinId = MDKConstants.HOLDING_BIN_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
-                    boolean found = false;
-                    // check to see if the holding bin was returned
-                    for (ObjectNode elem : serverElements) {
-                        if ((value = elem.get(MDKConstants.ID_KEY)) != null && value.isTextual()
-                                && value.asText().equals(holdingBinId)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    // if no holding bin in server collection && model was element && (depth > 0 || depth == -1)
-                    if (!found) {
-                        response = MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
-                        if (response != null && (value = response.get("elements")) != null && value.isArray()) {
-                            serverElements.addAll(StreamSupport.stream(value.spliterator(), false)
-                                    .filter(JsonNode::isObject).map(jsonNode -> (ObjectNode) jsonNode).collect(Collectors.toList()));
-                        }
-                    }
-                }
-            }
-            return serverElements;
-        }
-        return new ArrayList<>();
+    private static JsonParser collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+        return MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
     }
 
     // TODO Make common across all sync types @donbot
