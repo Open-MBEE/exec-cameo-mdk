@@ -9,14 +9,17 @@ import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.properties.Property;
+import com.nomagic.magicdraw.ui.dialogs.specifications.SpecificationDialogManager;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.lib.Debug;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.SpecificationNodeAspectsConfigurator;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -95,6 +98,9 @@ public class MDKPlugin extends Plugin {
         loadExtensionJars(); // people can actually just create a new plugin and
 
         configureEnvironmentOptions();
+
+        SpecificationDialogManager.getManager().addConfigurator(Element.class, new SpecificationNodeAspectsConfigurator());
+
     }
 
     public DebugExportImportModelPlugin getDebugExportImportPlugin() {
