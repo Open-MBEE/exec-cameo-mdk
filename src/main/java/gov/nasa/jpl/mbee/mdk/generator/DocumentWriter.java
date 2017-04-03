@@ -32,10 +32,10 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
-import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
-import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBSerializeVisitor;
+import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
+import gov.nasa.jpl.mbee.mdk.model.Document;
 
 import java.io.*;
 

@@ -36,10 +36,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;

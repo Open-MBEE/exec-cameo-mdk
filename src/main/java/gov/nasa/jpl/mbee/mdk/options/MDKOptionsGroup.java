@@ -124,7 +124,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         Property p = getProperty(CUSTOM_USER_SCRIPT_DIRECTORIES_ID);
         String val = p.getValueStringRepresentation();
         if (val == null || val.isEmpty()) {
-             return 0;
+            return 0;
         }
         return val.split(File.pathSeparator).length;
 

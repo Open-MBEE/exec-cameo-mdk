@@ -12,7 +12,6 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Namespace;
-import gov.nasa.jpl.mbee.mdk.validation.actions.CreateInstanceAction;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;

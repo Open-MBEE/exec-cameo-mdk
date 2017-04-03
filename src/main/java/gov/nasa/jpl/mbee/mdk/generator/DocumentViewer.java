@@ -30,10 +30,10 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
-import gov.nasa.jpl.mbee.mdk.model.*;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
 import gov.nasa.jpl.mbee.mdk.model.Container;
+import gov.nasa.jpl.mbee.mdk.model.*;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;

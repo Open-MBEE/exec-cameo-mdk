@@ -31,41 +31,34 @@ package gov.nasa.jpl.mbee.mdk.api;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
-import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.GenerateViewPresentationAction;
-import gov.nasa.jpl.mbee.mdk.ems.actions.UpdateAllDocumentsAction;
-import gov.nasa.jpl.mbee.mdk.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncRunner;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter.LocalSyncProjectMapping;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateViewPresentationAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateAllDocumentsAction;
+import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter.LocalSyncProjectMapping;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -182,7 +175,6 @@ public class MDKHelper {
     /**
      * Logs onto mms using the supplied username and password Does not generate
      * or interact with mmslogin dialog window
-     *
      */
     public static void logoutOfMMS(Project project) {
         MMSLogoutAction.logoutAction(project);
@@ -256,7 +248,6 @@ public class MDKHelper {
 
     /**
      * Checks if entire project is initialized; if not does nothing
-     *
      */
     public static boolean checkInitialization() {
         if (validationWindow == null) {
@@ -268,7 +259,6 @@ public class MDKHelper {
     /**
      * Checks if entire project is initialized; if not initializes project
      * without committing model
-     *
      */
     public static boolean confirmInitialization()
             throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {

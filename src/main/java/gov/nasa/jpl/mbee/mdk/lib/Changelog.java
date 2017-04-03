@@ -2,10 +2,11 @@ package gov.nasa.jpl.mbee.mdk.lib;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
+import javafx.util.Pair;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 /**
  * Created by igomes on 6/30/16.

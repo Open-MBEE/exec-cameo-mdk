@@ -31,10 +31,10 @@ package gov.nasa.jpl.mbee.mdk.model.actions;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import gov.nasa.jpl.mbee.mdk.DgviewDBSwitch;
-import gov.nasa.jpl.mbee.mdk.dgview.MDEditableTable;
-import gov.nasa.jpl.mbee.mdk.model.UserScript;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenViewDBSwitch;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
+import gov.nasa.jpl.mbee.mdk.docgen.view.MDEditableTable;
+import gov.nasa.jpl.mbee.mdk.model.UserScript;
 
 import java.awt.event.ActionEvent;
 import java.util.List;
@@ -68,7 +68,7 @@ public class RunUserEditableTableAction extends MDAction {
             if (o.get("editableTable") instanceof List) {
                 for (Object object : (List<?>) o.get("editableTable")) {
                     if (object instanceof MDEditableTable) {
-                        DgviewDBSwitch.convertEditableTable((MDEditableTable) object).showTable();
+                        DocGenViewDBSwitch.convertEditableTable((MDEditableTable) object).showTable();
                     }
                 }
             }

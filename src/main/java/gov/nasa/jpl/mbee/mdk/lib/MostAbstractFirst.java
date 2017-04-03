@@ -30,6 +30,7 @@ package gov.nasa.jpl.mbee.mdk.lib;
 
 import java.util.Comparator;
 
+@Deprecated
 public class MostAbstractFirst implements Comparator<Class<?>> {
 
     public static MostAbstractFirst instance = instance();

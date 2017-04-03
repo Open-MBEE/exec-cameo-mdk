@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.systems_reasoner.actions;
 
-import com.nomagic.actions.NMAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.RedefinableElement;
@@ -35,12 +34,13 @@ public class SubsetRedefinedProperty extends SRAction {
     @Override
     public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
 
-        for(Property p : redefinedElement.getSubsettedProperty()){
-            for(RedefinableElement r : p.get_redefinableElementOfRedefinedElement()){
-                if(r instanceof Property)
-                    if(!redefiningElement.getSubsettedProperty().contains((Property) r)) {
+        for (Property p : redefinedElement.getSubsettedProperty()) {
+            for (RedefinableElement r : p.get_redefinableElementOfRedefinedElement()) {
+                if (r instanceof Property) {
+                    if (!redefiningElement.getSubsettedProperty().contains(r)) {
                         redefiningElement.getSubsettedProperty().add((Property) r);
                     }
+                }
             }
         }
     }

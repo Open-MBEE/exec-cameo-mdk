@@ -3,12 +3,12 @@ import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 import java.util.zip.ZipFile
 
-String buildBranch = project.getProperties().get('buildBranch');
+String buildBranch = project.getProperties().get('buildBranch')
 if (buildBranch == null || buildBranch != 'master' && !buildBranch.matches('support/[0-9.]+')) {
     version += '-SNAPSHOT'
 }
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
-String buildAccess = project.getProperties().getOrDefault('buildAccess', 'external');
+String buildAccess = project.getProperties().getOrDefault('buildAccess', 'external')
 String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
 buildscript {
@@ -161,7 +161,7 @@ class PreDist extends DefaultTask {
     String descriptor
 
     @TaskAction
-    public void executeTask() {
+    void executeTask() {
         project.copy {
             from 'src/main/dist'
             exclude 'template'
@@ -189,7 +189,7 @@ class PreDist extends DefaultTask {
 
         String descriptorFiles = ''
         project.fileTree(dir: 'build/generated-dist').each { file ->
-            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '');
+            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '')
             descriptorFiles += '\t\t<file from=\"' + relativePath + '\" to=\"' + relativePath + '\"/>' + System.lineSeparator()
         }
         project.copy {

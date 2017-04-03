@@ -36,7 +36,7 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.DocumentMeta;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.Person;
@@ -137,36 +137,36 @@ public class GeneratorUtils {
         doc.setMetadata(meta);
 
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGen3Profile.documentViewStereotype, "Document Profile");
+                DocGenProfile.documentViewStereotype, "Document Profile");
         // documentMeta Backwards Compatibility
         String title = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "title");
+                DocGenProfile.documentMetaStereotype, "title");
         String subtitle = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "subtitle");
+                DocGenProfile.documentMetaStereotype, "subtitle");
         String header = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "header");
+                DocGenProfile.documentMetaStereotype, "header");
         String footer = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "footer");
+                DocGenProfile.documentMetaStereotype, "footer");
         String subheader = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "subheader");
+                DocGenProfile.documentMetaStereotype, "subheader");
         String subfooter = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "subfooter");
+                DocGenProfile.documentMetaStereotype, "subfooter");
         String legalNotice = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "legalNotice");
+                DocGenProfile.documentMetaStereotype, "legalNotice");
         String acknowledgements = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "acknowledgement");
+                DocGenProfile.documentMetaStereotype, "acknowledgement");
         Object chunkFirstSectionsO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "chunkFirstSections");
+                DocGenProfile.documentMetaStereotype, "chunkFirstSections");
         Diagram coverImage = (Diagram) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "coverImage");
+                DocGenProfile.documentMetaStereotype, "coverImage");
         boolean chunkFirstSections = !(chunkFirstSectionsO instanceof Boolean && !(Boolean) chunkFirstSectionsO || chunkFirstSectionsO instanceof String
                 && chunkFirstSectionsO.equals("false"));
         Object indexO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "index");
+                DocGenProfile.documentMetaStereotype, "index");
         boolean index = (indexO instanceof Boolean && (Boolean) indexO || indexO instanceof String
                 && indexO.equals("true"));
         Object tocSectionDepthO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "tocSectionDepth");
+                DocGenProfile.documentMetaStereotype, "tocSectionDepth");
         Integer tocSectionDepth = 20;
         if (tocSectionDepthO != null && tocSectionDepthO instanceof Integer && (Integer) tocSectionDepthO > 0) {
             tocSectionDepth = (Integer) tocSectionDepthO;
@@ -175,7 +175,7 @@ public class GeneratorUtils {
             tocSectionDepth = Integer.parseInt((String) tocSectionDepthO);
         }
         Object chunkSectionDepthO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "chunkSectionDepth");
+                DocGenProfile.documentMetaStereotype, "chunkSectionDepth");
         Integer chunkSectionDepth = 20;
         if (chunkSectionDepthO != null && chunkSectionDepthO instanceof Integer
                 && (Integer) chunkSectionDepthO > 0) {
@@ -223,7 +223,7 @@ public class GeneratorUtils {
                 && UseDefaultStylesheetO.equals("false"));
 
         Object genO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGen3Profile.documentMetaStereotype, "genNewImages");
+                DocGenProfile.documentMetaStereotype, "genNewImages");
         boolean gen = (genO instanceof Boolean && (Boolean) genO || genO instanceof String
                 && genO.equals("true"));
 
@@ -263,7 +263,7 @@ public class GeneratorUtils {
 
         List<String> authorCollect = new ArrayList<String>();
         List<Element> roles = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start,
-                DocGen3Profile.accountableForStereotype, 2, false, 1);
+                DocGenProfile.accountableForStereotype, 2, false, 1);
         String s = "1,2,3,4,5";
         for (Element r : roles) {
 
@@ -278,11 +278,11 @@ public class GeneratorUtils {
                     s = f + ",2," + t + "4,5";
                     Type rT = ((TypedElement) rA).getType();
                     // if StereotypesHelper.hasSereotype(rT,
-                    // DocGen3Profile.projectStaffStereotype) {
+                    // DocGenProfile.projectStaffStereotype) {
                     String o = (String) StereotypesHelper.getStereotypePropertyFirst(rT,
-                            DocGen3Profile.projectStaffStereotype, "Organization");
+                            DocGenProfile.projectStaffStereotype, "Organization");
                     String d = (String) StereotypesHelper.getStereotypePropertyFirst(rT,
-                            DocGen3Profile.projectStaffStereotype, "Division");
+                            DocGenProfile.projectStaffStereotype, "Division");
                     s = f + ",," + t + "," + o + "," + d;
                     authorCollect.add(s);
                 }
@@ -298,7 +298,7 @@ public class GeneratorUtils {
         List<String> approverCollect = new ArrayList<String>();
 
         List<Element> aprvrs = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start,
-                DocGen3Profile.approvesStereotype, 1, false, 1);
+                DocGenProfile.approvesStereotype, 1, false, 1);
         for (Element a : aprvrs) {
             List<Property> aM = ((Association) a).getMemberEnd();
             String f = "";
@@ -308,14 +308,14 @@ public class GeneratorUtils {
             for (Property aR : aM) {
                 Element aT = aR.getType();
 
-                if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.projectStaffStereotype)) {
+                if (StereotypesHelper.hasStereotype(aT, DocGenProfile.projectStaffStereotype)) {
                     f = aR.getName();
                     o = (String) StereotypesHelper.getStereotypePropertyFirst(aT,
-                            DocGen3Profile.projectStaffStereotype, "Organization");
+                            DocGenProfile.projectStaffStereotype, "Organization");
                     d = (String) StereotypesHelper.getStereotypePropertyFirst(aT,
-                            DocGen3Profile.projectStaffStereotype, "Division");
+                            DocGenProfile.projectStaffStereotype, "Division");
                 }
-                else if (StereotypesHelper.hasStereotype(aT, DocGen3Profile.roleStereotype)) {
+                else if (StereotypesHelper.hasStereotype(aT, DocGenProfile.roleStereotype)) {
                     t = ((NamedElement) aT).getName();
                 }
             }
@@ -334,7 +334,7 @@ public class GeneratorUtils {
         List<String> concurCollect = new ArrayList<String>();
 
         List<Element> cncr = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start,
-                DocGen3Profile.concursStereotype, 1, false, 1);
+                DocGenProfile.concursStereotype, 1, false, 1);
         for (Element c : cncr) {
             List<Property> cM = ((Association) c).getMemberEnd();
             String f = "";
@@ -344,14 +344,14 @@ public class GeneratorUtils {
             for (Property cR : cM) {
                 Element cT = cR.getType();
 
-                if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.projectStaffStereotype)) {
+                if (StereotypesHelper.hasStereotype(cT, DocGenProfile.projectStaffStereotype)) {
                     f = cR.getName();
                     o = (String) StereotypesHelper.getStereotypePropertyFirst(cT,
-                            DocGen3Profile.projectStaffStereotype, "Organization");
+                            DocGenProfile.projectStaffStereotype, "Organization");
                     d = (String) StereotypesHelper.getStereotypePropertyFirst(cT,
-                            DocGen3Profile.projectStaffStereotype, "Division");
+                            DocGenProfile.projectStaffStereotype, "Division");
                 }
-                else if (StereotypesHelper.hasStereotype(cT, DocGen3Profile.roleStereotype)) {
+                else if (StereotypesHelper.hasStereotype(cT, DocGenProfile.roleStereotype)) {
                     t = ((NamedElement) cT).getName();
                 }
             }

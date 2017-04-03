@@ -31,8 +31,8 @@ package gov.nasa.jpl.mbee.mdk.model.actions;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import gov.nasa.jpl.mbee.mdk.model.PropertiesTableByAttributes;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
+import gov.nasa.jpl.mbee.mdk.model.PropertiesTableByAttributes;
 
 import java.awt.event.ActionEvent;
 import java.io.PrintWriter;

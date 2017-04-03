@@ -33,7 +33,6 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
@@ -65,22 +64,23 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
-import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertyEnum;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.*;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
+import gov.nasa.jpl.mbee.mdk.validation.*;
+import javafx.util.Pair;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -605,10 +605,10 @@ public class Utils {
             return res;
         }
         Pair<Boolean, Set<Object>> p = Utils2.seen(o, true, seen);
-        if (p.first) {
+        if (p.getKey()) {
             return res;
         }
-        seen = p.second;
+        seen = p.getValue();
         if (type.isInstance(o)) {
             res.add((T) o);
         }
@@ -739,7 +739,7 @@ public class Utils {
      * @param e
      * @param javaClasses this is the class of the relationships to consider
      * @param direction   0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth       collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByJavaClasses(Element e,
@@ -806,7 +806,7 @@ public class Utils {
      * @param e
      * @param c
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByJavaClass(Element e, java.lang.Class<?> c,
@@ -827,7 +827,7 @@ public class Utils {
      * @param e
      * @param c         this is the class from magicdraw's uml profile
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByMetaclass(Element e, Class c, int direction, int depth) {
@@ -936,7 +936,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByStereotype(Element e, Stereotype stereotype,
@@ -959,7 +959,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByStereotypeString(Project project, Element e, String stereotype,
@@ -985,7 +985,7 @@ public class Utils {
      * @param e
      * @param javaClasses this is the class of the relationships to consider
      * @param direction   0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth       collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClasses(Element e,
@@ -1052,7 +1052,7 @@ public class Utils {
      * @param e
      * @param c
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClass(Element e, java.lang.Class<?> c, int direction, int depth) {
@@ -1072,7 +1072,7 @@ public class Utils {
      * @param e
      * @param c         this is the class from magicdraw's uml profile
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipMetaclass(Element e, Class c,
@@ -1217,7 +1217,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotype(Element e, Stereotype stereotype, int direction, boolean derived, int depth) {
@@ -1269,7 +1269,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypeString(Element e, String stereotype, int direction, boolean derived, int depth) {
@@ -1867,10 +1867,10 @@ public class Utils {
             return getPackagesOfType((Package) root, typeName, seen);
         }
         Pair<Boolean, Set<Element>> p = Utils2.seen(root, true, seen);
-        if (p.first) {
+        if (p.getKey()) {
             return Utils2.getEmptyList();
         }
-        seen = p.second;
+        seen = p.getValue();
         List<Package> pkgs = new ArrayList<>();
         for (Element elmt : root.getOwnedElement()) {
             pkgs.addAll(getPackagesOfType(elmt, typeName, seen));
@@ -1894,10 +1894,10 @@ public class Utils {
             return null; // REVIEW -- error?
         }
         Pair<Boolean, Set<Element>> p = Utils2.seen(root, true, seen);
-        if (p.first) {
+        if (p.getKey()) {
             return Utils2.getEmptyList();
         }
-        seen = p.second;
+        seen = p.getValue();
         List<Package> pkgs = new ArrayList<Package>();
         if (isTypeOf(root, typeName)) {
             pkgs.add(root);

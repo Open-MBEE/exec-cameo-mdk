@@ -32,9 +32,7 @@ import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-/**
- *
- */
+@Deprecated
 public class Debug {
     protected static boolean on = false;
 

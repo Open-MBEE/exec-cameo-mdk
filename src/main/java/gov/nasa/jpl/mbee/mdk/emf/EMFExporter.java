@@ -118,7 +118,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (eObject == null) {
             return null;
         }
-        if ( !(eObject instanceof Element)) {
+        if (!(eObject instanceof Element)) {
             return EcoreUtil.getID(eObject);
         }
         Element element = (Element) eObject;
@@ -222,7 +222,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 (element, project, objectNode) -> {
                     if (!(element instanceof Model)
                             || element.equals(project.getPrimaryModel())
-                            || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY) ) {
+                            || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY)) {
                         return objectNode;
                     }
                     Model model = (Model) element;

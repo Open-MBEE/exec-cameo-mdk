@@ -16,15 +16,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-
 import gov.nasa.jpl.mbee.mdk.actions.*;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.*;
-import gov.nasa.jpl.mbee.mdk.ems.actions.*;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
+import gov.nasa.jpl.mbee.mdk.mms.actions.*;
 import gov.nasa.jpl.mbee.mdk.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.UserScript;
@@ -113,11 +113,11 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         IntStream.range(0, i++).forEach(ignored -> System.out.print("-"));
         System.out.println("[C] " + category.getID() + " : " + category.getName());
         for (ActionsCategory c : category.getCategories()) {
-                dumpCategory(c, i);
+            dumpCategory(c, i);
         }
         for (NMAction action : category.getActions()) {
-                IntStream.range(0, i).forEach(ignored -> System.out.print("-"));
-                System.out.println("[A] " + action.getID() + " : " + action.getName());
+            IntStream.range(0, i).forEach(ignored -> System.out.print("-"));
+            System.out.println("[A] " + action.getID() + " : " + action.getName());
         }
     }
 
@@ -189,27 +189,27 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
 
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
-        if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.validationScriptStereotype)) {
+        if (StereotypesHelper.hasStereotypeOrDerived(e, DocGenProfile.validationScriptStereotype)) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
             us.setDgElement(e);
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGen3Profile.queriesStereotype, 1, false, 1);
+                    DocGenProfile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGen3Profile.oldQueriesStereotype, 1, false, 1));
+                    DocGenProfile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(Utils2.asList(targets, Object.class));
             if (manager.getActionFor(RunUserValidationScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserValidationScriptAction(us, true));
             }
         }
-        else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
+        else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGenProfile.userScriptStereotype)) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
             us.setDgElement(e);
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGen3Profile.queriesStereotype, 1, false, 1);
+                    DocGenProfile.queriesStereotype, 1, false, 1);
             targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGen3Profile.oldQueriesStereotype, 1, false, 1));
+                    DocGenProfile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(Utils2.asList(targets, Object.class));
             if (manager.getActionFor(RunUserScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserScriptAction(us, true));
@@ -347,7 +347,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
 
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,
-                DocGen3Profile.documentStereotype)) || StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
+                DocGenProfile.documentStereotype)) || StereotypesHelper.hasStereotypeOrDerived(e, sysmlview)) {
             NMAction act = null;
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
             // DefaultPropertyResourceProvider pp = new
@@ -396,7 +396,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             /*
              * if (e instanceof Activity &&
              * StereotypesHelper.hasStereotypeOrDerived(e,
-             * DocGen3Profile.documentStereotype)) { act =
+             * DocGenProfile.documentStereotype)) { act =
              * manager.getActionFor(PublishDocWebAction.DEFAULT_ID); if (act ==
              * null) c.addAction(new PublishDocWebAction((NamedElement)e)); }
              */
@@ -411,7 +411,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         }
         // if ( ( e instanceof Activity &&
         // StereotypesHelper.hasStereotypeOrDerived( e,
-        // DocGen3Profile.documentStereotype ) ) ||
+        // DocGenProfile.documentStereotype ) ) ||
         // StereotypesHelper.hasStereotypeOrDerived( e, sysmlview ) ) {
         // ActionsCategory c = myCategory( manager, "DocGen", "DocGen" );
         // NMAction act = manager.getActionFor( "DocGenComments" );
@@ -458,7 +458,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         }
         // //this add actions for syncing to docweb comments
         // if (StereotypesHelper.hasStereotypeOrDerived(owner,
-        // DocGen3Profile.documentViewStereotype)) {
+        // DocGenProfile.documentViewStereotype)) {
         // ActionsCategory category = myCategory(manager, "DocGen", "DocGen");
         // NMAction action = manager.getActionFor("DocGenComments");
         // if (action == null)

@@ -38,13 +38,18 @@ import com.nomagic.uml2.ext.jmi.smartlistener.SmartListenerConfig;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint.Type;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.mdk.lib.*;
+import gov.nasa.jpl.mbee.mdk.lib.CompareUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Debug;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils2;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 
 import java.lang.Class;
 import java.util.*;
@@ -230,7 +235,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     public static boolean isDocGenConstraint(gov.nasa.jpl.mbee.mdk.constraint.Constraint constraint) {
         Element constrObj = getConstraintObject(constraint);
         return (constrObj != null && StereotypesHelper.hasStereotypeOrDerived(constrObj,
-                DocGen3Profile.constraintStereotype));
+                DocGenProfile.constraintStereotype));
     }
 
     private static boolean isLanguageOcl(gov.nasa.jpl.mbee.mdk.constraint.Constraint constraint) {
@@ -267,7 +272,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     public Set<Annotation> run(Project paramProject, Constraint paramConstraint, Collection<? extends Element> paramCollection) {
         Set<Annotation> result = new HashSet<Annotation>();
 
-        MdDebug.logForce("*** Starting MDK Validate Constraints: " + constraintType + " ***");
+        System.out.println("*** Starting MDK Validate Constraints: " + constraintType + " ***");
         // boolean wasOn = Debug.isOn();
         // Debug.turnOn();
 
@@ -314,7 +319,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         result = Utils.getAnnotations(this, paramProject, cons);
         annotations = result;
 
-        MdDebug.logForce("*** Finished MDK Validate Constraints: " + constraintType + " ***");
+        System.out.println("*** Finished MDK Validate Constraints: " + constraintType + " ***");
 
         // if ( !wasOn ) Debug.turnOff();
         return result;
@@ -327,13 +332,13 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             if (e != null) {
                 errorMsg = e.errorMessage;
             }
-            MdDebug.logForce("  Not OCL parsable: " + constraint + "; " + errorMsg);
+            System.out.println("  Not OCL parsable: " + constraint + "; " + errorMsg);
         }
         else if (satisfied) {
-            MdDebug.logForce("            Passed: " + constraint);
+            System.out.println("            Passed: " + constraint);
         }
         else {
-            MdDebug.logForce("            Failed: " + constraint);
+            System.out.println("            Failed: " + constraint);
         }
     }
 

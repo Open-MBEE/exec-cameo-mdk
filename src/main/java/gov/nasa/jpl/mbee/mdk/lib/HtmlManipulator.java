@@ -84,12 +84,16 @@ public final class HtmlManipulator {
      */
     private static final int RAW_HTML_ENTITY_TABLE_HASHCODE = -301953893;
 
-    /** mapping: HTML entity ---> Unicode character */
+    /**
+     * mapping: HTML entity ---> Unicode character
+     */
     private static final Map<String, Character> HTML_ENTITY_TO_UNICODE_MAP = new HashMap<String, Character>();
 
     private static final Map<String, String> HTML_ENTITY_TO_NUMERIC_MAP = new HashMap<String, String>();
 
-    /** mapping: Unicode character ---> HTML entity */
+    /**
+     * mapping: Unicode character ---> HTML entity
+     */
     private static final Map<Character, String> UNICODE_TO_HTML_ENTITY_MAP = new HashMap<Character, String>();
 
     /**
@@ -124,8 +128,7 @@ public final class HtmlManipulator {
      * Replace HTML entities in a given string with their numeric
      * representations.
      *
-     * @param s
-     *            input string
+     * @param s input string
      * @return string with HTML entities replaced
      */
     public static String replaceHtmlEntities(final String s) {
@@ -161,8 +164,7 @@ public final class HtmlManipulator {
      * Quote a specified string as HTML, by replacing all special characters
      * with their equivalent HTML entities.
      *
-     * @param s
-     *            input string
+     * @param s input string
      * @return string with special characters replaced
      */
     public static String quoteHtml(final String s) {

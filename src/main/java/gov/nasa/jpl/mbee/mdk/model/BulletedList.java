@@ -32,10 +32,10 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,18 +84,18 @@ public class BulletedList extends Table {
     @Override
     public void initialize() {
         Boolean showTargets = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.bulletedListStereotype, "showTargets", false);
+                DocGenProfile.bulletedListStereotype, "showTargets", false);
         Boolean showSPN = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.bulletedListStereotype, "showStereotypePropertyNames", false);
+                DocGenProfile.bulletedListStereotype, "showStereotypePropertyNames", false);
         Boolean ordered = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.bulletedListStereotype, "orderedList", false);
+                DocGenProfile.bulletedListStereotype, "orderedList", false);
         setShowTargets(showTargets);
         setShowStereotypePropertyNames(showSPN);
         setOrderedList(ordered);
         setIncludeDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.documentationChoosable, "includeDoc", false));
+                DocGenProfile.documentationChoosable, "includeDoc", false));
         setStereotypeProperties((List<Property>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable,
+                .getListProperty(dgElement, DocGenProfile.stereotypePropertyChoosable,
                         "stereotypeProperties", new ArrayList<Property>()));
     }
 

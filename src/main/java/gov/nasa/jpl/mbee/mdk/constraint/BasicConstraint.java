@@ -31,11 +31,12 @@ package gov.nasa.jpl.mbee.mdk.constraint;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
+import javafx.util.Pair;
 
 import java.util.*;
 
@@ -50,86 +51,39 @@ public class BasicConstraint implements Constraint {
     }
 
     LinkedHashSet<Element> constrainingElements;
-    // private LinkedHashSet< Element > constrainedElements;
-    private LinkedHashSet<Object> constrainedObjects;                // must
-    // contain
-    // constrainedElements
+    private LinkedHashSet<Object> constrainedObjects;
+
     Element violatedConstraintElement = null;
     Element violatedConstrainedElement = null;
     protected Boolean isConsistent = null;
     protected String errorMessage = null;
     protected boolean reported = false;
 
-    // /**
-    // * @param constrainingElement
-    // * @param constrainedElement
-    // */
-    // public BasicConstraint( Element constrainingElement,
-    // Element constrainedElement ) {
-    // addConstrainedElement( constrainedElement );
-    // addConstrainingElement( constrainingElement );
-    // }
-
-    /**
-     * @param constrainingElement
-     * @param constrainedElement
-     */
     public BasicConstraint(Object constraint, Object constrained) {
         addConstrainingObject(constraint);
         addConstrainedObject(constrained);
     }
 
-    /**
-     * @param constrainingElement
-     * @param constrainedElement
-     */
     public BasicConstraint(Object constraint, Collection<Object> constrained) {
         addConstrainingObject(constraint);
         addConstrainedObjects(constrained);
     }
 
-    // public static Boolean getBooleanPropertyValue( Element vpConstraint,
-    // String stereotypeName, String propName ) {
-    // // try to get default for the iterate property
-    // Property prop = StereotypesHelper.getPropertyByName(
-    // StereotypesHelper.getStereotype( Utils.getProject(), stereotypeName ),
-    // propName );
-    // ValueSpecification defaultVal = prop.getDefaultValue();
-    // // now get the property value
-    // Object propVal = GeneratorUtils.getObjectProperty( vpConstraint,
-    // stereotypeName, propName, defaultVal );
-    // Boolean boolVal = Utils.isTrue( DocGenUtils.fixString( propVal, false ),
-    // true );
-    // return boolVal;
-    // }
     public static boolean iterateViewpointConstrraint(Element vpConstraint) {
         Boolean iterate = (Boolean) GeneratorUtils.getObjectProperty(vpConstraint,
-                DocGen3Profile.viewpointConstraintStereotype, "iterate", true);
+                DocGenProfile.viewpointConstraintStereotype, "iterate", true);
         // Boolean iterate = getBooleanPropertyValue( vpConstraint,
-        // DocGen3Profile.expressionChoosable, "iterate" );
+        // DocGenProfile.expressionChoosable, "iterate" );
         boolean result = !Boolean.FALSE.equals(iterate);
         return result;
     }
 
     public static boolean reportedViewpointConstrraint(Element vpConstraint) {
         Boolean report = (Boolean) GeneratorUtils.getObjectProperty(vpConstraint,
-                DocGen3Profile.viewpointConstraintStereotype, "validationReport", false);
+                DocGenProfile.viewpointConstraintStereotype, "validationReport", false);
         boolean result = Boolean.TRUE.equals(report);
         return result;
     }
-
-    // /* (non-Javadoc)
-    // * @see gov.nasa.jpl.mbee.mdk.constraint.Constraint#getConstrainedElements()
-    // */
-    // @Override
-    // public Set< Element > getConstrainedElements() {
-    // if ( constrainedElements == null ) {
-    // constrainedElements = new LinkedHashSet< Element >();
-    // }
-    // return //Collections.unmodifiableList( Utils2.toList( constrainedElements
-    // ) );
-    // constrainedElements;
-    // }
 
     /**
      * Determines whether the input Constraint, constraint element, or all
@@ -187,11 +141,6 @@ public class BasicConstraint implements Constraint {
         return constrainedObjects;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see gov.nasa.jpl.mbee.mdk.constraint.Constraint#getConstrainingElements()
-     */
     @Override
     public Set<Element> getConstrainingElements() {
         return getConstrainingElements(Type.ANY);
@@ -213,24 +162,6 @@ public class BasicConstraint implements Constraint {
         return filtered;
     }
 
-    // /* (non-Javadoc)
-    // * @see
-    // gov.nasa.jpl.mbee.mdk.constraint.Constraint#addConstrainedElements(java.util.List)
-    // */
-    // @Override
-    // public void addConstrainedElements( Collection< Element > elements ) {
-    // getConstrainedElements().addAll( elements );
-    // }
-    //
-    // /* (non-Javadoc)
-    // * @see
-    // gov.nasa.jpl.mbee.mdk.constraint.Constraint#addConstrainedElement(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element)
-    // */
-    // @Override
-    // public void addConstrainedElement( Element element ) {
-    // getConstrainedElements().add( element );
-    // }
-
     @Override
     public void addConstrainedObjects(Collection<Object> objects) {
         getConstrainedObjects().addAll(objects);
@@ -238,35 +169,7 @@ public class BasicConstraint implements Constraint {
 
     @Override
     public void addConstrainedObject(Object obj) {
-        // // addConstrainedObject( obj, null );
-        // // }
-        // // public void addConstrainedObject( Object obj, Set<Object> seen ) {
-        // // Pair< Boolean, Set< Object > > p = Utils2.seen( obj, true, seen );
-        // // if ( p.first ) return;
-        // // seen = p.second;
         getConstrainedObjects().add(obj);
-        // if ( obj instanceof Element ) {
-        // addConstrainedElement( (Element)obj );
-        // getConstrainedObjects().add( obj );
-        // } else if ( obj instanceof Collection ) {
-        // boolean allElements = true;
-        // for ( Object o : (Collection<?>)obj ) {
-        // if ( !( o instanceof Element ) ) {
-        // allElements = false;
-        // break;
-        // }
-        // }
-        // if ( allElements && !((Collection<?>)obj).isEmpty() ) {
-        // for ( Object o : (Collection<?>)obj ) {
-        // addConstrainedElement( (Element)o );
-        // getConstrainedObjects().add( obj );
-        // }
-        // } else {
-        // getConstrainedObjects().add( obj );
-        // }
-        // } else {
-        // getConstrainedObjects().add( obj );
-        // }
     }
 
     public void addConstrainingObject(Object obj) {
@@ -275,10 +178,10 @@ public class BasicConstraint implements Constraint {
 
     public void addConstrainingObject(Object obj, Set<Object> seen) {
         Pair<Boolean, Set<Object>> p = Utils2.seen(obj, true, seen);
-        if (p.first) {
+        if (p.getKey()) {
             return;
         }
-        seen = p.second;
+        seen = p.getValue();
         if (obj instanceof Element) {
             addConstrainingElement((Element) obj);
         }
@@ -289,13 +192,6 @@ public class BasicConstraint implements Constraint {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * gov.nasa.jpl.mbee.mdk.constraint.Constraint#addConstrainingElement(com.nomagic
-     * .uml2.ext.magicdraw.classes.mdkernel.Element)
-     */
     @Override
     public void addConstrainingElement(Element constrainingElement) {
         if (constrainingElements == null) {
@@ -307,13 +203,6 @@ public class BasicConstraint implements Constraint {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * gov.nasa.jpl.mbee.mdk.constraint.Constraint#addConstrainingElements(java.
-     * util.Collection)
-     */
     @Override
     public void addConstrainingElements(Collection<Element> elements) {
         for (Element e : elements) {
@@ -321,11 +210,6 @@ public class BasicConstraint implements Constraint {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see gov.nasa.jpl.mbee.mdk.constraint.Constraint#getExpression()
-     */
     @Override
     public String getExpression() {
         StringBuffer sb = new StringBuffer();
@@ -358,11 +242,6 @@ public class BasicConstraint implements Constraint {
         return sb.toString();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see gov.nasa.jpl.mbee.mdk.constraint.Constraint#evaluate()
-     */
     @Override
     public Boolean evaluate() {
         return evaluate(true);
@@ -502,8 +381,8 @@ public class BasicConstraint implements Constraint {
             if (elementIsUmlConstraint(e)) {
                 expr = DocGenUtils.fixString(asUmlConstraint(e).getSpecification());
             }
-            else if (GeneratorUtils.hasStereotypeByString(e, DocGen3Profile.constraintStereotype, true)) {
-                Object v = GeneratorUtils.getObjectProperty(e, DocGen3Profile.constraintStereotype,
+            else if (GeneratorUtils.hasStereotypeByString(e, DocGenProfile.constraintStereotype, true)) {
+                Object v = GeneratorUtils.getObjectProperty(e, DocGenProfile.constraintStereotype,
                         "expression", null);
                 expr = v.toString();
             }
@@ -801,14 +680,14 @@ public class BasicConstraint implements Constraint {
         if (elem == null) {
             return false;
         }
-        return StereotypesHelper.hasStereotypeOrDerived(elem, DocGen3Profile.constraintStereotype);
+        return StereotypesHelper.hasStereotypeOrDerived(elem, DocGenProfile.constraintStereotype);
     }
 
     public static boolean elementIsViewpointConstraint(Element elem) {
         if (elem == null) {
             return false;
         }
-        return StereotypesHelper.hasStereotypeOrDerived(elem, DocGen3Profile.viewpointConstraintStereotype);
+        return StereotypesHelper.hasStereotypeOrDerived(elem, DocGenProfile.viewpointConstraintStereotype);
     }
 
     public static boolean elementIsConstraint(Element elem) {

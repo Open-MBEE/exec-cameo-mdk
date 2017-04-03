@@ -8,17 +8,16 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import javafx.util.Pair;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
@@ -142,10 +141,10 @@ public class AutomatedViewGeneration extends CommandLine {
      * is already in use, will load/generate and attempt to log in with additional sets
      * of credentials, up to the limit specified in applicationAccounts.
      *
-     * @throws FileNotFoundException missing credentialsLocation
+     * @throws FileNotFoundException        missing credentialsLocation
      * @throws UnsupportedEncodingException logMessage failures
-     * @throws InterruptedException cancel triggered and caught by cancel handler
-     * @throws IllegalAccessException access failure with loaded credentials
+     * @throws InterruptedException         cancel triggered and caught by cancel handler
+     * @throws IllegalAccessException       access failure with loaded credentials
      */
 
     private void loginTeamwork()
@@ -205,11 +204,11 @@ public class AutomatedViewGeneration extends CommandLine {
     /**
      * Loads the Teamwork project. Complains if it fails.
      *
-     * @throws FileNotFoundException can't find teamwork project or branch
+     * @throws FileNotFoundException        can't find teamwork project or branch
      * @throws UnsupportedEncodingException logMessage failures
-     * @throws InterruptedException cancel triggered and caught by cancel handler
-     * @throws IllegalAccessException access failure with loaded credentials
-     * @throws RemoteException error getting the projectDescriptor back from the twUtil
+     * @throws InterruptedException         cancel triggered and caught by cancel handler
+     * @throws IllegalAccessException       access failure with loaded credentials
+     * @throws RemoteException              error getting the projectDescriptor back from the twUtil
      */
     private void loadTeamworkProject()
             throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, InterruptedException {
@@ -285,8 +284,8 @@ public class AutomatedViewGeneration extends CommandLine {
      * sequentially. If an element is not found, skips generation and continues
      * through list, and will throw an exception at the end.
      *
-     * @throws FileNotFoundException one or more documents not found in project, or logMessage failure
-     * @throws InterruptedException cancel triggered and caught by cancel handler
+     * @throws FileNotFoundException        one or more documents not found in project, or logMessage failure
+     * @throws InterruptedException         cancel triggered and caught by cancel handler
      * @throws UnsupportedEncodingException logMessage failure
      */
     private void generateViewsForDocList()
@@ -323,7 +322,7 @@ public class AutomatedViewGeneration extends CommandLine {
                 if (OutputSyncRunner.getLastExceptionPair() != null) {
                     failedDocs = true;
                     Pair<Request, Exception> current = OutputSyncRunner.getLastExceptionPair();
-                    Exception e = current.getSecond();
+                    Exception e = current.getValue();
                     if (e instanceof ServerException && ((ServerException) e).getCode() == 403) {
                         msg = "[ERROR] Unable to generate " + document.getHumanName() + ". User " + teamworkUsername + " does not have permission to write to the MMS in this branch.";
                         logMessage(msg);
@@ -472,7 +471,8 @@ public class AutomatedViewGeneration extends CommandLine {
                 if (error == 0) {
                     reportStatus("completed", debug);
                     System.out.println("Automated View Generation completed without errors.\n");
-                } else {
+                }
+                else {
                     reportStatus("failed", debug);
                     System.out.println("Automated View Generation did not finish successfully. Operations were logged in MDNotificationWindowText.html.\n");
                 }

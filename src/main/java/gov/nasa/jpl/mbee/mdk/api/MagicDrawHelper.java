@@ -48,13 +48,11 @@ import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
+import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -111,7 +109,6 @@ public class MagicDrawHelper {
     public static void closeProject() {
         Application.getInstance().getProjectsManager().closeProject();
     }
-
 
 
     /*****************************************************************************************

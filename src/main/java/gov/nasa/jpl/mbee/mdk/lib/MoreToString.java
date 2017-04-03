@@ -28,6 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
 
+import javafx.util.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -269,7 +270,7 @@ public interface MoreToString {
                 stuffOptionsFromKey(otherOptions, formatKey);
                 return ((MoreToString) pair).toShortString();
             }
-            return toString(new Object[]{pair.first, pair.second}, false, false, null, otherOptions,
+            return toString(new Object[]{pair.getKey(), pair.getValue()}, false, false, null, otherOptions,
                     formatKey);
         }
 
@@ -420,7 +421,7 @@ public interface MoreToString {
                 stuffOptionsFromKey(otherOptions, formatKey);
                 return ((MoreToString) pair).toString(withHash, deep, seen, otherOptions);
             }
-            return toString(new Object[]{pair.first, pair.second}, withHash, deep, seen, otherOptions,
+            return toString(new Object[]{pair.getKey(), pair.getValue()}, withHash, deep, seen, otherOptions,
                     formatKey);
         }
 
@@ -441,7 +442,7 @@ public interface MoreToString {
                 stuffOptionsFromKey(otherOptions, prefix, delimiter, suffix);
                 return ((MoreToString) pair).toString(withHash, deep, seen, otherOptions);
             }
-            return toString(new Object[]{pair.first, pair.second}, withHash, deep, seen, otherOptions,
+            return toString(new Object[]{pair.getKey(), pair.getValue()}, withHash, deep, seen, otherOptions,
                     prefix, delimiter, suffix);
         }
 

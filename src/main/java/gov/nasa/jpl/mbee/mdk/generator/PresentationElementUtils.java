@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -28,19 +27,19 @@ public class PresentationElementUtils {
     private Project project;
 
     private Classifier paraC,
-                tparaC,
-                tableC,
-                listC,
-                imageC,
-                sectionC,
-                tsectionC;
+            tparaC,
+            tableC,
+            listC,
+            imageC,
+            sectionC,
+            tsectionC;
 
     private Stereotype presentsStereotype,
-                productStereotype,
-                viewClassStereotype;
+            productStereotype,
+            viewClassStereotype;
 
     private Property generatedFromView,
-                generatedFromElement;
+            generatedFromElement;
 
     private ElementsFactory ef;
 

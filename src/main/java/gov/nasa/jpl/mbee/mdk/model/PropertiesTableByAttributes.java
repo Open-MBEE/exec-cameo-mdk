@@ -35,15 +35,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
-import gov.nasa.jpl.mbee.mdk.model.actions.EditPropertiesTableAction;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils2;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertiesTable;
+import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils2;
+import gov.nasa.jpl.mbee.mdk.model.actions.EditPropertiesTableAction;
 
 import java.util.*;
 
@@ -460,38 +460,38 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
         super.initialize();
 
         List<Stereotype> splitStereotype = (List<Stereotype>) GeneratorUtils.getListProperty(dgElement,
-                DocGen3Profile.propertiesTableByAttributesStereotype, "splitStereotype",
+                DocGenProfile.propertiesTableByAttributesStereotype, "splitStereotype",
                 new ArrayList<Stereotype>());
         List<Stereotype> systemIncludeStereotype = (List<Stereotype>) GeneratorUtils.getListProperty(
-                dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeStereotype",
+                dgElement, DocGenProfile.propertiesTableByAttributesStereotype, "systemIncludeStereotype",
                 new ArrayList<Stereotype>());
         List<Stereotype> systemExcludeStereotype = (List<Stereotype>) GeneratorUtils.getListProperty(
-                dgElement, DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeStereotype",
+                dgElement, DocGenProfile.propertiesTableByAttributesStereotype, "systemExcludeStereotype",
                 new ArrayList<Stereotype>());
         List<String> systemIncludeTypeName = DocGenUtils
                 .getElementNames((Collection<NamedElement>) GeneratorUtils.getListProperty(dgElement,
-                        DocGen3Profile.propertiesTableByAttributesStereotype, "systemIncludeTypeName",
+                        DocGenProfile.propertiesTableByAttributesStereotype, "systemIncludeTypeName",
                         new ArrayList<Property>()));
         List<String> systemExcludeTypeName = DocGenUtils
                 .getElementNames((Collection<NamedElement>) GeneratorUtils.getListProperty(dgElement,
-                        DocGen3Profile.propertiesTableByAttributesStereotype, "systemExcludeTypeName",
+                        DocGenProfile.propertiesTableByAttributesStereotype, "systemExcludeTypeName",
                         new ArrayList<Property>()));
         List<String> systemIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype,
+                .getListProperty(dgElement, DocGenProfile.propertiesTableByAttributesStereotype,
                         "systemIncludeName", new ArrayList<Property>()));
         List<String> systemExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype,
+                .getListProperty(dgElement, DocGenProfile.propertiesTableByAttributesStereotype,
                         "systemExcludeName", new ArrayList<Property>()));
         Integer systemAssociationType = (Integer) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.propertiesTableByAttributesStereotype, "systemAssociationType", 0);
+                DocGenProfile.propertiesTableByAttributesStereotype, "systemAssociationType", 0);
         Boolean consolidateTypes = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.propertiesTableByAttributesStereotype, "consolidateTypes", false);
+                DocGenProfile.propertiesTableByAttributesStereotype, "consolidateTypes", false);
         Boolean showMultiplicity = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.propertiesTableByAttributesStereotype, "showMultiplicity", false);
+                DocGenProfile.propertiesTableByAttributesStereotype, "showMultiplicity", false);
         Boolean doRollup = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.propertiesTableByAttributesStereotype, "doRollup", false);
+                DocGenProfile.propertiesTableByAttributesStereotype, "doRollup", false);
         List<String> rollupProperty = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.propertiesTableByAttributesStereotype,
+                .getListProperty(dgElement, DocGenProfile.propertiesTableByAttributesStereotype,
                         "rollupProperty", new ArrayList<Property>()));
 
         setSplitStereotype(splitStereotype);

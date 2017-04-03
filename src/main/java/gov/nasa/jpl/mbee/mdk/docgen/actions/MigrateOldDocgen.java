@@ -31,9 +31,9 @@ package gov.nasa.jpl.mbee.mdk.docgen.actions;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.IRuleViolationAction;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.actions.MigrateToClassViewAction;
+import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
+import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;

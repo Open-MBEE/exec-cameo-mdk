@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.systems_reasoner.actions;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
@@ -19,7 +18,6 @@ import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
-import gov.nasa.jpl.mbee.mdk.validation.actions.AspectRemedyAction;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;

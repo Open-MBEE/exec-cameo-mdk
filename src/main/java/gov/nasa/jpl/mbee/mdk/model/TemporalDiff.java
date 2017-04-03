@@ -31,8 +31,8 @@ package gov.nasa.jpl.mbee.mdk.model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
@@ -66,7 +66,7 @@ public class TemporalDiff extends Table {
     @Override
     public void initialize() {
 
-        Object attr = GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "desiredAttribute", null);
+        Object attr = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "desiredAttribute", null);
         if (attr instanceof EnumerationLiteral) {
             attributeToCompare = Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName());
         }
@@ -82,10 +82,10 @@ public class TemporalDiff extends Table {
         else {
             tagAttr = "val";
         }
-        baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseVersionTime", null);
-        compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToTime", "latest");
-        baseBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "baseBranch", null);
-        compareToBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.temporalDiffStereotype, "compareToBranch", null);
+        baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "baseVersionTime", null);
+        compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "compareToTime", "latest");
+        baseBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "baseBranch", null);
+        compareToBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "compareToBranch", null);
     }
 
     @Override

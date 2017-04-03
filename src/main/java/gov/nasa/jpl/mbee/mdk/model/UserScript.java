@@ -36,18 +36,17 @@ import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DgvalidationDBSwitch;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.Suite;
+import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
+import gov.nasa.jpl.mbee.mdk.lib.ScriptRunner;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserEditableTableAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
-import gov.nasa.jpl.mbee.mdk.dgvalidation.Suite;
-import gov.nasa.jpl.mbee.mdk.dgview.ViewElement;
-import gov.nasa.jpl.mbee.mdk.lib.ScriptRunner;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import javax.script.ScriptException;
 import java.io.PrintWriter;
@@ -61,16 +60,16 @@ public class UserScript extends Query {
 
     public String getStereotypeName() {
         Element e = this.dgElement;
-        if (!StereotypesHelper.hasStereotypeOrDerived(this.dgElement, DocGen3Profile.userScriptStereotype)) {
+        if (!StereotypesHelper.hasStereotypeOrDerived(this.dgElement, DocGenProfile.userScriptStereotype)) {
             if (this.dgElement instanceof CallBehaviorAction
                     && ((CallBehaviorAction) this.dgElement).getBehavior() != null
                     && StereotypesHelper.hasStereotypeOrDerived(
                     ((CallBehaviorAction) this.dgElement).getBehavior(),
-                    DocGen3Profile.userScriptStereotype)) {
+                    DocGenProfile.userScriptStereotype)) {
                 e = ((CallBehaviorAction) this.dgElement).getBehavior();
             }
         }
-        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGen3Profile.userScriptStereotype);
+        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype);
         return s.getName();
     }
 
@@ -96,16 +95,16 @@ public class UserScript extends Query {
                 inputs2.put("ForViewEditor", false);
             }
             Element e = this.dgElement;
-            if (!StereotypesHelper.hasStereotypeOrDerived(e, DocGen3Profile.userScriptStereotype)) {
+            if (!StereotypesHelper.hasStereotypeOrDerived(e, DocGenProfile.userScriptStereotype)) {
                 if (e instanceof CallBehaviorAction
                         && ((CallBehaviorAction) e).getBehavior() != null
                         && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction) e).getBehavior(),
-                        DocGen3Profile.userScriptStereotype)) {
+                        DocGenProfile.userScriptStereotype)) {
                     e = ((CallBehaviorAction) e).getBehavior();
                 }
             }
             Object o = ScriptRunner.runScriptFromStereotype(e,
-                    StereotypesHelper.checkForDerivedStereotype(e, DocGen3Profile.userScriptStereotype),
+                    StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype),
                     inputs2);
             if (o != null && o instanceof Map) {
                 return (Map<?, ?>) o;
@@ -171,7 +170,7 @@ public class UserScript extends Query {
         if (o != null && o.containsKey("docgenValidationOutput")) {
             Object l = o.get("docgenValidationOutput");
             if (l instanceof List) {
-                DgvalidationDBSwitch s = new DgvalidationDBSwitch();
+                DocGenValidationDBSwitch s = new DocGenValidationDBSwitch();
                 for (Object object : (List<?>) l) {
                     if (object instanceof Suite) {
                         res.addAll(((ValidationSuite) s.doSwitch((Suite) object)).getDocBook());
@@ -187,19 +186,19 @@ public class UserScript extends Query {
         List<MDAction> res = new ArrayList<MDAction>();
         Element action = getDgElement();
         boolean added = false;
-        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGen3Profile.editableTableStereotype)
+        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGenProfile.editableTableStereotype)
                 || ((action instanceof CallBehaviorAction)
                 && ((CallBehaviorAction) action).getBehavior() != null && StereotypesHelper
                 .hasStereotypeOrDerived(((CallBehaviorAction) action).getBehavior(),
-                        DocGen3Profile.editableTableStereotype))) {
+                        DocGenProfile.editableTableStereotype))) {
             res.add(new RunUserEditableTableAction(this));
             added = true;
         }
-        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGen3Profile.validationScriptStereotype)
+        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGenProfile.validationScriptStereotype)
                 || ((action instanceof CallBehaviorAction)
                 && ((CallBehaviorAction) action).getBehavior() != null && StereotypesHelper
                 .hasStereotypeOrDerived(((CallBehaviorAction) action).getBehavior(),
-                        DocGen3Profile.validationScriptStereotype))) {
+                        DocGenProfile.validationScriptStereotype))) {
             res.add(new RunUserValidationScriptAction(this));
             added = true;
         }

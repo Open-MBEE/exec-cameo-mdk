@@ -28,17 +28,17 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.model;
 
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBColSpec;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.lib.Debug;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBColSpec;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import org.eclipse.ocl.ParserException;
 
@@ -206,10 +206,10 @@ public class CustomTable extends Table {
     @Override
     public void initialize() {
         super.initialize();
-        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable,
+        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.headersChoosable,
                 "headers", new ArrayList<String>()));
         setColumns((List<String>) GeneratorUtils.getListProperty(dgElement,
-                DocGen3Profile.customTableStereotype, "columns", new ArrayList<String>()));
+                DocGenProfile.customTableStereotype, "columns", new ArrayList<String>()));
     }
 
 }

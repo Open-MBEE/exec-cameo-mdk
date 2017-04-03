@@ -28,7 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.viewedit;
 
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 
 public class DBHTMLVisitor extends DBAbstractVisitor {

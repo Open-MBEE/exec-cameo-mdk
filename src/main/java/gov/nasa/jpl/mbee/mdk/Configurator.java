@@ -39,6 +39,9 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.mdk.lib.ClassUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Debug;
+import javafx.util.Pair;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -155,7 +158,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             String addMethodString = "add" + toString()
                     + (this.equals(DiagramToolbarActionsProvider) ? "" : "Configurator");
 
-            Method[] addMethods = gov.nasa.jpl.mbee.mdk.lib.ClassUtils.getMethodsForName(ActionsConfiguratorsManager.class,
+            Method[] addMethods = ClassUtils.getMethodsForName(ActionsConfiguratorsManager.class,
                     addMethodString);
             if (addMethods == null || addMethods.length == 0) {
                 gov.nasa.jpl.mbee.mdk.lib.Debug.error(true, true, "Error! " + toString() + ".getAddConfiguratorMethod(" + subcontext
@@ -276,7 +279,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             }
             lastActionEvent = actionEvent;
             // Pair< Boolean, Object > p =
-            gov.nasa.jpl.mbee.mdk.lib.ClassUtils.runMethod(false, objectInvokingAction, actionMethod, args.toArray());
+            ClassUtils.runMethod(false, objectInvokingAction, actionMethod, args.toArray());
         }
 
     }
@@ -522,10 +525,10 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (diagram instanceof DiagramPresentationElement) {
             // Configurator.Context context =
             // getContextForType( DiagramContextToolbarAMConfigurator.class );
-            gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class,
+            Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class,
                     ((DiagramPresentationElement) diagram).getDiagramType().getType());
-            lastContext = p.first;
-            addDiagramActions(manager, diagram, getMenus().get(p.first).get(p.second));
+            lastContext = p.getKey();
+            addDiagramActions(manager, diagram, getMenus().get(p.getKey()).get(p.getValue()));
         }
         else {
             Assert.assertTrue(false);
@@ -540,7 +543,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * @return
      */
     protected Context getContextForType(Class<?> cls) {
-        return getContextForType(cls, null).first;
+        return getContextForType(cls, null).getKey();
     }
 
     /**
@@ -584,13 +587,13 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * @param subcontext
      * @return
      */
-    protected gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> getContextForType(Class<?> cls, String subcontext) {
+    protected Pair<Context, String> getContextForType(Class<?> cls, String subcontext) {
         boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> pcs = null;
+        Debug.turnOff();
+        Pair<Context, String> pcs = null;
         Set<Context> ctxts = getContextsForType(cls);
         if (gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(ctxts)) {
-            pcs = new gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String>(contexts[0], null);
+            pcs = new Pair<>(contexts[0], null);
             gov.nasa.jpl.mbee.mdk.lib.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): no save contexts returning "
                     + pcs);
             if (wasOn) {
@@ -604,13 +607,13 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         String subcontextKey[] = {null, null};
         // get best matching subcontext
         for (Context c : ctxts) {
-            gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer> p = prefixOverlapScore(c.toString(), subcontext);
-            boolean betterContext = p.first > numMatch[0]
-                    || (p.first == numMatch[0] && p.second < numDontMatch[0]);
+            Pair<Integer, Integer> p = prefixOverlapScore(c.toString(), subcontext);
+            boolean betterContext = p.getKey() > numMatch[0]
+                    || (p.getKey() == numMatch[0] && p.getValue() < numDontMatch[0]);
             if (betterContext) {
                 contextKey[0] = c;
-                numMatch[0] = p.first;
-                numDontMatch[0] = p.second;
+                numMatch[0] = p.getKey();
+                numDontMatch[0] = p.getValue();
             }
             int idx = (betterContext ? 1 : 3);
             int idxKey = (betterContext ? 0 : 1);
@@ -622,14 +625,14 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                         Map<String, Map<String, MDAction>> configs = subcontexts.get(subc);
                         if (configs != null && !configs.isEmpty()) {
                             p = prefixOverlapScore(subc, subcontext);
-                            boolean betterSubcontext = (p.first > numMatch[idx] || (p.first == numMatch[idx] && p.second < numDontMatch[idx]));
+                            boolean betterSubcontext = (p.getKey() > numMatch[idx] || (p.getKey() == numMatch[idx] && p.getValue() < numDontMatch[idx]));
                             if (betterSubcontext) {
                                 subcontextKey[idxKey] = subc;
                                 if (!betterContext) {
                                     contextKey[1] = c;
                                 }
-                                numMatch[idx] = p.first;
-                                numDontMatch[idx] = p.second;
+                                numMatch[idx] = p.getKey();
+                                numDontMatch[idx] = p.getValue();
                             }
                         }
                     }
@@ -660,14 +663,14 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                 + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(contextKey) + ", subcontextKey="
                 + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(subcontextKey));
         if (numMatch[0] > numMatch[3] || (numMatch[0] == numMatch[3] && numDontMatch[0] <= numDontMatch[3])) {
-            pcs = new gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String>(contextKey[0], subcontextKey[0]);
+            pcs = new Pair<Context, String>(contextKey[0], subcontextKey[0]);
             gov.nasa.jpl.mbee.mdk.lib.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
             if (wasOn) {
                 gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
             }
             return pcs;
         }
-        pcs = new gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String>(contextKey[1], subcontextKey[1]);
+        pcs = new Pair<Context, String>(contextKey[1], subcontextKey[1]);
         gov.nasa.jpl.mbee.mdk.lib.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
         if (wasOn) {
             gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
@@ -675,9 +678,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         return pcs;
     }
 
-    public static gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer> prefixOverlapScore(String s1, String s2) {
+    public static Pair<Integer, Integer> prefixOverlapScore(String s1, String s2) {
         if (gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(s1) || gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(s2)) {
-            return new gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer>(0, 0);
+            return new Pair<Integer, Integer>(0, 0);
         }
         // String subcontextKey = null;
         int numMatch = 0;
@@ -706,7 +709,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             // }
             // }
         }
-        return new gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer>(numMatch, numDontMatch);
+        return new Pair<Integer, Integer>(numMatch, numDontMatch);
     }
 
     /*
@@ -724,16 +727,16 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (wasOn) {
             gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
         }
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(AMConfigurator.class, manager.getClass().getSimpleName());
-        lastContext = p.first;
+        Pair<Context, String> p = getContextForType(AMConfigurator.class, manager.getClass().getSimpleName());
+        lastContext = p.getKey();
         //invokedFromMenu = true;
         //setLastContextIsDiagram( false );
-        if (p == null || p.first == null || p.second == null) {
+        if (p == null || p.getKey() == null || p.getValue() == null) {
             gov.nasa.jpl.mbee.mdk.lib.Debug.errln("Could not addElementActions: getContextForType( AMConfigurator.class, \""
                     + manager.getClass().getSimpleName() + "\") returned " + p);
         }
         else {
-            addElementActions(manager, null, getMenus().get(p.first).get(p.second));// Context.General
+            addElementActions(manager, null, getMenus().get(p.getKey()).get(p.getValue()));// Context.General
             // )
             // );
         }
@@ -768,21 +771,21 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         }
 
         DiagramType dType = diagram.getDiagramType();
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class, dType.getType());
-        lastContext = p.first;
+        Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class, dType.getType());
+        lastContext = p.getKey();
         setLastContextIsDiagram(true);
         //invokedFromMenu = false;
-        if (p == null || p.first == null || p.second == null) {
+        if (p == null || p.getKey() == null || p.getValue() == null) {
             gov.nasa.jpl.mbee.mdk.lib.Debug.errln("Could not addElementActions: getContextForType( DiagramContextAMConfigurator.class, \""
                     + dType.getType() + "\") returned " + p);
         }
         else {
             if (requestor != null) {
                 Element e = requestor.getElement();
-                addElementActions(manager, e, getMenus().get(p.first).get(p.second));
+                addElementActions(manager, e, getMenus().get(p.getKey()).get(p.getValue()));
             }
             else {
-                addDiagramActions(manager, diagram, getMenus().get(p.first).get(p.second));
+                addDiagramActions(manager, diagram, getMenus().get(p.getKey()).get(p.getValue()));
             }
         }
     }
@@ -822,16 +825,16 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(browserType)) {
             browserType = browser.getClass().getSimpleName();
         }
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(BrowserContextAMConfigurator.class, browserType);
-        lastContext = p.first;
+        Pair<Context, String> p = getContextForType(BrowserContextAMConfigurator.class, browserType);
+        lastContext = p != null ? p.getKey() : null;
         setLastContextIsDiagram(false);
         //invokedFromMenu = false;
-        if (p == null || p.first == null || p.second == null) {
+        if (p == null || p.getKey() == null || p.getValue() == null) {
             gov.nasa.jpl.mbee.mdk.lib.Debug.errln("Could not addElementActions: getContextForType( BrowserContextAMConfigurator.class, \""
                     + browser.getName() + "\") returned " + p);
         }
         else {
-            addElementActions(manager, (Element) o, getMenus().get(p.first).get(p.second));
+            addElementActions(manager, (Element) o, getMenus().get(p.getKey()).get(p.getValue()));
         }
     }
 

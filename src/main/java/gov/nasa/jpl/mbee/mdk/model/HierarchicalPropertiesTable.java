@@ -31,8 +31,8 @@ package gov.nasa.jpl.mbee.mdk.model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 
 import java.util.ArrayList;
@@ -154,38 +154,38 @@ public abstract class HierarchicalPropertiesTable extends Table {
     public void initialize() {
         super.initialize();
         Integer maxDepth = (Integer) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.hierarchicalPropertiesTableStereotype, "maxDepth", 0);
+                DocGenProfile.hierarchicalPropertiesTableStereotype, "maxDepth", 0);
         List<String> topIncludeTypeName = DocGenUtils
                 .getElementNames((Collection<NamedElement>) GeneratorUtils.getListProperty(dgElement,
-                        DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeTypeName",
+                        DocGenProfile.hierarchicalPropertiesTableStereotype, "topIncludeTypeName",
                         new ArrayList<Property>()));
         List<String> topExcludeTypeName = DocGenUtils
                 .getElementNames((Collection<NamedElement>) GeneratorUtils.getListProperty(dgElement,
-                        DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeTypeName",
+                        DocGenProfile.hierarchicalPropertiesTableStereotype, "topExcludeTypeName",
                         new ArrayList<Property>()));
         List<Stereotype> topIncludeStereotype = (List<Stereotype>) GeneratorUtils.getListProperty(dgElement,
-                DocGen3Profile.hierarchicalPropertiesTableStereotype, "topIncludeStereotype",
+                DocGenProfile.hierarchicalPropertiesTableStereotype, "topIncludeStereotype",
                 new ArrayList<Stereotype>());
         List<Stereotype> topExcludeStereotype = (List<Stereotype>) GeneratorUtils.getListProperty(dgElement,
-                DocGen3Profile.hierarchicalPropertiesTableStereotype, "topExcludeStereotype",
+                DocGenProfile.hierarchicalPropertiesTableStereotype, "topExcludeStereotype",
                 new ArrayList<Stereotype>());
         List<String> topIncludeName = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype,
+                .getListProperty(dgElement, DocGenProfile.hierarchicalPropertiesTableStereotype,
                         "topIncludeName", new ArrayList<Property>()));
         List<String> topExcludeName = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype,
+                .getListProperty(dgElement, DocGenProfile.hierarchicalPropertiesTableStereotype,
                         "topExcludeName", new ArrayList<Property>()));
         Integer topAssociationType = (Integer) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.hierarchicalPropertiesTableStereotype, "topAssociationType", 0);
+                DocGenProfile.hierarchicalPropertiesTableStereotype, "topAssociationType", 0);
         List<String> topOrder = DocGenUtils.getElementNames((Collection<NamedElement>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.hierarchicalPropertiesTableStereotype, "topOrder",
+                .getListProperty(dgElement, DocGenProfile.hierarchicalPropertiesTableStereotype, "topOrder",
                         new ArrayList<Property>()));
         if (!topIncludeName.isEmpty() && topOrder.isEmpty()) {
             topOrder = topIncludeName;
         }
 
         setFloatingPrecision((Integer) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.precisionChoosable, "floatingPrecision", -1));
+                DocGenProfile.precisionChoosable, "floatingPrecision", -1));
         setMaxDepth(maxDepth);
         setTopIncludeTypeName(topIncludeTypeName);
         setTopExcludeTypeName(topExcludeTypeName);
@@ -196,6 +196,6 @@ public abstract class HierarchicalPropertiesTable extends Table {
         setTopAssociationType(topAssociationType);
         setTopOrder(topOrder);
         setIncludeInherited((Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.inheritedChoosable, "includeInherited", false));
+                DocGenProfile.inheritedChoosable, "includeInherited", false));
     }
 }

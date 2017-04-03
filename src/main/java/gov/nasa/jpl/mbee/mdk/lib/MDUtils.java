@@ -191,7 +191,6 @@ public class MDUtils {
     }
 
 
-
     public static Class<?> getType(BaseElement elem) {
         Class<?> type = elem.getClassType();
 

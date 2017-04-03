@@ -83,8 +83,7 @@ public abstract class DBAbstractVisitor implements IDBVisitor {
     }
 
 
-
-        protected void visitChildren(DBHasContent d) {
+    protected void visitChildren(DBHasContent d) {
         for (DocumentElement de : d.getChildren()) {
             de.accept(this);
         }

@@ -2,20 +2,17 @@ package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.utils.CollectionUtils;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.*;
+import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.Table;
 
 
 /**
@@ -40,7 +37,7 @@ public class TomSawyerDiagram extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        Object enumliteral = GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.tomsawyerDiagramStereotype,
+        Object enumliteral = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.tomsawyerDiagramStereotype,
                 "diagram_type", false);
         if (enumliteral instanceof String) {
             setType(diagramType.valueOf(enumliteral.toString()));

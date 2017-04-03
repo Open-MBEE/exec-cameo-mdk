@@ -29,8 +29,8 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.magicdraw.actions.MDAction;
-import gov.nasa.jpl.mbee.mdk.generator.Generatable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mbee.mdk.generator.Generatable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

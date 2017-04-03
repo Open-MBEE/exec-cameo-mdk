@@ -35,7 +35,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.util.List;
@@ -55,21 +55,21 @@ public class ViewDependencyNumberer {
      * @param view View to clear strings for
      */
     public static void clearAll(Element view) {
-        Dependency first = findStereotypedRelationship(view, DocGen3Profile.firstStereotype);
+        Dependency first = findStereotypedRelationship(view, DocGenProfile.firstStereotype);
         if (first != null) {
             if (first.isEditable()) {
                 first.setName("");
             }
             clearAll(ModelHelper.getSupplierElement(first));
         }
-        Dependency next = findStereotypedRelationship(view, DocGen3Profile.nextStereotype);
+        Dependency next = findStereotypedRelationship(view, DocGenProfile.nextStereotype);
         if (next != null) {
             if (next.isEditable()) {
                 next.setName("");
             }
             clearAll(ModelHelper.getSupplierElement(next));
         }
-        Dependency nosection = findStereotypedRelationship(view, DocGen3Profile.nosectionStereotype);
+        Dependency nosection = findStereotypedRelationship(view, DocGenProfile.nosectionStereotype);
         if (nosection != null) {
             if (nosection.isEditable()) {
                 nosection.setName("");
@@ -87,7 +87,7 @@ public class ViewDependencyNumberer {
      *               prefixes
      */
     public static void start(Element view, List<Integer> prefix) {
-        Dependency first = findStereotypedRelationship(view, DocGen3Profile.firstStereotype);
+        Dependency first = findStereotypedRelationship(view, DocGenProfile.firstStereotype);
         if (first != null) {
             prefix.add(1);
             String s = Utils.join(prefix, ".");
@@ -97,7 +97,7 @@ public class ViewDependencyNumberer {
             start(ModelHelper.getSupplierElement(first), prefix);
             prefix.remove(prefix.size() - 1);
         }
-        Dependency next = findStereotypedRelationship(view, DocGen3Profile.nextStereotype);
+        Dependency next = findStereotypedRelationship(view, DocGenProfile.nextStereotype);
         if (next != null) {
             if (!prefix.isEmpty()) {
                 prefix.set(prefix.size() - 1, prefix.get(prefix.size() - 1) + 1);

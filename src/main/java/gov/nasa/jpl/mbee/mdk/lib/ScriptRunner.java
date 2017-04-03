@@ -1,21 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.lib;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.script.Bindings;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import com.nomagic.magicdraw.automaton.AutomatonPlugin;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ApplicationEnvironment;
@@ -28,8 +12,18 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+
+import javax.script.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * runs a userscript in [md install dir]/DocGenUserScripts/...
@@ -73,8 +67,7 @@ public class ScriptRunner {
      *
      * @param e
      * @param s
-     * @param addInputs
-     *            additional inputs to add to scriptInput
+     * @param addInputs additional inputs to add to scriptInput
      * @return
      * @throws ScriptException
      */
@@ -128,7 +121,8 @@ public class ScriptRunner {
                 lang = ((EnumerationLiteral) language).getName();
                 if (lang.equals("groovy")) {
                     extension = ".groovy";
-                } else if (lang.equals("qvt")) {
+                }
+                else if (lang.equals("qvt")) {
                     extension = ".qvto";
                 }
             }
@@ -141,8 +135,9 @@ public class ScriptRunner {
         }
         binDirs[numDirs + 1] = new File(script.getParent());
         if (j > numDirs) {
-            if (numDirs > 0)
+            if (numDirs > 0) {
                 log.log("Script not found on paths: ");
+            }
             for (int i = 0; i < numDirs; i++) {
                 log.log(paths[i].getPath());
             }
@@ -159,15 +154,12 @@ public class ScriptRunner {
      * session will be created if it isn't already, session will surround the script run so user don't have to manage sessions
      *
      * @param language
-     * @param inputs
-     *            A map of key/value pair of script input (it can be anything really, as long as the script knows what to do with it. the inputs object will be passed to the script
-     *            as 'scriptInput'
-     * @param script
-     *            File of the script file
-     * @param binDirs
-     *            File of the script directory
+     * @param inputs   A map of key/value pair of script input (it can be anything really, as long as the script knows what to do with it. the inputs object will be passed to the script
+     *                 as 'scriptInput'
+     * @param script   File of the script file
+     * @param binDirs  File of the script directory
      * @return a var called scriptInput will be accessible in the script, this is a map of key value pairs, keys will be based on what the script does and what the corresponding
-     *         stereotype tags in md are, to return something from the script, assign a map to scriptOutput var in your script
+     * stereotype tags in md are, to return something from the script, assign a map to scriptOutput var in your script
      * @throws ScriptException
      */
     public static Object runScript(String language, Map<String, Object> inputs, File script, File[] binDirs) throws ScriptException {

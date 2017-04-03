@@ -29,7 +29,7 @@
 package gov.nasa.jpl.mbee.mdk.docgen.docbook;
 
 import com.nomagic.task.ProgressStatus;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.DocumentMeta;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.Person;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.Revision;

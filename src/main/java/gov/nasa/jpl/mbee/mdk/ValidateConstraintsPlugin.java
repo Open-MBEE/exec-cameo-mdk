@@ -29,20 +29,12 @@
 package gov.nasa.jpl.mbee.mdk;
 
 import com.nomagic.actions.NMAction;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.actions.ValidateConstraints;
-import gov.nasa.jpl.mbee.mdk.lib.Debug;
 
-import java.awt.event.ActionEvent;
 import java.lang.reflect.Method;
 
 public class ValidateConstraintsPlugin extends MDPlugin {
 
-    // ValidateConstraints action = null;
-
-    /**
-     *
-     */
     public ValidateConstraintsPlugin() {
         this(ValidateConstraints.class);
     }
@@ -51,33 +43,8 @@ public class ValidateConstraintsPlugin extends MDPlugin {
         super(cls);
     }
 
-    // unused -- TODO -- remove after testing
-    public static void doIt(ActionEvent event, Element element) {
-        ValidateConstraints action = new ValidateConstraints(element);
-        action.actionPerformed(event);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see gov.nasa.jpl.mbee.mdk.docgen.MDPlugin#initConfigurations()
-     */
     @Override
     public void initConfigurations() {
-        // //Debug.turnOn();
-        // if ( !MDUtils.isDeveloperMode() ) {
-        // Debug.outln(
-        // "ValidateConstraintsPlugin will be hidden since MD is not in developer mode."
-        // );
-        // return;
-        // }
-        Debug.outln("initializing ValidateConstraintsPlugin!");
-
-        // Method method = ClassUtils.getMethodsForName(
-        // ValidateConstraintsPlugin.class, "doIt")[ 0 ];
-        // TODO -- shouldn't have to look this method up and pass it--just get
-        // rid of
-        // method argument in addConfiguration calls below.
         Method method = getNmActionMethod();
 
         String category = "MDK";
@@ -101,8 +68,6 @@ public class ValidateConstraintsPlugin extends MDPlugin {
                 method, this);
         addConfiguration(diagramContext, "DocumentView", ValidateConstraints.actionText, category,
                 method, this);
-
-        Debug.outln("finished initializing TestPlugin!");
     }
 
 }

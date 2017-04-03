@@ -29,15 +29,15 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ConstraintValidationRule;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ConstraintValidationRule;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,11 +90,11 @@ public class ViewpointConstraint extends Query {
     @Override
     public void initialize() {
         iterate = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.viewpointConstraintStereotype, "iterate", true);
+                DocGenProfile.viewpointConstraintStereotype, "iterate", true);
         expression = (String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.viewpointConstraintStereotype, "expression", "");
+                DocGenProfile.viewpointConstraintStereotype, "expression", "");
         report = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.viewpointConstraintStereotype, "validationReport", false);
+                DocGenProfile.viewpointConstraintStereotype, "validationReport", false);
     }
 
 }

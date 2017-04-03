@@ -257,8 +257,7 @@ public class ElementFinder {
      * Finds an element within the passed project's primary model. Does not search other modules loaded in project.
      *
      * @param qualifiedName in the format of magicdraw's qualified name: ex "Package::hello::world
-     * @param project project to search the primary model on
-     *
+     * @param project       project to search the primary model on
      * @return found element, or null if not found
      */
     @Deprecated

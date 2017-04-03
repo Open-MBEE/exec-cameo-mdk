@@ -19,8 +19,8 @@ import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
+import gov.nasa.jpl.mbee.mdk.json.ImportException;
+import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.UniqueEList;
@@ -361,24 +361,24 @@ public class EMFImporter implements JsonToElementFunction {
     protected static class EStructuralFeatureOverride {
         public static final EStructuralFeatureOverride
                 ID = new EStructuralFeatureOverride(
-                    (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
-                    (objectNode, eStructuralFeature, project, strict, element) -> {
-                        JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
-                        if (jsonNode == null || !jsonNode.isTextual()) {
+                (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
+                (objectNode, eStructuralFeature, project, strict, element) -> {
+                    JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
+                    if (jsonNode == null || !jsonNode.isTextual()) {
                             /*if (strict) {
                                 throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
                             }
                             return null;*/
-                            return element;
-                        }
-                        try {
-                            UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
-                        } catch (IllegalArgumentException e) {
-                            throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
-                        }
                         return element;
                     }
-                ),
+                    try {
+                        UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
+                    } catch (IllegalArgumentException e) {
+                        throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
+                    }
+                    return element;
+                }
+        ),
                 OWNER = getOwnerEStructuralFeatureOverride(Converters.getIdToElementConverter());
 
         private ImportPredicate importPredicate;

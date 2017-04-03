@@ -46,16 +46,20 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.Constraint;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ConstraintValidationRule;
 import gov.nasa.jpl.mbee.mdk.lib.Debug;
 import gov.nasa.jpl.mbee.mdk.lib.MoreToString;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.*;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import org.eclipse.ocl.ParserException;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.EdgeFactory;
@@ -91,13 +95,13 @@ public class DocumentValidator {
         private static final long serialVersionUID = -5391825454091546000L;
 
         {
-            put(DocGen3Profile.metaclassChoosable, "metaclasses");
-            put(DocGen3Profile.stereotypeChoosable, "stereotypes");
-            put(DocGen3Profile.nameChoosable, "names");
-            put(DocGen3Profile.diagramTypeChoosable, "diagramTypes");
-            put(DocGen3Profile.expressionChoosable, "expression");
-            put(DocGen3Profile.propertyChoosable, "desiredProperty");
-            put(DocGen3Profile.attributeChoosable, "desiredAttribute");
+            put(DocGenProfile.metaclassChoosable, "metaclasses");
+            put(DocGenProfile.stereotypeChoosable, "stereotypes");
+            put(DocGenProfile.nameChoosable, "names");
+            put(DocGenProfile.diagramTypeChoosable, "diagramTypes");
+            put(DocGenProfile.expressionChoosable, "expression");
+            put(DocGenProfile.propertyChoosable, "desiredProperty");
+            put(DocGenProfile.attributeChoosable, "desiredAttribute");
         }
     };
     /*
@@ -277,7 +281,7 @@ public class DocumentValidator {
         if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
             validateView((NamedElement) start, true);
         }
-        else if (StereotypesHelper.hasStereotypeOrDerived(start, DocGen3Profile.documentStereotype)
+        else if (StereotypesHelper.hasStereotypeOrDerived(start, DocGenProfile.documentStereotype)
                 && start instanceof Activity) {
             this.done.add((Activity) start);
             validateActivity((NamedElement) start);
@@ -382,12 +386,12 @@ public class DocumentValidator {
             missingViewpointErrors.addViolation(view, missingViewpointErrors.getDescription());
         }
         if (view instanceof Package) {
-            List<Dependency> firsts = getOutgoingDependencies(view, DocGen3Profile.firstStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGen3Profile.firstStereotype, 1, false, 1);
-            List<Dependency> nexts = getOutgoingDependencies(view, DocGen3Profile.nextStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGen3Profile.nextStereotype, 1, false, 1);
-            List<Dependency> contents = getOutgoingDependencies(view, DocGen3Profile.nosectionStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGen3Profile.nosectionStereotype, 1, false, 1);
+            List<Dependency> firsts = getOutgoingDependencies(view, DocGenProfile.firstStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
+            //DocGenProfile.firstStereotype, 1, false, 1);
+            List<Dependency> nexts = getOutgoingDependencies(view, DocGenProfile.nextStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
+            //DocGenProfile.nextStereotype, 1, false, 1);
+            List<Dependency> contents = getOutgoingDependencies(view, DocGenProfile.nosectionStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
+            //DocGenProfile.nosectionStereotype, 1, false, 1);
             if (contents.size() > 1) {
                 multipleContentErrors.addViolation(view, multipleContentErrors.getDescription());
             }
@@ -470,11 +474,11 @@ public class DocumentValidator {
             Behavior b = n instanceof CallBehaviorAction ? ((CallBehaviorAction) n).getBehavior() : null;
             Collection<Stereotype> napplied = new HashSet<Stereotype>(
                     StereotypesHelper
-                            .checkForAllDerivedStereotypes(n, DocGen3Profile.collectFilterStereotype));
+                            .checkForAllDerivedStereotypes(n, DocGenProfile.collectFilterStereotype));
             napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n,
-                    DocGen3Profile.ignorableStereotype));
+                    DocGenProfile.ignorableStereotype));
             napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n,
-                    DocGen3Profile.tableColumnStereotype));
+                    DocGenProfile.tableColumnStereotype));
             if (b == null) {
                 if (napplied.isEmpty()) {
                     missingStereotype.addViolation(n, missingStereotype.getDescription());
@@ -486,11 +490,11 @@ public class DocumentValidator {
             else {
                 Collection<Stereotype> bapplied = new HashSet<Stereotype>(
                         StereotypesHelper.checkForAllDerivedStereotypes(b,
-                                DocGen3Profile.collectFilterStereotype));
+                                DocGenProfile.collectFilterStereotype));
                 bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b,
-                        DocGen3Profile.ignorableStereotype));
+                        DocGenProfile.ignorableStereotype));
                 bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b,
-                        DocGen3Profile.tableColumnStereotype));
+                        DocGenProfile.tableColumnStereotype));
                 if (napplied.isEmpty() && bapplied.isEmpty()) {
                     missingStereotype.addViolation(n, missingStereotype.getDescription());
                 }
@@ -503,22 +507,22 @@ public class DocumentValidator {
                 else if (!napplied.isEmpty() && !bapplied.isEmpty()
                         && napplied.iterator().next() != bapplied.iterator().next()) {
                     Stereotype ns = napplied.iterator().next();
-                    if (!ns.getName().equals(DocGen3Profile.tableAttributeColumnStereotype) &&
-                            !ns.getName().equals(DocGen3Profile.tableColumnStereotype) &&
-                            !ns.getName().equals(DocGen3Profile.tableExpressionColumnStereotype) &&
-                            !ns.getName().equals(DocGen3Profile.tablePropertyColumnStereotype)) {
+                    if (!ns.getName().equals(DocGenProfile.tableAttributeColumnStereotype) &&
+                            !ns.getName().equals(DocGenProfile.tableColumnStereotype) &&
+                            !ns.getName().equals(DocGenProfile.tableExpressionColumnStereotype) &&
+                            !ns.getName().equals(DocGenProfile.tablePropertyColumnStereotype)) {
                         mismatchStereotypeErrors.addViolation(n, mismatchStereotypeErrors.getDescription());
                     }
                 }
                 /*
                  * if (StereotypesHelper.hasStereotype(b,
-                 * DocGen3Profile.sectionStereotype) ||
+                 * DocGenProfile.sectionStereotype) ||
                  * StereotypesHelper.hasStereotype(b,
-                 * DocGen3Profile.structuredQueryStereotype) ||
+                 * DocGenProfile.structuredQueryStereotype) ||
                  * StereotypesHelper.hasStereotypeOrDerived(b,
-                 * DocGen3Profile.collectionStereotype) ||
+                 * DocGenProfile.collectionStereotype) ||
                  * StereotypesHelper.hasStereotype(b,
-                 * DocGen3Profile.tableStructureStereotype)) {
+                 * DocGenProfile.tableStructureStereotype)) {
                  */
                 if (!this.done.contains(b)) {
                     this.done.add(b);
@@ -529,10 +533,10 @@ public class DocumentValidator {
             validateTags(n, b);
         }
         else if (n instanceof StructuredActivityNode) {
-            if (!StereotypesHelper.hasStereotype(n, DocGen3Profile.structuredQueryStereotype)
-                    && !StereotypesHelper.hasStereotype(n, DocGen3Profile.tableStructureStereotype)
+            if (!StereotypesHelper.hasStereotype(n, DocGenProfile.structuredQueryStereotype)
+                    && !StereotypesHelper.hasStereotype(n, DocGenProfile.tableStructureStereotype)
                     && StereotypesHelper.checkForAllDerivedStereotypes(n,
-                    DocGen3Profile.tableColumnStereotype).isEmpty()) {
+                    DocGenProfile.tableColumnStereotype).isEmpty()) {
                 missingStereotype.addViolation(n, missingStereotype.getDescription());
             }
             validateActivity(n);
@@ -1011,7 +1015,7 @@ public class DocumentValidator {
             List<Object> separatelyConstrained = Utils2.newList();
             boolean isVpConstraint = BasicConstraint.elementIsViewpointConstraint(constraintElement);
             boolean isExpressionChoosable = StereotypesHelper.hasStereotypeOrDerived(constraintElement,
-                    DocGen3Profile.expressionChoosable);
+                    DocGenProfile.expressionChoosable);
             // if ( isVpConstraint) {
 
             Element vpConstraint = constraintElement;

@@ -31,7 +31,7 @@ public class MDKConstants {
             MOUNTED_ELEMENT_ID_KEY = "mountedElement" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_PROJECT_ID_KEY = "mountedElementProject" + ID_KEY_SUFFIX,
             QUALIFIED_NAME_KEY = "qualifiedName",
-            QUALIFIED_ID_KEY = "qualified"  + ID_KEY_SUFFIX,
+            QUALIFIED_ID_KEY = "qualified" + ID_KEY_SUFFIX,
             TWC_URI_KEY = "uri",
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,

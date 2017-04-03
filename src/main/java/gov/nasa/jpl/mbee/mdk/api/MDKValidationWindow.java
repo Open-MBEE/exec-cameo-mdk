@@ -32,13 +32,11 @@ package gov.nasa.jpl.mbee.mdk.api;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -71,7 +69,7 @@ public class MDKValidationWindow {
     public static final String[][] VALIDATION_RULE_OPTIONS = {
             {"Project Existence", "CommitProjectAction", ""},
             {"Element Equivalence", "CommitClientElementAction", "AcceptClientElementAction"}
-        };
+    };
 
     /**
      * Constructor. This will sort the validation rules results into a format expected by a user who sorted their
@@ -115,8 +113,7 @@ public class MDKValidationWindow {
                     }
                     try {
                         pooledViolations.get(lookupListIndex(vr.getName())).addAll(vr.getViolations());
-                    }
-                    catch (UnsupportedOperationException e) {
+                    } catch (UnsupportedOperationException e) {
                         Application.getInstance().getGUILog().log("[ERROR] Unable to store violations for rule "
                                 + vr.getName());
                     }
@@ -190,7 +187,7 @@ public class MDKValidationWindow {
      * @param type String of the type to look for. Expected format: '[type]'
      * @return index of the list of validation results of the specified type
      */
-    private int lookupListIndex(String type) throws IllegalArgumentException{
+    private int lookupListIndex(String type) throws IllegalArgumentException {
         for (int index = 0; index < VALIDATION_RULE_OPTIONS.length; index++) {
             if (VALIDATION_RULE_OPTIONS[index][VIOLATION_RULE_NAME].equalsIgnoreCase(type)) {
                 return index;
@@ -222,15 +219,15 @@ public class MDKValidationWindow {
      * Processes validation rule violations that have been stored in the MDKValidationWindow object
      *
      * @param violationRuleName the type of violation to be accepted
-     * @param commit        will commit to MMS if true, will accept from MMS is false
-     * @param targets       limits processing of violations to only those elements that are
-     *                      contained in the collection. if null, does not limit processing.
-     *                      ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
-     *                      exception will be thrown if specified with targetIDs.
-     * @param targetIDs     limits processing of violations to only those elements whose IDs are
-     *                      contained in the collection. if null, does not limit processing.
-     *                      ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
-     *                      exception will be thrown if specified with targets.
+     * @param commit            will commit to MMS if true, will accept from MMS is false
+     * @param targets           limits processing of violations to only those elements that are
+     *                          contained in the collection. if null, does not limit processing.
+     *                          ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *                          exception will be thrown if specified with targetIDs.
+     * @param targetIDs         limits processing of violations to only those elements whose IDs are
+     *                          contained in the collection. if null, does not limit processing.
+     *                          ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *                          exception will be thrown if specified with targets.
      * @throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
      */
     private void processValidationResults(String violationRuleName, Collection<Element> targets,
@@ -269,7 +266,7 @@ public class MDKValidationWindow {
         // TODO fix project initialization checks
         if (violationRuleName.equals(VALIDATION_RULE_OPTIONS[INITIALIZATION_RULE][VIOLATION_RULE_NAME])) {
 //            if (!commit || !violationList.get(0).getComment().equals(ManualSyncRunner.INITIALIZE_PROJECT_COMMENT)) {
-                return;
+            return;
 //            }
         }
 
@@ -348,7 +345,7 @@ public class MDKValidationWindow {
      * Commits the MD version to MMS for the specified violation type, if the associated element id is in the targetIDs collection
      *
      * @param violationType the type of violation to be accepted
-     * @param targetIDs the collection of element IDs whose validations are to be processed
+     * @param targetIDs     the collection of element IDs whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      */
     public Collection<String> acceptSpecificMDChangesToMMSByID(String violationType, Collection<String> targetIDs) {
@@ -365,7 +362,6 @@ public class MDKValidationWindow {
 
     /**
      * Commits the MD version to MMS for all violation types
-     *
      */
     public void commitAllMDChangesToMMS() {
         try {
@@ -391,7 +387,7 @@ public class MDKValidationWindow {
         try {
             processValidationResults(VALIDATION_RULE_OPTIONS[EQUIVALENCE_RULE][VIOLATION_RULE_NAME], notFound, null, true);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
-                    | InvocationTargetException | IllegalStateException e) {
+                | InvocationTargetException | IllegalStateException e) {
             MagicDrawHelper.generalMessage("[ERROR]" + e.getMessage());
         }
         return notFound;
@@ -401,7 +397,7 @@ public class MDKValidationWindow {
      * Commits the MD version to MMS for the specified violation type, if the associated element id is in the targetIDs collection
      *
      * @param violationType the type of violation to be accepted
-     * @param targetIDs the collection of element IDs whose validations are to be processed
+     * @param targetIDs     the collection of element IDs whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      */
     public Collection<String> commitSpecificMDChangesToMMSByID(String violationType, Collection<String> targetIDs) {

@@ -32,7 +32,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.model.Container;
 import gov.nasa.jpl.mbee.mdk.model.Document;
@@ -62,13 +62,13 @@ public class ViewParser {
 
     public Section parse() {
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGen3Profile.documentViewStereotype, "Document Profile");
+                DocGenProfile.documentViewStereotype, "Document Profile");
         if (StereotypesHelper.hasStereotypeOrDerived(start, documentView)) {
             doc.setDgElement(start); // only set the DgElement if this is
             // actually a document view, this affects
             // processing down the line for various
             // things (like docweb visitors)
-            Element first = GeneratorUtils.findStereotypedRelationship(start, DocGen3Profile.firstStereotype);
+            Element first = GeneratorUtils.findStereotypedRelationship(start, DocGenProfile.firstStereotype);
             if (first != null) {
                 return parseView(first, doc, true, false);
             }
@@ -101,7 +101,7 @@ public class ViewParser {
 
         if (!singleView) { // does everything from here including nexts
             Element content = GeneratorUtils.findStereotypedRelationship(view,
-                    DocGen3Profile.nosectionStereotype);
+                    DocGenProfile.nosectionStereotype);
             if (content != null && section) // current view is a section,
             // nosection children should go
             // under it
@@ -114,11 +114,11 @@ public class ViewParser {
             {
                 parseView(content, parent, false, false);
             }
-            Element first = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.firstStereotype);
+            Element first = GeneratorUtils.findStereotypedRelationship(view, DocGenProfile.firstStereotype);
             if (first != null) {
                 parseView(first, viewSection, true, false);
             }
-            Element next = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.nextStereotype);
+            Element next = GeneratorUtils.findStereotypedRelationship(view, DocGenProfile.nextStereotype);
             if (next != null) {
                 parseView(next, parent, true, false);
             }
@@ -128,20 +128,20 @@ public class ViewParser {
             // underneath view including view, but not nexts
             // from the top view
             Element content = GeneratorUtils.findStereotypedRelationship(view,
-                    DocGen3Profile.nosectionStereotype);
+                    DocGenProfile.nosectionStereotype);
             if (content != null && section) {
                 parseView(content, viewSection, false, false);
             }
             if (content != null && !section) {
                 parseView(content, parent, false, false);
             }
-            Element first = GeneratorUtils.findStereotypedRelationship(view, DocGen3Profile.firstStereotype);
+            Element first = GeneratorUtils.findStereotypedRelationship(view, DocGenProfile.firstStereotype);
             if (first != null) {
                 parseView(first, viewSection, true, false);
             }
             if (!top) {
                 Element next = GeneratorUtils
-                        .findStereotypedRelationship(view, DocGen3Profile.nextStereotype);
+                        .findStereotypedRelationship(view, DocGenProfile.nextStereotype);
                 if (next != null) {
                     parseView(next, parent, true, false);
                 }

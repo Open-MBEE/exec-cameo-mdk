@@ -33,11 +33,11 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -219,20 +219,20 @@ public class CombinedMatrix extends Table {
         super.initialize();
         // TODO Auto-generated method stub
         Integer nameColumn = (Integer) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.combinedMatrixStereotype, "nameColumn", 1);
+                DocGenProfile.combinedMatrixStereotype, "nameColumn", 1);
         Integer docColumn = (Integer) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.combinedMatrixStereotype, "docColumn", 2);
+                DocGenProfile.combinedMatrixStereotype, "docColumn", 2);
         nameColumn = nameColumn < 1 ? 1 : nameColumn;
         docColumn = docColumn < 1 ? 2 : docColumn;
-        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable,
+        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.headersChoosable,
                 "headers", new ArrayList<String>()));
         setOutgoing((List<Stereotype>) GeneratorUtils.getListProperty(dgElement,
-                DocGen3Profile.stereotypedRelChoosable, "outgoingStereotypedRelationships",
+                DocGenProfile.stereotypedRelChoosable, "outgoingStereotypedRelationships",
                 new ArrayList<Stereotype>()));
         setIncoming((List<Stereotype>) GeneratorUtils.getListProperty(dgElement,
-                DocGen3Profile.stereotypedRelChoosable, "incomingStereotypedRelationships",
+                DocGenProfile.stereotypedRelChoosable, "incomingStereotypedRelationships",
                 new ArrayList<Stereotype>()));
-        setSkipIfNoDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.docSkippable,
+        setSkipIfNoDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.docSkippable,
                 "skipIfNoDoc", false));
         setNameColumn(nameColumn);
         setDocColumn(docColumn);

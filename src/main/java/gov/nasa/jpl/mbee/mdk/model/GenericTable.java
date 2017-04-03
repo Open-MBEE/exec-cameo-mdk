@@ -33,13 +33,13 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.generator.DiagramTableTool;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mbee.mdk.generator.DiagramTableTool;
+import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,9 +60,9 @@ public class GenericTable extends Table {
             }
             res.add(row);
         }
-        else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGen3Profile.headersChoosable)) {
+        else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGenProfile.headersChoosable)) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
-            for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d, DocGen3Profile.headersChoosable, "headers")) {
+            for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d, DocGenProfile.headersChoosable, "headers")) {
                 row.add(new DBText(h));
             }
             res.add(row);
@@ -178,9 +178,9 @@ public class GenericTable extends Table {
     @Override
     public void initialize() {
         super.initialize();
-        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGen3Profile.headersChoosable,
+        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.headersChoosable,
                 "headers", new ArrayList<String>()));
-        setSkipIfNoDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.docSkippable,
+        setSkipIfNoDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.docSkippable,
                 "skipIfNoDoc", false));
     }
 

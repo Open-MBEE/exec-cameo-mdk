@@ -15,30 +15,30 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.json.JsonDiffFunction;
-import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.Request;
-import gov.nasa.jpl.mbee.mdk.ems.validation.ImageValidator;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Changelog;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
+import javafx.util.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -49,11 +49,8 @@ import java.util.*;
 
 /**
  * @author dlam
- *
  */
 
-@Deprecated
-//TODO update stuff in here for @donbot
 public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationSuite suite = new ValidationSuite("View Instance Generation");
     private ValidationRule uneditableContent = new ValidationRule("Uneditable", "uneditable", ViolationSeverity.ERROR);
@@ -160,7 +157,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         if (!constraintsToBeDeleted.isEmpty()) {
-            SessionManager.getInstance().createSession(project,"Legacy View Constraint Purge");
+            SessionManager.getInstance().createSession(project, "Legacy View Constraint Purge");
             for (Constraint constraint : constraintsToBeDeleted) {
                 if (constraint.isEditable()) {
                     Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + Converters.getElementToIdConverter().apply(constraint));
@@ -197,7 +194,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         if (SessionManager.getInstance().isSessionCreated(project)) {
             SessionManager.getInstance().closeSession(project);
         }
-        SessionManager.getInstance().createSession(project,"View Presentation Generation - Cancelled");
+        SessionManager.getInstance().createSession(project, "View Presentation Generation - Cancelled");
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
         }
@@ -586,11 +583,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             String viewInstanceBinId = MDKConstants.VIEW_INSTANCES_BIN_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
             while (!instanceToView.isEmpty()) {
                 Pair<InstanceSpecification, Element> pair = instanceToView.remove();
-                InstanceSpecification instance = pair.getFirst();
+                InstanceSpecification instance = pair.getKey();
 
-                List<InstanceSpecification> subInstances = instanceUtils.getCurrentInstances(instance, pair.getSecond()).getAll();
+                List<InstanceSpecification> subInstances = instanceUtils.getCurrentInstances(instance, pair.getValue()).getAll();
                 for (InstanceSpecification subInstance : subInstances) {
-                    instanceToView.add(new Pair<>(subInstance, pair.getSecond()));
+                    instanceToView.add(new Pair<>(subInstance, pair.getValue()));
                 }
 
                 ObjectNode clientInstanceSpecificationJson = Converters.getElementToJsonConverter().apply(instance, project);
@@ -600,7 +597,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // override owner of pei to store parallel to the model
                 clientInstanceSpecificationJson.put(MDKConstants.OWNER_ID_KEY, viewInstanceBinId);
                 ObjectNode serverInstanceSpecificationJson = instanceSpecificationMap.containsKey(Converters.getElementToIdConverter().apply(instance)) ?
-                        instanceSpecificationMap.get(Converters.getElementToIdConverter().apply(instance)).getFirst() : null;
+                        instanceSpecificationMap.get(Converters.getElementToIdConverter().apply(instance)).getKey() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
                     if (MDUtils.isDeveloperMode()) {
                         Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonDiffFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
@@ -614,7 +611,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         continue;
                     }
                     JsonNode serverSlotJson = slotMap.containsKey(Converters.getElementToIdConverter().apply(slot)) ?
-                            slotMap.get(Converters.getElementToIdConverter().apply(slot)).getFirst() : null;
+                            slotMap.get(Converters.getElementToIdConverter().apply(slot)).getKey() : null;
                     if (!JsonEquivalencePredicate.getInstance().test(clientSlotJson, serverSlotJson)) {
                         elementsToCommit.add(clientSlotJson);
                         if (MDUtils.isDeveloperMode()) {
@@ -681,13 +678,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // on the view block.
             Set<Element> elementsToDelete = new HashSet<>();
             for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
-                if (pair.getSecond() != null) {
-                    elementsToDelete.add(pair.getSecond());
+                if (pair.getValue() != null) {
+                    elementsToDelete.add(pair.getValue());
                 }
             }
             for (Pair<ObjectNode, InstanceSpecification> pair : instanceSpecificationMap.values()) {
-                if (pair.getSecond() != null) {
-                    elementsToDelete.add(pair.getSecond());
+                if (pair.getValue() != null) {
+                    elementsToDelete.add(pair.getValue());
                 }
             }
             for (Element element : views) {

@@ -30,12 +30,14 @@ package gov.nasa.jpl.mbee.mdk.lib;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import javafx.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 
+@Deprecated
 public class MdDebug extends Debug {
 
     public static GUILog gl = getGuiLog();
@@ -65,10 +67,10 @@ public class MdDebug extends Debug {
             if (p == null) {
                 return null;
             }
-            if (!p.first) {
+            if (!p.getKey()) {
                 return null;
             }
-            TT tt = p.second;
+            TT tt = p.getValue();
             if (tt != null) {
                 return tt;
             }
@@ -77,7 +79,7 @@ public class MdDebug extends Debug {
 
     @SuppressWarnings("unchecked")
     public static <TT> Pair<Boolean, TT> getComponentOfType(Object o, Class<TT> type, int depth,
-                                                            int maxDepth, Seen<Object> seen) {
+                                                            int maxDepth, SeenSet<Object> seen) {
         if (o == null) {
             return null;
         }
@@ -85,11 +87,11 @@ public class MdDebug extends Debug {
             return null;
         }
         // don't check same component twice
-        Pair<Boolean, Seen<Object>> p = Utils2.seen(o, true, seen);
-        if (p.first) {
+        Pair<Boolean, SeenSet<Object>> p = Utils2.seen(o, true, seen);
+        if (p.getKey()) {
             return null;
         }
-        seen = p.second;
+        seen = p.getValue();
 
         boolean gotLeafContainer = false;
 
@@ -128,9 +130,9 @@ public class MdDebug extends Debug {
                 for (Component cmp : cmps) {
                     Pair<Boolean, TT> pp = getComponentOfType(cmp, type, depth + 1, maxDepth, seen);
                     if (pp != null) {
-                        if (pp.first == true) {
+                        if (pp.getKey() == true) {
                             gotLeafContainer = true;
-                            if (pp.second != null) {
+                            if (pp.getValue() != null) {
                                 return pp;
                             }
                         }
@@ -157,9 +159,9 @@ public class MdDebug extends Debug {
                     }
                     Pair<Boolean, TT> pp = getComponentOfType(v, type, depth + 1, maxDepth, seen);
                     if (pp != null) {
-                        if (pp.first == true) {
+                        if (pp.getKey() == true) {
                             gotLeafContainer = true;
-                            if (pp.second != null) {
+                            if (pp.getValue() != null) {
                                 return pp;
                             }
                         }

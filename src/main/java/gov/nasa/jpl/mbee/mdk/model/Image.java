@@ -30,14 +30,14 @@ package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
+import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +109,7 @@ public class Image extends Query {
 
                     String doc = ModelHelper.getComment(diagram);
                     if (doc != null && (forViewEditor || (!doc.trim().isEmpty() && !getDoNotShow()))) {
-                        if ((Boolean) GeneratorUtils.getObjectProperty(diagram, DocGen3Profile.editableChoosable, "editable", true)) {
+                        if ((Boolean) GeneratorUtils.getObjectProperty(diagram, DocGenProfile.editableChoosable, "editable", true)) {
                             res.add(new DBParagraph(doc, diagram, From.DOCUMENTATION));
                         }
                         else {
@@ -128,10 +128,10 @@ public class Image extends Query {
     public void initialize() {
         // TODO Auto-generated method stub
         Boolean doNotShow = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.imageStereotype, "doNotShow", false);
-        setCaptions((List<String>) GeneratorUtils.getListProperty(dgElement, DocGen3Profile.hasCaptions,
+                DocGenProfile.imageStereotype, "doNotShow", false);
+        setCaptions((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.hasCaptions,
                 "captions", new ArrayList<String>()));
-        setShowCaptions((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.hasCaptions,
+        setShowCaptions((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.hasCaptions,
                 "showCaptions", true));
         setDoNotShow(doNotShow);
     }

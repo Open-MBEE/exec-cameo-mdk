@@ -31,11 +31,11 @@ package gov.nasa.jpl.mbee.mdk.model.actions;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import gov.nasa.jpl.mbee.mdk.DgvalidationDBSwitch;
-import gov.nasa.jpl.mbee.mdk.dgvalidation.Suite;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.Suite;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.model.DocGenValidationDBSwitch;
 import gov.nasa.jpl.mbee.mdk.model.UserScript;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -91,7 +91,7 @@ public class RunUserValidationScriptAction extends MDAction {
         else if (o != null && o.containsKey("docgenValidationOutput")) {
             Object l = o.get("docgenValidationOutput");
             if (l instanceof List) {
-                DgvalidationDBSwitch s = new DgvalidationDBSwitch();
+                DocGenValidationDBSwitch s = new DocGenValidationDBSwitch();
                 List<ValidationSuite> vs = new ArrayList<ValidationSuite>();
                 for (Object object : (List<?>) l) {
                     if (object instanceof Suite) {

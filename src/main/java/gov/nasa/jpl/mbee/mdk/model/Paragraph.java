@@ -35,14 +35,14 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.generator.GenerationContext;
 import gov.nasa.jpl.mbee.mdk.lib.*;
 import gov.nasa.jpl.mbee.mdk.lib.Utils.AvailableAttribute;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
 
 import java.util.*;
 
@@ -168,7 +168,7 @@ public class Paragraph extends Query {
             if (!Utils2.isNullOrEmpty(v)) {
                 Object o;
                 DBParagraph dbParagraph = new DBParagraph(v, e, getFrom());
-                if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+                if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGenProfile.editableChoosable, "editable")) instanceof Boolean) {
                     dbParagraph.setEditable((Boolean) o);
                 }
                 res.add(dbParagraph);
@@ -188,7 +188,7 @@ public class Paragraph extends Query {
                 if (!Utils2.isNullOrEmpty(result)) {
                     Object o;
                     DBParagraph dbParagraph = new DBParagraph(result);
-                    if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+                    if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGenProfile.editableChoosable, "editable")) instanceof Boolean) {
                         dbParagraph.setEditable((Boolean) o);
                     }
                     res.add(dbParagraph);
@@ -245,9 +245,9 @@ public class Paragraph extends Query {
             // of dgElement or the documentation of the dgElement if dgElement
             // is something other than a Paragraph
             if (forViewEditor || !getText().trim().isEmpty()) {
-                //GeneratorUtils.getObjectProperty( getDgElement(), DocGen3Profile.paragraphStereotype, "body", null );
+                //GeneratorUtils.getObjectProperty( getDgElement(), DocGenProfile.paragraphStereotype, "body", null );
                 // TODO @donbot find a way to remove this getProject() call
-                Stereotype paragraphStereotype = Utils.getStereotype(Application.getInstance().getProject(), DocGen3Profile.paragraphStereotype);
+                Stereotype paragraphStereotype = Utils.getStereotype(Application.getInstance().getProject(), DocGenProfile.paragraphStereotype);
                 Slot s = Utils.getSlot(getDgElement(), Utils.getStereotypePropertyByName(paragraphStereotype, "body"));
                 //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
                 DBParagraph dbParagraph;
@@ -266,7 +266,7 @@ public class Paragraph extends Query {
                     }
                 }
                 Object o;
-                if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGen3Profile.editableChoosable, "editable")) instanceof Boolean) {
+                if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGenProfile.editableChoosable, "editable")) instanceof Boolean) {
                     dbParagraph.setEditable((Boolean) o);
                 }
                 res.add(dbParagraph);
@@ -389,22 +389,22 @@ public class Paragraph extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        String body = (String) GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.paragraphStereotype,
+        String body = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.paragraphStereotype,
                 "body", null);
         setText(body);
-        Object doOcl = GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.paragraphStereotype,
+        Object doOcl = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.paragraphStereotype,
                 "evaluateOcl", null);
         if (doOcl != null) {
             tryOcl = Utils.isTrue(doOcl, true);
         }
-        Object iter = GeneratorUtils.getObjectProperty(dgElement, DocGen3Profile.paragraphStereotype,
+        Object iter = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.paragraphStereotype,
                 "iterate", null);
         if (iter != null) {
             iterate = Utils.isTrue(iter, false); // TODO -- use this!
         }
 
         Object attr = GeneratorUtils.getObjectProperty(dgElement,
-                DocGen3Profile.attributeChoosable, "desiredAttribute", null);
+                DocGenProfile.attributeChoosable, "desiredAttribute", null);
         if (attr instanceof EnumerationLiteral) {
             attribute = Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName());
             if (attribute != null) {
@@ -413,7 +413,7 @@ public class Paragraph extends Query {
         }
 
         setStereotypeProperties((List<Property>) GeneratorUtils
-                .getListProperty(dgElement, DocGen3Profile.stereotypePropertyChoosable,
+                .getListProperty(dgElement, DocGenProfile.stereotypePropertyChoosable,
                         "stereotypeProperties", new ArrayList<Property>()));
     }
 

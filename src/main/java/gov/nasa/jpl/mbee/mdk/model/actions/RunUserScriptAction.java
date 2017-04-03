@@ -32,7 +32,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import gov.nasa.jpl.mbee.mdk.dgview.ViewElement;
+import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
 import gov.nasa.jpl.mbee.mdk.model.UserScript;
 
 import java.awt.event.ActionEvent;

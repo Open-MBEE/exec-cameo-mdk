@@ -37,13 +37,6 @@ import java.util.Set;
  * A constraint in the context of a model.
  */
 public interface Constraint {
-    // // public abstract class Constraint {
-    // // public Constraint( Element constrainingElement, Element
-    // constrainedElement ) {
-    // // addConstrainedElement( constrainedElement );
-    // // addConstrainingElement( constrainingElement );
-    // // }
-    // public Set< Element > getConstrainedElements();
 
     /**
      * @return the constrained elements and any other other constrained objects.
@@ -52,8 +45,6 @@ public interface Constraint {
 
     Set<Element> getConstrainingElements();
 
-    // public void addConstrainedElements( Collection< Element > elements );
-    // public void addConstrainedElement( Element element );
     void addConstrainedObjects(Collection<Object> objects);
 
     void addConstrainedObject(Object object);
@@ -71,8 +62,6 @@ public interface Constraint {
      */
     String getExpression();
 
-    // public void setExpression();
-
     Boolean evaluate();
 
     /**
@@ -80,15 +69,4 @@ public interface Constraint {
      * self-contradictory
      */
     boolean isConsistent();
-    // public Boolean isGrounded();
-    // public static class Helper {
-    // public static Constraint makeConstraint( Element constraint, Object
-    // constrainedObject ) {
-    //
-    // }
-    // public static void evaluateAgainst( Element constraint, Object
-    // constrainedObject ) {
-    //
-    // }
-    // }
 }

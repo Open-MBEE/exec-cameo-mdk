@@ -39,7 +39,7 @@ public class ValidateAction extends SRAction {
         svs.run();
         Utils.displayValidationWindow(project, svs, "Systems Reasoner Validation");
         /*for (final Generalization g : clazz.getGeneralization()) {
-			if (g.getGeneral() != null)
+            if (g.getGeneral() != null)
 				System.out.println(g.getGeneral());
 			if (g.getGeneral() instanceof Class) {
 				System.out.println(((Class) g.getGeneral()).getName());

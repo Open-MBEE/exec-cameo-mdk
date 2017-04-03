@@ -28,17 +28,13 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-
-import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.ems.ServerException;
-import gov.nasa.jpl.mbee.mdk.ems.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,14 +44,13 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
-
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class TicketUtils {
-    
+
     private static String username = "";
     private static String password = "";
     private static final int TICKET_RENEWAL_INTERVAL = 1800; //seconds
@@ -94,12 +89,12 @@ public class TicketUtils {
 
     /**
      * Logs in to MMS, using pre-specified credentials or prompting the user for new credentials.
-     *
+     * <p>
      * If username and password have been pre-specified, will not display the dialog even if popups are
      * enabled. Else will display the login dialog and use the returned value.
      *
      * @return TRUE if successfully logged in to MMS, FALSE otherwise.
-     *         Will always return FALSE if popups are disabled and username/password are not pre-specified
+     * Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
     public static boolean acquireMmsTicket(Project project) {
         if (!username.isEmpty() && !password.isEmpty()) {
@@ -193,11 +188,11 @@ public class TicketUtils {
      * information for automation, but should be used with Utils.disablePopups(true) to prevent display of the standard
      * log in window. Use without disabling popups will cause these values to be overwritten by the values obtained
      * from the popup window call.
-     *
      */
     public static void setUsernameAndPassword(String user, String pass) {
-        if (user == null)
+        if (user == null) {
             user = "";
+        }
         if (pass == null) {
             pass = "";
         }
@@ -219,15 +214,14 @@ public class TicketUtils {
 
     /**
      * Uses the stored username and passed password to query MMS for a ticket. Will clear any stored password on attempt.
-     *
+     * <p>
      * Will first check to see if there is an existing ticket, and if so if it is valid. If valid, will not resend
      * for new ticket. If invalid or not present, will send for new ticket.
-     *
+     * <p>
      * Since it can only be called by logInToMMS(), assumes that the username and password were recently
      * acquired from the login dialogue or pre-specified if that's disabled.
      */
     private static boolean acquireTicket(Project project, String pass) {
-        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service/api/login -X POST -H "Content-Type:application/json" -d '{"username":"username", "password":"password"}'
         if (username == null || username.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username");
             return false;
@@ -277,14 +271,12 @@ public class TicketUtils {
      * @return True if ticket is still valid and matches the currently stored username
      */
     public static boolean isTicketValid(Project project) {
-        //curl -k https://cae-ems-origin.jpl.nasa.gov/alfresco/service//mms/login/ticket/${TICKET}
         if (!isTicketSet(project)) {
             return false;
         }
         try {
             return MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket());
-        }
-        catch (ServerException | IOException | URISyntaxException e) {
+        } catch (ServerException | IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained for now). Reason: " + e.getMessage());
             e.printStackTrace();
             // can't confirm invalid if can't check ticket at all
@@ -304,7 +296,8 @@ public class TicketUtils {
                 // try/catching here to prevent service being disabled for future calls
                 try {
                     TicketUtils.isTicketValid(project);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             };
             this.ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS);
         }

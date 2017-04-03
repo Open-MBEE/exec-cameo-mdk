@@ -28,6 +28,8 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
 
+import javafx.util.Pair;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
@@ -381,7 +383,7 @@ public class Utils2 {
      * @param seen      is the set of objects already visited
      * @return whether the object has already been visited
      */
-    public static <T> Pair<Boolean, Seen<T>> seen(T o, boolean recursive, Seen<T> seen) {
+    public static <T> Pair<Boolean, SeenSet<T>> seen(T o, boolean recursive, SeenSet<T> seen) {
         // boolean hadSeen = false;
         // if ( seen == null && recursive ) {
         // seen = new SeenHashSet< T >();
@@ -390,7 +392,7 @@ public class Utils2 {
         // seen.see( o, recursive );
         if (seen != null && seen.contains(o)) {
             // ++seenCt;
-            return new Pair<Boolean, Seen<T>>(seen.see(o, recursive), seen);
+            return new Pair<Boolean, SeenSet<T>>(seen.see(o, recursive), seen);
         }
         // ++notSeenCt;
         if (seen == null && recursive == true) {
@@ -401,7 +403,7 @@ public class Utils2 {
         if (seen != null) {
             seen.add(o);
         }
-        return new Pair<Boolean, Seen<T>>(false, seen);
+        return new Pair<Boolean, SeenSet<T>>(false, seen);
     }
 
     // private static long notSeenCt = 0;
@@ -416,9 +418,9 @@ public class Utils2 {
      * @return whether the object has already been visited
      */
     public static <T> Pair<Boolean, Set<T>> seen(T o, boolean recursive, Set<T> seen) {
-        if (seen instanceof Seen) {
-            Pair<Boolean, Seen<T>> p = seen(o, recursive, (Seen<T>) seen);
-            return new Pair<Boolean, Set<T>>(p);
+        if (seen instanceof SeenSet) {
+            Pair<Boolean, Set<T>> p = seen(o, recursive, seen);
+            return p;
         }
         if (seen != null && seen.contains(o)) {
             // ++seenCt;
@@ -475,7 +477,7 @@ public class Utils2 {
             }
             if (m.getParameterTypes().length == 0) {
                 sb.append(indent + m.getDeclaringClass() + ", " + m.toGenericString() + " --> "
-                        + ClassUtils.runMethod(true, o, m).second + "\n");
+                        + ClassUtils.runMethod(true, o, m).getValue() + "\n");
             }
         }
         sb.append(indent + suffix + "\n");
@@ -614,28 +616,6 @@ public class Utils2 {
         return sb.toString();
     }
 
-    public static <T> T[] scramble(T[] array) {
-        for (int i = 0; i < array.length; ++i) {
-            int j = Random.global.nextInt(array.length);
-            if (j != i) {
-                T tmp = array[i];
-                array[i] = array[j];
-                array[j] = tmp;
-            }
-        }
-        return array;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> T[] scramble(Collection<T> collection) {
-        if (isNullOrEmpty(collection)) {
-            return (T[]) new Object[]{};
-        }
-        T[] a = (T[]) new Object[collection.size()];
-        collection.toArray(a);
-        return scramble(a);
-    }
-
     // /**
     // * @param o
     // * @param T
@@ -693,18 +673,6 @@ public class Utils2 {
         ArrayList<T> newList = new ArrayList<T>(cBigger);
         newList.addAll(cSmaller);
         return (C) newList;
-    }
-
-    public static String addTimestampToFilename(String fileName) {
-        int pos = fileName.lastIndexOf('.');
-        String prefix = fileName;
-        String suffix = "";
-        if (pos != -1) {
-            prefix = fileName.substring(0, pos);
-            suffix = fileName.substring(pos);
-        }
-        String newFileName = prefix + TimeUtils.timestampForFile() + suffix;
-        return newFileName;
     }
 
     public static <T1, T2> boolean valuesEqual(T1 v1, T2 v2) {

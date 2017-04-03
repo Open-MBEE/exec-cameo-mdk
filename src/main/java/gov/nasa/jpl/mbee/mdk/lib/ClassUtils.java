@@ -28,9 +28,7 @@
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
 
-// import gov.nasa.jpl.ae.event.Expression;
-// import gov.nasa.jpl.ae.event.Parameter;
-
+import javafx.util.Pair;
 import junit.framework.Assert;
 
 import java.lang.reflect.*;
@@ -937,7 +935,7 @@ public class ClassUtils {
                                         Class<?>... argTypes) {
         ArgTypeCompare<T> atc = new ArgTypeCompare<T>(argTypes);
         for (Entry<T, Pair<Class<?>[], Boolean>> e : candidates.entrySet()) {
-            atc.compare(e.getKey(), e.getValue().first, e.getValue().second);
+            atc.compare(e.getKey(), e.getValue().getKey(), e.getValue().getValue());
         }
         if (atc.best != null && !atc.allNonNullArgsMatched) {
             System.err.println("constructor returned (" + atc.best + ") only matches " + atc.mostMatchingArgs
@@ -995,7 +993,7 @@ public class ClassUtils {
         if (p == null) {
             return null;
         }
-        return p.first;
+        return p.getKey();
     }
 
     public static boolean isInnerClass(Class<?> eventClass) {
@@ -1258,7 +1256,7 @@ public class ClassUtils {
      * value (or null)
      */
     public static Pair<Boolean, Object> runMethodByName(boolean suppressErrors, Object o, String methodName,
-                                                  Object... args) {
+                                                        Object... args) {
         Method m = getMethodForArgs(o.getClass(), methodName, args);
         return runMethod(suppressErrors, o, m, args);
     }
@@ -1292,16 +1290,16 @@ public class ClassUtils {
                 errors.add(e);
             }
         }
-        if (!p.first && isStatic(method) && o != null) {
+        if (!p.getKey() && isStatic(method) && o != null) {
             List<Object> l = Utils2.newList(o);
             l.addAll(Arrays.asList(args));
             Object nullObject = null;
             p = runMethod(true, nullObject, method, l.toArray());
-            if (!p.first && l.size() > 1) {
+            if (!p.getKey() && l.size() > 1) {
                 p = runMethod(true, nullObject, method, o);
             }
         }
-        if (!suppressErrors && !p.first) {
+        if (!suppressErrors && !p.getKey()) {
             Debug.error(false, "runMethod( " + o + ", " + method + ", " + Utils2.toString(args, true)
                     + " ) failed!");
         }
@@ -1358,13 +1356,7 @@ public class ClassUtils {
      */
     public static Pair<Boolean, Object> runMethod(Object o, Method m, Object... args)
             throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        Pair<Boolean, Object> p = new Pair<Boolean, Object>(false, null);
-        if (m == null) {
-            return p;
-        }
-        p.second = m.invoke(o, args);
-        p.first = true;
-        return p;
+        return new Pair<>(m != null, m != null ? m.invoke(o, args) : null);
     }
 
     /**

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -150,7 +149,7 @@ public class JacksonUtils {
         }
         LinkedList<ObjectNode> results = new LinkedList<>();
         while (current != JsonToken.END_OBJECT) {
-            if (jsonParser.getCurrentName() == null){
+            if (jsonParser.getCurrentName() == null) {
                 current = jsonParser.nextToken();
                 continue;
             }
@@ -180,7 +179,8 @@ public class JacksonUtils {
                         if (current == JsonToken.START_ARRAY) {
                             ArrayNode arraynode = messages.putArray(keyName);
                             JacksonUtils.parseJsonArray(jsonParser, arraynode);
-                        } else {
+                        }
+                        else {
                             messages.put(keyName, jsonParser.getText());
                         }
                     }

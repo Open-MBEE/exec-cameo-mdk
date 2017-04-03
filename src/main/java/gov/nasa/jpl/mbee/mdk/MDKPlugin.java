@@ -12,11 +12,9 @@ import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueueStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
-import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.lib.Debug;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueStatusConfigurator;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
+import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 
@@ -36,7 +34,6 @@ public class MDKPlugin extends Plugin {
 
     private OclEvaluatorPlugin oclPlugin;
     private ValidateConstraintsPlugin vcPlugin;
-    private DebugExportImportModelPlugin debugExportImportModelPlugin;
 
     public MDKPlugin() {
         super();
@@ -95,7 +92,6 @@ public class MDKPlugin extends Plugin {
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
-        getDebugExportImportPlugin().init();
         getOclPlugin().init();
         getVcPlugin().init();
         MMSSyncPlugin.getInstance().init();
@@ -105,13 +101,6 @@ public class MDKPlugin extends Plugin {
         loadExtensionJars(); // people can actually just create a new plugin and
 
         configureEnvironmentOptions();
-    }
-
-    public DebugExportImportModelPlugin getDebugExportImportPlugin() {
-        if (debugExportImportModelPlugin == null) {
-            debugExportImportModelPlugin = new DebugExportImportModelPlugin();
-        }
-        return debugExportImportModelPlugin;
     }
 
     public OclEvaluatorPlugin getOclPlugin() {

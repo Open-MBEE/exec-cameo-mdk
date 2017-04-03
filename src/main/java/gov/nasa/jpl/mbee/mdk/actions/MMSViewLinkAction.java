@@ -7,16 +7,18 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.actions.ui.MMSViewLinkForm;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.ems.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.ui.ViewEditorLinkForm;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,7 +50,7 @@ public class MMSViewLinkAction extends MDAction {
         Stereotype documentStereotype = Utils.getDocumentStereotype(project);
         Stereotype viewStereotype = Utils.getViewStereotype(project);
 
-        for (Element element: targetElements) {
+        for (Element element : targetElements) {
             if (!StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)
                     && !StereotypesHelper.hasStereotypeOrDerived(element, documentStereotype)) {
                 continue;
@@ -71,7 +73,7 @@ public class MMSViewLinkAction extends MDAction {
             // collect document parents from hierarchy
             ArrayList<Element> viewChain = new ArrayList<>();
             viewChain.add(element);
-            for (int i = 0; i <  viewChain.size(); i++) {
+            for (int i = 0; i < viewChain.size(); i++) {
                 if (StereotypesHelper.hasStereotype(viewChain.get(i), documentStereotype)) {
                     documents.add(viewChain.get(i));
                 }
@@ -107,7 +109,7 @@ public class MMSViewLinkAction extends MDAction {
 
             // build links
             URI link;
-            if(documents.size() > 1){
+            if (documents.size() > 1) {
                 // build multiple links
                 String label = "";
                 List<JButton> linkButtons = new ArrayList<>();
@@ -117,27 +119,27 @@ public class MMSViewLinkAction extends MDAction {
                         for (Element doc : documents) {
                             if (doc.equals(element)) {
                                 link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(element));
-                            } else {
+                            }
+                            else {
                                 link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element));
                             }
                             JButton button = new ViewButton(doc.getHumanName(), link);
                             linkButtons.add(button);
                         }
                     }
-                }
-                catch (URISyntaxException se) {
+                } catch (URISyntaxException se) {
                     Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");
                     return;
                 }
                 // and display
-                MMSViewLinkForm viewLinkForm = new MMSViewLinkForm(label, linkButtons);
+                ViewEditorLinkForm viewLinkForm = new ViewEditorLinkForm(label, linkButtons);
                 viewLinkForm.setVisible(true);
-            }else {
+            }
+            else {
                 // build single link
                 try {
                     link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element));
-                }
-                catch (URISyntaxException se) {
+                } catch (URISyntaxException se) {
                     Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");
                     return;
                 }
@@ -149,12 +151,12 @@ public class MMSViewLinkAction extends MDAction {
                                     + " does not belong to a document hierarchy. Opening view in View Editor without document context.");
                         }
                         Desktop.getDesktop().browse(link);
-                    }
-                    catch (IOException e1) {
+                    } catch (IOException e1) {
                         Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + link.toString());
                         e1.printStackTrace();
                     }
-                } else {
+                }
+                else {
                     Application.getInstance().getGUILog().log("[WARNING] Java is unable to open links on your computer. Link: " + link.toString());
                 }
             }
@@ -164,13 +166,13 @@ public class MMSViewLinkAction extends MDAction {
     private class ViewButton extends JButton {
         private URI uri;
 
-        ViewButton(String text, URI uri){
+        ViewButton(String text, URI uri) {
             super(text);
             setup(uri);
             this.setMaximumSize(new Dimension(280, 18));
         }
 
-        public void setup(URI u){
+        public void setup(URI u) {
             uri = u;
             setToolTipText(uri.toString());
             addMouseListener(new MouseAdapter() {
@@ -188,7 +190,8 @@ public class MMSViewLinkAction extends MDAction {
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + uri.toString());
                 }
-            } else {
+            }
+            else {
                 Application.getInstance().getGUILog().log("[WARNING] Java is unable to open links on your computer. Link: " + uri.toString());
             }
         }

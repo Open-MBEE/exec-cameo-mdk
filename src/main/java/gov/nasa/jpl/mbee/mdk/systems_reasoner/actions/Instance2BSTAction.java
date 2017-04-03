@@ -4,8 +4,6 @@ import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import gov.nasa.jpl.mbee.mdk.validation.actions.SetOrCreateRedefinableElementAction;
-import gov.nasa.jpl.mbee.mdk.validation.actions.SpecializeClassifierAction;
 
 import java.awt.event.ActionEvent;
 import java.util.HashMap;

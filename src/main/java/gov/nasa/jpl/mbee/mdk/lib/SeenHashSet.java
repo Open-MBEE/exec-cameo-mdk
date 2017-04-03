@@ -38,12 +38,12 @@ import java.util.HashSet;
  * NOTE: Okay to use hash table since nothing changes based on the order. We
  * never need to iterate over the contents.
  */
-public class SeenHashSet<E> extends HashSet<E> implements Seen<E> {
+public class SeenHashSet<E> extends HashSet<E> implements SeenSet<E> {
 
     /*
      * (non-Javadoc)
      * 
-     * @see gov.nasa.jpl.ae.util.Seen#seen(java.lang.Object, boolean)
+     * @see gov.nasa.jpl.ae.util.SeenSet#seen(java.lang.Object, boolean)
      */
     @Override
     public boolean see(E element, boolean recursive) {

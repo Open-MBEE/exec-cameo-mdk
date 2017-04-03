@@ -14,10 +14,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-/**
- * Created by igomes on 9/15/16.
- */
-// TODO Lombok? @donbot
 public class Converters {
 
     private static BiFunction<Element, Project, ObjectNode> ELEMENT_TO_JSON_CONVERTER;

@@ -33,8 +33,10 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
-import com.nomagic.magicdraw.core.Application;
-import gov.nasa.jpl.mbee.mdk.ems.actions.*;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateAllDocumentsAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.ValidateBranchesAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 public class MMSConfigurator implements AMConfigurator {
