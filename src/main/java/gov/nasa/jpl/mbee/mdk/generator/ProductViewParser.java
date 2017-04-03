@@ -9,7 +9,7 @@ import gov.nasa.jpl.mbee.mdk.model.Container;
 import gov.nasa.jpl.mbee.mdk.model.DocGenElement;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.Section;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashSet;

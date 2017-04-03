@@ -29,7 +29,7 @@ import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 

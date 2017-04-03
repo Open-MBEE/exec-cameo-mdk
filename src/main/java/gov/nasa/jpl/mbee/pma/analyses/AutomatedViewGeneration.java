@@ -17,7 +17,7 @@ import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;

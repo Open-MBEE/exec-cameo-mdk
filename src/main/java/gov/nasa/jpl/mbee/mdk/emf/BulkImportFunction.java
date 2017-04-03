@@ -5,7 +5,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import java.util.Collection;
 

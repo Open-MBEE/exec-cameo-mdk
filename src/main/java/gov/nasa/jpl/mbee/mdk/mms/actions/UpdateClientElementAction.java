@@ -26,7 +26,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.validation.*;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;

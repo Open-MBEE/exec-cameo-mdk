@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

@@ -3,7 +3,7 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.queue;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;

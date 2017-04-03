@@ -38,7 +38,7 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 

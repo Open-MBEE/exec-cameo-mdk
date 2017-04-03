@@ -14,7 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.util.ClassUtils;
 import gov.nasa.jpl.mbee.mdk.util.Debug;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.junit.Assert;
 
 import javax.swing.*;

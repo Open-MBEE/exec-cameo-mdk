@@ -52,7 +52,7 @@ import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.validation.*;
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;

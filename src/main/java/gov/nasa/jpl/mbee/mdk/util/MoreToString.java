@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
-import javafx.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 
