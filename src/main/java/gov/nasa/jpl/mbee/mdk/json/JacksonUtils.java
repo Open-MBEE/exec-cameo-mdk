@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.apache.commons.lang.math.NumberUtils;
 
 import java.io.IOException;
@@ -28,7 +29,9 @@ public class JacksonUtils {
             OBJECT_MAPPER_INSTANCE = new ObjectMapper();
             if (MDUtils.isDeveloperMode()) {
                 OBJECT_MAPPER_INSTANCE.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-                OBJECT_MAPPER_INSTANCE.enable(SerializationFeature.INDENT_OUTPUT);
+                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                    OBJECT_MAPPER_INSTANCE.enable(SerializationFeature.INDENT_OUTPUT);
+                }
             }
         }
         return OBJECT_MAPPER_INSTANCE;
