@@ -224,7 +224,7 @@ public class MMSUtils {
 
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
             throws IOException {
-        File file = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '.'), null);
+        File file = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         file.deleteOnExit();
 
         String arrayName = "elements";
