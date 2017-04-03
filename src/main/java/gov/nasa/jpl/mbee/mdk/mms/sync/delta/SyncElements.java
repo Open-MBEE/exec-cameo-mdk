@@ -17,7 +17,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import java.io.IOException;
 import java.text.DateFormat;

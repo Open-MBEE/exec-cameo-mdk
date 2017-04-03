@@ -8,7 +8,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.test.elements.MDKProject;
 import org.junit.Assert;
 

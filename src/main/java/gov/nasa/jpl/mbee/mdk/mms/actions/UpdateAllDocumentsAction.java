@@ -11,7 +11,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.generator.ViewPresentationGenerator;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;

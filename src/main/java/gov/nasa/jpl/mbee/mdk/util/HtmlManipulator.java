@@ -16,7 +16,7 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package gov.nasa.jpl.mbee.mdk.lib;
+package gov.nasa.jpl.mbee.mdk.util;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -11,7 +11,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;

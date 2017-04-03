@@ -5,7 +5,7 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.impl.ElementsFactory;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.HashMap;
 import java.util.Map;

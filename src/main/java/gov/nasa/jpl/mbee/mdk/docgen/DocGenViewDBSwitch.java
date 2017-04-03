@@ -10,7 +10,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mbee.mdk.docgen.view.*;
 import gov.nasa.jpl.mbee.mdk.docgen.view.util.DocGenViewSwitch;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.ArrayList;
 

@@ -4,7 +4,7 @@ import com.nomagic.magicdraw.actions.ActionsStateUpdater;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 

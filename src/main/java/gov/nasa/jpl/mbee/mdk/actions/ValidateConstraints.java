@@ -6,8 +6,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.Configurator;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint.Type;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ConstraintValidationRule;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 

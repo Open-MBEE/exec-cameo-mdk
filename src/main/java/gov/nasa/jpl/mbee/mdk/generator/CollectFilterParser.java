@@ -18,10 +18,10 @@ import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.algorithms.TopologicalSort;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.ScriptRunner;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils2;
+import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.ScriptRunner;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils2;
 import org.apache.log4j.Logger;
 
 import javax.script.ScriptException;

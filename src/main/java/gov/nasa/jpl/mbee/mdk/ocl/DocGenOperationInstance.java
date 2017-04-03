@@ -1,8 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.ocl;
 
-import gov.nasa.jpl.mbee.mdk.lib.CompareUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Debug;
-import gov.nasa.jpl.mbee.mdk.lib.MoreToString;
+import gov.nasa.jpl.mbee.mdk.util.CompareUtils;
+import gov.nasa.jpl.mbee.mdk.util.Debug;
+import gov.nasa.jpl.mbee.mdk.util.MoreToString;
 import org.eclipse.emf.ecore.EClassifier;
 import org.eclipse.emf.ecore.EParameter;
 import org.eclipse.ocl.ecore.internal.OCLStandardLibraryImpl;

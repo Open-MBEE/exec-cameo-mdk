@@ -116,14 +116,14 @@ public class DocGenUtils {
         if (s instanceof String) {
             if (((String) s).contains("<html>")) {
                 if (convertHtml) {
-                    return gov.nasa.jpl.mbee.mdk.lib.HtmlManipulator.replaceHtmlEntities(html2docbook((String) s));
+                    return gov.nasa.jpl.mbee.mdk.util.HtmlManipulator.replaceHtmlEntities(html2docbook((String) s));
                 }
                 else {
-                    return gov.nasa.jpl.mbee.mdk.lib.Utils.stripHtmlWrapper((String) s);
+                    return gov.nasa.jpl.mbee.mdk.util.Utils.stripHtmlWrapper((String) s);
                 }
             }
             else {
-                return gov.nasa.jpl.mbee.mdk.lib.HtmlManipulator.replaceHtmlEntities(((String) s)
+                return gov.nasa.jpl.mbee.mdk.util.HtmlManipulator.replaceHtmlEntities(((String) s)
                         .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
                         .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
             }
@@ -277,7 +277,7 @@ public class DocGenUtils {
         for (ValueSpecification vs : s.getValue()) {
             values.add(fixString(vs));
         }
-        return string + gov.nasa.jpl.mbee.mdk.lib.Utils.join(values, ", ");
+        return string + gov.nasa.jpl.mbee.mdk.util.Utils.join(values, ", ");
     }
 
     /**

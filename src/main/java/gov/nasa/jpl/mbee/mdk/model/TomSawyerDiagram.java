@@ -5,7 +5,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;

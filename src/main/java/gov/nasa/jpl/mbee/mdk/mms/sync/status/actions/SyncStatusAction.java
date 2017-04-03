@@ -11,7 +11,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.ui.SyncStatusFrame;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import javax.annotation.CheckForNull;
 import javax.swing.*;

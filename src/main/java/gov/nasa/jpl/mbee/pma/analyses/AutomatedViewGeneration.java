@@ -12,7 +12,7 @@ import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
-import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;

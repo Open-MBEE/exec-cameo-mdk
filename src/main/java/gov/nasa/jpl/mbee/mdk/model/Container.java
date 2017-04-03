@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
-import gov.nasa.jpl.mbee.mdk.lib.MoreToString;
+import gov.nasa.jpl.mbee.mdk.util.MoreToString;
 
 import java.util.ArrayList;
 import java.util.List;

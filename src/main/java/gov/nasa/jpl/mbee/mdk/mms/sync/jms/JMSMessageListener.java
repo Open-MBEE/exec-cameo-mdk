@@ -15,9 +15,9 @@ import gov.nasa.jpl.mbee.mdk.mms.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.jms.*;

@@ -12,7 +12,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;

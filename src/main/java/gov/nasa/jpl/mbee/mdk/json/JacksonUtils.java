@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.apache.commons.lang.math.NumberUtils;
 

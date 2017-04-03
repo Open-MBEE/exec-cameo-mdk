@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.lib;
+package gov.nasa.jpl.mbee.mdk.util;
 
 import java.util.Collection;
 import java.util.HashSet;

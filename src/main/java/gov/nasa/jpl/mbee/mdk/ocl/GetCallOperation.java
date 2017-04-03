@@ -9,10 +9,10 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
-import gov.nasa.jpl.mbee.mdk.lib.CollectionAdder;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils.AvailableAttribute;
-import gov.nasa.jpl.mbee.mdk.lib.Utils2;
+import gov.nasa.jpl.mbee.mdk.util.CollectionAdder;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils.AvailableAttribute;
+import gov.nasa.jpl.mbee.mdk.util.Utils2;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 

@@ -8,8 +8,8 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;

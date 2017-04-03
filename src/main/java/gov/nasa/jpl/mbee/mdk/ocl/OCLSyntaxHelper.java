@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.ocl;
 
-import gov.nasa.jpl.mbee.mdk.lib.Debug;
+import gov.nasa.jpl.mbee.mdk.util.Debug;
 import lpg.runtime.IToken;
 import org.eclipse.ocl.Environment;
 import org.eclipse.ocl.expressions.*;

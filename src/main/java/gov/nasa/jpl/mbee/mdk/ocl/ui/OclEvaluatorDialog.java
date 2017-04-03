@@ -1,8 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.ocl.ui;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.MoreToString;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.MoreToString;
 import gov.nasa.jpl.mbee.mdk.ocl.actions.OclQueryAction;
 import gov.nasa.jpl.mbee.mdk.ocl.actions.OclQueryAction.ProcessOclQuery;
 import org.eclipse.ocl.util.CollectionUtil;

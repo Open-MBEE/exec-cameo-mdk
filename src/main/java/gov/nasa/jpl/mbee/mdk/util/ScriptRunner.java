@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.lib;
+package gov.nasa.jpl.mbee.mdk.util;
 
 import com.nomagic.magicdraw.automaton.AutomatonPlugin;
 import com.nomagic.magicdraw.core.Application;

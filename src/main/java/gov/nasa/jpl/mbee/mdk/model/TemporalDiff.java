@@ -8,10 +8,10 @@ import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils.AvailableAttribute;
-import gov.nasa.jpl.mbee.mdk.lib.Utils2;
+import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils.AvailableAttribute;
+import gov.nasa.jpl.mbee.mdk.util.Utils2;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

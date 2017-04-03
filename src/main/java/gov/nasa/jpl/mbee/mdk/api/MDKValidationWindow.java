@@ -33,7 +33,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;

@@ -16,7 +16,7 @@ import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.generator.GenerationContext;
-import gov.nasa.jpl.mbee.mdk.lib.*;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import javafx.util.Pair;
 

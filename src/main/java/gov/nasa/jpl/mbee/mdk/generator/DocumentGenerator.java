@@ -20,7 +20,7 @@ import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
-import gov.nasa.jpl.mbee.mdk.lib.*;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.model.*;
 
 import java.io.PrintWriter;

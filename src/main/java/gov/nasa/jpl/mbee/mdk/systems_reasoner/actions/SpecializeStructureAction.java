@@ -12,7 +12,7 @@ import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;

@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.lib;
+package gov.nasa.jpl.mbee.mdk.util;
 
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;

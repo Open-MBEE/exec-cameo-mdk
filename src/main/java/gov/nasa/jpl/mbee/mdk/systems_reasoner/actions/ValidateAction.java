@@ -3,8 +3,8 @@ package gov.nasa.jpl.mbee.mdk.systems_reasoner.actions;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils2;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils2;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.validation.SRValidationSuite;
 
 import java.awt.event.ActionEvent;

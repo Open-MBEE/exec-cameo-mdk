@@ -7,8 +7,8 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
-import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.event.ActionEvent;
 

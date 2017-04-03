@@ -7,7 +7,7 @@ import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyResourceProvider;
 import com.nomagic.magicdraw.properties.StringProperty;
 import com.nomagic.magicdraw.ui.ImageMap16;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import javax.swing.*;
 import java.io.File;

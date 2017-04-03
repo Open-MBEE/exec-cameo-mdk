@@ -4,7 +4,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.lib.*;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import javafx.util.Pair;
 import junit.framework.Assert;
 import org.eclipse.emf.ecore.EClassifier;

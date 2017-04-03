@@ -20,7 +20,7 @@ import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInfo;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.model.Section;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

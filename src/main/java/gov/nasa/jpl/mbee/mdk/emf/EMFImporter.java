@@ -21,7 +21,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.emf.ecore.*;

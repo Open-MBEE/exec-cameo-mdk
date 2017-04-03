@@ -13,7 +13,7 @@ import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;

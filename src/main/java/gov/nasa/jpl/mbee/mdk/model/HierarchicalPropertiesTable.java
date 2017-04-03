@@ -5,7 +5,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;

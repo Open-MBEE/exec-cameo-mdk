@@ -20,7 +20,7 @@ import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.lib.Debug;
+import gov.nasa.jpl.mbee.mdk.util.Debug;
 
 import java.util.*;
 

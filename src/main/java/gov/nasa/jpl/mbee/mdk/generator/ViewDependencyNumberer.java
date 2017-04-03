@@ -8,7 +8,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.List;
 

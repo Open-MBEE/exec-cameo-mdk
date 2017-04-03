@@ -10,8 +10,8 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.generator.DiagramTableTool;
-import gov.nasa.jpl.mbee.mdk.lib.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.ArrayList;
 import java.util.Collection;

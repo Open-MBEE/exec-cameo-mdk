@@ -2,7 +2,7 @@ package gov.nasa.jpl.mbee.mdk.mms.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
-import gov.nasa.jpl.mbee.mdk.lib.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import javax.swing.*;
 

@@ -13,8 +13,8 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.generator.GenerationContext;
-import gov.nasa.jpl.mbee.mdk.lib.*;
-import gov.nasa.jpl.mbee.mdk.lib.Utils.AvailableAttribute;
+import gov.nasa.jpl.mbee.mdk.util.*;
+import gov.nasa.jpl.mbee.mdk.util.Utils.AvailableAttribute;
 
 import java.util.*;
 

@@ -9,9 +9,9 @@ import com.nomagic.uml2.impl.PropertyNames;
 import com.nomagic.uml2.transaction.TransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import java.beans.PropertyChangeEvent;
