@@ -29,12 +29,13 @@ import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -199,7 +200,7 @@ public class MMSUtils {
             if (contentType != null) {
                 request.addHeader("Content-Type", contentType.getMimeType());
             }
-            InputStreamEntity reqEntity = new InputStreamEntity(new FileInputStream(sendData), sendData.length(), contentType);
+            HttpEntity reqEntity = new FileEntity(sendData, contentType);
             //reqEntity.setChunked(true);
             ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
         }
