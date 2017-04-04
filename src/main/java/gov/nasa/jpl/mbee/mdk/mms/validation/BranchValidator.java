@@ -33,6 +33,7 @@ import java.util.*;
 public class BranchValidator {
 
     private final Project project;
+    private boolean errors;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
     //    private ValidationRule twcMissingBranchValidationRule = new ValidationRule("Missing in Client", "Branch shall exist in TWC if it exists in MMS.", ViolationSeverity.WARNING);
     private ValidationRule mmsMissingBranchValidationRule = new ValidationRule("Missing on Server", "Branch shall exist in MMS if it exists in Teamwork Cloud.", ViolationSeverity.WARNING);
@@ -46,14 +47,14 @@ public class BranchValidator {
     }
 
     public void validate(ProgressStatus progressStatus, boolean allBranches) {
-        Project project = Application.getInstance().getProject();
         IPrimaryProject primaryProject = project.getPrimaryProject();
 
         if (!ProjectUtilities.isRemote(primaryProject)) {
             return;
         }
         if (EsiUtils.getLoggedUserName() == null) {
-            Utils.guilog("[INFO] You need to logged in to Teamwork Cloud first to do branch validation. Aborting.");
+            errors = true;
+            Utils.guilog("[INFO] You need to be logged in to Teamwork Cloud first to do branch validation. Aborting.");
             return;
         }
 
@@ -103,6 +104,7 @@ public class BranchValidator {
 
         URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
         if (requestUri == null) {
+            errors = true;
             Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation cancelled.");
             return;
         }
@@ -127,6 +129,7 @@ public class BranchValidator {
                 }
             }
         } catch (IOException | URISyntaxException | ServerException e) {
+            errors = true;
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS branches. Branch validation cancelled. Reason: " + e.getMessage());
             return;
@@ -208,6 +211,10 @@ public class BranchValidator {
         refObjectNode.put(MDKConstants.PARENT_REF_ID_KEY, "master");
 //        refObjectNode.put("commitId", "c7513a67-0543-4a9c-b978-a40ba65a2d07");
         return refObjectNode;
+    }
+
+    public boolean hasErrors() {
+        return this.errors;
     }
 
     public void showWindow() {
