@@ -234,28 +234,28 @@ public class MMSUtils {
         else if (jsonBlobType == JsonBlobType.REF) {
             arrayName = "refs";
         }
-        FileOutputStream outputStream = new FileOutputStream(file);
-        JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream);
-        jsonGenerator.writeStartObject();
-        jsonGenerator.writeArrayFieldStart(arrayName);
-        for (Object node : nodes) {
-            if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
-                jsonGenerator.writeObject(node);
+        try (FileOutputStream outputStream = new FileOutputStream(file);
+                JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeArrayFieldStart(arrayName);
+            for (Object node : nodes) {
+                if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
+                    jsonGenerator.writeObject(node);
+                }
+                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
+                    jsonGenerator.writeStartObject();
+                    jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
+                    jsonGenerator.writeEndObject();
+                }
+                else {
+                    throw new IOException("Unsupported collection type for entity file.");
+                }
             }
-            else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
-                jsonGenerator.writeStartObject();
-                jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
-                jsonGenerator.writeEndObject();
-            }
-            else {
-                throw new IOException("Unsupported collection type for entity file.");
-            }
+            jsonGenerator.writeEndArray();
+            jsonGenerator.writeStringField("source", "magicdraw");
+            jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
+            jsonGenerator.writeEndObject();
         }
-        jsonGenerator.writeEndArray();
-        jsonGenerator.writeStringField("source", "magicdraw");
-        jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
-        jsonGenerator.writeEndObject();
-        jsonGenerator.close();
         System.out.println(file.getPath());
         return file;
     }
@@ -287,8 +287,7 @@ public class MMSUtils {
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
              InputStream inputStream = response.getEntity().getContent();
-             OutputStream outputStream = new FileOutputStream(targetFile)
-        ) {
+             OutputStream outputStream = new FileOutputStream(targetFile)) {
             // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
