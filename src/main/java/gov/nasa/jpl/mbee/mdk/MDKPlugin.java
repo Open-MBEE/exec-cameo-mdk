@@ -17,6 +17,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -73,6 +74,11 @@ public class MDKPlugin extends Plugin {
         getVersion();
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
         System.setProperty("jsse.enableSNIExtension", "false");
+        if (MDUtils.isDeveloperMode()) {
+            System.setProperty("org.apache.commons.logging.Log","org.apache.commons.logging.impl.SimpleLog");
+            System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
+            System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http.wire", "DEBUG");
+        }
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);

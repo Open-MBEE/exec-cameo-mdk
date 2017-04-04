@@ -32,12 +32,13 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -203,7 +204,7 @@ public class MMSUtils {
             if (contentType != null) {
                 request.addHeader("Content-Type", contentType.getMimeType());
             }
-            InputStreamEntity reqEntity = new InputStreamEntity(new FileInputStream(sendData), sendData.length(), contentType);
+            HttpEntity reqEntity = new FileEntity(sendData, contentType);
             //reqEntity.setChunked(true);
             ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
         }
@@ -227,7 +228,7 @@ public class MMSUtils {
 
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
             throws IOException {
-        File file = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '.'), null);
+        File file = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         file.deleteOnExit();
 
         String arrayName = "elements";
@@ -237,29 +238,29 @@ public class MMSUtils {
         else if (jsonBlobType == JsonBlobType.REF) {
             arrayName = "refs";
         }
-        FileOutputStream outputStream = new FileOutputStream(file);
-        JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream);
-        jsonGenerator.writeStartObject();
-        jsonGenerator.writeArrayFieldStart(arrayName);
-        for (Object node : nodes) {
-            if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
-                jsonGenerator.writeObject(node);
+        try (FileOutputStream outputStream = new FileOutputStream(file);
+                JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeArrayFieldStart(arrayName);
+            for (Object node : nodes) {
+                if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
+                    jsonGenerator.writeObject(node);
+                }
+                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
+                    jsonGenerator.writeStartObject();
+                    jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
+                    jsonGenerator.writeEndObject();
+                }
+                else {
+                    throw new IOException("Unsupported collection type for entity file.");
+                }
             }
-            else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
-                jsonGenerator.writeStartObject();
-                jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
-                jsonGenerator.writeEndObject();
-            }
-            else {
-                throw new IOException("Unsupported collection type for entity file.");
-            }
+            jsonGenerator.writeEndArray();
+            jsonGenerator.writeStringField("source", "magicdraw");
+            jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
+            jsonGenerator.writeEndObject();
         }
-        jsonGenerator.writeEndArray();
-        jsonGenerator.writeStringField("source", "magicdraw");
-        jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
-        jsonGenerator.writeEndObject();
-        jsonGenerator.close();
-//        System.out.println(file.getPath());
+        System.out.println(file.getPath());
         return file;
     }
 
@@ -287,8 +288,7 @@ public class MMSUtils {
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
              InputStream inputStream = response.getEntity().getContent();
-             OutputStream outputStream = new FileOutputStream(targetFile)
-        ) {
+             OutputStream outputStream = new FileOutputStream(targetFile)) {
             // get data out of the response
             int responseCode = response.getStatusLine().getStatusCode();
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
@@ -308,15 +308,7 @@ public class MMSUtils {
             else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
                 MMSLogoutAction.logoutAction(project);
-                if (MMSLoginAction.loginAction(project)) {
-                    URIBuilder newRequestUri = new URIBuilder(request.getURI());
-                    newRequestUri.setParameter("alf_ticket", TicketUtils.getTicket(project));
-                    request.setURI(newRequestUri.build());
-                    return sendMMSRequest(project, request);
-                }
-                else {
-                    throwServerException = true;
-                }
+                throwServerException = true;
             }
             // if it's anything else, assume failure and break normal flow
             else {
