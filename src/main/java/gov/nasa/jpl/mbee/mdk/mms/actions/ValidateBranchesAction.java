@@ -21,9 +21,13 @@ public class ValidateBranchesAction extends MMSAction {
 
         @Override
         public void run(ProgressStatus arg0) {
-            BranchValidator v = new BranchValidator(Application.getInstance().getProject());
-            v.validate(arg0, false);
-            v.showWindow();
+            BranchValidator branchValidator = new BranchValidator(Application.getInstance().getProject());
+            branchValidator.validate(arg0, true);
+            if (branchValidator.hasErrors()) {
+                Application.getInstance().getGUILog().log("[ERROR] Unable to complete validate branches action.");
+                return;
+            }
+            branchValidator.showWindow();
         }
     }
 
@@ -36,6 +40,5 @@ public class ValidateBranchesAction extends MMSAction {
     public void updateState() {
         setEnabled(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
     }
-
 
 }
