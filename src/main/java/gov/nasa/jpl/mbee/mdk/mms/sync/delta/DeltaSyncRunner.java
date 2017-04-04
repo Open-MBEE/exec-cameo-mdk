@@ -74,7 +74,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         ProjectValidator pv = new ProjectValidator(project);
         pv.validate();
         if (pv.hasErrors()) {
-            Application.getInstance().getGUILog().log("[ERROR] Coordinated sync can not complete and will be skipped.");
+            Application.getInstance().getGUILog().log("[WARNING] Coordinated sync can not complete and will be skipped.");
             return;
         }
         if (pv.getValidationSuite().hasErrors()) {
@@ -86,7 +86,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         BranchValidator bv = new BranchValidator(project);
         bv.validate(null, false);
         if (bv.hasErrors()) {
-            Application.getInstance().getGUILog().log("[ERROR] Coordinated sync can not complete and will be skipped.");
+            Application.getInstance().getGUILog().log("[WARNING] Coordinated sync can not complete and will be skipped.");
             return;
         }
         if (bv.getValidationSuite().hasErrors()) {
@@ -108,7 +108,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
         if (jmsMessageListener == null) {
             if (MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
-                Application.getInstance().getGUILog().log("[ERROR] Not connected to MMS queue. Skipping sync. All changes will be re-attempted in the next sync.");
+                Application.getInstance().getGUILog().log("[WARNING] Not connected to MMS queue. Skipping sync. All changes will be re-attempted in the next sync.");
             }
             return;
         }

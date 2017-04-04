@@ -33,7 +33,7 @@ import java.util.*;
 public class BranchValidator {
 
     private final Project project;
-    private boolean errors = false;
+    private boolean errors;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
     //    private ValidationRule twcMissingBranchValidationRule = new ValidationRule("Missing in Client", "Branch shall exist in TWC if it exists in MMS.", ViolationSeverity.WARNING);
     private ValidationRule mmsMissingBranchValidationRule = new ValidationRule("Missing on Server", "Branch shall exist in MMS if it exists in Teamwork Cloud.", ViolationSeverity.WARNING);

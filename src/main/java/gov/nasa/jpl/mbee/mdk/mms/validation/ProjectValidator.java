@@ -28,7 +28,7 @@ import java.net.URISyntaxException;
 public class ProjectValidator {
 
     private final Project project;
-    private boolean errors = false;
+    private boolean errors;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
     private ValidationRule projectExistenceValidationRule = new ValidationRule("Project Existence", "The project shall exist in the specified site.", ViolationSeverity.ERROR);
 
