@@ -260,7 +260,7 @@ public class MMSUtils {
             jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
             jsonGenerator.writeEndObject();
         }
-        System.out.println(file.getPath());
+        System.out.println("Request Body: " + file.getPath());
         return file;
     }
 
@@ -294,8 +294,8 @@ public class MMSUtils {
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
             // debug / logging output from response
-//            System.out.println(targetFile.getPath());
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
+            System.out.println("Response Body: " + targetFile.getPath());
 
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
             boolean throwServerException = false;
