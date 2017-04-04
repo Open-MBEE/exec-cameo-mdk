@@ -307,15 +307,7 @@ public class MMSUtils {
             else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
                 MMSLogoutAction.logoutAction(project);
-                if (MMSLoginAction.loginAction(project)) {
-                    URIBuilder newRequestUri = new URIBuilder(request.getURI());
-                    newRequestUri.setParameter("alf_ticket", TicketUtils.getTicket(project));
-                    request.setURI(newRequestUri.build());
-                    return sendMMSRequest(project, request);
-                }
-                else {
-                    throwServerException = true;
-                }
+                throwServerException = true;
             }
             // if it's anything else, assume failure and break normal flow
             else {
