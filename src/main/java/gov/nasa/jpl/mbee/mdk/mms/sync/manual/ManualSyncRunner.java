@@ -120,9 +120,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
             return;
         }
         elements.add(new Pair<>(element, jsonObject));
-        if (depth != 0) {
+        if (depth-- != 0) {
             for (Element elementChild : element.getOwnedElement()) {
-                collectClientElementsRecursively(project, elementChild, --depth, elements);
+                collectClientElementsRecursively(project, elementChild, depth, elements);
             }
         }
         if (element.equals(project.getPrimaryModel())) {
