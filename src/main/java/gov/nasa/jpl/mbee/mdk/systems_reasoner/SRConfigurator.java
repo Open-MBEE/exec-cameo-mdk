@@ -23,7 +23,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     public static final String ID = "Specialize Structure";
     public static final String ID_RECURSIVE = "Specialize Structure Recursively";
     public static final String ID_RECURSIVE_INDIVIDUAL = "Specialize Recursively & Individually";
-    private SRAction validateAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
+    private SRAction validateAction = null, importCSVAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
 
     @Override
     public int getPriority() {
@@ -62,6 +62,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         createInstanceMenuAction = null;
         instance2BSTAction = null;
         aspectAction = null;
+        importCSVAction = null;
         copyAction = null;
 
         ActionsCategory category = (ActionsCategory) manager.getActionFor("SRMain");
@@ -74,11 +75,9 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
         if (elements.size() > 1) {
             category = handleMultipleNodes(category, manager, elements);
-        }
-        else if (elements.size() == 1) {
+        } else if (elements.size() == 1) {
             category = handleSingleNode(category, manager, elements.get(0));
-        }
-        else {
+        } else {
             return;
         }
 
@@ -94,6 +93,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             }
         }
         category.addAction(copyAction);
+        category.addAction(importCSVAction);
         category.addAction(specializeStructureAction);
         category.addAction(specializeStructureRecursiveAction);
         category.addAction(createBSTAction);
@@ -123,8 +123,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
                 if (element instanceof Classifier) {
                     classifiers.add((Classifier) element);
                     validatableElements.add(element);
-                }
-                else if (element instanceof InstanceSpecification) {
+                } else if (element instanceof InstanceSpecification) {
                     instances.add((InstanceSpecification) element);
                     validatableElements.add(element);
                 }
@@ -162,6 +161,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         if (element instanceof Classifier) {
             final Classifier classifier = (Classifier) element;
             validateAction = new ValidateAction(classifier);
+            importCSVAction = new ImportCSVAction(classifier);
             ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
 
             specializeStructureAction = new SpecializeStructureAction(classifier, false, ID, false, false);
@@ -174,15 +174,13 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             if (classifier instanceof Behavior) {
 
             }
-        }
-        else if (element instanceof InstanceSpecification) {
+        } else if (element instanceof InstanceSpecification) {
             final InstanceSpecification instance = (InstanceSpecification) element;
             validateAction = new ValidateAction(instance);
             ArrayList<InstanceSpecification> insts = new ArrayList();
             insts.add(instance);
             instance2BSTAction = new Instance2BSTAction(insts);
-        }
-        else {
+        } else {
             return null;
         }
         return category;
