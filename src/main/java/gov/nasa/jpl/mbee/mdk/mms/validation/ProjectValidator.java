@@ -28,7 +28,7 @@ import java.net.URISyntaxException;
 public class ProjectValidator {
 
     private final Project project;
-
+    private boolean errors;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
     private ValidationRule projectExistenceValidationRule = new ValidationRule("Project Existence", "The project shall exist in the specified site.", ViolationSeverity.ERROR);
 
@@ -38,11 +38,10 @@ public class ProjectValidator {
     }
 
     public void validate() {
-        Project project = Application.getInstance().getProject();
-
         URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
         if (requestUri == null) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Project validation cancelled.");
+            errors = true;
             return;
         }
         requestUri.setPath(requestUri.getPath() + "/" + Converters.getProjectToIdConverter().apply(project));
@@ -50,6 +49,7 @@ public class ProjectValidator {
         try {
             response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
         } catch (IOException | ServerException | URISyntaxException e) {
+            errors = true;
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS projects. Project validation cancelled. Reason: " + e.getMessage());
             return;
@@ -74,6 +74,10 @@ public class ProjectValidator {
             v = new ValidationRuleViolation(project.getPrimaryModel(), "[PROJECT MISSING ON MMS] The project does not exist in the MMS. You must initialize the project from the master branch first.");
         }
         projectExistenceValidationRule.addViolation(v);
+    }
+
+    public boolean hasErrors() {
+        return this.errors;
     }
 
     public ValidationSuite getValidationSuite() {

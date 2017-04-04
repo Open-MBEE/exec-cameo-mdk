@@ -126,7 +126,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToDelete.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToDelete.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();

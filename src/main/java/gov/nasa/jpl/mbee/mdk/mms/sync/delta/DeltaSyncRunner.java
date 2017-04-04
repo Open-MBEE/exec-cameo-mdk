@@ -73,6 +73,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         ProjectValidator pv = new ProjectValidator(project);
         pv.validate();
+        if (pv.hasErrors()) {
+            Application.getInstance().getGUILog().log("[WARNING] Coordinated sync can not complete and will be skipped.");
+            return;
+        }
         if (pv.getValidationSuite().hasErrors()) {
             Application.getInstance().getGUILog().log("[WARNING] Project has not been committed to MMS. Skipping sync. You must commit the project and model to MMS before Coordinated Sync can complete.");
             Utils.displayValidationWindow(project, pv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
@@ -81,9 +85,14 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         BranchValidator bv = new BranchValidator(project);
         bv.validate(null, false);
+        if (bv.hasErrors()) {
+            Application.getInstance().getGUILog().log("[WARNING] Coordinated sync can not complete and will be skipped.");
+            return;
+        }
         if (bv.getValidationSuite().hasErrors()) {
             Application.getInstance().getGUILog().log("[WARNING] Branch has not been committed to MMS. Skipping sync. You must commit the branch to MMS and sync the model before Coordinated Sync can complete.");
             Utils.displayValidationWindow(project, bv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
+            return;
         }
 
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
@@ -99,7 +108,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
         if (jmsMessageListener == null) {
             if (MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()) {
-                Application.getInstance().getGUILog().log("[ERROR] Not connected to MMS queue. Skipping sync. All changes will be re-attempted in the next sync.");
+                Application.getInstance().getGUILog().log("[WARNING] Not connected to MMS queue. Skipping sync. All changes will be re-attempted in the next sync.");
             }
             return;
         }
