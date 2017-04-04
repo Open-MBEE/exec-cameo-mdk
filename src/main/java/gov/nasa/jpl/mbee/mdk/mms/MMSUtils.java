@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -15,6 +16,7 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -27,6 +29,7 @@ import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -39,7 +42,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -47,6 +49,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.swing.*;
 
 public class MMSUtils {
 
@@ -255,7 +259,7 @@ public class MMSUtils {
         jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
         jsonGenerator.writeEndObject();
         jsonGenerator.close();
-        System.out.println(file.getPath());
+//        System.out.println(file.getPath());
         return file;
     }
 
@@ -270,7 +274,6 @@ public class MMSUtils {
     public static JsonParser sendMMSRequest(Project project, HttpRequestBase request)
             throws IOException, ServerException, URISyntaxException {
         File targetFile = File.createTempFile("Response-", null);
-        System.out.println(targetFile.getPath());
         targetFile.deleteOnExit();
         HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
         boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson();
@@ -281,8 +284,6 @@ public class MMSUtils {
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
              InputStream inputStream = response.getEntity().getContent();
@@ -293,13 +294,14 @@ public class MMSUtils {
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
             // debug / logging output from response
+//            System.out.println(targetFile.getPath());
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
 
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
             boolean throwServerException = false;
 
-            // assume that 404s with json response bodies are "missing resource" 404s, which are expected for some cases and should not break normal execution flow
-            if (responseCode == HttpURLConnection.HTTP_OK || (responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8"))) {
+            // assume that a GET that returns 404 with json response bodies is a "missing resource" 404, which are expected for some cases and should not break normal execution flow
+            if (responseCode == HttpURLConnection.HTTP_OK || (request.getMethod().equals("GET") && responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8"))) {
                 // continue
             }
             // allow re-attempt of request if credentials have expired or are invalid
@@ -459,8 +461,8 @@ public class MMSUtils {
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
             boolean throwServerException = false;
 
-            // if it's anything else outside of the 200 range, assume failure and break normal flow
-            if (responseCode != 200) {
+            // if it's not 200, failure and break normal flow
+            if (responseCode != HttpURLConnection.HTTP_OK) {
                 Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 throwServerException = true;
             }
@@ -529,8 +531,8 @@ public class MMSUtils {
             // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
             boolean throwServerException = false;
 
-            // if it's anything  200 range, assume failure and break normal flow
-            if (responseCode != 200) {
+            // if it's not 200 or expected 404, failure and break normal flow
+            if (responseCode != HttpURLConnection.HTTP_OK || (responseCode == HttpURLConnection.HTTP_NOT_FOUND && !responseType.equals("application/json;charset=UTF-8"))) {
                 Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 throwServerException = true;
             }
