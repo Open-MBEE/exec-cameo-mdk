@@ -493,11 +493,11 @@ public class MMSUtils {
         return null;
     }
 
-    public static boolean validateCredentials(Project project, String ticket)
+    public static String validateCredentials(Project project, String ticket)
             throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
-            return false;
+            return "";
         }
         requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticket);
         requestUri.clearParameters();
@@ -508,7 +508,8 @@ public class MMSUtils {
 
         // do request
         System.out.println("MMS Request [GET] " + requestUri.toString());
-        String message = "";
+        ObjectNode responseJson;
+        JsonNode value;
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
              InputStream inputStream = response.getEntity().getContent()) {
@@ -520,35 +521,26 @@ public class MMSUtils {
             // debug / logging output from response
             System.out.println("MMS Response [GET] " + requestUri.toString() + " - Code: " + responseCode);
 
-            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
-            boolean throwServerException = false;
-
-            // if it's not 200 or expected 404, failure and break normal flow
-            if (responseCode != HttpURLConnection.HTTP_OK || (responseCode == HttpURLConnection.HTTP_NOT_FOUND && !responseType.equals("application/json;charset=UTF-8"))) {
-                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                throwServerException = true;
-            }
-
-            // print server message if possible
-            if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
-                ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
-                JsonNode value;
-                // display single response message
-                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                    message = value.asText();
-                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
+            if (responseCode == 200) {
+                if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
+                    responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+                    if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                        Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
+                    }
+                    if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
+                        return value.asText();
+                    }
                 }
+                return "";
             }
-
-            if (throwServerException) {
+            else {
+                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
                 // big flashing red letters that the action failed, or as close as we're going to get
                 Utils.showPopupMessage("Action failed. See notification window for details.");
                 // throw is done last, after printing the error and any messages that might have been returned
                 throw new ServerException(responseBody, responseCode);
             }
         }
-        // parse response
-        return message.equals("Ticket not found");
     }
 
     /**

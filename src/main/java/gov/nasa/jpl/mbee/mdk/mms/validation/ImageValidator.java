@@ -76,7 +76,8 @@ public class ImageValidator {
                 e1.printStackTrace();
                 return;
             }
-            if ((value = response.get("message")) != null && value.isTextual() && value.asText().contains("not found")) {
+            if (((value = response.get("message")) == null || !value.isTextual() || value.asText().contains("not found"))
+                    || ((value = response.get("cs")) == null || !value.isTextual() || !value.asText().equals(cs))) {
                 ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web.");
                 v.addAction(new ExportImage(e, allImages));
                 rule.addViolation(v);

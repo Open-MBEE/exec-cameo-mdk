@@ -7,7 +7,7 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateAllDocumentsAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.ValidateBranchesAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
@@ -33,7 +33,7 @@ public class MMSConfigurator implements AMConfigurator {
         MMSLogoutAction logout = new MMSLogoutAction();
         category.addAction(logout);
 
-        UpdateAllDocumentsAction uada = new UpdateAllDocumentsAction();
+        GenerateAllDocumentsAction uada = new GenerateAllDocumentsAction();
         category.addAction(uada);
 
         if (MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {

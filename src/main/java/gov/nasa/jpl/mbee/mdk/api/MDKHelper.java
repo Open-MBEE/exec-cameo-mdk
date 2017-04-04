@@ -49,7 +49,7 @@ import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateAllDocumentsAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
@@ -303,7 +303,7 @@ public class MDKHelper {
     }
 
     public static void generateAllDocuments(Project project) {
-        UpdateAllDocumentsAction uad = new UpdateAllDocumentsAction();
+        GenerateAllDocumentsAction uad = new GenerateAllDocumentsAction();
         validationWindow = new MDKValidationWindow(uad.updateAction(project));
     }
 

@@ -61,15 +61,6 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             // skip csync
             return;
         }
-        if (!TicketUtils.isTicketValid(project)) {
-            Application.getInstance().getGUILog().log("[INFO] User is not logged in to MMS or login has expired. Coordinated sync will be skipped for this commit. Attempting to reconnect to MMS for next commit.");
-            new Thread() {
-                public void run() {
-                    MMSLoginAction.loginAction(project);
-                }
-            }.start();
-            return;
-        }
         deltaSyncRunner = new DeltaSyncRunner(true, true, true);
         ProgressStatusRunner.runWithProgressStatus(deltaSyncRunner, "Coordinated Sync", true, 0);
     }

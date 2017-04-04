@@ -66,7 +66,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
-        if (!TicketUtils.isTicketValid(project)) {
+        if (!TicketUtils.isTicketSet(project)) {
             Utils.guilog("[WARNING] You need to be logged in to MMS first. Skipping sync. All changes will be re-attempted in the next sync.");
             return;
         }
