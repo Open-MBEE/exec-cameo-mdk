@@ -100,16 +100,16 @@ public class ImportCSVAction extends SRAction {
                             LiteralSpecification vs = null;
                             if (((Property) el).getType() instanceof DataType) {
                                 if (!props[jj].isEmpty()) {
-                                    if (((Property) el).getType().getName().equals("String")) {
+                                    if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_479030_4092")) {
                                         vs = UMLFactory.eINSTANCE.createLiteralString();
                                         ((LiteralString) vs).setValue(props[jj]);
-                                    } else if (((Property) el).getType().getName().equals("Real")) {
+                                    } else if (((Property) el).getType().getID().equals("_11_5EAPbeta_be00301_1147431819399_50461_1671")) {
                                         vs = UMLFactory.eINSTANCE.createLiteralReal();
                                         ((LiteralReal) vs).setValue(Double.parseDouble(props[jj]));
-                                    } else if (((Property) el).getType().getName().equals("Boolean")) {
+                                    } else if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_39033_4086")) {
                                         vs = UMLFactory.eINSTANCE.createLiteralBoolean();
                                         ((LiteralBoolean) vs).setValue(Boolean.parseBoolean(props[jj]));
-                                    } else if (((Property) el).getType().getName().equals("Integer")) {
+                                    } else if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_8641_4088")) {
                                         vs = UMLFactory.eINSTANCE.createLiteralInteger();
                                         ((LiteralInteger) vs).setValue(Integer.parseInt(props[jj]));
                                     }
