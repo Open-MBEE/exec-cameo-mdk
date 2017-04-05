@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.mms.actions;
 
 import com.nomagic.magicdraw.actions.ActionsStateUpdater;
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
@@ -10,7 +11,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 
 import java.awt.event.ActionEvent;
 
-public class MMSLogoutAction extends MMSAction {
+public class MMSLogoutAction extends MDAction {
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "Logout";
 
@@ -32,6 +33,11 @@ public class MMSLogoutAction extends MMSAction {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
         }
         SyncStatusConfigurator.getSyncStatusAction().update();
+    }
+
+    @Override
+    public void updateState() {
+        setEnabled(TicketUtils.isTicketSet(Application.getInstance().getProject()));
     }
 
 }

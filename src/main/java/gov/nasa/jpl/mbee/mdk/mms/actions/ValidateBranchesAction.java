@@ -6,6 +6,7 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import java.awt.event.ActionEvent;
 
@@ -38,7 +39,7 @@ public class ValidateBranchesAction extends MMSAction {
 
     @Override
     public void updateState() {
-        setEnabled(MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
+        setEnabled(TicketUtils.isTicketSet(Application.getInstance().getProject()) && !super.isDisabled() && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
     }
 
 }

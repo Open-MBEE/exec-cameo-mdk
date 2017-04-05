@@ -165,7 +165,6 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         exceptionHandlerRunning.set(true);
-        MMSAction.setDisabled(exceptionHandlerRunning.get());
         Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
         JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().setDisabled(true);
         while (shouldAttemptToReconnect()) {
@@ -193,7 +192,6 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
         reconnectionAttempts = 0;
         exceptionHandlerRunning.set(false);
-        MMSAction.setDisabled(exceptionHandlerRunning.get());
     }
 
     private boolean shouldAttemptToReconnect() {

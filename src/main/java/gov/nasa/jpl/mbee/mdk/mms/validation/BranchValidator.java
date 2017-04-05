@@ -47,6 +47,9 @@ public class BranchValidator {
     }
 
     public void validate(ProgressStatus progressStatus, boolean allBranches) {
+        if (project == null) {
+            return;
+        }
         IPrimaryProject primaryProject = project.getPrimaryProject();
 
         if (!ProjectUtilities.isRemote(primaryProject)) {

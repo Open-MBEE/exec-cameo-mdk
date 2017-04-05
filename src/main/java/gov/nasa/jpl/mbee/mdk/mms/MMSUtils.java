@@ -232,7 +232,10 @@ public class MMSUtils {
         file.deleteOnExit();
 
         String arrayName = "elements";
-        if (jsonBlobType == JsonBlobType.PROJECT) {
+        if (jsonBlobType == JsonBlobType.ORG) {
+            arrayName = "orgs";
+        }
+        else if (jsonBlobType == JsonBlobType.PROJECT) {
             arrayName = "projects";
         }
         else if (jsonBlobType == JsonBlobType.REF) {

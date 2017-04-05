@@ -67,8 +67,14 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
             return;
         }
-        if (!TicketUtils.isTicketSet(project)) {
-            Utils.guilog("[WARNING] You are not logged in to MMS. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
+        try {
+            if (!TicketUtils.isTicketValid(project)) {
+                Utils.guilog("[WARNING] You are not logged in to MMS. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
+                MMSLoginAction.loginAction(project);
+                return;
+            }
+        } catch (ServerException | IOException | URISyntaxException e) {
+            Utils.guilog("[ERROR] Exception occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
             MMSLoginAction.loginAction(project);
             return;
         }
@@ -76,7 +82,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         ProjectValidator pv = new ProjectValidator(project);
         pv.validate();
         if (pv.hasErrors()) {
-            Application.getInstance().getGUILog().log("[WARNING] Coordinated sync can not complete and will be skipped.");
+            Application.getInstance().getGUILog().log("[WARNING] Coordinated Sync can not complete and will be skipped.");
             return;
         }
         if (pv.getValidationSuite().hasErrors()) {
