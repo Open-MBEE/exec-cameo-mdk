@@ -149,7 +149,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
         }
 
-        ActionsCategory modelLoad = myCategory(manager, "MMS", "MMS");
+        ActionsCategory modelLoad = myCategory(manager, "MMSContext", "MMS");
         if (!TicketUtils.isTicketSet(project)) {
             ActionsCategory login = getCategory(manager, "LoginOption", "LoginOption", modelLoad);
             if (manager.getActionFor(MMSLoginAction.DEFAULT_ID) == null) {
@@ -234,7 +234,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 }
             }
 
-            ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
+            ActionsCategory modelLoad2 = myCategory(manager, "MMSContext", "MMS");
             ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
             NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
             if (action == null) {
