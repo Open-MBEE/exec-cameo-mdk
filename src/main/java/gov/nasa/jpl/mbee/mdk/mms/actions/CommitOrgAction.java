@@ -78,11 +78,11 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             responseParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
             JsonNode arrayNode;
-            if (response != null && (arrayNode = response.get("elements")) != null && arrayNode.isArray()) {
+            if (response != null && (arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
                 for (JsonNode orgNode : arrayNode) {
                     JsonNode value;
                     if ((value = orgNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                        if (value.asText().equals("org")) {
+                        if (value.asText().equals(org)) {
                             Application.getInstance().getGUILog().log("[WARNING] Org already exists. Org commit cancelled.");
                             return org;
                         }

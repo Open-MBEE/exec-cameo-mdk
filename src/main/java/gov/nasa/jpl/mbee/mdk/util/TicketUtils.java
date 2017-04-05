@@ -196,11 +196,15 @@ public class TicketUtils {
      */
     private static boolean acquireTicket(Project project, String pass) {
         if (username == null || username.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username.");
             return false;
         }
         if (pass == null) {
             return false;
+        }
+        if (isTicketSet(project)) {
+            Application.getInstance().getGUILog().log("[INFO] Clearing previous credentials.");
+            MMSLogoutAction.logoutAction(project);
         }
 
         //ensure ticket is cleared in case of failure

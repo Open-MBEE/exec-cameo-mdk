@@ -148,42 +148,34 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(es));
             }
         }
-        //manager.addCategory(refactorWithIDActionCat);
 
         ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
-        if (TicketUtils.isTicketSet(project) && !MMSAction.isDisabled()) {
-            ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
-            if (MDUtils.isDeveloperMode()) {
-                if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
-                    models.addAction(new CommitProjectAction(project, false, true));
-                    models.addAction(new CommitProjectAction(project, true, true));
-                }
-            }
-            if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateModelAction(es, (project.getPrimaryModel() == e) ? "Validate Models" : "Validate Models"));
-            }
-            if (manager.getActionFor(ValidateElementAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateElementAction(es, (project.getPrimaryModel() == e) ? "Validate Element" : "Validate Element"));
-            }
-            if (manager.getActionFor(ValidateElementDepthAction.DEFAULT_ID) == null) {
-                models.addAction(new ValidateElementDepthAction(es, (project.getPrimaryModel() == e) ? "Validate Models (specified depth)" : "Validate Models (specified depth)"));
-            }
-
-            /*if (e instanceof Package) {
-                if (manager.getActionFor(ExportAllDocuments.DEFAULT_ID) == null)
-                    models.addAction(new ExportAllDocuments(e));
-            }*/
-        }
-        else {
-            ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
+        if (!TicketUtils.isTicketSet(project)) {
+            ActionsCategory login = getCategory(manager, "Login", "Login", modelLoad);
             if (manager.getActionFor(MMSLoginAction.DEFAULT_ID) == null) {
                 login.addAction(new MMSLoginAction());
             }
-            // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
-            //final MDAction mda = new MDAction(null, null, null, "null");
-            //mda.updateState();
-            //mda.setEnabled(false);
-            //modelLoad.addAction(mda);
+        }
+        // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
+        //final MDAction mda = new MDAction(null, null, null, "null");
+        //mda.updateState();
+        //mda.setEnabled(false);
+        //modelLoad.addAction(mda);
+        ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
+        if (MDUtils.isDeveloperMode()) {
+            if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
+                models.addAction(new CommitProjectAction(project, false, true));
+                models.addAction(new CommitProjectAction(project, true, true));
+            }
+        }
+        if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {
+            models.addAction(new ValidateModelAction(es, "Validate Models"));
+        }
+        if (manager.getActionFor(ValidateElementDepthAction.DEFAULT_ID) == null) {
+            models.addAction(new ValidateElementDepthAction(es, "Validate Models (specified depth)"));
+        }
+        if (manager.getActionFor(ValidateElementAction.DEFAULT_ID) == null) {
+            models.addAction(new ValidateElementAction(es, "Validate Element"));
         }
         ActionsStateUpdater.updateActionsState();
 
@@ -243,46 +235,23 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
 
             ActionsCategory modelLoad2 = myCategory(manager, "AlfrescoModel", "MMS");
-            if (TicketUtils.isTicketSet(project) && !MMSAction.isDisabled()) {
-
-                ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
-                NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
-                if (action == null) {
-                    viewInstances.addAction(new GenerateViewPresentationAction(es, false));
-                }
-                action = manager.getActionFor(GenerateViewPresentationAction.RECURSE_DEFAULT_ID);
-                if (action == null) {
-                    viewInstances.addAction(new GenerateViewPresentationAction(es, true));
-                }
-                /*action = manager.getActionFor(OrganizeViewInstancesAction.DEFAULT_ID);
-                if (action == null) {
-                    viewInstances.addAction(new OrganizeViewInstancesAction(es, false));
-                }
-                action = manager.getActionFor(OrganizeViewInstancesAction.RECURSE_DEFAULT_ID);
-                if (action == null) {
-                    viewInstances.addAction(new OrganizeViewInstancesAction(es, true));
-                }
-                action = manager.getActionFor(OneClickUpdateDoc.DEFAULT_ID);
-                if (action == null) {
-                    viewInstances.addAction(new OneClickUpdateDoc(es));
-                }*/
+            ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
+            NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
+            if (action == null) {
+                viewInstances.addAction(new GenerateViewPresentationAction(es, false));
             }
-            else {
-                ActionsCategory login = getCategory(manager, "Login to MMS", "Login to MMS", modelLoad);
-                if (manager.getActionFor(MMSLoginAction.DEFAULT_ID) == null) {
-                    login.addAction(new MMSLoginAction());
-                }
-                // Ivan: Little hack to disable category by adding a disabled child action and deriving category state using useActionForDisable
-                //final MDAction mda = new MDAction(null, null, null, "null");
-                //mda.updateState();
-                //mda.setEnabled(false);
-                //modelLoad2.addAction(mda);
+            action = manager.getActionFor(GenerateViewPresentationAction.RECURSE_DEFAULT_ID);
+            if (action == null) {
+                viewInstances.addAction(new GenerateViewPresentationAction(es, true));
             }
 
-            if (StereotypesHelper.hasStereotype(Project.getProject(e).getPrimaryModel(), "ModelManagementSystem")) {
+            String url;
+            if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")
+                    && (url = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS URL")) != null
+                    && !url.isEmpty()) {
                 ActionsCategory tracingCategory = manager.getCategory("TRACING_CATEGORY");
                 if (tracingCategory != null) {
-                    NMAction action = manager.getActionFor(MMSViewLinkAction.DEFAULT_ID);
+                    action = manager.getActionFor(MMSViewLinkAction.DEFAULT_ID);
                     if (action == null) {
                         tracingCategory.addAction(new MMSViewLinkAction(es));
                     }

@@ -27,20 +27,21 @@ public class MMSConfigurator implements AMConfigurator {
         ((ActionsCategory) category).setNested(true);
         manager.addCategory((ActionsCategory) category);
 
-        MMSLoginAction login = new MMSLoginAction();
-        category.addAction(login);
+        MMSLoginAction mmsLoginAction = new MMSLoginAction();
+        category.addAction(mmsLoginAction);
 
-        MMSLogoutAction logout = new MMSLogoutAction();
-        category.addAction(logout);
+        MMSLogoutAction mmsLogoutAction = new MMSLogoutAction();
+        category.addAction(mmsLogoutAction);
 
-        GenerateAllDocumentsAction uada = new GenerateAllDocumentsAction();
-        category.addAction(uada);
+        GenerateAllDocumentsAction generateAllDocumentsAction = new GenerateAllDocumentsAction();
+        category.addAction(generateAllDocumentsAction);
 
         if (MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
             MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
             validateCategory.setNested(true);
             category.addAction(validateCategory);
-            validateCategory.addAction(new ValidateBranchesAction());
+            ValidateBranchesAction validateBranchesAction = new ValidateBranchesAction();
+            validateCategory.addAction(validateBranchesAction);
         }
     }
 

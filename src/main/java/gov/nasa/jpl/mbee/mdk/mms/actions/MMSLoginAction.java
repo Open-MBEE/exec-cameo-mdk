@@ -34,9 +34,7 @@ public class MMSLoginAction extends MDAction {
             Utils.showPopupMessage("You need to be logged in to Teamwork Cloud first!");
             return false;
         }
-
         if (!TicketUtils.acquireMmsTicket(project)) {
-//            Application.getInstance().getGUILog().log("[WARNING] Unable to log in to MMS with the supplied credentials. Please try to login again.");
             return false;
         }
         ActionsStateUpdater.updateActionsState();
