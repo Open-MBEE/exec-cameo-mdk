@@ -149,9 +149,9 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
         }
 
-        ActionsCategory modelLoad = myCategory(manager, "AlfrescoModel", "MMS");
+        ActionsCategory modelLoad = myCategory(manager, "MMS", "MMS");
         if (!TicketUtils.isTicketSet(project)) {
-            ActionsCategory login = getCategory(manager, "Login", "Login", modelLoad);
+            ActionsCategory login = getCategory(manager, "LoginOption", "LoginOption", modelLoad);
             if (manager.getActionFor(MMSLoginAction.DEFAULT_ID) == null) {
                 login.addAction(new MMSLoginAction());
             }

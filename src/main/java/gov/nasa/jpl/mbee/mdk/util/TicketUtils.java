@@ -48,6 +48,13 @@ public class TicketUtils {
         return ticketMap != null && ticketMap.getTicket() != null && !ticketMap.getTicket().isEmpty();
     }
 
+    public static boolean isTicketValid(Project project) throws ServerException, IOException, URISyntaxException {
+        if (!isTicketSet(project)) {
+            return false;
+        }
+        return MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket()).equals(username);
+    }
+
     /**
      * Accessor for ticket field.
      *
@@ -254,7 +261,7 @@ public class TicketUtils {
                 // try/catching here to prevent service being disabled for future calls
                 try {
                     try {
-                        boolean isValid = MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket()).equals(username);
+                        boolean isValid = isTicketValid(project);
                         if (!isValid) {
                             Application.getInstance().getGUILog().log("[INFO] MMS credentials are expired or invalid.");
                             MMSLogoutAction.logoutAction(project);

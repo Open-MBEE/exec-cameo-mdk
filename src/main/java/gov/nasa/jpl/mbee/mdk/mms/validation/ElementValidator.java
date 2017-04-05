@@ -97,6 +97,9 @@ public class ElementValidator implements RunnableWithProgress {
         Set<String> processedElementIds = new HashSet<>();
         try {
             for (JsonParser jsonParser : serverElementParsers) {
+                if (jsonParser == null) {
+                    continue;
+                }
                 JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
                 if (current != JsonToken.START_OBJECT) {
                     throw new IOException("Unable to build object from JSON parser.");
