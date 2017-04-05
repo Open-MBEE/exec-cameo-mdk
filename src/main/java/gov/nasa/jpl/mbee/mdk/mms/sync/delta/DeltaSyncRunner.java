@@ -64,7 +64,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
     public void run(ProgressStatus progressStatus) {
         progressStatus.setDescription("Initializing");
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) && EsiUtils.getLoggedUserName() == null) {
-            Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be re-attempted in the next sync.");
+            Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
             return;
         }
         try {
