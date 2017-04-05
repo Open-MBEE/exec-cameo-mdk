@@ -74,7 +74,11 @@ public class TicketUtils {
             return acquireTicket(project, password);
         }
         else if (!Utils.isPopupsDisabled()) {
-            return acquireTicket(project, getUserCredentialsDialog());
+            String password = getUserCredentialsDialog();
+            if (password == null) {
+                return false;
+            }
+            return acquireTicket(project, password);
         }
         else {
             Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
