@@ -34,7 +34,7 @@ import java.util.List;
 // TODO Abstract this and update to a common class @donbot
 public class CommitClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final String DEFAULT_ID = "Commit Element to MMS";
-    private static final int COMMIT_ELEMENT_COUNT_THRESHOLD = 10;
+    private static final int COMMIT_ELEMENT_COUNT_THRESHOLD = 50000;
 
     private final String elementID;
     private final Element element;
