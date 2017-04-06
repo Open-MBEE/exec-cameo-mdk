@@ -26,6 +26,7 @@ public class MDKConstants {
             OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_KEY_SUFFIX,
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
+            DISPLAYED_ELEMENT_IDS_KEY = DERIVED_KEY_PREFIX + "displayedElement" + IDS_KEY_SUFFIX,
             DIAGRAM_TYPE_KEY = DERIVED_KEY_PREFIX + "diagramType",
             CATEGORY_ID_KEY = "category" + ID_KEY_SUFFIX,
             MOUNTED_ELEMENT_ID_KEY = "mountedElement" + ID_KEY_SUFFIX,
