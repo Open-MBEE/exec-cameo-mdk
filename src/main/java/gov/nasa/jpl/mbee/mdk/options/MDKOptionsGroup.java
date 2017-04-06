@@ -7,7 +7,7 @@ import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyResourceProvider;
 import com.nomagic.magicdraw.properties.StringProperty;
 import com.nomagic.magicdraw.ui.ImageMap16;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -124,7 +124,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         Property p = getProperty(CUSTOM_USER_SCRIPT_DIRECTORIES_ID);
         String val = p.getValueStringRepresentation();
         if (val == null || val.isEmpty()) {
-             return 0;
+            return 0;
         }
         return val.split(File.pathSeparator).length;
 

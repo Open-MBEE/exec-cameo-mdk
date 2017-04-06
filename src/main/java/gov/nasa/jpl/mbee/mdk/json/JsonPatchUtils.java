@@ -1,14 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.diff.JsonDiff;
-import com.github.fge.jsonpatch.operation.JsonPatchOperation;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by igomes on 9/26/16.

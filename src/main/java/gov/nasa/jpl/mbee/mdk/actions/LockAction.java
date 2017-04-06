@@ -12,7 +12,10 @@ import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by igomes on 12/5/16.

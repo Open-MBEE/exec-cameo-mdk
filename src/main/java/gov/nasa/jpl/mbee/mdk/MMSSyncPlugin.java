@@ -3,17 +3,17 @@ package gov.nasa.jpl.mbee.mdk;
 import com.nomagic.magicdraw.cookies.CloseCookie;
 import com.nomagic.magicdraw.cookies.CookieSet;
 import com.nomagic.magicdraw.core.Application;
-import gov.nasa.jpl.mbee.mdk.ems.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.delta.DeltaSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.jms.JMSSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueueCloseCookie;
-import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueCloseCookie;
+import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusProjectEventListenerAdapter;
 
 /*
  * This class is responsible for performing automatic syncs with
  * MMS whenever any type of commit is executed.
- * This class is also responsible for start the REST webservices.
+ * This class is also responsible for start the REST web services.
  */
 public class MMSSyncPlugin extends MDPlugin {
     private static MMSSyncPlugin instance;

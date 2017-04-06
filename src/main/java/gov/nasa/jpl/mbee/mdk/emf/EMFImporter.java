@@ -19,9 +19,9 @@ import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
+import gov.nasa.jpl.mbee.mdk.json.ImportException;
+import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.emf.ecore.*;
@@ -361,24 +361,24 @@ public class EMFImporter implements JsonToElementFunction {
     protected static class EStructuralFeatureOverride {
         public static final EStructuralFeatureOverride
                 ID = new EStructuralFeatureOverride(
-                    (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
-                    (objectNode, eStructuralFeature, project, strict, element) -> {
-                        JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
-                        if (jsonNode == null || !jsonNode.isTextual()) {
+                (objectNode, eStructuralFeature, project, strict, element) -> eStructuralFeature == element.eClass().getEIDAttribute(),
+                (objectNode, eStructuralFeature, project, strict, element) -> {
+                    JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
+                    if (jsonNode == null || !jsonNode.isTextual()) {
                             /*if (strict) {
                                 throw new ImportException(element, objectNode, "Element JSON has missing/malformed ID.");
                             }
                             return null;*/
-                            return element;
-                        }
-                        try {
-                            UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
-                        } catch (IllegalArgumentException e) {
-                            throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
-                        }
                         return element;
                     }
-                ),
+                    try {
+                        UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
+                    } catch (IllegalArgumentException e) {
+                        throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
+                    }
+                    return element;
+                }
+        ),
                 OWNER = getOwnerEStructuralFeatureOverride(Converters.getIdToElementConverter());
 
         private ImportPredicate importPredicate;
@@ -412,7 +412,7 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         if (element instanceof Package
-                                && (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith("holding_bin")
+                                && (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith(MDKConstants.HOLDING_BIN_ID_PREFIX)
                                 && (jsonNode = objectNode.get(MDKConstants.OWNER_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                             ((Package) element).setOwningPackage(project.getPrimaryModel());
                             return element;
@@ -439,11 +439,9 @@ public class EMFImporter implements JsonToElementFunction {
                                     && ((jsonNode = objectNode.get(KEY_FUNCTION.apply(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT))) != null && jsonNode.isTextual()
                                     || (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
                                 ((InstanceSpecification) element).setStereotypedElement(owningElement);
-                                //System.out.println("[STEREOTYPED ELEMENT] " + Converters.getElementToIdConverter().apply(element) + " -> " + Converters.getElementToIdConverter().apply(owningElement));
                             }
                             else {
                                 element.setOwner(owningElement);
-                                //System.out.println("[OWNER] " + element + " " + Converters.getElementToIdConverter().apply(element) + " -> " + owningElement + " " + Converters.getElementToIdConverter().apply(owningElement));
                             }
                         } catch (IllegalArgumentException e) {
                             System.out.println("ELEMENT: " + element + (element != null ? " " + Converters.getElementToIdConverter().apply(element) : ""));

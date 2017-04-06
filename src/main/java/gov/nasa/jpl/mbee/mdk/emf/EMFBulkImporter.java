@@ -13,11 +13,11 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.annotations.SessionManaged;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.json.ImportException;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
@@ -233,8 +233,8 @@ public class EMFBulkImporter implements BulkImportFunction {
 
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                     for (Map.Entry<String, Pair<Element, ObjectNode>> entry : changelog.get(changeType).entrySet()) {
-                        Element element = entry.getValue().getFirst();
-                        ObjectNode objectNode = entry.getValue().getSecond();
+                        Element element = entry.getValue().getKey();
+                        ObjectNode objectNode = entry.getValue().getValue();
 
                         Collection<ModelValidationResult> results = validator.validateChanges(Collections.singleton(element));
 

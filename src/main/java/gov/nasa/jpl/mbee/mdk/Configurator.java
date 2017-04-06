@@ -1,31 +1,4 @@
-/*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
- * U.S. Government sponsorship acknowledged.
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are 
- * permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
- * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
+
 package gov.nasa.jpl.mbee.mdk;
 
 import com.nomagic.actions.AMConfigurator;
@@ -39,6 +12,9 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import gov.nasa.jpl.mbee.mdk.util.ClassUtils;
+import gov.nasa.jpl.mbee.mdk.util.Debug;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -155,10 +131,10 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             String addMethodString = "add" + toString()
                     + (this.equals(DiagramToolbarActionsProvider) ? "" : "Configurator");
 
-            Method[] addMethods = gov.nasa.jpl.mbee.mdk.lib.ClassUtils.getMethodsForName(ActionsConfiguratorsManager.class,
+            Method[] addMethods = ClassUtils.getMethodsForName(ActionsConfiguratorsManager.class,
                     addMethodString);
             if (addMethods == null || addMethods.length == 0) {
-                gov.nasa.jpl.mbee.mdk.lib.Debug.error(true, true, "Error! " + toString() + ".getAddConfiguratorMethod(" + subcontext
+                gov.nasa.jpl.mbee.mdk.util.Debug.error(true, true, "Error! " + toString() + ".getAddConfiguratorMethod(" + subcontext
                         + "): add method, " + addMethodString + ", for context " + toString() + " not found");
                 return null;
             }
@@ -218,7 +194,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         public GenericMDAction(String id, String name, Integer mnemonic, String group, Method actionMethod,
                                Object objectInvokingMethod) {
             super(id, name, mnemonic, group);
-            gov.nasa.jpl.mbee.mdk.lib.Debug.outln("GenericMDAction( id=" + id + ", name=" + name + ", mnemonic=" + mnemonic
+            gov.nasa.jpl.mbee.mdk.util.Debug.outln("GenericMDAction( id=" + id + ", name=" + name + ", mnemonic=" + mnemonic
                     + ", group=" + group + ", actionMethod="
                     + ((actionMethod == null) ? "null" : actionMethod.getName()) + ", objectInvokingMethod="
                     + objectInvokingMethod + " )");
@@ -229,7 +205,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         public GenericMDAction(String id, String name, KeyStroke keyStroke, String group,
                                Method actionMethod, Object objectInvokingMethod) {
             super(id, name, keyStroke, group);
-            gov.nasa.jpl.mbee.mdk.lib.Debug.outln("GenericMDAction( id=" + id + ", name=" + name + ", keyStroke=" + keyStroke
+            gov.nasa.jpl.mbee.mdk.util.Debug.outln("GenericMDAction( id=" + id + ", name=" + name + ", keyStroke=" + keyStroke
                     + ", group=" + group + ", actionMethod="
                     + ((actionMethod == null) ? "null" : actionMethod.getName()) + ", objectInvokingMethod="
                     + objectInvokingMethod + " )");
@@ -268,7 +244,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                         }
                         else {
                             // unrecognized argument
-                            gov.nasa.jpl.mbee.mdk.lib.Debug.error(true, false, "Warning! Action " + actionMethod.getName()
+                            gov.nasa.jpl.mbee.mdk.util.Debug.error(true, false, "Warning! Action " + actionMethod.getName()
                                     + " is getting passed null " + c.getSimpleName() + "!");
                         }
                     }
@@ -276,7 +252,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             }
             lastActionEvent = actionEvent;
             // Pair< Boolean, Object > p =
-            gov.nasa.jpl.mbee.mdk.lib.ClassUtils.runMethod(false, objectInvokingAction, actionMethod, args.toArray());
+            ClassUtils.runMethod(false, objectInvokingAction, actionMethod, args.toArray());
         }
 
     }
@@ -352,7 +328,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         typeForContext = new HashMap<Configurator.Context, Class<?>>();
         for (Context c : getContexts()) {
             if (c == null) {
-                gov.nasa.jpl.mbee.mdk.lib.Debug.error("Error! Null context from getContexts()?!!");
+                gov.nasa.jpl.mbee.mdk.util.Debug.error("Error! Null context from getContexts()?!!");
             }
             Method addMethod = c.getAddConfiguratorMethod("");
             Class<?> cls = Configurator.class;
@@ -375,16 +351,16 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                     }
                 }
                 if (j < pTypes.length) {
-                    gov.nasa.jpl.mbee.mdk.lib.Debug.error(false, "No type for context! " + c);
+                    gov.nasa.jpl.mbee.mdk.util.Debug.error(false, "No type for context! " + c);
                 }
             }
             else {
-                gov.nasa.jpl.mbee.mdk.lib.Debug.error("No add config method found for " + c);
+                gov.nasa.jpl.mbee.mdk.util.Debug.error("No add config method found for " + c);
             }
-            gov.nasa.jpl.mbee.mdk.lib.Debug.outln("typeForContext.put(" + c + ", " + cls.getName() + ")");
+            gov.nasa.jpl.mbee.mdk.util.Debug.outln("typeForContext.put(" + c + ", " + cls.getName() + ")");
             typeForContext.put(c, cls);
         }
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("typeForContext = " + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(typeForContext));
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("typeForContext = " + gov.nasa.jpl.mbee.mdk.util.MoreToString.Helper.toString(typeForContext));
         return typeForContext;
     }
 
@@ -403,13 +379,13 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             Set<Configurator.Context> theContexts = contextsForType.get(e.getValue());
             if (theContexts == null) {
                 theContexts = new HashSet<Configurator.Context>();
-                gov.nasa.jpl.mbee.mdk.lib.Debug.outln("contextsForType.put(" + e.getValue() + ", " + theContexts + ")");
+                gov.nasa.jpl.mbee.mdk.util.Debug.outln("contextsForType.put(" + e.getValue() + ", " + theContexts + ")");
                 contextsForType.put(e.getValue(), theContexts);
             }
-            gov.nasa.jpl.mbee.mdk.lib.Debug.outln("theContexts.add(" + e.getKey() + ")");
+            gov.nasa.jpl.mbee.mdk.util.Debug.outln("theContexts.add(" + e.getKey() + ")");
             theContexts.add(e.getKey());
         }
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("contextsForType = " + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(contextsForType));
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("contextsForType = " + gov.nasa.jpl.mbee.mdk.util.MoreToString.Helper.toString(contextsForType));
         return contextsForType;
     }
 
@@ -507,14 +483,14 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      */
     @Override
     public void configure(ActionsManager manager, PresentationElement diagram) {
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("configure(manager=" + manager + ", diagram=" + diagram
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        gov.nasa.jpl.mbee.mdk.util.Debug.turnOff();
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("configure(manager=" + manager + ", diagram=" + diagram
                 + ") for DiagramContextToolbarAMConfigurator");
-        gov.nasa.jpl.mbee.mdk.lib.Debug.errln("configure(manager=" + manager + ", diagram=" + diagram
+        gov.nasa.jpl.mbee.mdk.util.Debug.errln("configure(manager=" + manager + ", diagram=" + diagram
                 + ") for DiagramContextToolbarAMConfigurator");
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
         lastContext = Context.DiagramContext;
         setLastContextIsDiagram(true);
@@ -522,10 +498,10 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (diagram instanceof DiagramPresentationElement) {
             // Configurator.Context context =
             // getContextForType( DiagramContextToolbarAMConfigurator.class );
-            gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class,
+            Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class,
                     ((DiagramPresentationElement) diagram).getDiagramType().getType());
-            lastContext = p.first;
-            addDiagramActions(manager, diagram, getMenus().get(p.first).get(p.second));
+            lastContext = p.getKey();
+            addDiagramActions(manager, diagram, getMenus().get(p.getKey()).get(p.getValue()));
         }
         else {
             Assert.assertTrue(false);
@@ -540,7 +516,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * @return
      */
     protected Context getContextForType(Class<?> cls) {
-        return getContextForType(cls, null).first;
+        return getContextForType(cls, null).getKey();
     }
 
     /**
@@ -552,9 +528,9 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      */
     protected Set<Context> getContextsForType(Class<?> cls) {
         Set<Context> ctxts = getContextsForType().get(cls);
-        if (gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(ctxts)) {
+        if (gov.nasa.jpl.mbee.mdk.util.Utils2.isNullOrEmpty(ctxts)) {
             TreeMap<Class<?>, Set<Context>> map = new TreeMap<Class<?>, Set<Context>>(
-                    gov.nasa.jpl.mbee.mdk.lib.MostAbstractFirst.instance());
+                    gov.nasa.jpl.mbee.mdk.util.MostAbstractFirst.instance());
             for (Entry<Class<?>, Set<Context>> e : getContextsForType().entrySet()) {
                 if (cls.isAssignableFrom(e.getKey())) {
                     map.put(e.getKey(), e.getValue());
@@ -584,17 +560,17 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * @param subcontext
      * @return
      */
-    protected gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> getContextForType(Class<?> cls, String subcontext) {
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> pcs = null;
+    protected Pair<Context, String> getContextForType(Class<?> cls, String subcontext) {
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        Debug.turnOff();
+        Pair<Context, String> pcs = null;
         Set<Context> ctxts = getContextsForType(cls);
-        if (gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(ctxts)) {
-            pcs = new gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String>(contexts[0], null);
-            gov.nasa.jpl.mbee.mdk.lib.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): no save contexts returning "
+        if (gov.nasa.jpl.mbee.mdk.util.Utils2.isNullOrEmpty(ctxts)) {
+            pcs = new Pair<>(contexts[0], null);
+            gov.nasa.jpl.mbee.mdk.util.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): no save contexts returning "
                     + pcs);
             if (wasOn) {
-                gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+                gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
             }
             return pcs;
         }
@@ -604,32 +580,32 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         String subcontextKey[] = {null, null};
         // get best matching subcontext
         for (Context c : ctxts) {
-            gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer> p = prefixOverlapScore(c.toString(), subcontext);
-            boolean betterContext = p.first > numMatch[0]
-                    || (p.first == numMatch[0] && p.second < numDontMatch[0]);
+            Pair<Integer, Integer> p = prefixOverlapScore(c.toString(), subcontext);
+            boolean betterContext = p.getKey() > numMatch[0]
+                    || (p.getKey() == numMatch[0] && p.getValue() < numDontMatch[0]);
             if (betterContext) {
                 contextKey[0] = c;
-                numMatch[0] = p.first;
-                numDontMatch[0] = p.second;
+                numMatch[0] = p.getKey();
+                numDontMatch[0] = p.getValue();
             }
             int idx = (betterContext ? 1 : 3);
             int idxKey = (betterContext ? 0 : 1);
             // get best matching subcontext
             Map<String, Map<String, Map<String, MDAction>>> subcontexts = getMenus().get(c);
-            if (!gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(subcontexts)) {
+            if (!gov.nasa.jpl.mbee.mdk.util.Utils2.isNullOrEmpty(subcontexts)) {
                 if (subcontext != null) {
                     for (String subc : subcontexts.keySet()) {
                         Map<String, Map<String, MDAction>> configs = subcontexts.get(subc);
                         if (configs != null && !configs.isEmpty()) {
                             p = prefixOverlapScore(subc, subcontext);
-                            boolean betterSubcontext = (p.first > numMatch[idx] || (p.first == numMatch[idx] && p.second < numDontMatch[idx]));
+                            boolean betterSubcontext = (p.getKey() > numMatch[idx] || (p.getKey() == numMatch[idx] && p.getValue() < numDontMatch[idx]));
                             if (betterSubcontext) {
                                 subcontextKey[idxKey] = subc;
                                 if (!betterContext) {
                                     contextKey[1] = c;
                                 }
-                                numMatch[idx] = p.first;
-                                numDontMatch[idx] = p.second;
+                                numMatch[idx] = p.getKey();
+                                numDontMatch[idx] = p.getValue();
                             }
                         }
                     }
@@ -654,30 +630,30 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
                 // }
             }
         }
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): numMatch="
-                + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(numMatch) + ", numDontMatch="
-                + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(numDontMatch) + ", contextKey="
-                + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(contextKey) + ", subcontextKey="
-                + gov.nasa.jpl.mbee.mdk.lib.MoreToString.Helper.toString(subcontextKey));
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): numMatch="
+                + gov.nasa.jpl.mbee.mdk.util.MoreToString.Helper.toString(numMatch) + ", numDontMatch="
+                + gov.nasa.jpl.mbee.mdk.util.MoreToString.Helper.toString(numDontMatch) + ", contextKey="
+                + gov.nasa.jpl.mbee.mdk.util.MoreToString.Helper.toString(contextKey) + ", subcontextKey="
+                + gov.nasa.jpl.mbee.mdk.util.MoreToString.Helper.toString(subcontextKey));
         if (numMatch[0] > numMatch[3] || (numMatch[0] == numMatch[3] && numDontMatch[0] <= numDontMatch[3])) {
-            pcs = new gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String>(contextKey[0], subcontextKey[0]);
-            gov.nasa.jpl.mbee.mdk.lib.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
+            pcs = new Pair<Context, String>(contextKey[0], subcontextKey[0]);
+            gov.nasa.jpl.mbee.mdk.util.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
             if (wasOn) {
-                gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+                gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
             }
             return pcs;
         }
-        pcs = new gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String>(contextKey[1], subcontextKey[1]);
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
+        pcs = new Pair<Context, String>(contextKey[1], subcontextKey[1]);
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("getContextForType(" + cls + ", " + subcontext + "): got a winner! " + pcs);
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
         return pcs;
     }
 
-    public static gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer> prefixOverlapScore(String s1, String s2) {
-        if (gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(s1) || gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(s2)) {
-            return new gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer>(0, 0);
+    public static Pair<Integer, Integer> prefixOverlapScore(String s1, String s2) {
+        if (gov.nasa.jpl.mbee.mdk.util.Utils2.isNullOrEmpty(s1) || gov.nasa.jpl.mbee.mdk.util.Utils2.isNullOrEmpty(s2)) {
+            return new Pair<Integer, Integer>(0, 0);
         }
         // String subcontextKey = null;
         int numMatch = 0;
@@ -706,7 +682,7 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
             // }
             // }
         }
-        return new gov.nasa.jpl.mbee.mdk.lib.Pair<Integer, Integer>(numMatch, numDontMatch);
+        return new Pair<Integer, Integer>(numMatch, numDontMatch);
     }
 
     /*
@@ -717,23 +693,23 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      */
     @Override
     public void configure(ActionsManager manager) {
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("configure(manager=" + manager + ") for AMConfigurator");
-        gov.nasa.jpl.mbee.mdk.lib.Debug.errln("configure(manager=" + manager + ") for AMConfigurator");
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        gov.nasa.jpl.mbee.mdk.util.Debug.turnOff();
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("configure(manager=" + manager + ") for AMConfigurator");
+        gov.nasa.jpl.mbee.mdk.util.Debug.errln("configure(manager=" + manager + ") for AMConfigurator");
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(AMConfigurator.class, manager.getClass().getSimpleName());
-        lastContext = p.first;
+        Pair<Context, String> p = getContextForType(AMConfigurator.class, manager.getClass().getSimpleName());
+        lastContext = p.getKey();
         //invokedFromMenu = true;
         //setLastContextIsDiagram( false );
-        if (p == null || p.first == null || p.second == null) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.errln("Could not addElementActions: getContextForType( AMConfigurator.class, \""
+        if (p == null || p.getKey() == null || p.getValue() == null) {
+            gov.nasa.jpl.mbee.mdk.util.Debug.errln("Could not addElementActions: getContextForType( AMConfigurator.class, \""
                     + manager.getClass().getSimpleName() + "\") returned " + p);
         }
         else {
-            addElementActions(manager, null, getMenus().get(p.first).get(p.second));// Context.General
+            addElementActions(manager, null, getMenus().get(p.getKey()).get(p.getValue()));// Context.General
             // )
             // );
         }
@@ -755,34 +731,34 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         if (MDKConfigurator.repainting()) {
             return;
         }
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("configure(manager=" + manager + ", diagram=" + diagram + ", selected="
-                + gov.nasa.jpl.mbee.mdk.lib.Utils2.toString(selected) + ", requestor=" + requestor
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        gov.nasa.jpl.mbee.mdk.util.Debug.turnOff();
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("configure(manager=" + manager + ", diagram=" + diagram + ", selected="
+                + gov.nasa.jpl.mbee.mdk.util.Utils2.toString(selected) + ", requestor=" + requestor
                 + ") for DiagramContextAMConfigurator");
-        gov.nasa.jpl.mbee.mdk.lib.Debug.errln("configure(manager=" + manager + ", diagram=" + diagram + ", selected="
-                + gov.nasa.jpl.mbee.mdk.lib.Utils2.toString(selected) + ", requestor=" + requestor
+        gov.nasa.jpl.mbee.mdk.util.Debug.errln("configure(manager=" + manager + ", diagram=" + diagram + ", selected="
+                + gov.nasa.jpl.mbee.mdk.util.Utils2.toString(selected) + ", requestor=" + requestor
                 + ") for DiagramContextAMConfigurator");
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
 
         DiagramType dType = diagram.getDiagramType();
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class, dType.getType());
-        lastContext = p.first;
+        Pair<Context, String> p = getContextForType(DiagramContextAMConfigurator.class, dType.getType());
+        lastContext = p.getKey();
         setLastContextIsDiagram(true);
         //invokedFromMenu = false;
-        if (p == null || p.first == null || p.second == null) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.errln("Could not addElementActions: getContextForType( DiagramContextAMConfigurator.class, \""
+        if (p == null || p.getKey() == null || p.getValue() == null) {
+            gov.nasa.jpl.mbee.mdk.util.Debug.errln("Could not addElementActions: getContextForType( DiagramContextAMConfigurator.class, \""
                     + dType.getType() + "\") returned " + p);
         }
         else {
             if (requestor != null) {
                 Element e = requestor.getElement();
-                addElementActions(manager, e, getMenus().get(p.first).get(p.second));
+                addElementActions(manager, e, getMenus().get(p.getKey()).get(p.getValue()));
             }
             else {
-                addDiagramActions(manager, diagram, getMenus().get(p.first).get(p.second));
+                addDiagramActions(manager, diagram, getMenus().get(p.getKey()).get(p.getValue()));
             }
         }
     }
@@ -796,42 +772,42 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      */
     @Override
     public void configure(ActionsManager manager, Tree browser) {
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("configure(manager=" + manager + ", browser=" + browser
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        gov.nasa.jpl.mbee.mdk.util.Debug.turnOff();
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("configure(manager=" + manager + ", browser=" + browser
                 + ") for BrowserContextAMConfigurator");
-        gov.nasa.jpl.mbee.mdk.lib.Debug.errln("configure(manager=" + manager + ", browser=" + browser
+        gov.nasa.jpl.mbee.mdk.util.Debug.errln("configure(manager=" + manager + ", browser=" + browser
                 + ") for BrowserContextAMConfigurator");
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
         Node no = browser.getSelectedNode();
         lastContext = null;
         if (no == null) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.errln("No selected node for adding action.");
+            gov.nasa.jpl.mbee.mdk.util.Debug.errln("No selected node for adding action.");
             return;
         }
         Object o = no.getUserObject();
         if (!(o instanceof Element)) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.errln("Selected node = " + no);
-            gov.nasa.jpl.mbee.mdk.lib.Debug.errln("User object is not an Element but a " + (o == null ? "null" : o.getClass()) + ": "
+            gov.nasa.jpl.mbee.mdk.util.Debug.errln("Selected node = " + no);
+            gov.nasa.jpl.mbee.mdk.util.Debug.errln("User object is not an Element but a " + (o == null ? "null" : o.getClass()) + ": "
                     + o);
             return;
         }
         String browserType = browser.getName();
-        if (gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(browserType)) {
+        if (gov.nasa.jpl.mbee.mdk.util.Utils2.isNullOrEmpty(browserType)) {
             browserType = browser.getClass().getSimpleName();
         }
-        gov.nasa.jpl.mbee.mdk.lib.Pair<Context, String> p = getContextForType(BrowserContextAMConfigurator.class, browserType);
-        lastContext = p.first;
+        Pair<Context, String> p = getContextForType(BrowserContextAMConfigurator.class, browserType);
+        lastContext = p != null ? p.getKey() : null;
         setLastContextIsDiagram(false);
         //invokedFromMenu = false;
-        if (p == null || p.first == null || p.second == null) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.errln("Could not addElementActions: getContextForType( BrowserContextAMConfigurator.class, \""
+        if (p == null || p.getKey() == null || p.getValue() == null) {
+            gov.nasa.jpl.mbee.mdk.util.Debug.errln("Could not addElementActions: getContextForType( BrowserContextAMConfigurator.class, \""
                     + browser.getName() + "\") returned " + p);
         }
         else {
-            addElementActions(manager, (Element) o, getMenus().get(p.first).get(p.second));
+            addElementActions(manager, (Element) o, getMenus().get(p.getKey()).get(p.getValue()));
         }
     }
 
@@ -856,14 +832,14 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
 
     protected void addElementActions(ActionsManager manager, Element e,
                                      Map<String, Map<String, MDAction>> actionCategories) {
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("addElementActions( manager=" + manager + ", element=" + e + ", actionCategories="
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        gov.nasa.jpl.mbee.mdk.util.Debug.turnOff();
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("addElementActions( manager=" + manager + ", element=" + e + ", actionCategories="
                 + actionCategories + ")");
-        gov.nasa.jpl.mbee.mdk.lib.Debug.errln("addElementActions( manager=" + manager + ", element=" + e + ", actionCategories="
+        gov.nasa.jpl.mbee.mdk.util.Debug.errln("addElementActions( manager=" + manager + ", element=" + e + ", actionCategories="
                 + actionCategories + ")");
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
         for (Entry<String, Map<String, MDAction>> category : actionCategories.entrySet()) {
             ActionsCategory c = myCategory(manager, category.getKey(), category.getKey());
@@ -882,11 +858,11 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
      * @return category with given id/name
      */
     private ActionsCategory myCategory(ActionsManager manager, String id, String name) {
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("myCategory( manager=" + manager + ", id=" + id + ", name=" + name + ")");
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        gov.nasa.jpl.mbee.mdk.util.Debug.turnOff();
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("myCategory( manager=" + manager + ", id=" + id + ", name=" + name + ")");
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
         ActionsCategory category = manager.getCategory(id); // .getActionFor(id);
         if (category == null) {
@@ -931,24 +907,24 @@ public class Configurator implements ConfiguratorWithPriority, BrowserContextAMC
         }
         Context c = Context.fromString(context);
         if (c == null) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.error(true, true, "Error! addConfiguration( context=" + context + ", actionName="
+            gov.nasa.jpl.mbee.mdk.util.Debug.error(true, true, "Error! addConfiguration( context=" + context + ", actionName="
                     + actionName + ", category=" + category + ", actionMethod=" + actionMethod
                     + ", objectInvokingMethod=" + objectInvokingMethod + ", id=" + id + ", mnemonic="
                     + mnemonic + ", k=" + k + ", group=" + category + " ): Unrecognized context, " + context);
             return null;
         }
 
-        boolean wasOn = gov.nasa.jpl.mbee.mdk.lib.Debug.isOn();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.turnOff();
-        gov.nasa.jpl.mbee.mdk.lib.Debug.outln("addConfiguration( context=" + context + ", actionName=" + actionName + ", category="
+        boolean wasOn = gov.nasa.jpl.mbee.mdk.util.Debug.isOn();
+        gov.nasa.jpl.mbee.mdk.util.Debug.turnOff();
+        gov.nasa.jpl.mbee.mdk.util.Debug.outln("addConfiguration( context=" + context + ", actionName=" + actionName + ", category="
                 + category + ", actionMethod=" + actionMethod + ", objectInvokingMethod="
                 + objectInvokingMethod + ", id=" + id + ", mnemonic=" + mnemonic + ", k=" + k + ", group="
                 + category + " )");
         if (wasOn) {
-            gov.nasa.jpl.mbee.mdk.lib.Debug.turnOn();
+            gov.nasa.jpl.mbee.mdk.util.Debug.turnOn();
         }
 
-        gov.nasa.jpl.mbee.mdk.lib.Utils2.put(getMenus().get(c), subcontext, category, gov.nasa.jpl.mbee.mdk.lib.Utils2.isNullOrEmpty(id) ? actionName : id,
+        gov.nasa.jpl.mbee.mdk.util.Utils2.put(getMenus().get(c), subcontext, category, gov.nasa.jpl.mbee.mdk.util.Utils2.isNullOrEmpty(id) ? actionName : id,
                 mdAction);
         return mdAction;
     }

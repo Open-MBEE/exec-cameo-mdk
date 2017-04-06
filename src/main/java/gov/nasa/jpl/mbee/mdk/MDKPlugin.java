@@ -8,15 +8,16 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
+import com.nomagic.magicdraw.plugins.PluginDescriptor;
+import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputQueueStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ems.sync.queue.OutputSyncRunner;
-import gov.nasa.jpl.mbee.mdk.ems.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.lib.Debug;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueStatusConfigurator;
+import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
+import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -26,18 +27,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MDKPlugin extends Plugin {
-    public static final String VERSION = "3.0",
-            MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
-    public static ClassLoader extensionsClassloader = null;
+    public static final String MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
+
+    public static String VERSION;
+    public static ClassLoader extensionsClassloader;
     public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
-    private OclEvaluatorPlugin oclPlugin = null;
-    private ValidateConstraintsPlugin vcPlugin = null;
-    private DebugExportImportModelPlugin debugExportImportModelPlugin = null;
-    private EnvironmentOptions.EnvironmentChangeListener mdkEnvOptionsListener;
+
+    private OclEvaluatorPlugin oclPlugin;
+    private ValidateConstraintsPlugin vcPlugin;
 
     public MDKPlugin() {
         super();
-        Debug.outln("constructed MDKPlugin!");
+    }
+
+    public static String getVersion() {
+        if (VERSION == null) {
+            VERSION = PluginUtils.getPlugins().stream().map(Plugin::getDescriptor).filter(descriptor -> descriptor.getName().equals("Model Development Kit")).map(PluginDescriptor::getVersion).findAny().orElse(null);
+        }
+        return VERSION;
     }
 
     public static void updateMainToolbarCategory() {
@@ -64,8 +71,14 @@ public class MDKPlugin extends Plugin {
 
     @Override
     public void init() {
+        getVersion();
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
         System.setProperty("jsse.enableSNIExtension", "false");
+        if (MDUtils.isDeveloperMode()) {
+            System.setProperty("org.apache.commons.logging.Log","org.apache.commons.logging.impl.SimpleLog");
+            System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
+            System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http.wire", "DEBUG");
+        }
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);
@@ -85,7 +98,6 @@ public class MDKPlugin extends Plugin {
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
-        getDebugExportImportPlugin().init();
         getOclPlugin().init();
         getVcPlugin().init();
         MMSSyncPlugin.getInstance().init();
@@ -95,13 +107,6 @@ public class MDKPlugin extends Plugin {
         loadExtensionJars(); // people can actually just create a new plugin and
 
         configureEnvironmentOptions();
-    }
-
-    public DebugExportImportModelPlugin getDebugExportImportPlugin() {
-        if (debugExportImportModelPlugin == null) {
-            debugExportImportModelPlugin = new DebugExportImportModelPlugin();
-        }
-        return debugExportImportModelPlugin;
     }
 
     public OclEvaluatorPlugin getOclPlugin() {
@@ -151,14 +156,11 @@ public class MDKPlugin extends Plugin {
     private void configureEnvironmentOptions() {
         EnvironmentOptions mdkOptions = Application.getInstance().getEnvironmentOptions();
         mdkOptions.addGroup(new MDKOptionsGroup());
-        mdkEnvOptionsListener = new EnvironmentOptions.EnvironmentChangeListener() {
-            @Override
-            public void updateByEnvironmentProperties(List<Property> list) {
-                Property advancedOptions = MDKOptionsGroup.getMDKOptions().getProperty(MDKOptionsGroup.SHOW_ADVANCED_OPTIONS_ID);
-                for (Property p : list) {
-                    if (p.equals(advancedOptions) && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-                        Application.getInstance().getGUILog().log("[INFO] You must restart MagicDraw to show advanced MDK options.");
-                    }
+        EnvironmentOptions.EnvironmentChangeListener mdkEnvOptionsListener = list -> {
+            Property advancedOptions = MDKOptionsGroup.getMDKOptions().getProperty(MDKOptionsGroup.SHOW_ADVANCED_OPTIONS_ID);
+            for (Property p : list) {
+                if (p.equals(advancedOptions) && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
+                    Application.getInstance().getGUILog().log("[INFO] You must restart MagicDraw to show advanced MDK options.");
                 }
             }
         };

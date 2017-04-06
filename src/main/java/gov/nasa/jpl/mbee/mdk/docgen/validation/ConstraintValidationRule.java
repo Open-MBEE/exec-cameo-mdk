@@ -1,31 +1,3 @@
-/*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
- * U.S. Government sponsorship acknowledged.
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are 
- * permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
- * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.docgen.validation;
 
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -38,13 +10,18 @@ import com.nomagic.uml2.ext.jmi.smartlistener.SmartListenerConfig;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint.Type;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.mdk.lib.*;
+import gov.nasa.jpl.mbee.mdk.util.CompareUtils;
+import gov.nasa.jpl.mbee.mdk.util.Debug;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils2;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 
 import java.lang.Class;
 import java.util.*;
@@ -122,7 +99,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * com.nomagic.magicdraw.validation.ElementValidationRuleImpl#init(com.nomagic
      * .magicdraw.core.Project,
@@ -147,7 +124,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         constraintElementToViolationMap.clear();
 
         if (Utils2.isNullOrEmpty(paramCollection)) {
-            paramCollection = Utils2.newList(Utils.getRootElement());
+            paramCollection = Utils2.newList(Utils.getRootElement(paramProject));
         }
 
         // // collect all constraints and the objects they constrain
@@ -230,7 +207,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
     public static boolean isDocGenConstraint(gov.nasa.jpl.mbee.mdk.constraint.Constraint constraint) {
         Element constrObj = getConstraintObject(constraint);
         return (constrObj != null && StereotypesHelper.hasStereotypeOrDerived(constrObj,
-                DocGen3Profile.constraintStereotype));
+                DocGenProfile.constraintStereotype));
     }
 
     private static boolean isLanguageOcl(gov.nasa.jpl.mbee.mdk.constraint.Constraint constraint) {
@@ -264,11 +241,10 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
      * java.util.Collection)
      */
     @Override
-    public Set<Annotation> run(Project paramProject, Constraint paramConstraint,
-                               Collection<? extends Element> paramCollection) {
+    public Set<Annotation> run(Project paramProject, Constraint paramConstraint, Collection<? extends Element> paramCollection) {
         Set<Annotation> result = new HashSet<Annotation>();
 
-        MdDebug.logForce("*** Starting MDK Validate Constraints: " + constraintType + " ***");
+        System.out.println("*** Starting MDK Validate Constraints: " + constraintType + " ***");
         // boolean wasOn = Debug.isOn();
         // Debug.turnOn();
 
@@ -311,12 +287,11 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
                 e.printStackTrace();
             }
         }
-        Project project = Utils.getProject();
-        Constraint cons = Utils.getWarningConstraint();
-        result = Utils.getAnnotations(this, project, cons);
+        Constraint cons = Utils.getWarningConstraint(paramProject);
+        result = Utils.getAnnotations(this, paramProject, cons);
         annotations = result;
 
-        MdDebug.logForce("*** Finished MDK Validate Constraints: " + constraintType + " ***");
+        System.out.println("*** Finished MDK Validate Constraints: " + constraintType + " ***");
 
         // if ( !wasOn ) Debug.turnOff();
         return result;
@@ -329,13 +304,13 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
             if (e != null) {
                 errorMsg = e.errorMessage;
             }
-            MdDebug.logForce("  Not OCL parsable: " + constraint + "; " + errorMsg);
+            System.out.println("  Not OCL parsable: " + constraint + "; " + errorMsg);
         }
         else if (satisfied) {
-            MdDebug.logForce("            Passed: " + constraint);
+            System.out.println("            Passed: " + constraint);
         }
         else {
-            MdDebug.logForce("            Failed: " + constraint);
+            System.out.println("            Failed: " + constraint);
         }
     }
 
