@@ -412,7 +412,7 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         if (element instanceof Package
-                                && (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith("holding_bin")
+                                && (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().startsWith(MDKConstants.HOLDING_BIN_ID_PREFIX)
                                 && (jsonNode = objectNode.get(MDKConstants.OWNER_ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
                             ((Package) element).setOwningPackage(project.getPrimaryModel());
                             return element;

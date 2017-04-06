@@ -9,9 +9,9 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -85,20 +85,29 @@ public class ManualSyncRunner implements RunnableWithProgress {
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
             try {
-                jsonParsers.add(collectServerElementsRecursively(project, element, depth, progressStatus));
+                JsonParser jsonParser = collectServerElementsRecursively(project, element, depth, progressStatus);
+                if (jsonParser != null) {
+                    jsonParsers.add(jsonParser);
+                }
                 if (element == project.getPrimaryModel() && depth != 0) {
                     // scan of initial return for holding bin is expensive. assume it's not there and request anyway
                     if (progressStatus.isCancel()) {
                         Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
-                    jsonParsers.add(collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus));
+                    jsonParser = collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus);
+                    if (jsonParser != null) {
+                        jsonParsers.add(jsonParser);
+                    }
 
                     if (progressStatus.isCancel()) {
                         Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
-                    jsonParsers.add(collectServerModuleElementsRecursively(project, 0, progressStatus));
+                    jsonParser = collectServerModuleElementsRecursively(project, 0, progressStatus);
+                    if (jsonParser != null) {
+                        jsonParsers.add(jsonParser);
+                    }
                 }
             } catch (ServerException | URISyntaxException | IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting elements from the server. Aborting manual sync.");
@@ -159,7 +168,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     private static JsonParser collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
-        String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+        String holdingBinId = MDKConstants.HOLDING_BIN_ID_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         return MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
     }
 
