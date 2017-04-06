@@ -11,7 +11,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
 
-public class ValidateElementAction extends MDAction {
+public class ValidateElementAction extends MMSAction {
 
     private static final long serialVersionUID = 1L;
     private Collection<Element> start;

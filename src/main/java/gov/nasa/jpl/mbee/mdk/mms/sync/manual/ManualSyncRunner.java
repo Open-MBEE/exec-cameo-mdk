@@ -9,8 +9,9 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -49,21 +50,29 @@ public class ManualSyncRunner implements RunnableWithProgress {
     public void run(ProgressStatus progressStatus) {
         progressStatus.setDescription("Validating sync pre-conditions");
         progressStatus.setIndeterminate(true);
-        try {
-            if (!checkProject()) {
-                if (validationSuite.hasErrors()) {
-                    validationSuite.setName("Sync Pre-Condition Validation");
-                }
-                else {
-                    Application.getInstance().getGUILog().log("[ERROR] Project does not exist but no validation errors generated.");
-                }
+
+        ProjectValidator pv = new ProjectValidator(project);
+        pv.validate();
+        if (pv.hasErrors()) {
+            Application.getInstance().getGUILog().log("[ERROR] Manual sync can not complete and will be skipped.");
+            return;
+        }
+        if (pv.getValidationSuite().hasErrors()) {
+            Utils.displayValidationWindow(project, pv.getValidationSuite(), "Sync Pre-Condition Validation");
+            return;
+        }
+
+        if (project.isRemote()) {
+            BranchValidator bv = new BranchValidator(project);
+            bv.validate(null, false);
+            if (bv.hasErrors()) {
+                Application.getInstance().getGUILog().log("[ERROR] Manual sync can not complete and will be skipped.");
                 return;
             }
-        }  catch (IOException | URISyntaxException | ServerException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while locating project on MMS. Reason: " + e.getMessage());
-            e.printStackTrace();
-            validationSuite = null;
-            return;
+            if (bv.getValidationSuite().hasErrors()) {
+                Utils.displayValidationWindow(project, bv.getValidationSuite(), "Sync Pre-Condition Validation");
+                return;
+            }
         }
 
         progressStatus.setDescription("Processing and querying for " + rootElements.size() + " " + ((depth != 0) ? "root " : "") + "element" + (rootElements.size() != 1 ? "s" : ""));
@@ -76,20 +85,29 @@ public class ManualSyncRunner implements RunnableWithProgress {
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
             try {
-                jsonParsers.add(collectServerElementsRecursively(project, element, depth, progressStatus));
+                JsonParser jsonParser = collectServerElementsRecursively(project, element, depth, progressStatus);
+                if (jsonParser != null) {
+                    jsonParsers.add(jsonParser);
+                }
                 if (element == project.getPrimaryModel() && depth != 0) {
                     // scan of initial return for holding bin is expensive. assume it's not there and request anyway
                     if (progressStatus.isCancel()) {
                         Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
-                    jsonParsers.add(collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus));
+                    jsonParser = collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus);
+                    if (jsonParser != null) {
+                        jsonParsers.add(jsonParser);
+                    }
 
                     if (progressStatus.isCancel()) {
                         Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
-                    jsonParsers.add(collectServerModuleElementsRecursively(project, 0, progressStatus));
+                    jsonParser = collectServerModuleElementsRecursively(project, 0, progressStatus);
+                    if (jsonParser != null) {
+                        jsonParsers.add(jsonParser);
+                    }
                 }
             } catch (ServerException | URISyntaxException | IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting elements from the server. Aborting manual sync.");
@@ -120,9 +138,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
             return;
         }
         elements.add(new Pair<>(element, jsonObject));
-        if (depth != 0) {
+        if (depth-- != 0) {
             for (Element elementChild : element.getOwnedElement()) {
-                collectClientElementsRecursively(project, elementChild, --depth, elements);
+                collectClientElementsRecursively(project, elementChild, depth, elements);
             }
         }
         if (element.equals(project.getPrimaryModel())) {
@@ -150,33 +168,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
 
     private static JsonParser collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
-        String holdingBinId = "holding_bin_" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+        String holdingBinId = MDKConstants.HOLDING_BIN_ID_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         return MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
-    }
-
-    // TODO Make common across all sync types @donbot
-    private boolean checkProject() throws ServerException, IOException, URISyntaxException {
-        ProjectValidator pv = new ProjectValidator(project);
-        pv.validate();
-        if (pv.getValidationSuite().hasErrors()) {
-            for (ValidationRule vr : pv.getValidationSuite().getValidationRules()) {
-                validationSuite.addValidationRule(vr);
-            }
-            return false;
-        }
-
-        if (project.isRemote()) {
-            BranchValidator bv = new BranchValidator(project);
-            bv.validate(null, false);
-            if (bv.getValidationSuite().hasErrors()) {
-                for (ValidationRule vr : bv.getValidationSuite().getValidationRules()) {
-                    validationSuite.addValidationRule(vr);
-                }
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public ValidationSuite getValidationSuite() {

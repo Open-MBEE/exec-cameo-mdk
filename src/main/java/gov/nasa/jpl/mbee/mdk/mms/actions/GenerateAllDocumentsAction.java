@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -17,13 +18,13 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
-public class UpdateAllDocumentsAction extends MMSAction {
+public class GenerateAllDocumentsAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "GenerateAllDocs";
 
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
 
-    public UpdateAllDocumentsAction() {
+    public GenerateAllDocumentsAction() {
         super(DEFAULT_ID, "Generate All Documents", null, null);
     }
 
@@ -47,16 +48,22 @@ public class UpdateAllDocumentsAction extends MMSAction {
         Set<Element> docs = getProjectDocuments(project);
         PresentationElementUtils viu = new PresentationElementUtils();
         Map<String, ObjectNode> images = new HashMap<>();
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession(project);
+        }
+        SessionManager.getInstance().createSession(project, "View Presentation Generation - All Documents - Cancelled");
         for (Element doc : docs) {
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null);
+            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null, false);
             ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement) doc).getName() + "...", true, 0);
             vss.addAll(vg.getValidations());
             if (vg.isFailure()) {
+                SessionManager.getInstance().cancelSession(project);
                 Utils.guilog("[ERROR] Document generation was not completed");
                 Utils.displayValidationWindow(project, vss, "View Generation and Images Validation");
                 return vss;
             }
         }
+        SessionManager.getInstance().cancelSession(project);
         Utils.displayValidationWindow(project, vss, "View Generation and Images Validation");
         return vss;
     }

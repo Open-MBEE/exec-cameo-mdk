@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -47,6 +48,13 @@ public class TicketUtils {
         return ticketMap != null && ticketMap.getTicket() != null && !ticketMap.getTicket().isEmpty();
     }
 
+    public static boolean isTicketValid(Project project) throws ServerException, IOException, URISyntaxException {
+        if (!isTicketSet(project)) {
+            return false;
+        }
+        return MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket()).equals(username);
+    }
+
     /**
      * Accessor for ticket field.
      *
@@ -73,7 +81,11 @@ public class TicketUtils {
             return acquireTicket(project, password);
         }
         else if (!Utils.isPopupsDisabled()) {
-            return acquireTicket(project, getUserCredentialsDialog());
+            String password = getUserCredentialsDialog();
+            if (password == null) {
+                return false;
+            }
+            return acquireTicket(project, password);
         }
         else {
             Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
@@ -195,11 +207,15 @@ public class TicketUtils {
      */
     private static boolean acquireTicket(Project project, String pass) {
         if (username == null || username.isEmpty()) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS without a username.");
             return false;
         }
         if (pass == null) {
             return false;
+        }
+        if (isTicketSet(project)) {
+            Application.getInstance().getGUILog().log("[INFO] Clearing previous credentials.");
+            MMSLogoutAction.logoutAction(project);
         }
 
         //ensure ticket is cleared in case of failure
@@ -237,25 +253,6 @@ public class TicketUtils {
         return false;
     }
 
-    /**
-     * Helper method to determine if the ticket currently stored is still valid.
-     *
-     * @return True if ticket is still valid and matches the currently stored username
-     */
-    public static boolean isTicketValid(Project project) {
-        if (!isTicketSet(project)) {
-            return false;
-        }
-        try {
-            return MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket());
-        } catch (ServerException | IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained for now). Reason: " + e.getMessage());
-            e.printStackTrace();
-            // can't confirm invalid if can't check ticket at all
-            return true;
-        }
-    }
-
     private static class TicketMapping {
         private String ticket;
         private ScheduledExecutorService ticketRenewer;
@@ -267,7 +264,16 @@ public class TicketUtils {
             final Runnable renewTicket = () -> {
                 // try/catching here to prevent service being disabled for future calls
                 try {
-                    TicketUtils.isTicketValid(project);
+                    try {
+                        boolean isValid = isTicketValid(project);
+                        if (!isValid) {
+                            Application.getInstance().getGUILog().log("[INFO] MMS credentials are expired or invalid.");
+                            MMSLogoutAction.logoutAction(project);
+                        }
+                    } catch (ServerException | IOException | URISyntaxException e) {
+                        Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained). Reason: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                 } catch (Exception ignored) {
                 }
             };

@@ -13,7 +13,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ValidateElementDepthAction extends MDAction {
+public class ValidateElementDepthAction extends MMSAction {
 
     private static final long serialVersionUID = 1L;
     private Collection<Element> start;

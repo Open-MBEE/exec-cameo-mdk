@@ -22,9 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by igomes on 6/28/16.
- */
 public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final String ERROR_STRING = "Reverting to offline mode. All changes will be saved in the model until reconnected.";
     private static final Map<String, JMSSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
@@ -35,7 +32,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (shouldEnableJMS(project)) {
             new Thread() {
                 public void run() {
-                    if (TicketUtils.isTicketValid(project)) {
+                    if (TicketUtils.isTicketSet(project)) {
                         initializeJMS(project);
                     } else {
                         MMSLoginAction.loginAction(project);
@@ -68,9 +65,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     }
 
     public static boolean shouldEnableJMS(Project project) {
+        String url;
         return ((project.getPrimaryModel() != null) && project.isRemote()
                 && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()
-                && StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem"));
+                && StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem"))
+                && (url = ((String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS URL"))) != null
+                && !url.isEmpty();
     }
 
     public void initializeJMS(Project project) {

@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.actions;
 
-import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -16,7 +15,7 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
-public class GenerateViewPresentationAction extends MDAction {
+public class GenerateViewPresentationAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "GenerateViewPresentation";
     public static final String RECURSE_DEFAULT_ID = "GenerateViewPresentationR";

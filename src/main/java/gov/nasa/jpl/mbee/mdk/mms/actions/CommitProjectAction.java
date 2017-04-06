@@ -139,7 +139,11 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
             response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON)));
             // we don't need to process this response, just make sure the request comes back without exception
-        } catch (IOException | URISyntaxException | ServerException e1) {
+            if (response != null) {
+                // crude method of waiting for project post to propagate
+                Thread.sleep(5000);
+            }
+        } catch (IOException | URISyntaxException | ServerException | InterruptedException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;

@@ -7,7 +7,7 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateAllDocumentsAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllDocumentsAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.ValidateBranchesAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
@@ -27,20 +27,21 @@ public class MMSConfigurator implements AMConfigurator {
         ((ActionsCategory) category).setNested(true);
         manager.addCategory((ActionsCategory) category);
 
-        MMSLoginAction login = new MMSLoginAction();
-        category.addAction(login);
+        MMSLoginAction mmsLoginAction = new MMSLoginAction();
+        category.addAction(mmsLoginAction);
 
-        MMSLogoutAction logout = new MMSLogoutAction();
-        category.addAction(logout);
+        MMSLogoutAction mmsLogoutAction = new MMSLogoutAction();
+        category.addAction(mmsLogoutAction);
 
-        UpdateAllDocumentsAction uada = new UpdateAllDocumentsAction();
-        category.addAction(uada);
+        GenerateAllDocumentsAction generateAllDocumentsAction = new GenerateAllDocumentsAction();
+        category.addAction(generateAllDocumentsAction);
 
         if (MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
             MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
             validateCategory.setNested(true);
             category.addAction(validateCategory);
-            validateCategory.addAction(new ValidateBranchesAction());
+            ValidateBranchesAction validateBranchesAction = new ValidateBranchesAction();
+            validateCategory.addAction(validateBranchesAction);
         }
     }
 
