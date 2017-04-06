@@ -11,10 +11,10 @@ import static org.junit.Assert.assertTrue;
 @RunWith(ApplicationStartClassRunner.class)
 public class MDKPluginTest {
 
-    private MDKPlugin plugin;
+    private static MDKPlugin plugin;
 
     @BeforeClass
-    public void setup() {
+    public static void setup() {
         plugin = (MDKPlugin) PluginUtils.getPlugins().stream().filter(s -> s instanceof MDKPlugin).findFirst().get();
     }
 

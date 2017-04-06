@@ -432,7 +432,7 @@ test {
                     fileTree(dir: 'build/install', include: ['lib/**/*.jar']).getFiles().stream().map{i -> i.getAbsolutePath()}.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                     testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     if (buildAccess == 'internal') {
-        arguments.addAll(['-DFL_FORCE_USAGE=true', '-DFL_SERVER_ADDRESS=cae-license-uat.jpl.nasa.gov', '-DFL_SERVER_PORT=1101', '-DFL_EDITION=18.5'])
+        arguments.addAll(['-DFL_FORCE_USAGE=true', '-DFL_SERVER_ADDRESS=cae-lic04.jpl.nasa.gov', '-DFL_SERVER_PORT=1101', '-DFL_EDITION=18.5'])
     }
     jvmArgs = arguments
 }
