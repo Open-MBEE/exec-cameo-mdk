@@ -97,7 +97,11 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
 
         // build post data
         LinkedList<ObjectNode> orgs = new LinkedList<>();
-        orgs.add(JacksonUtils.getObjectMapper().createObjectNode());
+        ObjectNode orgNode =JacksonUtils.getObjectMapper().createObjectNode();
+        orgNode.put(MDKConstants.ID_KEY, org);
+        orgNode.put(MDKConstants.NAME_KEY, org);
+        orgs.add(orgNode);
+
 
         // do post request
         try {
@@ -108,8 +112,9 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             e.printStackTrace();
             return null;
         }
-        //TODO possible response processing
+        //response processing if needed
         return org;
     }
+
 }
 
