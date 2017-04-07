@@ -36,7 +36,7 @@ public class MMSConfigurator implements AMConfigurator {
         GenerateAllDocumentsAction generateAllDocumentsAction = new GenerateAllDocumentsAction();
         category.addAction(generateAllDocumentsAction);
 
-        if (MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
+        if (MDKOptionsGroup.getMDKOptions() != null && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
             MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
             validateCategory.setNested(true);
             category.addAction(validateCategory);
