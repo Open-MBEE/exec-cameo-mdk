@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -41,6 +42,7 @@ import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
+import org.json.simple.JSONArray;
 
 import java.io.File;
 import java.io.IOException;
@@ -572,6 +574,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // commit to MMS
             LinkedList<ObjectNode> elementsToCommit = new LinkedList<>();
             Queue<Pair<InstanceSpecification, Element>> instanceToView = new LinkedList<>();
+            Map<Element, JSONArray> view2elements = dbAlfrescoVisitor.getView2Elements();
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
                     continue;
@@ -582,6 +585,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 if (clientViewJson == null) {
                     skippedViews.add(view);
                     continue;
+                }
+                if (view2elements.get(view) != null) {
+                    ArrayNode displayedElements = clientViewJson.putArray(MDKConstants.DISPLAYED_ELEMENT_IDS_KEY);
+                    for (Object id : view2elements.get(view)) {
+                        displayedElements.add((String) id);
+                    }
                 }
                 Object o;
                 ObjectNode serverViewJson = (o = viewMap.get(Converters.getElementToIdConverter().apply(view))) != null ? ((ViewMapping) o).getObjectNode() : null;

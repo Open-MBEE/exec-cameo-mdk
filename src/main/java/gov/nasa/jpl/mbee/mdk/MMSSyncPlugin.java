@@ -47,7 +47,6 @@ public class MMSSyncPlugin extends MDPlugin {
     }
 
     public SyncStatusProjectEventListenerAdapter getSyncStatusProjectEventListenerAdapter() {
-
         return syncStatusProjectEventListenerAdapter;
     }
 
