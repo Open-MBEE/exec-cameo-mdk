@@ -399,6 +399,7 @@ task runScript(type: Exec) {
 runScript.dependsOn installDist
 
 test {
+    ignoreFailures = true
     testLogging.showStandardStreams = true
     forkEvery 1
 
