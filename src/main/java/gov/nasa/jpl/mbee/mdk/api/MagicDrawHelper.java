@@ -53,7 +53,7 @@ import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -84,15 +84,19 @@ public class MagicDrawHelper {
      *****************************************************************************************/
 
     public static ProjectDescriptor openProject(File file) throws IOException {
-        final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
+        return openProject(file.toURI());
+    }
+
+    public static ProjectDescriptor openProject(URI uri) throws IOException {
+        final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(uri);
         if (projectDescriptor == null) {
-            throw new IOException(Paths.get(file.toURI()).toString() + " could not generate a project descriptor.");
+            throw new IOException(uri.toString() + " could not generate a project descriptor.");
         }
         final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
         projectsManager.loadProject(projectDescriptor, true);
         final Project project = projectsManager.getActiveProject();
         if (project == null) {
-            throw new IOException(Paths.get(file.toURI()).toString() + " could not be loaded into MagicDraw.");
+            throw new IOException(uri.toString() + " could not be loaded into MagicDraw.");
         }
         return projectDescriptor;
     }

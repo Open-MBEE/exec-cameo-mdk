@@ -386,14 +386,23 @@ public class PresentationElementUtils {
 
     //return bfs view order
     public List<Element> getViewProcessOrder(Element start, Map<Element, List<Element>> view2view) {
-        List<Element> res = new ArrayList<Element>();
-        Queue<Element> toProcess = new LinkedList<Element>();
+        List<Element> res = new ArrayList<>();
+        Queue<Element> toProcess = new LinkedList<>();
+        HashSet<Element> processed = new HashSet<>();
         toProcess.add(start);
         while (!toProcess.isEmpty()) {
             Element next = toProcess.remove();
             res.add(next);
+            processed.add(next);
             if (view2view.containsKey(next)) {
-                toProcess.addAll(view2view.get(next));
+                for (Element element : view2view.get(next)) {
+                    if (!processed.contains(element)) {
+                        toProcess.add(element);
+                    }
+                    else {
+                        Application.getInstance().getGUILog().log("[WARNING] Circular view order detected for " + element.getHumanName() + ". View will not be added to the ordering an additional time.");
+                    }
+                }
             }
         }
         return res;
