@@ -134,20 +134,20 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                             }
                             requestUri.addParameter("nodes", Boolean.toString(true));
                             //requestUri.addParameter("edges", Boolean.toString(false));
-                            requests.add(requestIndex, new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToPost.size(),
-                                    "Sync Changes - Nodes - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2)));
+                            requests.add(requestIndex, new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
+                                    "Sync Changes - Nodes - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), 5 * 60 * 1000));
                             requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                             if (requestUri == null) {
                                 throw new IOException();
                             }
                             //requestUri.addParameter("nodes", Boolean.toString(false));
                             requestUri.addParameter("edges", Boolean.toString(true));
-                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToPost.size(),
-                                    "Sync Changes - Edges - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2)));
+                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
+                                    "Sync Changes - Edges - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), 5 * 60 * 1000));
                         }
                         else {
                             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToPost.size(), "Sync Changes"));
+                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(), "Sync Changes"));
                         }
                     } catch (IOException | URISyntaxException e) {
                         Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
@@ -166,7 +166,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToDelete.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON, elementsToDelete.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();

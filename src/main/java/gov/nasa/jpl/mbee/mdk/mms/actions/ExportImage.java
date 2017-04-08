@@ -74,7 +74,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         File imageFile = new File(filename);
 
         try {
-            Request imageRequest = new Request(project, requestUri, imageFile, "Image");
+            Request imageRequest = new Request(project, requestUri, imageFile, 1, "Image");
             OutputQueue.getInstance().offer(imageRequest);
         } catch (IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit image " + filename + ". Reason: " + e.getMessage());

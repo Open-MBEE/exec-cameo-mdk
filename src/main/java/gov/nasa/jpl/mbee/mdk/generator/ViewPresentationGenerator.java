@@ -671,7 +671,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, true, elementsToCommit.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, elementsToCommit.size(), "Sync Changes"));
                 changed = true;
             }
 
@@ -695,7 +695,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, true, elementsToCommit.size(), "View Generation"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, elementsToCommit.size(), "View Generation"));
                 changed = true;
             }
 

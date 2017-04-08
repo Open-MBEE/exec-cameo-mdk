@@ -109,8 +109,8 @@ public class OutputQueueStatusAction extends SRAction {
                 final Vector<Object> row = new Vector<Object>();
                 row.addElement(0);
                 row.addElement(current.getRequest().getMethod());
-                row.addElement(NumberFormat.getInstance().format(current.getNumElements()));
-                row.addElement(current.getType());
+                row.addElement(NumberFormat.getInstance().format(current.getCount()));
+                row.addElement(current.getName());
                 row.addElement(current.getRequest().getURI().toString());
                 row.addElement("Continue in Background");
                 data.addElement(row);
@@ -124,8 +124,8 @@ public class OutputQueueStatusAction extends SRAction {
                 final Vector<Object> row = new Vector<Object>();
                 row.addElement(counter);
                 row.addElement(r.getRequest().getMethod());
-                row.addElement(NumberFormat.getInstance().format(r.getNumElements()));
-                row.addElement(r.getType());
+                row.addElement(NumberFormat.getInstance().format(r.getCount()));
+                row.addElement(r.getName());
                 row.addElement(r.getRequest().getURI().toString());
                 row.addElement("Delete");
                 data.addElement(row);

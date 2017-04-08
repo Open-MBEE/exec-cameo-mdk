@@ -326,7 +326,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
                     File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, true, postElements.size(), "Sync Changes"));
+                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -347,7 +347,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, true, deleteElements.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes"));
             } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                 e.printStackTrace();

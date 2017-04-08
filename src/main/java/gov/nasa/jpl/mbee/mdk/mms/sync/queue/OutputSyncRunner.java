@@ -45,39 +45,38 @@ public class OutputSyncRunner implements Runnable {
     @Override
     public void run() {
         log.info("sync runner started");
-        OutputQueue q = OutputQueue.getInstance();
+        OutputQueue outputQueue = OutputQueue.getInstance();
         SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
         while (true) {
             try {
-                if (q.isEmpty()) {
+                if (outputQueue.isEmpty()) {
                     SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
                 }
-                final Request r = q.take();
-                q.setCurrent(r);
+                final Request request = outputQueue.take();
+                outputQueue.setCurrent(request);
                 SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
-                SendThread st = new SendThread(r);
-                st.setName("Send#" + id++);
-                st.start();
-
-                //if background on server, then wait maximumWaitTime
-                //if not background and r.getWait() > defaultWaitTime, then use defaultWaitTime, otherwise r.wait ( = num of elements per seconds + 2 mins)
-                final int maximumWaitTime = 5; //second
-                final int waitTime = (r.isBackground() ? maximumWaitTime * 1000 : (r.getWait() > maximumWaitTime * 1000 ? maximumWaitTime * 1000 : r.getWait()));
-                st.join(waitTime);
-
-                //Utils.guilog("[INFO] A send request did not finish within expected time. So keep waiting..."); //until a user press cancel
-                //log.info(st.getName() + " A send request did not finish within expected time.");
-                while (st.isAlive() && r == q.getCurrent()) { // r is not current if "cancel" in queue dialog is pressed
-                    //log.info(st.getName() + " Did not finish yet so waiting another 5 sec.");
-                    Thread.sleep(5000);
-                } //end of while
-                //log.info(st.getName() + " received response or cancel is pressed.");
-                q.setCurrent(null);
-
+                SendThread sendThread = new SendThread(request);
+                sendThread.setName(sendThread.toString() + " - #" + id++);
+                sendThread.start();
+                sendThread.join(0);
+                while (sendThread.isAlive() && request == outputQueue.getCurrent()) {
+                    Thread.sleep(1000);
+                }
+                if (request.getCompletionDelay() > 0) {
+                    System.out.println("Delaying completion by " + request.getCompletionDelay() + " ms starting at " + System.currentTimeMillis());
+                    int slept = 0;
+                    do {
+                        int sleep = Math.min(request.getCompletionDelay() - slept, 1000);
+                        Thread.sleep(sleep);
+                        slept += sleep;
+                    } while (slept < request.getCompletionDelay() && request == outputQueue.getCurrent());
+                    System.out.println("Finished completion delay at " + System.currentTimeMillis());
+                }
+                outputQueue.setCurrent(null);
             } catch (Exception e) {
-                log.error("", e);
+                e.printStackTrace();
             }
-            if (q.isEmpty()) {
+            if (outputQueue.isEmpty()) {
                 Utils.guilog("[INFO] Finished processing queued requests.");
             }
 

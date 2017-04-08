@@ -93,9 +93,9 @@ public class MDKHelper {
      */
     public static boolean mmsUploadWait() {
         if (OutputQueue.getInstance().getCurrent() != null) {
-            int elements = OutputQueue.getInstance().getCurrent().getNumElements();
+            int elements = OutputQueue.getInstance().getCurrent().getCount();
             for (Request request : OutputQueue.getInstance()) {
-                elements += request.getNumElements();
+                elements += request.getCount();
             }
             MagicDrawHelper.generalMessage("Uploading: " + elements + " Elements");
             while (true) {
