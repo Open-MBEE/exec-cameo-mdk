@@ -36,7 +36,6 @@ public class OutputSyncRunner implements Runnable {
                 MMSUtils.sendMMSRequest(r.getProject(), r.getRequest());
             } catch (IOException | ServerException | URISyntaxException e) {
                 lastException = new Pair<>(r, e);
-                log.info("[ERROR] Exception occurred during request processing. Reason: " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -44,7 +43,6 @@ public class OutputSyncRunner implements Runnable {
 
     @Override
     public void run() {
-        log.info("sync runner started");
         OutputQueue outputQueue = OutputQueue.getInstance();
         SwingUtilities.invokeLater(() -> OutputQueueStatusConfigurator.getOutputQueueStatusAction().update());
         while (true) {
