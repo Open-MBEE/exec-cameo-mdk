@@ -40,6 +40,13 @@ repositories {
                 password project.getProperties().get('artifactory_password')
             }
         }
+        maven {
+            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-release-virtual'
+            credentials {
+                username project.getProperties().get('artifactory_user')
+                password project.getProperties().get('artifactory_password')
+            }
+        }
     }
     else {
         ivy {
