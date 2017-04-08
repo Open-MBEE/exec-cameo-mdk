@@ -63,9 +63,9 @@ public class OutputSyncRunner implements Runnable {
                 if (request.getCompletionDelay() > 0) {
                     int slept = 0;
                     do {
-                        int sleep = Math.min(request.getCompletionDelay() - slept, 1000);
-                        Thread.sleep(sleep);
-                        slept += sleep;
+                        int duration = Math.min(request.getCompletionDelay() - slept, 1000);
+                        Thread.sleep(duration);
+                        slept += duration;
                     } while (slept < request.getCompletionDelay() && request == outputQueue.getCurrent());
                 }
                 outputQueue.setCurrent(null);
