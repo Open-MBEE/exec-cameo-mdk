@@ -23,8 +23,8 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     private String name;
     private boolean isIndividual;
 
-    public SetOrCreateRedefinableElementAction(final Classifier clazz, final RedefinableElement re, boolean isIndividual) {
-        this(clazz, re, false, DEFAULT_NAME, isIndividual);
+    public SetOrCreateRedefinableElementAction(final Classifier targetForRedefEl, final RedefinableElement elementToBeRedefined, boolean isIndividual) {
+        this(targetForRedefEl, elementToBeRedefined, false, DEFAULT_NAME, isIndividual);
     }
 
     /**
@@ -53,10 +53,10 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     }
 
     public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType, boolean isIndividual) {
-        return redefineAttribute(subClassifier, re, createSpecializedType, new ArrayList<RedefinableElement>(),new ArrayList<Classifier>(), isIndividual);
+        return redefineAttribute(subClassifier, re, createSpecializedType, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual);
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier classifierOfProp, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final List<RedefinableElement> traveled,  List<Classifier> visited, boolean isIndividual) {
+    public static RedefinableElement redefineAttribute(final Classifier classifierOfProp, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual) {
         if (elementToBeRedefined.isLeaf()) {
             Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " is a leaf. Cannot redefine further.");
         }
@@ -104,7 +104,7 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
 //            SpecializeStructureAction speca = new SpecializeStructureAction(classifierOfProp, false, "", isIndividual, isIndividual);
 //            speca.createSpecialClassifier()
-            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, classifierOfProp, true, traveled,visited, isIndividual);
+            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, classifierOfProp, true, traveled, visited, isIndividual);
         }
         return redefinedElement;
 
@@ -117,11 +117,11 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     private static boolean isMatchingStructuralFeature(NamedElement p, NamedElement elementToBeRedefined) {
         if (p.getName().equals(elementToBeRedefined.getName())) {
             if (p instanceof TypedElement && elementToBeRedefined instanceof TypedElement) {
-                if(((TypedElement) p).getType()!=null) {
+                if (((TypedElement) p).getType() != null) {
                     if (((TypedElement) p).getType().equals(((TypedElement) elementToBeRedefined).getType())) {
                         return true;
                     }
-                }else if (((TypedElement) elementToBeRedefined).getType() == null){
+                } else if (((TypedElement) elementToBeRedefined).getType() == null) {
                     return true;
                 }
             }

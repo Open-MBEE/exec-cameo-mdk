@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.systems_reasoner.actions;
 
 import au.com.bytecode.opencsv.CSVReader;
+import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
@@ -8,17 +9,18 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.validation.SRValidationSuite;
+import gov.nasa.jpl.mbee.mdk.validation.actions.SetOrCreateRedefinableElementAction;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ImportCSVAction extends SRAction {
     public static final String DEFAULT_ID = "Import from CSV";
@@ -42,6 +44,7 @@ public class ImportCSVAction extends SRAction {
         JFileChooser choose = new JFileChooser();
         choose.setDialogTitle("Open csv file");
         choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        HashSet<Classifier> createdElements = new HashSet<>();
         int retval = choose.showOpenDialog(null);
         if (retval == JFileChooser.APPROVE_OPTION) {
             if (choose.getSelectedFile() != null) {
@@ -50,9 +53,11 @@ public class ImportCSVAction extends SRAction {
                     SessionManager.getInstance().createSession("change");
                     gl.log("Starting CSV import.");
                     CSVReader reader = new CSVReader(new FileReader(savefile), separator.charAt(0));
-                    importFromCsv(reader);
+                    importFromCsv(reader, createdElements);
+                    checkForRedefinedElements(createdElements);
                     reader.close();
                     SessionManager.getInstance().closeSession();
+                    // checkForAssociationInheritance(createdElements);
                     gl.log("CSV import finished.");
                 } catch (IOException ex) {
                     gl.log("CSV import failed:");
@@ -66,13 +71,49 @@ public class ImportCSVAction extends SRAction {
         }
     }
 
-    private void importFromCsv(CSVReader reader) throws IOException {
+    private void checkForAssociationInheritance(HashSet<Classifier> createdElements) {
+
+        for (Classifier element : createdElements) {
+            for (Classifier general : element.getGeneral()) {
+                SRValidationSuite.checkAssociationsForInheritance(element, general);
+                ValidationRule ele = SRValidationSuite.getAssociationInheritanceRule();
+                for (ValidationRuleViolation violation : ele.getViolations()) {
+                    NMAction action = violation.getActions().get(0);
+                    action.actionPerformed(null);
+                }
+            }
+        }
+
+    }
+
+    private void checkForRedefinedElements(HashSet<Classifier> createdElements) {
+        for (Classifier ns : createdElements) {
+            for (NamedElement mem : ns.getInheritedMember()) {
+                if (mem instanceof RedefinableElement) {
+                    boolean redefined = false;
+                    for (NamedElement om : ns.getOwnedMember()) {
+                        if (om instanceof RedefinableElement) {
+                            if (SRValidationSuite.doesEventuallyRedefine(((RedefinableElement) om), (RedefinableElement) mem)) {
+                                redefined = true;
+                            }
+                        }
+                    }
+                    if (!redefined) {
+                        SetOrCreateRedefinableElementAction action = new SetOrCreateRedefinableElementAction(ns, (RedefinableElement) mem, false);
+                        action.run();
+                    }
+                }
+            }
+        }
+    }
+
+    private void importFromCsv(CSVReader reader, HashSet<Classifier> createdElements) throws IOException {
         GUILog gl = Application.getInstance().getGUILog();
         Project project = Application.getInstance().getProject();
 
         String[] line = reader.readNext(); // ignore header
 
-
+        String selectedClassifierName = selectedClassifier.getName();
         List<Element> sortedColumns = new ArrayList<Element>();
         boolean isFirstLine = true;
         boolean lineWasEmpty = true;
@@ -80,71 +121,90 @@ public class ImportCSVAction extends SRAction {
         HashMap<Property, Classifier> previousLinesClasses = new HashMap<>();
         HashMap<Property, Classifier> thisLinesClasses = new HashMap<>();
         while (line != null) {
-            previousLinesClasses = thisLinesClasses;
-            thisLinesClasses = new HashMap<>();
-            if (!isFirstLine) {
-                for (int jj = 0; jj < sortedColumns.size(); jj++) {
-                    String valueFromCSV = line[jj].trim();
-                    Element el = sortedColumns.get(jj);
-                    if (el != null) {
-                        if (el instanceof Property) {
-                            Classifier child = null;
-                            Type type = ((Property) el).getType();
-                            if (!(type instanceof DataType)) {
-                                if (!valueFromCSV.isEmpty()) {
-                                    if (type instanceof Classifier) {
-                                        child = createNewSubElement(line, jj, (Classifier) type);
-                                        thisLinesClasses.put((Property) el, child);
+            if (!emptyLine(line)) {
+                createdElements.addAll(thisLinesClasses.values());
+                previousLinesClasses = thisLinesClasses;
+                thisLinesClasses = new HashMap<>();
+                if (!isFirstLine) {
+                    for (int jj = 0; jj < sortedColumns.size(); jj++) {
+                        String valueFromCSV = line[jj].trim();
+                        Element el = sortedColumns.get(jj);
+                        if (el != null) {
+                            if (el instanceof Property) {
+                                Classifier child = null;
+                                Type type = ((Property) el).getType();
+                                if (!(type instanceof DataType)) {
+                                    if (!valueFromCSV.isEmpty()) {
+                                        if (type instanceof Classifier) {
+                                            child = createNewSubElement(line, jj, (Classifier) type);
+                                            thisLinesClasses.put((Property) el, child);
+                                        }
+                                    } else {
+                                        thisLinesClasses.put((Property) el, previousLinesClasses.get(el));
                                     }
-                                } else {
-                                    thisLinesClasses.put((Property) el, previousLinesClasses.get(el));
+                                }
+                                if (!valueFromCSV.isEmpty()) {
+                                    setPropertyValue(valueFromCSV, (RedefinableElement) el, thisLinesClasses);
                                 }
                             }
-                            if (!valueFromCSV.isEmpty()) {
-                                setPropertyValue(valueFromCSV, (RedefinableElement) el, thisLinesClasses);
-                            }
-                        }
-                    } else {
-                        if (jj == elementName) {
-                            if (!line[elementName].isEmpty()) {
-                                Classifier topClass = (Classifier) CopyPasting.copyPasteElement(selectedClassifier, selectedClassifier.getOwner());
-                                topClass.getOwnedMember().clear();
-                                topClass.getGeneralization().clear();
-                                Utils.createGeneralization(selectedClassifier, topClass);
-                                topClass.setName(line[elementName]);
-                                thisLinesClasses.put(null, topClass);
-                                Application.getInstance().getGUILog().log("Creating new " + selectedClassifier.getName() + " named " + topClass.getName() + " for line " + row + ".");
-                            } else {
-                                thisLinesClasses.put(null, previousLinesClasses.get(null));
-                            }
-                        }
-                    }
-                }
-
-            } else {
-                for (int c = 0; c < line.length; c++) {
-                    String propertyName = line[c];
-                    if (!propertyName.isEmpty()) {
-                        if (propertyName.contains(".")) {
-                            propertyName = handleSubProperty(sortedColumns, propertyName, selectedClassifier);
                         } else {
-                            lineWasEmpty = false;
-                            sortedColumns.add(getPropertyFromColumnName(propertyName, selectedClassifier));
-                            System.out.println(line);
+                            if (sortedColumns.get(jj) == null) {
+                                if (!line[jj].isEmpty()) {
+                                    Classifier topClass = (Classifier) CopyPasting.copyPasteElement(selectedClassifier, selectedClassifier.getOwner());
+                                    topClass.getOwnedMember().clear();
+                                    topClass.getGeneralization().clear();
+                                    Utils.createGeneralization(selectedClassifier, topClass);
+                                    topClass.setName(line[jj]);
+                                    thisLinesClasses.put(null, topClass);
+                                    Application.getInstance().getGUILog().log("Creating new " + selectedClassifier.getName() + " named " + topClass.getName() + " for line " + row + ".");
+                                } else {
+                                    if (jj == elementName) {
+                                        thisLinesClasses.put(null, previousLinesClasses.get(null));
+                                    }
+                                }
+                            }
                         }
-                    } else {
-                        elementName = c;
-                        sortedColumns.add(null);
+                    }
+
+                } else {
+                    for (int c = 0; c < line.length; c++) {
+                        String propertyName = line[c];
+                        if (!propertyName.isEmpty()) {
+                            if (propertyName.contains(".")) {
+                                propertyName = handleSubProperty(sortedColumns, propertyName, selectedClassifier);
+                            } else {
+                                lineWasEmpty = false;
+                                sortedColumns.add(getPropertyFromColumnName(propertyName, selectedClassifier));
+                                if (propertyName.equals(selectedClassifierName)) {
+                                    elementName = c;
+                                }
+                            }
+                        } else {
+                            if (elementName == -1) {// only set it the first time.
+                                elementName = c;
+                            }
+                            sortedColumns.add(null);
+                        }
                     }
                 }
-            }
-            if (!lineWasEmpty) {
-                isFirstLine = false;
+                if (!lineWasEmpty) {
+                    isFirstLine = false;
+                }
             }
             line = reader.readNext();
             row++;
-        }
 
+        }
+    }
+
+    private boolean emptyLine(String[] line) {
+        for (int i = 0; i < line.length; i++) {
+            String s = line[i];
+            if (!s.trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String handleSubProperty(List<Element> sortedColumns, String propertyName, Classifier parent) {
@@ -199,17 +259,19 @@ public class ImportCSVAction extends SRAction {
                                         vs = UMLFactory.eINSTANCE.createLiteralString();
                                         ((LiteralString) vs).setValue(valueFromCSV);
                                     } else if (((Property) el).getType().getID().equals("_11_5EAPbeta_be00301_1147431819399_50461_1671")) {
+                                        double val = Double.parseDouble(valueFromCSV);
                                         vs = UMLFactory.eINSTANCE.createLiteralReal();
-                                        ((LiteralReal) vs).setValue(Double.parseDouble(valueFromCSV));
+                                        ((LiteralReal) vs).setValue(val);
                                     } else if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_39033_4086")) {
                                         vs = UMLFactory.eINSTANCE.createLiteralBoolean();
                                         ((LiteralBoolean) vs).setValue(Boolean.parseBoolean(valueFromCSV));
                                     } else if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_8641_4088")) {
+                                        int val = Integer.parseInt(valueFromCSV);
                                         vs = UMLFactory.eINSTANCE.createLiteralInteger();
-                                        ((LiteralInteger) vs).setValue(Integer.parseInt(valueFromCSV));
+                                        ((LiteralInteger) vs).setValue(val);
                                     }
                                 } catch (NumberFormatException nf) {
-                                    Application.getInstance().getGUILog().log("[WARNING] Value in line " + row + " for property " + el.getName() + " not correct.");
+                                    Application.getInstance().getGUILog().log("[WARNING] Value in line " + row + " for property " + el.getName() + " not correct. Reason: " + nf.getMessage());
 
                                 }
                             }
@@ -231,8 +293,10 @@ public class ImportCSVAction extends SRAction {
 
     private Classifier findMatchingSubclass(Classifier general, Collection<Classifier> thisLinesClasses) {
         for (Classifier cl : thisLinesClasses) {
-            if (cl.getGeneral().contains(general)) {
-                return cl;
+            if (cl != null) {
+                if (cl.getGeneral().contains(general)) {
+                    return cl;
+                }
             }
         }
         return null;
