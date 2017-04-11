@@ -287,6 +287,10 @@ public class MMSUtils {
         logBody = logBody && httpEntityEnclosingRequest.getEntity().isRepeatable();
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
 
+        // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
+        boolean throwServerException = false;
+        int responseCode;
+
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -294,15 +298,12 @@ public class MMSUtils {
              InputStream inputStream = response.getEntity().getContent();
              OutputStream outputStream = new FileOutputStream(targetFile)) {
             // get data out of the response
-            int responseCode = response.getStatusLine().getStatusCode();
+            responseCode = response.getStatusLine().getStatusCode();
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
             // debug / logging output from response
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
             System.out.println("Response Body: " + targetFile.getPath());
-
-            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
-            boolean throwServerException = false;
 
             // assume that a GET that returns 404 with json response bodies is a "missing resource" 404, which are expected for some cases and should not break normal execution flow
             if (responseCode == HttpURLConnection.HTTP_OK || (request.getMethod().equals("GET") && responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8"))) {
@@ -327,28 +328,28 @@ public class MMSUtils {
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-
-                JsonFactory jasonFactory = JacksonUtils.getJsonFactory();
-                JsonParser jsonParser = jasonFactory.createParser(targetFile);
-                while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
-                    // spin until we find message
-                }
-                if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
-                    jsonParser.nextToken();
-                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
-                }
-            }
-
-            if (throwServerException) {
-                // big flashing red letters that the action failed, or as close as we're going to get
-                Utils.showPopupMessage("Action failed. See notification window for details.");
-                // throw is done last, after printing the error and any messages that might have been returned
-                throw new ServerException((inputStream != null ? inputStream.toString() : ""), responseCode);
             }
         }
-        JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(targetFile);
-        jsonParser.nextToken();
-        return jsonParser;
+
+        JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
+        try (JsonParser jsonParser = jsonFactory.createParser(targetFile)) {
+            while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
+                // spin until we find message
+            }
+            if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
+                jsonParser.nextToken();
+                Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
+            }
+        }
+
+        if (throwServerException) {
+            // big flashing red letters that the action failed, or as close as we're going to get
+            Utils.showPopupMessage("Action failed. See notification window for details.");
+            // throw is done last, after printing the error and any messages that might have been returned
+            throw new ServerException(targetFile.getAbsolutePath(), responseCode);
+        }
+
+        return JacksonUtils.getJsonFactory().createParser(targetFile);
     }
 
     /**

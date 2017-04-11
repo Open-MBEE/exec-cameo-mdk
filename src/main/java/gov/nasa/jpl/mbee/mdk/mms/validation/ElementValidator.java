@@ -95,20 +95,17 @@ public class ElementValidator implements RunnableWithProgress {
 
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         Set<String> processedElementIds = new HashSet<>();
+        JsonToken current = null;
         try {
             for (JsonParser jsonParser : serverElementParsers) {
-                JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
+                current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
                 if (current != JsonToken.START_OBJECT) {
                     throw new IOException("Unable to build object from JSON parser.");
                 }
                 while (current != JsonToken.END_OBJECT) {
-                    if (jsonParser.getCurrentName() == null) {
-                        current = jsonParser.nextToken();
-                        continue;
-                    }
-                    String keyName = jsonParser.getCurrentName();
-                    if (keyName.equals("elements")) {
-                        jsonParser.nextToken();
+                    current = jsonParser.nextToken();
+                    String keyName;
+                    if (current != null && (keyName = jsonParser.getCurrentName()) != null && keyName.equals("elements") && (current = jsonParser.nextToken()) == JsonToken.START_ARRAY) {
                         current = jsonParser.nextToken();
                         JsonNode value;
                         while (current != JsonToken.END_ARRAY) {
@@ -128,20 +125,14 @@ public class ElementValidator implements RunnableWithProgress {
                                     }
                                 }
                             }
-                            else {
-                                // ignore
-                            }
-                            current = jsonParser.nextToken();
                         }
                     }
-                    current = jsonParser.nextToken();
                 }
                 jsonParser.close();
             }
         } catch (IOException e) {
             // stuff
         }
-
 
         if (serverElements == null) {
             serverElements = new LinkedList<>();
