@@ -40,13 +40,12 @@ public class ImageValidator {
     }
 
     public void validate(Project project) {
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-        if (requestUri == null) {
-            return;
-        }
-
         for (String key : images.keySet()) {
             // customize request
+            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+            if (requestUri == null) {
+                return;
+            }
             Element e = Converters.getIdToElementConverter().apply(key, project);
             String id = key.replace(".", "%2E");
             requestUri.setPath(requestUri.getPath() + "/" + id);
