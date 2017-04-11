@@ -65,7 +65,7 @@ public class ElementValidator implements RunnableWithProgress {
     public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project) {
         this.clientElements = clientElements;
         this.serverElements = serverElements;
-        this.serverElementFiles = new LinkedList<>();
+        this.serverElementFiles = Collections.emptyList();
         this.project = project;
     }
 
