@@ -36,5 +36,7 @@ public class MDKConstants {
             TWC_URI_KEY = "uri",
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
-            TWC_ID_KEY = "twc" + ID_KEY_SUFFIX;
+            TWC_ID_KEY = "twc" + ID_KEY_SUFFIX,
+            TWC_VERSION_KEY = "twcVersion",
+            BRANCH_KEY = "branch";
 }
