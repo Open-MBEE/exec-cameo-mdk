@@ -12,6 +12,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.generator.ViewPresentationGenerator;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
@@ -47,23 +49,28 @@ public class GenerateAllDocumentsAction extends MMSAction {
 
         Set<Element> docs = getProjectDocuments(project);
         PresentationElementUtils viu = new PresentationElementUtils();
-        Map<String, ObjectNode> images = new HashMap<>();
-        if (SessionManager.getInstance().isSessionCreated(project)) {
+        /*if (SessionManager.getInstance().isSessionCreated(project)) {
             SessionManager.getInstance().closeSession(project);
+        }*/
+        //SessionManager.getInstance().createSession(project, "View Presentation Generation - All Documents - Cancelled");
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(docs, project, true, false, viu, null);
+        ProgressStatusRunner.runWithProgressStatus(vg, "Generating All Documents", true, 0);
+        vss.addAll(vg.getValidations());
+        if (vg.isFailure()) {
+            //SessionManager.getInstance().cancelSession(project);
+            Utils.guilog("[ERROR] Document generation was not completed");
+            Utils.displayValidationWindow(project, vss, "View Generation and Images Validation");
+            return vss;
         }
-        SessionManager.getInstance().createSession(project, "View Presentation Generation - All Documents - Cancelled");
-        for (Element doc : docs) {
-            ViewPresentationGenerator vg = new ViewPresentationGenerator(doc, true, false, viu, images, null, false);
-            ProgressStatusRunner.runWithProgressStatus(vg, "Generating Document " + ((NamedElement) doc).getName() + "...", true, 0);
-            vss.addAll(vg.getValidations());
-            if (vg.isFailure()) {
-                SessionManager.getInstance().cancelSession(project);
-                Utils.guilog("[ERROR] Document generation was not completed");
-                Utils.displayValidationWindow(project, vss, "View Generation and Images Validation");
-                return vss;
-            }
+
+        /*LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        if (localSyncTransactionCommitListener != null) {
+            localSyncTransactionCommitListener.setDisabled(true);
         }
         SessionManager.getInstance().cancelSession(project);
+        if (localSyncTransactionCommitListener != null) {
+            localSyncTransactionCommitListener.setDisabled(false);
+        }*/
         Utils.displayValidationWindow(project, vss, "View Generation and Images Validation");
         return vss;
     }

@@ -31,10 +31,7 @@ import gov.nasa.jpl.mbee.mdk.model.UserScript;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
@@ -238,11 +235,11 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
             NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
             if (action == null) {
-                viewInstances.addAction(new GenerateViewPresentationAction(es, false));
+                viewInstances.addAction(new GenerateViewPresentationAction(new LinkedHashSet<>(es), false));
             }
             action = manager.getActionFor(GenerateViewPresentationAction.RECURSE_DEFAULT_ID);
             if (action == null) {
-                viewInstances.addAction(new GenerateViewPresentationAction(es, true));
+                viewInstances.addAction(new GenerateViewPresentationAction(new LinkedHashSet<>(es), true));
             }
 
             String url;

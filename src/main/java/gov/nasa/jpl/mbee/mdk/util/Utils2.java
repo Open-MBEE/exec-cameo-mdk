@@ -390,10 +390,6 @@ public class Utils2 {
      * @return whether the object has already been visited
      */
     public static <T> Pair<Boolean, Set<T>> seen(T o, boolean recursive, Set<T> seen) {
-        if (seen instanceof SeenSet) {
-            Pair<Boolean, Set<T>> p = seen(o, recursive, seen);
-            return p;
-        }
         if (seen != null && seen.contains(o)) {
             // ++seenCt;
             return new Pair<Boolean, Set<T>>(true, seen);
