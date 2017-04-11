@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2013>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
- *
+ * <p>
  * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * <p>
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * <p>
+ * - Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ * - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ * nor the names of its contributors may be used to endorse or promote products derived
+ * from this software without specific prior written permission.
+ * <p>
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.lib;
@@ -33,7 +33,6 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
@@ -64,9 +63,9 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.DocGenUtils;
-import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
@@ -181,8 +180,7 @@ public class Utils {
                 if (include) {
                     res.add((Diagram) d);
                 }
-            }
-            else if (!include) {
+            } else if (!include) {
                 res.add((Diagram) d);
             }
         }
@@ -199,8 +197,7 @@ public class Utils {
                     res.add(e);
                 }
             }
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 if (derived && !StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
                         && !StereotypesHelper.hasStereotype(e, stereotype)) {
@@ -221,8 +218,7 @@ public class Utils {
                     res.add(e);
                 }
             }
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 if (derived && !StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
                         && !StereotypesHelper.hasStereotype(e, stereotype)) {
@@ -290,8 +286,7 @@ public class Utils {
                 // } catch ( ParserException e1 ) {
                 // e1.printStackTrace();
             }
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 Object o = null;
                 DocumentValidator dv = CollectFilterParser.getValidator();
@@ -336,8 +331,7 @@ public class Utils {
                     res.add(e);
                 }
             }
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 if (derived && !StereotypesHelper.hasStereotypeOrDerived(e, stereotypes) || !derived
                         && !StereotypesHelper.hasStereotype(e, stereotypes)) {
@@ -371,8 +365,7 @@ public class Utils {
                     res.add(e);
                 }
             }
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 if (e instanceof NamedElement && !names.contains(((NamedElement) e).getName())) {
                     res.add(e);
@@ -452,8 +445,7 @@ public class Utils {
                     }
                 }
             }
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 boolean add = true;
                 for (java.lang.Class<?> c : javaClasses) {
@@ -479,8 +471,7 @@ public class Utils {
                     res.add(e);
                 }
             }
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 if (javaClass.isInstance(e)) {
                     continue;
@@ -611,8 +602,7 @@ public class Utils {
         seen = p.second;
         if (type.isInstance(o)) {
             res.add((T) o);
-        }
-        else if (o instanceof Collection) {
+        } else if (o instanceof Collection) {
             for (Object obj : (Collection<?>) o) {
                 res.addAll(getListOfType(obj, type, seen));
             }
@@ -660,8 +650,7 @@ public class Utils {
         List<Element> res = new ArrayList<>();
         if (!iterate) {
             res.addAll(collectByExpression(elements, query));
-        }
-        else {
+        } else {
             for (Element e : elements) {
                 res.addAll(collectByExpression(e, query));
             }
@@ -722,8 +711,7 @@ public class Utils {
         List<Element> res = new ArrayList<>();
         if (direction == 0) {
             res = EmfUtils.getRelationships(e);
-        }
-        else if (direction == 1) {
+        } else if (direction == 1) {
             res.addAll(e.get_directedRelationshipOfSource());
         }
         if (direction == 2) {
@@ -739,7 +727,7 @@ public class Utils {
      * @param e
      * @param javaClasses this is the class of the relationships to consider
      * @param direction   0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth       collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByJavaClasses(Element e,
@@ -806,7 +794,7 @@ public class Utils {
      * @param e
      * @param c
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByJavaClass(Element e, java.lang.Class<?> c,
@@ -827,7 +815,7 @@ public class Utils {
      * @param e
      * @param c         this is the class from magicdraw's uml profile
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByMetaclass(Element e, Class c, int direction, int depth) {
@@ -936,7 +924,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByStereotype(Element e, Stereotype stereotype,
@@ -959,7 +947,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectRelatedElementsByStereotypeString(Project project, Element e, String stereotype,
@@ -985,7 +973,7 @@ public class Utils {
      * @param e
      * @param javaClasses this is the class of the relationships to consider
      * @param direction   0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth       collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClasses(Element e,
@@ -1052,7 +1040,7 @@ public class Utils {
      * @param e
      * @param c
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipJavaClass(Element e, java.lang.Class<?> c, int direction, int depth) {
@@ -1072,7 +1060,7 @@ public class Utils {
      * @param e
      * @param c         this is the class from magicdraw's uml profile
      * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth     collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipMetaclass(Element e, Class c,
@@ -1217,7 +1205,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotype(Element e, Stereotype stereotype, int direction, boolean derived, int depth) {
@@ -1247,8 +1235,7 @@ public class Utils {
                 if (value != null) {
                     if (value instanceof Collection) {
                         results.addAll((Collection<?>) value);
-                    }
-                    else {
+                    } else {
                         results.add(value);
                     }
                 }
@@ -1269,7 +1256,7 @@ public class Utils {
      * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
      *                   the supplier
      * @param derived
-     * @param depth collect to what level of depth - 0 is infinite
+     * @param depth      collect to what level of depth - 0 is infinite
      * @return
      */
     public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypeString(Element e, String stereotype, int direction, boolean derived, int depth) {
@@ -1315,8 +1302,7 @@ public class Utils {
                     for (Property redef : ((Property) ne).getRedefinedProperty()) {
                         inheritedCopy.remove(redef);
                     }
-                }
-                else {
+                } else {
                     inheritedCopy.remove(ne);
                 }
             }
@@ -1605,12 +1591,10 @@ public class Utils {
                         Double da0 = Utils2.toDouble(as);
                         Double db0 = Utils2.toDouble(bs);
                         return CompareUtils.compare(da0, db0, true);
-                    }
-                    else {
+                    } else {
                         return CompareUtils.compare(as, bs, true);
                     }
-                }
-                else {
+                } else {
                     return a.size() - b.size();
                 }
             }
@@ -1667,8 +1651,7 @@ public class Utils {
                     if (isAllNumbers) {
                         if (Utils2.isNumber(s)) {
                             numbers.add(Utils2.toDouble(s));
-                        }
-                        else {
+                        } else {
                             isAllNumbers = false;
                             break;
                         }
@@ -1677,13 +1660,11 @@ public class Utils {
                 if (isAllNumbers) {
                     resultNumberMap.put(e, numbers);
                 }
-            }
-            else {
+            } else {
                 String s = DocGenUtils.fixString(result);
                 if (!Utils2.isNumber(s)) {
                     isAllNumbers = false;
-                }
-                else {
+                } else {
                     resultNumberMap.put(e, Utils2.toDouble(s));
                 }
 
@@ -1695,6 +1676,8 @@ public class Utils {
         Collections.sort(list, new DocGenComparator(resultMap, isAllNumbers));
         return list;
     }
+
+
 
     public static class DocGenComparator implements Comparator<Object> {
         final boolean allNums;
@@ -1743,8 +1726,7 @@ public class Utils {
             Double da0 = Utils2.toDouble(as);
             Double db0 = Utils2.toDouble(bs);
             return CompareUtils.compare(da0, db0, true);
-        }
-        else {
+        } else {
             return CompareUtils.compare(as, bs, true);
         }
     }
@@ -1926,8 +1908,7 @@ public class Utils {
             if (e != null) {
                 return Utils2.newList(e);
             }
-        }
-        else {
+        } else {
             Collection<Element> res = nameOrIdSearchCache.get(pattern);
             return Utils2.asList(res);
         }
@@ -1952,8 +1933,7 @@ public class Utils {
             if (e != null) {
                 return Utils2.newList(e);
             }
-        }
-        else {
+        } else {
             Collection<Element> res =
                     Utils2.get(nameOrIdSearchOwnerCache, owner, pattern);
             return Utils2.asList(res);
@@ -1993,7 +1973,9 @@ public class Utils {
 
     /********************************************** Direct Stereotype Utils **********************************************/
 
-    /*** SysML::Model Elements ***/
+    /***
+     * SysML::Model Elements
+     ***/
     public static Stereotype getConformsStereotype(Project project) {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
@@ -2014,7 +1996,9 @@ public class Utils {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
     }
 
-    /*** SysML Extensions::_Stereotypes ***/
+    /***
+     * SysML Extensions::_Stereotypes
+     ***/
     public static Stereotype getAccountableForStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1371599170030_696081_43276");
     }
@@ -2063,7 +2047,9 @@ public class Utils {
         return (Stereotype) project.getElementByID("_18_0_5_407019f_1462145965413_380403_14076");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Document Profile
+     ***/
     public static Stereotype getCommentStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_5_407019f_1337877314051_474317_11891");
     }
@@ -2076,7 +2062,9 @@ public class Utils {
         return (Stereotype) project.getElementByID("_16_5_4_409a058d_1259862803278_226185_1083");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers
+     ***/
     public static Stereotype getProductStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
     }
@@ -2086,19 +2074,25 @@ public class Utils {
         return (Stereotype) project.getElementByID("_17_0_1_232f03dc_1325612611695_581988_21583");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements
+     ***/
     public static Stereotype getPresentsStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1430628469999_419411_12119");
     }
 
     /********************************************** Direct Property Utils **********************************************/
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement
+     ***/
     public static Property getGeneratedFromViewProperty(Project project) {
         return (Property) project.getElementByID("_17_0_5_1_407019f_1430628276506_565_12080");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection
+     ***/
     public static Property getGeneratedFromElementProperty(Project project) {
         return (Property) project.getElementByID("_17_0_5_1_407019f_1430628376067_525763_12104");
     }
@@ -2109,12 +2103,16 @@ public class Utils {
 
     /********************************************** Direct Component Utils **********************************************/
 
-    /*** SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library ***/
+    /***
+     * SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library
+     ***/
     public static Component getSiteCharacterizationComponent(Project project) {
         return (Component) project.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
     }
 
-    /********************************************** Constraint Utils **********************************************/
+    /**********************************************
+     * Constraint Utils
+     **********************************************/
     public static Constraint getViewConstraint(Element view) {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
@@ -2309,8 +2307,7 @@ public class Utils {
     public static void showPopupMessage(String message) {
         if (popupsDisabled || MainFrame.isSilentMode()) {
             Utils.guilog("[POPUP] " + message);
-        }
-        else {
+        } else {
             JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), message);
         }
     }
@@ -2332,8 +2329,7 @@ public class Utils {
         int res = JOptionPane.showOptionDialog(Application.getInstance().getMainFrame(), question, "Choose", option, JOptionPane.QUESTION_MESSAGE, null, buttons, buttons[0]);
         if (res == JOptionPane.YES_OPTION) {
             return true;
-        }
-        else if (res == JOptionPane.NO_OPTION) {
+        } else if (res == JOptionPane.NO_OPTION) {
             return false;
         }
         return null;
@@ -2359,8 +2355,7 @@ public class Utils {
         int res = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), question);
         if (res == JOptionPane.YES_OPTION) {
             return true;
-        }
-        else if (res == JOptionPane.NO_OPTION) {
+        } else if (res == JOptionPane.NO_OPTION) {
             return false;
         }
         return null;
@@ -2426,8 +2421,7 @@ public class Utils {
                         ((IRuleViolationAction) action).setAnnotation(anno);
                     }
                 }
-            }
-            else {
+            } else {
                 anno = new Annotation(severity, vr.getName(), vrv.getComment(), vrv.getElement());
             }
             RuleViolationResult rvr = new RuleViolationResult(anno, cons);
@@ -2599,6 +2593,21 @@ public class Utils {
         setOwnerPackage(d, from);
     }
 
+
+    public static void createInheritingAssociation(Property generalProperty, Classifier classifierOfnewProperty, Property newProperty) {
+        Association generalAssociation = generalProperty.getAssociation();
+        Association newAssociation = UMLFactory.eINSTANCE.createAssociation();
+        newAssociation.setName(generalAssociation.getName());
+        Property ownedEnd = UMLFactory.eINSTANCE.createProperty();
+        ownedEnd.setOwner(newAssociation);
+        ownedEnd.setType(classifierOfnewProperty);
+        Utils.createGeneralization(generalAssociation, newAssociation);
+        newAssociation.setOwner(classifierOfnewProperty.getOwner());
+        newAssociation.getMemberEnd().add(newProperty);
+        newAssociation.getOwnedEnd().add(ownedEnd);
+    }
+
+
     /**
      * This will set the default value of p to value, based on what type the
      * default value currently is right now, it'll try to convert to:
@@ -2630,8 +2639,7 @@ public class Utils {
         ValueSpecification v = null;
         if (value instanceof ValueSpecification) {
             v = (ValueSpecification) value;
-        }
-        else {
+        } else {
             for (ValueSpecification valueSpec : valueSpecs) {
                 v = makeValueSpecification(project, value.toString(), valueSpec);
                 break;
@@ -2663,24 +2671,19 @@ public class Utils {
                         || value.equals("no") || value.equals("n") || value.isEmpty()
                         || value.equals("FALSE") || value.equals("NO") || value.equals("No")) {
                     ((LiteralBoolean) v).setValue(false);
-                }
-                else {
+                } else {
                     ((LiteralBoolean) v).setValue(true);
                 }
-            }
-            else if (valueSpec instanceof LiteralInteger) {
+            } else if (valueSpec instanceof LiteralInteger) {
                 v = ef.createLiteralIntegerInstance();
                 ((LiteralInteger) v).setValue(Integer.parseInt(value));
-            }
-            else if (valueSpec instanceof LiteralUnlimitedNatural) {
+            } else if (valueSpec instanceof LiteralUnlimitedNatural) {
                 v = ef.createLiteralUnlimitedNaturalInstance();
                 ((LiteralUnlimitedNatural) v).setValue(Integer.parseInt(value));
-            }
-            else if (valueSpec instanceof LiteralReal) {
+            } else if (valueSpec instanceof LiteralReal) {
                 v = ef.createLiteralRealInstance();
                 ((LiteralReal) v).setValue(Double.parseDouble(value));
-            }
-            else {
+            } else {
                 v = ef.createLiteralStringInstance();
                 ((LiteralString) v).setValue(value);
             }
@@ -2699,7 +2702,9 @@ public class Utils {
         return v;
     }
 
-    /************************* Getting element attributes and properties/values ****************************/
+    /*************************
+     * Getting element attributes and properties/values
+     ****************************/
 
     public enum AvailableAttribute {
         Name, Documentation, Value
@@ -2809,8 +2814,7 @@ public class Utils {
             case Name:
                 if (elem instanceof NamedElement) {
                     return ((NamedElement) elem).getName();
-                }
-                else {
+                } else {
                     return elem.getHumanName();
                 }
             case Documentation:
@@ -2818,11 +2822,9 @@ public class Utils {
             case Value:
                 if (elem instanceof Property) {
                     return ((Property) elem).getDefaultValue();
-                }
-                else if (elem instanceof Slot) {
+                } else if (elem instanceof Slot) {
                     return ((Slot) elem).getValue();
-                }
-                else if (elem instanceof Constraint) {
+                } else if (elem instanceof Constraint) {
                     return ((Constraint) elem).getSpecification();
                 }
             default:
@@ -2952,8 +2954,7 @@ public class Utils {
             if (slot != null) {
                 return slot;
             }
-        }
-        else {
+        } else {
             Property result = getClassProperty(elem, prop, true);
             if (result != null) {
                 return result;
@@ -3016,8 +3017,7 @@ public class Utils {
                 if (value != null) {
                     if (value instanceof Collection) {
                         results.addAll((Collection<?>) value);
-                    }
-                    else {
+                    } else {
                         results.add(value);
                     }
                 }
@@ -3208,8 +3208,7 @@ public class Utils {
     public static void log(Object o, Object color) {
         if (color == null || color instanceof Color) {
             log(o, (Color) color);
-        }
-        else {
+        } else {
             log(o, color.toString());
         }
     }
@@ -3233,8 +3232,7 @@ public class Utils {
         if (sList != null && !sList.isEmpty()) {
             if (sList.size() == 1) {
                 s = sList.get(0);
-            }
-            else {
+            } else {
                 s = sList.toString();
             }
         }
@@ -3351,16 +3349,13 @@ public class Utils {
                 if (cell instanceof Element && what != null && editable) {
                     if (what == PropertyEnum.NAME) {
                         row.add(new DBText(tm.getValueAt(i, j).toString(), (Element) cell, From.NAME));
-                    }
-                    else if (what == PropertyEnum.VALUE) {
+                    } else if (what == PropertyEnum.VALUE) {
                         row.add(new DBText(tm.getValueAt(i, j).toString(), (Element) cell, From.DVALUE));
-                    }
-                    else {
+                    } else {
                         row.add(new DBParagraph(tm.getValueAt(i, j).toString(), (Element) cell,
                                 From.DOCUMENTATION));
                     }
-                }
-                else {
+                } else {
                     row.add(new DBText(tm.getValueAt(i, j).toString()));
                 }
             }
@@ -3430,8 +3425,7 @@ public class Utils {
                     if (val.toString().isEmpty()) {
                         s += "&#xA0;&#xA0;&#xA0;&#xA0;";
                         curCol++;
-                    }
-                    else {
+                    } else {
                         s += DocGenUtils.fixString(val.toString());
                         for (int k = j; k < i; k++) {
                             curCol++;
@@ -3451,16 +3445,13 @@ public class Utils {
                 if (cell instanceof Element && what != null && editable) {
                     if (what == PropertyEnum.NAME) {
                         rowl.add(new DBText(tm.getValueAt(row, j).toString(), (Element) cell, From.NAME));
-                    }
-                    else if (what == PropertyEnum.VALUE) {
+                    } else if (what == PropertyEnum.VALUE) {
                         rowl.add(new DBText(tm.getValueAt(row, j).toString(), (Element) cell, From.DVALUE));
-                    }
-                    else {
+                    } else {
                         rowl.add(new DBParagraph(tm.getValueAt(row, j).toString(), (Element) cell,
                                 From.DOCUMENTATION));
                     }
-                }
-                else {
+                } else {
                     rowl.add(new DBText(tm.getValueAt(row, j).toString()));
                 }
             }
@@ -3607,14 +3598,11 @@ public class Utils {
             String sep = ", ";
             if (o instanceof Collection) {
                 c = (Collection<?>) o;
-            }
-            else if (o instanceof Map) {
+            } else if (o instanceof Map) {
                 c = ((Map<?, ?>) o).entrySet();
-            }
-            else if (o.getClass().isArray()) {
+            } else if (o.getClass().isArray()) {
                 c = Arrays.asList((Object[]) o);
-            }
-            else if (o instanceof Entry) {
+            } else if (o instanceof Entry) {
                 Entry<?, ?> entry = (Entry<?, ?>) o;
                 c = Utils2.newList(entry.getKey(), entry.getValue());
                 sep = " = ";
@@ -3623,8 +3611,7 @@ public class Utils {
             for (Object i : c) {
                 if (first) {
                     first = false;
-                }
-                else {
+                } else {
                     sb.append(sep);
                 }
                 sb.append(toStringNameAndType(i, includeId, useToStringIfNull));
@@ -3641,8 +3628,7 @@ public class Utils {
             if (!Utils2.isNullOrEmpty(type)) {
                 s = s + ":" + type;
             }
-        }
-        else {
+        } else {
             s = type;
         }
 
@@ -3650,8 +3636,7 @@ public class Utils {
         if (includeId && o instanceof BaseElement) {
             if (!Utils2.isNullOrEmpty(s)) {
                 s = s + ":" + ((BaseElement) o).getID();
-            }
-            else {
+            } else {
                 s = ((BaseElement) o).getID();
             }
         }
@@ -3702,8 +3687,7 @@ public class Utils {
                 }
             }
             return true;
-        }
-        else {
+        } else {
             if (o instanceof Integer || o instanceof String || o instanceof Double || o instanceof Float
                     || o instanceof Boolean || o instanceof LiteralInteger || o instanceof LiteralString
                     || o instanceof LiteralUnlimitedNatural || o instanceof LiteralReal

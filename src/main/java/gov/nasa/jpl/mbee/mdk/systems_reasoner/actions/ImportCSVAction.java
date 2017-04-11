@@ -7,6 +7,13 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
+import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
+import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
+import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
+import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
+import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
+import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
@@ -16,17 +23,20 @@ import gov.nasa.jpl.mbee.mdk.systems_reasoner.validation.SRValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.actions.SetOrCreateRedefinableElementAction;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class ImportCSVAction extends SRAction {
     public static final String DEFAULT_ID = "Import from CSV";
     private static String csvSeparator = ",";
     private static Classifier selectedClassifier;
     private static int row = 0;
+    private static Namespace container;
 
     public ImportCSVAction(Classifier classifier) {
         super(DEFAULT_ID);
@@ -35,6 +45,12 @@ public class ImportCSVAction extends SRAction {
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
+        final List<java.lang.Class<?>> types = new ArrayList<>();
+        types.add(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class.class);
+        types.add(com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package.class);
+        types.add(Model.class);
+
+
         GUILog gl = Application.getInstance().getGUILog();
         String separator = getSeparator();
         if (separator == null) {
@@ -42,7 +58,7 @@ public class ImportCSVAction extends SRAction {
         }
         row = 0;
         JFileChooser choose = new JFileChooser();
-        choose.setDialogTitle("Open csv file");
+        choose.setDialogTitle("Open CSV file");
         choose.setFileSelectionMode(JFileChooser.FILES_ONLY);
         HashSet<Classifier> createdElements = new HashSet<>();
         int retval = choose.showOpenDialog(null);
@@ -50,15 +66,27 @@ public class ImportCSVAction extends SRAction {
             if (choose.getSelectedFile() != null) {
                 File savefile = choose.getSelectedFile();
                 try {
-                    SessionManager.getInstance().createSession("change");
-                    gl.log("Starting CSV import.");
-                    CSVReader reader = new CSVReader(new FileReader(savefile), separator.charAt(0));
-                    importFromCsv(reader, createdElements);
-                    checkForRedefinedElements(createdElements);
-                    reader.close();
-                    SessionManager.getInstance().closeSession();
-                    // checkForAssociationInheritance(createdElements);
-                    gl.log("CSV import finished.");
+
+                    final Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
+                    final ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
+                    dlg.setTitle("Select container for generated elements:");
+                    final SelectElementTypes set = new SelectElementTypes(null, types, null, null);
+                    final SelectElementInfo sei = new SelectElementInfo(true, false, Application.getInstance().getProject().getModel().getOwner(), true);
+                    ElementSelectionDlgFactory.initSingle(dlg, set, sei, selectedClassifier.getOwner());
+                    dlg.setSelectionMode(SelectionMode.SINGLE_MODE);
+                    dlg.setVisible(true);
+                    if (dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
+                        container = (Namespace) dlg.getSelectedElement();
+                        SessionManager.getInstance().createSession("change");
+                        gl.log("Starting CSV import.");
+                        CSVReader reader = new CSVReader(new FileReader(savefile), separator.charAt(0));
+                        importFromCsv(reader, createdElements);
+                        checkForRedefinedElements(createdElements);
+                        reader.close();
+                        SessionManager.getInstance().closeSession();
+                        checkForAssociationInheritance(createdElements);
+                        gl.log("CSV import finished.");
+                    }
                 } catch (IOException ex) {
                     gl.log("CSV import failed:");
                     SessionManager.getInstance().cancelSession();
@@ -70,6 +98,7 @@ public class ImportCSVAction extends SRAction {
             }
         }
     }
+
 
     private void checkForAssociationInheritance(HashSet<Classifier> createdElements) {
 
@@ -122,7 +151,6 @@ public class ImportCSVAction extends SRAction {
         HashMap<Property, Classifier> thisLinesClasses = new HashMap<>();
         while (line != null) {
             if (!emptyLine(line)) {
-                createdElements.addAll(thisLinesClasses.values());
                 previousLinesClasses = thisLinesClasses;
                 thisLinesClasses = new HashMap<>();
                 if (!isFirstLine) {
@@ -150,7 +178,7 @@ public class ImportCSVAction extends SRAction {
                         } else {
                             if (sortedColumns.get(jj) == null) {
                                 if (!line[jj].isEmpty()) {
-                                    Classifier topClass = (Classifier) CopyPasting.copyPasteElement(selectedClassifier, selectedClassifier.getOwner());
+                                    Classifier topClass = (Classifier) CopyPasting.copyPasteElement(selectedClassifier, container);
                                     topClass.getOwnedMember().clear();
                                     topClass.getGeneralization().clear();
                                     Utils.createGeneralization(selectedClassifier, topClass);
@@ -190,6 +218,8 @@ public class ImportCSVAction extends SRAction {
                 if (!lineWasEmpty) {
                     isFirstLine = false;
                 }
+                createdElements.addAll(thisLinesClasses.values());
+
             }
             line = reader.readNext();
             row++;
@@ -227,7 +257,7 @@ public class ImportCSVAction extends SRAction {
 
     private Classifier createNewSubElement(String[] line, int index, Classifier generalClassifier) {
 
-        Classifier createdClassifier = (Classifier) CopyPasting.copyPasteElement(generalClassifier, generalClassifier.getOwner());
+        Classifier createdClassifier = (Classifier) CopyPasting.copyPasteElement(generalClassifier, container);
         createdClassifier.getOwnedMember().clear();
         createdClassifier.getGeneralization().clear();
         Utils.createGeneralization(generalClassifier, createdClassifier);
@@ -281,6 +311,11 @@ public class ImportCSVAction extends SRAction {
                         }
                     } else {
                         prop.setType(linkedElement);
+                        if (el instanceof Property) {
+                            if (((Property) el).getAssociation() != null) {
+                                Utils.createInheritingAssociation((Property) el, owner, prop);
+                            }
+                        }
                     }
                 } else {
                     Application.getInstance().getGUILog().log("Property for " + el.getName() + " not created.");
@@ -289,6 +324,18 @@ public class ImportCSVAction extends SRAction {
             }
         }
 
+    }
+
+    private Property findRedefiningProperyOf(Property memberEnd, Collection<Classifier> thislinesClassValues) {
+        Classifier newType = findMatchingSubclass((Classifier) memberEnd.getType(), thislinesClassValues);
+        for (Property property : newType.getAttribute()) {
+            for (RedefinableElement redefinableElement : property.getRedefinedElement()) {
+                if (redefinableElement.equals(memberEnd)) {
+                    return property;
+                }
+            }
+        }
+        return null;
     }
 
     private Classifier findMatchingSubclass(Classifier general, Collection<Classifier> thisLinesClasses) {
