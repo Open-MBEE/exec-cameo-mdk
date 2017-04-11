@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.mms.jms;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,6 +19,7 @@ import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Hashtable;
@@ -55,8 +57,12 @@ public class JMSUtils {
             throws IOException, ServerException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         requestUri.setPath(requestUri.getPath() + "/connection/jms");
-
-        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
+        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+           return JacksonUtils.parseJsonObject(jsonParser);
+        } catch (Exception passed) {
+            throw passed;
+        }
     }
 
     // Varies by current project
@@ -68,8 +74,7 @@ public class JMSUtils {
             Application.getInstance().getGUILog().log("[ERROR]: Unable to acquire JMS Connection information.");
             e.printStackTrace();
         } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR]: Unexpected error occurred when trying to build MMS URL. " +
-                    "Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR]: Unexpected error occurred when trying to build MMS URL. Reason: " + e.getMessage());
             e.printStackTrace();
         }
         String url = ingestJson(jmsJson);

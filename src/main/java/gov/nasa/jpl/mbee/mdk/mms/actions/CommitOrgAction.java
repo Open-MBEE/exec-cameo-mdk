@@ -73,19 +73,20 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             return null;
         }
 
-        JsonParser responseParser;
+        File responseFile;
         try {
-            responseParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-            responseParser.close();
-            JsonNode arrayNode;
-            if (response != null && (arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
-                for (JsonNode orgNode : arrayNode) {
-                    JsonNode value;
-                    if ((value = orgNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                        if (value.asText().equals(org)) {
-                            Application.getInstance().getGUILog().log("[WARNING] Org already exists. Org commit cancelled.");
-                            return org;
+            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)){
+                ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+                JsonNode arrayNode;
+                if (response != null && (arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
+                    for (JsonNode orgNode : arrayNode) {
+                        JsonNode value;
+                        if ((value = orgNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+                            if (value.asText().equals(org)) {
+                                Application.getInstance().getGUILog().log("[WARNING] Org already exists. Org commit cancelled.");
+                                return org;
+                            }
                         }
                     }
                 }
@@ -107,9 +108,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         // do post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
-            responseParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
-            // do any response processing
-            responseParser.close();
+            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();

@@ -75,18 +75,21 @@ public class MMSUtils {
             throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
-        JsonParser responseParser = getElementsRecursively(project, elementIds, 0, progressStatus);
-        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-        responseParser.close();
-        JsonNode value;
-        if (((value = response.get("elements")) != null) && value.isArray()
-                && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
-            return (ObjectNode) value;
+        File responseFile = getElementsRecursively(project, elementIds, 0, progressStatus);
+        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+            JsonNode value;
+            if (((value = response.get("elements")) != null) && value.isArray()
+                    && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
+                return (ObjectNode) value;
+            }
+        } catch (Exception e) {
+            throw e;
         }
-        return response;
+        return null;
     }
 
-    public static JsonParser getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
+    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
@@ -102,7 +105,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static JsonParser getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
+    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
@@ -117,7 +120,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static JsonParser getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
@@ -276,7 +279,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static JsonParser sendMMSRequest(Project project, HttpRequestBase request)
+    public static File sendMMSRequest(Project project, HttpRequestBase request)
             throws IOException, ServerException, URISyntaxException {
         File targetFile = File.createTempFile("Response-", null);
         targetFile.deleteOnExit();
@@ -348,8 +351,7 @@ public class MMSUtils {
             // throw is done last, after printing the error and any messages that might have been returned
             throw new ServerException(targetFile.getAbsolutePath(), responseCode);
         }
-
-        return JacksonUtils.getJsonFactory().createParser(targetFile);
+        return targetFile;
     }
 
     /**
@@ -363,14 +365,14 @@ public class MMSUtils {
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static JsonParser sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
+    public static File sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
-        final AtomicReference<JsonParser> responseJsonParser = new AtomicReference<>();
+        final AtomicReference<File> responseFile = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
         final AtomicReference<String> emsg = new AtomicReference<>();
         Thread t = new Thread(() -> {
-            JsonParser response = null;
+            File response = null;
             try {
                 response = sendMMSRequest(project, request);
                 etype.set(null);
@@ -390,7 +392,7 @@ public class MMSUtils {
                 emsg.set(e.getMessage());
                 e.printStackTrace();
             }
-            responseJsonParser.set(response);
+            responseFile.set(response);
         });
         t.start();
         try {
@@ -415,7 +417,7 @@ public class MMSUtils {
         else if (etype.get() == ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION) {
             throw new URISyntaxException(request.getURI().toString(), emsg.get());
         }
-        return responseJsonParser.get();
+        return responseFile.get();
     }
 
     public static String sendCredentials(Project project, String username, String password)
@@ -593,18 +595,21 @@ public class MMSUtils {
 //        return siteString;
 
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        JsonParser responseParser = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
-        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-        responseParser.close();
-        JsonNode arrayNode;
-        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-            JsonNode value;
-            for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                    return value.asText();
+        File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+            JsonNode arrayNode;
+            if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+                JsonNode value;
+                for (JsonNode projectNode : arrayNode) {
+                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                            && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
+                        return value.asText();
+                    }
                 }
             }
+        } catch (Exception e) {
+            throw e;
         }
         return null;
     }
@@ -612,18 +617,21 @@ public class MMSUtils {
     public static String getUri(Project project)
             throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        JsonParser responseParser = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
-        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-        responseParser.close();
-        JsonNode arrayNode;
-        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-            JsonNode value;
-            for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                        && ((value = projectNode.get(MDKConstants.TWC_URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                    return value.asText();
+        File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+            JsonNode arrayNode;
+            if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+                JsonNode value;
+                for (JsonNode projectNode : arrayNode) {
+                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                            && ((value = projectNode.get(MDKConstants.TWC_URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
+                        return value.asText();
+                    }
                 }
             }
+        } catch (Exception e) {
+            throw e;
         }
         return null;
     }

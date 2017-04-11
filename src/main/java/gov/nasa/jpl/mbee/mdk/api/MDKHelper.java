@@ -382,21 +382,24 @@ public class MDKHelper {
 
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
-        JsonParser jsonParser;
+        File responseFile;
         if (progressStatus != null) {
-            jsonParser = MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+            responseFile = MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
         else {
-            jsonParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));
+            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));
         }
         LinkedList<Element> elementsList = new LinkedList<>();
-        for (ObjectNode elementJson : JacksonUtils.parseJsonResponseToObjectList(jsonParser, null)) {
-            JsonNode value;
-            if ((value = elementJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                elementsList.add(Converters.getIdToElementConverter().apply(value.asText(), project));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            for (ObjectNode elementJson : JacksonUtils.parseJsonResponseToObjectList(jsonParser, null)) {
+                JsonNode value;
+                if ((value = elementJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+                    elementsList.add(Converters.getIdToElementConverter().apply(value.asText(), project));
+                }
             }
+        } catch (Exception e) {
+            throw e;
         }
-        jsonParser.close();
         return elementsList;
     }
 
@@ -415,7 +418,12 @@ public class MDKHelper {
             return null;
         }
         File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON)));
+        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            return JacksonUtils.parseJsonObject(jsonParser);
+        } catch (Exception passed) {
+            throw passed;
+        }
     }
 
     /**
@@ -437,7 +445,12 @@ public class MDKHelper {
             elementJson.add(elemJson);
         }
         File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementJson, MMSUtils.JsonBlobType.ELEMENT_JSON);
-        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON)));
+        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            return JacksonUtils.parseJsonObject(jsonParser);
+        } catch (Exception passed) {
+            throw passed;
+        }
     }
 
 }
