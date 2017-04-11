@@ -66,7 +66,7 @@ public class GenerateViewPresentationAction extends MMSAction {
             }
         }
 
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(views, project, recurse, true, null, processedElements);
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(views, project, recurse, null, processedElements);
         ProgressStatusRunner.runWithProgressStatus(vg, "Generating View" + (recurse ? "s" : ""), true, 0);
         vss.addAll(vg.getValidations());
         return vss;
