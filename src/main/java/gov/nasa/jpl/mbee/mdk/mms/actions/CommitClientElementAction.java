@@ -35,6 +35,7 @@ import java.util.List;
 public class CommitClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final String DEFAULT_ID = "Commit Element to MMS";
     private static final int COMMIT_ELEMENT_COUNT_THRESHOLD = 50000;
+    private static final int COMPLETION_DELAY = 0;
 
     private final String elementID;
     private final Element element;
@@ -135,7 +136,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                             requestUri.addParameter("nodes", Boolean.toString(true));
                             //requestUri.addParameter("edges", Boolean.toString(false));
                             requests.add(requestIndex, new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
-                                    "Sync Changes - Nodes - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), 5 * 60 * 1000));
+                                    "Sync Changes - Nodes - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), COMPLETION_DELAY));
                             requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                             if (requestUri == null) {
                                 throw new IOException();
@@ -143,7 +144,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                             //requestUri.addParameter("nodes", Boolean.toString(false));
                             requestUri.addParameter("edges", Boolean.toString(true));
                             requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
-                                    "Sync Changes - Edges - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), 5 * 60 * 1000));
+                                    "Sync Changes - Edges - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), COMPLETION_DELAY));
                         }
                         else {
                             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
