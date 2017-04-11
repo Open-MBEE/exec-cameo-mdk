@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
@@ -99,19 +100,18 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         if (redefinedElement == null) {
             redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, classifierOfProp, false);
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
+            if (elementToBeRedefined instanceof Property) {
+                if (((Property) elementToBeRedefined).getAssociation() != null) {
+                    Utils.createInheritingAssociation((Property) elementToBeRedefined, classifierOfProp, (Property) redefinedElement);
+                }
+
+            }
         }
 
         if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
-//            SpecializeStructureAction speca = new SpecializeStructureAction(classifierOfProp, false, "", isIndividual, isIndividual);
-//            speca.createSpecialClassifier()
             CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, classifierOfProp, true, traveled, visited, isIndividual);
         }
         return redefinedElement;
-
-//        else {
-//            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " has already been redefined in " + classifierOfProp.getQualifiedName() + ".");
-//            return null;
-//        }
     }
 
     private static boolean isMatchingStructuralFeature(NamedElement p, NamedElement elementToBeRedefined) {
