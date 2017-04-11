@@ -100,14 +100,13 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         if (redefinedElement == null) {
             redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, classifierOfProp, false);
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
-            if (elementToBeRedefined instanceof Property) {
-                if (((Property) elementToBeRedefined).getAssociation() != null) {
-                    Utils.createInheritingAssociation((Property) elementToBeRedefined, classifierOfProp, (Property) redefinedElement);
-                }
 
+        }
+        if (elementToBeRedefined instanceof Property) {
+            if (((Property) elementToBeRedefined).getAssociation() != null) {
+                Utils.createInheritingAssociation((Property) elementToBeRedefined, classifierOfProp, (Property) redefinedElement);
             }
         }
-
         if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
             CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, classifierOfProp, true, traveled, visited, isIndividual);
         }
