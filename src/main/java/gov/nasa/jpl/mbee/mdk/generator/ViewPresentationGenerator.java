@@ -20,9 +20,6 @@ import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
@@ -33,13 +30,16 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.json.simple.JSONArray;
@@ -274,9 +274,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                                 String instanceId;
                                 if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
-                            /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
-                                continue;
-                            }*/
                                     if (generatedFromViewProperty != null) {
                                         slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + Converters.getElementToIdConverter().apply(generatedFromViewProperty));
                                     }
@@ -404,12 +401,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(instanceObjectNode, (InstanceSpecification) element));
                             }
                         } catch (ImportException | ReadOnlyElementException e) {
-                        /*failure = true;
-                        Utils.printException(e);
-                        if (manageSesssions) {
-                            SessionManager.getInstance().cancelSession();
-                        }
-                        return;*/
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + instanceObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             instanceObjectNodesIterator.remove();
                         }
@@ -434,12 +425,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotObjectNode, (Slot) element));
                             }
                         } catch (ImportException | ReadOnlyElementException e) {
-                        /*failure = true;
-                        Utils.printException(e);
-                        if (manageSesssions) {
-                            SessionManager.getInstance().cancelSession();
-                        }
-                        return;*/
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             slotObjectNodesIterator.remove();
                         }
@@ -472,66 +457,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         //continue;
                     }
                 }
-
-            /*for (ViewMapping viewMapping : viewMap.values()) {
-                Element view = viewMapping.getElement();
-                if (handleCancel(progressStatus)) {
-                    return;
-                }
-
-                List<String> instanceSpecificationIDs;
-                if (viewMap.containsKey(view.getID()) && (instanceSpecificationIDs = viewMap.get(view.getID()).getInstanceIDs()) != null) {
-                    final List<InstanceSpecification> instanceSpecifications = new ArrayList<>(instanceSpecificationIDs.size());
-                    for (String instanceSpecificationID : instanceSpecificationIDs) {
-                        Pair<ObjectNode, InstanceSpecification> pair = instanceSpecificationMap.get(instanceSpecificationID);
-                        if (pair != null && pair.getSecond() != null) {
-                            instanceSpecifications.add(pair.getSecond());
-                        }
-                    }
-                    instanceUtils.updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
-                }
-            }*/
-
-                // Update relations for all InstanceSpecifications and Slots
-                // Instances need to be done in reverse order to load the lowest level instances first (sections)
-            /*ListIterator<Pair<ObjectNode, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
-            while (instanceSpecificationMapIterator.hasPrevious()) {
-                if (handleCancel(progressStatus)) {
-                    return;
-                }
-
-                Pair<ObjectNode, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
-                try {
-                    //ImportUtility.createElement(pair.getFirst(), true, true);
-                    emfImporter.apply(pair.getFirst(), project, true);
-                } catch (Exception e) {
-                    /*failure = true;
-                    Utils.printException(e);
-                    if (manageSesssions) {
-                        SessionManager.getInstance().cancelSession();
-                    }
-                    return;* /
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.ID_KEY) + ": " + e.getMessage());
-                }
-            }
-            for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
-                if (handleCancel(progressStatus)) {
-                    return;
-                }
-
-                try {
-                    //ImportUtility.createElement(pair.getFirst(), true, false);
-                    emfImporter.apply(pair.getFirst(), project, true);
-                } catch (Exception e) {
-                    /*failure = true;
-                    Utils.printException(e);
-                    if (manageSesssions) {
-                        SessionManager.getInstance().cancelSession();
-                    }
-                    return;* /
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for slot " + pair.getFirst().get(MDKConstants.ID_KEY) + ": " + e.getMessage());
-                }
-            }*/
             }
         }
 
@@ -632,14 +557,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
                     }
                 }
-
-                // No need to commit constraint as it's wrapped up into the view
-            /*
-            Constraint constraint = Utils.getViewConstraint(view);
-            if (constraint != null) {
-                elementsJSONArray.add(Converters.getElementToJsonConverter().apply(constraint, project));
-            }
-            */
             }
 
             String viewInstanceBinId = MDKConstants.VIEW_INSTANCES_BIN_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
@@ -738,54 +655,54 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
-        /*
-        Set<Element> elementsToDelete = new HashSet<>();
-        for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
-            if (pair.getValue() != null) {
-                elementsToDelete.add(pair.getValue());
+
+            Set<Element> elementsToDelete = new HashSet<>();
+            for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
+                if (pair.getValue() != null) {
+                    elementsToDelete.add(pair.getValue());
+                }
             }
-        }
-        for (Pair<ObjectNode, InstanceSpecification> pair : instanceSpecificationMap.values()) {
-            if (pair.getValue() != null) {
-                elementsToDelete.add(pair.getValue());
+            for (Pair<ObjectNode, InstanceSpecification> pair : instanceSpecificationMap.values()) {
+                if (pair.getValue() != null) {
+                    elementsToDelete.add(pair.getValue());
+                }
             }
-        }
-        for (Element element : views) {
-            Constraint constraint = Utils.getViewConstraint(element);
-            if (constraint == null) {
-                continue;
-            }
-            elementsToDelete.add(constraint);
-            ValueSpecification valueSpecification = constraint.getSpecification();
-            if (valueSpecification == null) {
-                continue;
-            }
-            elementsToDelete.add(valueSpecification);
-            List<ValueSpecification> operands;
-            if (!(valueSpecification instanceof Expression) || (operands = ((Expression) valueSpecification).getOperand()) == null) {
-                continue;
-            }
-            for (ValueSpecification operand : operands) {
-                elementsToDelete.add(operand);
-                InstanceSpecification instanceSpecification;
-                if (!(operand instanceof InstanceValue) || (instanceSpecification = ((InstanceValue) operand).getInstance()) == null) {
+            for (Element element : views) {
+                Constraint constraint = Utils.getViewConstraint(element);
+                if (constraint == null) {
                     continue;
                 }
-                elementsToDelete.add(instanceSpecification);
-                for (Slot slot : instanceSpecification.getSlot()) {
-                    elementsToDelete.add(slot);
-                    elementsToDelete.addAll(slot.getValue());
+                elementsToDelete.add(constraint);
+                ValueSpecification valueSpecification = constraint.getSpecification();
+                if (valueSpecification == null) {
+                    continue;
+                }
+                elementsToDelete.add(valueSpecification);
+                List<ValueSpecification> operands;
+                if (!(valueSpecification instanceof Expression) || (operands = ((Expression) valueSpecification).getOperand()) == null) {
+                    continue;
+                }
+                for (ValueSpecification operand : operands) {
+                    elementsToDelete.add(operand);
+                    InstanceSpecification instanceSpecification;
+                    if (!(operand instanceof InstanceValue) || (instanceSpecification = ((InstanceValue) operand).getInstance()) == null) {
+                        continue;
+                    }
+                    elementsToDelete.add(instanceSpecification);
+                    for (Slot slot : instanceSpecification.getSlot()) {
+                        elementsToDelete.add(slot);
+                        elementsToDelete.addAll(slot.getValue());
+                    }
                 }
             }
-        }
-        for (Element element : elementsToDelete) {
-            try {
-                ModelElementsManager.getInstance().removeElement(element);
-            } catch (ReadOnlyElementException ignored) {
-                System.out.println("Could not clean up " + element.getLocalID());
+            for (Element element : elementsToDelete) {
+                try {
+                    ModelElementsManager.getInstance().removeElement(element);
+                } catch (ReadOnlyElementException ignored) {
+                    System.out.println("Could not clean up " + element.getLocalID());
+                }
             }
-        }
-        */
+
             // used to skip redundant view generation attempts when using multi-select or ElementGroups; see GenerateViewPresentationAction
             processedElements.addAll(views);
         } catch (Exception e) {
@@ -814,7 +731,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
         }
 
-//        vss.add(iv.getSuite());
         if (showValidation) {
             if (suite.hasErrors()) {
                 Utils.displayValidationWindow(project, vss, "View Generation Validation");
