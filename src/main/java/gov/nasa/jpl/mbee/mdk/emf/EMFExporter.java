@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.*;
 import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -205,14 +206,14 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     }
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject.getPrimaryProject()));
-                    objectNode.put(MDKConstants.NAME_KEY, EsiUtils.getCurrentBranch(attachedProject).getName());
-//                    String branchName = EsiUtils.getCurrentBranch(attachedProject).getName();
-//                    if (branchName == null) {
-//                        branchName = "master";
-//                    }
-//                    objectNode.put(MDKConstants.NAME_KEY, branchName);
-                    objectNode.put(MDKConstants.TWC_ID_KEY, ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
-                    //objectNode.put("_uri", ProjectDescriptorsFactory.createRemoteProjectDescriptorWithActualVersion(attachedProject.getProjectDescriptor()));
+                    //objectNode.put(MDKConstants.NAME_KEY, EsiUtils.getCurrentBranch(attachedProject).getName());
+                    String branchName = EsiUtils.getCurrentBranch(attachedProject).getName();
+                    if (branchName == null || branchName.equals("trunk")) {
+                        branchName = "master";
+                    }
+                    objectNode.put(MDKConstants.BRANCH_KEY, branchName);
+                    objectNode.put(MDKConstants.TWC_VERSION_KEY, ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
+                    objectNode.put(MDKConstants.TWC_URI_KEY, attachedProject.getProjectDescriptor().getLocationUri().toString());
                     return objectNode;
                 }
         ),
