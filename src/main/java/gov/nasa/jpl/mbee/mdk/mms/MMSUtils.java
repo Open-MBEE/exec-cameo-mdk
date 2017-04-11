@@ -83,8 +83,6 @@ public class MMSUtils {
                     && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
                 return (ObjectNode) value;
             }
-        } catch (Exception e) {
-            throw e;
         }
         return null;
     }
@@ -587,13 +585,6 @@ public class MMSUtils {
 
     public static String getMmsOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
-
-//        String siteString = "";
-//        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
-//            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS Org");
-//        }
-//        return siteString;
-
         URIBuilder uriBuilder = getServiceProjectsUri(project);
         File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
@@ -608,8 +599,6 @@ public class MMSUtils {
                     }
                 }
             }
-        } catch (Exception e) {
-            throw e;
         }
         return null;
     }
@@ -630,8 +619,6 @@ public class MMSUtils {
                     }
                 }
             }
-        } catch (Exception e) {
-            throw e;
         }
         return null;
     }

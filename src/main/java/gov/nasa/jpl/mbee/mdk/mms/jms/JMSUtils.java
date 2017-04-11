@@ -60,8 +60,6 @@ public class JMSUtils {
         File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
         try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
            return JacksonUtils.parseJsonObject(jsonParser);
-        } catch (Exception passed) {
-            throw passed;
         }
     }
 

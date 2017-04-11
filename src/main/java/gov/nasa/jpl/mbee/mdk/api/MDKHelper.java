@@ -397,8 +397,6 @@ public class MDKHelper {
                     elementsList.add(Converters.getIdToElementConverter().apply(value.asText(), project));
                 }
             }
-        } catch (Exception e) {
-            throw e;
         }
         return elementsList;
     }
@@ -421,8 +419,6 @@ public class MDKHelper {
         File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON));
         try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             return JacksonUtils.parseJsonObject(jsonParser);
-        } catch (Exception passed) {
-            throw passed;
         }
     }
 
@@ -448,8 +444,6 @@ public class MDKHelper {
         File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
         try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             return JacksonUtils.parseJsonObject(jsonParser);
-        } catch (Exception passed) {
-            throw passed;
         }
     }
 

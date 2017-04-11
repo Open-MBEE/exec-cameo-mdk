@@ -186,7 +186,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             } catch (ServerException | IOException | URISyntaxException e) {
                 if (progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
+                    Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
                     return;
                 }
                 Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
@@ -195,7 +195,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
 
             if (progressStatus.isCancel()) {
-                Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
                 return;
             }
 
