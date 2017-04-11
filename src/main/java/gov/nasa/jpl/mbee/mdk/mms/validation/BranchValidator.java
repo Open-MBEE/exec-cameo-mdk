@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.validation;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IPrimaryProject;
@@ -26,6 +27,7 @@ import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -116,7 +118,11 @@ public class BranchValidator {
         }
         try {
             HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
-            ObjectNode response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, request));
+            File responseFile = MMSUtils.sendMMSRequest(project, request);
+            ObjectNode response;
+            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                response = JacksonUtils.parseJsonObject(jsonParser);
+            }
             JsonNode refsArray, value;
             if ((refsArray = response.get("refs")) != null && refsArray.isArray()) {
                 for (JsonNode refJson : refsArray) {
@@ -151,7 +157,7 @@ public class BranchValidator {
 
         for (String key : keySet) {
 
-            // TODO @DONBOT remove this check/skip for master branch after master is updatable
+            // TODO @DONBOT 3.0.1 remove this check/skip for master branch after master is updatable
             if (key.equals("master")) {
                 continue;
             }
@@ -160,7 +166,7 @@ public class BranchValidator {
             ObjectNode serverBranch = serverBranches.get(key);
 
             if (clientBranch == null) {
-                //TODO @donbot 3.0.1 - add support for importing MMS branch into TWC
+                //TODO @donbot 3.0.1 add support for importing MMS branch into TWC
 //                ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH MISSING ON MMS] The MMS branch \"" + key + "\" does not have a corresponding Teamwork Cloud branch.");
 //                // add actions here
 //                twcMissingBranchValidationRule.addViolation(v);
