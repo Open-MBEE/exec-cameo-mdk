@@ -300,7 +300,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
         }*/
 
-        if (e == project.getPrimaryModel()) {
+        /*if (e == project.getPrimaryModel()) {
             NMAction act = null;
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
             // DefaultPropertyResourceProvider pp = new
@@ -310,6 +310,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 c.addAction(new ValidateOldDocgen());
             }
         }
+        */
 
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,

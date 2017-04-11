@@ -111,7 +111,8 @@ public class JMSUtils {
             // just grab first connection
             for (int ii = 0; ii < conns.size(); ii++) {
                 json = (ObjectNode) conns.get(ii);
-                if (json.get("eventType").equals("DELTA")) {
+                JsonNode value;
+                if ((value = json.get("eventType")) != null && value.isTextual() && value.asText().equals("DELTA")) {
                     break;
                 }
             }
