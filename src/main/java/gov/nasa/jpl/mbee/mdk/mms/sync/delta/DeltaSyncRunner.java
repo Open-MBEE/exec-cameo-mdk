@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.delta;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -176,23 +177,28 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         if (!elementIdsToGet.isEmpty()) {
             progressStatus.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
-            ObjectNode response = null;
+            File responseFile;
+            ObjectNode response;
             try {
-                response = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, elementIdsToGet, progressStatus));
-            } catch (ServerException | IOException | URISyntaxException e) {
-                if (e instanceof ServerException && ((ServerException) e).getCode() == 404) {
-                    (response = JacksonUtils.getObjectMapper().createObjectNode()).putArray("elements");
+                responseFile = MMSUtils.getElements(project, elementIdsToGet, progressStatus);
+                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                    response = JacksonUtils.parseJsonObject(jsonParser);
                 }
-                else if (!progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
-                    e.printStackTrace();
+            } catch (ServerException | IOException | URISyntaxException e) {
+                if (progressStatus.isCancel()) {
+                    Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
                     return;
                 }
-            }
-            if (progressStatus.isCancel()) {
-                Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
+                e.printStackTrace();
                 return;
             }
+
+            if (progressStatus.isCancel()) {
+                Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
+                return;
+            }
+
             JsonNode elementsArrayNode;
             if (response == null || (elementsArrayNode = response.get("elements")) == null || !elementsArrayNode.isArray()) {
                 Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");

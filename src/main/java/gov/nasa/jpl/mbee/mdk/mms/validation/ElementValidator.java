@@ -27,6 +27,7 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.*;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 public class ElementValidator implements RunnableWithProgress {
     private Collection<Pair<Element, ObjectNode>> clientElements;
     private Collection<ObjectNode> serverElements;
-    private Collection<JsonParser> serverElementParsers;
+    private Collection<File> serverElementFiles;
     private final Project project;
     private int notEquivalentCount = 0;
     private int missingInClientCount = 0;
@@ -54,17 +55,17 @@ public class ElementValidator implements RunnableWithProgress {
         validationSuite.addValidationRule(elementEquivalenceValidationRule);
     }
 
-    public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Collection<JsonParser> serverElementParsers, Project project) {
+    public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Collection<File> serverElementFiles, Project project) {
         this.clientElements = clientElements;
         this.serverElements = serverElements;
-        this.serverElementParsers = serverElementParsers;
+        this.serverElementFiles = serverElementFiles;
         this.project = project;
     }
 
     public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project) {
         this.clientElements = clientElements;
         this.serverElements = serverElements;
-        this.serverElementParsers = Collections.emptyList();
+        this.serverElementFiles = Collections.emptyList();
         this.project = project;
     }
 
@@ -96,8 +97,8 @@ public class ElementValidator implements RunnableWithProgress {
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         Set<String> processedElementIds = new HashSet<>();
         JsonToken current = null;
-        try {
-            for (JsonParser jsonParser : serverElementParsers) {
+        for (File responseFile : serverElementFiles) {
+            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
                 if (current != JsonToken.START_OBJECT) {
                     throw new IOException("Unable to build object from JSON parser.");
@@ -119,8 +120,7 @@ public class ElementValidator implements RunnableWithProgress {
                                     Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);
                                     if (currentClientElement == null) {
                                         addMissingInClientViolation(currentServerElement);
-                                    }
-                                    else {
+                                    } else {
                                         addElementEquivalenceViolation(currentClientElement, currentServerElement);
                                     }
                                 }
@@ -128,9 +128,9 @@ public class ElementValidator implements RunnableWithProgress {
                         }
                     }
                 }
+            } catch (IOException e) {
+                // stuff
             }
-        } catch (IOException e) {
-            // stuff
         }
 
         if (serverElements == null) {

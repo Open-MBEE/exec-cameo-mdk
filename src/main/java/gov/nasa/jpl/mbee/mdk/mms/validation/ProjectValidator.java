@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.validation;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
@@ -17,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import org.apache.http.client.utils.URIBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -45,15 +47,19 @@ public class ProjectValidator {
             return;
         }
         requestUri.setPath(requestUri.getPath() + "/" + Converters.getProjectToIdConverter().apply(project));
+        File responseFile;
         ObjectNode response;
         try {
-            response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
+            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                response = JacksonUtils.parseJsonObject(jsonParser);
+            }
         } catch (IOException | ServerException | URISyntaxException e) {
             errors = true;
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS projects. Project validation cancelled. Reason: " + e.getMessage());
             return;
-        }
+       }
         JsonNode projectsJson;
         if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
             JsonNode value;

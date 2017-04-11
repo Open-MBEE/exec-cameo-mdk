@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -224,7 +225,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             ObjectNode viewResponse;
             try {
-                viewResponse = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, viewMap.keySet(), progressStatus));
+                File responseFile = MMSUtils.getElements(project, viewMap.keySet(), progressStatus);
+                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                    viewResponse = JacksonUtils.parseJsonObject(jsonParser);
+                }
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
@@ -292,7 +296,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     ObjectNode instanceAndSlotResponse;
                     try {
-                        instanceAndSlotResponse = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, elementIDs, progressStatus));
+                        File responseFile = MMSUtils.getElements(project, elementIDs, progressStatus);
+                        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                            instanceAndSlotResponse = JacksonUtils.parseJsonObject(jsonParser);
+                        }
                     } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");

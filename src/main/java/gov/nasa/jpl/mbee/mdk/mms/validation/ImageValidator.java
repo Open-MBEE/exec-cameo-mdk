@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.validation;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
@@ -17,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -64,22 +66,26 @@ public class ImageValidator {
             }
             requestUri.setParameter("extension", extension);
 
+            File responseFile;
             ObjectNode response;
             // do request
             try {
                 HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
                 request.setHeader("Accept", "image/" + extension);
-                response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, request));
+                responseFile = MMSUtils.sendMMSRequest(project, request);
+                try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                    response = JacksonUtils.parseJsonObject(responseParser);
+                    if (((value = response.get("message")) == null || !value.isTextual() || value.asText().contains("not found"))
+                            || ((value = response.get("cs")) == null || !value.isTextual() || !value.asText().equals(cs))) {
+                        ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web.");
+                        v.addAction(new ExportImage(e, allImages));
+                        rule.addViolation(v);
+                    }
+                }
             } catch (ServerException | IOException | URISyntaxException e1) {
-                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while validating images. Image validation cancelled. Reason: " + e1.getMessage());
+                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while validating image " + key + ". Image validation cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
-                return;
-            }
-            if (((value = response.get("message")) == null || !value.isTextual() || value.asText().contains("not found"))
-                    || ((value = response.get("cs")) == null || !value.isTextual() || !value.asText().equals(cs))) {
-                ValidationRuleViolation v = new ValidationRuleViolation(e, "[IMAGE] This image is outdated on the web.");
-                v.addAction(new ExportImage(e, allImages));
-                rule.addViolation(v);
+                continue;
             }
         }
     }
