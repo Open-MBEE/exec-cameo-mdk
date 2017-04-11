@@ -66,10 +66,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -296,9 +293,7 @@ public class MDKHelper {
      *                generate only the view for the selected element
      */
     public static void generateViews(Element doc, Boolean recurse) {
-        List<Element> documents = new ArrayList<>(1);
-        documents.add(doc);
-        GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(documents, recurse);
+        GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(Collections.singleton(doc), recurse);
         validationWindow = new MDKValidationWindow(gvpa.updateAction());
     }
 
