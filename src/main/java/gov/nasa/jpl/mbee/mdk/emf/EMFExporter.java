@@ -304,10 +304,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         else if (eStructuralFeature instanceof EReference && object instanceof EObject) {
             return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)), project, eStructuralFeature);
         }
-        else if (eStructuralFeature.getEType() instanceof EDataType) {
-            return TextNode.valueOf(EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object));
-            //return ((Enumerator) object).getLiteral();
-        }
         else if (object instanceof String) {
             return TextNode.valueOf((String) object);
         }
@@ -337,6 +333,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         }
         else if (object instanceof byte[]) {
             return BinaryNode.valueOf((byte[]) object);
+        }
+        else if (eStructuralFeature.getEType() instanceof EDataType) {
+            return TextNode.valueOf(EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object));
+            //return ((Enumerator) object).getLiteral();
         }
         // if we get here we have no idea what to do with this object
         return NullNode.getInstance();
