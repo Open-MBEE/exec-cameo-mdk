@@ -396,6 +396,7 @@ public class MDKHelper {
                 elementsList.add(Converters.getIdToElementConverter().apply(value.asText(), project));
             }
         }
+        jsonParser.close();
         return elementsList;
     }
 

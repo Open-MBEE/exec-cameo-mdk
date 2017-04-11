@@ -77,6 +77,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         try {
             responseParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+            responseParser.close();
             JsonNode arrayNode;
             if (response != null && (arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
                 for (JsonNode orgNode : arrayNode) {
@@ -107,12 +108,13 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
             responseParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+            // do any response processing
+            responseParser.close();
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
-        //response processing if needed
         return org;
     }
 

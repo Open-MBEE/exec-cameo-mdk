@@ -136,6 +136,7 @@ public class ElementValidator implements RunnableWithProgress {
                     }
                     current = jsonParser.nextToken();
                 }
+                jsonParser.close();
             }
         } catch (IOException e) {
             // stuff

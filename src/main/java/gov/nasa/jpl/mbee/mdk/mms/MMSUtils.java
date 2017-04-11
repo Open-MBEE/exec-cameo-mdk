@@ -77,6 +77,7 @@ public class MMSUtils {
         elementIds.add(elementId);
         JsonParser responseParser = getElementsRecursively(project, elementIds, 0, progressStatus);
         ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+        responseParser.close();
         JsonNode value;
         if (((value = response.get("elements")) != null) && value.isArray()
                 && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
@@ -593,6 +594,7 @@ public class MMSUtils {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
         JsonParser responseParser = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+        responseParser.close();
         JsonNode arrayNode;
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
@@ -609,7 +611,9 @@ public class MMSUtils {
     public static String getUri(Project project)
             throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        ObjectNode response = JacksonUtils.parseJsonObject(sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder)));
+        JsonParser responseParser = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+        responseParser.close();
         JsonNode arrayNode;
         if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
             JsonNode value;
@@ -621,51 +625,6 @@ public class MMSUtils {
             }
         }
         return null;
-    }
-
-    public static boolean isProjectOnMms(Project project) throws IOException, URISyntaxException, ServerException {
-        // build request for bulk project GET
-        URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-
-        // do request, check return for project
-        ObjectNode response = JacksonUtils.parseJsonObject(sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
-        JsonNode projectsJson;
-        if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
-            JsonNode value;
-            for (JsonNode projectJson : projectsJson) {
-                if ((value = projectJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()
-                        && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    public static boolean isBranchOnMms(Project project, String branch) throws IOException, URISyntaxException, ServerException {
-        // build request for project element
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-
-        // do request for ref element
-        JsonParser responseParser = sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-        JsonNode projectsJson;
-        if ((projectsJson = response.get("refs")) != null && projectsJson.isArray()) {
-            JsonNode value;
-            for (JsonNode projectJson : projectsJson) {
-                if ((value = projectJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual() && value.asText().equals(branch)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**
