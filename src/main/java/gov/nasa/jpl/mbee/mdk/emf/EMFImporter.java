@@ -162,9 +162,14 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         AbstractRepository initialRepository = (UMLFactory.eINSTANCE instanceof UMLFactoryImpl) ? ((UMLFactoryImpl) UMLFactory.eINSTANCE).getRepository() : null;
-                        UMLFactory.eINSTANCE.setRepository(project.getRepository());
-                        EObject eObject = UMLFactory.eINSTANCE.create((EClass) eClassifier);
-                        UMLFactory.eINSTANCE.setRepository(initialRepository);
+                        EObject eObject;
+                        try {
+                            UMLFactory.eINSTANCE.setRepository(project.getRepository());
+                            eObject = UMLFactory.eINSTANCE.create((EClass) eClassifier);
+                        }
+                        finally {
+                            UMLFactory.eINSTANCE.setRepository(initialRepository);
+                        }
                         if (!(eObject instanceof Element)) {
                             return null;
                         }
