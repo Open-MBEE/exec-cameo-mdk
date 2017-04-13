@@ -20,14 +20,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GenerateAllDocumentsAction extends MMSAction {
+public class GenerateAllViewsAction extends MMSAction {
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = "GenerateAllDocs";
 
     private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
 
-    public GenerateAllDocumentsAction() {
-        super(DEFAULT_ID, "Generate All Documents", null, null);
+    public GenerateAllViewsAction() {
+        super(DEFAULT_ID, "Generate All Views", null, null);
     }
 
     @SuppressWarnings("unchecked")
@@ -41,33 +41,24 @@ public class GenerateAllDocumentsAction extends MMSAction {
     public List<ValidationSuite> updateAction(Project project) {
         Set<Element> docs = getProjectDocuments(project);
         ViewPresentationGenerator vg = new ViewPresentationGenerator(docs, project, false);
-        ProgressStatusRunner.runWithProgressStatus(vg, "Generating All Documents and Views", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(vg, "Generating All Views", true, 0);
         vss.addAll(vg.getValidations());
         return vss;
     }
 
     private Set<Element> getProjectDocuments(Project project) {
         Stereotype documentView = Utils.getViewClassStereotype(project);
-        List<Stereotype> products = new ArrayList<>();
-        for (Element el : Utils.collectDirectedRelatedElementsByRelationshipJavaClass(documentView, Generalization.class, 0, 0)) {
-            if (el instanceof Stereotype) {
-                products.add((Stereotype) el);
+        Set<Element> projectViews = new HashSet<>();
+        for (InstanceSpecification is : documentView.get_instanceSpecificationOfClassifier()) {
+            Element owner = is.getOwner();
+            if (!ProjectUtilities.isElementInAttachedProject(owner) && StereotypesHelper.hasStereotypeOrDerived(owner, documentView) && owner instanceof Class) {
+                projectViews.add(owner);
             }
         }
-        products.add(documentView);
-        Set<Element> projDocs = new HashSet<>();
-        for (Stereotype product : products) {
-            for (InstanceSpecification is : product.get_instanceSpecificationOfClassifier()) {
-                Element owner = is.getOwner();
-                if (!ProjectUtilities.isElementInAttachedProject(owner) && StereotypesHelper.hasStereotypeOrDerived(owner, documentView) && owner instanceof Class) {
-                    projDocs.add(owner);
-                }
-            }
-        }
-        if (projDocs.isEmpty()) {
+        if (projectViews.isEmpty()) {
             Application.getInstance().getGUILog().log("No documents or views found in this project");
         }
-        return projDocs;
+        return projectViews;
     }
 
     public List<ValidationSuite> getValidations() {
