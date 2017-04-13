@@ -15,4 +15,4 @@ test:
 
 deployment:
   override:
-    - ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildBranch=$CIRCLE_BRANCH --info artifactoryPublish
+    - ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildBranch=$CIRCLE_BRANCH -Partifactory_user=$ARTIFACTORY_USER -Partifactory_password=$ARTIFACTORY_PASSWORD --info artifactoryPublish
