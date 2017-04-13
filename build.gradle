@@ -183,13 +183,16 @@ class PreDist extends DefaultTask {
             from project.jar
             into "build/generated-dist/plugins/${project.group}"
         }
+        project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
+            file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${project.group}")))
+        }
 
         String pluginLibraries = ''
         project.fileTree(dir: "build/generated-dist/plugins/${project.group}", include: '**/*.jar').each { file ->
             pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${project.group}\//, '') + '\"/>' + System.lineSeparator()
         }
         project.copy {
-            from "src/main/dist/template/plugins/${project.group}/plugin.xml"
+            from 'src/main/dist/template/plugins/${group}/plugin.xml'
             filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + pluginLibraries) }
             filter { String line -> line.replace('${human.version}', humanVersion) }
             filter { String line -> line.replace('${internal.version}', internalVersion) }
