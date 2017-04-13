@@ -40,16 +40,16 @@ public class GenerateAllDocumentsAction extends MMSAction {
 
     public List<ValidationSuite> updateAction(Project project) {
         Set<Element> docs = getProjectDocuments(project);
-        ViewPresentationGenerator vg = new ViewPresentationGenerator(docs, project, true);
-        ProgressStatusRunner.runWithProgressStatus(vg, "Generating All Documents", true, 0);
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(docs, project, false);
+        ProgressStatusRunner.runWithProgressStatus(vg, "Generating All Documents and Views", true, 0);
         vss.addAll(vg.getValidations());
         return vss;
     }
 
     private Set<Element> getProjectDocuments(Project project) {
-        Stereotype documentView = Utils.getProductStereotype(project);
+        Stereotype documentView = Utils.getViewClassStereotype(project);
         List<Stereotype> products = new ArrayList<>();
-        for (Element el : Utils.collectDirectedRelatedElementsByRelationshipJavaClass(documentView, Generalization.class, 2, 0)) {
+        for (Element el : Utils.collectDirectedRelatedElementsByRelationshipJavaClass(documentView, Generalization.class, 0, 0)) {
             if (el instanceof Stereotype) {
                 products.add((Stereotype) el);
             }
@@ -65,7 +65,7 @@ public class GenerateAllDocumentsAction extends MMSAction {
             }
         }
         if (projDocs.isEmpty()) {
-            Application.getInstance().getGUILog().log("No Documents Found in this project");
+            Application.getInstance().getGUILog().log("No documents or views found in this project");
         }
         return projDocs;
     }
