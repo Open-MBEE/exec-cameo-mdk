@@ -4,9 +4,12 @@ import java.util.stream.Collectors
 import java.util.zip.ZipFile
 
 String buildAccess = project.getProperties().getOrDefault('buildAccess', 'opensource')
-String buildBranch = project.getProperties().get('buildBranch')
-if (buildBranch == null || buildBranch != 'master' && !buildBranch.matches('support/[0-9.]+')) {
+String buildTag = project.getProperties().get('buildTag')
+if (buildTag == null || buildTag.isEmpty()) {
     version += '-SNAPSHOT'
+}
+else if (buildTag != version) {
+    throw new GradleException('Version mismatch.')
 }
 group = (buildAccess == 'internal' ? 'gov.nasa.jpl.cae.magicdraw.mdk' : 'org.openmbee.magicdraw.mdk')
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
@@ -323,8 +326,8 @@ artifactory {
     publish {
         repository {
             repoKey = (buildAccess == 'internal' ? 'maven-plugins' : 'oss') + '-' + (version.endsWith('SNAPSHOT') ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
-            username = project.getProperties().get('artifactory_user') // The publisher user name
-            password = project.getProperties().get('artifactory_password') // The publisher password
+            username = project.getProperties().get('artifactoryUser') // The publisher user name
+            password = project.getProperties().get('artifactoryPassword') // The publisher password
             maven = true
         }
         defaults {

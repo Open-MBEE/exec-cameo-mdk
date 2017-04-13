@@ -4,11 +4,11 @@ machine:
 
 compile:
   override:
-    - "./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildBranch=$CIRCLE_BRANCH --info distZip"
+    - "./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --info distZip"
 
 test:
   override:
-    - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildBranch=$CIRCLE_BRANCH -PmagicDrawLicense=$MAGICDRAW_LICENSE --info test"
+    - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info test"
   post:
     - "mkdir -p $CIRCLE_TEST_REPORTS/junit/"
     - "find . -type f -regex \".*/build/test-results/.*xml\" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \\;"
@@ -16,4 +16,4 @@ test:
 
 deployment:
   override:
-    - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildBranch=$CIRCLE_BRANCH -Partifactory_user=$ARTIFACTORY_USER -Partifactory_password=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
+    - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUser=$ARTIFACTORY_USER -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
