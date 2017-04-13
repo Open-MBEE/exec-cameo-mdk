@@ -7,8 +7,9 @@ compile:
     - "./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildBranch=$CIRCLE_BRANCH --info distZip"
 
 test:
-  override:
-    - "true" # disabling tests until MagicDraw licensing issues are resolved
+   override:
+    # - "true" # disabling tests until MagicDraw licensing issues are resolved
+    - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildBranch=$CIRCLE_BRANCH -PmagicDrawLicense=$MAGICDRAW_LICENSE --info test"
   post:
     - "mkdir -p $CIRCLE_TEST_REPORTS/junit/"
     - "find . -type f -regex \".*/build/test-results/.*xml\" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \\;"
@@ -16,4 +17,4 @@ test:
 
 deployment:
   override:
-    - "./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildBranch=$CIRCLE_BRANCH -Partifactory_user=$ARTIFACTORY_USER -Partifactory_password=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
+    - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildBranch=$CIRCLE_BRANCH -Partifactory_user=$ARTIFACTORY_USER -Partifactory_password=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
