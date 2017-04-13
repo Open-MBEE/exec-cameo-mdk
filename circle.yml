@@ -1,0 +1,18 @@
+machine:
+  java:
+    version: oraclejdk8
+
+compile:
+  override:
+    - ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildBranch=$CIRCLE_BRANCH --info distZip
+
+test:
+  override:
+    - "true" # disabling tests until MagicDraw licensing issues are resolved
+  post:
+    - cp -R build/test-results $CIRCLE_ARTIFACTS/
+    - cp -R build/reports $CIRCLE_ARTIFACTS/
+
+deployment:
+  override:
+    - ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildBranch=$CIRCLE_BRANCH --info artifactoryPublish
