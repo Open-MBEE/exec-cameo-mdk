@@ -10,7 +10,8 @@ test:
   override:
     - "true" # disabling tests until MagicDraw licensing issues are resolved
   post:
-    - "[ ! -d build/test-results ] || cp -R build/test-results $CIRCLE_ARTIFACTS/"
+    - "mkdir -p $CIRCLE_TEST_REPORTS/junit/"
+    - "find . -type f -regex \".*/build/test-results/.*xml\" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;"
     - "[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/"
 
 deployment:
