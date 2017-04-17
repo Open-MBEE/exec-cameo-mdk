@@ -5,7 +5,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -21,10 +21,9 @@ import java.util.List;
 import java.util.Set;
 
 public class GenerateAllViewsAction extends MMSAction {
-    private static final long serialVersionUID = 1L;
-    public static final String DEFAULT_ID = "GenerateAllDocs";
+    public static final String DEFAULT_ID = "GenerateAllViews";
 
-    private List<ValidationSuite> vss = new ArrayList<ValidationSuite>();
+    private List<ValidationSuite> vss = new ArrayList<>();
 
     public GenerateAllViewsAction() {
         super(DEFAULT_ID, "Generate All Views", null, null);
@@ -51,12 +50,12 @@ public class GenerateAllViewsAction extends MMSAction {
         Set<Element> projectViews = new HashSet<>();
         for (InstanceSpecification is : documentView.get_instanceSpecificationOfClassifier()) {
             Element owner = is.getOwner();
-            if (!ProjectUtilities.isElementInAttachedProject(owner) && StereotypesHelper.hasStereotypeOrDerived(owner, documentView) && owner instanceof Class) {
+            if (!ProjectUtilities.isElementInAttachedProject(owner) && StereotypesHelper.hasStereotypeOrDerived(owner, documentView) && owner instanceof Classifier) {
                 projectViews.add(owner);
             }
         }
         if (projectViews.isEmpty()) {
-            Application.getInstance().getGUILog().log("No documents or views found in this project");
+            Application.getInstance().getGUILog().log("[INFO] No views found. Skipping generation.");
         }
         return projectViews;
     }
