@@ -31,20 +31,7 @@ import java.util.Map;
  * @author dlam
  */
 public class ScriptRunner {
-
-    /**
-     * runs the script with steroetype tag values as input to scriptInput
-     *
-     * @param e
-     * @param s
-     * @return
-     * @throws ScriptException
-     */
-    public static Object runScriptFromStereotype(Element e, Stereotype s) throws ScriptException {
-        return runScriptFromStereotype(e, s, new HashMap<String, Object>());
-    }
-
-    static String userScriptDirectoryName = null;
+    private static String userScriptDirectoryName;
 
     public static String getUserScriptDirectoryName() {
         if (userScriptDirectoryName == null) {
@@ -53,7 +40,7 @@ public class ScriptRunner {
         return userScriptDirectoryName;
     }
 
-    static File userScriptDirectory = null;
+    private static File userScriptDirectory;
 
     public static File getUserScriptDirectory() {
         if (userScriptDirectory == null) {
