@@ -26,7 +26,6 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
@@ -47,8 +46,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
@@ -120,6 +118,7 @@ public class MMSUtils {
      */
     public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
+/* ORIGINAL VERSION - uses MMS recursion instead of recursive depth 1 calls from MDK
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
             return null;
@@ -143,6 +142,83 @@ public class MMSUtils {
             return sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
         return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
+END ORIGINAL VERSION */
+
+        // verify elements
+        if (elementIds == null || elementIds.isEmpty()) {
+            return null;
+        }
+
+        // build uri
+        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+
+        HashSet<String> processedIds = new HashSet<>();
+        File targetFile = File.createTempFile("RecursiveResponse-", null);
+        targetFile.deleteOnExit();
+        try (FileOutputStream outputStream = new FileOutputStream(targetFile);
+             JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeArrayFieldStart("elements");
+            for (String elementId : elementIds) {
+                getElementsRecursivelyHelper(project, requestUri, elementId, depth, processedIds, jsonGenerator, progressStatus);
+            }
+            jsonGenerator.writeEndArray();
+            jsonGenerator.writeEndObject();
+        }
+        System.out.println("Compiled Response Body: " + targetFile.getPath());
+        return targetFile;
+    }
+
+    public static void getElementsRecursivelyHelper(Project project, URIBuilder requestUri, String targetId, int depth, Set<String> processedIds, JsonGenerator jsonGenerator, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        if (depth == 0) {
+            requestUri.setParameter("depth", "0");
+        } else {
+            requestUri.setParameter("depth", "1");
+        }
+
+        // create request file
+        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, Collections.singletonList(targetId), JsonBlobType.ELEMENT_ID);
+
+        //do cancellable request if progressStatus exists
+        processedIds.add(targetId);
+        File currentResponse;
+        if (progressStatus != null) {
+            currentResponse = sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+        } else {
+            currentResponse = sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
+        }
+        if (currentResponse == null) {
+            return;
+        }
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(currentResponse)) {
+            // find elements array
+            JsonToken current;
+            while ((current = jsonParser.nextToken()) != null) {
+                if (current == JsonToken.FIELD_NAME && jsonParser.getCurrentName().equals("elements")) {
+                    while ((current = jsonParser.nextToken()) != JsonToken.END_ARRAY && current != null) {
+                        if (current == JsonToken.START_OBJECT) {
+                            ObjectNode node = JacksonUtils.parseJsonObject(jsonParser);
+                            JsonNode idValue;
+                            if ((idValue = node.get(MDKConstants.ID_KEY)) != null && idValue.isTextual()) {
+                                if (idValue.asText().equals(targetId)) {
+                                    // if id == targetId, add objectNode to jsonGenerator output
+                                    jsonGenerator.writeObject(node);
+                                } else if (!processedIds.contains(idValue.asText()) && depth != 0) {
+                                    // else if id not in processedIds, run this function on that id
+                                    getElementsRecursivelyHelper(project, requestUri, idValue.asText(), depth - 1, processedIds, jsonGenerator, progressStatus);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        currentResponse.delete();
+        sendData.delete();
     }
 
     /**
