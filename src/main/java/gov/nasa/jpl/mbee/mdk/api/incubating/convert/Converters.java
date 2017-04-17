@@ -54,8 +54,8 @@ public class Converters {
                     return null;
                 }
                 BaseElement baseElement = project.getElementByID(id);
-                if (baseElement == null) {
-                    return null;
+                if (baseElement instanceof Element) {
+                    return (Element) baseElement;
                 }
                 if (id.endsWith(MDKConstants.PRIMARY_MODEL_ID_SUFFIX)) {
                     String projectId = id.substring(0, id.length() - MDKConstants.PRIMARY_MODEL_ID_SUFFIX.length());
@@ -115,7 +115,7 @@ public class Converters {
                     }
                     return ((InstanceSpecification) owningInstance).getSlot().stream().filter(slot -> definingFeature.equals(slot.getDefiningFeature())).findAny().orElse(null);
                 }
-                return baseElement instanceof Element ? (Element) baseElement : null;
+                return null;
             };
         }
         return ID_TO_ELEMENT_CONVERTER;
