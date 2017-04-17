@@ -71,12 +71,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         try {
             if (!TicketUtils.isTicketValid(project)) {
                 Utils.guilog("[WARNING] You are not logged in to MMS. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
-                MMSLoginAction.loginAction(project);
+                new Thread(() -> MMSLoginAction.loginAction(project)).start();
                 return;
             }
         } catch (ServerException | IOException | URISyntaxException e) {
             Utils.guilog("[ERROR] Exception occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
-            MMSLoginAction.loginAction(project);
+            new Thread(() -> MMSLoginAction.loginAction(project)).start();
             return;
         }
 

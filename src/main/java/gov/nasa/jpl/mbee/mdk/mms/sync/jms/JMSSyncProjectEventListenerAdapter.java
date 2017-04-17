@@ -30,16 +30,14 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectOpened(final Project project) {
         closeJMS(project);
         if (shouldEnableJMS(project)) {
-            new Thread() {
-                public void run() {
-                    if (TicketUtils.isTicketSet(project)) {
-                        initializeJMS(project);
-                    } else {
-                        MMSLoginAction.loginAction(project);
-                        // loginAction contains a call to initializeJMS on a successful ticket get
-                    }
+            new Thread(() -> {
+                if (TicketUtils.isTicketSet(project)) {
+                    initializeJMS(project);
+                } else {
+                    MMSLoginAction.loginAction(project);
+                    // loginAction contains a call to initializeJMS on a successful ticket get
                 }
-            }.start();
+            }).start();
         }
     }
 
