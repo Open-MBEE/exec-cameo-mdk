@@ -187,7 +187,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             }
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                 for (Map.Entry<String, Pair<Element, ObjectNode>> entry : changelog.get(changeType).entrySet()) {
-                    successfulChangeValidationRule.addViolation(new ValidationRuleViolation(entry.getValue().getKey(), "Source: [" + SyncElement.Type.MMS.name() + " | Type: [" + changeType.name() + "] | Target: [" + SyncElement.Type.LOCAL.name() + "]"));
+                    successfulChangeValidationRule.addViolation(new ValidationRuleViolation(entry.getValue().getKey(), "Source: [" + SyncElement.Type.MMS.name() + "] | Type: [" + changeType.name() + "] | Target: [" + SyncElement.Type.LOCAL.name() + "]"));
                 }
             }
 
