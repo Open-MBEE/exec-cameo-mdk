@@ -84,10 +84,9 @@ import java.util.regex.Pattern;
  *
  * @author dlam
  */
+@Deprecated
 public class Utils {
     public static Logger log = Logger.getLogger(Utils.class);
-    public static final int[] TABBED_PANE_INDICES = {1, 0, 0, 0, 1, 0, 0, 1, 1};
-    // final JTabbedPane jtp = ((JTabbedPane) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) ((Container) dlg2.getContentPane().getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[0]).getComponents()[0]).getComponents()[1]).getComponents()[1]);
 
     private static boolean forceDialogFalse = false;
     private static boolean forceDialogTrue = false;
@@ -183,33 +182,7 @@ public class Utils {
         return res;
     }
 
-    public static List<Element> filterElementsByStereotypeString(Collection<Element> elements,
-                                                                 String stereotype, boolean include, boolean derived) {
-        List<Element> res = new ArrayList<>();
-        if (include) {
-            for (Element e : elements) {
-                if (derived && StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
-                        && StereotypesHelper.hasStereotype(e, stereotype)) {
-                    res.add(e);
-                }
-            }
-        }
-        else {
-            for (Element e : elements) {
-                if (derived && !StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
-                        && !StereotypesHelper.hasStereotype(e, stereotype)) {
-                    res.add(e);
-                }
-            }
-        }
-        return res;
-    }
-
     protected static final String[] trueStrings = new String[]{"t", "true", "1", "1.0", "yes", "y"};
-
-    public static Boolean isTrue(Object o) {
-        return isTrue(o, true);
-    }
 
     public static Boolean isTrue(Object o, boolean strict) {
         if (o == null) {
@@ -246,38 +219,30 @@ public class Utils {
     public static List<Element> filterElementsByExpression(Collection<Element> elements, String query,
                                                            boolean include, boolean iterate) {
         List<Element> res = new ArrayList<>();
-        OclEvaluator evaluator = null;
+        OclEvaluator evaluator;
         if (!iterate) {
-            Object o = null;
+            Object o;
             DocumentValidator dv = CollectFilterParser.getValidator();
             o = DocumentValidator.evaluate(query, elements, dv, true);
             evaluator = OclEvaluator.instance;
             if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
-                // try {
-                // o = OclEvaluator.evaluateQuery(e, query);
                 Boolean istrue = isTrue(o, false);
                 if (include == (istrue == null ? false : istrue)) {
                     res.addAll(elements);
                 }
-                // } catch ( ParserException e1 ) {
-                // e1.printStackTrace();
             }
         }
         else {
             for (Element e : elements) {
-                Object o = null;
+                Object o;
                 DocumentValidator dv = CollectFilterParser.getValidator();
                 o = DocumentValidator.evaluate(query, e, dv, true);
                 evaluator = OclEvaluator.instance;
                 if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
-                    // try {
-                    // o = OclEvaluator.evaluateQuery(e, query);
                     Boolean istrue = isTrue(o, false);
                     if (include == (istrue == null ? false : istrue)) {
                         res.add(e);
                     }
-                    // } catch ( ParserException e1 ) {
-                    // e1.printStackTrace();
                 }
             }
         }
@@ -313,40 +278,6 @@ public class Utils {
             for (Element e : elements) {
                 if (derived && !StereotypesHelper.hasStereotypeOrDerived(e, stereotypes) || !derived
                         && !StereotypesHelper.hasStereotype(e, stereotypes)) {
-                    res.add(e);
-                }
-            }
-        }
-        return res;
-    }
-
-    /**
-     * @param elements this can be a collection of any model element, only
-     *                 NamedElement will be tested and returned
-     * @param names
-     * @param include
-     * @return
-     */
-    public static List<Element> filterElementsByNames(Collection<Element> elements, Collection<String> names,
-                                                      boolean include) {
-        List<Element> res = new ArrayList<>();
-        if (names.isEmpty() && include) {
-            return res;
-        }
-        if (names.isEmpty() && !include) {
-            res.addAll(elements);
-            return res;
-        }
-        if (include) {
-            for (Element e : elements) {
-                if (e instanceof NamedElement && names.contains(((NamedElement) e).getName())) {
-                    res.add(e);
-                }
-            }
-        }
-        else {
-            for (Element e : elements) {
-                if (e instanceof NamedElement && !names.contains(((NamedElement) e).getName())) {
                     res.add(e);
                 }
             }
@@ -442,39 +373,6 @@ public class Utils {
         return res;
     }
 
-    public static List<Element> filterElementsByJavaClass(Collection<Element> elements,
-                                                          java.lang.Class<?> javaClass, boolean include) {
-        List<Element> res = new ArrayList<>();
-        if (include) {
-            for (Element e : elements) {
-                if (javaClass.isInstance(e)) {
-                    res.add(e);
-                }
-            }
-        }
-        else {
-            for (Element e : elements) {
-                if (javaClass.isInstance(e)) {
-                    continue;
-                }
-                res.add(e);
-            }
-        }
-        return res;
-    }
-
-    /**
-     * @param elements
-     * @param metaclass this is the metaclass class model element from magicdraw's uml profile
-     * @param include
-     * @return
-     */
-    public static List<Element> filterElementsByMetaclass(Collection<Element> elements, Class metaclass,
-                                                          boolean include) {
-        java.lang.Class<?> javaClass = StereotypesHelper.getClassOfMetaClass(metaclass);
-        return filterElementsByJavaClass(elements, javaClass, include);
-    }
-
     /**
      * @param elements
      * @param metaclasses these are the metaclass element classes from magicdraw's uml
@@ -537,9 +435,6 @@ public class Utils {
         }
         Collection<Element> owned = e.getOwnedElement();
         for (Element o : owned) {
-            // if (e instanceof NamedElement &&
-            // ((NamedElement)e).getName().startsWith("base_"))
-            // continue;
             all.add(o);
             collectRecursiveOwnedElements(o, all, depth, current + 1);
         }
@@ -676,281 +571,6 @@ public class Utils {
     }
 
     /**
-     * This collects all relationships.
-     *
-     * @param e
-     * @param direction 0 means any or no direction, 1 means e is the client/source, 2
-     *                  means e is the supplier/target
-     * @return a list of relationships as Elements
-     */
-    public static List<Element> collectRelationships(Element e, int direction) {
-        if (e == null) {
-            return null;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelationships(element, direction)");
-            direction = 0;
-        }
-        List<Element> res = new ArrayList<>();
-        if (direction == 0) {
-            res = EmfUtils.getRelationships(e);
-        }
-        else if (direction == 1) {
-            res.addAll(e.get_directedRelationshipOfSource());
-        }
-        if (direction == 2) {
-            res.addAll(e.get_directedRelationshipOfTarget());
-        }
-        return res;
-    }
-
-    /**
-     * This will consider all relationships that are also specializations of
-     * javaClasses
-     *
-     * @param e
-     * @param javaClasses this is the class of the relationships to consider
-     * @param direction   0 is both, 1 is outward, 2 is inward
-     * @param depth       collect to what level of depth - 0 is infinite
-     * @return
-     */
-    public static List<Element> collectRelatedElementsByJavaClasses(Element e,
-                                                                    Collection<java.lang.Class<?>> javaClasses, int direction, int depth) {
-        List<Element> res = new ArrayList<Element>();
-        if (e == null) {
-            return res;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByJavaClasses()");
-            direction = 0;
-        }
-        collectRelatedElementsByJavaClassesRecursive(e, javaClasses, direction, depth, 1, res);
-        return res;
-    }
-
-    // TODO -- refactor as collect( What.RelatedElements, Criteria.JavaClass,
-    // argMap );
-    private static void collectRelatedElementsByJavaClassesRecursive(Element e,
-                                                                     Collection<java.lang.Class<?>> javaClasses, int direction, int depth, int curdepth,
-                                                                     List<Element> res) {
-        if (e == null) {
-            return;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByJavaClassesRecursive()");
-            direction = 0;
-        }
-        if (depth != 0 && curdepth > depth) {
-            return;
-        }
-        List<Element> relationships = collectRelationships(e, direction);
-        if (relationships == null) {
-            return;
-        }
-        for (Element r : relationships) {
-            Element relatedElement = null;
-            // client: 0 is both, 1 is client, 2 is supplier
-            if (direction == 0 || direction == 1) {
-                relatedElement = ModelHelper.getSupplierElement(r);
-                if (direction == 0 && relatedElement == e) {
-                    relatedElement = null;
-                }
-            }
-            if ((direction == 0 && relatedElement == null) || direction == 2) {
-                relatedElement = ModelHelper.getClientElement(r);
-            }
-            if (!res.contains(relatedElement)) {
-                for (java.lang.Class<?> c : javaClasses) { // TODO -- make this
-                    // line & next a
-                    // utlity fcn
-                    if (c.isInstance(relatedElement)) {
-                        res.add(relatedElement);
-                        collectRelatedElementsByJavaClassesRecursive(relatedElement, javaClasses, direction,
-                                depth, curdepth + 1, res);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * @param e
-     * @param c
-     * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth     collect to what level of depth - 0 is infinite
-     * @return
-     */
-    public static List<Element> collectRelatedElementsByJavaClass(Element e, java.lang.Class<?> c,
-                                                                  int direction, int depth) {
-        if (e == null) {
-            return Utils2.newList();
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByJavaClass()");
-            direction = 0;
-        }
-        List<java.lang.Class<?>> classes = new ArrayList<java.lang.Class<?>>();
-        classes.add(c);
-        return collectRelatedElementsByJavaClasses(e, classes, direction, depth);
-    }
-
-    /**
-     * @param e
-     * @param c         this is the class from magicdraw's uml profile
-     * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth     collect to what level of depth - 0 is infinite
-     * @return
-     */
-    public static List<Element> collectRelatedElementsByMetaclass(Element e, Class c, int direction, int depth) {
-        if (e == null) {
-            return null;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByMetaclass()");
-            direction = 0;
-        }
-        java.lang.Class<?> java = StereotypesHelper.getClassOfMetaClass(c);
-        return collectRelatedElementsByJavaClass(e, java, direction, depth);
-    }
-
-    /**
-     * @param e
-     * @param metaclasses these are the metaclass element classes from magicdraw's uml
-     *                    profile, this will always considered derived relationship
-     *                    metaclasses
-     * @param direction   0 means both, 1 means e is the client, 2 means e is the
-     *                    supplier
-     * @return
-     */
-    public static List<Element> collectRelatedElementsByMetaclasses(Element e, Collection<Class> metaclasses,
-                                                                    int direction, int depth) {
-        if (e == null) {
-            return null;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByMetaclasses()");
-            direction = 0;
-        }
-        List<java.lang.Class<?>> javaClasses = new ArrayList<java.lang.Class<?>>();
-        for (Class c : metaclasses) {
-            javaClasses.add(StereotypesHelper.getClassOfMetaClass(c));
-        }
-        return collectRelatedElementsByJavaClasses(e, javaClasses, direction, depth);
-    }
-
-    /**
-     * @param e
-     * @param stereotypes
-     * @param direction   0 means both, 1 means e is the client, 2 means e is the
-     *                    supplier
-     * @param derived     whether to consider derived stereotypes
-     * @return
-     */
-    public static List<Element> collectRelatedElementsByStereotypes(Element e,
-                                                                    Collection<Stereotype> stereotypes, int direction, boolean derived, int depth) {
-        List<Element> res = new ArrayList<>();
-        if (e == null) {
-            return res;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByStereotypes()");
-            direction = 0;
-        }
-        // client: 0 is both, 1 is client, 2 is supplier
-        collectRelatedElementsByStereotypesRecursive(e, stereotypes, direction, derived, depth, 1, res);
-        return res;
-    }
-
-    private static void collectRelatedElementsByStereotypesRecursive(Element e,
-                                                                     Collection<Stereotype> stereotypes, int direction, boolean derived, int depth, int curdepth,
-                                                                     List<Element> res) {
-        if (e == null) {
-            return;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByStereotypesRecursive()");
-            direction = 0;
-        }
-        if (depth != 0 && curdepth > depth) {
-            return;
-        }
-        List<Element> relationships = collectRelationships(e, direction);
-        if (relationships == null) {
-            return;
-        }
-        for (Element r : relationships) {
-            Element relatedElement = null;
-            if (direction == 0 || direction == 1) {
-                relatedElement = ModelHelper.getSupplierElement(r);
-                if (direction == 0 && relatedElement == e) {
-                    relatedElement = null;
-                }
-            }
-            // client: 0 is both, 1 is client, 2 is supplier
-            if ((direction == 0 && relatedElement == null) || direction == 2) {
-                relatedElement = ModelHelper.getClientElement(r);
-            }
-            if (derived && StereotypesHelper.hasStereotypeOrDerived(relatedElement, stereotypes) || !derived
-                    && StereotypesHelper.hasStereotype(relatedElement, stereotypes)) {
-                if (!res.contains(relatedElement)) {
-                    res.add(relatedElement);
-                    collectRelatedElementsByStereotypesRecursive(relatedElement, stereotypes, direction,
-                            derived, depth, curdepth + 1, res);
-                }
-            }
-        }
-    }
-
-    /**
-     * @param e
-     * @param stereotype
-     * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
-     *                   the supplier
-     * @param derived
-     * @param depth      collect to what level of depth - 0 is infinite
-     * @return
-     */
-    public static List<Element> collectRelatedElementsByStereotype(Element e, Stereotype stereotype,
-                                                                   int direction, boolean derived, int depth) {
-        if (e == null) {
-            return Utils2.newList();
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByStereotype()");
-            direction = 0;
-        }
-        List<Stereotype> s = new ArrayList<Stereotype>();
-        s.add(stereotype);
-        return collectRelatedElementsByStereotypes(e, s, direction, derived, depth);
-    }
-
-    /**
-     * @param e
-     * @param stereotype
-     * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
-     *                   the supplier
-     * @param derived
-     * @param depth      collect to what level of depth - 0 is infinite
-     * @return
-     */
-    public static List<Element> collectRelatedElementsByStereotypeString(Project project, Element e, String stereotype,
-                                                                         int direction, boolean derived, int depth) {
-        if (e == null) {
-            return Utils2.newList();
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectRelatedElementsByStereotypeString()");
-            direction = 0;
-        }
-        Stereotype s = StereotypesHelper.getStereotype(project, stereotype);
-        if (s != null) {
-            return collectRelatedElementsByStereotype(e, s, direction, derived, depth);
-        }
-        return Utils2.newList();
-    }
-
-    /**
      * This will consider all relationships that are also specializations of
      * javaClasses
      *
@@ -1042,26 +662,6 @@ public class Utils {
 
     /**
      * @param e
-     * @param c         this is the class from magicdraw's uml profile
-     * @param direction 0 is both, 1 is outward, 2 is inward
-     * @param depth     collect to what level of depth - 0 is infinite
-     * @return
-     */
-    public static List<Element> collectDirectedRelatedElementsByRelationshipMetaclass(Element e, Class c,
-                                                                                      int direction, int depth) {
-        if (e == null) {
-            return null;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectDirectedRelatedElementsByRelationshipMetaclass()");
-            direction = 0;
-        }
-        java.lang.Class<?> java = StereotypesHelper.getClassOfMetaClass(c);
-        return collectDirectedRelatedElementsByRelationshipJavaClass(e, java, direction, depth);
-    }
-
-    /**
-     * @param e
      * @param metaclasses these are the metaclass element classes from magicdraw's uml
      *                    profile, this will always considered derived relationship
      *                    metaclasses
@@ -1083,40 +683,6 @@ public class Utils {
             javaClasses.add(StereotypesHelper.getClassOfMetaClass(c));
         }
         return collectDirectedRelatedElementsByRelationshipJavaClasses(e, javaClasses, direction, depth);
-    }
-
-    /**
-     * This collects all elements related by any kind of directed relationship
-     *
-     * @param e
-     * @param direction 0 means both, 1 means e is the client, 2 means e is the
-     *                  supplier
-     * @return
-     */
-    public static List<Element> collectDirectedRelatedElements(Element e, int direction) {
-        if (e == null) {
-            return null;
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectDirectedRelatedElements(element, direction)");
-            direction = 0;
-        }
-        List<Element> res = new ArrayList<Element>();
-        if (direction == 0 || direction == 1) {
-            for (DirectedRelationship dr : e.get_directedRelationshipOfSource()) {
-                if (!res.contains(ModelHelper.getSupplierElement(dr))) {
-                    res.add(ModelHelper.getSupplierElement(dr));
-                }
-            }
-        }
-        if (direction == 0 || direction == 2) {
-            for (DirectedRelationship dr : e.get_directedRelationshipOfTarget()) {
-                if (!res.contains(ModelHelper.getClientElement(dr))) {
-                    res.add(ModelHelper.getClientElement(dr));
-                }
-            }
-        }
-        return res;
     }
 
     /**
@@ -1303,60 +869,6 @@ public class Utils {
         }
 
         return res;
-    }
-
-    /**
-     * Get the things that have t as the type
-     *
-     * @param t
-     * @return
-     */
-    public static List<TypedElement> getPropertiesWithType(Type t) {
-        return new ArrayList<TypedElement>(t.get_typedElementOfType());
-    }
-
-    /**
-     * get the call behavior actions that're typed by b
-     *
-     * @param b
-     * @return
-     */
-    public static List<CallBehaviorAction> getCallBehaviorActionsOfBehavior(Behavior b) {
-        return new ArrayList<CallBehaviorAction>(b.get_callBehaviorActionOfBehavior());
-    }
-
-    /**
-     * get call operation actions that're typed by o
-     *
-     * @param o
-     * @return
-     */
-    public static List<CallOperationAction> getCallOperationActionsOfOperation(Operation o) {
-        return new ArrayList<CallOperationAction>(o.get_callOperationActionOfOperation());
-    }
-
-    public static List<ActivityPartition> getSwimlanesThatRepresentElement(Element e) {
-        return new ArrayList<ActivityPartition>(e.get_activityPartitionOfRepresents());
-    }
-
-    public static List<Element> intersectionOfCollections(Collection<Element>... a) {
-        List<Element> i = new ArrayList<Element>();
-        Set<Element> inter = new HashSet<Element>(a[0]);
-        for (Collection<Element> es : a) {
-            inter.retainAll(es);
-        }
-        i.addAll(inter);
-        return i;
-    }
-
-    public static List<Element> unionOfCollections(Collection<Element>... a) {
-        List<Element> i = new ArrayList<Element>();
-        Set<Element> union = new HashSet<Element>(a[0]);
-        for (Collection<Element> c : a) {
-            union.addAll(c);
-        }
-        i.addAll(union);
-        return i;
     }
 
     public static List<Element> intersectionOfCollections(Collection<? extends Collection<Element>> a) {
@@ -1587,10 +1099,6 @@ public class Utils {
                 }
             }
         };
-    }
-
-    public static List<Element> sortByAttribute(Collection<? extends Element> elem, String attr) {
-        return sortByAttribute(elem, AvailableAttribute.valueOf(attr));
     }
 
     /**
@@ -1833,14 +1341,14 @@ public class Utils {
             root = getRootElement(project);
         }
         if (root == null) {
-            return Utils2.getEmptyList(); // REVIEW -- error?
+            return Collections.emptyList(); // REVIEW -- error?
         }
         if (root instanceof Package) {
             return getPackagesOfType((Package) root, typeName, seen);
         }
         Pair<Boolean, Set<Element>> p = Utils2.seen(root, true, seen);
         if (p.getKey()) {
-            return Utils2.getEmptyList();
+            return Collections.emptyList();
         }
         seen = p.getValue();
         List<Package> pkgs = new ArrayList<>();
@@ -1867,7 +1375,7 @@ public class Utils {
         }
         Pair<Boolean, Set<Element>> p = Utils2.seen(root, true, seen);
         if (p.getKey()) {
-            return Utils2.getEmptyList();
+            return Collections.emptyList();
         }
         seen = p.getValue();
         List<Package> pkgs = new ArrayList<Package>();
@@ -2126,64 +1634,6 @@ public class Utils {
     }
 
     /**
-     * Displays a dialog box that allows users to select elements from the
-     * containment tree<br/>
-     * 17.0.2 seems to have a new nicer dialog box, gotta find it...
-     *
-     * @param types this should be a list of java.lang.Class types (ex. Package
-     *              from com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package)
-     *              This constraints what the user can select
-     * @param title title of the dialog box
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-    public static List<BaseElement> getUserSelections(List<java.lang.Class<?>> types, String title) {
-        SelectElementTypes a = new SelectElementTypes(null, types);
-        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject().getPrimaryModel(), true);
-        Frame dialogParent = MDDialogParentProvider.getProvider().getDialogParent();
-        ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
-        ElementSelectionDlgFactory.initMultiple(dlg, a, b, new ArrayList());
-        dlg.setTitle(title);
-        dlg.show();
-        if (dlg.isOkClicked()) {
-            return dlg.getSelectedElements();
-        }
-        return null;
-        /*
-        SelectElementTypes a = new SelectElementTypes(null, types);
-        // SelectElementType(display, select)
-        SelectElementInfo b = new SelectElementInfo(false, false, Application.getInstance().getProject()
-                .getModel(), true);
-        SelectElementsDlg z = null;
-        z = new SelectElementsDlg(MDDialogParentProvider.getProvider().getDialogParent(), a, b, false, false,
-                null);
-        z.setTitle(title);
-        z.setVisible(true);
-        if (z.isOk())
-            return z.getSelected();
-        return null;
-        */
-    }
-
-    public static ElementSelectionDlg disableSingleSelection(final ElementSelectionDlg dlg) {
-        Container c = dlg.getContentPane();
-        for (final int i : TABBED_PANE_INDICES) {
-            if (c.getComponents().length <= i || !(c.getComponents()[i] instanceof Container)) {
-                break;
-            }
-            c = (Container) c.getComponents()[i];
-        }
-        if (c instanceof JTabbedPane) {
-            final JTabbedPane jtp = (JTabbedPane) c;
-            if (jtp.getTabCount() >= 2) {
-                jtp.setSelectedIndex(1);
-                jtp.setEnabledAt(0, false);
-            }
-        }
-        return dlg;
-    }
-
-    /**
      * @param types
      * @param title title of the dialog box
      * @return
@@ -2200,82 +1650,6 @@ public class Utils {
             return dlg.getSelectedElement();
         }
         return null;
-        /*
-
-        // SelectElementType(display, select)
-
-        SelectElementDlg z = null;
-        z = new SelectElementDlg(MDDialogParentProvider.getProvider().getDialogParent(), null, a, b);
-        z.setTitle(title);
-        z.setVisible(true);
-        if (z.isOk())
-            return z.getSelected();
-        return null;*/
-    }
-
-    /**
-     * Given a list of named elements, will prompt the user to choose one and
-     * return it (selections are showne as qualified names, null if nothing
-     * chosen
-     *
-     * @param title
-     * @param message
-     * @param elements
-     * @return
-     */
-    public static Element getUserDropdownSelection(String title, String message, List<NamedElement> elements) {
-        String[] strings = new String[elements.size()];
-        int i = 0;
-        for (NamedElement e : elements) {
-            strings[i] = e.getQualifiedName();
-            i++;
-        }
-        Object input = JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE, null,
-                strings, null);
-        if (input != null) {
-            for (int j = 0; j < strings.length; j++) {
-                if (input.equals(strings[j])) {
-                    return elements.get(j);
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * This is similar to getUserDropdownSelection but you provide the string of
-     * what to display to user
-     *
-     * @param title
-     * @param message
-     * @param elements what to return based on what user selected
-     * @param displays what to display to user (the size of this must match the size
-     *                 of elements argument)
-     * @return
-     */
-    public static String getUserDropdownSelectionForString(String title, String message,
-                                                           List<String> elements, List<String> displays, String initial) {
-        String[] strings = new String[elements.size()];
-        int i = 0;
-        for (String e : displays) {
-            strings[i] = e;
-            i++;
-        }
-        Object input = JOptionPane.showInputDialog(Application.getInstance().getMainFrame(), message, title, JOptionPane.PLAIN_MESSAGE, null,
-                strings, initial);
-        if (input != null) {
-            for (int j = 0; j < strings.length; j++) {
-                if (input.equals(strings[j])) {
-                    return elements.get(j);
-                }
-            }
-        }
-        return null;
-    }
-
-    public static String getUserDropdownSelectionForString(String title, String message,
-                                                           List<String> elements, List<String> displays) {
-        return getUserDropdownSelectionForString(title, message, elements, displays, null);
     }
 
     public static void showPopupMessage(String message) {
@@ -2347,19 +1721,8 @@ public class Utils {
         return annotations;
     }
 
-    public static Set<Annotation> getAnnotations(Project project, Collection<ValidationSuite> vss) {
-        Set<Annotation> annotations = new LinkedHashSet<>();
-        List<RuleViolationResult> results = getRuleViolations(project, vss);
-        for (RuleViolationResult violation : results) {
-            annotations.add(violation.getAnnotation());
-        }
-        return annotations;
-    }
-
     public static List<RuleViolationResult> getRuleViolations(ValidationRule vr, Project project, Constraint cons) {
         List<RuleViolationResult> results = new ArrayList<RuleViolationResult>();
-        // Project project = getProject();
-        // Constraint cons = Utils.getWarningConstraint();
 
         EnumerationLiteral severity;
         /*
@@ -2414,7 +1777,6 @@ public class Utils {
 
         }
         return results;
-
     }
 
     public static List<RuleViolationResult> getRuleViolations(Project project, Collection<ValidationSuite> vss) {
@@ -2442,27 +1804,15 @@ public class Utils {
             elements.add((Element) violation.getElement());
         }
 
-        // //ValidationResultProvider provider =
-        // project.getValidationResultProvider();
-        // Collection<RuleViolationResult> results = new
-        // ArrayList<RuleViolationResult>();
         Package dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
-        //Constraint cons = Utils.getWarningConstraint();
         if (dummyvs == null) {
-            //Utils.showPopupMessage("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
             Application.getInstance().getGUILog().log("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
             return;
         }
         EnumerationLiteral severitylevel = Annotation.getSeverityLevel(project, Annotation.INFO);
         ValidationRunData runData = new ValidationRunData(dummyvs, false, elements, severitylevel);
-        // ValidationRunData runData = new ValidationRunData(dummyvs, false,
-        // elements, Annotation.getSeverityLevel(project, Annotation.DEBUG));
-        // provider.dispose();
-        // provider.init();
         // TODO @donbot change the id here from ms to the action name - this will cause windows to be reused
         String id = "" + System.currentTimeMillis();
-        // provider.setValidationResults(id, results);
-        // provider.update();
         Map<Annotation, RuleViolationResult> mapping = new HashMap<>();
         ValidationWindowRun vwr = new ValidationWindowRun(id, title, runData, results, mapping);
         for (RuleViolationResult rvr : results) {
@@ -2474,24 +1824,6 @@ public class Utils {
             mapping.put(rvr.getAnnotation(), rvr);
         }
         ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
-    }
-
-    /************************************************ Existence check **************************************/
-
-    /**
-     * check if there's any directed relationship between 2 elements
-     *
-     * @param from
-     * @param to
-     * @return
-     */
-    public static boolean hasDirectedRelationship(Element from, Element to) {
-        for (DirectedRelationship dr : from.get_directedRelationshipOfSource()) {
-            if (ModelHelper.getSupplierElement(dr) == to) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /************************************************ Model Modification **************************************/
@@ -2531,43 +1863,11 @@ public class Utils {
         child.setOwner(parent);
     }
 
-    public static void createDependency(Element from, Element to) {
-        Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-        ModelHelper.setClientElement(d, from);
-        ModelHelper.setSupplierElement(d, to);
-        setOwnerPackage(d, from);
-    }
-
     public static void createDependencyWithStereotype(Element from, Element to, Stereotype s) {
         Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
         ModelHelper.setClientElement(d, from);
         ModelHelper.setSupplierElement(d, to);
         StereotypesHelper.addStereotype(d, s);
-        setOwnerPackage(d, from);
-    }
-
-    public static void createDependencyWithStereotypes(Element from, Element to, Collection<Stereotype> s) {
-        Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-        ModelHelper.setClientElement(d, from);
-        ModelHelper.setSupplierElement(d, to);
-        StereotypesHelper.addStereotypes(d, s);
-        setOwnerPackage(d, from);
-    }
-
-    public static void createDependencyWithStereotypeName(Element from, Element to, String stereotype) {
-        Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-        ModelHelper.setClientElement(d, from);
-        ModelHelper.setSupplierElement(d, to);
-        StereotypesHelper.addStereotypeByString(d, stereotype);
-        setOwnerPackage(d, from);
-    }
-
-    public static void createDependencyWithStereotypeNames(Element from, Element to,
-                                                           Collection<String> stereotypes) {
-        Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-        ModelHelper.setClientElement(d, from);
-        ModelHelper.setSupplierElement(d, to);
-        StereotypesHelper.addStereotypesWithNames(d, stereotypes);
         setOwnerPackage(d, from);
     }
 
@@ -2935,25 +2235,6 @@ public class Utils {
     }
 
     /**
-     * Get the element's matching Slot or Properties.
-     *
-     * @param elem     the Element with the sought Properties.
-     * @param propName the name of the Stereotype tag or Class Property
-     * @return a Property or Slot that corresponds to the input property
-     */
-    public static Element getElementProperty(Element elem, String propName) {
-        Property prop = getElementStereotypeProperty(elem, propName);
-        if (prop != null) {
-            Element result = getElementProperty(elem, prop);
-            if (result != null) {
-                return result;
-            }
-        }
-        prop = getClassProperty(elem, propName, true);
-        return prop;
-    }
-
-    /**
      * A list of property values will always be returned. Gets default value of
      * a stereotype property when there's no slot for the element. Class value
      * properties will be collected by name matching.
@@ -3056,25 +2337,6 @@ public class Utils {
             }
         }
         return results;
-    }
-
-    /**
-     * Gets list of values for a stereotype property, supports derived
-     * properties in customizations
-     *
-     * @param elem
-     * @param propName
-     * @param useDefaultIfNoSlot
-     * @return
-     */
-    public static List<Object> getStereotypePropertyValues(Element elem,
-                                                           String propName,
-                                                           boolean useDefaultIfNoSlot) {
-        Property prop = getElementStereotypeProperty(elem, propName);
-        if (prop == null) {
-            return null;
-        }
-        return getStereotypePropertyValues(elem, prop, useDefaultIfNoSlot);
     }
 
     /*****************************************************************************************/
@@ -3246,44 +2508,6 @@ public class Utils {
         return f;
     }
 
-    public static String floatTruncate(double f, int p) {
-        if (p < 0) {
-            return Double.toString(f);
-        }
-        String pattern = "#.";
-        if (p == 0) {
-            pattern = "#";
-        }
-        for (int i = 0; i < p; i++) {
-            pattern += "#";
-        }
-        return new DecimalFormat(pattern).format(f);
-        // return String.format("%." + Integer.toString(p) + "f", f);
-    }
-
-    /**
-     * adds line numbers to the left of an existing dbtable (simple only, will
-     * not recalculate spans) this returns the original table (will change the
-     * original!)
-     */
-    public static DBTable addLineNumber(DBTable b) {
-        int i = 1;
-        for (List<DocumentElement> row : b.getBody()) {
-            row.add(0, new DBText(Integer.toString(i)));
-            i++;
-        }
-        for (List<DocumentElement> row : b.getHeaders()) {
-            row.add(0, new DBText(""));
-        }
-        b.setCols(b.getCols() + 1);
-        if (b.getColspecs() != null) {
-            for (DBColSpec cs : b.getColspecs()) {
-                cs.setColnum(cs.getColnum() + 1);
-            }
-        }
-        return b;
-    }
-
     /**
      * For user scripts, if you have a pop up table that should look the same as
      * the docgen output, you can just use this method to get back a DBTable to
@@ -3414,9 +2638,6 @@ public class Utils {
                 rowl.add(new DBText(s));
             }
             for (int j = curCol; j < tm.getColumnCount(); j++) {
-                // rowl.add(new DBText(DocGenUtils.fixString(tm.getValueAt(row,
-                // j).toString())));
-
                 PropertyEnum what = tm.getWhatToChangeAt(row, j);
                 boolean editable = tm.isCellEditable(row, j);
                 Object cell = tm.getObjectAt(row, j);
@@ -3444,20 +2665,6 @@ public class Utils {
         return res;
     }
 
-    /**
-     * if s has any xml tags it'll assume it's html
-     *
-     * @param s
-     * @return
-     */
-    public static String addHtmlWrapper(String s) {
-        if (!s.startsWith("<html") && (s.contains("</p>") || s.contains("<br/>") ||
-                s.contains("<br>") || s.contains("</span>") || s.contains("</li>") || s.contains("</th>") || s.contains("</td>"))) {
-            return "<html>\n<body>\n" + s + "</body>\n</html>";
-        }
-        return s;
-    }
-
     public static final Pattern HTML_WRAPPER_START = Pattern.compile("^<html>.*<body>\\s*", Pattern.DOTALL);
     public static final Pattern HTML_WRAPPER_END = Pattern.compile("\\s*</body>.*</html>\\s*$",
             Pattern.DOTALL);
@@ -3475,10 +2682,6 @@ public class Utils {
         }
         String startRemoved = HTML_WRAPPER_START.matcher(before).replaceAll("");
         return HTML_WRAPPER_END.matcher(startRemoved).replaceAll("");
-    }
-
-    public static String escapeString(String s) {
-        return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
     }
 
     /**
@@ -3558,10 +2761,6 @@ public class Utils {
             }
         }
         return EmfUtils.getTypeName(obj);
-    }
-
-    public static String toStringNameAndType(final Object o) {
-        return toStringNameAndType(o, false, false);
     }
 
     public static String toStringNameAndType(final Object o, final boolean includeId,
@@ -3666,26 +2865,6 @@ public class Utils {
         return 1;
     }
 
-    public static boolean isLiteral(Object o) {
-        if (o instanceof Collection) {
-            for (Object oo : (Collection<?>) o) {
-                if (!isLiteral(oo)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        else {
-            if (o instanceof Integer || o instanceof String || o instanceof Double || o instanceof Float
-                    || o instanceof Boolean || o instanceof LiteralInteger || o instanceof LiteralString
-                    || o instanceof LiteralUnlimitedNatural || o instanceof LiteralReal
-                    || o instanceof LiteralBoolean || o instanceof OpaqueExpression) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static void printException(Exception ex) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -3742,46 +2921,6 @@ public class Utils {
         return true;
     }
 
-    //check if the given element would have a model inconsistency in the current state
-    public static boolean modelInconsistency(Element e) {
-        if (e instanceof DirectedRelationship) {
-            if (((DirectedRelationship) e).getSource().isEmpty() || ((DirectedRelationship) e).getTarget().isEmpty()) {
-                return true;
-            }
-        }
-        if (e instanceof Association) {
-            List<Property> memberEnds = ((Association) e).getMemberEnd();
-            if (memberEnds.size() != 2) {
-                return true;
-            }
-            if (!(memberEnds.get(0) instanceof Property) || !(memberEnds.get(1) instanceof Property)) {
-                return true;
-            }
-        }
-        if (e instanceof Connector) {
-            List<ConnectorEnd> ends = ((Connector) e).getEnd();
-            if (ends.size() != 2 || !(ends.get(1).getRole() instanceof ConnectableElement) || !(ends.get(0).getRole() instanceof ConnectableElement)) {
-                return true;
-            }
-        }
-        if (e instanceof ActivityEdge) {
-            if (!(((ActivityEdge) e).getSource() instanceof ActivityNode) || !(((ActivityEdge) e).getSource() instanceof ActivityNode)) {
-                return true;
-            }
-        }
-        if (e instanceof InstanceSpecification) {
-            if (((InstanceSpecification) e).getClassifier().isEmpty()) {
-                return true;
-            }
-        }
-        if (e instanceof Slot) {
-            if (!(((Slot) e).getDefiningFeature() instanceof StructuralFeature)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * Sets boolean that can disabled popups and redirect their messages to the GUI log.
      *
@@ -3800,16 +2939,8 @@ public class Utils {
      * The called method should then reset these values, so they don't accidentally get used again
      */
 
-    public static void forceDialogReturnTrue() {
-        Utils.forceDialogTrue = true;
-    }
-
     public static void forceDialogReturnFalse() {
         Utils.forceDialogFalse = true;
-    }
-
-    public static void forceDialogReturnCancel() {
-        Utils.forceDialogCancel = true;
     }
 
     /**
@@ -3820,5 +2951,4 @@ public class Utils {
         Utils.forceDialogFalse = false;
         Utils.forceDialogCancel = false;
     }
-
 }

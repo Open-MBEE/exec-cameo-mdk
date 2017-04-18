@@ -693,7 +693,7 @@ public interface MoreToString {
         }
 
         public static List<String> fromString(String s, String prefix, String delimiter, String suffix) {
-            List<String> list = Utils2.getEmptyList();
+            List<String> list = Collections.emptyList();
             Pattern p = Pattern.compile(prefix);
             Matcher matcher = p.matcher(s);
             if (!matcher.find()) {
