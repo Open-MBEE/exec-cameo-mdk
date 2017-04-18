@@ -16,7 +16,6 @@ import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.actions.AddInheritanceToAssociationAction;
 import gov.nasa.jpl.mbee.mdk.validation.actions.SetOrCreateRedefinableElementAction;
 
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.lang.Class;
@@ -35,6 +34,7 @@ public class SpecializeStructureAction extends SRAction {
         UNSPECIALIZABLE_CLASSIFIERS.add(DataType.class);
         UNSPECIALIZABLE_CLASSIFIERS.add(PrimitiveType.class);
     }
+
     private final boolean recursionMode;
     private final boolean individualMode;
     private Classifier classifier;
@@ -49,7 +49,6 @@ public class SpecializeStructureAction extends SRAction {
         this.recursionMode = isRecursive;
         this.individualMode = isIndividual;
     }
-
 
 
     @Override
@@ -76,16 +75,15 @@ public class SpecializeStructureAction extends SRAction {
             Namespace container;
             if (isValidationMode) {
                 container = (Namespace) classifier.getOwner();
-            }
-            else {
+            } else {
                 container = (Namespace) dlg.getSelectedElement();
             }
 
-           Classifier specific = createSpecialClassifier(container, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>());
+            Classifier specific = createSpecialClassifier(container, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>());
             SessionManager.getInstance().closeSession();
 
-            checkAssociationsForInheritance(specific,classifier);
-         }
+            checkAssociationsForInheritance(specific, classifier);
+        }
     }
 
     public Classifier createSpecialClassifier(Namespace container, List<RedefinableElement> traveled, List<Classifier> visited) {
@@ -102,24 +100,35 @@ public class SpecializeStructureAction extends SRAction {
         visited.add(specific);
         visited.add(classifier);
         specific.getGeneralization().clear();
+        ArrayList<RedefinableElement> redefinedElements = new ArrayList<RedefinableElement>();
+        for (NamedElement namedElement : specific.getOwnedMember()) {
+            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf() && !(namedElement instanceof Classifier)) {
+                redefinedElements.add((RedefinableElement) namedElement);
+            }
+        }
         Utils.createGeneralization(classifier, specific);
+
+
         for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
-                final RedefinableElement redefEl = (RedefinableElement) ne;
-                    SetOrCreateRedefinableElementAction action = new SetOrCreateRedefinableElementAction();
-                    action.redefineRedefinableElement(specific, redefEl, recursionMode, traveled,visited, individualMode);
-                }
+                final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
+                SetOrCreateRedefinableElementAction action = new SetOrCreateRedefinableElementAction();
+                action.redefineRedefinableElement(specific, elementToBeRedefined, recursionMode, traveled, visited, individualMode);
+                //redefinedElements.add(elementToBeRedefined);
+            }
+        }
+        for (RedefinableElement redefinedElement : redefinedElements) {
+            redefinedElement.dispose();
         }
         return specific;
     }
 
     private void deleteDiagrams(Namespace specific, ArrayList<Diagram> diagrams) {
-        for(NamedElement ne : specific.getOwnedMember()){
-            if(ne instanceof Diagram){
+        for (NamedElement ne : specific.getOwnedMember()) {
+            if (ne instanceof Diagram) {
                 diagrams.add((Diagram) ne);
-            }
-            else if(ne instanceof Namespace){
-                for(NamedElement nam : ((Namespace) ne).getOwnedMember()){
+            } else if (ne instanceof Namespace) {
+                for (NamedElement nam : ((Namespace) ne).getOwnedMember()) {
                     deleteDiagrams((Namespace) nam, diagrams);
                 }
             }
@@ -135,24 +144,21 @@ public class SpecializeStructureAction extends SRAction {
                 for (Element superChild : general.getOwnedElement()) {
                     if (superChild instanceof Property) {
                         Type superPartType = ((Property) superChild).getType();
-                         if (partType != null) {
+                        if (partType != null) {
                             if (partType.equals(superPartType)) {
                                 if (hasAnAssociation(superChild)) {
                                     if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
                                         break assocRule;
-                                    }
-                                    else {
+                                    } else {
                                         AddInheritanceToAssociationAction action = new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation());
                                         action.actionPerformed(null);
                                     }
                                 }
-                            }
-                            else if (partType instanceof Classifier) {
+                            } else if (partType instanceof Classifier) {
                                 if (((Classifier) partType).getGeneral().contains(superPartType)) {
                                     if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
                                         break assocRule;
-                                    }
-                                    else {
+                                    } else {
                                         AddInheritanceToAssociationAction action = new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation());
                                         action.actionPerformed(null);
                                     }
@@ -169,11 +175,11 @@ public class SpecializeStructureAction extends SRAction {
         return ((Property) superChild).getAssociation() != null;
 
     }
+
     private boolean hasInheritanceFromTo(Classifier classifier, Classifier general) {
         if (classifier != null) {
             return ModelHelper.getGeneralClassifiersRecursivelly(classifier).contains(general);
-        }
-        else {
+        } else {
             return false;
         }
     }

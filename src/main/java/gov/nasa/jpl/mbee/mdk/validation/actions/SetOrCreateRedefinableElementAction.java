@@ -7,7 +7,6 @@ import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.C
 import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAction {
@@ -92,11 +91,12 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         }
         if (redefinedElement == null) {
             redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
+            redefinedElement.getRedefinedElement().removeAll(elementToBeRedefined.getRedefinedElement());
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
         }
 
         if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
-                 CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, true, traveled, visited, isIndividual);
+            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, true, traveled, visited, isIndividual);
         }
         return redefinedElement;
 
