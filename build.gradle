@@ -169,6 +169,7 @@ compileJava.dependsOn extractDependencies
 class PreDist extends DefaultTask {
     String humanVersion
     String internalVersion
+    String groupName
     String buildTimestamp
     String descriptor
 
@@ -184,22 +185,22 @@ class PreDist extends DefaultTask {
             from project.configurations.compile.resolvedConfiguration.resolvedArtifacts.file
             from 'lib'
             from project.jar
-            into "build/generated-dist/plugins/${project.group}"
+            into "build/generated-dist/plugins/${groupName}"
         }
         project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
-            file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${project.group}")))
+            file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${groupName}")))
         }
 
         String pluginLibraries = ''
-        project.fileTree(dir: "build/generated-dist/plugins/${project.group}", include: '**/*.jar').each { file ->
-            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${project.group}\//, '') + '\"/>' + System.lineSeparator()
+        project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
+            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
         }
         project.copy {
             from 'src/main/dist/template/plugins/${group}/plugin.xml'
             filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + pluginLibraries) }
             filter { String line -> line.replace('${human.version}', humanVersion) }
             filter { String line -> line.replace('${internal.version}', internalVersion) }
-            into "build/generated-dist/plugins/${project.group}"
+            into "build/generated-dist/plugins/${groupName}"
         }
 
         String descriptorFiles = ''
@@ -221,6 +222,7 @@ class PreDist extends DefaultTask {
 task preDist(type: PreDist, dependsOn: jar) {
     humanVersion = version
     internalVersion = buildNumber
+    groupName = 'gov.nasa.jpl.cae.magicdraw.mdk'
     buildTimestamp = timestamp
     descriptor = descriptorFile
 }
