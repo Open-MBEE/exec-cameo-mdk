@@ -11,13 +11,13 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author igomes
  */
 public class LocalSyncTransactionCommitListener implements TransactionCommitListener {
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
     private static final List<String> IGNORED_PROPERTY_CHANGE_EVENT_NAMES = Arrays.asList(
             PropertyNames.PACKAGED_ELEMENT,
             UML2MetamodelConstants.ID,
@@ -74,10 +75,6 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
         return new TransactionCommitHandler(events, project);
     }
 
-    /**
-     * Adapter to call handleChangeEvent() from the TransactionCommitListener
-     * interface.
-     */
     private class TransactionCommitHandler implements Runnable {
         private final Collection<PropertyChangeEvent> events;
         private final Project project;
@@ -90,75 +87,86 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
         @Override
         public void run() {
             try {
+                CountDownLatch doneSignal = new CountDownLatch(events.size());
+                new Thread(() -> {
+                    try {
+                        doneSignal.await();
+                    } catch (InterruptedException ignored) {
+                    }
+                    SyncStatusConfigurator.getSyncStatusAction().update();
+                }, "Sync Status Update").start();
                 for (PropertyChangeEvent event : events) {
-                    Object source = event.getSource();
-                    if (!(source instanceof Element) || ProjectUtilities.isElementInAttachedProject((Element) source)) {
-                        continue;
-                    }
-                    Element sourceElement = (Element) source;
-                    String changedPropertyName = event.getPropertyName();
-                    if (changedPropertyName == null || changedPropertyName.startsWith("_") || IGNORED_PROPERTY_CHANGE_EVENT_NAMES.contains(changedPropertyName)) {
-                        continue;
-                    }
-                    if ((event.getNewValue() == null && event.getOldValue() == null) || (event.getNewValue() != null && event.getNewValue().equals(event.getOldValue()))) {
-                        continue;
-                    }
-
-                    if (!changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
-                        Element root = sourceElement;
-                        while (root.getOwner() != null) {
-                            root = root.getOwner();
+                    EXECUTOR_SERVICE.execute(() -> {
+                        Object source = event.getSource();
+                        if (!(source instanceof Element) || ProjectUtilities.isElementInAttachedProject((Element) source)) {
+                            doneSignal.countDown();
+                            return;
                         }
-                        if (!root.equals(project.getModel())) {
-                            continue;
+                        Element sourceElement = (Element) source;
+                        String changedPropertyName = event.getPropertyName();
+                        if (changedPropertyName == null || changedPropertyName.startsWith("_") || IGNORED_PROPERTY_CHANGE_EVENT_NAMES.contains(changedPropertyName)) {
+                            doneSignal.countDown();
+                            return;
                         }
-                    }
+                        if ((event.getNewValue() == null && event.getOldValue() == null) || (event.getNewValue() != null && event.getNewValue().equals(event.getOldValue()))) {
+                            doneSignal.countDown();
+                            return;
+                        }
 
-                    // START PRE-PROCESSING
-                    Comment comment;
-                    if (changedPropertyName.equals(PropertyNames.BODY) && sourceElement instanceof Comment && (comment = (Comment) sourceElement).getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner()) {
-                        sourceElement = sourceElement.getOwner();
-                    }
-                    else if (changedPropertyName.equals(PropertyNames.VALUE) && sourceElement instanceof ValueSpecification ||
-                            changedPropertyName.equals(PropertyNames.BODY) && sourceElement instanceof OpaqueExpression ||
-                            changedPropertyName.equals(PropertyNames.OPERAND) && sourceElement instanceof Expression) {
-                        // Need to find the actual element that needs to be sent (most likely a Property or Slot that's the closest owner of this element)
-                        do {
+                        if (!changedPropertyName.equals(UML2MetamodelConstants.INSTANCE_DELETED)) {
+                            Element root = sourceElement;
+                            while (root.getOwner() != null) {
+                                root = root.getOwner();
+                            }
+                            if (!root.equals(project.getModel())) {
+                                doneSignal.countDown();
+                                return;
+                            }
+                        }
+
+                        // START PRE-PROCESSING
+                        Comment comment;
+                        if (changedPropertyName.equals(PropertyNames.BODY) && sourceElement instanceof Comment && (comment = (Comment) sourceElement).getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner()) {
                             sourceElement = sourceElement.getOwner();
                         }
-                        while (sourceElement instanceof ValueSpecification);
-                        // There may be multiple ValueSpecification changes so go up the chain of owners until we find the actual owner that should be submitted
-                    }
+                        else if (changedPropertyName.equals(PropertyNames.VALUE) && sourceElement instanceof ValueSpecification ||
+                                changedPropertyName.equals(PropertyNames.BODY) && sourceElement instanceof OpaqueExpression ||
+                                changedPropertyName.equals(PropertyNames.OPERAND) && sourceElement instanceof Expression) {
+                            // Need to find the actual element that needs to be sent (most likely a Property or Slot that's the closest owner of this element)
+                            do {
+                                sourceElement = sourceElement.getOwner();
+                            }
+                            while (sourceElement instanceof ValueSpecification);
+                            // There may be multiple ValueSpecification changes so go up the chain of owners until we find the actual owner that should be submitted
+                        }
+                        // END PRE-PROCESSING
 
-                    // no more view constraints in model
-                    /*if (sourceElement instanceof Constraint && (e = ExportUtility.getViewFromConstraint((Constraint) sourceElement)) != null) {
-                        sourceElement = e;
-                    }*/
-                    // END PRE-PROCESSING
+                        if (Converters.getElementToJsonConverter().apply(sourceElement, project) == null) {
+                            doneSignal.countDown();
+                            return;
+                        }
+                        String sysmlId = Converters.getElementToIdConverter().apply(sourceElement);
+                        if (sysmlId == null) {
+                            doneSignal.countDown();
+                            return;
+                        }
 
-                    if (Converters.getElementToJsonConverter().apply(sourceElement, project) == null) {
-                        continue;
-                    }
-                    String sysmlId = Converters.getElementToIdConverter().apply(sourceElement);
-                    if (sysmlId == null) {
-                        continue;
-                    }
-
-                    Changelog.ChangeType changeType = Changelog.ChangeType.UPDATED;
-                    switch (changedPropertyName) {
-                        case UML2MetamodelConstants.INSTANCE_DELETED:
-                            changeType = Changelog.ChangeType.DELETED;
-                            break;
-                        case UML2MetamodelConstants.INSTANCE_CREATED:
-                            changeType = Changelog.ChangeType.CREATED;
-                            break;
-                    }
-                    inMemoryLocalChangelog.addChange(sysmlId, sourceElement, changeType);
+                        Changelog.ChangeType changeType = Changelog.ChangeType.UPDATED;
+                        switch (changedPropertyName) {
+                            case UML2MetamodelConstants.INSTANCE_DELETED:
+                                changeType = Changelog.ChangeType.DELETED;
+                                break;
+                            case UML2MetamodelConstants.INSTANCE_CREATED:
+                                changeType = Changelog.ChangeType.CREATED;
+                                break;
+                        }
+                        inMemoryLocalChangelog.addChange(sysmlId, sourceElement, changeType);
+                        doneSignal.countDown();
+                    });
                 }
-                SyncStatusConfigurator.getSyncStatusAction().update();
             } catch (Exception e) {
                 Application.getInstance().getGUILog().log("[ERROR] LocalSyncTransactionCommitListener had an unexpected error: " + e.getMessage());
-                Utils.printException(e);
+                e.printStackTrace();
                 throw e;
             }
         }

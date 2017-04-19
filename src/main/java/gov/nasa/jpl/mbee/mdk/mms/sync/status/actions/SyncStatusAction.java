@@ -102,12 +102,9 @@ public class SyncStatusAction extends SRAction {
         }
 
         totalChangedCount[0] = totalLocalChangedCount[0] + totalJmsChangedCount[0];
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                setName(NAME + ": " + numberFormat.format(totalChangedCount[0]));
-                MDKPlugin.updateMainToolbarCategory();
-            }
+        SwingUtilities.invokeLater(() -> {
+            setName(NAME + ": " + numberFormat.format(totalChangedCount[0]));
+            MDKPlugin.updateMainToolbarCategory();
         });
 
         if (getSyncStatusFrame().isVisible()) {
@@ -119,41 +116,38 @@ public class SyncStatusAction extends SRAction {
             totalJmsUpdatedCount[0] = inMemoryJmsUpdatedCount[0] + persistedJmsUpdatedCount[0];
             totalJmsDeletedCount[0] = inMemoryJmsDeletedCount[0] + persistedJmsDeletedCount[0];
 
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    getSyncStatusFrame().getInMemoryLocalCreatedLabel().setText(numberFormat.format(inMemoryLocalCreatedCount[0]));
-                    getSyncStatusFrame().getInMemoryLocalUpdatedLabel().setText(numberFormat.format(inMemoryLocalUpdatedCount[0]));
-                    getSyncStatusFrame().getInMemoryLocalDeletedLabel().setText(numberFormat.format(inMemoryLocalDeletedCount[0]));
+            SwingUtilities.invokeLater(() -> {
+                getSyncStatusFrame().getInMemoryLocalCreatedLabel().setText(numberFormat.format(inMemoryLocalCreatedCount[0]));
+                getSyncStatusFrame().getInMemoryLocalUpdatedLabel().setText(numberFormat.format(inMemoryLocalUpdatedCount[0]));
+                getSyncStatusFrame().getInMemoryLocalDeletedLabel().setText(numberFormat.format(inMemoryLocalDeletedCount[0]));
 
-                    getSyncStatusFrame().getPersistedLocalCreatedLabel().setText(numberFormat.format(persistedLocalCreatedCount[0]));
-                    getSyncStatusFrame().getPersistedLocalUpdatedLabel().setText(numberFormat.format(persistedLocalUpdatedCount[0]));
-                    getSyncStatusFrame().getPersistedLocalDeletedLabel().setText(numberFormat.format(persistedLocalDeletedCount[0]));
+                getSyncStatusFrame().getPersistedLocalCreatedLabel().setText(numberFormat.format(persistedLocalCreatedCount[0]));
+                getSyncStatusFrame().getPersistedLocalUpdatedLabel().setText(numberFormat.format(persistedLocalUpdatedCount[0]));
+                getSyncStatusFrame().getPersistedLocalDeletedLabel().setText(numberFormat.format(persistedLocalDeletedCount[0]));
 
-                    getSyncStatusFrame().getTotalLocalCreatedLabel().setText(numberFormat.format(totalLocalCreatedCount[0]));
-                    getSyncStatusFrame().getTotalLocalUpdatedLabel().setText(numberFormat.format(totalLocalUpdatedCount[0]));
-                    getSyncStatusFrame().getTotalLocalDeletedLabel().setText(numberFormat.format(totalLocalDeletedCount[0]));
+                getSyncStatusFrame().getTotalLocalCreatedLabel().setText(numberFormat.format(totalLocalCreatedCount[0]));
+                getSyncStatusFrame().getTotalLocalUpdatedLabel().setText(numberFormat.format(totalLocalUpdatedCount[0]));
+                getSyncStatusFrame().getTotalLocalDeletedLabel().setText(numberFormat.format(totalLocalDeletedCount[0]));
 
-                    getSyncStatusFrame().getTotalInMemoryLocalChangedLabel().setText(numberFormat.format(totalInMemoryLocalChangedCount[0]));
-                    getSyncStatusFrame().getTotalPersistedLocalChangedLabel().setText(numberFormat.format(totalPersistedLocalChangedCount[0]));
-                    getSyncStatusFrame().getTotalLocalChangedLabel().setText(numberFormat.format(totalLocalChangedCount[0]));
+                getSyncStatusFrame().getTotalInMemoryLocalChangedLabel().setText(numberFormat.format(totalInMemoryLocalChangedCount[0]));
+                getSyncStatusFrame().getTotalPersistedLocalChangedLabel().setText(numberFormat.format(totalPersistedLocalChangedCount[0]));
+                getSyncStatusFrame().getTotalLocalChangedLabel().setText(numberFormat.format(totalLocalChangedCount[0]));
 
-                    getSyncStatusFrame().getInMemoryJmsCreatedLabel().setText(numberFormat.format(inMemoryJmsCreatedCount[0]));
-                    getSyncStatusFrame().getInMemoryJmsUpdatedLabel().setText(numberFormat.format(inMemoryJmsUpdatedCount[0]));
-                    getSyncStatusFrame().getInMemoryJmsDeletedLabel().setText(numberFormat.format(inMemoryJmsDeletedCount[0]));
+                getSyncStatusFrame().getInMemoryJmsCreatedLabel().setText(numberFormat.format(inMemoryJmsCreatedCount[0]));
+                getSyncStatusFrame().getInMemoryJmsUpdatedLabel().setText(numberFormat.format(inMemoryJmsUpdatedCount[0]));
+                getSyncStatusFrame().getInMemoryJmsDeletedLabel().setText(numberFormat.format(inMemoryJmsDeletedCount[0]));
 
-                    getSyncStatusFrame().getPersistedJmsCreatedLabel().setText(numberFormat.format(persistedJmsCreatedCount[0]));
-                    getSyncStatusFrame().getPersistedJmsUpdatedLabel().setText(numberFormat.format(persistedJmsUpdatedCount[0]));
-                    getSyncStatusFrame().getPersistedJmsDeletedLabel().setText(numberFormat.format(persistedJmsDeletedCount[0]));
+                getSyncStatusFrame().getPersistedJmsCreatedLabel().setText(numberFormat.format(persistedJmsCreatedCount[0]));
+                getSyncStatusFrame().getPersistedJmsUpdatedLabel().setText(numberFormat.format(persistedJmsUpdatedCount[0]));
+                getSyncStatusFrame().getPersistedJmsDeletedLabel().setText(numberFormat.format(persistedJmsDeletedCount[0]));
 
-                    getSyncStatusFrame().getTotalJmsCreatedLabel().setText(numberFormat.format(totalJmsCreatedCount[0]));
-                    getSyncStatusFrame().getTotalJmsUpdatedLabel().setText(numberFormat.format(totalJmsUpdatedCount[0]));
-                    getSyncStatusFrame().getTotalJmsDeletedLabel().setText(numberFormat.format(totalJmsDeletedCount[0]));
+                getSyncStatusFrame().getTotalJmsCreatedLabel().setText(numberFormat.format(totalJmsCreatedCount[0]));
+                getSyncStatusFrame().getTotalJmsUpdatedLabel().setText(numberFormat.format(totalJmsUpdatedCount[0]));
+                getSyncStatusFrame().getTotalJmsDeletedLabel().setText(numberFormat.format(totalJmsDeletedCount[0]));
 
-                    getSyncStatusFrame().getTotalInMemoryJmsChangedLabel().setText(numberFormat.format(totalInMemoryJmsChangedCount[0]));
-                    getSyncStatusFrame().getTotalPersistedJmsChangedLabel().setText(numberFormat.format(totalPersistedJmsChangedCount[0]));
-                    getSyncStatusFrame().getTotalJmsChangedLabel().setText(numberFormat.format(totalJmsChangedCount[0]));
-                }
+                getSyncStatusFrame().getTotalInMemoryJmsChangedLabel().setText(numberFormat.format(totalInMemoryJmsChangedCount[0]));
+                getSyncStatusFrame().getTotalPersistedJmsChangedLabel().setText(numberFormat.format(totalPersistedJmsChangedCount[0]));
+                getSyncStatusFrame().getTotalJmsChangedLabel().setText(numberFormat.format(totalJmsChangedCount[0]));
             });
         }
     }
