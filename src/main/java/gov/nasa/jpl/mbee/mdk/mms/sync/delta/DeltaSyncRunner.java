@@ -199,10 +199,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 return;
             }
 
-            JsonNode elementsArrayNode;
-            if (response == null || (elementsArrayNode = response.get("elements")) == null || !elementsArrayNode.isArray()) {
-                Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
+            if (response == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
                 return;
+            }
+            JsonNode elementsArrayNode = response.get("elements");
+            if (elementsArrayNode == null || !elementsArrayNode.isArray()) {
+                elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             }
             for (JsonNode jsonNode : elementsArrayNode) {
                 if (!jsonNode.isObject()) {
