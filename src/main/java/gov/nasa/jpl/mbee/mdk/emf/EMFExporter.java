@@ -249,7 +249,15 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 }
         ),
         VALUE_SPECIFICATION(
-                (element, project, objectNode) -> element instanceof ValueSpecification ? null : objectNode
+                (element, project, objectNode) -> {
+                    Element e = element;
+                    do {
+                        if (e instanceof ValueSpecification) {
+                            return null;
+                        }
+                    } while ((e = e.getOwner()) != null);
+                    return objectNode;
+                }
         ),
         VIEW(
                 (element, project, objectNode) -> {
