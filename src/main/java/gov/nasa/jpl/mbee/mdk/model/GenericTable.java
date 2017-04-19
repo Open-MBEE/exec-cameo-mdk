@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
+import com.nomagic.generictable.GenericTableManager;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
@@ -31,15 +33,13 @@ public class GenericTable extends Table {
                 row.add(new DBText(h));
             }
             res.add(row);
-        }
-        else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGenProfile.headersChoosable)) {
+        } else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGenProfile.headersChoosable)) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d, DocGenProfile.headersChoosable, "headers")) {
                 row.add(new DBText(h));
             }
             res.add(row);
-        }
-        else {
+        } else {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             int count = 0;
             for (String s : dtt.getColumnNames(d, columnIds)) {
@@ -55,8 +55,29 @@ public class GenericTable extends Table {
 
     }
 
+//    public List<List<DocumentElement>> getBody(Diagram d, List<Element> rowElements, List<String> columnIds,
+//                                               DiagramTableTool dtt, boolean forViewEditor) {
+//        List<List<DocumentElement>> res = new ArrayList<>();
+//        for (Element e : rowElements) {
+//            if (skipIfNoDoc && ModelHelper.getComment(e).trim().isEmpty()) {
+//                continue;
+//            }
+//            List<DocumentElement> row = new ArrayList<>();
+//            int count = 0;
+//            for (String cid : columnIds) {
+//                if (count == 0) {
+//                    count++;
+//                    continue;
+//                }
+//                row.add(Common.getTableEntryFromObject(getTableValues(dtt.getCellValue(d, e, cid))));
+//            }
+//            res.add(row);
+//        }
+//        return res;
+//    }
+
     public List<List<DocumentElement>> getBody(Diagram d, List<Element> rowElements, List<String> columnIds,
-                                               DiagramTableTool dtt, boolean forViewEditor) {
+                                               GenericTableManager gtm, boolean forViewEditor) {
         List<List<DocumentElement>> res = new ArrayList<>();
         for (Element e : rowElements) {
             if (skipIfNoDoc && ModelHelper.getComment(e).trim().isEmpty()) {
@@ -69,7 +90,7 @@ public class GenericTable extends Table {
                     count++;
                     continue;
                 }
-                row.add(Common.getTableEntryFromObject(getTableValues(dtt.getCellValue(d, e, cid))));
+                row.add(Common.getTableEntryFromObject(getTableValues(gtm.getCellValue(d, e, cid))));
             }
             res.add(row);
         }
@@ -84,13 +105,11 @@ public class GenericTable extends Table {
             for (int i = 0; i < a.length; i++) {
                 res.addAll(getTableValues(a[i]));
             }
-        }
-        else if (o instanceof Collection) {
+        } else if (o instanceof Collection) {
             for (Object oo : (Collection) o) {
                 res.addAll(getTableValues(oo));
             }
-        }
-        else if (o != null) {
+        } else if (o != null) {
             res.add(o);
         }
         return res;
@@ -111,6 +130,8 @@ public class GenericTable extends Table {
         if (getIgnore()) {
             return res;
         }
+
+        SessionManager.getInstance().createSession(Application.getInstance().getProject(), "Hello");
         int tableCount = 0;
         List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
         for (Object e : targets) {
@@ -119,20 +140,51 @@ public class GenericTable extends Table {
                 if (Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
                         .equals("Generic Table")) {
                     DBTable t = new DBTable();
-                    List<String> columnIds = dtt.getColumnIds(diagram);
+
+                    GenericTableManager gtm = new GenericTableManager();
+                    //gtm.getCellValue(diagram, , "");
+                    // String columnid = gtm.getColumnIDByPropertyName("Owner");
+//                    List<Element> list = gtm.getRowElements(diagram);
+//                    List<String> columns = gtm.getColumnIds(diagram);
+//
+//                    for (Element element : list) {
+//                        System.out.println("Row: " + element.getHumanName());
+//                        for (String columnid : columns) {
+//                            System.out.print("Column: " + columnid + "    ");
+//                            Property value = gtm.getCellValue(diagram, element, columnid);
+//                            if (value != null) {
+//                                System.out.print("CellValue: " + value.getName() + "    ");
+//                                if (value instanceof ElementProperty) {
+//                                    Element cellelement = ((ElementProperty) value).getElement();
+//                                    System.out.print("ElementProperty Element: " + cellelement.getHumanName() + "    ");
+//                                } else if (value instanceof StringProperty) {
+//                                    System.out.print("StringProperty: " + ((StringProperty) value).getString() + "    ");
+//                                } else if (value instanceof ElementListProperty) {
+//                                    ElementListProperty elp = (ElementListProperty) value;
+//                                    for (Element listEl : ((ElementListProperty) value).getValue()) {
+//                                        System.out.println("listel: " + listEl.getHumanName() + ", ");
+//                                    }
+//                                } else {
+//                                    System.out.print("Or: " + value.toString() + "    ");
+//                                }
+//                            }
+//                        }
+//                    }
+                    List<String> columnIds = gtm.getColumnIds(diagram);
+                    //List<String> columnIds = dtt.getColumnIds(diagram);
                     t.setHeaders(getHeaders(diagram, columnIds, dtt));
-                    List<Element> rowElements = dtt.getRowElements(diagram);
-                    t.setBody(getBody(diagram, rowElements, columnIds, dtt, forViewEditor));
+                    List<Element> rowElements = gtm.getRowElements(diagram);
+                    //List<Element> rowElements = dtt.getRowElements(diagram);
+                    t.setBody(getBody(diagram, rowElements, columnIds, gtm, forViewEditor));
+                    //t.setBody(getBody(diagram, rowElements, columnIds, dtt, forViewEditor));
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
-                    }
-                    else {
+                    } else {
                         t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
                     }
                     if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
                         t.setCaption(getCaptions().get(tableCount));
-                    }
-                    else {
+                    } else {
                         t.setCaption(ModelHelper.getComment(diagram));
                     }
                     t.setCols(columnIds.size() - 1);
@@ -142,6 +194,8 @@ public class GenericTable extends Table {
                 }
             }
         }
+
+        SessionManager.getInstance().closeSession(Application.getInstance().getProject());
         dtt.closeOpenedTables();
         return res;
     }
