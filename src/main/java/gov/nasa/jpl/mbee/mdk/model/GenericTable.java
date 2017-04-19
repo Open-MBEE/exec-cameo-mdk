@@ -95,6 +95,7 @@ public class GenericTable extends Table {
         return res;
 
     }
+
 //    public List<List<DocumentElement>> getBody(Diagram d, List<Element> rowElements, List<String> columnIds,
 //                                               DiagramTableTool dtt, boolean forViewEditor) {
 //        List<List<DocumentElement>> res = new ArrayList<>();
@@ -133,8 +134,6 @@ public class GenericTable extends Table {
                 if (skipColumnIDs.contains(cid)) {
                     continue;
                 }
-                //   row.add(Common.getTableEntryFromObject(getTableValues(gtm.getCellValue(d, e, cid))));
-                //row.add(getTableValues(gtm.getCellValue(d, e, cid)));
 
                 DBTableEntry entry = new DBTableEntry();
                 Property cellValue = gtm.getCellValue(d, e, cid);
@@ -146,14 +145,13 @@ public class GenericTable extends Table {
                 } else if (cellValue instanceof StringProperty) {
                     entry.addElement(new DBParagraph(cellValue.getValue()));
                 } else if (cellValue instanceof ElementListProperty) {
-                    ElementListProperty elp = (ElementListProperty) cellValue;
                     for (Element listEl : ((ElementListProperty) cellValue).getValue()) {
                         if (listEl instanceof NamedElement) {
                             entry.addElement(new DBParagraph(((NamedElement) listEl).getName(), listEl, From.NAME));
                         }
                     }
                 } else {
-                    System.out.print("Not added : " + cellValue.toString() + "    ");
+                    System.out.print("[WARNING] Not added : " + cellValue.toString() + "    ");
                 }
                 row.add(entry);
 
