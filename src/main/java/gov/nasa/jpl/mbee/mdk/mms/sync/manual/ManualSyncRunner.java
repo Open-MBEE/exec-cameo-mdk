@@ -129,7 +129,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
             return;
         }
-        elementValidator = new ElementValidator(clientElements, null, responseFiles, project);
+        elementValidator = new ElementValidator("Element Validation", clientElements, null, project, responseFiles);
         elementValidator.run(progressStatus);
     }
 
