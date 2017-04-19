@@ -158,9 +158,10 @@ public class ScriptRunner {
             SessionManager.getInstance().createSession(language + " script run");
             sessionCreated = true;
         }
+        String scriptResolvedPath = null;
         try {
             String scriptPath = script.getAbsolutePath();
-            String scriptResolvedPath = PathVariablesResolver.getResolvedPath(scriptPath);
+            scriptResolvedPath = PathVariablesResolver.getResolvedPath(scriptPath);
 
             URL[] urls = new URL[binDirs.length + 1];
             int count = 0;
@@ -207,22 +208,14 @@ public class ScriptRunner {
                 sessionCreated = false;
             }
             return output;
-        } catch (MalformedURLException e) {
-            log.log(e.getMessage());
+        } catch (MalformedURLException | FileNotFoundException | ScriptException | RuntimeException e) {
+            Application.getInstance().getGUILog().log("An error occurred while attempting to run script" + (scriptResolvedPath != null ? ": " + scriptResolvedPath : "") + ". Reason: " + e.getMessage());
             e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            log.log(e.getMessage());
-            e.printStackTrace();
-        } catch (ScriptException e) {
-            e.printStackTrace();
-            throw e; // if session is managed by some caller, they need to know
-            // the script failed so they can manage their sessions
         } finally {
             Thread.currentThread().setContextClassLoader(localClassLoader);
             if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
                 // if we made the session, need to cancel due to script failure
                 SessionManager.getInstance().cancelSession();
-                sessionCreated = false;
             }
         }
         return output;
