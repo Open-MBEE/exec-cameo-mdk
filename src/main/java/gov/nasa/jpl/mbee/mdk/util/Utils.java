@@ -557,15 +557,22 @@ public class Utils {
         }
         Collection<Property> owned = e.getAttribute();
         for (Property o : owned) {
+            if (all.contains(o)) {
+                continue;
+            }
             if (o.getAggregation() != kind) {
                 continue;
             }
-            if (o.getType() == null) {
+            Type type = o.getType();
+            if (type == null) {
                 continue;
             }
-            all.add(o.getType());
-            if (o.getType() instanceof Classifier) {
-                collectRecursiveAssociatedElements((Classifier) o.getType(), all, depth, current + 1, kind);
+            if (all.contains(type)) {
+                continue;
+            }
+            all.add(type);
+            if (type instanceof Classifier) {
+                collectRecursiveAssociatedElements((Classifier) type, all, depth, current + 1, kind);
             }
         }
     }
