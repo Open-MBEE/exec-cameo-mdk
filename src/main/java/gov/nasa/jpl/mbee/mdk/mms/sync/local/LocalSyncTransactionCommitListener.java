@@ -33,7 +33,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
             PropertyNames.NESTED_CLASSIFIER
     );
 
-    private Project project;
+    private final Project project;
 
     /**
      * Allow listener to be disabled during imports.
@@ -118,7 +118,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                             while (root.getOwner() != null) {
                                 root = root.getOwner();
                             }
-                            if (!root.equals(project.getModel())) {
+                            if (!root.equals(project.getPrimaryModel())) {
                                 doneSignal.countDown();
                                 return;
                             }

@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by igomes on 6/22/16.
  */
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<String, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
     private DeltaSyncRunner deltaSyncRunner;
 
     @Override
@@ -38,7 +38,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (coordinatedSyncProjectMapping.isDisabled()) {
             return;
         }
-        projectMappings.remove(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        projectMappings.remove(project);
     }
 
     @Override
@@ -109,10 +109,10 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     public static CoordinatedSyncProjectMapping getProjectMapping(Project project) {
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = projectMappings.get(project);
         if (coordinatedSyncProjectMapping == null) {
-            projectMappings.put(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
-            projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())).setDisabled(!project.isRemote());
+            projectMappings.put(project, coordinatedSyncProjectMapping = new CoordinatedSyncProjectMapping());
+            projectMappings.get(project).setDisabled(!project.isRemote());
         }
         return coordinatedSyncProjectMapping;
     }
