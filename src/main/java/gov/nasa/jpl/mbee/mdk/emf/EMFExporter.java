@@ -409,6 +409,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 (element, eStructuralFeature) -> eStructuralFeature.getName().startsWith("owned") && !eStructuralFeature.isOrdered(),
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
+        NESTED(
+                (element, eStructuralFeature) -> eStructuralFeature.getName().startsWith("nested"),
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
         PACKAGED_ELEMENT(
                 (element, eStructuralFeature) -> UMLPackage.Literals.PACKAGE__PACKAGED_ELEMENT == eStructuralFeature || UMLPackage.Literals.COMPONENT__PACKAGED_ELEMENT == eStructuralFeature,
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION

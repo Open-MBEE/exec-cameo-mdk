@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.mms.actions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
@@ -15,11 +16,13 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
@@ -166,9 +169,36 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         name = "<>";
                     }
                 }
-                (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(new ValidationRuleViolation(element != null ? element : project.getPrimaryModel(), "["
+                ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(element != null ? element : project.getPrimaryModel(), "["
                         + (element != null ? "UPDATE" : "CREATE") + " FAILED]" + (element == null ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + sysmlId : "")
-                        + (element == null && exception != null ? " -" : "") + (exception != null ? " " + (exception instanceof ReadOnlyElementException ? "Element is not editable." : exception.getMessage()) : "")));
+                        + (element == null && exception != null ? " -" : "") + (exception != null ? " " + (exception instanceof ReadOnlyElementException ? "Element is not editable." : exception.getMessage()) : ""));
+                ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
+                copyActionsCategory.setNested(true);
+                validationRuleViolation.addAction(copyActionsCategory);
+                copyActionsCategory.addAction(new ClipboardAction("ID", sysmlId));
+                JsonNode diff = null;
+                if (element != null) {
+                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + element.getID()));
+                    ObjectNode elementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
+                    if (elementObjectNode != null) {
+                        try {
+                            copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writeValueAsString(elementObjectNode)));
+                        } catch (JsonProcessingException ignored) {
+                        }
+                        diff = JsonDiffFunction.getInstance().apply(elementObjectNode, objectNode);
+                    }
+                }
+                try {
+                    copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writeValueAsString(objectNode)));
+                } catch (JsonProcessingException ignored) {
+                }
+                if (diff != null) {
+                    try {
+                        copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writeValueAsString(diff)));
+                    } catch (JsonProcessingException ignored) {
+                    }
+                }
+                (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(validationRuleViolation);
                 failedChangelog.addChange(sysmlId, objectNode, element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
