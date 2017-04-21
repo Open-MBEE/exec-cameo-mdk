@@ -36,7 +36,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         CHANGE_MAPPING.put("updatedElements", Changelog.ChangeType.UPDATED);
     }
 
-    private final AtomicBoolean disabled = new AtomicBoolean();
+    private final AtomicBoolean disabled = new AtomicBoolean(true);
     private final AtomicBoolean exceptionHandlerRunning = new AtomicBoolean();
     private int reconnectionAttempts = 0;
 
@@ -178,8 +178,8 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                 return;
             }
             if (shouldAttemptToReconnect()) {
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
-                MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().initializeJMS(project);
+                JMSSyncProjectEventListenerAdapter.closeJMS(project);
+                JMSSyncProjectEventListenerAdapter.initializeJMS(project);
             }
         }
         if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {

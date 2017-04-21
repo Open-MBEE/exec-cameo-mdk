@@ -32,6 +32,17 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     public void projectOpened(final Project project) {
         closeJMS(project);
         getProjectMapping(project);
+        if (shouldEnableJMS(project)) {
+            new Thread(() -> {
+                if (TicketUtils.isTicketSet(project)) {
+                    initializeJMS(project);
+                }
+                else {
+                    MMSLoginAction.loginAction(project);
+                    // loginAction contains a call to initializeJMS on a successful ticket get
+                }
+            }).start();
+        }
     }
 
     @Override
@@ -66,6 +77,10 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
     public static void initializeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+        if (jmsSyncProjectMapping == null || jmsSyncProjectMapping.getJmsMessageListener() == null || !jmsSyncProjectMapping.getJmsMessageListener().isDisabled()) {
+            return;
+        }
+        if (jmsSyncProjectMapping.getJmsMessageListener() == null)
         if (!shouldEnableJMS(project)) {
             jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
             return;
@@ -74,7 +89,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         jmsSyncProjectMapping.getJmsMessageListener().setDisabled(!initialized);
     }
 
-    public void closeJMS(Project project) {
+    public static void closeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = projectMappings.get(project);
         if (jmsSyncProjectMapping == null) {
             return;
@@ -126,7 +141,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             return false;
         }
         if (workspaceID == null) {
-            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + "Reason: Cannot get the server workspace that corresponds to this project branch.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get the MMS branch that corresponds to this project's branch.");
             return false;
         }
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
@@ -197,25 +212,14 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             e.printStackTrace();
             jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public static JMSSyncProjectMapping getProjectMapping(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = projectMappings.get(project);
         if (jmsSyncProjectMapping == null) {
             projectMappings.put(project, jmsSyncProjectMapping = new JMSSyncProjectMapping(project));
-            if (shouldEnableJMS(project)) {
-                new Thread(() -> {
-                    if (TicketUtils.isTicketSet(project)) {
-                        initializeJMS(project);
-                    }
-                    else {
-                        MMSLoginAction.loginAction(project);
-                        // loginAction contains a call to initializeJMS on a successful ticket get
-                    }
-                }).start();
-            }
         }
         return jmsSyncProjectMapping;
     }
