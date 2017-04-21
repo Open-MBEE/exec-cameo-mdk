@@ -20,11 +20,10 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.HttpDeleteWithBody;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import org.apache.commons.io.IOUtils;
@@ -49,8 +48,6 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
-
-import static org.apache.wink.common.model.opensearch.OpenSearchQuery.QueryRole.request;
 
 public class MMSUtils {
 
@@ -297,6 +294,7 @@ public class MMSUtils {
             // debug / logging output from response
             responseCode = response.getStatusLine().getStatusCode();
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
+
             // get data out of the response, dump to temp file
             System.out.println("Response Body: " + targetFile.getPath());
             if (inputStream != null) {
@@ -307,7 +305,7 @@ public class MMSUtils {
                 }
             }
         }
-        if (!processResponse(responseCode, new FileInputStream(targetFile))) {
+        if (!processResponse(responseCode, new FileInputStream(targetFile), project)) {
             throw new ServerException(targetFile.getAbsolutePath(), responseCode);
         }
         return targetFile;
@@ -415,7 +413,7 @@ public class MMSUtils {
             // get data out of the response
             responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
         }
-        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()))) {
+        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()), project)) {
             throw new ServerException("Credential acquisition.", responseCode);
         }
 
@@ -454,7 +452,7 @@ public class MMSUtils {
             // get data out of the response
             responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
         }
-        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()))) {
+        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()), project)) {
             throw new ServerException("Credential validation.", responseCode);
         }
 
@@ -467,7 +465,7 @@ public class MMSUtils {
         return "";
     }
 
-    private static boolean processResponse(int responseCode, InputStream responseStream) {
+    private static boolean processResponse(int responseCode, InputStream responseStream, Project project) {
         boolean throwServerException = false;
         JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
         try (JsonParser jsonParser = jsonFactory.createParser(responseStream)) {
@@ -483,15 +481,20 @@ public class MMSUtils {
             throwServerException = true;
         }
 
+        if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried.");
+            MMSLogoutAction.logoutAction(project);
+            throwServerException = true;
+        }
         // if we got messages out, we hit a valid endpoint and got a valid response and either a 200 or a 404 is an acceptable response code. If not, throw is already true.
-        if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NOT_FOUND) {
+        else if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NOT_FOUND) {
             throwServerException = true;
         }
 
         if (throwServerException) {
             // big flashing red letters that the action failed, or as close as we're going to get
             Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[ERROR] Operation failed due to server error. Server code: " + responseCode + "</span>" +
-                    "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>");
+                    "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>"); // hidden characters for easy search
 //            Utils.showPopupMessage("Action failed. See notification window for details.");
         }
         return throwServerException;
