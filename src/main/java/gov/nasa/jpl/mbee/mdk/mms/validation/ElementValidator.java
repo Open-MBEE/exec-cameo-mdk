@@ -17,10 +17,9 @@ import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
@@ -194,8 +193,8 @@ public class ElementValidator implements RunnableWithProgress {
     }
 
     public void addElementEquivalenceViolation(Pair<Element, ObjectNode> clientElement, ObjectNode serverElement) {
-        JsonNode diff = JsonDiffFunction.getInstance().apply(clientElement.getValue(), serverElement);
-        if (!JsonPatchUtils.isEqual(diff)) {
+        JsonNode diff = JsonPatchFunction.getInstance().apply(clientElement.getValue(), serverElement);
+        if (diff != null && diff.size() != 0) {
             notEquivalentCount++;
             String name = "<>";
             if (clientElement.getKey() instanceof NamedElement && ((NamedElement) clientElement.getKey()).getName() != null && !((NamedElement) clientElement.getKey()).getName().isEmpty()) {
@@ -216,19 +215,19 @@ public class ElementValidator implements RunnableWithProgress {
         if (clientElement != null) {
             copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElement.getKey().getID()));
             try {
-                copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writeValueAsString(clientElement.getValue())));
+                copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(clientElement.getValue())));
             } catch (JsonProcessingException ignored) {
             }
         }
         if (serverElement != null) {
             try {
-                copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writeValueAsString(serverElement)));
+                copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(serverElement)));
             } catch (JsonProcessingException ignored) {
             }
         }
         if (diff != null) {
             try {
-                copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writeValueAsString(diff)));
+                copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(diff)));
             } catch (JsonProcessingException ignored) {
             }
         }

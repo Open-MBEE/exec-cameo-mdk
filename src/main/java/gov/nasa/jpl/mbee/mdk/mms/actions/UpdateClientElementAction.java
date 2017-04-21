@@ -21,8 +21,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
@@ -182,19 +181,19 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                     ObjectNode elementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
                     if (elementObjectNode != null) {
                         try {
-                            copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writeValueAsString(elementObjectNode)));
+                            copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(elementObjectNode)));
                         } catch (JsonProcessingException ignored) {
                         }
-                        diff = JsonDiffFunction.getInstance().apply(elementObjectNode, objectNode);
+                        diff = JsonPatchFunction.getInstance().apply(elementObjectNode, objectNode);
                     }
                 }
                 try {
-                    copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writeValueAsString(objectNode)));
+                    copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(objectNode)));
                 } catch (JsonProcessingException ignored) {
                 }
                 if (diff != null) {
                     try {
-                        copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writeValueAsString(diff)));
+                        copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(diff)));
                     } catch (JsonProcessingException ignored) {
                     }
                 }
@@ -202,18 +201,31 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 failedChangelog.addChange(sysmlId, objectNode, element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
+                Element element = entry.getKey();
+                String sysmlId = element.getLocalID();
+                ObjectNode clientElementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
+                ObjectNode serverElementObjectNode = entry.getValue();
+                JsonNode diff = JsonPatchFunction.getInstance().apply(clientElementObjectNode, serverElementObjectNode);
+
+                ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT]");
+                ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
+                copyActionsCategory.setNested(true);
+                validationRuleViolation.addAction(copyActionsCategory);
+                copyActionsCategory.addAction(new ClipboardAction("ID", sysmlId));
+                copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + element.getID()));
                 try {
-                    // TODO Change me to clipboard stuff @donbot
-                    ObjectNode clientElementObjectNode = Converters.getElementToJsonConverter().apply(entry.getKey(), project);
-                    ObjectNode serverElementObjectNode = entry.getValue();
-                    System.err.println("[NOT EQUIVALENT] " + Converters.getElementToIdConverter().apply(entry.getKey()));
-                    System.err.println(clientElementObjectNode);
-                    System.err.println(serverElementObjectNode);
-                    equivalentElementValidationRule.addViolation(new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT] " + JacksonUtils.getObjectMapper().writeValueAsString(JsonPatchUtils.getDiffAsJson(clientElementObjectNode, serverElementObjectNode))));
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
+                    copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(clientElementObjectNode)));
+                } catch (JsonProcessingException ignored) {
                 }
-                // TODO Add detail diff here @donbot
+                try {
+                    copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(serverElementObjectNode)));
+                } catch (JsonProcessingException ignored) {
+                }
+                try {
+                    copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(diff)));
+                } catch (JsonProcessingException ignored) {
+                }
+                equivalentElementValidationRule.addViolation(validationRuleViolation);
             }
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                 for (Map.Entry<String, Pair<Element, ObjectNode>> entry : changelog.get(changeType).entrySet()) {

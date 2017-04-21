@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 
 import java.util.function.BiPredicate;
 
@@ -19,7 +18,8 @@ public class JsonEquivalencePredicate implements BiPredicate<JsonNode, JsonNode>
         if (source == null || target == null) {
             return false;
         }
-        return JsonPatchUtils.isEqual(JsonDiffFunction.getInstance().apply(source, target));
+        JsonNode patch = JsonPatchFunction.getInstance().apply(source, target);
+        return patch == null || patch.size() == 0;
     }
 
     public static JsonEquivalencePredicate getInstance() {

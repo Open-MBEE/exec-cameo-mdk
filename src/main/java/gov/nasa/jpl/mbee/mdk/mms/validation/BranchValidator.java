@@ -14,11 +14,10 @@ import com.nomagic.task.ProgressStatus;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitBranchAction;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
@@ -179,8 +178,8 @@ public class BranchValidator {
 
             }
             else {
-                JsonNode diff = JsonDiffFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
-                if (JsonPatchUtils.isEqual(diff)) {
+                JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
+                if (diff == null || diff.size() == 0) {
                     continue;
                 }
                 ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + key + "\" is not equivalent to the corresponding MMS branch.");

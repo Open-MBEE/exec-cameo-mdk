@@ -22,7 +22,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
@@ -539,7 +539,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ObjectNode serverViewJson = (o = viewMap.get(Converters.getElementToIdConverter().apply(view))) != null ? ((ViewMapping) o).getObjectNode() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientViewJson, serverViewJson)) {
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonDiffFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
+                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonPatchFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
                     }
                     elementsToCommit.add(clientViewJson);
                 }
@@ -570,7 +570,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         instanceSpecificationMap.get(Converters.getElementToIdConverter().apply(instance)).getKey() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonDiffFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
+                        Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonPatchFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
                     }
                     elementsToCommit.add(clientInstanceSpecificationJson);
                 }
@@ -585,7 +585,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (!JsonEquivalencePredicate.getInstance().test(clientSlotJson, serverSlotJson)) {
                         elementsToCommit.add(clientSlotJson);
                         if (MDUtils.isDeveloperMode()) {
-                            Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonDiffFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
+                            Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonPatchFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
                         }
                     }
                 }
