@@ -22,15 +22,4 @@ public class MDKPluginTest {
     public void init() {
         assertTrue("MDK shall be installed in MagicDraw.", plugin != null && plugin.getDescriptor().getName().equals("Model Development Kit"));
     }
-
-    @Test
-    public void getOclPlugin() {
-        assertTrue("Ocl Evaluator plugin shall be installed in MagicDraw via the MDK Plugin.", plugin != null && plugin.getOclPlugin() != null);
-    }
-
-    @Test
-    public void getVcPlugin() {
-        assertTrue("ValidateConstraint Evaluator plugin shall be installed in MagicDraw via the MDK Plugin.", plugin != null && plugin.getVcPlugin() != null);
-    }
-
 }

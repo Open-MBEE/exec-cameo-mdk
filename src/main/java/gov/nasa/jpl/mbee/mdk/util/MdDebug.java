@@ -112,34 +112,6 @@ public class MdDebug extends Debug {
                     // }
                 }
             }
-            Field[] fields = ClassUtils.getAllFields(o.getClass());
-            // if ( fields.length > 0 ) {
-            // System.out.println( "getComponentOfType(" +
-            // o.getClass().getSimpleName() + ":" + name +
-            // ", depth=" + depth + "): fields = " + Utils.toString( fields ) );
-            // }
-            for (Field f : fields) {
-                Object v = null;
-                try {
-                    v = f.get(o);
-                } catch (IllegalArgumentException e) {
-                } catch (IllegalAccessException e) {
-                }
-                if (v != null) {
-                    if (ClassUtils.isPrimitive(v) && !ClassUtils.isPrimitive(type)) {
-                        continue;
-                    }
-                    Pair<Boolean, TT> pp = getComponentOfType(v, type, depth + 1, maxDepth, seen);
-                    if (pp != null) {
-                        if (pp.getKey() == true) {
-                            gotLeafContainer = true;
-                            if (pp.getValue() != null) {
-                                return pp;
-                            }
-                        }
-                    }
-                }
-            }
         }
         return new Pair<Boolean, TT>(gotLeafContainer, null);
     }

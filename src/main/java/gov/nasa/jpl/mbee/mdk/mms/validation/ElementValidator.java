@@ -40,33 +40,31 @@ import java.util.stream.Collectors;
 public class ElementValidator implements RunnableWithProgress {
     private Collection<Pair<Element, ObjectNode>> clientElements;
     private Collection<ObjectNode> serverElements;
-    private Collection<File> serverElementFiles;
     private final Project project;
+
+    private Collection<File> serverElementFiles;
+
     private int notEquivalentCount = 0;
     private int missingInClientCount = 0;
     private int missingOnMmsCount = 0;
 
 
-    private ValidationSuite validationSuite = new ValidationSuite("Model Validation");
+    private final ValidationSuite validationSuite;
     private ValidationRule elementEquivalenceValidationRule = new ValidationRule("Element Equivalence", "Element shall be represented in MagicDraw and MMS equivalently.", ViolationSeverity.ERROR);
     private Map<String, Pair<Pair<Element, ObjectNode>, ObjectNode>> invalidElements = new LinkedHashMap<>();
 
-    {
+    public ElementValidator(String name, Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project, Collection<File> serverElementFiles) {
+        this.clientElements = clientElements;
+        this.serverElements = serverElements;
+        this.project = project;
+        this.serverElementFiles = serverElementFiles;
+
+        validationSuite = new ValidationSuite(name);
         validationSuite.addValidationRule(elementEquivalenceValidationRule);
     }
 
-    public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Collection<File> serverElementFiles, Project project) {
-        this.clientElements = clientElements;
-        this.serverElements = serverElements;
-        this.serverElementFiles = serverElementFiles;
-        this.project = project;
-    }
-
-    public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project) {
-        this.clientElements = clientElements;
-        this.serverElements = serverElements;
-        this.serverElementFiles = Collections.emptyList();
-        this.project = project;
+    public ElementValidator(String name, Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project) {
+        this(name, clientElements, serverElements, project, Collections.emptyList());
     }
 
     public static Collection<Pair<Element, ObjectNode>> buildElementPairs(Collection<Element> elements, Project project) {
@@ -168,11 +166,11 @@ public class ElementValidator implements RunnableWithProgress {
             }
             progressStatus.increase();
         }
-        Application.getInstance().getGUILog().log("[INFO] --- Start MDK Element Validation Summary ---");
+        Application.getInstance().getGUILog().log("[INFO] --- Start " + validationSuite.getName() + " Summary ---");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingInClientCount) + " element" + (missingInClientCount != 1 ? "s are" : " is") + " missing in client.");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingOnMmsCount) + " element" + (missingOnMmsCount != 1 ? "s are" : "is") + " missing on MMS.");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(notEquivalentCount) + " element" + (notEquivalentCount != 1 ? "s are" : " is") + " not equivalent between client and MMS.");
-        Application.getInstance().getGUILog().log("[INFO] ---  End MDK Element Validation Summary  ---");
+        Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
     }
 
     private void addMissingInClientViolation(ObjectNode serverElement) {

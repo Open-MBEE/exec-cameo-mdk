@@ -199,10 +199,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 return;
             }
 
-            JsonNode elementsArrayNode;
-            if (response == null || (elementsArrayNode = response.get("elements")) == null || !elementsArrayNode.isArray()) {
-                Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
+            if (response == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
                 return;
+            }
+            JsonNode elementsArrayNode = response.get("elements");
+            if (elementsArrayNode == null || !elementsArrayNode.isArray()) {
+                elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             }
             for (JsonNode jsonNode : elementsArrayNode) {
                 if (!jsonNode.isObject()) {
@@ -413,7 +416,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
         }
 
-        ElementValidator elementValidator = new ElementValidator(ElementValidator.buildElementPairs(localConflictedElements, project), jmsConflictedElements, project);
+        ElementValidator elementValidator = new ElementValidator("CSync Conflict Validation", ElementValidator.buildElementPairs(localConflictedElements, project), jmsConflictedElements, project);
         elementValidator.run(progressStatus);
         if (!elementValidator.getInvalidElements().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + elementValidator.getInvalidElements().size() + " element" + (elementValidator.getInvalidElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");
