@@ -117,7 +117,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
 
     private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) throws JsonProcessingException {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
             int requestCapacity = elementsToUpdate.size() > COMMIT_ELEMENT_COUNT_THRESHOLD ? (elementsToUpdate.size() / COMMIT_ELEMENT_COUNT_THRESHOLD + (elementsToUpdate.size() % COMMIT_ELEMENT_COUNT_THRESHOLD != 0 ? 1 : 0)) * 2 : 1;
             List<Request> requests = new ArrayList<>(requestCapacity);
             List<ObjectNode> elementsToPost = new ArrayList<>(Math.min(elementsToUpdate.size(), COMMIT_ELEMENT_COUNT_THRESHOLD));
@@ -163,7 +163,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             requests.forEach(request -> OutputQueue.getInstance().offer(request));
         }
         if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Queueing request to delete " + elementsToDelete.size() + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
