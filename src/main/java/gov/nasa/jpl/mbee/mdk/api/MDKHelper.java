@@ -303,11 +303,25 @@ public class MDKHelper {
     }
 
     /**
-     * Executes "Validate Model" on specified element
+     * Executes "Validate Element" on specified element
      *
      * @param validateTarget element that the validation is to be performed upon
      */
     public static void manualValidateElement(Element validateTarget) {
+        Collection<Element> sync = new ArrayList<>();
+        sync.add(validateTarget);
+        ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), 0);
+        ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
+        Application.getInstance().getGUILog().log("Validated");
+        validationWindow = new MDKValidationWindow(manualSyncRunner.getValidationSuite());
+    }
+
+    /**
+     * Executes "Validate Model" on specified element
+     *
+     * @param validateTarget element that the validation is to be performed upon
+     */
+    public static void manualValidateModel(Element validateTarget) {
         Collection<Element> sync = new ArrayList<>();
         sync.add(validateTarget);
         ManualSyncRunner manualSyncRunner = new ManualSyncRunner(sync, Application.getInstance().getProject(), -1);
@@ -320,7 +334,7 @@ public class MDKHelper {
      * Executes "Validate Model" on model root
      */
     public static void manualValidateModel() {
-        manualValidateElement(ElementFinder.getModelRoot());
+        manualValidateModel(ElementFinder.getModelRoot());
     }
 
     /**********************************************************************************

@@ -1,9 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -52,6 +49,8 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
+
+import static org.apache.wink.common.model.opensearch.OpenSearchQuery.QueryRole.request;
 
 public class MMSUtils {
 
@@ -288,42 +287,19 @@ public class MMSUtils {
         logBody = logBody && httpEntityEnclosingRequest.getEntity().isRepeatable();
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
 
-        // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
-        boolean throwServerException = false;
         int responseCode;
-
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
              InputStream inputStream = response.getEntity().getContent();
              OutputStream outputStream = new FileOutputStream(targetFile)) {
-            // get data out of the response
-            responseCode = response.getStatusLine().getStatusCode();
-            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
-
             // debug / logging output from response
+            responseCode = response.getStatusLine().getStatusCode();
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
+            // get data out of the response, dump to temp file
             System.out.println("Response Body: " + targetFile.getPath());
-
-            // assume that a GET that returns 404 with json response bodies is a "missing resource" 404, which are expected for some cases and should not break normal execution flow
-            if (responseCode == HttpURLConnection.HTTP_OK || (request.getMethod().equals("GET") && responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8"))) {
-                // continue
-            }
-            // allow re-attempt of request if credentials have expired or are invalid
-            else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
-                MMSLogoutAction.logoutAction(project);
-                throwServerException = true;
-            }
-            // if it's anything else, assume failure and break normal flow
-            else {
-                Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                throwServerException = true;
-            }
-
-            // dump to temp response file, build jsonParser and print server message if possible
-            if (inputStream != null && responseType.equals("application/json;charset=UTF-8")) {
+            if (inputStream != null) {
                 byte[] buffer = new byte[8 * 1024];
                 int bytesRead;
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -331,22 +307,7 @@ public class MMSUtils {
                 }
             }
         }
-
-        JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
-        try (JsonParser jsonParser = jsonFactory.createParser(targetFile)) {
-            while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
-                // spin until we find message
-            }
-            if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
-                jsonParser.nextToken();
-                Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
-            }
-        }
-
-        if (throwServerException) {
-            // big flashing red letters that the action failed, or as close as we're going to get
-            Utils.showPopupMessage("Action failed. See notification window for details.");
-            // throw is done last, after printing the error and any messages that might have been returned
+        if (!processResponse(responseCode, new FileInputStream(targetFile))) {
             throw new ServerException(targetFile.getAbsolutePath(), responseCode);
         }
         return targetFile;
@@ -443,53 +404,22 @@ public class MMSUtils {
 
         // do request
         System.out.println("MMS Request [POST] " + requestUri.toString());
-        ObjectNode responseJson = null;
+        String responseBody;
+        int responseCode;
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
              InputStream inputStream = response.getEntity().getContent()) {
-            // get data out of the response
-            int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
-            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
-
             // debug / logging output from response
+            responseCode = response.getStatusLine().getStatusCode();
             System.out.println("MMS Response [POST] " + requestUri.toString() + " - Code: " + responseCode);
-
-            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
-            boolean throwServerException = false;
-
-            // if it's not 200, failure and break normal flow
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                throwServerException = true;
-            }
-
-            // print server message if possible
-            if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
-                responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
-                JsonNode value;
-                // display single response message
-                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
-                }
-                // display multiple response messages
-                if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
-                    ArrayNode msgs = (ArrayNode) value;
-                    for (JsonNode msg : msgs) {
-                        if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                            Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
-                        }
-                    }
-                }
-            }
-
-            if (throwServerException) {
-                // big flashing red letters that the action failed, or as close as we're going to get
-                Utils.showPopupMessage("Action failed. See notification window for details.");
-                // throw is done last, after printing the error and any messages that might have been returned
-                throw new ServerException(responseBody, responseCode);
-            }
+            // get data out of the response
+            responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
         }
+        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()))) {
+            throw new ServerException("Credential acquisition.", responseCode);
+        }
+
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
         // parse response
         JsonNode value;
         if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
@@ -513,39 +443,58 @@ public class MMSUtils {
 
         // do request
         System.out.println("MMS Request [GET] " + requestUri.toString());
-        ObjectNode responseJson;
-        JsonNode value;
+        String responseBody;
+        int responseCode;
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
              CloseableHttpResponse response = httpclient.execute(request);
              InputStream inputStream = response.getEntity().getContent()) {
-            // get data out of the response
-            int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
-            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
-
             // debug / logging output from response
+            responseCode = response.getStatusLine().getStatusCode();
             System.out.println("MMS Response [GET] " + requestUri.toString() + " - Code: " + responseCode);
-
-            if (responseCode == 200) {
-                if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
-                    responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
-                    if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                        Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
-                    }
-                    if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                        return value.asText();
-                    }
-                }
-                return "";
-            }
-            else {
-                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                // big flashing red letters that the action failed, or as close as we're going to get
-                Utils.showPopupMessage("Action failed. See notification window for details.");
-                // throw is done last, after printing the error and any messages that might have been returned
-                throw new ServerException(responseBody, responseCode);
-            }
+            // get data out of the response
+            responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
         }
+        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()))) {
+            throw new ServerException("Credential validation.", responseCode);
+        }
+
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+        // parse response
+        JsonNode value;
+        if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
+            return value.asText();
+        }
+        return "";
+    }
+
+    private static boolean processResponse(int responseCode, InputStream responseStream) {
+        boolean throwServerException = false;
+        JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
+        try (JsonParser jsonParser = jsonFactory.createParser(responseStream)) {
+            while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
+                // spin until we find message
+            }
+            if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
+                jsonParser.nextToken();
+                Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
+            }
+        } catch (IOException e) {
+            Application.getInstance().getGUILog().log("[WARNING] Unable to retrieve messages from server response.");
+            throwServerException = true;
+        }
+
+        // if we got messages out, we hit a valid endpoint and got a valid response and either a 200 or a 404 is an acceptable response code. If not, throw is already true.
+        if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NOT_FOUND) {
+            throwServerException = true;
+        }
+
+        if (throwServerException) {
+            // big flashing red letters that the action failed, or as close as we're going to get
+            Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[ERROR] Operation failed due to server error. Server code: " + responseCode + "</span>" +
+                    "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>");
+//            Utils.showPopupMessage("Action failed. See notification window for details.");
+        }
+        return throwServerException;
     }
 
     /**
