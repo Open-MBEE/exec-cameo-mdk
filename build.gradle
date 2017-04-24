@@ -40,15 +40,15 @@ repositories {
         maven {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
             credentials {
-                username project.getProperties().get('artifactory_user')
-                password project.getProperties().get('artifactory_password')
+                username project.getProperties().get('artifactoryUser')
+                password project.getProperties().get('artifactoryPassword')
             }
         }
         maven {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-release-virtual'
             credentials {
-                username project.getProperties().get('artifactory_user')
-                password project.getProperties().get('artifactory_password')
+                username project.getProperties().get('artifactoryUser')
+                password project.getProperties().get('artifactoryPassword')
             }
         }
     }
