@@ -4,7 +4,7 @@ machine:
 
 compile:
   override:
-    - "./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --info distZip"
+    - "./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --info assemble"
 
 test:
   override:
