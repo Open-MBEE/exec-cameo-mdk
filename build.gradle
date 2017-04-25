@@ -31,6 +31,8 @@ apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
 apply plugin: 'rebel'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -297,9 +299,6 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.artifactory'
-
 publishing {
     // Reference to Gradle publications defined in the build script.
     // This is how we tell the Artifactory Plugin which artifacts should be
@@ -340,6 +339,9 @@ artifactory {
             // Publish generated POM files to Artifactory (true by default)
             publishPom = true
         }
+    }
+    if (buildNumber != null && !buildNumber.isEmpty()) {
+        clientConfig.info.setBuildNumber(buildNumber)
     }
 }
 
