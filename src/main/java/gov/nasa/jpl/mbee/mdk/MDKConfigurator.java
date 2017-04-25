@@ -31,10 +31,7 @@ import gov.nasa.jpl.mbee.mdk.model.UserScript;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
@@ -168,8 +165,8 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 models.addAction(new CommitProjectAction(project, true, true));
             }
         }
-        if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {
-            models.addAction(new ValidateModelAction(es, "Validate Models"));
+        if (manager.getActionFor(ValidateElementRecursivelyAction.DEFAULT_ID) == null) {
+            models.addAction(new ValidateElementRecursivelyAction(es, "Validate Models"));
         }
         if (manager.getActionFor(ValidateElementDepthAction.DEFAULT_ID) == null) {
             models.addAction(new ValidateElementDepthAction(es, "Validate Models (specified depth)"));
@@ -238,11 +235,11 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             ActionsCategory viewInstances = getCategory(manager, "MMSViewInstance", "MMSViewInstance", modelLoad2);
             NMAction action = manager.getActionFor(GenerateViewPresentationAction.DEFAULT_ID);
             if (action == null) {
-                viewInstances.addAction(new GenerateViewPresentationAction(es, false));
+                viewInstances.addAction(new GenerateViewPresentationAction(new LinkedHashSet<>(es), false));
             }
             action = manager.getActionFor(GenerateViewPresentationAction.RECURSE_DEFAULT_ID);
             if (action == null) {
-                viewInstances.addAction(new GenerateViewPresentationAction(es, true));
+                viewInstances.addAction(new GenerateViewPresentationAction(new LinkedHashSet<>(es), true));
             }
 
             String url;
@@ -303,7 +300,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             }
         }*/
 
-        if (e == project.getPrimaryModel()) {
+        /*if (e == project.getPrimaryModel()) {
             NMAction act = null;
             ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
             // DefaultPropertyResourceProvider pp = new
@@ -313,6 +310,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 c.addAction(new ValidateOldDocgen());
             }
         }
+        */
 
         // DocGen menu
         if ((e instanceof Activity && StereotypesHelper.hasStereotypeOrDerived(e,

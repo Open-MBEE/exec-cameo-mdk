@@ -17,6 +17,7 @@ import java.awt.event.ActionEvent;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,7 +50,7 @@ public class MDUtils {
     public static Collection<Element> getSelection(ActionEvent event, boolean fromDiagram) {
         // TODO -- the input event seems useless since its not unique to the
         // context
-        Collection<Element> coll = Utils2.getEmptyList();
+        Collection<Element> coll = Collections.emptyList();
         boolean b = getActiveBrowser(false) != null;
         boolean d = getActiveDiagram(false) != null;
         // Component focus =
@@ -121,7 +122,7 @@ public class MDUtils {
      * MD's GUI.
      */
     public static Collection<Element> getSelectionInContainmentBrowser() {
-        Collection<Element> coll = Utils2.getEmptyList();
+        Collection<Element> coll = Collections.emptyList();
         BrowserTabTree tree = getActiveBrowser(false);
         if (tree == null) {
             return coll;

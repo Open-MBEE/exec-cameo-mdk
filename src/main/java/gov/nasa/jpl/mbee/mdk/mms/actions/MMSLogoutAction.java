@@ -29,7 +29,7 @@ public class MMSLogoutAction extends MDAction {
         Application.getInstance().getGUILog().log("[INFO] MMS logout complete.");
         ActionsStateUpdater.updateActionsState();
         if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
-            MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter().closeJMS(project);
+            JMSSyncProjectEventListenerAdapter.closeJMS(project);
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Reverting to offline mode. All changes will be saved in the model until reconnected. Reason: You must be logged into MMS.");
         }
         SyncStatusConfigurator.getSyncStatusAction().update();

@@ -15,6 +15,7 @@ import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
+import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
@@ -29,12 +30,9 @@ import java.util.List;
 public class MDKPlugin extends Plugin {
     public static final String MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
 
-    public static String VERSION;
+    private static String VERSION;
     public static ClassLoader extensionsClassloader;
     public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
-
-    private OclEvaluatorPlugin oclPlugin;
-    private ValidateConstraintsPlugin vcPlugin;
 
     public MDKPlugin() {
         super();
@@ -71,7 +69,6 @@ public class MDKPlugin extends Plugin {
 
     @Override
     public void init() {
-        getVersion();
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
         System.setProperty("jsse.enableSNIExtension", "false");
         if (MDUtils.isDeveloperMode()) {
@@ -79,48 +76,36 @@ public class MDKPlugin extends Plugin {
             System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
             System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http.wire", "INFO");
         }
+        // This somehow allows things to be loaded to evaluate opaque expressions or something.
+        EvaluationConfigurator.getInstance().registerBinaryImplementers(this.getClass().getClassLoader());
+
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, mdkConfigurator);
-        //acm.addBaseDiagramContextConfigurator("Class Diagram", dgc);
-        //acm.addBaseDiagramContextConfigurator("Activity Diagram", dgc);
-        //acm.addBaseDiagramContextConfigurator("SysML Package Diagram", dgc);
+
+        OclQueryConfigurator oclQueryConfigurator = new OclQueryConfigurator();
+        acm.addMainMenuConfigurator(oclQueryConfigurator);
+        acm.addSearchBrowserContextConfigurator(oclQueryConfigurator);
+        acm.addContainmentBrowserContextConfigurator(oclQueryConfigurator);
+        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, oclQueryConfigurator);
 
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
 
-        SRConfigurator srconfig = new SRConfigurator();
-        acm.addSearchBrowserContextConfigurator(srconfig);
-        acm.addContainmentBrowserContextConfigurator(srconfig);
-        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srconfig);
+        SRConfigurator srConfigurator = new SRConfigurator();
+        acm.addSearchBrowserContextConfigurator(srConfigurator);
+        acm.addContainmentBrowserContextConfigurator(srConfigurator);
+        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srConfigurator);
 
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
-        getOclPlugin().init();
-        getVcPlugin().init();
         MMSSyncPlugin.getInstance().init();
         (new Thread(new OutputSyncRunner())).start();
-        //ApplicationSyncEventSubscriber.subscribe(); //really old docweb sync, should remove related code
 
-        loadExtensionJars(); // people can actually just create a new plugin and
-
+        loadExtensionJars();
         configureEnvironmentOptions();
-    }
-
-    public OclEvaluatorPlugin getOclPlugin() {
-        if (oclPlugin == null) {
-            oclPlugin = new OclEvaluatorPlugin();
-        }
-        return oclPlugin;
-    }
-
-    public ValidateConstraintsPlugin getVcPlugin() {
-        if (vcPlugin == null) {
-            vcPlugin = new ValidateConstraintsPlugin();
-        }
-        return vcPlugin;
     }
 
     @Override
@@ -141,9 +126,12 @@ public class MDKPlugin extends Plugin {
             // TODO Auto-generated catch block
             e1.printStackTrace();
         }
-        for (File file : extensionDir.listFiles()) {
+        File[] files = extensionDir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File file : files) {
             try {
-                //     JarFile jarFile = new JarFile(file);
                 extensions.add(file.toURI().toURL());
             } catch (MalformedURLException e) {
                 e.printStackTrace();

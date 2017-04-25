@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.mms.jms;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,6 +19,7 @@ import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Hashtable;
@@ -31,7 +33,7 @@ public class JMSUtils {
     private static final String JMS_S = "tcp";
 
     public static final String MSG_SELECTOR_PROJECT_ID = "projectId",
-            MSG_SELECTOR_WORKSPACE_ID = "workspace";
+            MSG_SELECTOR_REF_ID = "refId";
 
     // Members to look up MMS using JNDI
     // TODO: If any other context factories are used, need to add those JARs into class path (e.g., for weblogic)
@@ -55,8 +57,10 @@ public class JMSUtils {
             throws IOException, ServerException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         requestUri.setPath(requestUri.getPath() + "/connection/jms");
-
-        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
+        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+           return JacksonUtils.parseJsonObject(jsonParser);
+        }
     }
 
     // Varies by current project
@@ -68,8 +72,7 @@ public class JMSUtils {
             Application.getInstance().getGUILog().log("[ERROR]: Unable to acquire JMS Connection information.");
             e.printStackTrace();
         } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR]: Unexpected error occurred when trying to build MMS URL. " +
-                    "Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR]: Unexpected error occurred when trying to build MMS URL. Reason: " + e.getMessage());
             e.printStackTrace();
         }
         String url = ingestJson(jmsJson);
@@ -108,7 +111,8 @@ public class JMSUtils {
             // just grab first connection
             for (int ii = 0; ii < conns.size(); ii++) {
                 json = (ObjectNode) conns.get(ii);
-                if (json.get("eventType").equals("DELTA")) {
+                JsonNode value;
+                if ((value = json.get("eventType")) != null && value.isTextual() && value.asText().equals("DELTA")) {
                     break;
                 }
             }
@@ -186,10 +190,10 @@ public class JMSUtils {
     public static String constructSelectorString(String projectID, String workspaceID) {
         StringBuilder selectorBuilder = new StringBuilder();
 
-        //selectorBuilder.append("(").append(MSG_SELECTOR_WORKSPACE_ID).append("='").append(workspaceID).append("')");
+        //selectorBuilder.append("(").append(MSG_SELECTOR_REF_ID).append("='").append(workspaceID).append("')");
 
         selectorBuilder.append("(").append(MSG_SELECTOR_PROJECT_ID).append(" = '").append(projectID).append("')")
-                .append(" AND ").append("((").append(MSG_SELECTOR_WORKSPACE_ID).append(" = '").append(workspaceID).append("') OR (").append(MSG_SELECTOR_WORKSPACE_ID).append(" = '").append(workspaceID).append("_mdk").append("'))");
+                .append(" AND ").append("((").append(MSG_SELECTOR_REF_ID).append(" = '").append(workspaceID).append("') OR (").append(MSG_SELECTOR_REF_ID).append(" = '").append(workspaceID).append("_mdk").append("'))");
 
         String outputMsgSelector = selectorBuilder.toString();
         selectorBuilder.delete(0, selectorBuilder.length());

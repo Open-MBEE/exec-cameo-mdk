@@ -21,11 +21,11 @@ public class GenerateViewPresentationAction extends MMSAction {
     public static final String RECURSE_DEFAULT_ID = "GenerateViewPresentationR";
 
     private List<ValidationSuite> vss = new ArrayList<>();
-    private List<Element> elements;
+    private Set<Element> elements;
     private Project project;
     private boolean recurse;
 
-    public GenerateViewPresentationAction(List<Element> elements, boolean recurse) {
+    public GenerateViewPresentationAction(Set<Element> elements, boolean recurse) {
         super(recurse ? RECURSE_DEFAULT_ID : DEFAULT_ID, "Generate View" + (recurse ? "s Recursively" : ""), null, null);
         this.elements = elements;
         this.project = Project.getProject(elements.iterator().next());
@@ -44,6 +44,7 @@ public class GenerateViewPresentationAction extends MMSAction {
 
         Set<Element> processedElements = new HashSet<>(elements.size());
         Queue<Element> queuedElements = new LinkedList<>(elements);
+        Set<Element> views = new LinkedHashSet<>(elements.size());
 
         while (!queuedElements.isEmpty()) {
             Element element = queuedElements.remove();
@@ -52,12 +53,7 @@ public class GenerateViewPresentationAction extends MMSAction {
                 continue;
             }
             if (StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
-                ViewPresentationGenerator vg = new ViewPresentationGenerator(element, recurse, true, null, null, processedElements);
-                ProgressStatusRunner.runWithProgressStatus(vg, "Generating View" + (recurse ? "s" : "") + " - " + ((element instanceof NamedElement && ((NamedElement) element).getName() != null) ? ((NamedElement) element).getName() : "<>"), true, 0);
-                if (vg.isFailure()) {
-                    break;
-                }
-                vss.addAll(vg.getValidations());
+                views.add(element);
             }
             else if (StereotypesHelper.hasStereotypeOrDerived(element, elementGroupStereotype)) {
                 List members = StereotypesHelper.getStereotypePropertyValue(element, elementGroupStereotype, "member", true);
@@ -69,6 +65,10 @@ public class GenerateViewPresentationAction extends MMSAction {
                 processedElements.add(element);
             }
         }
+
+        ViewPresentationGenerator vg = new ViewPresentationGenerator(views, project, recurse, null, processedElements);
+        ProgressStatusRunner.runWithProgressStatus(vg, "Generating View" + (recurse ? "s" : ""), true, 0);
+        vss.addAll(vg.getValidations());
         return vss;
     }
 

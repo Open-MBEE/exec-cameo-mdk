@@ -49,7 +49,7 @@ import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllDocumentsAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllViewsAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
@@ -66,10 +66,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -93,9 +90,9 @@ public class MDKHelper {
      */
     public static boolean mmsUploadWait() {
         if (OutputQueue.getInstance().getCurrent() != null) {
-            int elements = OutputQueue.getInstance().getCurrent().getNumElements();
+            int elements = OutputQueue.getInstance().getCurrent().getCount();
             for (Request request : OutputQueue.getInstance()) {
-                elements += request.getNumElements();
+                elements += request.getCount();
             }
             MagicDrawHelper.generalMessage("Uploading: " + elements + " Elements");
             while (true) {
@@ -296,14 +293,12 @@ public class MDKHelper {
      *                generate only the view for the selected element
      */
     public static void generateViews(Element doc, Boolean recurse) {
-        List<Element> documents = new ArrayList<>(1);
-        documents.add(doc);
-        GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(documents, recurse);
+        GenerateViewPresentationAction gvpa = new GenerateViewPresentationAction(Collections.singleton(doc), recurse);
         validationWindow = new MDKValidationWindow(gvpa.updateAction());
     }
 
     public static void generateAllDocuments(Project project) {
-        GenerateAllDocumentsAction uad = new GenerateAllDocumentsAction();
+        GenerateAllViewsAction uad = new GenerateAllViewsAction();
         validationWindow = new MDKValidationWindow(uad.updateAction(project));
     }
 
@@ -382,18 +377,20 @@ public class MDKHelper {
 
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
-        JsonParser jsonParser;
+        File responseFile;
         if (progressStatus != null) {
-            jsonParser = MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+            responseFile = MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
         else {
-            jsonParser = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));
+            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));
         }
         LinkedList<Element> elementsList = new LinkedList<>();
-        for (ObjectNode elementJson : JacksonUtils.parseJsonResponseToObjectList(jsonParser, null)) {
-            JsonNode value;
-            if ((value = elementJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                elementsList.add(Converters.getIdToElementConverter().apply(value.asText(), project));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            for (ObjectNode elementJson : JacksonUtils.parseJsonResponseToObjectList(jsonParser, null)) {
+                JsonNode value;
+                if ((value = elementJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+                    elementsList.add(Converters.getIdToElementConverter().apply(value.asText(), project));
+                }
             }
         }
         return elementsList;
@@ -414,7 +411,10 @@ public class MDKHelper {
             return null;
         }
         File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON)));
+        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            return JacksonUtils.parseJsonObject(jsonParser);
+        }
     }
 
     /**
@@ -436,7 +436,10 @@ public class MDKHelper {
             elementJson.add(elemJson);
         }
         File sendData = MMSUtils.createEntityFile(MDKHelper.class, ContentType.APPLICATION_JSON, elementJson, MMSUtils.JsonBlobType.ELEMENT_JSON);
-        return JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON)));
+        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            return JacksonUtils.parseJsonObject(jsonParser);
+        }
     }
 
 }

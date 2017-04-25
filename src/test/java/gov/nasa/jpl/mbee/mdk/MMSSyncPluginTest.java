@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk;
 
-import com.nomagic.magicdraw.plugins.PluginUtils;
 import gov.nasa.jpl.mbee.mdk.test.framework.ApplicationStartClassRunner;
 import org.junit.BeforeClass;
 import org.junit.Test;

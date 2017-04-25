@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.delta;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -70,12 +71,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         try {
             if (!TicketUtils.isTicketValid(project)) {
                 Utils.guilog("[WARNING] You are not logged in to MMS. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
-                MMSLoginAction.loginAction(project);
+                new Thread(() -> MMSLoginAction.loginAction(project)).start();
                 return;
             }
         } catch (ServerException | IOException | URISyntaxException e) {
             Utils.guilog("[ERROR] Exception occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
-            MMSLoginAction.loginAction(project);
+            new Thread(() -> MMSLoginAction.loginAction(project)).start();
             return;
         }
 
@@ -176,27 +177,35 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         if (!elementIdsToGet.isEmpty()) {
             progressStatus.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
-            ObjectNode response = null;
+            File responseFile;
+            ObjectNode response;
             try {
-                response = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, elementIdsToGet, progressStatus));
-            } catch (ServerException | IOException | URISyntaxException e) {
-                if (e instanceof ServerException && ((ServerException) e).getCode() == 404) {
-                    (response = JacksonUtils.getObjectMapper().createObjectNode()).putArray("elements");
+                responseFile = MMSUtils.getElements(project, elementIdsToGet, progressStatus);
+                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                    response = JacksonUtils.parseJsonObject(jsonParser);
                 }
-                else if (!progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
-                    e.printStackTrace();
+            } catch (ServerException | IOException | URISyntaxException e) {
+                if (progressStatus.isCancel()) {
+                    Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
                     return;
                 }
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
+                e.printStackTrace();
+                return;
             }
+
             if (progressStatus.isCancel()) {
-                Application.getInstance().getGUILog().log("Sync manually aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
                 return;
             }
-            JsonNode elementsArrayNode;
-            if (response == null || (elementsArrayNode = response.get("elements")) == null || !elementsArrayNode.isArray()) {
-                Utils.guilog("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
+
+            if (response == null) {
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
                 return;
+            }
+            JsonNode elementsArrayNode = response.get("elements");
+            if (elementsArrayNode == null || !elementsArrayNode.isArray()) {
+                elementsArrayNode = JacksonUtils.getObjectMapper().createArrayNode();
             }
             for (JsonNode jsonNode : elementsArrayNode) {
                 if (!jsonNode.isObject()) {
@@ -322,11 +331,11 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             if (postElements.size() > 0) {
-                Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
+                Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
                     File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, true, postElements.size(), "Sync Changes"));
+                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes"));
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
@@ -347,7 +356,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, true, deleteElements.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes"));
             } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                 e.printStackTrace();
@@ -407,7 +416,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
         }
 
-        ElementValidator elementValidator = new ElementValidator(ElementValidator.buildElementPairs(localConflictedElements, project), jmsConflictedElements, project);
+        ElementValidator elementValidator = new ElementValidator("CSync Conflict Validation", ElementValidator.buildElementPairs(localConflictedElements, project), jmsConflictedElements, project);
         elementValidator.run(progressStatus);
         if (!elementValidator.getInvalidElements().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + elementValidator.getInvalidElements().size() + " element" + (elementValidator.getInvalidElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");

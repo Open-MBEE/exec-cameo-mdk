@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.actions;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.annotation.Annotation;
@@ -92,7 +93,10 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode response;
         if (org == null || org.isEmpty()) {
             try {
-                response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
+                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                    response = JacksonUtils.parseJsonObject(jsonParser);
+                }
             } catch (IOException | URISyntaxException | ServerException e1) {
                 Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
@@ -137,7 +141,10 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // do project post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
-            response = JacksonUtils.parseJsonObject(MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON)));
+            File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                response = JacksonUtils.parseJsonObject(jsonParser);
+            }
             // we don't need to process this response, just make sure the request comes back without exception
             if (response != null) {
                 // crude method of waiting for project post to propagate

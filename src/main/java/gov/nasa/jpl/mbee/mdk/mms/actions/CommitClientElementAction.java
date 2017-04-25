@@ -34,7 +34,8 @@ import java.util.List;
 // TODO Abstract this and update to a common class @donbot
 public class CommitClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final String DEFAULT_ID = "Commit Element to MMS";
-    private static final int COMMIT_ELEMENT_COUNT_THRESHOLD = 50000;
+    private static final int COMMIT_ELEMENT_COUNT_THRESHOLD = Integer.MAX_VALUE;
+    private static final int COMPLETION_DELAY = 0;
 
     private final String elementID;
     private final Element element;
@@ -116,7 +117,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
 
     private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) throws JsonProcessingException {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + elementsToUpdate.size() + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
             int requestCapacity = elementsToUpdate.size() > COMMIT_ELEMENT_COUNT_THRESHOLD ? (elementsToUpdate.size() / COMMIT_ELEMENT_COUNT_THRESHOLD + (elementsToUpdate.size() % COMMIT_ELEMENT_COUNT_THRESHOLD != 0 ? 1 : 0)) * 2 : 1;
             List<Request> requests = new ArrayList<>(requestCapacity);
             List<ObjectNode> elementsToPost = new ArrayList<>(Math.min(elementsToUpdate.size(), COMMIT_ELEMENT_COUNT_THRESHOLD));
@@ -134,20 +135,20 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                             }
                             requestUri.addParameter("nodes", Boolean.toString(true));
                             //requestUri.addParameter("edges", Boolean.toString(false));
-                            requests.add(requestIndex, new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToPost.size(),
-                                    "Sync Changes - Nodes - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2)));
+                            requests.add(requestIndex, new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
+                                    "Sync Changes - Nodes - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), COMPLETION_DELAY));
                             requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                             if (requestUri == null) {
                                 throw new IOException();
                             }
                             //requestUri.addParameter("nodes", Boolean.toString(false));
                             requestUri.addParameter("edges", Boolean.toString(true));
-                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToPost.size(),
-                                    "Sync Changes - Edges - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2)));
+                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
+                                    "Sync Changes - Edges - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), COMPLETION_DELAY));
                         }
                         else {
                             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToPost.size(), "Sync Changes"));
+                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(), "Sync Changes"));
                         }
                     } catch (IOException | URISyntaxException e) {
                         Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
@@ -162,11 +163,11 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             requests.forEach(request -> OutputQueue.getInstance().offer(request));
         }
         if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Queueing request to delete " + elementsToDelete.size() + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
+            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON, true, elementsToDelete.size(), "Sync Changes")));
+                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON, elementsToDelete.size(), "Sync Changes")));
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();

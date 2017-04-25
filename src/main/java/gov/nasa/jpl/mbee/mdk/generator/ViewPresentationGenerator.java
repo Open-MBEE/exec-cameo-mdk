@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,11 +21,8 @@ import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
@@ -33,13 +31,16 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.json.simple.JSONArray;
@@ -48,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author dlam
@@ -61,139 +63,151 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     private ValidationRule updateFailed = new ValidationRule("updateFailed", "updateFailed", ViolationSeverity.ERROR);
     private ValidationRule viewDoesNotExist = new ValidationRule("viewDoesNotExist", "viewDoesNotExist", ViolationSeverity.ERROR);
 
-    private PresentationElementUtils instanceUtils;
+    private PresentationElementUtils presentationElementUtils;
 
-    private boolean recurse;
-    private Element start;
-    private boolean failure = false;
-
-    private Project project;
-    private boolean showValidation;
-
+    private final Set<Element> rootViews;
+    private final Project project;
+    private final boolean recurse;
     private final List<ValidationSuite> vss = new ArrayList<>();
-    private final Map<String, ObjectNode> images;
     private final Set<Element> processedElements;
-    private final boolean manageSesssions;
 
-    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, ObjectNode> images, Set<Element> processedElements, boolean manageSesssions) {
-        this.start = start;
-        this.project = Project.getProject(start);
-        this.images = images != null ? images : new HashMap<>();
-        this.processedElements = processedElements != null ? processedElements : new HashSet<>();
+    private boolean failure;
+
+    public ViewPresentationGenerator(Set<Element> rootViews, Project project, boolean recurse) {
+        this(rootViews, project, recurse, null, null);
+    }
+
+    public ViewPresentationGenerator(Set<Element> rootViews, Project project, boolean recurse, PresentationElementUtils presentationElementUtils) {
+        this(rootViews, project, recurse, presentationElementUtils, null);
+    }
+
+    public ViewPresentationGenerator(Set<Element> rootViews, Project project, boolean recurse, PresentationElementUtils presentationElementUtils, Set<Element> processedElements) {
+        if (rootViews == null || rootViews.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+        this.rootViews = rootViews;
+        this.project = project;
+        this.processedElements = processedElements != null ? processedElements : new HashSet<>(rootViews.size());
         this.recurse = recurse;
-        this.showValidation = showValidation;
-        this.instanceUtils = viu;
-        if (this.instanceUtils == null) {
-            this.instanceUtils = new PresentationElementUtils();
+        this.presentationElementUtils = presentationElementUtils;
+        if (this.presentationElementUtils == null) {
+            this.presentationElementUtils = new PresentationElementUtils();
         }
         suite.addValidationRule(uneditableContent);
         suite.addValidationRule(viewInProject);
         suite.addValidationRule(updateFailed);
         suite.addValidationRule(uneditableElements);
         suite.addValidationRule(viewDoesNotExist);
-        this.manageSesssions = manageSesssions;
         vss.add(suite);
     }
 
-    public ViewPresentationGenerator(Element start, boolean recurse, boolean showValidation, PresentationElementUtils viu, Map<String, ObjectNode> images, Set<Element> processedElements) {
-        this(start, recurse, showValidation, viu, images, processedElements, true);
-    }
-
-        @Override
+    @Override
     public void run(ProgressStatus progressStatus) {
         progressStatus.init("Initializing", 6);
         // Ensure no existing session so we have full control of whether to close/cancel further sessions.
         // no wild sessions spotted as of 06/05/16
-        if (manageSesssions) {
-            if (SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().closeSession(project);
-            }
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession(project);
         }
-
-        // STAGE 1: Calculating view structure
-        progressStatus.setDescription("Calculating view structure");
-        progressStatus.setCurrent(1);
-
-        DocumentValidator dv = new DocumentValidator(start);
-        dv.validateDocument();
-        if (dv.isFatal()) {
-            dv.printErrors(false);
-            return;
-        }
-        // first run a local generation of the view model to get the current model view structure
-        DocumentGenerator dg = new DocumentGenerator(start, dv, null, false);
-        Document dge = dg.parseDocument(true, recurse, false);
-        new PostProcessor().process(dge);
-
-        DocBookOutputVisitor docBookOutputVisitor = new DocBookOutputVisitor(true);
-        dge.accept(docBookOutputVisitor);
-        DBBook book = docBookOutputVisitor.getBook();
-        // TODO ??
-        if (book == null) {
-            return;
-        }
-        // Use HierarchyVisitor to find all views to download related elements (instances, constraint, etc.)
-        ViewHierarchyVisitor viewHierarchyVisitor = new ViewHierarchyVisitor();
-        dge.accept(viewHierarchyVisitor);
 
         Map<String, Pair<ObjectNode, InstanceSpecification>> instanceSpecificationMap = new LinkedHashMap<>();
         Map<String, Pair<ObjectNode, Slot>> slotMap = new LinkedHashMap<>();
-        Map<String, ViewMapping> viewMap = new LinkedHashMap<>(viewHierarchyVisitor.getView2ViewElements().size());
+        Map<String, ViewMapping> viewMap = new LinkedHashMap<>();
 
-        for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
-            if (processedElements.contains(view)) {
-                Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + Converters.getElementToIdConverter().apply(view) + ".");
-                continue;
+        for (Element rootView : rootViews) {
+            // STAGE 1: Calculating view structure
+            progressStatus.setDescription("Calculating view structure");
+            progressStatus.setCurrent(1);
+
+            DocumentValidator dv = new DocumentValidator(rootView);
+            dv.validateDocument();
+            if (dv.isFatal()) {
+                dv.printErrors(false);
+                return;
             }
-            ViewMapping viewMapping = viewMap.containsKey(Converters.getElementToIdConverter().apply(view)) ?
-                    viewMap.get(Converters.getElementToIdConverter().apply(view)) : new ViewMapping();
-            viewMapping.setElement(view);
-            viewMap.put(Converters.getElementToIdConverter().apply(view), viewMapping);
+            // first run a local generation of the view model to get the current model view structure
+            DocumentGenerator dg = new DocumentGenerator(rootView, dv, null, false);
+            Document dge = dg.parseDocument(true, recurse, false);
+            new PostProcessor().process(dge);
+
+            DocBookOutputVisitor docBookOutputVisitor = new DocBookOutputVisitor(true);
+            dge.accept(docBookOutputVisitor);
+            DBBook book = docBookOutputVisitor.getBook();
+            // TODO ??
+            if (book == null) {
+                return;
+            }
+            // Use HierarchyVisitor to find all views to download related elements (instances, constraint, etc.)
+            ViewHierarchyVisitor viewHierarchyVisitor = new ViewHierarchyVisitor();
+            dge.accept(viewHierarchyVisitor);
+
+            for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
+                if (processedElements.contains(view)) {
+                    Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + Converters.getElementToIdConverter().apply(view) + ".");
+                    continue;
+                }
+                ViewMapping viewMapping = viewMap.containsKey(Converters.getElementToIdConverter().apply(view)) ?
+                        viewMap.get(Converters.getElementToIdConverter().apply(view)) : new ViewMapping();
+                viewMapping.setElement(view);
+                viewMapping.setDbBook(book);
+                viewMap.put(Converters.getElementToIdConverter().apply(view), viewMapping);
+            }
         }
 
         // Find and delete existing view constraints to prevent ID conflict when importing. Migration should handle this,
         // but best to not let the user corrupt their model. Have also noticed an MD bug where the constraint just sticks around
         // after a session cancellation.
-        List<Constraint> constraintsToBeDeleted = new ArrayList<>(viewMap.size());
+        Map<Element, Constraint> viewConstraintHashMap = new HashMap<>(0);
         for (ViewMapping viewMapping : viewMap.values()) {
             Element view = viewMapping.getElement();
             if (view == null) {
                 continue;
             }
             Constraint constraint = Utils.getViewConstraint(view);
+            if (constraint == null) {
+                Element element = Converters.getIdToElementConverter().apply(Converters.getElementToIdConverter().apply(view) + MDKConstants.VIEW_CONSTRAINT_SYSML_ID_SUFFIX, project);
+                if (element instanceof Constraint) {
+                    constraint = (Constraint) element;
+                }
+            }
             if (constraint != null) {
-                constraintsToBeDeleted.add(constraint);
+                viewConstraintHashMap.put(view, constraint);
             }
         }
 
-        if (!constraintsToBeDeleted.isEmpty()) {
-            if (manageSesssions) {
+        if (!viewConstraintHashMap.isEmpty()) {
+            try {
                 SessionManager.getInstance().createSession(project, "Legacy View Constraint Purge");
-            }
-            for (Constraint constraint : constraintsToBeDeleted) {
-                if (constraint.isEditable()) {
+                if (!SessionManager.getInstance().isSessionCreated(project)) {
+                    Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
+                    failure = true;
+                    return;
+                }
+                for (Map.Entry<Element, Constraint> entry : viewConstraintHashMap.entrySet()) {
+                    Constraint constraint = entry.getValue();
+                    if (!constraint.isEditable()) {
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + ">  could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        failure = true;
+                        continue;
+                    }
                     Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + Converters.getElementToIdConverter().apply(constraint));
                     try {
                         ModelElementsManager.getInstance().removeElement(constraint);
                     } catch (ReadOnlyElementException e) {
-                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + "> could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
                 }
-                else {
-                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
-                    failure = true;
-                }
             }
-            if (manageSesssions) {
-                SessionManager.getInstance().closeSession(project);
+            finally {
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
+                }
             }
         }
 
         if (failure) {
-            if (showValidation) {
-                Utils.displayValidationWindow(project, vss, "View Generation Validation");
-            }
+            Utils.displayValidationWindow(project, vss, "View Generation Validation");
             return;
         }
 
@@ -203,13 +217,17 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        Set<Element> elementsToDelete = new HashSet<>();
 
         // Create the session you intend to cancel to revert all temporary elements.
-        if (manageSesssions) {
-            if (SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().closeSession(project);
-            }
-            SessionManager.getInstance().createSession(project, "View Presentation Generation - Cancelled");
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession(project);
+        }
+        SessionManager.getInstance().createSession(project, "View Presentation Generation - Cancelled");
+        if (!SessionManager.getInstance().isSessionCreated(project)) {
+            Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
+            failure = true;
+            return;
         }
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
@@ -224,7 +242,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             ObjectNode viewResponse;
             try {
-                viewResponse = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, viewMap.keySet(), progressStatus));
+                File responseFile = MMSUtils.getElements(project, viewMap.keySet(), progressStatus);
+                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                    viewResponse = JacksonUtils.parseJsonObject(jsonParser);
+                }
             } catch (ServerException | IOException | URISyntaxException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
@@ -256,9 +277,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 JsonNode instanceIdJsonNode = viewOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                                 String instanceId;
                                 if (instanceIdJsonNode != null && instanceIdJsonNode.isTextual() && !(instanceId = instanceIdJsonNode.asText()).isEmpty()) {
-                                /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
-                                    continue;
-                                }*/
                                     if (generatedFromViewProperty != null) {
                                         slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + Converters.getElementToIdConverter().apply(generatedFromViewProperty));
                                     }
@@ -292,14 +310,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     ObjectNode instanceAndSlotResponse;
                     try {
-                        instanceAndSlotResponse = JacksonUtils.parseJsonObject(MMSUtils.getElements(project, elementIDs, progressStatus));
+                        File responseFile = MMSUtils.getElements(project, elementIDs, progressStatus);
+                        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                            instanceAndSlotResponse = JacksonUtils.parseJsonObject(jsonParser);
+                        }
                     } catch (ServerException | IOException | URISyntaxException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
                         e.printStackTrace();
-                        if (manageSesssions) {
-                            SessionManager.getInstance().cancelSession(project);
-                        }
+                        SessionManager.getInstance().cancelSession(project);
                         return;
                     }
                     instanceIDs.clear();
@@ -313,9 +332,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                     JsonNode instanceIdJson = instanceOperandJson.get(MDKConstants.INSTANCE_ID_KEY);
                                     String instanceId;
                                     if (instanceIdJson != null && instanceIdJson.isTextual() && !(instanceId = instanceIdJson.asText()).isEmpty()) {
-                                        /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
-                                            continue;
-                                        }*/
+                                    /*if (!instanceID.endsWith(PresentationElementUtils.ID_KEY_SUFFIX)) {
+                                        continue;
+                                    }*/
                                         if (generatedFromViewProperty != null) {
                                             slotIDs.add(instanceId + MDKConstants.SLOT_ID_SEPARATOR + Converters.getElementToIdConverter().apply(generatedFromViewProperty));
                                         }
@@ -386,12 +405,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(instanceObjectNode, (InstanceSpecification) element));
                             }
                         } catch (ImportException | ReadOnlyElementException e) {
-                            /*failure = true;
-                            Utils.printException(e);
-                            if (manageSesssions) {
-                                SessionManager.getInstance().cancelSession();
-                            }
-                            return;*/
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + instanceObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             instanceObjectNodesIterator.remove();
                         }
@@ -416,12 +429,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                                 slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotObjectNode, (Slot) element));
                             }
                         } catch (ImportException | ReadOnlyElementException e) {
-                            /*failure = true;
-                            Utils.printException(e);
-                            if (manageSesssions) {
-                                SessionManager.getInstance().cancelSession();
-                            }
-                            return;*/
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             slotObjectNodesIterator.remove();
                         }
@@ -447,73 +454,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply((ObjectNode) viewContentsJsonNode, project, false);
                         if (change.getChanged() != null && change.getChanged() instanceof Expression) {
-                            instanceUtils.getOrCreateViewConstraint(view).setSpecification((Expression) change.getChanged());
+                            Expression expression = (Expression) change.getChanged();
+                            // bit of massaging to filter out InstanceValues whose InstanceSpecification is deleted
+                            expression.getOperand().stream().filter(vs -> !(vs instanceof InstanceValue) || ((InstanceValue) vs).getInstance() == null).collect(Collectors.toList()).forEach(vs -> {
+                                elementsToDelete.add(vs);
+                                expression.getOperand().remove(vs);
+                            });
+                            presentationElementUtils.getOrCreateViewConstraint(view).setSpecification(expression);
                         }
                     } catch (ImportException | ReadOnlyElementException e) {
                         Application.getInstance().getGUILog().log("[WARNING] Could not create view contents for " + Converters.getElementToIdConverter().apply(view) + ". The result could be that the view contents are created from scratch.");
-                        continue;
+                        //continue;
                     }
                 }
-
-                /*for (ViewMapping viewMapping : viewMap.values()) {
-                    Element view = viewMapping.getElement();
-                    if (handleCancel(progressStatus)) {
-                        return;
-                    }
-
-                    List<String> instanceSpecificationIDs;
-                    if (viewMap.containsKey(view.getID()) && (instanceSpecificationIDs = viewMap.get(view.getID()).getInstanceIDs()) != null) {
-                        final List<InstanceSpecification> instanceSpecifications = new ArrayList<>(instanceSpecificationIDs.size());
-                        for (String instanceSpecificationID : instanceSpecificationIDs) {
-                            Pair<ObjectNode, InstanceSpecification> pair = instanceSpecificationMap.get(instanceSpecificationID);
-                            if (pair != null && pair.getSecond() != null) {
-                                instanceSpecifications.add(pair.getSecond());
-                            }
-                        }
-                        instanceUtils.updateOrCreateConstraintFromInstanceSpecifications(view, instanceSpecifications);
-                    }
-                }*/
-
-                // Update relations for all InstanceSpecifications and Slots
-                // Instances need to be done in reverse order to load the lowest level instances first (sections)
-                /*ListIterator<Pair<ObjectNode, InstanceSpecification>> instanceSpecificationMapIterator = new ArrayList<>(instanceSpecificationMap.values()).listIterator(instanceSpecificationMap.size());
-                while (instanceSpecificationMapIterator.hasPrevious()) {
-                    if (handleCancel(progressStatus)) {
-                        return;
-                    }
-
-                    Pair<ObjectNode, InstanceSpecification> pair = instanceSpecificationMapIterator.previous();
-                    try {
-                        //ImportUtility.createElement(pair.getFirst(), true, true);
-                        emfImporter.apply(pair.getFirst(), project, true);
-                    } catch (Exception e) {
-                        /*failure = true;
-                        Utils.printException(e);
-                        if (manageSesssions) {
-                            SessionManager.getInstance().cancelSession();
-                        }
-                        return;* /
-                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for instance specification " + pair.getFirst().get(MDKConstants.ID_KEY) + ": " + e.getMessage());
-                    }
-                }
-                for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
-                    if (handleCancel(progressStatus)) {
-                        return;
-                    }
-
-                    try {
-                        //ImportUtility.createElement(pair.getFirst(), true, false);
-                        emfImporter.apply(pair.getFirst(), project, true);
-                    } catch (Exception e) {
-                        /*failure = true;
-                        Utils.printException(e);
-                        if (manageSesssions) {
-                            SessionManager.getInstance().cancelSession();
-                        }
-                        return;* /
-                        Application.getInstance().getGUILog().log("[ERROR] Failed to update relations for slot " + pair.getFirst().get(MDKConstants.ID_KEY) + ": " + e.getMessage());
-                    }
-                }*/
             }
         }
 
@@ -521,18 +474,28 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         progressStatus.setDescription("Generating new view instances");
         progressStatus.setCurrent(4);
 
-        DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
-        try {
-            book.accept(dbAlfrescoVisitor);
-        } catch (Exception e) {
-            Utils.printException(e);
-            e.printStackTrace();
-        }
-        Map<Element, List<PresentationElementInstance>> view2pe = dbAlfrescoVisitor.getView2Pe();
-        Map<Element, List<PresentationElementInstance>> view2unused = dbAlfrescoVisitor.getView2Unused();
-        List<Element> views = instanceUtils.getViewProcessOrder(start, dbAlfrescoVisitor.getHierarchyElements());
-        views.removeAll(processedElements);
+        Set<Element> views = new LinkedHashSet<>();
+        Map<Element, List<PresentationElementInstance>> view2pe = new LinkedHashMap<>();
+        Map<Element, List<PresentationElementInstance>> view2unused = new LinkedHashMap<>();
+        Map<Element, JSONArray> view2elements = new LinkedHashMap<>();
+        Map<String, ObjectNode> images = new LinkedHashMap<>();
         Set<Element> skippedViews = new HashSet<>();
+        for (Element rootView : rootViews) {
+            DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
+            try {
+                viewMap.get(Converters.getElementToIdConverter().apply(rootView)).getDbBook().accept(dbAlfrescoVisitor);
+            } catch (Exception e) {
+                Utils.printException(e);
+                e.printStackTrace();
+            }
+            views.addAll(presentationElementUtils.getViewProcessOrder(rootView, dbAlfrescoVisitor.getHierarchyElements()));
+            view2pe.putAll(dbAlfrescoVisitor.getView2Pe());
+            view2unused.putAll(dbAlfrescoVisitor.getView2Unused());
+            view2elements.putAll(dbAlfrescoVisitor.getView2Elements());
+            images.putAll(dbAlfrescoVisitor.getImages());
+            views.removeAll(processedElements);
+        }
+
 
         for (Element view : views) {
             if (ProjectUtilities.isElementInAttachedProject(view)) {
@@ -548,12 +511,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         if (failure) {
-            if (showValidation) {
-                Utils.displayValidationWindow(project, vss, "View Generation Validation");
-            }
-            if (manageSesssions) {
-                SessionManager.getInstance().cancelSession(project);
-            }
+            Utils.displayValidationWindow(project, vss, "View Generation Validation");
+            SessionManager.getInstance().cancelSession(project);
             return;
         }
 
@@ -564,7 +523,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 // Using null package with intention to cancel session and delete instances to prevent model validation error.
                 handlePes(view2pe.get(view), null);
-                instanceUtils.updateOrCreateConstraintFromPresentationElements(view, view2pe.get(view));
+                presentationElementUtils.updateOrCreateConstraintFromPresentationElements(view, view2pe.get(view));
             }
 
             if (handleCancel(progressStatus)) {
@@ -574,7 +533,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // commit to MMS
             LinkedList<ObjectNode> elementsToCommit = new LinkedList<>();
             Queue<Pair<InstanceSpecification, Element>> instanceToView = new LinkedList<>();
-            Map<Element, JSONArray> view2elements = dbAlfrescoVisitor.getView2Elements();
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
                     continue;
@@ -596,7 +554,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ObjectNode serverViewJson = (o = viewMap.get(Converters.getElementToIdConverter().apply(view))) != null ? ((ViewMapping) o).getObjectNode() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientViewJson, serverViewJson)) {
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonDiffFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
+                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonPatchFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
                     }
                     elementsToCommit.add(clientViewJson);
                 }
@@ -605,14 +563,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         instanceToView.add(new Pair<>(presentationElementInstance.getInstance(), view));
                     }
                 }
-
-                // No need to commit constraint as it's wrapped up into the view
-                /*
-                Constraint constraint = Utils.getViewConstraint(view);
-                if (constraint != null) {
-                    elementsJSONArray.add(Converters.getElementToJsonConverter().apply(constraint, project));
-                }
-                */
             }
 
             String viewInstanceBinId = MDKConstants.VIEW_INSTANCES_BIN_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
@@ -620,7 +570,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 Pair<InstanceSpecification, Element> pair = instanceToView.remove();
                 InstanceSpecification instance = pair.getKey();
 
-                List<InstanceSpecification> subInstances = instanceUtils.getCurrentInstances(instance, pair.getValue()).getAll();
+                List<InstanceSpecification> subInstances = presentationElementUtils.getCurrentInstances(instance, pair.getValue()).getAll();
                 for (InstanceSpecification subInstance : subInstances) {
                     instanceToView.add(new Pair<>(subInstance, pair.getValue()));
                 }
@@ -635,7 +585,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         instanceSpecificationMap.get(Converters.getElementToIdConverter().apply(instance)).getKey() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonDiffFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
+                        Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonPatchFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
                     }
                     elementsToCommit.add(clientInstanceSpecificationJson);
                 }
@@ -650,7 +600,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (!JsonEquivalencePredicate.getInstance().test(clientSlotJson, serverSlotJson)) {
                         elementsToCommit.add(clientSlotJson);
                         if (MDUtils.isDeveloperMode()) {
-                            Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonDiffFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
+                            Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonPatchFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
                         }
                     }
                 }
@@ -671,7 +621,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, true, elementsToCommit.size(), "Sync Changes"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, elementsToCommit.size(), "Sync Changes"));
                 changed = true;
             }
 
@@ -695,7 +645,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, true, elementsToCommit.size(), "View Generation"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, elementsToCommit.size(), "View Generation"));
                 changed = true;
             }
 
@@ -711,7 +661,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // Cleaning up after myself. While cancelSession *should* undo all elements created, there are certain edge
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
-            Set<Element> elementsToDelete = new HashSet<>();
+
             for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
                 if (pair.getValue() != null) {
                     elementsToDelete.add(pair.getValue());
@@ -757,6 +707,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     System.out.println("Could not clean up " + element.getLocalID());
                 }
             }
+
             // used to skip redundant view generation attempts when using multi-select or ElementGroups; see GenerateViewPresentationAction
             processedElements.addAll(views);
         } catch (Exception e) {
@@ -764,16 +715,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             Utils.printException(e);
         } finally {
             // cancel session so all elements created get deleted automatically
-            if (manageSesssions) {
-                if (SessionManager.getInstance().isSessionCreated(project)) {
-                    SessionManager.getInstance().cancelSession(project);
-                }
+            if (SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().cancelSession(project);
             }
             if (localSyncTransactionCommitListener != null) {
                 localSyncTransactionCommitListener.setDisabled(false);
             }
         }
-        ImageValidator iv = new ImageValidator(dbAlfrescoVisitor.getImages(), images);
+        ImageValidator iv = new ImageValidator(images, images);
         // this checks images generated from the local generation against what's on the web based on checksum
         iv.validate(project);
         // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
@@ -784,11 +733,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
         }
-//        vss.add(iv.getSuite());
-        if (showValidation) {
-            if (suite.hasErrors()) {
-                Utils.displayValidationWindow(project, vss, "View Generation Validation");
-            }
+
+        if (suite.hasErrors()) {
+            Utils.displayValidationWindow(project, vss, "View Generation Validation");
         }
     }
 
@@ -797,17 +744,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (pe.getChildren() != null && !pe.getChildren().isEmpty()) {
                 handlePes(pe.getChildren(), p);
             }
-            instanceUtils.updateOrCreateInstance(pe, p);
+            presentationElementUtils.updateOrCreateInstance(pe, p);
         }
     }
 
     private boolean handleCancel(ProgressStatus progressStatus) {
         if (progressStatus.isCancel()) {
             failure = true;
-            if (manageSesssions) {
-                if (SessionManager.getInstance().isSessionCreated(project)) {
-                    SessionManager.getInstance().cancelSession(project);
-                }
+            if (SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().cancelSession(project);
             }
             Application.getInstance().getGUILog().log("View generation cancelled.");
             return true;
@@ -827,6 +772,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         private Element element;
         private ObjectNode objectNode;
         private List<String> instanceIDs;
+        private DBBook dbBook;
 
         public Element getElement() {
             return element;
@@ -850,6 +796,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         public void setInstanceIDs(List<String> instanceIDs) {
             this.instanceIDs = instanceIDs;
+        }
+
+        public DBBook getDbBook() {
+            return dbBook;
+        }
+
+        public void setDbBook(DBBook dbBook) {
+            this.dbBook = dbBook;
         }
     }
 

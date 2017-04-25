@@ -12,115 +12,52 @@ import java.net.URISyntaxException;
 
 public class Request {
 
-    private Project project = null;
-    private boolean feedback = false;
-    private HttpRequestBase request = null;
-    private boolean suppressGui = false;
-    private int wait = 60000;
-    private String type = "Element";
-    private int numElements = 1;
-    private boolean background = false;
+    private final Project project;
+    private final HttpRequestBase request;
+    private final int count, completionDelay;
+    private final String name;
 
+    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, File file, ContentType contentType, int count, String name)
+            throws IOException, URISyntaxException {
+        this(project, method, uri, file, contentType, count, name, 0);
+    }
 
-    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, File data, ContentType contentType, boolean feedback)
+    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, File file, ContentType contentType, int count, String name, int completionDelay)
             throws IOException, URISyntaxException {
         this.project = project;
-        this.request = MMSUtils.buildRequest(method, uri, data, contentType);
-        this.feedback = feedback;
-        this.suppressGui = !feedback;
+        this.request = MMSUtils.buildRequest(method, uri, file, contentType);
+        this.count = count;
+        this.name = name;
+        this.completionDelay = completionDelay;
     }
 
-    public Request(Project project, MMSUtils.HttpRequestType method, URIBuilder uri, File data, ContentType contentType, boolean feedback, int wait, String type)
+    public Request(Project project, URIBuilder requestUri, File file, int count, String name)
             throws IOException, URISyntaxException {
         this.project = project;
-        this.request = MMSUtils.buildRequest(method, uri, data, contentType);
-        this.feedback = feedback;
-        this.suppressGui = !feedback;
-        this.wait = wait * 1000 + 120000;
-        this.type = type;
-        this.numElements = wait;
-    }
-
-    public Request(Project project, URIBuilder requestUri, File data, ContentType contentType, String type)
-            throws IOException, URISyntaxException {
-        this.project = project;
-        this.request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, data, contentType);
-        this.type = type;
-    }
-
-    public Request(Project project, URIBuilder requestUri, File uploadFile, String type)
-            throws IOException, URISyntaxException {
-        this.project = project;
-        this.request = MMSUtils.buildImageRequest(requestUri, uploadFile);
-        this.type = type;
-    }
-
-    public Request(Project project, URIBuilder requestUri, File data, ContentType contentType, int wait, String type, Boolean background)
-            throws IOException, URISyntaxException {
-        this.project = project;
-        if (background != null && background) {
-            requestUri.setParameter("background", "true");
-        }
-        this.request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, data, contentType);
-        this.wait = wait * 1000 + 120000;
-        this.type = type;
-        this.numElements = wait;
-        this.background = (background == null) ? false : background;
-    }
-
-    public Request() {
-    }
-
-    public HttpRequestBase getRequest() {
-        return this.request;
-    }
-
-    public boolean isBackground() {
-        return this.background;
-    }
-
-    public boolean isFeedback() {
-        return this.feedback;
-    }
-
-    public void setFeedback(boolean feedback) {
-        this.feedback = feedback;
-    }
-
-    public boolean isSuppressGui() {
-        return this.suppressGui;
-    }
-
-    public void setSuppressGui(boolean suppressGui) {
-        this.suppressGui = suppressGui;
-    }
-
-    public int getWait() {
-        return this.wait;
-    }
-
-    public void setWait(int wait) {
-        this.wait = wait;
-    }
-
-    public String getType() {
-        return this.type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public int getNumElements() {
-        return this.numElements;
-    }
-
-    public void setNumElements(int numElements) {
-        this.numElements = numElements;
+        this.request = MMSUtils.buildImageRequest(requestUri, file);
+        this.count = count;
+        this.name = name;
+        this.completionDelay = 0;
     }
 
     public Project getProject() {
-        return this.project;
+        return project;
+    }
+
+    public HttpRequestBase getRequest() {
+        return request;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getCompletionDelay() {
+        return completionDelay;
     }
 
     @Override
@@ -128,7 +65,6 @@ public class Request {
         String s = "";
         s += "url: " + request.getURI().toString();
         s += "\nmethod: " + request.getMethod();
-        s += "\nwait: " + wait + "\n";
         return s;
     }
 }
