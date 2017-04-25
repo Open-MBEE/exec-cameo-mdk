@@ -21,7 +21,7 @@ deployment:
     commands:
       - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUser=$ARTIFACTORY_USER -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
   snapshot:
-    branch: "((release|hotfix|support)\/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)"
+    branch: "/((release|hotfix|support)\/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/"
     owner: Open-MBEE
     commands:
       - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUser=$ARTIFACTORY_USER -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
