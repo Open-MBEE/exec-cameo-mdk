@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk;
 import com.nomagic.magicdraw.cookies.CloseCookie;
 import com.nomagic.magicdraw.cookies.CookieSet;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.plugins.Plugin;
 import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
@@ -15,7 +16,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusProjectEventListenerAdapt
  * MMS whenever any type of commit is executed.
  * This class is also responsible for start the REST web services.
  */
-public class MMSSyncPlugin extends MDPlugin {
+public class MMSSyncPlugin extends Plugin {
     private static MMSSyncPlugin instance;
     private LocalSyncProjectEventListenerAdapter localSyncProjectEventListenerAdapter;
     private JMSSyncProjectEventListenerAdapter jmsSyncProjectEventListenerAdapter;
@@ -51,8 +52,7 @@ public class MMSSyncPlugin extends MDPlugin {
     }
 
     @Override
-    public void initConfigurations() {
-        System.out.println("Initializing MMSSyncPlugin.");
+    public void init() {
         // Order matters!
         Application.getInstance().getProjectsManager().addProjectListener(coordinatedSyncProjectEventListenerAdapter = new CoordinatedSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(deltaSyncProjectEventListenerAdapter = new DeltaSyncProjectEventListenerAdapter());
@@ -67,6 +67,11 @@ public class MMSSyncPlugin extends MDPlugin {
             cookieSet.remove(closeCookie);
         }
         cookieSet.add(new OutputQueueCloseCookie(closeCookie));
+    }
+
+    @Override
+    public boolean close() {
+        return true;
     }
 
     public boolean isSupported() {

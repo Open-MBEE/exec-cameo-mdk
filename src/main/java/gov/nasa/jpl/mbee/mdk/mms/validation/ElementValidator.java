@@ -17,16 +17,16 @@ import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.JsonPatchUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.*;
@@ -39,33 +39,31 @@ import java.util.stream.Collectors;
 public class ElementValidator implements RunnableWithProgress {
     private Collection<Pair<Element, ObjectNode>> clientElements;
     private Collection<ObjectNode> serverElements;
-    private Collection<JsonParser> serverElementParsers;
     private final Project project;
+
+    private Collection<File> serverElementFiles;
+
     private int notEquivalentCount = 0;
     private int missingInClientCount = 0;
     private int missingOnMmsCount = 0;
 
 
-    private ValidationSuite validationSuite = new ValidationSuite("Model Validation");
+    private final ValidationSuite validationSuite;
     private ValidationRule elementEquivalenceValidationRule = new ValidationRule("Element Equivalence", "Element shall be represented in MagicDraw and MMS equivalently.", ViolationSeverity.ERROR);
     private Map<String, Pair<Pair<Element, ObjectNode>, ObjectNode>> invalidElements = new LinkedHashMap<>();
 
-    {
+    public ElementValidator(String name, Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project, Collection<File> serverElementFiles) {
+        this.clientElements = clientElements;
+        this.serverElements = serverElements;
+        this.project = project;
+        this.serverElementFiles = serverElementFiles;
+
+        validationSuite = new ValidationSuite(name);
         validationSuite.addValidationRule(elementEquivalenceValidationRule);
     }
 
-    public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Collection<JsonParser> serverElementParsers, Project project) {
-        this.clientElements = clientElements;
-        this.serverElements = serverElements;
-        this.serverElementParsers = serverElementParsers;
-        this.project = project;
-    }
-
-    public ElementValidator(Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project) {
-        this.clientElements = clientElements;
-        this.serverElements = serverElements;
-        this.serverElementParsers = null;
-        this.project = project;
+    public ElementValidator(String name, Collection<Pair<Element, ObjectNode>> clientElements, Collection<ObjectNode> serverElements, Project project) {
+        this(name, clientElements, serverElements, project, Collections.emptyList());
     }
 
     public static Collection<Pair<Element, ObjectNode>> buildElementPairs(Collection<Element> elements, Project project) {
@@ -95,20 +93,17 @@ public class ElementValidator implements RunnableWithProgress {
 
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         Set<String> processedElementIds = new HashSet<>();
-        try {
-            for (JsonParser jsonParser : serverElementParsers) {
-                JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
+        JsonToken current = null;
+        for (File responseFile : serverElementFiles) {
+            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
                 if (current != JsonToken.START_OBJECT) {
                     throw new IOException("Unable to build object from JSON parser.");
                 }
                 while (current != JsonToken.END_OBJECT) {
-                    if (jsonParser.getCurrentName() == null) {
-                        current = jsonParser.nextToken();
-                        continue;
-                    }
-                    String keyName = jsonParser.getCurrentName();
-                    if (keyName.equals("elements")) {
-                        jsonParser.nextToken();
+                    current = jsonParser.nextToken();
+                    String keyName;
+                    if (current != null && (keyName = jsonParser.getCurrentName()) != null && keyName.equals("elements") && (current = jsonParser.nextToken()) == JsonToken.START_ARRAY) {
                         current = jsonParser.nextToken();
                         JsonNode value;
                         while (current != JsonToken.END_ARRAY) {
@@ -122,25 +117,18 @@ public class ElementValidator implements RunnableWithProgress {
                                     Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);
                                     if (currentClientElement == null) {
                                         addMissingInClientViolation(currentServerElement);
-                                    }
-                                    else {
+                                    } else {
                                         addElementEquivalenceViolation(currentClientElement, currentServerElement);
                                     }
                                 }
                             }
-                            else {
-                                // ignore
-                            }
-                            current = jsonParser.nextToken();
                         }
                     }
-                    current = jsonParser.nextToken();
                 }
+            } catch (IOException e) {
+                // stuff
             }
-        } catch (IOException e) {
-            // stuff
         }
-
 
         if (serverElements == null) {
             serverElements = new LinkedList<>();
@@ -177,11 +165,11 @@ public class ElementValidator implements RunnableWithProgress {
             }
             progressStatus.increase();
         }
-        Application.getInstance().getGUILog().log("[INFO] --- Start MDK Element Validation Summary ---");
+        Application.getInstance().getGUILog().log("[INFO] --- Start " + validationSuite.getName() + " Summary ---");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingInClientCount) + " element" + (missingInClientCount != 1 ? "s are" : " is") + " missing in client.");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingOnMmsCount) + " element" + (missingOnMmsCount != 1 ? "s are" : "is") + " missing on MMS.");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(notEquivalentCount) + " element" + (notEquivalentCount != 1 ? "s are" : " is") + " not equivalent between client and MMS.");
-        Application.getInstance().getGUILog().log("[INFO] ---  End MDK Element Validation Summary  ---");
+        Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
     }
 
     private void addMissingInClientViolation(ObjectNode serverElement) {
@@ -205,8 +193,8 @@ public class ElementValidator implements RunnableWithProgress {
     }
 
     public void addElementEquivalenceViolation(Pair<Element, ObjectNode> clientElement, ObjectNode serverElement) {
-        JsonNode diff = JsonDiffFunction.getInstance().apply(clientElement.getValue(), serverElement);
-        if (!JsonPatchUtils.isEqual(diff)) {
+        JsonNode diff = JsonPatchFunction.getInstance().apply(clientElement.getValue(), serverElement);
+        if (diff != null && diff.size() != 0) {
             notEquivalentCount++;
             String name = "<>";
             if (clientElement.getKey() instanceof NamedElement && ((NamedElement) clientElement.getKey()).getName() != null && !((NamedElement) clientElement.getKey()).getName().isEmpty()) {
@@ -227,19 +215,19 @@ public class ElementValidator implements RunnableWithProgress {
         if (clientElement != null) {
             copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElement.getKey().getID()));
             try {
-                copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writeValueAsString(clientElement.getValue())));
+                copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(clientElement.getValue())));
             } catch (JsonProcessingException ignored) {
             }
         }
         if (serverElement != null) {
             try {
-                copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writeValueAsString(serverElement)));
+                copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(serverElement)));
             } catch (JsonProcessingException ignored) {
             }
         }
         if (diff != null) {
             try {
-                copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writeValueAsString(diff)));
+                copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(diff)));
             } catch (JsonProcessingException ignored) {
             }
         }

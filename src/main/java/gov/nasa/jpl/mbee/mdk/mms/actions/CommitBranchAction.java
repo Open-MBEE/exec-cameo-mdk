@@ -81,18 +81,16 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo, updateBranch);
         refsNodes.add(branchNode);
 
-        JsonParser response;
+        File responseFile;
         try {
             File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
             HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
-            response = MMSUtils.sendMMSRequest(project, request);
+            responseFile = MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | URISyntaxException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting branch. Reason: " + e.getMessage());
             e.printStackTrace();
             return;
         }
-        // do any response processing
-
         if (shouldCommitModel) {
             RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);

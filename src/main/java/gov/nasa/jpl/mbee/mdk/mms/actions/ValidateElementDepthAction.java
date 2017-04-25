@@ -10,6 +10,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -84,16 +85,13 @@ public class ValidateElementDepthAction extends MMSAction {
 
         if (!cancel) {
             ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), depth);
-            ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync (depth: " + Integer.toString(depth) + ")", true, 0);
+            ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Validate Models (depth: " + NumberFormat.getInstance().format(depth) + ")", true, 0);
             if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
                 Utils.displayValidationWindow(project, manualSyncRunner.getValidationSuite(), manualSyncRunner.getValidationSuite().getName());
             }
-            else {
-                Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");
-            }
         }
         else {
-            Application.getInstance().getGUILog().log("[INFO] Cancel pressed. Aborting validation.");
+            Application.getInstance().getGUILog().log("[INFO] Cancel pressed. Validation aborted.");
         }
     }
 }

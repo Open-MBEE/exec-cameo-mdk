@@ -20,6 +20,7 @@ import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -81,13 +82,13 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setCurrent(0);
 
         List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
-        Collection<JsonParser> jsonParsers = new ArrayList<>(3);
+        Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
             try {
-                JsonParser jsonParser = collectServerElementsRecursively(project, element, depth, progressStatus);
-                if (jsonParser != null) {
-                    jsonParsers.add(jsonParser);
+                File responseFile = collectServerElementsRecursively(project, element, depth, progressStatus);
+                if (responseFile != null) {
+                    responseFiles.add(responseFile);
                 }
                 if (element == project.getPrimaryModel() && depth != 0) {
                     // scan of initial return for holding bin is expensive. assume it's not there and request anyway
@@ -95,18 +96,18 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
-                    jsonParser = collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus);
-                    if (jsonParser != null) {
-                        jsonParsers.add(jsonParser);
+                    responseFile = collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus);
+                    if (responseFile != null) {
+                        responseFiles.add(responseFile);
                     }
 
                     if (progressStatus.isCancel()) {
                         Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
-                    jsonParser = collectServerModuleElementsRecursively(project, 0, progressStatus);
-                    if (jsonParser != null) {
-                        jsonParsers.add(jsonParser);
+                    responseFile = collectServerModuleElementsRecursively(project, 0, progressStatus);
+                    if (responseFile != null) {
+                        responseFiles.add(responseFile);
                     }
                 }
             } catch (ServerException | URISyntaxException | IOException e) {
@@ -115,7 +116,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 validationSuite = null;
                 return;
             }
-            if (jsonParsers.isEmpty()) {
+            if (responseFiles.isEmpty()) {
                 if (!progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[ERROR] Failed to get elements from the server. Aborting manual sync.");
                 }
@@ -128,7 +129,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
             return;
         }
-        elementValidator = new ElementValidator(clientElements, null, jsonParsers, project);
+        elementValidator = new ElementValidator("Element Validation", clientElements, null, project, responseFiles);
         elementValidator.run(progressStatus);
     }
 
@@ -150,7 +151,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
     }
 
-    private static JsonParser collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
+    private static File collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         String id = Converters.getElementToIdConverter().apply(element);
         Collection<String> elementIds = new ArrayList<>(1);
@@ -158,7 +159,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return MMSUtils.getElementsRecursively(project, elementIds, depth, progressStatus);
     }
 
-    private static JsonParser collectServerModuleElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
+    private static File collectServerModuleElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         Collection<Element> attachedModels = new ArrayList<>(project.getModels());
         attachedModels.remove(project.getPrimaryModel());
@@ -166,7 +167,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return MMSUtils.getElements(project, attachedModelIds, null);
     }
 
-    private static JsonParser collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
+    private static File collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         String holdingBinId = MDKConstants.HOLDING_BIN_ID_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         return MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);

@@ -1,24 +1,19 @@
 package gov.nasa.jpl.mbee.mdk.ocl.actions;
 
-//import gov.nasa.jpl.mbee.mdk.Configurator;
-
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.base.ModelObject;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.Configurator;
 import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
+import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
+import gov.nasa.jpl.mbee.mdk.ocl.ui.OclQueryDialog;
+import gov.nasa.jpl.mbee.mdk.ocl.ui.RepeatInputComboBoxDialog;
 import gov.nasa.jpl.mbee.mdk.util.Debug;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.MoreToString;
 import gov.nasa.jpl.mbee.mdk.util.Utils2;
-import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
-import gov.nasa.jpl.mbee.mdk.ocl.ui.OclEvaluatorDialog;
-import gov.nasa.jpl.mbee.mdk.ocl.ui.RepeatInputComboBoxDialog;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.ocl.ParserException;
-import org.junit.Assert;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -26,15 +21,8 @@ import java.util.*;
 import java.util.List;
 
 public class OclQueryAction extends MDAction {
-
-    private static final long serialVersionUID = -4695340422718243709L;
-
-    //private List<Element>        context          = new ArrayList<Element>();
-    private Object context;
-
     public static final String DEFAULT_ID = "OclQuery";
-
-    public static String actionText = "Run OCL Query";
+    public static final String actionText = "Run OCL Query";
 
     protected String lastInput = "";
     protected LinkedList<String> inputHistory = new LinkedList<String>();
@@ -43,13 +31,12 @@ public class OclQueryAction extends MDAction {
 
     //protected static boolean selectionInDiagram = true;
 
-    public static OclEvaluatorDialog dialog = null;
+    public static OclQueryDialog dialog = null;
 
     public static boolean useNewOclEvaluator = true;
 
-    public OclQueryAction(Element context) {
+    public OclQueryAction() {
         super(DEFAULT_ID, actionText, null, null);
-        setContext(context);
     }
 
     public static class ProcessOclQuery implements RepeatInputComboBoxDialog.Processor {
@@ -401,56 +388,6 @@ public class OclQueryAction extends MDAction {
             return s;
         }
 
-        private String propertiesToString(EObject eObject) {
-            StringBuffer sb = new StringBuffer();
-            // TODO
-            Assert.assertFalse(true);
-            return sb.toString();
-        }
-
-        private String spew(Object result) {
-            String s = null;
-            if (result instanceof Collection) {
-                StringBuffer sb = new StringBuffer();
-                sb.append("(");
-                boolean first = true;
-                for (Object r : (Collection<?>) result) {
-                    if (first) {
-                        first = false;
-                    }
-                    else {
-                        sb.append(",");
-                    }
-                    sb.append(spew(r));
-                }
-                sb.append(")");
-                s = sb.toString();
-            }
-            if (Utils2.isNullOrEmpty(s) && result instanceof BaseElement) {
-                BaseElement be = ((BaseElement) result);
-                s = be.getHumanName();
-            }
-            if (Utils2.isNullOrEmpty(s) && result instanceof ModelObject) {
-                s = ((ModelObject) result).get_representationText();
-            }
-            if (result instanceof EObject) {
-                if (Utils2.isNullOrEmpty(s)) {
-                    s = "";
-                }
-                else {
-                    s = s + ": ";
-                }
-                s = s + EmfUtils.spew(result);
-            }
-            if (Utils2.isNullOrEmpty(s) && result != null) {
-                s = result.toString();
-            }
-            if (s == null) {
-                s = "null";
-            }
-            return s;
-        }
-
         @Override
         public List<String> getCompletionChoices() {
             return choiceStrings;
@@ -466,9 +403,6 @@ public class OclQueryAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Collection<Element> selectedElements = MDUtils.getSelection(e, isSelectionInDiagram());
-        setContext(selectedElements);
-
         // Ensure user-defined shortcut functions are updated
         OclEvaluator.resetEnvironment();
 
@@ -479,75 +413,15 @@ public class OclQueryAction extends MDAction {
             t.printStackTrace();
         }
         try {
-            if (useNewOclEvaluator) {
-                boolean selectionInDiagram = true;
-                boolean selectionInBrowser = false;
-                //dialog = null;  // comment this out -- only for debug
-                if (dialog == null) {
-                    dialog = new OclEvaluatorDialog(owner, "OCL Evaluation");
-                }
-                else if (Configurator.isInvokedFromMainMenu()) {
-                    // use last 
-                    selectionInDiagram = dialog.diagramCB.isSelected();
-                    selectionInBrowser = dialog.browserCB.isSelected();
-                }
-                if (!Configurator.isInvokedFromMainMenu()) {
-                    selectionInDiagram = isSelectionInDiagram();
-                    selectionInBrowser = !selectionInDiagram;
-                }
-                if (MDUtils.getSelectionInDiagram().isEmpty()
-                        && !MDUtils.getSelectionInContainmentBrowser().isEmpty()) {
-                    selectionInDiagram = false;
-                    selectionInBrowser = true;
-                }
-                dialog.diagramCB.setSelected(selectionInDiagram);
-                dialog.browserCB.setSelected(selectionInBrowser);
-                dialog.getEditableListPanel().setResult("");
-                dialog.setVisible(true);
-
+            if (dialog == null) {
+                dialog = new OclQueryDialog(owner, "OCL Evaluation");
             }
-            else {
-                RepeatInputComboBoxDialog.showRepeatInputComboBoxDialog("Enter an OCL expression:",
-                        "OCL Evaluation", new ProcessOclQuery(selectedElements));
-            }
+            dialog.diagramCB.setSelected(true);
+            dialog.browserCB.setSelected(true);
+            dialog.getEditableListPanel().setResult("");
+            dialog.setVisible(true);
         } catch (Throwable t) {
             t.printStackTrace();
         }
-    }
-
-    /**
-     * @return the context
-     */
-    /*public List<Element> getContext() {
-        if (context == null)
-            context = new ArrayList<Element>();
-        return context;
-    }*/
-
-    /**
-     * @param context
-     *            the context to set
-     */
-    /*public void setContext(List<Element> context) {
-        this.context = context;
-    }*/
-
-    /**
-     * @param context the context to set
-     */
-    /*public void setContext(Collection<Element> context) {
-        getContext().clear();
-        getContext().addAll(context);
-    }*/
-    public void setContext(final Object context) {
-        this.context = context;
-    }
-
-    /**
-     * @return the selectionInDiagram
-     */
-    public static boolean isSelectionInDiagram() {
-        return Configurator.isLastContextDiagram();
-        //return selectionInDiagram;
     }
 }

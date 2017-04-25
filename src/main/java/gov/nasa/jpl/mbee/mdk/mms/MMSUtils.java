@@ -75,17 +75,19 @@ public class MMSUtils {
             throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
-        JsonParser responseParser = getElementsRecursively(project, elementIds, 0, progressStatus);
-        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-        JsonNode value;
-        if (((value = response.get("elements")) != null) && value.isArray()
-                && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
-            return (ObjectNode) value;
+        File responseFile = getElementsRecursively(project, elementIds, 0, progressStatus);
+        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+            JsonNode value;
+            if (((value = response.get("elements")) != null) && value.isArray()
+                    && (value = ((ArrayNode) value).remove(1)) != null && (value instanceof ObjectNode)) {
+                return (ObjectNode) value;
+            }
         }
-        return response;
+        return null;
     }
 
-    public static JsonParser getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
+    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
@@ -101,7 +103,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static JsonParser getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
+    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
         return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
@@ -116,7 +118,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static JsonParser getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
@@ -260,7 +262,7 @@ public class MMSUtils {
             }
             jsonGenerator.writeEndArray();
             jsonGenerator.writeStringField("source", "magicdraw");
-            jsonGenerator.writeStringField("mdkVersion", MDKPlugin.VERSION);
+            jsonGenerator.writeStringField("mdkVersion", MDKPlugin.getVersion());
             jsonGenerator.writeEndObject();
         }
         System.out.println("Request Body: " + file.getPath());
@@ -275,7 +277,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static JsonParser sendMMSRequest(Project project, HttpRequestBase request)
+    public static File sendMMSRequest(Project project, HttpRequestBase request)
             throws IOException, ServerException, URISyntaxException {
         File targetFile = File.createTempFile("Response-", null);
         targetFile.deleteOnExit();
@@ -286,6 +288,10 @@ public class MMSUtils {
         logBody = logBody && httpEntityEnclosingRequest.getEntity().isRepeatable();
         System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
 
+        // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
+        boolean throwServerException = false;
+        int responseCode;
+
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         try (CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -293,15 +299,12 @@ public class MMSUtils {
              InputStream inputStream = response.getEntity().getContent();
              OutputStream outputStream = new FileOutputStream(targetFile)) {
             // get data out of the response
-            int responseCode = response.getStatusLine().getStatusCode();
+            responseCode = response.getStatusLine().getStatusCode();
             String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
             // debug / logging output from response
             System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
             System.out.println("Response Body: " + targetFile.getPath());
-
-            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
-            boolean throwServerException = false;
 
             // assume that a GET that returns 404 with json response bodies is a "missing resource" 404, which are expected for some cases and should not break normal execution flow
             if (responseCode == HttpURLConnection.HTTP_OK || (request.getMethod().equals("GET") && responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8"))) {
@@ -326,28 +329,27 @@ public class MMSUtils {
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-
-                JsonFactory jasonFactory = JacksonUtils.getJsonFactory();
-                JsonParser jsonParser = jasonFactory.createParser(targetFile);
-                while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
-                    // spin until we find message
-                }
-                if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
-                    jsonParser.nextToken();
-                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
-                }
-            }
-
-            if (throwServerException) {
-                // big flashing red letters that the action failed, or as close as we're going to get
-                Utils.showPopupMessage("Action failed. See notification window for details.");
-                // throw is done last, after printing the error and any messages that might have been returned
-                throw new ServerException((inputStream != null ? inputStream.toString() : ""), responseCode);
             }
         }
-        JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(targetFile);
-        jsonParser.nextToken();
-        return jsonParser;
+
+        JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
+        try (JsonParser jsonParser = jsonFactory.createParser(targetFile)) {
+            while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
+                // spin until we find message
+            }
+            if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
+                jsonParser.nextToken();
+                Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
+            }
+        }
+
+        if (throwServerException) {
+            // big flashing red letters that the action failed, or as close as we're going to get
+            Utils.showPopupMessage("Action failed. See notification window for details.");
+            // throw is done last, after printing the error and any messages that might have been returned
+            throw new ServerException(targetFile.getAbsolutePath(), responseCode);
+        }
+        return targetFile;
     }
 
     /**
@@ -361,14 +363,14 @@ public class MMSUtils {
      * @throws URISyntaxException
      * @throws ServerException    contains both response code and response body
      */
-    public static JsonParser sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
+    public static File sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
             throws IOException, ServerException, URISyntaxException {
-        final AtomicReference<JsonParser> responseJsonParser = new AtomicReference<>();
+        final AtomicReference<File> responseFile = new AtomicReference<>();
         final AtomicReference<Integer> ecode = new AtomicReference<>();
         final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
         final AtomicReference<String> emsg = new AtomicReference<>();
         Thread t = new Thread(() -> {
-            JsonParser response = null;
+            File response = null;
             try {
                 response = sendMMSRequest(project, request);
                 etype.set(null);
@@ -388,7 +390,7 @@ public class MMSUtils {
                 emsg.set(e.getMessage());
                 e.printStackTrace();
             }
-            responseJsonParser.set(response);
+            responseFile.set(response);
         });
         t.start();
         try {
@@ -413,7 +415,7 @@ public class MMSUtils {
         else if (etype.get() == ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION) {
             throw new URISyntaxException(request.getURI().toString(), emsg.get());
         }
-        return responseJsonParser.get();
+        return responseFile.get();
     }
 
     public static String sendCredentials(Project project, String username, String password)
@@ -583,23 +585,18 @@ public class MMSUtils {
 
     public static String getMmsOrg(Project project)
             throws IOException, URISyntaxException, ServerException {
-
-//        String siteString = "";
-//        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
-//            siteString = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS Org");
-//        }
-//        return siteString;
-
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        JsonParser responseParser = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
-        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-        JsonNode arrayNode;
-        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-            JsonNode value;
-            for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                        && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                    return value.asText();
+        File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+            JsonNode arrayNode;
+            if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+                JsonNode value;
+                for (JsonNode projectNode : arrayNode) {
+                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                            && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
+                        return value.asText();
+                    }
                 }
             }
         }
@@ -609,63 +606,21 @@ public class MMSUtils {
     public static String getUri(Project project)
             throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
-        ObjectNode response = JacksonUtils.parseJsonObject(sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder)));
-        JsonNode arrayNode;
-        if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-            JsonNode value;
-            for (JsonNode projectNode : arrayNode) {
-                if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                        && ((value = projectNode.get(MDKConstants.TWC_URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                    return value.asText();
+        File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
+            JsonNode arrayNode;
+            if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
+                JsonNode value;
+                for (JsonNode projectNode : arrayNode) {
+                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                            && ((value = projectNode.get(MDKConstants.TWC_URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
+                        return value.asText();
+                    }
                 }
             }
         }
         return null;
-    }
-
-    public static boolean isProjectOnMms(Project project) throws IOException, URISyntaxException, ServerException {
-        // build request for bulk project GET
-        URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-
-        // do request, check return for project
-        ObjectNode response = JacksonUtils.parseJsonObject(sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri)));
-        JsonNode projectsJson;
-        if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
-            JsonNode value;
-            for (JsonNode projectJson : projectsJson) {
-                if ((value = projectJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()
-                        && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    public static boolean isBranchOnMms(Project project, String branch) throws IOException, URISyntaxException, ServerException {
-        // build request for project element
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-
-        // do request for ref element
-        JsonParser responseParser = sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-        JsonNode projectsJson;
-        if ((projectsJson = response.get("refs")) != null && projectsJson.isArray()) {
-            JsonNode value;
-            for (JsonNode projectJson : projectsJson) {
-                if ((value = projectJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual() && value.asText().equals(branch)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**

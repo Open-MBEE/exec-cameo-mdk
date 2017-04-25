@@ -17,11 +17,11 @@ import java.util.List;
 /**
  *
  */
-public class OclEvaluatorDialog extends JDialog implements ActionListener {
+public class OclQueryDialog extends JDialog implements ActionListener {
 
     private static final long serialVersionUID = -9114812582757129836L;
 
-    private static OclEvaluatorDialog instance = null;
+    private static OclQueryDialog instance = null;
     // members for tracking input history
     protected static String query = null;
     //protected static LinkedList<Object>                          inputHistory      = new LinkedList<Object>();
@@ -50,7 +50,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
      * @param owner
      * @param title
      */
-    public OclEvaluatorDialog(Window owner, String title) {
+    public OclQueryDialog(Window owner, String title) {
         super(owner, title, ModalityType.MODELESS);
         init(owner);
     }
@@ -380,7 +380,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
     }
 
 
-    public static OclEvaluatorDialog getInstance() {
+    public static OclQueryDialog getInstance() {
         return instance;
     }
 
@@ -396,7 +396,7 @@ public class OclEvaluatorDialog extends JDialog implements ActionListener {
      * @param args
      */
     public static void main(String[] args) {
-        OclEvaluatorDialog dialog = new OclEvaluatorDialog(null, "testing");
+        OclQueryDialog dialog = new OclQueryDialog(null, "testing");
         dialog.setVisible(true);
     }
 

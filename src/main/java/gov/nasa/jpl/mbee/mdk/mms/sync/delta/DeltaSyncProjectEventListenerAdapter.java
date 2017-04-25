@@ -42,12 +42,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             if (localSyncTransactionCommitListener == null) {
                 return combinedPersistedChangelog;
             }
-            return combinedPersistedChangelog.and(localSyncTransactionCommitListener.getInMemoryLocalChangelog(), new BiFunction<String, Element, Void>() {
-                @Override
-                public Void apply(String key, Element element) {
-                    return null;
-                }
-            });
+            return combinedPersistedChangelog.and(localSyncTransactionCommitListener.getInMemoryLocalChangelog(), (key, element) -> null);
         });
         CHANGELOG_FUNCTIONS.put(SyncElement.Type.MMS, project -> {
             Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();

@@ -12,26 +12,25 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by igomes on 6/28/16.
  */
 public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<String, LocalSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, LocalSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
     public void projectCreated(Project project) {
         projectOpened(project);
     }
 
+    // Cannot rely on this being called when MagicDraw programmatically reloads a project, which makes the old Project stale.
+    // Mitigating by moving all logic to mapping constructor, but this leaves gaps where events may not be captured.
     @Override
     public void projectOpened(Project project) {
         closeLocalCommitListener(project);
-        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
-        if (project.isRemote()) {
-            ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(listener);
-        }
+        getProjectMapping(project);
     }
 
     @Override
     public void projectClosed(Project project) {
         closeLocalCommitListener(project);
+        projectMappings.remove(project);
     }
 
     @Override
@@ -42,7 +41,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
-        LocalSyncProjectMapping localSyncProjectMapping = LocalSyncProjectEventListenerAdapter.getProjectMapping(project);
+        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
         LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
         if (listener == null) {
             projectOpened(project);
@@ -52,17 +51,19 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     }
 
     private static void closeLocalCommitListener(Project project) {
-        LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        if (localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
+        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project);
+        if (localSyncProjectMapping != null && localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
             project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
         }
-        //projectMappings.remove(MDUtils.getProjectID(project));
     }
 
     public static LocalSyncProjectMapping getProjectMapping(Project project) {
-        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project);
         if (localSyncProjectMapping == null) {
-            projectMappings.put(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), localSyncProjectMapping = new LocalSyncProjectMapping(project));
+            projectMappings.put(project, localSyncProjectMapping = new LocalSyncProjectMapping(project));
+            if (project.isRemote()) {
+                ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
+            }
         }
         return localSyncProjectMapping;
     }

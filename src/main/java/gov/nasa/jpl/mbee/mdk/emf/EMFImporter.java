@@ -8,11 +8,13 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.reflect.AbstractRepository;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.ParameterableElement;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.TemplateParameter;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.impl.UMLFactoryImpl;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
@@ -47,9 +49,6 @@ public class EMFImporter implements JsonToElementFunction {
     }
 
     private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException, ReadOnlyElementException {
-        UMLFactory.eINSTANCE.setRepository(project.getRepository());
-        project.getCounter().setCanResetIDForObject(true);
-
         JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
         /*if (jsonNode == null || !jsonNode.isTextual()) {
             return null;
@@ -63,6 +62,9 @@ public class EMFImporter implements JsonToElementFunction {
                 if (element == null) {
                     return null;
                 }
+            }
+            if (element.eClass() == null) {
+                return null;
             }
             for (EStructuralFeature eStructuralFeature : element.eClass().getEAllStructuralFeatures()) {
                 final Element finalElement = element;
@@ -159,7 +161,15 @@ public class EMFImporter implements JsonToElementFunction {
                         if (!(eClassifier instanceof EClass)) {
                             return null;
                         }
-                        EObject eObject = UMLFactory.eINSTANCE.create((EClass) eClassifier);
+                        AbstractRepository initialRepository = (UMLFactory.eINSTANCE instanceof UMLFactoryImpl) ? ((UMLFactoryImpl) UMLFactory.eINSTANCE).getRepository() : null;
+                        EObject eObject;
+                        try {
+                            UMLFactory.eINSTANCE.setRepository(project.getRepository());
+                            eObject = UMLFactory.eINSTANCE.create((EClass) eClassifier);
+                        }
+                        finally {
+                            UMLFactory.eINSTANCE.setRepository(initialRepository);
+                        }
                         if (!(eObject instanceof Element)) {
                             return null;
                         }
@@ -372,7 +382,10 @@ public class EMFImporter implements JsonToElementFunction {
                         return element;
                     }
                     try {
+                        boolean initialCanResetIDForObject = project.getCounter().canResetIDForObject();
+                        project.getCounter().setCanResetIDForObject(true);
                         UNCHECKED_SET_E_STRUCTURAL_FEATURE_FUNCTION.apply(jsonNode.asText(), element.eClass().getEIDAttribute(), element);
+                        project.getCounter().setCanResetIDForObject(initialCanResetIDForObject);
                     } catch (IllegalArgumentException e) {
                         throw new ImportException(element, objectNode, "Unexpected illegal argument exception. See logs for more information.", e);
                     }

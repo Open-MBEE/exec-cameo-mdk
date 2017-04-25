@@ -24,22 +24,24 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final String ERROR_STRING = "Reverting to offline mode. All changes will be saved in the model until reconnected.";
-    private static final Map<String, JMSSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, JMSSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
+    // Cannot rely on this being called when MagicDraw programmatically reloads a project, which makes the old Project stale.
+    // Mitigating by moving all logic to mapping constructor, but this leaves gaps where events may not be captured.
     @Override
     public void projectOpened(final Project project) {
         closeJMS(project);
+        getProjectMapping(project);
         if (shouldEnableJMS(project)) {
-            new Thread() {
-                public void run() {
-                    if (TicketUtils.isTicketSet(project)) {
-                        initializeJMS(project);
-                    } else {
-                        MMSLoginAction.loginAction(project);
-                        // loginAction contains a call to initializeJMS on a successful ticket get
-                    }
+            new Thread(() -> {
+                if (TicketUtils.isTicketSet(project)) {
+                    initializeJMS(project);
                 }
-            }.start();
+                else {
+                    MMSLoginAction.loginAction(project);
+                    // loginAction contains a call to initializeJMS on a successful ticket get
+                }
+            }).start();
         }
     }
 
@@ -73,8 +75,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 && !url.isEmpty();
     }
 
-    public void initializeJMS(Project project) {
+    public static void initializeJMS(Project project) {
         JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+        if (jmsSyncProjectMapping == null || jmsSyncProjectMapping.getJmsMessageListener() == null || !jmsSyncProjectMapping.getJmsMessageListener().isDisabled()) {
+            return;
+        }
+        if (jmsSyncProjectMapping.getJmsMessageListener() == null)
         if (!shouldEnableJMS(project)) {
             jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
             return;
@@ -83,8 +89,11 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         jmsSyncProjectMapping.getJmsMessageListener().setDisabled(!initialized);
     }
 
-    public void closeJMS(Project project) {
-        JMSSyncProjectMapping jmsSyncProjectMapping = getProjectMapping(project);
+    public static void closeJMS(Project project) {
+        JMSSyncProjectMapping jmsSyncProjectMapping = projectMappings.get(project);
+        if (jmsSyncProjectMapping == null) {
+            return;
+        }
         try {
             if (jmsSyncProjectMapping.getMessageConsumer() != null) {
                 jmsSyncProjectMapping.getMessageConsumer().close();
@@ -98,10 +107,10 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         } catch (JMSException e) {
             e.printStackTrace();
         }
-        projectMappings.remove(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        projectMappings.remove(project);
     }
 
-    public boolean initDurable(Project project) {
+    private static boolean initDurable(Project project) {
         String projectID = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         String workspaceID = MDUtils.getWorkspace(project);
 
@@ -111,9 +120,6 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             return false;
         }
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
-//            if (EsiUtils.getTeamworkService().getConnectedUser() == null) {
-//            if (!EsiUtils.getTeamworkService().isConnected()) {
-//            if (!EsiUtils.getTeamworkService().isLiveConnection()) {
             if (!com.nomagic.magicdraw.teamwork2.esi.EsiSessionUtil.isLoggedIn()) {
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: You must be logged into Teamwork Cloud.");
                 return false;
@@ -135,7 +141,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             return false;
         }
         if (workspaceID == null) {
-            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + "Reason: Cannot get the server workspace that corresponds to this project branch.");
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get the MMS branch that corresponds to this project's branch.");
             return false;
         }
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
@@ -206,16 +212,16 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             e.printStackTrace();
             jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public static JMSSyncProjectMapping getProjectMapping(Project project) {
-        JMSSyncProjectMapping JMSSyncProjectMapping = projectMappings.get(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-        if (JMSSyncProjectMapping == null) {
-            projectMappings.put(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()), JMSSyncProjectMapping = new JMSSyncProjectMapping(project));
+        JMSSyncProjectMapping jmsSyncProjectMapping = projectMappings.get(project);
+        if (jmsSyncProjectMapping == null) {
+            projectMappings.put(project, jmsSyncProjectMapping = new JMSSyncProjectMapping(project));
         }
-        return JMSSyncProjectMapping;
+        return jmsSyncProjectMapping;
     }
 
     public static class JMSSyncProjectMapping {
