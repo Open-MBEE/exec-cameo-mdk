@@ -176,6 +176,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
         if (!viewConstraintHashMap.isEmpty()) {
             SessionManager.getInstance().createSession(project, "Legacy View Constraint Purge");
+            if (!SessionManager.getInstance().isSessionCreated(project)) {
+                Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
+                failure = true;
+                return;
+            }
             for (Map.Entry<Element, Constraint> entry : viewConstraintHashMap.entrySet()) {
                 Constraint constraint = entry.getValue();
                 if (!constraint.isEditable()) {
@@ -211,6 +216,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             SessionManager.getInstance().closeSession(project);
         }
         SessionManager.getInstance().createSession(project, "View Presentation Generation - Cancelled");
+        if (!SessionManager.getInstance().isSessionCreated(project)) {
+            Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
+            failure = true;
+            return;
+        }
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
         }
