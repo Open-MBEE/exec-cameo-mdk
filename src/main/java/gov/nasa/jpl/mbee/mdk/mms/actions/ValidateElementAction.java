@@ -27,18 +27,9 @@ public class ValidateElementAction extends MMSAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         ManualSyncRunner manualSyncRunner = new ManualSyncRunner(start, Application.getInstance().getProject(), 0);
-        ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Manual Sync", true, 0);
-        if (manualSyncRunner.getValidationSuite() == null) {
-            // if it's null, there was an error in processing that was already displayed
-            return;
-        }
-        else if (manualSyncRunner.getValidationSuite().hasErrors()) {
-            // not null, has errors, display for processing
+        ProgressStatusRunner.runWithProgressStatus(manualSyncRunner, "Validate Element", true, 0);
+        if (manualSyncRunner.getValidationSuite() != null && manualSyncRunner.getValidationSuite().hasErrors()) {
             Utils.displayValidationWindow(project, manualSyncRunner.getValidationSuite(), manualSyncRunner.getValidationSuite().getName());
-        }
-        else {
-            // not null, no errors, all fine
-            Application.getInstance().getGUILog().log("[INFO] All validated elements are equivalent.");
         }
     }
 }

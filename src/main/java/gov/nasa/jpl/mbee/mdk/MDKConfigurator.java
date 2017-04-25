@@ -165,8 +165,8 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 models.addAction(new CommitProjectAction(project, true, true));
             }
         }
-        if (manager.getActionFor(ValidateModelAction.DEFAULT_ID) == null) {
-            models.addAction(new ValidateModelAction(es, "Validate Models"));
+        if (manager.getActionFor(ValidateElementRecursivelyAction.DEFAULT_ID) == null) {
+            models.addAction(new ValidateElementRecursivelyAction(es, "Validate Models"));
         }
         if (manager.getActionFor(ValidateElementDepthAction.DEFAULT_ID) == null) {
             models.addAction(new ValidateElementDepthAction(es, "Validate Models (specified depth)"));

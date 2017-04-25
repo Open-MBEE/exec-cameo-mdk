@@ -175,28 +175,34 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         if (!viewConstraintHashMap.isEmpty()) {
-            SessionManager.getInstance().createSession(project, "Legacy View Constraint Purge");
-            if (!SessionManager.getInstance().isSessionCreated(project)) {
-                Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
-                failure = true;
-                return;
-            }
-            for (Map.Entry<Element, Constraint> entry : viewConstraintHashMap.entrySet()) {
-                Constraint constraint = entry.getValue();
-                if (!constraint.isEditable()) {
-                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + ">  could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+            try {
+                SessionManager.getInstance().createSession(project, "Legacy View Constraint Purge");
+                if (!SessionManager.getInstance().isSessionCreated(project)) {
+                    Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
                     failure = true;
-                    continue;
+                    return;
                 }
-                Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + Converters.getElementToIdConverter().apply(constraint));
-                try {
-                    ModelElementsManager.getInstance().removeElement(constraint);
-                } catch (ReadOnlyElementException e) {
-                    updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + "> could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
-                    failure = true;
+                for (Map.Entry<Element, Constraint> entry : viewConstraintHashMap.entrySet()) {
+                    Constraint constraint = entry.getValue();
+                    if (!constraint.isEditable()) {
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + ">  could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        failure = true;
+                        continue;
+                    }
+                    Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + Converters.getElementToIdConverter().apply(constraint));
+                    try {
+                        ModelElementsManager.getInstance().removeElement(constraint);
+                    } catch (ReadOnlyElementException e) {
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + "> could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        failure = true;
+                    }
                 }
             }
-            SessionManager.getInstance().closeSession(project);
+            finally {
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
+                }
+            }
         }
 
         if (failure) {
