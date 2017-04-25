@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author dlam
@@ -216,6 +217,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        Set<Element> elementsToDelete = new HashSet<>();
 
         // Create the session you intend to cancel to revert all temporary elements.
         if (SessionManager.getInstance().isSessionCreated(project)) {
@@ -452,7 +454,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply((ObjectNode) viewContentsJsonNode, project, false);
                         if (change.getChanged() != null && change.getChanged() instanceof Expression) {
-                            presentationElementUtils.getOrCreateViewConstraint(view).setSpecification((Expression) change.getChanged());
+                            Expression expression = (Expression) change.getChanged();
+                            // bit of massaging to filter out InstanceValues whose InstanceSpecification is deleted
+                            expression.getOperand().stream().filter(vs -> !(vs instanceof InstanceValue) || ((InstanceValue) vs).getInstance() == null).collect(Collectors.toList()).forEach(vs -> {
+                                elementsToDelete.add(vs);
+                                expression.getOperand().remove(vs);
+                            });
+                            presentationElementUtils.getOrCreateViewConstraint(view).setSpecification(expression);
                         }
                     } catch (ImportException | ReadOnlyElementException e) {
                         Application.getInstance().getGUILog().log("[WARNING] Could not create view contents for " + Converters.getElementToIdConverter().apply(view) + ". The result could be that the view contents are created from scratch.");
@@ -654,7 +662,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
 
-            Set<Element> elementsToDelete = new HashSet<>();
             for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
                 if (pair.getValue() != null) {
                     elementsToDelete.add(pair.getValue());
