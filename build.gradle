@@ -31,8 +31,6 @@ apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
 apply plugin: 'rebel'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.artifactory'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -298,6 +296,9 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
 }
+
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
 
 publishing {
     // Reference to Gradle publications defined in the build script.
