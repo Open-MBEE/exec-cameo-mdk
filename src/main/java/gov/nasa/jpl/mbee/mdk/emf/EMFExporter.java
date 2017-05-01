@@ -211,7 +211,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     if (branchName == null || branchName.equals("trunk")) {
                         branchName = "master";
                     }
-                    objectNode.put(MDKConstants.BRANCH_KEY, branchName);
+                    objectNode.put(MDKConstants.REF_ID_KEY, branchName);
                     objectNode.put(MDKConstants.TWC_VERSION_KEY, ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()));
                     objectNode.put(MDKConstants.TWC_URI_KEY, attachedProject.getProjectDescriptor().getLocationUri().toString());
                     return objectNode;
