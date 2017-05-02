@@ -31,7 +31,6 @@ public class GenericTable extends Table {
     }};
     private int numCols = 0;
 
-
     public List<List<DocumentElement>> getHeaders(Diagram d, List<String> columnIds, GenericTableManager gtm) {
         List<List<DocumentElement>> res = new ArrayList<List<DocumentElement>>();
         if (this.headers != null && !this.headers.isEmpty()) {
@@ -83,8 +82,9 @@ public class GenericTable extends Table {
                 if (skipColumnIDs.contains(cid)) {
                     continue;
                 }
+                 DBTableEntry entry = new DBTableEntry();
 
-                DBTableEntry entry = new DBTableEntry();
+
                 Property cellValue = gtm.getCellValue(d, e, cid);
                 if (cellValue instanceof ElementProperty) {
                     Element cellelement = ((ElementProperty) cellValue).getElement();
@@ -92,7 +92,12 @@ public class GenericTable extends Table {
                         entry.addElement(new DBParagraph(((NamedElement) cellelement).getName(), cellelement, From.NAME));
                     }
                 } else if (cellValue instanceof StringProperty) {
-                    entry.addElement(new DBParagraph(cellValue.getValue()));
+                    if(cid.contains("documentation")){
+                        entry.addElement(new DBParagraph(cellValue.getValue(), e, From.DOCUMENTATION));
+
+                    }else {
+                        entry.addElement(new DBParagraph(cellValue.getValue()));
+                    }
                 } else if (cellValue instanceof ElementListProperty) {
                     for (Element listEl : ((ElementListProperty) cellValue).getValue()) {
                         if (listEl instanceof NamedElement) {
