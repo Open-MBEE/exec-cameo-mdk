@@ -358,7 +358,7 @@ public class MMSUtils {
             t.join(CHECK_CANCEL_DELAY);
             while (t.isAlive()) {
                 if (progressStatus != null && progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[INFO] Request to server for elements cancelled.");
+                    Application.getInstance().getGUILog().log("[INFO] MMS request was manually cancelled.");
                     //clean up thread?
                     return null;
                 }
@@ -379,7 +379,7 @@ public class MMSUtils {
         return responseFile.get();
     }
 
-    public static String sendCredentials(Project project, String username, String password)
+    public static String sendCredentials(Project project, String username, String password, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
@@ -387,41 +387,70 @@ public class MMSUtils {
         }
         requestUri.setPath(requestUri.getPath() + "/api/login");
         requestUri.clearParameters();
-        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-        credentials.put("username", username);
-        credentials.put("password", password);
 
         //build request
-        ContentType contentType = ContentType.APPLICATION_JSON;
         URI requestDest = requestUri.build();
         HttpRequestBase request = new HttpPost(requestDest);
 
         request.addHeader("Content-Type", "application/json");
         request.addHeader("charset", (Consts.UTF_8).displayName());
 
+        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
+        credentials.put("username", username);
+        credentials.put("password", password);
         String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
         ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
 
         // do request
         System.out.println("MMS Request [POST] " + requestUri.toString());
-        String responseBody;
-        int responseCode;
-        try (CloseableHttpClient httpclient = HttpClients.createDefault();
-             CloseableHttpResponse response = httpclient.execute(request);
-             InputStream inputStream = response.getEntity().getContent()) {
-            // debug / logging output from response
-            responseCode = response.getStatusLine().getStatusCode();
-            System.out.println("MMS Response [POST] " + requestUri.toString() + " - Code: " + responseCode);
-            // get data out of the response
-            responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
-        }
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(responseBody.getBytes())) {
-            if (!processResponse(responseCode, byteArrayInputStream, project)) {
-                throw new ServerException("Credential acquisition could not be completed.", responseCode);
+        final AtomicReference<String> responseBody = new AtomicReference<>();
+        final AtomicReference<Integer> responseCode = new AtomicReference<>();
+        final AtomicReference<ThreadRequestExceptionType> threadedExceptionType = new AtomicReference<>();
+        final AtomicReference<String> threadedExceptionMessage = new AtomicReference<>();
+        Thread t = new Thread(() -> {
+            // create client, execute request, parse response, store in thread safe buffer to return as string later
+            // client, response, and reader are all auto closed after block
+            try (CloseableHttpClient httpclient = HttpClients.createDefault();
+                 CloseableHttpResponse response = httpclient.execute(request);
+                 InputStream inputStream = response.getEntity().getContent()) {
+
+                // debug / logging output from response
+                responseCode.set(response.getStatusLine().getStatusCode());
+                System.out.println("MMS Response [POST] " + requestUri.toString() + " - Code: " + responseCode.get());
+                // get data out of the response
+                responseBody.set((inputStream != null) ? IOUtils.toString(inputStream) : "");
+                threadedExceptionType.set(null);
+                threadedExceptionMessage.set("");
+            } catch (IOException e) {
+                threadedExceptionType.set(ThreadRequestExceptionType.IO_EXCEPTION);
+                threadedExceptionMessage.set(e.getMessage());
+                e.printStackTrace();
             }
+        });
+        t.start();
+        try {
+            t.join(CHECK_CANCEL_DELAY);
+            while (t.isAlive()) {
+                if (progressStatus != null && progressStatus.isCancel()) {
+                    Application.getInstance().getGUILog().log("[INFO] MMS request was manually cancelled.");
+                    //clean up thread?
+                    return null;
+                }
+                t.join(CHECK_CANCEL_DELAY);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (threadedExceptionType.get() == ThreadRequestExceptionType.IO_EXCEPTION) {
+            throw new IOException(threadedExceptionMessage.get());
         }
 
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(responseBody.get().getBytes())) {
+            if (!processResponse(responseCode.get(), byteArrayInputStream, project)) {
+                throw new ServerException("Credential acquisition could not be completed.", responseCode.get());
+            }
+        }
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody.get(), ObjectNode.class);
         // parse response
         JsonNode value;
         if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
@@ -430,7 +459,7 @@ public class MMSUtils {
         return null;
     }
 
-    public static String validateCredentials(Project project, String ticket)
+    public static String validateCredentials(Project project, String ticket, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
@@ -444,25 +473,56 @@ public class MMSUtils {
         HttpRequestBase request = new HttpGet(requestDest);
 
         // do request
-        System.out.println("MMS Request [GET] " + requestUri.toString());
-        String responseBody;
-        int responseCode;
-        try (CloseableHttpClient httpclient = HttpClients.createDefault();
-             CloseableHttpResponse response = httpclient.execute(request);
-             InputStream inputStream = response.getEntity().getContent()) {
-            // debug / logging output from response
-            responseCode = response.getStatusLine().getStatusCode();
-            System.out.println("MMS Response [GET] " + requestUri.toString() + " - Code: " + responseCode);
-            // get data out of the response
-            responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
+        System.out.println("MMS Request [POST] " + requestUri.toString());
+        final AtomicReference<String> responseBody = new AtomicReference<>();
+        final AtomicReference<Integer> responseCode = new AtomicReference<>();
+        final AtomicReference<ThreadRequestExceptionType> threadedExceptionType = new AtomicReference<>();
+        final AtomicReference<String> threadedExceptionMessage = new AtomicReference<>();
+        Thread t = new Thread(() -> {
+            // create client, execute request, parse response, store in thread safe buffer to return as string later
+            // client, response, and reader are all auto closed after block
+            try (CloseableHttpClient httpclient = HttpClients.createDefault();
+                 CloseableHttpResponse response = httpclient.execute(request);
+                 InputStream inputStream = response.getEntity().getContent()) {
+
+                // debug / logging output from response
+                responseCode.set(response.getStatusLine().getStatusCode());
+                System.out.println("MMS Response [POST] " + requestUri.toString() + " - Code: " + responseCode.get());
+                // get data out of the response
+                responseBody.set((inputStream != null) ? IOUtils.toString(inputStream) : "");
+                threadedExceptionType.set(null);
+                threadedExceptionMessage.set("");
+            } catch (IOException e) {
+                threadedExceptionType.set(ThreadRequestExceptionType.IO_EXCEPTION);
+                threadedExceptionMessage.set(e.getMessage());
+                e.printStackTrace();
+            }
+        });
+        t.start();
+        try {
+            t.join(CHECK_CANCEL_DELAY);
+            while (t.isAlive()) {
+                if (progressStatus != null && progressStatus.isCancel()) {
+                    Application.getInstance().getGUILog().log("[INFO] MMS request was manually cancelled.");
+                    //clean up thread?
+                    return null;
+                }
+                t.join(CHECK_CANCEL_DELAY);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(responseBody.getBytes())) {
-            if (!processResponse(responseCode, byteArrayInputStream, project)) {
-                throw new ServerException("Credential validation could not be completed.", responseCode);
+        if (threadedExceptionType.get() == ThreadRequestExceptionType.IO_EXCEPTION) {
+            throw new IOException(threadedExceptionMessage.get());
+        }
+
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(responseBody.get().getBytes())) {
+            if (!processResponse(responseCode.get(), byteArrayInputStream, project)) {
+                throw new ServerException("Credential acquisition could not be completed.", responseCode.get());
             }
         }
 
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody.get(), ObjectNode.class);
         // parse response
         JsonNode value;
         if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
