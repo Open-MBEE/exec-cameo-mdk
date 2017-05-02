@@ -305,8 +305,10 @@ public class MMSUtils {
                 }
             }
         }
-        if (!processResponse(responseCode, new FileInputStream(targetFile), project)) {
-            throw new ServerException(targetFile.getAbsolutePath(), responseCode);
+        try (FileInputStream fileInputStream = new FileInputStream(targetFile)) {
+            if (!processResponse(responseCode, fileInputStream, project)) {
+                throw new ServerException(targetFile.getAbsolutePath(), responseCode);
+            }
         }
         return targetFile;
     }
