@@ -3,12 +3,12 @@ package gov.nasa.jpl.mbee.mdk.actions;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ui.ViewEditorLinkForm;
@@ -58,19 +58,23 @@ public class MMSViewLinkAction extends MDAction {
             Project project = Project.getProject(element);
 
             // build url
-            // can't use URIBuilder, it converts the ‘#’ in the url and breaks things
             URIBuilder uriBase = MMSUtils.getServiceUri(project);
             if (uriBase == null) {
                 Application.getInstance().getGUILog().log("[ERROR] Unable to retrieve MMS information from model stereotype. Cancelling view open.");
                 return;
             }
-            String uriBasePath = uriBase.setPath("").clearParameters().toString()
-                    + "/alfresco/mmsapp/mms.html#/workspaces/" + MDUtils.getWorkspace(project)
-//                    + "/sites/" + MMSUtils.getSiteName(project);
-                    + "/projects/" + project.getName();
-            Set<Element> documents = new HashSet<>();
+            //projects/PROJECT-ID_5_17_16_1_31_54_PM_5fc737b6_154bba92ecd_4cc1_cae_tw_jpl_nasa_gov_127_0_0_1/master/documents/_18_5_83a025f_1491339810716_846504_4332/views/_18_5_83a025f_1491339810716_846504_4332
+
+            // include this in the host portion of the uri. not technically correct, but it prevents the # from being converted and breaking things
+            uriBase.setHost(uriBase.getHost() +  "/alfresco/mmsapp/mms.html#");
+
+            String uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+
+            String branchName = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
+            uriPath +=  "/" + (branchName.equals("trunk") ? "master" : branchName);
 
             // collect document parents from hierarchy
+            Set<Element> documents = new HashSet<>();
             ArrayList<Element> viewChain = new ArrayList<>();
             viewChain.add(element);
             for (int i = 0; i < viewChain.size(); i++) {
@@ -108,7 +112,6 @@ public class MMSViewLinkAction extends MDAction {
             }
 
             // build links
-            URI link;
             if (documents.size() > 1) {
                 // build multiple links
                 String label = "";
@@ -118,12 +121,12 @@ public class MMSViewLinkAction extends MDAction {
                         label = "Documents containing " + element.getHumanName() + ":";
                         for (Element doc : documents) {
                             if (doc.equals(element)) {
-                                link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(element));
+                                uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element);
                             }
                             else {
-                                link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element));
+                                uriPath += "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element);
                             }
-                            JButton button = new ViewButton(doc.getHumanName(), link);
+                            JButton button = new ViewButton(doc.getHumanName(), uriBase.setPath(uriPath).build());
                             linkButtons.add(button);
                         }
                     }
@@ -137,12 +140,7 @@ public class MMSViewLinkAction extends MDAction {
             }
             else {
                 // build single link
-                try {
-                    link = new URI(uriBasePath + "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element));
-                } catch (URISyntaxException se) {
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");
-                    return;
-                }
+                uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
                 // just open it if possible
                 if (Desktop.isDesktopSupported()) {
                     try {
@@ -150,14 +148,14 @@ public class MMSViewLinkAction extends MDAction {
                             Application.getInstance().getGUILog().log("[INFO] " + element.getHumanName()
                                     + " does not belong to a document hierarchy. Opening view in View Editor without document context.");
                         }
-                        Desktop.getDesktop().browse(link);
-                    } catch (IOException e1) {
-                        Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + link.toString());
+                        Desktop.getDesktop().browse(uriBase.setPath(uriPath).build());
+                    } catch (URISyntaxException | IOException e1) {
+                        Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + uriBase.toString());
                         e1.printStackTrace();
                     }
                 }
                 else {
-                    Application.getInstance().getGUILog().log("[WARNING] Java is unable to open links on your computer. Link: " + link.toString());
+                    Application.getInstance().getGUILog().log("[WARNING] Java is unable to open links on your computer. Link: " + uriBase.toString());
                 }
             }
         }
@@ -172,7 +170,7 @@ public class MMSViewLinkAction extends MDAction {
             this.setMaximumSize(new Dimension(280, 18));
         }
 
-        public void setup(URI u) {
+        void setup(URI u) {
             uri = u;
             setToolTipText(uri.toString());
             addMouseListener(new MouseAdapter() {

@@ -22,6 +22,7 @@ public class MDKConstants {
             TYPE_KEY = "type",
             NAME_KEY = "name",
             ID_KEY = "id",
+            REF_ID_KEY = "ref" + ID_KEY_SUFFIX,
             PARENT_REF_ID_KEY = "parentRef" + ID_KEY_SUFFIX,
             OWNER_ID_KEY = UMLPackage.Literals.ELEMENT__OWNER.getName() + ID_KEY_SUFFIX,
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
@@ -37,6 +38,5 @@ public class MDKConstants {
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
             TWC_ID_KEY = "twc" + ID_KEY_SUFFIX,
-            TWC_VERSION_KEY = "twcVersion",
-            BRANCH_KEY = "branch";
+            TWC_VERSION_KEY = "twcVersion";
 }
