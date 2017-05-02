@@ -415,8 +415,10 @@ public class MMSUtils {
             // get data out of the response
             responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
         }
-        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()), project)) {
-            throw new ServerException("Credential acquisition.", responseCode);
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(responseBody.getBytes())) {
+            if (!processResponse(responseCode, byteArrayInputStream, project)) {
+                throw new ServerException("Credential acquisition could not be completed.", responseCode);
+            }
         }
 
         ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
@@ -454,8 +456,10 @@ public class MMSUtils {
             // get data out of the response
             responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
         }
-        if (!processResponse(responseCode, new ByteArrayInputStream(responseBody.getBytes()), project)) {
-            throw new ServerException("Credential validation.", responseCode);
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(responseBody.getBytes())) {
+            if (!processResponse(responseCode, byteArrayInputStream, project)) {
+                throw new ServerException("Credential validation could not be completed.", responseCode);
+            }
         }
 
         ObjectNode responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
@@ -499,7 +503,7 @@ public class MMSUtils {
                     "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>"); // hidden characters for easy search
 //            Utils.showPopupMessage("Action failed. See notification window for details.");
         }
-        return throwServerException;
+        return !throwServerException;
     }
 
     /**
