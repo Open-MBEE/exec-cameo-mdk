@@ -213,7 +213,7 @@ public class BranchValidator {
         }
         refObjectNode.put(MDKConstants.NAME_KEY, name);
         refObjectNode.put(MDKConstants.TWC_ID_KEY, branchInfo.getID().toString());
-        refObjectNode.put(MDKConstants.TWC_URI_KEY,
+        refObjectNode.put(MDKConstants.URI_KEY,
                 EsiUtils.getDescriptorByBranchID(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project), branchInfo.getID()).getURI().toString());
         // TODO unlink this from "master" when we support non-head branching
         refObjectNode.put(MDKConstants.PARENT_REF_ID_KEY, "master");

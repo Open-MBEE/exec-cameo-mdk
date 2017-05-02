@@ -572,7 +572,7 @@ public class MMSUtils {
                 JsonNode value;
                 for (JsonNode projectNode : arrayNode) {
                     if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                            && ((value = projectNode.get(MDKConstants.TWC_URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
+                            && ((value = projectNode.get(MDKConstants.URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
                         return value.asText();
                     }
                 }
@@ -703,7 +703,7 @@ public class MMSUtils {
             categoryId = EsiUtils.getCategoryID(resourceId);
         }
         projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        projectObjectNode.put(MDKConstants.TWC_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
+        projectObjectNode.put(MDKConstants.URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
     }
 
