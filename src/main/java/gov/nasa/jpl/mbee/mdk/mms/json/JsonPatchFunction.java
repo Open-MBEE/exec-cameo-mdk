@@ -12,8 +12,8 @@ import java.util.function.BiFunction;
 /**
  * Created by igomes on 9/28/16.
  */
-public class JsonDiffFunction implements BiFunction<JsonNode, JsonNode, JsonNode> {
-    private static JsonDiffFunction INSTANCE;
+public class JsonPatchFunction implements BiFunction<JsonNode, JsonNode, JsonNode> {
+    private static JsonPatchFunction INSTANCE;
 
     @Override
     public JsonNode apply(JsonNode client, JsonNode server) {
@@ -39,16 +39,12 @@ public class JsonDiffFunction implements BiFunction<JsonNode, JsonNode, JsonNode
             if (targetKey.startsWith(MDKConstants.DERIVED_KEY_PREFIX) && !sourceObjectNode.has(targetKey)) {
                 targetKeyIterator.remove();
             }
-            // TODO Remove me once derived prefixed @donbot
-            if (targetKey.equals("editable")) {
-                targetKeyIterator.remove();
-            }
         }
     }
 
-    public static JsonDiffFunction getInstance() {
+    public static JsonPatchFunction getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new JsonDiffFunction();
+            INSTANCE = new JsonPatchFunction();
         }
         return INSTANCE;
     }

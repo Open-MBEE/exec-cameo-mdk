@@ -331,7 +331,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             if (postElements.size() > 0) {
-                Application.getInstance().getGUILog().log("[INFO] Queueing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
+                Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
                     File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);

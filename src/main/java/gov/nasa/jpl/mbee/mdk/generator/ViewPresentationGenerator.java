@@ -22,7 +22,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonDiffFunction;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author dlam
@@ -163,44 +164,46 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 continue;
             }
             Constraint constraint = Utils.getViewConstraint(view);
+            if (constraint == null) {
+                Element element = Converters.getIdToElementConverter().apply(Converters.getElementToIdConverter().apply(view) + MDKConstants.VIEW_CONSTRAINT_SYSML_ID_SUFFIX, project);
+                if (element instanceof Constraint) {
+                    constraint = (Constraint) element;
+                }
+            }
             if (constraint != null) {
                 viewConstraintHashMap.put(view, constraint);
             }
         }
 
         if (!viewConstraintHashMap.isEmpty()) {
-            SessionManager.getInstance().createSession(project, "Legacy View Constraint Purge");
-            for (Map.Entry<Element, Constraint> entry : viewConstraintHashMap.entrySet()) {
-                Constraint constraint = entry.getValue();
-                if (constraint.isEditable()) {
+            try {
+                SessionManager.getInstance().createSession(project, "Legacy View Constraint Purge");
+                if (!SessionManager.getInstance().isSessionCreated(project)) {
+                    Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
+                    failure = true;
+                    return;
+                }
+                for (Map.Entry<Element, Constraint> entry : viewConstraintHashMap.entrySet()) {
+                    Constraint constraint = entry.getValue();
+                    if (!constraint.isEditable()) {
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + ">  could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        failure = true;
+                        continue;
+                    }
                     Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + Converters.getElementToIdConverter().apply(constraint));
                     try {
                         ModelElementsManager.getInstance().removeElement(constraint);
                     } catch (ReadOnlyElementException e) {
-                        Element view = entry.getKey();
-                        if (view.isEditable()) {
-                            Application.getInstance().getGUILog().log("Unconstraining view: " + Converters.getElementToIdConverter().apply(view));
-                            view.get_constraintOfConstrainedElement().remove(constraint);
-                        }
-                        else {
-                            updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + "> could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
-                            failure = true;
-                        }
-                    }
-                }
-                else {
-                    Element view = entry.getKey();
-                    if (view.isEditable()) {
-                        Application.getInstance().getGUILog().log("Unconstraining view: " + Converters.getElementToIdConverter().apply(view));
-                        view.get_constraintOfConstrainedElement().remove(constraint);
-                    }
-                    else {
-                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + ">  could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
+                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + "> could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
                 }
             }
-            SessionManager.getInstance().closeSession(project);
+            finally {
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
+                }
+            }
         }
 
         if (failure) {
@@ -214,12 +217,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         }
 
         LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        Set<Element> elementsToDelete = new HashSet<>();
 
         // Create the session you intend to cancel to revert all temporary elements.
         if (SessionManager.getInstance().isSessionCreated(project)) {
             SessionManager.getInstance().closeSession(project);
         }
         SessionManager.getInstance().createSession(project, "View Presentation Generation - Cancelled");
+        if (!SessionManager.getInstance().isSessionCreated(project)) {
+            Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
+            failure = true;
+            return;
+        }
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
         }
@@ -445,7 +454,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     try {
                         Changelog.Change<Element> change = Converters.getJsonToElementConverter().apply((ObjectNode) viewContentsJsonNode, project, false);
                         if (change.getChanged() != null && change.getChanged() instanceof Expression) {
-                            presentationElementUtils.getOrCreateViewConstraint(view).setSpecification((Expression) change.getChanged());
+                            Expression expression = (Expression) change.getChanged();
+                            // bit of massaging to filter out InstanceValues whose InstanceSpecification is deleted
+                            expression.getOperand().stream().filter(vs -> !(vs instanceof InstanceValue) || ((InstanceValue) vs).getInstance() == null).collect(Collectors.toList()).forEach(vs -> {
+                                elementsToDelete.add(vs);
+                                expression.getOperand().remove(vs);
+                            });
+                            presentationElementUtils.getOrCreateViewConstraint(view).setSpecification(expression);
                         }
                     } catch (ImportException | ReadOnlyElementException e) {
                         Application.getInstance().getGUILog().log("[WARNING] Could not create view contents for " + Converters.getElementToIdConverter().apply(view) + ". The result could be that the view contents are created from scratch.");
@@ -539,7 +554,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ObjectNode serverViewJson = (o = viewMap.get(Converters.getElementToIdConverter().apply(view))) != null ? ((ViewMapping) o).getObjectNode() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientViewJson, serverViewJson)) {
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonDiffFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
+                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonPatchFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
                     }
                     elementsToCommit.add(clientViewJson);
                 }
@@ -570,7 +585,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         instanceSpecificationMap.get(Converters.getElementToIdConverter().apply(instance)).getKey() : null;
                 if (!JsonEquivalencePredicate.getInstance().test(clientInstanceSpecificationJson, serverInstanceSpecificationJson)) {
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonDiffFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
+                        Application.getInstance().getGUILog().log("View Instance diff for " + Converters.getElementToIdConverter().apply(instance) + ": " + JsonPatchFunction.getInstance().apply(clientInstanceSpecificationJson, serverInstanceSpecificationJson).toString());
                     }
                     elementsToCommit.add(clientInstanceSpecificationJson);
                 }
@@ -585,7 +600,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     if (!JsonEquivalencePredicate.getInstance().test(clientSlotJson, serverSlotJson)) {
                         elementsToCommit.add(clientSlotJson);
                         if (MDUtils.isDeveloperMode()) {
-                            Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonDiffFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
+                            Application.getInstance().getGUILog().log("Slot diff for " + Converters.getElementToIdConverter().apply(slot) + ": " + JsonPatchFunction.getInstance().apply(clientSlotJson, serverSlotJson).toString());
                         }
                     }
                 }
@@ -647,7 +662,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             // cases like the underlying constraint not existing in the containment tree, but leaving a stale constraint
             // on the view block.
 
-            Set<Element> elementsToDelete = new HashSet<>();
             for (Pair<ObjectNode, Slot> pair : slotMap.values()) {
                 if (pair.getValue() != null) {
                     elementsToDelete.add(pair.getValue());

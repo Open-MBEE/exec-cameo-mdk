@@ -33,7 +33,7 @@ public class JMSUtils {
     private static final String JMS_S = "tcp";
 
     public static final String MSG_SELECTOR_PROJECT_ID = "projectId",
-            MSG_SELECTOR_WORKSPACE_ID = "workspace";
+            MSG_SELECTOR_REF_ID = "refId";
 
     // Members to look up MMS using JNDI
     // TODO: If any other context factories are used, need to add those JARs into class path (e.g., for weblogic)
@@ -190,10 +190,10 @@ public class JMSUtils {
     public static String constructSelectorString(String projectID, String workspaceID) {
         StringBuilder selectorBuilder = new StringBuilder();
 
-        //selectorBuilder.append("(").append(MSG_SELECTOR_WORKSPACE_ID).append("='").append(workspaceID).append("')");
+        //selectorBuilder.append("(").append(MSG_SELECTOR_REF_ID).append("='").append(workspaceID).append("')");
 
         selectorBuilder.append("(").append(MSG_SELECTOR_PROJECT_ID).append(" = '").append(projectID).append("')")
-                .append(" AND ").append("((").append(MSG_SELECTOR_WORKSPACE_ID).append(" = '").append(workspaceID).append("') OR (").append(MSG_SELECTOR_WORKSPACE_ID).append(" = '").append(workspaceID).append("_mdk").append("'))");
+                .append(" AND ").append("((").append(MSG_SELECTOR_REF_ID).append(" = '").append(workspaceID).append("') OR (").append(MSG_SELECTOR_REF_ID).append(" = '").append(workspaceID).append("_mdk").append("'))");
 
         String outputMsgSelector = selectorBuilder.toString();
         selectorBuilder.delete(0, selectorBuilder.length());

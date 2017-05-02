@@ -8,7 +8,6 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
@@ -97,7 +96,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             try {
                 TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));
                 successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_WORKSPACE_ID, MDUtils.getWorkspace(project) + "_mdk");
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_REF_ID, MDUtils.getWorkspace(project) + "_mdk");
                 jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
                 int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
                 Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
