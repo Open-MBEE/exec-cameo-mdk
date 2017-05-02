@@ -5,6 +5,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
@@ -2898,7 +2899,7 @@ public class Utils {
         }
         String user = EsiUtils.getLoggedUserName();
         try {
-            long lastVersion = MDUtils.getLatestEsiVersion(project);
+            long lastVersion = EsiUtils.getLastVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project));
             if (user == null || lastVersion < 0) {
                 Utils.guilog("[ERROR] You must be logged into Teamwork Cloud first.");
                 return false;
