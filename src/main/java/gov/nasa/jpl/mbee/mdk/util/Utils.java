@@ -1300,14 +1300,6 @@ public class Utils {
         return project == null ? null : project.getPrimaryModel();
     }
 
-    public static List<Package> getPackagesOfType(String typeName) {
-        return getPackagesOfType(null, typeName);
-    }
-
-    public static List<Package> getPackagesOfType(Element root, String typeName) {
-        return getPackagesOfType(root, typeName, null);
-    }
-
     public static boolean isSiteChar(Project project, Package e) {
         Stereotype characterizes = Utils.getCharacterizesStereotype(project);
         if (characterizes != null) {
@@ -1330,72 +1322,6 @@ public class Utils {
             return found;
         }
         return false;
-    }
-
-    /**
-     * @param root
-     * @param typeName the name or regular expression pattern of the type name on
-     *                 which to filter collected packages; this type name could be a
-     *                 stereotype, EClass, or Java class name
-     * @param seen     a set of already visited Elements to avoid revisiting them in
-     *                 infinite cycles
-     * @return all Packages, including root, top-level Packages within root, and
-     * their nested packages, that also have a type matching typeName
-     * (exactly or as a pattern)
-     */
-    public static List<Package> getPackagesOfType(Element root, String typeName, Set<Element> seen) {
-        Project project = Project.getProject(root);
-        if (root == null) {
-            root = getRootElement(project);
-        }
-        if (root == null) {
-            return Collections.emptyList(); // REVIEW -- error?
-        }
-        if (root instanceof Package) {
-            return getPackagesOfType((Package) root, typeName, seen);
-        }
-        Pair<Boolean, Set<Element>> p = Utils2.seen(root, true, seen);
-        if (p.getKey()) {
-            return Collections.emptyList();
-        }
-        seen = p.getValue();
-        List<Package> pkgs = new ArrayList<>();
-        for (Element elmt : root.getOwnedElement()) {
-            pkgs.addAll(getPackagesOfType(elmt, typeName, seen));
-        }
-        return pkgs;
-    }
-
-    /**
-     * @param root     top-level Package
-     * @param typeName the name or regular expression pattern of the type name on
-     *                 which to filter collected packages; this type name could be a
-     *                 stereotype, EClass, or Java class name
-     * @param seen     a set of already visited Elements to avoid revisiting them in
-     *                 infinite cycles
-     * @return all Packages, including root, top-level Packages within root, and
-     * their nested packages, that also have a type matching typeName
-     * (exactly or as a pattern)
-     */
-    public static List<Package> getPackagesOfType(Package root, String typeName, Set<Element> seen) {
-        if (root == null) {
-            return null; // REVIEW -- error?
-        }
-        Pair<Boolean, Set<Element>> p = Utils2.seen(root, true, seen);
-        if (p.getKey()) {
-            return Collections.emptyList();
-        }
-        seen = p.getValue();
-        List<Package> pkgs = new ArrayList<Package>();
-        if (isTypeOf(root, typeName)) {
-            pkgs.add(root);
-        }
-        if (root.getNestedPackage() != null) {
-            for (Package pkg : root.getNestedPackage()) {
-                pkgs.addAll(getPackagesOfType(pkg, typeName, seen));
-            }
-        }
-        return pkgs;
     }
 
     public static Map<Element, Map<String, Collection<Element>>> nameOrIdSearchOwnerCache =
@@ -1567,6 +1493,14 @@ public class Utils {
     /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers ***/
     public static Stereotype getProductStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
+    }
+
+    public static Stereotype getExpressionStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1382549095816_841656_29288");
+    }
+
+    public static Stereotype getExpressionLibraryStereotype(Project project) {
+        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1382560401073_180081_29279");
     }
 
     @Deprecated

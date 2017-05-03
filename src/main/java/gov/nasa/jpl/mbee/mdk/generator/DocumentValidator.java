@@ -211,9 +211,6 @@ public class DocumentValidator {
         aef = new ActivityEdgeFactory();
         dg = new DefaultDirectedGraph<>(Element.class);
 
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
-
         // List of Validation Rules
         validationui.addValidationRule(multipleFirstErrors);
         validationui.addValidationRule(multipleNextErrors);
