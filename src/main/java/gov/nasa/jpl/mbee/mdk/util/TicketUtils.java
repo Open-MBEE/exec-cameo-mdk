@@ -29,7 +29,7 @@ public class TicketUtils {
 
     private static String username = "";
     private static String password = "";
-    private static final int TICKET_RENEWAL_INTERVAL = 30 * 60; //seconds
+    private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
     private static final HashMap<Project, TicketMapping> ticketMappings = new HashMap<>();
 
     /**
