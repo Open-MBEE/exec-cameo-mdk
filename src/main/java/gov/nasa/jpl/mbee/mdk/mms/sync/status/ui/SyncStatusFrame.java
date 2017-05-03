@@ -150,7 +150,7 @@ public class SyncStatusFrame extends JFrame {
         pack();
         setMinimumSize(getSize());
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        setAlwaysOnTop(true);
+//        setAlwaysOnTop(true);
         detailsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

@@ -39,9 +39,12 @@ public class OutputQueueStatusAction extends SRAction {
 
     @Override
     public void actionPerformed(final ActionEvent event) {
-        outputQueueDetailWindow.setVisible(!outputQueueDetailWindow.isVisible());
-        if (outputQueueDetailWindow.isVisible()) {
+        if (!outputQueueDetailWindow.isVisible()) {
+            outputQueueDetailWindow.setVisible(true);
+        }
+        else {
             outputQueueDetailWindow.update();
+            outputQueueDetailWindow.toFront();
         }
     }
 
@@ -137,7 +140,7 @@ public class OutputQueueStatusAction extends SRAction {
 				((AbstractTableModel) table.getModel()).fireTableStructureChanged();
 			}*/
             table.repaint();
-            this.setAlwaysOnTop(true);
+//            this.setAlwaysOnTop(true);
             //tableModel.fireTableDataChanged();
         }
 
