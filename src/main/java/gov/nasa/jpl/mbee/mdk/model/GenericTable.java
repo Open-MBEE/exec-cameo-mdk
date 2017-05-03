@@ -2,6 +2,9 @@ package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.generictable.GenericTableManager;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.dependencymatrix.configuration.MatrixDataHelper;
+import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
+import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.properties.ElementListProperty;
 import com.nomagic.magicdraw.properties.ElementProperty;
@@ -49,23 +52,32 @@ public class GenericTable extends Table {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             int count = 0;
             for (String columnid : columnIds) {
-                if (count == 0) {
-                    count++;
-                    continue;
-                }
-                if (!skipColumnIDs.contains(columnid)) {
-                    row.add(new DBText(gtm.getColumnNameById(d, columnid)));
+                if(gtm == null) {
+                    if(count == 0){
+                        row.add(new DBText(""));
+                        count++;
+                        numCols++;
+                    }
+                    row.add(new DBText(columnid));
                     numCols++;
+                }else {
+                    if (count == 0) {
+                        count++;
+                        continue;
+                    }
+                    if (!skipColumnIDs.contains(columnid)) {
+                        row.add(new DBText(gtm.getColumnNameById(d, columnid)));
+                        numCols++;
+                    }
                 }
             }
             res.add(row);
         }
         return res;
-
     }
 
 
-    public List<List<DocumentElement>> getBody(Diagram d, List<Element> rowElements, List<String> columnIds,
+    public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds,
                                                GenericTableManager gtm, boolean forViewEditor) {
         List<List<DocumentElement>> res = new ArrayList<>();
         for (Element e : rowElements) {
@@ -164,6 +176,69 @@ public class GenericTable extends Table {
                     t.setHeaders(getHeaders(diagram, columnIds, gtm));
                     List<Element> rowElements = gtm.getRowElements(diagram);
                     t.setBody(getBody(diagram, rowElements, columnIds, gtm, forViewEditor));
+                    if (getTitles() != null && getTitles().size() > tableCount) {
+                        t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
+                    } else {
+                        t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
+                    }
+                    if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
+                        t.setCaption(getCaptions().get(tableCount));
+                    } else {
+                        t.setCaption(ModelHelper.getComment(diagram));
+                    }
+                    t.setCols(numCols);
+                    res.add(t);
+                    t.setStyle(getStyle());
+                    tableCount++;
+                }else {
+                    MatrixData matrixData;
+                    Diagram matrix = diagram;
+                    if (MatrixDataHelper.isRebuildNeeded(matrix)){
+                        matrixData = MatrixDataHelper.buildMatrix(matrix);
+                    } else {
+                        matrixData = MatrixDataHelper.getMatrixData(matrix);
+                    }
+
+                    Collection<Element> columnElements = matrixData.getColumnElements();
+                    List<Element> colmnList = (List<Element>) matrixData.getColumnElements();
+                    for (Element element : colmnList) {
+                        System.out.println("list: "+element.getHumanName());
+                    }
+                    for (Element columnElement : columnElements) {
+                        System.out.println("coll: "+ columnElement.getHumanName());
+                    }
+                    DBTable t = new DBTable();
+                    Collection<Element> rowElements = matrixData.getRowElements();
+                    List<List<DocumentElement>> matrixResult = new ArrayList<>();
+                    List<String> columnHeaders = new ArrayList<>();
+                    for (Element rowElement : rowElements) {
+                        List<DocumentElement> matrixcolumn = new ArrayList<>();
+                        if(rowElement instanceof NamedElement) {
+                            matrixcolumn.add(new DBText(((NamedElement) rowElement).getName()));
+                        }else{
+                            matrixcolumn.add(new DBText(rowElement.getHumanName()));
+                        }
+                        for (Element columnElement : columnElements) {
+                            AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
+                            if(val.getDescription() != null){
+                                if(val.isEditable()) {
+                                    matrixcolumn.add(new DBText("&#10004;"));
+                                }else {
+                                    matrixcolumn.add(new DBText("&#10003;"));
+                                }
+                            }else {
+                                matrixcolumn.add(new DBText(""));
+                            }
+                        }
+                        matrixResult.add(matrixcolumn);
+                    }
+                    for (Element element : columnElements) {
+                        if(element instanceof NamedElement){
+                            columnHeaders.add(((NamedElement) element).getName());
+                        }
+                    }
+                    t.setHeaders(getHeaders(diagram, columnHeaders, null));
+                    t.setBody(matrixResult);
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
                     } else {
