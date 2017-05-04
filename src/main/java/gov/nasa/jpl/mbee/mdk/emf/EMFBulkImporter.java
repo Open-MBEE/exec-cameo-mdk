@@ -41,10 +41,14 @@ public class EMFBulkImporter implements BulkImportFunction {
 
     private final BiFunction<String, Project, Element> bulkIdToElementConverter = (id, project) -> {
         Element element = Converters.getIdToElementConverter().apply(id, project);
-        System.out.println("[NO CACHE] " + id + " -> " + element);
+        if (MDUtils.isDeveloperMode()) {
+            System.out.println("[NO CACHE] " + id + " -> " + element);
+        }
         if (element == null && elementCache != null) {
             element = elementCache.get(id);
-            System.out.println("[CACHE] " + id + " -> " + element);
+            if (MDUtils.isDeveloperMode()) {
+                System.out.println("[CACHE] " + id + " -> " + element);
+            }
         }
         return element;
     };
