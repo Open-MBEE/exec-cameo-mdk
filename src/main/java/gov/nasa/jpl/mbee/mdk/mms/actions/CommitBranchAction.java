@@ -41,7 +41,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CommitBranchAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
+public class CommitBranchAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction, RunnableWithProgress {
 
     public static final String DEFAULT_ID = CommitBranchAction.class.getSimpleName();
     public static final String VALIDATE_MODEL_DEFAULT_ID = DEFAULT_ID + "_Validate_Model";
@@ -79,150 +79,150 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
     }
 
     public void commitAction() {
-        ProgressStatusRunner.runWithProgressStatus(new RunnableWithProgress() {
-            @Override
-            public void run(ProgressStatus progressStatus) {
-                BranchInfoImpl branchInfoImpl = toBranchInfoImpl(branchInfo);
-                if (branchInfoImpl == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Current branch not found. Branch commit aborted.");
-                    return;
-                }
+        ProgressStatusRunner.runWithProgressStatus(this, "Commit Branch", true, 0);
+    }
 
-                ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project);
-                ProjectDescriptor branchDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, branchInfoImpl.getID());
-                List<CommitInfoImpl> branchCommits = toCommitInfoImpls(EsiUtils.getVersions(branchDescriptor));
+    @Override
+    public void run(ProgressStatus progressStatus) {
+        BranchInfoImpl branchInfoImpl = toBranchInfoImpl(branchInfo);
+        if (branchInfoImpl == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Current branch not found. Branch commit aborted.");
+            return;
+        }
 
-                long startRevisionCommitId = branchInfoImpl.getStartRevision();
-                CommitInfoImpl startRevisionCommitInfo = branchCommits.stream().filter(version -> startRevisionCommitId == version.getID()).findAny().orElse(null);
-                if (startRevisionCommitInfo == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to find start revision commit info. Branch commit aborted.");
-                    return;
-                }
-                UUID parentBranchUuid = startRevisionCommitInfo.getBranchID();
-                EsiUtils.EsiBranchInfo parentBranchInfo = EsiUtils.getBranches(projectDescriptor).stream().filter(branch -> branch.getID().equals(parentBranchUuid)).findAny().orElse(null);
-                if (parentBranchInfo == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to find parent branch info. Branch commit aborted.");
-                    return;
-                }
-                String parentBranchId = parentBranchUuid.toString();
-                String parentBranchName = parentBranchInfo.getName();
-                if (parentBranchInfo.getName().equals("trunk")) {
-                    parentBranchId = "master";
-                    parentBranchName = "master";
-                }
+        ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project);
+        ProjectDescriptor branchDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, branchInfoImpl.getID());
+        List<CommitInfoImpl> branchCommits = toCommitInfoImpls(EsiUtils.getVersions(branchDescriptor));
 
-                int parentCommitsBehind = 0;
-                long latestRevisionCommitId = branchInfoImpl.getLatestRevision();
-                CommitInfoImpl latestRevisionCommitInfo = branchCommits.stream().filter(version -> latestRevisionCommitId == version.getID()).findAny().orElse(null);
-                if (latestRevisionCommitInfo == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to find latest revision commit info of current branch. Branch commit aborted.");
-                    return;
-                }
-                CommitInfoImpl commit = latestRevisionCommitInfo;
-                while (commit != null && commit.getID() != startRevisionCommitId) {
-                    parentCommitsBehind++;
-                    long directParent = commit.getDirectParent();
-                    commit = branchCommits.stream().filter(version -> directParent == version.getID()).findAny().orElse(null);
-                }
-                // This is needed since on branch init TWC automatically creates a commit. This presumably doesn't make any element changes, so it shouldn't be necessary to manually sync.
-                parentCommitsBehind--;
+        long startRevisionCommitId = branchInfoImpl.getStartRevision();
+        CommitInfoImpl startRevisionCommitInfo = branchCommits.stream().filter(version -> startRevisionCommitId == version.getID()).findAny().orElse(null);
+        if (startRevisionCommitInfo == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to find start revision commit info. Branch commit aborted.");
+            return;
+        }
+        UUID parentBranchUuid = startRevisionCommitInfo.getBranchID();
+        EsiUtils.EsiBranchInfo parentBranchInfo = EsiUtils.getBranches(projectDescriptor).stream().filter(branch -> branch.getID().equals(parentBranchUuid)).findAny().orElse(null);
+        if (parentBranchInfo == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to find parent branch info. Branch commit aborted.");
+            return;
+        }
+        String parentBranchId = parentBranchUuid.toString();
+        String parentBranchName = parentBranchInfo.getName();
+        if (parentBranchInfo.getName().equals("trunk")) {
+            parentBranchId = "master";
+            parentBranchName = "master";
+        }
 
-                int parentCommitsAhead = 0;
-                ProjectDescriptor parentBranchDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, parentBranchUuid);
-                List<CommitInfoImpl> parentBranchCommits = toCommitInfoImpls(EsiUtils.getVersions(parentBranchDescriptor));
-                BranchInfoImpl parentBranchInfoImpl = toBranchInfoImpl(parentBranchInfo);
-                if (parentBranchInfoImpl == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Parent branch not found. Branch commit aborted.");
-                }
-                long parentLatestRevisionCommitId = parentBranchInfoImpl.getLatestRevision();
-                CommitInfoImpl parentLatestRevisionCommitInfo = parentBranchCommits.stream().filter(version -> parentLatestRevisionCommitId == version.getID()).findAny().orElse(null);
-                if (parentLatestRevisionCommitInfo == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to find latest revision commit info of parent branch. Branch commit aborted.");
-                    return;
-                }
-                commit = parentLatestRevisionCommitInfo;
-                while (commit != null && commit.getID() != startRevisionCommitId) {
-                    parentCommitsAhead++;
-                    long directParent = commit.getDirectParent();
-                    commit = parentBranchCommits.stream().filter(version -> directParent == version.getID()).findAny().orElse(null);
-                }
+        int parentCommitsBehind = 0;
+        long latestRevisionCommitId = branchInfoImpl.getLatestRevision();
+        CommitInfoImpl latestRevisionCommitInfo = branchCommits.stream().filter(version -> latestRevisionCommitId == version.getID()).findAny().orElse(null);
+        if (latestRevisionCommitInfo == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to find latest revision commit info of current branch. Branch commit aborted.");
+            return;
+        }
+        CommitInfoImpl commit = latestRevisionCommitInfo;
+        while (commit != null && commit.getID() != startRevisionCommitId) {
+            parentCommitsBehind++;
+            long directParent = commit.getDirectParent();
+            commit = branchCommits.stream().filter(version -> directParent == version.getID()).findAny().orElse(null);
+        }
+        // This is needed since on branch init TWC automatically creates a commit. This presumably doesn't make any element changes, so it shouldn't be necessary to manually sync.
+        parentCommitsBehind--;
 
-                JsonNode parentBranchJsonNode = null;
-                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-                if (requestUri == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs URL. Branch commit aborted.");
-                    return;
-                }
-                requestUri.setPath(requestUri.getPath() + "/" + parentBranchId);
-                try {
-                    HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
-                    File responseFile = MMSUtils.sendMMSRequest(project, request);
-                    ObjectNode response;
-                    try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                        response = JacksonUtils.parseJsonObject(jsonParser);
-                    }
-                    JsonNode refsArray, value;
-                    if ((refsArray = response.get("refs")) != null && refsArray.isArray()) {
-                        for (JsonNode refJson : refsArray) {
-                            if (refJson.isObject()) {
-                                ObjectNode refObjectNode = (ObjectNode) refJson;
-                                refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
-                                String entryKey;
-                                if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                                    entryKey = refObjectNode.get(MDKConstants.ID_KEY).asText();
-                                    if (entryKey.equals(parentBranchId)) {
-                                        parentBranchJsonNode = refObjectNode;
-                                    }
-                                }
+        int parentCommitsAhead = 0;
+        ProjectDescriptor parentBranchDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, parentBranchUuid);
+        List<CommitInfoImpl> parentBranchCommits = toCommitInfoImpls(EsiUtils.getVersions(parentBranchDescriptor));
+        BranchInfoImpl parentBranchInfoImpl = toBranchInfoImpl(parentBranchInfo);
+        if (parentBranchInfoImpl == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Parent branch not found. Branch commit aborted.");
+        }
+        long parentLatestRevisionCommitId = parentBranchInfoImpl.getLatestRevision();
+        CommitInfoImpl parentLatestRevisionCommitInfo = parentBranchCommits.stream().filter(version -> parentLatestRevisionCommitId == version.getID()).findAny().orElse(null);
+        if (parentLatestRevisionCommitInfo == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to find latest revision commit info of parent branch. Branch commit aborted.");
+            return;
+        }
+        commit = parentLatestRevisionCommitInfo;
+        while (commit != null && commit.getID() != startRevisionCommitId) {
+            parentCommitsAhead++;
+            long directParent = commit.getDirectParent();
+            commit = parentBranchCommits.stream().filter(version -> directParent == version.getID()).findAny().orElse(null);
+        }
+
+        JsonNode parentBranchJsonNode = null;
+        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
+        if (requestUri == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs URL. Branch commit aborted.");
+            return;
+        }
+        requestUri.setPath(requestUri.getPath() + "/" + parentBranchId);
+        try {
+            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
+            File responseFile = MMSUtils.sendMMSRequest(project, request);
+            ObjectNode response;
+            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                response = JacksonUtils.parseJsonObject(jsonParser);
+            }
+            JsonNode refsArray, value;
+            if ((refsArray = response.get("refs")) != null && refsArray.isArray()) {
+                for (JsonNode refJson : refsArray) {
+                    if (refJson.isObject()) {
+                        ObjectNode refObjectNode = (ObjectNode) refJson;
+                        refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
+                        String entryKey;
+                        if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+                            entryKey = refObjectNode.get(MDKConstants.ID_KEY).asText();
+                            if (entryKey.equals(parentBranchId)) {
+                                parentBranchJsonNode = refObjectNode;
                             }
                         }
                     }
-                } catch (IOException | URISyntaxException | ServerException e) {
-                    e.printStackTrace();
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS branches. Branch commit aborted. Reason: " + e.getMessage());
-                    return;
-                }
-                if (parentBranchJsonNode == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Parent branch (" + parentBranchName + ") does not exist on MMS. Please commit that one first. Branch commit aborted.");
-                    return;
-                }
-
-                requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-                if (requestUri == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs url. Branch commit aborted.");
-                    return;
-                }
-
-                Collection<ObjectNode> refsNodes = new LinkedList<>();
-                ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo, parentBranchId);
-                refsNodes.add(branchNode);
-
-                if (parentCommitsBehind > 0 || parentCommitsAhead > 0) {
-                    Application.getInstance().getGUILog().log("[INFO] The parent branch (" + parentBranchName + ") is " +
-                            (parentCommitsBehind > 0 ? NumberFormat.getInstance().format(parentCommitsBehind) + " commit" + (parentCommitsBehind != 1 ? "s" : "") + "behind " : "") +
-                            (parentCommitsBehind > 0 && parentCommitsAhead > 0 ? "and " : "") +
-                            (parentCommitsAhead > 0 ? NumberFormat.getInstance().format(parentCommitsAhead) + " commit" + (parentCommitsAhead != 1 ? "s" : "") + " ahead of " : "") +
-                            "the branch being created (" + branchInfo.getName() + "). " +
-                            "It is highly recommended that you manually sync the newly created branch to ensure parity.");
-                }
-
-                try {
-                    File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
-                    HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
-                    MMSUtils.sendMMSRequest(project, request);
-                } catch (IOException | URISyntaxException | ServerException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
-                    e.printStackTrace();
-                    return;
-                }
-                Application.getInstance().getGUILog().log("[INFO] Branch creation for \"" + branchInfo.getName() + "\" on MMS initiated.");
-                if (validateModel) {
-                    //RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
-                    RunnableWithProgress temp = new ManualSyncRunner(Collections.singletonList(project.getPrimaryModel()), project, -1);
-                    ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
                 }
             }
-        }, "Commit Branch", true, 0);
+        } catch (IOException | URISyntaxException | ServerException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS branches. Branch commit aborted. Reason: " + e.getMessage());
+            return;
+        }
+        if (parentBranchJsonNode == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Parent branch (" + parentBranchName + ") does not exist on MMS. Please commit that one first. Branch commit aborted.");
+            return;
+        }
+
+        requestUri = MMSUtils.getServiceProjectsRefsUri(project);
+        if (requestUri == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs url. Branch commit aborted.");
+            return;
+        }
+
+        Collection<ObjectNode> refsNodes = new LinkedList<>();
+        ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo, parentBranchId);
+        refsNodes.add(branchNode);
+
+        if (parentCommitsBehind > 0 || parentCommitsAhead > 0) {
+            Application.getInstance().getGUILog().log("[INFO] The parent branch (" + parentBranchName + ") is " +
+                    (parentCommitsBehind > 0 ? NumberFormat.getInstance().format(parentCommitsBehind) + " commit" + (parentCommitsBehind != 1 ? "s" : "") + "behind " : "") +
+                    (parentCommitsBehind > 0 && parentCommitsAhead > 0 ? "and " : "") +
+                    (parentCommitsAhead > 0 ? NumberFormat.getInstance().format(parentCommitsAhead) + " commit" + (parentCommitsAhead != 1 ? "s" : "") + " ahead of " : "") +
+                    "the branch being created (" + branchInfo.getName() + "). " +
+                    "It is highly recommended that you manually sync the newly created branch to ensure parity.");
+        }
+
+        try {
+            File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
+            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
+            MMSUtils.sendMMSRequest(project, request);
+        } catch (IOException | URISyntaxException | ServerException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
+        Application.getInstance().getGUILog().log("[INFO] Branch creation for \"" + branchInfo.getName() + "\" on MMS initiated.");
+        if (validateModel) {
+            //RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
+            RunnableWithProgress temp = new ManualSyncRunner(Collections.singletonList(project.getPrimaryModel()), project, -1);
+            ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
+        }
     }
 
     public BranchInfoImpl toBranchInfoImpl(EsiUtils.EsiBranchInfo esiBranchInfo) {
