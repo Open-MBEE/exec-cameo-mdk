@@ -198,7 +198,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                             if (element == null) {
                                 continue;
                             }
-                            deletionOnSuccessValidationRule.addViolation(element, "[DELETE SKIPPED] Delete skipped due element create/update failure.");
+                            deletionOnSuccessValidationRule.addViolation(element, "[DELETE SKIPPED] Delete skipped due to element create/update failure.");
                             failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                         }
                     }
