@@ -54,13 +54,15 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
     private ValidationRule editableValidationRule = new ValidationRule("Element Editability", "The element to be updated shall be editable.", ViolationSeverity.WARNING),
             failedChangeValidationRule = new ValidationRule("Failed Change", "The element shall not fail to change.", ViolationSeverity.ERROR),
             equivalentElementValidationRule = new ValidationRule("Element Equivalency", "The changed element shall be equivalent to the source element.", ViolationSeverity.WARNING),
-            successfulChangeValidationRule = new ValidationRule("Successful Change", "The element shall successfully change.", ViolationSeverity.INFO);
+            successfulChangeValidationRule = new ValidationRule("Successful Change", "The element shall successfully change.", ViolationSeverity.INFO),
+            deletionOnSuccessValidationRule = new ValidationRule("Deletion on Success", "The element to be deleted shall only be deleted if all elements to be created/updated are successfully imported.", ViolationSeverity.WARNING);
 
     {
         validationSuite.addValidationRule(editableValidationRule);
         validationSuite.addValidationRule(failedChangeValidationRule);
         validationSuite.addValidationRule(equivalentElementValidationRule);
         validationSuite.addValidationRule(successfulChangeValidationRule);
+        validationSuite.addValidationRule(deletionOnSuccessValidationRule);
     }
 
     private Collection<ObjectNode> elementsToUpdate;
@@ -146,7 +148,62 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 localSyncTransactionCommitListener.setDisabled(true);
             }
 
-            EMFBulkImporter emfBulkImporter = new EMFBulkImporter(NAME);
+            EMFBulkImporter emfBulkImporter = new EMFBulkImporter(NAME) {
+                @Override
+                public void onSuccess() {
+                    if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
+                        Application.getInstance().getGUILog().log("[INFO] Attempting to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " locally.");
+
+                        if (localSyncTransactionCommitListener != null) {
+                            localSyncTransactionCommitListener.setDisabled(true);
+                        }
+                        if (!SessionManager.getInstance().isSessionCreated()) {
+                            SessionManager.getInstance().createSession(UpdateClientElementAction.class.getName() + " Deletes");
+                        }
+
+                        for (String id : elementsToDelete) {
+                            Exception exception = null;
+                            Element element = Converters.getIdToElementConverter().apply(id, project);
+                            if (element == null) {
+                                continue;
+                            }
+                            try {
+                                ModelElementsManager.getInstance().removeElement(element);
+                            } catch (ReadOnlyElementException | RuntimeException e) {
+                                exception = e;
+                            }
+                            if (exception == null) {
+                                successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
+                            }
+                            else {
+                                (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(element, "[DELETE FAILED] " + exception.getMessage());
+                                failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
+                            }
+                        }
+
+                        if (localSyncTransactionCommitListener != null) {
+                            localSyncTransactionCommitListener.setDisabled(false);
+                        }
+                        if (SessionManager.getInstance().isSessionCreated()) {
+                            SessionManager.getInstance().closeSession();
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure() {
+                    if (elementsToDelete != null) {
+                        for (String id : elementsToDelete) {
+                            Element element = Converters.getIdToElementConverter().apply(id, project);
+                            if (element == null) {
+                                continue;
+                            }
+                            deletionOnSuccessValidationRule.addViolation(element, "[DELETE SKIPPED] Delete skipped due element create/update failure.");
+                            failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
+                        }
+                    }
+                }
+            };
             Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project, progressStatus);
             for (Map.Entry<Pair<Element, ObjectNode>, Exception> entry : emfBulkImporter.getFailedElementMap().entrySet()) {
                 Element element = entry.getKey().getKey();
@@ -235,43 +292,6 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
             if (localSyncTransactionCommitListener != null) {
                 localSyncTransactionCommitListener.setDisabled(false);
-            }
-        }
-        if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
-            Application.getInstance().getGUILog().log("[INFO] Attempting to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " locally.");
-
-            if (localSyncTransactionCommitListener != null) {
-                localSyncTransactionCommitListener.setDisabled(true);
-            }
-            if (!SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().createSession(UpdateClientElementAction.class.getName() + " Deletes");
-            }
-
-            for (String id : elementsToDelete) {
-                Exception exception = null;
-                Element element = Converters.getIdToElementConverter().apply(id, project);
-                if (element == null) {
-                    continue;
-                }
-                try {
-                    ModelElementsManager.getInstance().removeElement(element);
-                } catch (ReadOnlyElementException | RuntimeException e) {
-                    exception = e;
-                }
-                if (exception == null) {
-                    successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
-                }
-                else {
-                    (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(element, "[DELETE FAILED] " + exception.getMessage());
-                    failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
-                }
-            }
-
-            if (localSyncTransactionCommitListener != null) {
-                localSyncTransactionCommitListener.setDisabled(false);
-            }
-            if (SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().closeSession();
             }
         }
         if (validationSuite.hasErrors()) {

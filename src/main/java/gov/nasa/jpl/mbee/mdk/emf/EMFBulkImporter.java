@@ -276,6 +276,10 @@ public class EMFBulkImporter implements BulkImportFunction {
                     }
                 }
 
+                if (failedElementMap.isEmpty()) {
+                    onSuccess();
+                }
+
                 if (SessionManager.getInstance().isSessionCreated()) {
                     SessionManager.getInstance().closeSession();
                 }
@@ -284,6 +288,9 @@ public class EMFBulkImporter implements BulkImportFunction {
         } finally {
             if (SessionManager.getInstance().isSessionCreated()) {
                 SessionManager.getInstance().cancelSession();
+            }
+            if (!failedElementMap.isEmpty()) {
+                onFailure();
             }
             if (progressStatus != null) {
                 progressStatus.setDescription(initialProgressStatusDescription);
@@ -298,6 +305,12 @@ public class EMFBulkImporter implements BulkImportFunction {
         for (final TreeIterator<Object> allProperContents = EcoreUtil.getAllProperContents(eObject, true); allProperContents.hasNext(); allProperContents.next()) {
             // just iterate to load contents
         }
+    }
+
+    public void onSuccess() {
+    }
+
+    public void onFailure() {
     }
 
     public String getSessionName() {
