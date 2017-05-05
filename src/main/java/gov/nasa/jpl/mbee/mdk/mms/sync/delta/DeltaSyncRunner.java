@@ -69,7 +69,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             return;
         }
         try {
-            if (!TicketUtils.isTicketValid(project)) {
+            if (!TicketUtils.isTicketValid(project, progressStatus)) {
                 Utils.guilog("[WARNING] You are not logged in to MMS. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
                 new Thread(() -> MMSLoginAction.loginAction(project)).start();
                 return;
