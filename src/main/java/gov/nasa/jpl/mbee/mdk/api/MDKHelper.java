@@ -393,7 +393,7 @@ public class MDKHelper {
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server.");
         File responseFile;
         if (progressStatus != null) {
-            responseFile = MMSUtils.sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
         else {
             responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri, sendData, ContentType.APPLICATION_JSON));

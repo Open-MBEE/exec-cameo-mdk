@@ -55,12 +55,18 @@ public class JMSUtils {
      */
     public static ObjectNode getJmsConnectionDetails(Project project)
             throws IOException, ServerException, URISyntaxException {
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        requestUri.setPath(requestUri.getPath() + "/connection/jms");
-        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-           return JacksonUtils.parseJsonObject(jsonParser);
+        if (requestUri == null) {
+            return responseJson;
         }
+        requestUri.setPath(requestUri.getPath() + "/connection/jms");
+        MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri), null, responseJson);
+//        File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+//        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+//           return JacksonUtils.parseJsonObject(jsonParser);
+//        }
+        return responseJson;
     }
 
     // Varies by current project
