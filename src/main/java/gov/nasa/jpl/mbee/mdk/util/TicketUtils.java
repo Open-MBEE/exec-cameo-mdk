@@ -3,6 +3,9 @@ package gov.nasa.jpl.mbee.mdk.util;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
@@ -26,7 +29,7 @@ public class TicketUtils {
 
     private static String username = "";
     private static String password = "";
-    private static final int TICKET_RENEWAL_INTERVAL = 1800; //seconds
+    private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
     private static final HashMap<Project, TicketMapping> ticketMappings = new HashMap<>();
 
     /**
@@ -48,11 +51,12 @@ public class TicketUtils {
         return ticketMap != null && ticketMap.getTicket() != null && !ticketMap.getTicket().isEmpty();
     }
 
-    public static boolean isTicketValid(Project project) throws ServerException, IOException, URISyntaxException {
+    public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         if (!isTicketSet(project)) {
             return false;
         }
-        return MMSUtils.validateCredentials(project, ticketMappings.get(project).getTicket()).equals(username);
+        String ticket = ticketMappings.get(project).getTicket();
+        return MMSUtils.validateCredentials(project, ticket, progressStatus).equals(username);
     }
 
     /**
@@ -233,23 +237,30 @@ public class TicketUtils {
         credentials.put("password", pass);
 
         // do request
-        String ticket;
-        try {
-            ticket = MMSUtils.sendCredentials(project, username, pass);
-        } catch (ServerException | IOException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        ProgressStatusRunner.runWithProgressStatus(new RunnableWithProgress() {
+            @Override
+            public void run(ProgressStatus progressStatus) {
+                String ticket;
+                try {
+                    ticket = MMSUtils.sendCredentials(project, username, pass, progressStatus);
+                } catch (ServerException | IOException | URISyntaxException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
+                    e.printStackTrace();
+                    return;
+                }
+                // parse response
+                if (ticket != null) {
+                    ticketMappings.put(project, new TicketMapping(project, ticket));
+                }
+            }
+        }, "Logging in to MMS", true, 0);
 
         // parse response
-        if (ticket != null) {
-            password = "";
-            ticketMappings.put(project, new TicketMapping(project, ticket));
+        password = "";
+        if (ticketMappings.get(project) != null && !ticketMappings.get(project).getTicket().isEmpty()) {
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");
-        password = "";
         return false;
     }
 
@@ -265,7 +276,7 @@ public class TicketUtils {
                 // try/catching here to prevent service being disabled for future calls
                 try {
                     try {
-                        boolean isValid = isTicketValid(project);
+                        boolean isValid = isTicketValid(project, null);
                         if (!isValid) {
                             Application.getInstance().getGUILog().log("[INFO] MMS credentials are expired or invalid.");
                             MMSLogoutAction.logoutAction(project);

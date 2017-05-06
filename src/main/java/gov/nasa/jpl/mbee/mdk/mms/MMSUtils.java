@@ -1,9 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -23,11 +20,10 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.HttpDeleteWithBody;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import org.apache.commons.io.IOUtils;
@@ -49,6 +45,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
@@ -140,7 +138,7 @@ public class MMSUtils {
         //do cancellable request if progressStatus exists
         Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
         if (progressStatus != null) {
-            return sendCancellableMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+            return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
         return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
@@ -230,8 +228,14 @@ public class MMSUtils {
 
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
             throws IOException {
-        File file = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
-        file.deleteOnExit();
+        File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
+        System.out.println("Request Body: " + requestFile.getPath());
+        if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+            Application.getInstance().getGUILog().log("[INFO] Request Body: " + requestFile.getPath());
+        }
+        else {
+            requestFile.deleteOnExit();
+        }
 
         String arrayName = "elements";
         if (jsonBlobType == JsonBlobType.ORG) {
@@ -243,7 +247,7 @@ public class MMSUtils {
         else if (jsonBlobType == JsonBlobType.REF) {
             arrayName = "refs";
         }
-        try (FileOutputStream outputStream = new FileOutputStream(file);
+        try (FileOutputStream outputStream = new FileOutputStream(requestFile);
                 JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
             jsonGenerator.writeStartObject();
             jsonGenerator.writeArrayFieldStart(arrayName);
@@ -265,160 +269,137 @@ public class MMSUtils {
             jsonGenerator.writeStringField("mdkVersion", MDKPlugin.getVersion());
             jsonGenerator.writeEndObject();
         }
-        System.out.println("Request Body: " + file.getPath());
-        return file;
+
+        return requestFile;
     }
 
     /**
-     * General purpose method for sending a constructed http request via http client.
+     * General purpose method for sending a constructed http request via http client. For streaming reasons, defaults to writing to a file.
+     * When the file is written, it is temp unless the logJSON environment variable is enabled (or DEVELOPER mode is on). This file IS NOT
+     * written to when the responseJson object is non-null. In that instance, the response is parsed into this object instead, keeping
+     * the results entirely in memory. For large results this could be extremely memory intensive, so it is not advised for general use.
      *
      * @param request
      * @return
      * @throws IOException
      * @throws ServerException
      */
-    public static File sendMMSRequest(Project project, HttpRequestBase request)
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson)
             throws IOException, ServerException, URISyntaxException {
-        File targetFile = File.createTempFile("Response-", null);
-        targetFile.deleteOnExit();
-        HttpEntityEnclosingRequest httpEntityEnclosingRequest = null;
-        boolean logBody = MDKOptionsGroup.getMDKOptions().isLogJson();
-        logBody = logBody && request instanceof HttpEntityEnclosingRequest;
-        logBody = logBody && ((httpEntityEnclosingRequest = (HttpEntityEnclosingRequest) request).getEntity() != null);
-        logBody = logBody && httpEntityEnclosingRequest.getEntity().isRepeatable();
-        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
+        final File responseFile = (responseJson == null ? File.createTempFile("Response-", null) : null);
+        final AtomicReference<String> responseBody = new AtomicReference<>();
+        final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
-        boolean throwServerException = false;
-        int responseCode;
+        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
-        try (CloseableHttpClient httpclient = HttpClients.createDefault();
-             CloseableHttpResponse response = httpclient.execute(request);
-             InputStream inputStream = response.getEntity().getContent();
-             OutputStream outputStream = new FileOutputStream(targetFile)) {
-            // get data out of the response
-            responseCode = response.getStatusLine().getStatusCode();
-            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
 
-            // debug / logging output from response
-            System.out.println("MMS Response [" + request.getMethod() + "] " + request.getURI().toString() + " - Code: " + responseCode);
-            System.out.println("Response Body: " + targetFile.getPath());
+        System.out.println("MMS Request [POST] " + request.getURI().toString());
+        if (progressStatus == null) {
+            try (CloseableHttpClient httpclient = HttpClients.createDefault();
+                 CloseableHttpResponse response = httpclient.execute(request);
+                 InputStream inputStream = response.getEntity().getContent()) {
+                if (inputStream != null) {
+                    responseBody.set(generateMmsOutput(inputStream, responseFile));
+                }
+                responseCode.set(response.getStatusLine().getStatusCode());
+            }
+        }
+        else {
+            final AtomicReference<ThreadRequestExceptionType> threadedExceptionType = new AtomicReference<>();
+            final AtomicReference<String> threadedExceptionMessage = new AtomicReference<>();
+            Thread t = new Thread(() -> {
+                // create client, execute request, parse response, store in thread safe buffer to return to calling method for later closing
+                try (CloseableHttpClient httpclient = HttpClients.createDefault();
+                     CloseableHttpResponse response = httpclient.execute(request);
+                     InputStream inputStream = response.getEntity().getContent()){
+                    if (inputStream != null) {
+                        responseBody.set(generateMmsOutput(inputStream, responseFile));
+                    }
+                    responseCode.set(response.getStatusLine().getStatusCode());
+                    threadedExceptionType.set(null);
+                    threadedExceptionMessage.set("");
+                } catch (IOException e) {
+                    threadedExceptionType.set(ThreadRequestExceptionType.IO_EXCEPTION);
+                    threadedExceptionMessage.set(e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+            t.start();
+            try {
+                t.join(CHECK_CANCEL_DELAY);
+                while (t.isAlive()) {
+                    if (progressStatus.isCancel()) {
+                        Application.getInstance().getGUILog().log("[INFO] MMS request was manually cancelled.");
+                        //clean up thread?
+                        return null;
+                    }
+                    t.join(CHECK_CANCEL_DELAY);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (threadedExceptionType.get() == ThreadRequestExceptionType.IO_EXCEPTION) {
+                throw new IOException(threadedExceptionMessage.get());
+            }
+        }
 
-            // assume that a GET that returns 404 with json response bodies is a "missing resource" 404, which are expected for some cases and should not break normal execution flow
-            if (responseCode == HttpURLConnection.HTTP_OK || (request.getMethod().equals("GET") && responseCode == HttpURLConnection.HTTP_NOT_FOUND && responseType.equals("application/json;charset=UTF-8"))) {
-                // continue
+        if (responseFile == null) {
+            try (InputStream inputStream = new ByteArrayInputStream(responseBody.get().getBytes())) {
+                if (!processResponse(responseCode.get(), inputStream, project)) {
+                    throw new ServerException(responseBody.get(), responseCode.get());
+                }
+                ObjectNode json = JacksonUtils.getObjectMapper().readValue(responseBody.get(), ObjectNode.class);
+                Iterator<Map.Entry<String, JsonNode>> jsonFields = json.fields();
+                while (jsonFields.hasNext()) {
+                    Map.Entry<String, JsonNode> currentField = jsonFields.next();
+                    responseJson.put(currentField.getKey(), currentField.getValue());
+                }
             }
-            // allow re-attempt of request if credentials have expired or are invalid
-            else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                Utils.guilog("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried. Server code: " + responseCode);
-                MMSLogoutAction.logoutAction(project);
-                throwServerException = true;
+        } else {
+            try (InputStream inputStream = new FileInputStream(responseFile)) {
+                if (!processResponse(responseCode.get(), inputStream, project)) {
+                    throw new ServerException(responseFile.getAbsolutePath(), responseCode.get());
+                }
             }
-            // if it's anything else, assume failure and break normal flow
-            else {
-                Utils.guilog("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                throwServerException = true;
-            }
+        }
 
-            // dump to temp response file, build jsonParser and print server message if possible
-            if (inputStream != null && responseType.equals("application/json;charset=UTF-8")) {
+        return responseFile;
+    }
+
+    public static File sendMMSRequest(Project project, HttpRequestBase request)
+            throws IOException, ServerException, URISyntaxException {
+        return sendMMSRequest(project, request, null, null);
+    }
+
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException {
+        return sendMMSRequest(project, request, progressStatus, null);
+    }
+
+    private static String generateMmsOutput(InputStream inputStream, final File responseFile) throws IOException {
+        if (responseFile != null) {
+            try (OutputStream outputStream = new FileOutputStream(responseFile)) {
                 byte[] buffer = new byte[8 * 1024];
                 int bytesRead;
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-            }
-        }
-
-        JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
-        try (JsonParser jsonParser = jsonFactory.createParser(targetFile)) {
-            while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
-                // spin until we find message
-            }
-            if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
-                jsonParser.nextToken();
-                Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
-            }
-        }
-
-        if (throwServerException) {
-            // big flashing red letters that the action failed, or as close as we're going to get
-            Utils.showPopupMessage("Action failed. See notification window for details.");
-            // throw is done last, after printing the error and any messages that might have been returned
-            throw new ServerException(targetFile.getAbsolutePath(), responseCode);
-        }
-        return targetFile;
-    }
-
-    /**
-     * General purpose method for running a cancellable request. Builds a new thread to run the request, and passes
-     * any relevant exception information back out via atomic references and generates new exceptions in calling thread
-     *
-     * @param request
-     * @param progressStatus
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     * @throws ServerException    contains both response code and response body
-     */
-    public static File sendCancellableMMSRequest(final Project project, HttpRequestBase request, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
-        final AtomicReference<File> responseFile = new AtomicReference<>();
-        final AtomicReference<Integer> ecode = new AtomicReference<>();
-        final AtomicReference<ThreadRequestExceptionType> etype = new AtomicReference<>();
-        final AtomicReference<String> emsg = new AtomicReference<>();
-        Thread t = new Thread(() -> {
-            File response = null;
-            try {
-                response = sendMMSRequest(project, request);
-                etype.set(null);
-                ecode.set(200);
-                emsg.set("");
-            } catch (ServerException ex) {
-                etype.set(ThreadRequestExceptionType.SERVER_EXCEPTION);
-                ecode.set(ex.getCode());
-                emsg.set(ex.getMessage());
-                ex.printStackTrace();
-            } catch (IOException e) {
-                etype.set(ThreadRequestExceptionType.IO_EXCEPTION);
-                emsg.set(e.getMessage());
-                e.printStackTrace();
-            } catch (URISyntaxException e) {
-                etype.set(ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION);
-                emsg.set(e.getMessage());
-                e.printStackTrace();
-            }
-            responseFile.set(response);
-        });
-        t.start();
-        try {
-            t.join(CHECK_CANCEL_DELAY);
-            while (t.isAlive()) {
-                if (progressStatus != null && progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[INFO] Request to server for elements cancelled.");
-                    //clean up thread?
-                    return null;
+                System.out.println("Response Body: " + responseFile.getPath());
+                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                    Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
+                } else {
+                    responseFile.deleteOnExit();
                 }
-                t.join(CHECK_CANCEL_DELAY);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            return "";
+        } else {
+            return IOUtils.toString(inputStream);
         }
-        if (etype.get() == ThreadRequestExceptionType.SERVER_EXCEPTION) {
-            throw new ServerException(emsg.get(), ecode.get());
-        }
-        else if (etype.get() == ThreadRequestExceptionType.IO_EXCEPTION) {
-            throw new IOException(emsg.get());
-        }
-        else if (etype.get() == ThreadRequestExceptionType.URI_SYNTAX_EXCEPTION) {
-            throw new URISyntaxException(request.getURI().toString(), emsg.get());
-        }
-        return responseFile.get();
     }
 
-    public static String sendCredentials(Project project, String username, String password)
+    public static String sendCredentials(Project project, String username, String password, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
@@ -426,71 +407,23 @@ public class MMSUtils {
         }
         requestUri.setPath(requestUri.getPath() + "/api/login");
         requestUri.clearParameters();
-        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-        credentials.put("username", username);
-        credentials.put("password", password);
 
         //build request
-        ContentType contentType = ContentType.APPLICATION_JSON;
         URI requestDest = requestUri.build();
         HttpRequestBase request = new HttpPost(requestDest);
 
         request.addHeader("Content-Type", "application/json");
         request.addHeader("charset", (Consts.UTF_8).displayName());
 
+        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
+        credentials.put("username", username);
+        credentials.put("password", password);
         String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
         ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
 
         // do request
-        System.out.println("MMS Request [POST] " + requestUri.toString());
-        ObjectNode responseJson = null;
-        try (CloseableHttpClient httpclient = HttpClients.createDefault();
-             CloseableHttpResponse response = httpclient.execute(request);
-             InputStream inputStream = response.getEntity().getContent()) {
-            // get data out of the response
-            int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
-            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
-
-            // debug / logging output from response
-            System.out.println("MMS Response [POST] " + requestUri.toString() + " - Code: " + responseCode);
-
-            // flag for later server exceptions; they will be thrown after printing any available server messages to the gui log
-            boolean throwServerException = false;
-
-            // if it's not 200, failure and break normal flow
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                throwServerException = true;
-            }
-
-            // print server message if possible
-            if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
-                responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
-                JsonNode value;
-                // display single response message
-                if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                    Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
-                }
-                // display multiple response messages
-                if (responseJson != null && (value = responseJson.get("messages")) != null && value.isArray()) {
-                    ArrayNode msgs = (ArrayNode) value;
-                    for (JsonNode msg : msgs) {
-                        if (msg != null && (value = msg.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                            Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
-                        }
-                    }
-                }
-            }
-
-            if (throwServerException) {
-                // big flashing red letters that the action failed, or as close as we're going to get
-                Utils.showPopupMessage("Action failed. See notification window for details.");
-                // throw is done last, after printing the error and any messages that might have been returned
-                throw new ServerException(responseBody, responseCode);
-            }
-        }
-        // parse response
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        sendMMSRequest(project, request, progressStatus, responseJson);
         JsonNode value;
         if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
             return value.asText();
@@ -498,7 +431,7 @@ public class MMSUtils {
         return null;
     }
 
-    public static String validateCredentials(Project project, String ticket)
+    public static String validateCredentials(Project project, String ticket, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
@@ -512,40 +445,50 @@ public class MMSUtils {
         HttpRequestBase request = new HttpGet(requestDest);
 
         // do request
-        System.out.println("MMS Request [GET] " + requestUri.toString());
-        ObjectNode responseJson;
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        sendMMSRequest(project, request, progressStatus, responseJson);
+
+        // parse response
         JsonNode value;
-        try (CloseableHttpClient httpclient = HttpClients.createDefault();
-             CloseableHttpResponse response = httpclient.execute(request);
-             InputStream inputStream = response.getEntity().getContent()) {
-            // get data out of the response
-            int responseCode = response.getStatusLine().getStatusCode();
-            String responseBody = ((inputStream != null) ? IOUtils.toString(inputStream) : "");
-            String responseType = ((response.getEntity().getContentType() != null) ? response.getEntity().getContentType().getValue() : "");
-
-            // debug / logging output from response
-            System.out.println("MMS Response [GET] " + requestUri.toString() + " - Code: " + responseCode);
-
-            if (responseCode == 200) {
-                if (!responseBody.isEmpty() && responseType.equals("application/json;charset=UTF-8")) {
-                    responseJson = JacksonUtils.getObjectMapper().readValue(responseBody, ObjectNode.class);
-                    if (responseJson != null && (value = responseJson.get("message")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                        Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + value.asText());
-                    }
-                    if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
-                        return value.asText();
-                    }
-                }
-                return "";
-            }
-            else {
-                Application.getInstance().getGUILog().log("[ERROR] Operation failed due to server error. Server code: " + responseCode);
-                // big flashing red letters that the action failed, or as close as we're going to get
-                Utils.showPopupMessage("Action failed. See notification window for details.");
-                // throw is done last, after printing the error and any messages that might have been returned
-                throw new ServerException(responseBody, responseCode);
-            }
+        if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
+            return value.asText();
         }
+        return "";
+    }
+
+    private static boolean processResponse(int responseCode, InputStream responseStream, Project project) {
+        boolean throwServerException = false;
+        JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
+        try (JsonParser jsonParser = jsonFactory.createParser(responseStream)) {
+            while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
+                // spin until we find message
+            }
+            if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
+                jsonParser.nextToken();
+                Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
+            }
+        } catch (IOException e) {
+            Application.getInstance().getGUILog().log("[WARNING] Unable to retrieve messages from server response.");
+            throwServerException = true;
+        }
+
+        if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried.");
+            MMSLogoutAction.logoutAction(project);
+            throwServerException = true;
+        }
+        // if we got messages out, we hit a valid endpoint and got a valid response and either a 200 or a 404 is an acceptable response code. If not, throw is already true.
+        else if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_NOT_FOUND) {
+            throwServerException = true;
+        }
+
+        if (throwServerException) {
+            // big flashing red letters that the action failed, or as close as we're going to get
+            Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[ERROR] Operation failed due to server error. Server code: " + responseCode + "</span>" +
+                    "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>"); // hidden characters for easy search
+//            Utils.showPopupMessage("Action failed. See notification window for details.");
+        }
+        return !throwServerException;
     }
 
     /**
@@ -614,7 +557,7 @@ public class MMSUtils {
                 JsonNode value;
                 for (JsonNode projectNode : arrayNode) {
                     if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                            && ((value = projectNode.get(MDKConstants.TWC_URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
+                            && ((value = projectNode.get(MDKConstants.URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
                         return value.asText();
                     }
                 }
@@ -745,7 +688,7 @@ public class MMSUtils {
             categoryId = EsiUtils.getCategoryID(resourceId);
         }
         projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        projectObjectNode.put(MDKConstants.TWC_URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
+        projectObjectNode.put(MDKConstants.URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
     }
 

@@ -39,9 +39,6 @@ public class ValidateConstraintsAction extends MDAction {
         }
         Project project = Project.getProject(selectedElements.iterator().next());
 
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
-
         constraintRule.constraintType = Type.STATIC;
         constraintRule.init(project, null);
         constraintRule.run(project, null, selectedElements);

@@ -279,7 +279,7 @@ public class OclQueryDialog extends JDialog implements ActionListener {
                     resultList.add(processedResult);
 
                     if (result != null && !classList.contains(result.getClass())) {
-                        completionList.add(editableListPanel.getCompletionHeader(processor.getSourceOfCompletion()));
+//                        completionList.add(editableListPanel.getCompletionHeader(processor.getSourceOfCompletion()));
                         completionList.addAll(processor.getCompletionChoices());
                         classList.add(result.getClass());
                     }

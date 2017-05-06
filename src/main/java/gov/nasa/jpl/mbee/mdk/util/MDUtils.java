@@ -170,95 +170,18 @@ public class MDUtils {
         return type;
     }
 
-    // public static Object getValue( BaseElement elem ) {
-    // Object res = null;
-    // if ( elem instanceof EObject ) {
-    // res = EmfUtils.getValue( (EObject)elem );
-    // }
-    // Assert.assertFalse( true ); // TODO
-    // return res;
-    // }
-
-    // public static Constraint getConstraint( Element elemt ) {
-    // Constraint c = null;
-    // elemt.get_constraintOfConstrainedElement();
-    // return c;
-    // }
-
     public static String getWorkspace(Project project) {
         if (!project.isRemote()) {
             return "master";
         }
         String twcBranch = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
         return (twcBranch.equals("trunk") ? "master" : twcBranch);
-
-//        String twbranch = getRemoteBranchPath(project);
-//        if (twbranch == null) {
-//            return "master";
-//        }
-//        twbranch = "master/" + twbranch;
-//      //  String projId = Application.getInstance().getProject().getPrimaryProject().getProjectID();
-//
-        //TODO @donbot imported from ExportUtility, update to finish the import
-//        Map<String, String> wsmap = wsIdMapping.get(projId);
-//        if (wsmap == null) {
-//            updateWorkspaceIdMapping();
-//            wsmap = wsIdMapping.get(projId);
-//        }
-//        if (wsmap != null) {
-//            String id = wsmap.get(twbranch);
-//            if (id == null) {
-//                updateWorkspaceIdMapping();
-//                id = wsmap.get(twbranch);
-//            }
-//            if (id != null) {
-//                return id;
-//            }
-//        }
-//        Utils.guilog("[ERROR]: Cannot lookup workspace on server that corresponds to this project branch");
-//        return twbranch;
-    }
-
-    public static String getRemoteBranchPath(Project project) {
-        if (!project.isRemote()) {
-            return "master";
-        }
-//        return getRemoteBranchPath(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
-        return EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
-    }
-
-    public static String getRemoteBranchPath(URI uri) {
-
-        return ProjectDescriptorsFactory.getProjectBranchPath(uri);
     }
 
     public static long getRemoteVersion(Project project) {
         if (!project.isRemote()) {
             return -1;
         }
-//        return getRemoteVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project).getURI());
         return Long.valueOf(ProjectUtilities.getVersion(project.getPrimaryProject()).getName());
     }
-
-
-    public static int getRemoteVersion(URI uri) {
-        return ProjectDescriptorsFactory.getRemoteVersion(uri);
-    }
-
-    public static long getLatestEsiVersion(Project project) {
-        if (!project.isRemote()) {
-            return -1;
-        }
-        return getLatestEsiVersion(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project));
-    }
-
-
-    // TODO Switch to convenience method in 18.5 @donbot
-    // note that this only converts version to int, despite being compared with a long from the getRemoteVersion methods
-    public static long getLatestEsiVersion(ProjectDescriptor projectDescriptor) {
-        final long[] version = new long[]{-1};
-        EsiUtils.getVersions(projectDescriptor).stream().max(ProjectUtilities::compareVersions).ifPresent(iVersionDescriptor -> version[0] = ProjectUtilities.versionToInt(iVersionDescriptor.getName()));
-        return version[0];
-    }
-
 }

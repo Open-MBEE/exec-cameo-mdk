@@ -404,8 +404,6 @@ public class OclQueryAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
-
         Window owner = null;
         try {
             owner = Application.getInstance().getMainFrame();
