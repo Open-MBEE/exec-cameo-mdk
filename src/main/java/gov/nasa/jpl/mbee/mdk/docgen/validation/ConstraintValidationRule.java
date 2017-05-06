@@ -111,10 +111,6 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         if (constraintElement == null) {
             constraintElement = paramConstraint;
         }
-
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
-
     }
 
     protected void initConstraintMaps(Project paramProject, Collection<? extends Element> paramCollection) {
@@ -251,13 +247,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         // Debug.outln( "run(Project, " + paramConstraint + " , "
         // + paramCollection + ")" );
 
-        // Ensure user-defined shortcut functions are updated
-        OclEvaluator.resetEnvironment();
-
         initConstraintMaps(paramProject, paramCollection);
-
-        OclEvaluator.resetEnvironment();
-
         // Set< BaseElement > elements = elementToConstraintMap.keySet();
 
         @SuppressWarnings("unchecked")

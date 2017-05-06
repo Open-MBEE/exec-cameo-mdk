@@ -32,7 +32,7 @@ public class ViewEditorLinkForm extends JFrame {
         setMinimumSize(getSize());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setResizable(false);
-        setAlwaysOnTop(true);
+//        setAlwaysOnTop(true);
     }
 
     {

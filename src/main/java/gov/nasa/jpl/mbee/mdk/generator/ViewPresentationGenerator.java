@@ -115,6 +115,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>();
 
         for (Element rootView : rootViews) {
+            if (MDUtils.isDeveloperMode()) {
+                //Application.getInstance().getGUILog().log("Generating " + rootView.getHumanName() + " (" + rootView.getLocalID() + ").");
+            }
             // STAGE 1: Calculating view structure
             progressStatus.setDescription("Calculating view structure");
             progressStatus.setCurrent(1);
@@ -437,11 +440,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                 // Build view constraints client-side as actual Constraint, Expression, InstanceValue(s), etc.
                 // Note: Doing this one first since what it does is smaller in scope than ImportUtility. Potential order-dependent edge cases require further evaluation.
+                // Correct point of no return.
                 for (ViewMapping viewMapping : viewMap.values()) {
                     Element view = viewMapping.getElement();
-                    if (handleCancel(progressStatus)) {
+                    /*if (handleCancel(progressStatus)) {
                         return;
-                    }
+                    }*/
 
                     ObjectNode viewObjectNode = viewMapping.getObjectNode();
                     if (viewObjectNode == null) {
@@ -526,9 +530,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 presentationElementUtils.updateOrCreateConstraintFromPresentationElements(view, view2pe.get(view));
             }
 
-            if (handleCancel(progressStatus)) {
+            /*if (handleCancel(progressStatus)) {
                 return;
-            }
+            }*/
 
             // commit to MMS
             LinkedList<ObjectNode> elementsToCommit = new LinkedList<>();
@@ -607,9 +611,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
 
             // Last chance to cancel before sending generated views to the server. Point of no return.
-            if (handleCancel(progressStatus)) {
+            // Correction: It's already too late. MagicDraw doesn't clean up constraints on session cancel (confirmed: 18.5), so we have to do it ourselves in the last stage.
+            // Once constraints are created is the actual point of no return.
+            /*if (handleCancel(progressStatus)) {
                 return;
-            }
+            }*/
 
             boolean changed = false;
 

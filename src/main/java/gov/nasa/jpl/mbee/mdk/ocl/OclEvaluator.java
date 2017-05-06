@@ -5,8 +5,7 @@ import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
@@ -19,7 +18,9 @@ import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.util.Utils2;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
+
 import lpg.runtime.ParseTable;
+
 import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.Diagnostic;
 import org.eclipse.emf.ecore.*;
@@ -305,10 +306,7 @@ public class OclEvaluator {
             throws ParserException {
         OclEvaluator ev = new OclEvaluator();
         instance = ev;
-        // if ( needEnvironmentSetup() ) {
-        resetEnvironment(false);
         ev.setupEnvironment();
-        // }
         if (queryString == null) {
             return null;
         }
@@ -339,11 +337,6 @@ public class OclEvaluator {
                 + queryString + ", verbose=" + verbose + ") = " + DocGenUtils.fixString(result));
         // if ( !wasOn ) Debug.turnOff();
         return result;
-    }
-
-    public boolean needEnvironmentSetup() {
-        return environmentFactory == null || environmentFactory.getDgEnvironment() == null || ocl == null
-                || helper == null;
     }
 
     public static List<GetCallOperation> addOperation(String[] names, EClassifier callerType,
@@ -850,58 +843,26 @@ public class OclEvaluator {
         return null;
     }
 
-    // static List< Package > packages = null;
-    // static List< Package > getPkgs() {
-    // if ( packages == null ) packages = Utils.getPackagesOfType(
-    // DocGenProfile.expressionLibrary );
-    // return packages;
-    // }
-    static ArrayList<Element> expressions = null;
-
-    static ArrayList<Element> getExpressions() {
-        if (expressions == null) {
-            expressions = new ArrayList<Element>();
-            // get reference to entire model, and
-            // find packages with the ExpressionLibrary stereotype
-            List<Package> pkgs = Utils.getPackagesOfType(DocGenProfile.expressionLibrary);// getPkgs();
-            Stereotype exprStereotype = Utils.getStereotype(Application.getInstance().getProject(), DocGenProfile.expressionChoosable);
-            for (Package pkg : pkgs) {
-                List<Element> owned = Utils.collectOwnedElements(pkg, 0);
-                List<Element> moreExprs = Utils.filterElementsByStereotype(owned, exprStereotype, true, true);
-                expressions.addAll(moreExprs);
-            }
-        }
-        return expressions;
-    }
-
     /**
-     * Find Expressions in ExpressionLibraries and add them as blackbox
-     * shortcuts.
+     * Find Expressions in model and add them as blackbox shortcuts.
+     * ExpressionLibraries are retained
      *
      * @param envFactory
      */
     protected static void addExpressionOperations(DocGenEnvironmentFactory envFactory) {
-        ArrayList<Element> exprs = new ArrayList<Element>(getExpressions());
-        // add each of the elements with the Expression stereotype as
-        // shortcut/blackbox functions
-        for (Element expr : exprs) {
-            String name = Utils.getName(expr);
-            // function name can't have spaces and strange characters; e.g. the
-            // name "four+five" would be parsed as a sum operation.
+        // add each of the elements with the Expression stereotype as shortcut/blackbox functions
+        List<Element> expressions = StereotypesHelper.getExtendedElements(Utils.getExpressionStereotype(Application.getInstance().getProject()));
+        for (Element expression : expressions) {
+            // function name can't have spaces and strange characters; e.g. the name "four+five" would be parsed as a sum operation.
+            String name = Utils.getName(expression);
             name = name.replaceAll("[^A-Za-z0-9_]+", "");
-            String exprString = queryElementToStringExpression(expr);
-            // String errorMsg = checkParsable( exprString );
-            String errorMsg = null;
-            if (!Utils2.isNullOrEmpty(name) && errorMsg == null) {
+            String exprString = queryElementToStringExpression(expression);
+            if (!Utils2.isNullOrEmpty(name)) {
                 try {
                     addExpressionOperation(name, exprString, envFactory);
                 } catch (Throwable e) {
-                    errorMsg = e.getLocalizedMessage();
+                    Debug.error(true, false, "Could not add " + name + " OCL shortcut with expression \"" + exprString + "\". " + e.getLocalizedMessage());
                 }
-            }
-            if (errorMsg != null) {
-                Debug.error(true, false, "Could not add " + name + " OCL shortcut with expression \""
-                        + exprString + "\". " + errorMsg);
             }
         }
     }
@@ -921,29 +882,8 @@ public class OclEvaluator {
         return getEnvironmentFactory().getDgEnvironment();
     }
 
-    public static void resetEnvironment(boolean resetOpsCache) {
-        // DocGenEnvironmentFactory.reset();
-        // environmentFactory = null;//new DocGenEnvironmentFactory();
-        if (resetOpsCache) {
-            // opsCache = null;
-            expressions = null;
-        }
-        // ocl = null;
-        // helper = null;
-    }
-
-    public static void resetEnvironment() {
-        resetEnvironment(true);
-    }
-
-    protected static int cacheHits = 0;
-    protected static int cacheMisses = 0;
-
     protected DocGenEnvironmentFactory setupEnvironment() {
         // set up the customized environment
-        // create custom environment factory
-        resetEnvironment(false);
-
         // add custom OCL functions
         addRegexMatchOperation(getEnvironmentFactory());
         addEvalOperation(getEnvironmentFactory(), "eval");
