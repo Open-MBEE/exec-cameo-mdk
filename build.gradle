@@ -73,7 +73,7 @@ configurations {
 dependencies {
     // Production code requires MagicDraw patches to compile
     if (buildAccess == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0-rc2', ext: 'zip'
+        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0-rc4-SNAPSHOT', ext: 'zip'
     }
     else {
         preCompile group: 'com.nomagic', name: 'magicdraw', version: '185sp1', classifier: 'MagicDraw_185_sp1_no_install', ext: 'zip'
@@ -460,7 +460,7 @@ test {
         def arguments = ['-jar', testsHackJar.outputs.files.singleFile, '-cp',
                          fileTree(dir: 'build/generated-dist', include: '**/*.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */
-                                 fileTree(dir: 'build/install', include: classpathLibraries).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+                                 files(classpathLibraries.collect { 'build/install/' + it }).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
         String magicDrawLicense = project.getProperties().get('magicDrawLicense')
         if (magicDrawLicense != null && !magicDrawLicense.isEmpty()) {
