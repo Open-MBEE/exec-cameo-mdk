@@ -10,14 +10,16 @@ import com.nomagic.magicdraw.properties.ElementListProperty;
 import com.nomagic.magicdraw.properties.ElementProperty;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.StringProperty;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
+import gov.nasa.jpl.mbee.mdk.util.DependencyMatrixTool;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.Matrix;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.ArrayList;
@@ -192,23 +194,21 @@ public class GenericTable extends Table {
                     tableCount++;
                 }else {
                     MatrixData matrixData;
-                    Diagram matrix = diagram;
-                    if (MatrixDataHelper.isRebuildNeeded(matrix)){
-                        matrixData = MatrixDataHelper.buildMatrix(matrix);
+                     if (MatrixDataHelper.isRebuildNeeded(diagram)){
+                        matrixData = MatrixDataHelper.buildMatrix(diagram);
                     } else {
-                        matrixData = MatrixDataHelper.getMatrixData(matrix);
+                        matrixData = MatrixDataHelper.getMatrixData(diagram);
                     }
 
-                    Collection<Element> columnElements = matrixData.getColumnElements();
-                    List<Element> colmnList = (List<Element>) matrixData.getColumnElements();
-                    for (Element element : colmnList) {
-                        System.out.println("list: "+element.getHumanName());
-                    }
-                    for (Element columnElement : columnElements) {
-                        System.out.println("coll: "+ columnElement.getHumanName());
-                    }
+                    DependencyMatrixTool tool = new DependencyMatrixTool();
+                    Matrix matrix = tool.getMatrix(diagram);
+                    List<Element> rowElements = matrix.getRows();
+                    List<Element> columnElements = matrix.getColumns();
+
+                    //Collection<Element> columnElements = matrixData.getColumnElements();
+                    //Collection<Element> rowElements = matrixData.getRowElements();
+
                     DBTable t = new DBTable();
-                    Collection<Element> rowElements = matrixData.getRowElements();
                     List<List<DocumentElement>> matrixResult = new ArrayList<>();
                     List<String> columnHeaders = new ArrayList<>();
                     for (Element rowElement : rowElements) {
@@ -219,6 +219,7 @@ public class GenericTable extends Table {
                             matrixcolumn.add(new DBText(rowElement.getHumanName()));
                         }
                         for (Element columnElement : columnElements) {
+                           // List<Relation> relationships = matrix.getRelation(rowElement, columnElement);
                             AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
                             if(val.getDescription() != null){
                                 if(val.isEditable()) {
