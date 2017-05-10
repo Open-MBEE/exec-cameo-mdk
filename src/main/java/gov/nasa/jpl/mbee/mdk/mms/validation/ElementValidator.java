@@ -147,11 +147,9 @@ public class ElementValidator implements RunnableWithProgress {
 
         for (String id : elementKeySet) {
             Pair<Element, ObjectNode> clientElement = clientElementMap.get(id);
-            Element clientElementElement = clientElement != null ? clientElement.getKey() : null;
-            ObjectNode clientElementObjectNode = clientElement != null ? clientElement.getValue() : null;
             ObjectNode serverElement = serverElementMap.get(id);
 
-            if (clientElement.getKey() == null && serverElement == null) {
+            if ((clientElement == null || clientElement.getKey() == null) && serverElement == null) {
                 continue;
             }
             else if (clientElement == null) {
