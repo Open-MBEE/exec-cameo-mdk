@@ -6,14 +6,12 @@ import com.nomagic.magicdraw.dependencymatrix.configuration.MatrixDataHelper;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.properties.ElementListProperty;
-import com.nomagic.magicdraw.properties.ElementProperty;
-import com.nomagic.magicdraw.properties.Property;
-import com.nomagic.magicdraw.properties.StringProperty;
- import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.magicdraw.properties.*;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
@@ -118,7 +116,18 @@ public class GenericTable extends Table {
                             entry.addElement(new DBParagraph(((NamedElement) listEl).getName(), listEl, From.NAME));
                         }
                     }
-                } else {
+                } else if(cellValue instanceof ElementInstanceProperty) {
+                    //Object mval = cellValue.mValue;
+                    Object value = cellValue.getValue();
+
+                    if(value instanceof List){
+                        for (Object o : (List) value) {
+                            if(o instanceof InstanceSpecification){
+                                 entry.addElement(new DBParagraph(((InstanceSpecification) o).getName(), (Element) o, From.NAME));
+                            }
+                        }
+                    }
+                }else {
                     System.out.print("[WARNING] Not added : " + cellValue.toString() + ".");
                 }
                 row.add(entry);
@@ -169,7 +178,8 @@ public class GenericTable extends Table {
             if (e instanceof Diagram) {
                 Diagram diagram = (Diagram) e;
                 if (Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
-                        .equals("Generic Table")) {
+                        .equals("Generic Table") ||Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
+                        .equals("Instance Table")) {
                     DBTable t = new DBTable();
 
                     GenericTableManager gtm = new GenericTableManager();
@@ -192,6 +202,9 @@ public class GenericTable extends Table {
                     res.add(t);
                     t.setStyle(getStyle());
                     tableCount++;
+                }else if(Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
+                        .equals("Instance Table")){
+
                 }else {
                     MatrixData matrixData;
                      if (MatrixDataHelper.isRebuildNeeded(diagram)){
