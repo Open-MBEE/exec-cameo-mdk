@@ -201,7 +201,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
 
         if (parentCommitsBehind > 0 || parentCommitsAhead > 0) {
             Application.getInstance().getGUILog().log("[INFO] The parent branch (" + parentBranchName + ") is " +
-                    (parentCommitsBehind > 0 ? NumberFormat.getInstance().format(parentCommitsBehind) + " commit" + (parentCommitsBehind != 1 ? "s" : "") + "behind " : "") +
+                    (parentCommitsBehind > 0 ? NumberFormat.getInstance().format(parentCommitsBehind) + " commit" + (parentCommitsBehind != 1 ? "s" : "") + " behind " : "") +
                     (parentCommitsBehind > 0 && parentCommitsAhead > 0 ? "and " : "") +
                     (parentCommitsAhead > 0 ? NumberFormat.getInstance().format(parentCommitsAhead) + " commit" + (parentCommitsAhead != 1 ? "s" : "") + " ahead of " : "") +
                     "the branch being created (" + branchInfo.getName() + "). " +
