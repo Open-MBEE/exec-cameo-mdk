@@ -89,7 +89,7 @@ public class ElementValidator implements RunnableWithProgress {
         if (clientElements == null) {
             clientElements = new LinkedList<>();
         }
-        Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity()));
+        Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
 
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         Set<String> processedElementIds = new HashSet<>();
