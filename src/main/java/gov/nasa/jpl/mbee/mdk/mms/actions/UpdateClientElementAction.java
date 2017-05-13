@@ -192,7 +192,11 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
                 @Override
                 public void onFailure() {
-                    if (elementsToDelete != null) {
+                    onSuccess();
+                    // The original intent was to skip all deletions on the existence of any failure during import to avoid the edge case of move out owned elements and then delete owning element.
+                    // However, with MagicDraw locks the likelihood of failure is too high and not deleting results in corrupted elements.
+                    // Will investigate the potential of ignoring MagicDraw locks or restricting one CSync/commit at a time to mitigate, but for now reverting to deleting always.
+                    /*if (elementsToDelete != null) {
                         for (String id : elementsToDelete) {
                             Element element = Converters.getIdToElementConverter().apply(id, project);
                             if (element == null) {
@@ -201,7 +205,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                             deletionOnSuccessValidationRule.addViolation(element, "[DELETE SKIPPED] " + deletionOnSuccessValidationRule.getDescription());
                             failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                         }
-                    }
+                    }*/
                 }
             };
             Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project, progressStatus);
