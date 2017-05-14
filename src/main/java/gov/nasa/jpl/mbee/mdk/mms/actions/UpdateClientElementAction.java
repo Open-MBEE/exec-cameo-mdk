@@ -223,7 +223,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                     String sysmlId = sysmlIdJsonNode.asText();
                     // TODO Abstract this stuff to a converter @donbot
                     String name = null;
-                    if (element == null) {
+                    if (element == null || Project.isElementDisposed(element)) {
                         JsonNode nameJsonNode = objectNode.get(MDKConstants.NAME_KEY);
                         if (nameJsonNode != null && nameJsonNode.isTextual()) {
                             name = nameJsonNode.asText("<>");
@@ -232,9 +232,9 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                             name = "<>";
                         }
                     }
-                    ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(element != null ? element : project.getPrimaryModel(), "["
-                            + (element != null ? "UPDATE" : "CREATE") + " FAILED]" + (element == null ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + sysmlId : "")
-                            + (element == null && exception != null ? " -" : "") + (exception != null ? " " + (exception instanceof ReadOnlyElementException ? "Element is not editable." : exception.getMessage()) : ""));
+                    ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(element != null && !Project.isElementDisposed(element) ? element : project.getPrimaryModel(), "["
+                            + (element != null && !Project.isElementDisposed(element) ? "UPDATE" : "CREATE") + " FAILED]" + (element == null || Project.isElementDisposed(element) ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + sysmlId : "")
+                            + ((element == null || Project.isElementDisposed(element)) && exception != null ? " -" : "") + (exception != null ? " " + (exception instanceof ReadOnlyElementException ? "Element is not editable." : exception.getMessage()) : ""));
                     ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
                     copyActionsCategory.setNested(true);
                     validationRuleViolation.addAction(copyActionsCategory);
@@ -262,7 +262,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         }
                     }
                     (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(validationRuleViolation);
-                    failedChangelog.addChange(sysmlId, objectNode, element != null ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
+                    failedChangelog.addChange(sysmlId, objectNode, element != null && !Project.isElementDisposed(element) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
                 }
                 for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
                     Element element = entry.getKey();
