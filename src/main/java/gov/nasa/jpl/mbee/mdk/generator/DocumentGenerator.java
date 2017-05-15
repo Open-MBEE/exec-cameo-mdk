@@ -277,11 +277,20 @@ public class DocumentGenerator {
                     //if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
                     for (Element ex : elementImports) {
                         if (ex instanceof Diagram) {
-                            Image image = new Image();
-                            List<Object> images = new ArrayList<Object>();
-                            images.add(ex);
-                            image.setTargets(images);
-                            viewSection.addElement(image);
+                            String diagramType = Application.getInstance().getProject().getDiagram((Diagram) ex).getDiagramType().getType();
+                            if(diagramType.equals("Generic Table") ||diagramType.equals("Instance Table") || diagramType.equals("Verify Requirement Matrix") || diagramType.equals("SysML Allocation Matrix") || diagramType.equals("Satisfy Requirement Matrix")){
+                                GenericTable gt = new GenericTable();
+                                List<Object> tables = new ArrayList<Object>();
+                                tables.add(ex);
+                                gt.setTargets(tables);
+                                viewSection.addElement(gt);
+                            } else {
+                                Image image = new Image();
+                                List<Object> images = new ArrayList<Object>();
+                                images.add(ex);
+                                image.setTargets(images);
+                                viewSection.addElement(image);
+                            }
                         }
                     }
                 }

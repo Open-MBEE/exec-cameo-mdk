@@ -131,7 +131,6 @@ public class GenericTable extends Table {
                     System.out.print("[WARNING] Not added : " + cellValue.toString() + ".");
                 }
                 row.add(entry);
-
             }
             res.add(row);
         }
@@ -202,9 +201,6 @@ public class GenericTable extends Table {
                     res.add(t);
                     t.setStyle(getStyle());
                     tableCount++;
-                }else if(Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
-                        .equals("Instance Table")){
-
                 }else {
                     MatrixData matrixData;
                      if (MatrixDataHelper.isRebuildNeeded(diagram)){
