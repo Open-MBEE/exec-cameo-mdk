@@ -214,7 +214,7 @@ public class BranchValidator {
         refObjectNode.put(MDKConstants.ID_KEY, id);
         refObjectNode.put(MDKConstants.NAME_KEY, name);
         refObjectNode.put(MDKConstants.URI_KEY, projectDescriptor.getURI().toString());
-        // TODO unlink this from "master" when we support non-head branching
+        refObjectNode.put(MDKConstants.TYPE_KEY, "Branch");
         refObjectNode.put(MDKConstants.PARENT_REF_ID_KEY, parentRefId);
         return refObjectNode;
     }

@@ -89,7 +89,7 @@ public class ElementValidator implements RunnableWithProgress {
         if (clientElements == null) {
             clientElements = new LinkedList<>();
         }
-        Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity()));
+        Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
 
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         Set<String> processedElementIds = new HashSet<>();
@@ -147,11 +147,9 @@ public class ElementValidator implements RunnableWithProgress {
 
         for (String id : elementKeySet) {
             Pair<Element, ObjectNode> clientElement = clientElementMap.get(id);
-            Element clientElementElement = clientElement != null ? clientElement.getKey() : null;
-            ObjectNode clientElementObjectNode = clientElement != null ? clientElement.getValue() : null;
             ObjectNode serverElement = serverElementMap.get(id);
 
-            if (clientElement.getKey() == null && serverElement == null) {
+            if ((clientElement == null || clientElement.getKey() == null) && serverElement == null) {
                 continue;
             }
             else if (clientElement == null) {

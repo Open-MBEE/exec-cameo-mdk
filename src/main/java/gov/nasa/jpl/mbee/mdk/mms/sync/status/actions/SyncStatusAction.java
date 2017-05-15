@@ -165,9 +165,9 @@ public class SyncStatusAction extends SRAction {
             getSyncStatusFrame().setVisible(true);
         }
         else {
-            update();
             getSyncStatusFrame().toFront();
         }
+        update();
     }
 
     @Override
