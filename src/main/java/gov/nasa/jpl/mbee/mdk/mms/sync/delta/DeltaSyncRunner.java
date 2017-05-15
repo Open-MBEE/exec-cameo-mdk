@@ -23,7 +23,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
+//import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
@@ -322,7 +322,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         boolean shouldLogNoLocalChanges = shouldCommit;
         if (shouldCommit && !localElementsToPost.isEmpty()) {
             progressStatus.setDescription("Committing creations and updates to MMS");
-
             LinkedList<ObjectNode> postElements = new LinkedList<>();
             for (Element element : localElementsToPost.values()) {
                 ObjectNode elementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
@@ -331,16 +330,21 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             if (postElements.size() > 0) {
-                Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
                     File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes"));
+                    Request request = new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes");
+                    MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
+//                    Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
+//                    OutputQueue.getInstance().offer(request);
                 } catch (IOException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                     e.printStackTrace();
                 } catch (URISyntaxException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
+                    e.printStackTrace();
+                } catch (ServerException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] Unexpected server exception. See logs for more information.");
                     e.printStackTrace();
                 }
                 shouldLogNoLocalChanges = false;
@@ -352,16 +356,21 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         if (shouldCommit && shouldCommitDeletes && !deleteElements.isEmpty()) {
             progressStatus.setDescription("Committing deletions to MMS");
-            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(deleteElements.size()) + " local element" + (deleteElements.size() != 1 ? "s" : "") + " on the MMS.");
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes"));
+                Request request = new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes");
+                MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
+//                Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(deleteElements.size()) + " local element" + (deleteElements.size() != 1 ? "s" : "") + " on the MMS.");
+//                OutputQueue.getInstance().offer(request);
             } catch (IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
                 e.printStackTrace();
             } catch (URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
+                e.printStackTrace();
+            } catch (ServerException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected server exception. See logs for more information.");
                 e.printStackTrace();
             }
             shouldLogNoLocalChanges = false;
