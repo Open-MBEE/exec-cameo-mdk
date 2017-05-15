@@ -16,7 +16,7 @@ test:
 
 deployment:
   release:
-    tag: "/[0-9.]+(-(a|b|rc)[0-9]+/"
+    tag: "/[0-9.]+-(a|b|rc)[0-9]+/"
     owner: Open-MBEE
     commands:
       - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUser=$ARTIFACTORY_USER -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
