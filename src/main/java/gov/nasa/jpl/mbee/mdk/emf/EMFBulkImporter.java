@@ -116,8 +116,8 @@ public class EMFBulkImporter implements BulkImportFunction {
 
                 List<ObjectNode> retryObjectNodes = new ArrayList<>();
 
-                if (SessionManager.getInstance().isSessionCreated()) {
-                    SessionManager.getInstance().cancelSession();
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().cancelSession(project);
                 }
                 SessionManager.getInstance().createSession(project, sessionName + " x" + objectNodes.size() + " #" + ++sessionCount);
                 if (progressStatus != null) {
@@ -280,14 +280,14 @@ public class EMFBulkImporter implements BulkImportFunction {
                     onSuccess();
                 }
 
-                if (SessionManager.getInstance().isSessionCreated()) {
-                    SessionManager.getInstance().closeSession();
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
                 }
                 break;
             }
         } finally {
-            if (SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().cancelSession();
+            if (SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().cancelSession(project);
             }
             if (!failedElementMap.isEmpty()) {
                 onFailure();

@@ -432,10 +432,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Changelog.Change<ObjectNode> jmsChange = conflictedEntry.getValue().getValue() != null ?
                         new Changelog.Change<>(jmsJsons.get(id), conflictedEntry.getValue().getValue().getType()) : null;
 
-                if (localChange != null && localChange.getChanged() != null || Changelog.ChangeType.DELETED.equals(localChange.getType())) {
+                if (localChange != null && (localChange.getChanged() != null || Changelog.ChangeType.DELETED.equals(localChange.getType()))) {
                     failedLocalChangelog.addChange(conflictedEntry.getKey(), localChange.getChanged(), localChange.getType());
                 }
-                if (jmsChange != null && jmsChange.getChanged() != null || Changelog.ChangeType.DELETED.equals(jmsChange.getType())) {
+                if (jmsChange != null && (jmsChange.getChanged() != null || Changelog.ChangeType.DELETED.equals(jmsChange.getType()))) {
                     failedJmsChangelog.addChange(conflictedEntry.getKey(), null, jmsChange.getType());
                 }
             }

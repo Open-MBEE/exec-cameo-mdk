@@ -55,9 +55,10 @@ repositories {
     else {
         ivy {
             // http://d1g91r27pzl568.cloudfront.net/magicdraw185sp1/MagicDraw_185_sp1_no_install.zip
+            // http://download1.nomagic.com/magicdraw185sp1/MagicDraw_185_sp1_no_install.zip
             // http://d1g91r27pzl568.cloudfront.net/sysml185sp1/SysML_Plugin_185_sp1_bundle.zip
             // http://d1g91r27pzl568.cloudfront.net/cst185sp1/Cameo_Simulation_Toolkit_185_sp1.zip
-            url 'http://d1g91r27pzl568.cloudfront.net/'
+            url 'http://download1.nomagic.com/'
             layout 'pattern', {
                 artifact '/[module][revision]/[classifier].[ext]'
             }

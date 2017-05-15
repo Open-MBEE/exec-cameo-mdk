@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.emf;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import com.nomagic.ci.persistence.IAttachedProject;
+import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
@@ -195,15 +196,15 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                             || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY)) {
                         return objectNode;
                     }
-                    Model model = (Model) element;
-                    IAttachedProject attachedProject = ProjectUtilities.getAttachedProjects(project.getPrimaryProject()).stream().filter(ap -> ProjectUtilities.isAttachedProjectRoot(model, ap)).findAny().orElse(null);
-                    if (attachedProject == null) {
+                    IProject iProject = ProjectUtilities.getProjectFor(element);
+                    if (!(iProject instanceof IAttachedProject)) {
                         return null;
                     }
+                    IAttachedProject attachedProject = (IAttachedProject) iProject;
                     boolean isRemote = ProjectUtilities.isRemote(attachedProject) && !attachedProject.getLocationURI().isFile();
-                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getElementToIdConverter().apply(project.getPrimaryModel()));
-                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject.getPrimaryProject()));
-                    //objectNode.put(MDKConstants.NAME_KEY, EsiUtils.getCurrentBranch(attachedProject).getName());
+
+                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX);
+                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject));
                     String branchName;
                     EsiUtils.EsiBranchInfo esiBranchInfo = null;
                     if (isRemote && (esiBranchInfo = EsiUtils.getCurrentBranch(attachedProject)) == null) {
