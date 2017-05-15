@@ -1,11 +1,10 @@
 package gov.nasa.jpl.mbee.mdk.docgen.docbook;
 
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import java.util.List;
 
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram;
-
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.*;
+import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType;
 
 public class DBTomSawyerDiagram extends DocumentElement {
     public List<Element> getElements() {
@@ -21,7 +20,7 @@ public class DBTomSawyerDiagram extends DocumentElement {
     private boolean showForEditing = false;
 
     public shortDiagramType getShortType() {
-        switch (type){
+        switch (type) {
             case Block_Definition_Diagram:
                 return shortDiagramType.BDD;
             case Internal_Block_Diagram:
@@ -39,9 +38,11 @@ public class DBTomSawyerDiagram extends DocumentElement {
 
         return null;
     }
+
     public enum shortDiagramType {
         BDD, IBD, SMD, AD, SD, Table
     }
+
     private diagramType type;
 
     public DBTomSawyerDiagram(List<Element> classifiers) {

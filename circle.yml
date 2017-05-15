@@ -1,0 +1,28 @@
+machine:
+  java:
+    version: oraclejdk8
+
+compile:
+  override:
+    - "./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info clean assemble"
+
+test:
+  override:
+    - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info test"
+  post:
+    - "mkdir -p $CIRCLE_TEST_REPORTS/junit/"
+    - "find . -type f -regex \".*/build/test-results/.*xml\" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \\;"
+    - "[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/"
+
+deployment:
+  release:
+    tag: "/[0-9.]+-(a|b|rc)[0-9]+/"
+    owner: Open-MBEE
+    commands:
+      - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUser=$ARTIFACTORY_USER -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info artifactoryPublish"
+      - "curl -X POST -u $ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD https://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/mdk/$CIRCLE_BUILD_NUM?params=releaseVersion=$CIRCLE_TAG -H 'Content-Length: 0'"
+  snapshot:
+    branch: "/((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/"
+    owner: Open-MBEE
+    commands:
+      - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUser=$ARTIFACTORY_USER -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info artifactoryPublish"

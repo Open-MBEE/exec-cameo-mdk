@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2016>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2016>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
  *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
@@ -32,12 +32,11 @@ package gov.nasa.jpl.mbee.mdk.api;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
-import gov.nasa.jpl.mbee.mdk.ems.sync.manual.ManualSyncRunner;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRule;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.ValidationSuite;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -70,7 +69,7 @@ public class MDKValidationWindow {
     public static final String[][] VALIDATION_RULE_OPTIONS = {
             {"Project Existence", "CommitProjectAction", ""},
             {"Element Equivalence", "CommitClientElementAction", "AcceptClientElementAction"}
-        };
+    };
 
     /**
      * Constructor. This will sort the validation rules results into a format expected by a user who sorted their
@@ -114,8 +113,7 @@ public class MDKValidationWindow {
                     }
                     try {
                         pooledViolations.get(lookupListIndex(vr.getName())).addAll(vr.getViolations());
-                    }
-                    catch (UnsupportedOperationException e) {
+                    } catch (UnsupportedOperationException e) {
                         Application.getInstance().getGUILog().log("[ERROR] Unable to store violations for rule "
                                 + vr.getName());
                     }
@@ -189,7 +187,7 @@ public class MDKValidationWindow {
      * @param type String of the type to look for. Expected format: '[type]'
      * @return index of the list of validation results of the specified type
      */
-    private int lookupListIndex(String type) throws IllegalArgumentException{
+    private int lookupListIndex(String type) throws IllegalArgumentException {
         for (int index = 0; index < VALIDATION_RULE_OPTIONS.length; index++) {
             if (VALIDATION_RULE_OPTIONS[index][VIOLATION_RULE_NAME].equalsIgnoreCase(type)) {
                 return index;
@@ -206,7 +204,7 @@ public class MDKValidationWindow {
             return id;
         }
         else if (vrve != null) {
-            return vrve.getID();
+            return Converters.getElementToIdConverter().apply(vrve);
         }
         return "";
     }
@@ -221,15 +219,15 @@ public class MDKValidationWindow {
      * Processes validation rule violations that have been stored in the MDKValidationWindow object
      *
      * @param violationRuleName the type of violation to be accepted
-     * @param commit        will commit to MMS if true, will accept from MMS is false
-     * @param targets       limits processing of violations to only those elements that are
-     *                      contained in the collection. if null, does not limit processing.
-     *                      ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
-     *                      exception will be thrown if specified with targetIDs.
-     * @param targetIDs     limits processing of violations to only those elements whose IDs are
-     *                      contained in the collection. if null, does not limit processing.
-     *                      ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
-     *                      exception will be thrown if specified with targets.
+     * @param commit            will commit to MMS if true, will accept from MMS is false
+     * @param targets           limits processing of violations to only those elements that are
+     *                          contained in the collection. if null, does not limit processing.
+     *                          ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *                          exception will be thrown if specified with targetIDs.
+     * @param targetIDs         limits processing of violations to only those elements whose IDs are
+     *                          contained in the collection. if null, does not limit processing.
+     *                          ** COLLECTION IS MODIFIED DURING FUNCTION EXECUTION **
+     *                          exception will be thrown if specified with targets.
      * @throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
      */
     private void processValidationResults(String violationRuleName, Collection<Element> targets,
@@ -265,10 +263,11 @@ public class MDKValidationWindow {
 
         // there is only one initialization violation with a commit action, so check for it.
         // if it's not an actionable initialization violation, there is nothing to do so return.
+        // TODO fix project initialization checks
         if (violationRuleName.equals(VALIDATION_RULE_OPTIONS[INITIALIZATION_RULE][VIOLATION_RULE_NAME])) {
-            if (!commit || !violationList.get(0).getComment().equals(ManualSyncRunner.INITIALIZE_PROJECT_COMMENT)) {
-                return;
-            }
+//            if (!commit || !violationList.get(0).getComment().equals(ManualSyncRunner.INITIALIZE_PROJECT_COMMENT)) {
+            return;
+//            }
         }
 
         // find the index of the relevant action type within the vrv; throw exception if it's not found
@@ -346,7 +345,7 @@ public class MDKValidationWindow {
      * Commits the MD version to MMS for the specified violation type, if the associated element id is in the targetIDs collection
      *
      * @param violationType the type of violation to be accepted
-     * @param targetIDs the collection of element IDs whose validations are to be processed
+     * @param targetIDs     the collection of element IDs whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      */
     public Collection<String> acceptSpecificMDChangesToMMSByID(String violationType, Collection<String> targetIDs) {
@@ -363,7 +362,6 @@ public class MDKValidationWindow {
 
     /**
      * Commits the MD version to MMS for all violation types
-     *
      */
     public void commitAllMDChangesToMMS() {
         try {
@@ -389,7 +387,7 @@ public class MDKValidationWindow {
         try {
             processValidationResults(VALIDATION_RULE_OPTIONS[EQUIVALENCE_RULE][VIOLATION_RULE_NAME], notFound, null, true);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException
-                    | InvocationTargetException | IllegalStateException e) {
+                | InvocationTargetException | IllegalStateException e) {
             MagicDrawHelper.generalMessage("[ERROR]" + e.getMessage());
         }
         return notFound;
@@ -399,7 +397,7 @@ public class MDKValidationWindow {
      * Commits the MD version to MMS for the specified violation type, if the associated element id is in the targetIDs collection
      *
      * @param violationType the type of violation to be accepted
-     * @param targetIDs the collection of element IDs whose validations are to be processed
+     * @param targetIDs     the collection of element IDs whose validations are to be processed
      * @return returns elements in the target collection that could not be processed / that did not have violations
      */
     public Collection<String> commitSpecificMDChangesToMMSByID(String violationType, Collection<String> targetIDs) {

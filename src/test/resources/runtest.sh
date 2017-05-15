@@ -1,16 +1,19 @@
 #!/bin/bash
 
-#echo Test JARs Directory : $1
-#echo MD Install Directory : $2
-#echo Test Class Name : $3
+MD Install Directory : $1
+Test JARs Directory : $2
+Test Class Name : $3
 
 #run command from MD install dir
-cd $2
+cd $1
 
-export MDKTESTJARS=$(find $1 -name "*.jar" | tr -s '\r\n' ':')
-export MDKTESTJARS=${MDKTESTJARS/%?/}
-export MDKJARS=$(find $2/plugins/gov.nasa.jpl.mbee.mdk -name "*.jar" | tr -s '\r\n' ':')
-export MDKJARS=${MDKJARS/%?/}
+MDKJARS=$(find $1/plugins/gov.nasa.jpl.cae.magicdraw.mdk -name "*.jar")
+MDKJARS=${MDKJARS//[$';\ ']/}
+MDKJARS=${MDKJARS//[$'\r\t\n ']/:}
+
+MDKTESTJARS=$(find $2 -name "*.jar")
+MDKTESTJARS=${MDKTESTJARS//[$';\ ']/}
+MDKTESTJARS=${MDKTESTJARS//[$'\r\t\n ']/:}
 
 #all additional needed JARs must be added individually to the -Dmd.additional.class.path property like the ones below
 java -Xmx4096M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \

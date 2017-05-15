@@ -6,26 +6,23 @@ import com.nomagic.magicdraw.properties.BooleanProperty;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyResourceProvider;
 import com.nomagic.magicdraw.properties.StringProperty;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.options.EnvironmentOptionsResources;
+import com.nomagic.magicdraw.ui.ImageMap16;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
+import javax.swing.*;
 import java.io.File;
-//import com.nomagic.magicdraw.ui.ImageMap16;
-//import com.nomagic.ui.SwingImageIcon;
 
 public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     public static final String ID = "options.mdk";
-    public static final String GROUP = "MDK";
+    public static final String GROUP = "GROUP";
 
-    public static final String LOG_JSON_ID = "LOG_JSON",
-            PERSIST_CHANGELOG = "PERSIST_CHANGELOG_ON_SAVE",
-            CHANGE_LISTENER = "ENABLE_CHANGE_LISTENER",
-            COORDINATED_SYNC = "ENABLE_COORDINATED_SYNC",
-            USER_SCRIPT_DIRECTORIES = "USER_SCRIPT_DIRECTORIES",
-            SHOW_ADVANCED_OPTIONS = "SHOW_ADVANCED_OPTIONS";
-
-
+    public static final String LOG_JSON_ID = "LOG_JSON_ID",
+            PERSIST_CHANGELOG_ID = "PERSIST_CHANGELOG_ID",
+            ENABLE_CHANGE_LISTENER_ID = "ENABLE_CHANGE_LISTENER_ID",
+            ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
+            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
+            SHOW_ADVANCED_OPTIONS_ID = "SHOW_ADVANCED_OPTIONS_ID";
 
     public MDKOptionsGroup() {
         super(ID);
@@ -44,20 +41,20 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         BooleanProperty property = new BooleanProperty(LOG_JSON_ID, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        addProperty(property, true);
     }
 
     public boolean isPersistChangelog() {
-        Property p = getProperty(PERSIST_CHANGELOG);
+        Property p = getProperty(PERSIST_CHANGELOG_ID);
         return (Boolean) p.getValue();
     }
 
     public void setPersistChangelog(boolean value) {
-        BooleanProperty property = new BooleanProperty(PERSIST_CHANGELOG, value);
+        BooleanProperty property = new BooleanProperty(PERSIST_CHANGELOG_ID, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         if (MDUtils.isDeveloperMode()) {
-            addProperty(property);
+            addProperty(property, true);
         }
         else {
             addInvisibleProperty(property);
@@ -65,16 +62,16 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public boolean isChangeListenerEnabled() {
-        Property p = getProperty(CHANGE_LISTENER);
+        Property p = getProperty(ENABLE_CHANGE_LISTENER_ID);
         return (Boolean) p.getValue();
     }
 
     public void setChangeListenerEnabled(boolean value) {
-        BooleanProperty property = new BooleanProperty(CHANGE_LISTENER, value);
+        BooleanProperty property = new BooleanProperty(ENABLE_CHANGE_LISTENER_ID, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         if (MDUtils.isDeveloperMode()) {
-            addProperty(property);
+            addProperty(property, true);
         }
         else {
             addInvisibleProperty(property);
@@ -82,16 +79,16 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public boolean isCoordinatedSyncEnabled() {
-        Property p = getProperty(COORDINATED_SYNC);
+        Property p = getProperty(ENABLE_COORDINATED_SYNC_ID);
         return (Boolean) p.getValue();
     }
 
     public void setCoordinatedSyncEnabled(boolean value) {
-        BooleanProperty property = new BooleanProperty(COORDINATED_SYNC, value);
+        BooleanProperty property = new BooleanProperty(ENABLE_COORDINATED_SYNC_ID, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         if (MDUtils.isDeveloperMode()) {
-            addProperty(property);
+            addProperty(property, true);
         }
         else {
             addInvisibleProperty(property);
@@ -99,37 +96,34 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public boolean isMDKAdvancedOptions() {
-        Property p = getProperty(SHOW_ADVANCED_OPTIONS);
-//        if((Boolean) p.getValue()) {
-//            Application.getInstance().getGUILog().log("--- MAGICDRAW RESTART REQUIRED TO ENABLE MDK ADVANCED OPTIONS! ---  ");
-//        }
+        Property p = getProperty(SHOW_ADVANCED_OPTIONS_ID);
         return (Boolean) p.getValue();
     }
 
     public void setMDKAdvancedOptions(boolean value) {
-        BooleanProperty property = new BooleanProperty(SHOW_ADVANCED_OPTIONS, value);
+        BooleanProperty property = new BooleanProperty(SHOW_ADVANCED_OPTIONS_ID, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        addProperty(property, true);
     }
 
-    public File[] getCustomUserScriptDirectories(){
-        Property p = getProperty(USER_SCRIPT_DIRECTORIES);
-        String val =  p.getValueStringRepresentation();
-        if(val == null || val.isEmpty()){
+    public File[] getCustomUserScriptDirectories() {
+        Property p = getProperty(CUSTOM_USER_SCRIPT_DIRECTORIES_ID);
+        String val = p.getValueStringRepresentation();
+        if (val == null || val.isEmpty()) {
             return null;
         }
         File[] dirs = new File[getNumberOfCustomUserScriptDirectories()];
-        for(int i = 0; i < getNumberOfCustomUserScriptDirectories(); i++){
+        for (int i = 0; i < getNumberOfCustomUserScriptDirectories(); i++) {
             dirs[i] = new File(val.split(File.pathSeparator)[i]);
         }
         return dirs;
     }
 
-    public int getNumberOfCustomUserScriptDirectories(){
-        Property p = getProperty(USER_SCRIPT_DIRECTORIES);
-        String val =  p.getValueStringRepresentation();
-        if(val == null || val.isEmpty()){
+    public int getNumberOfCustomUserScriptDirectories() {
+        Property p = getProperty(CUSTOM_USER_SCRIPT_DIRECTORIES_ID);
+        String val = p.getValueStringRepresentation();
+        if (val == null || val.isEmpty()) {
             return 0;
         }
         return val.split(File.pathSeparator).length;
@@ -137,18 +131,13 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public void setUserScriptDirectory(String path) {
-        StringProperty property = new StringProperty(USER_SCRIPT_DIRECTORIES, path);
+        StringProperty property = new StringProperty(CUSTOM_USER_SCRIPT_DIRECTORIES_ID, path);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property);
+        addProperty(property, true);
     }
 
-    public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = new PropertyResourceProvider() {
-        @Override
-        public String getString(String key, Property property) {
-            return EnvironmentOptionsResources.getString(key);
-        }
-    };
+    public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> EnvironmentOptionsResources.getString(key);
 
     @Override
     public void setDefaultValues() {
@@ -156,22 +145,19 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
+        setMDKAdvancedOptions(MDUtils.isDeveloperMode());
         setUserScriptDirectory("");
-        setMDKAdvancedOptions(false);
     }
 
-    private static final String MDK_OPTIONS_NAME = "MDK";
+    private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";
 
     @Override
     public String getName() {
-        //return EnvironmentOptionsResources.getString(MDK_OPTIONS_NAME);
-        return MDK_OPTIONS_NAME;
+        return EnvironmentOptionsResources.getString(MDK_OPTIONS_NAME);
     }
 
-    //@Override
-    //public SwingImageIcon getIcon() {
-    //    return (SwingImageIcon) ImageMap16.SYSTEM_BOUNDARY;
-    //}
-
-
+    @Override
+    public Icon getGroupIcon() {
+        return ImageMap16.SETTINGS;
+    }
 }

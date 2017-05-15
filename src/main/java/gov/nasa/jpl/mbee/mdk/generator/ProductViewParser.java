@@ -5,11 +5,11 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.lib.Pair;
 import gov.nasa.jpl.mbee.mdk.model.Container;
 import gov.nasa.jpl.mbee.mdk.model.DocGenElement;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.Section;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -128,10 +128,10 @@ public class ProductViewParser {
             }
         }
         for (Pair<Class, AggregationKind> pair : childNoSections) {
-            parseView(pair.getFirst(), viewSection, true, !AggregationKindEnum.NONE.equals(pair.getSecond()));
+            parseView(pair.getKey(), viewSection, true, !AggregationKindEnum.NONE.equals(pair.getValue()));
         }
         for (Pair<Class, AggregationKind> pair : childSections) {
-            parseView(pair.getFirst(), viewSection, false, !AggregationKindEnum.NONE.equals(pair.getSecond()));
+            parseView(pair.getKey(), viewSection, false, !AggregationKindEnum.NONE.equals(pair.getValue()));
         }
     }
 }

@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.viewedit;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -10,16 +11,16 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import gov.nasa.jpl.mbee.mdk.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInfo;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.model.Section;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,7 +42,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Map<String, ObjectNode> images = new HashMap<>();
     protected boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
-    private static String FILE_EXTENSION = ".svg";
+    private static String FILE_EXTENSION = "svg";
 
     private Map<From, String> sourceMapping = new HashMap<>();
     private JSONObject view2view = new JSONObject(); //parent view id to array of children view ids (from sibviews)
@@ -144,7 +145,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         // export image - also keep track of exported images
         DiagramPresentationElement diagram = Application.getInstance().getProject()
                 .getDiagram(image.getImage());
-        String svgFilename = image.getImage().getID();
+        String svgFilename = Converters.getElementToIdConverter().apply(image.getImage());
 
         // create image file
         String userhome = System.getProperty("user.home");
@@ -184,7 +185,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         // Lets rename the file to have the hash code
         // make sure this matches what's in the View Editor ImageResource.java
-        String svgCrcFilename = image.getImage().getID() + "_latest" + FILE_EXTENSION;
+        String svgCrcFilename = Converters.getElementToIdConverter().apply(image.getImage()) + "_latest" + FILE_EXTENSION;
         //gl.log("Exporting diagram to: " + svgDiagramFile.getAbsolutePath());
 
         // keep record of all images found
@@ -196,7 +197,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #674 -- Update the type and id: was hard coded.
         //
         entry.put("type", "Image");
-        entry.put(MDKConstants.SYSML_ID_KEY, image.getImage().getID());
+        entry.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(image.getImage()));
         entry.put("title", image.getTitle());
         curContains.peek().add(entry);
 
@@ -332,7 +333,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             }
             //sibviews.pop();
             if (section.isNoSection()) {
-                noSections.add(eview.getID());
+                noSections.add(Converters.getElementToIdConverter().apply(eview));
             }
             endView(eview);
         }
@@ -360,17 +361,17 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     }
 
     @Override
-    public void visit(DBTomSawyerDiagram  tomSawyerDiagram) {
-      //  super.visit(tomSawyerDiagram);
-      //`  tomSawyerDiagram.accept();
+    public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
+        //  super.visit(tomSawyerDiagram);
+        //`  tomSawyerDiagram.accept();
         JSONObject entry = new JSONObject();
-       // entry.put("sourceType", "text");
+        // entry.put("sourceType", "text");
         entry.put("type", "Tsp");
-        entry.put("tstype" , tomSawyerDiagram.getShortType().toString());
+        entry.put("tstype", tomSawyerDiagram.getShortType().toString());
         // here enter a list of all the elements we need.
         JSONArray elements = new JSONArray();
-        for(Element elem : tomSawyerDiagram.getElements()){
-        elements.add(elem.getID());
+        for (Element elem : tomSawyerDiagram.getElements()) {
+            elements.add(Converters.getElementToIdConverter().apply(elem));
         }
 
         entry.put("elements", elements);
@@ -416,6 +417,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     public void startView(Element e) {
         JSONObject view = new JSONObject();
+        Project project = Project.getProject(e);
 //        JSONObject specialization = new JSONObject();
 
         //MDEV #673
@@ -423,14 +425,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //object and then insert appropriate
         //sub-elements in that specialization object.
         //
-        if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype())) {
+        if (StereotypesHelper.hasStereotypeOrDerived(e, Utils.getProductStereotype(project))) {
             view.put("type", "Product");
         }
         else {
             view.put("type", "View");
         }
-        String id = e.getID();
-        view.put(MDKConstants.SYSML_ID_KEY, id);
+        String id = Converters.getElementToIdConverter().apply(e);
+        view.put(MDKConstants.ID_KEY, id);
         views.put(id, view);
         Set<String> viewE = new HashSet<String>();
         viewElements.push(viewE);
@@ -442,7 +444,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         /*for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                 DocGen3Profile.queriesStereotype, 1, false, 1))
             addToElements(exposed);*/
-        sibviews.peek().add(e.getID());
+        sibviews.peek().add(Converters.getElementToIdConverter().apply(e));
         sibviewsElements.peek().add(e);
         JSONArray childViews = new JSONArray();
         sibviews.push(childViews);
@@ -472,14 +474,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //MDEV #673: update code to use the
         //specialization element.
         //
-        JSONObject view = (JSONObject) views.get(e.getID());
+        JSONObject view = (JSONObject) views.get(Converters.getElementToIdConverter().apply(e));
 
         view.put("displayedElements", viewEs);
         view.put("allowedElements", viewEs);
         if (recurse && !doc) {
             view.put("childrenViews", sibviews.peek());
         }
-        view2view.put(e.getID(), sibviews.pop());
+        view2view.put(Converters.getElementToIdConverter().apply(e), sibviews.pop());
         view2viewElements.put(e, sibviewsElements.pop());
         this.curContains.pop();
 

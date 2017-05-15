@@ -4,7 +4,6 @@ import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import gov.nasa.jpl.mbee.mdk.docgen.validation.RuleViolationAction;
 
 import java.util.Collection;
 

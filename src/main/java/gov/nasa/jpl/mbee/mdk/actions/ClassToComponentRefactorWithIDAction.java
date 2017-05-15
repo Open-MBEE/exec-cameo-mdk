@@ -9,9 +9,10 @@ import com.nomagic.magicdraw.uml.Refactoring;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.ems.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -45,7 +46,7 @@ public class ClassToComponentRefactorWithIDAction extends DefaultBrowserAction {
             if (!(element instanceof Class)) {
                 continue;
             }
-            String elementID = element.getID();
+            String elementID = Converters.getElementToIdConverter().apply(element);
 
 
             // Converts the element to an interface.

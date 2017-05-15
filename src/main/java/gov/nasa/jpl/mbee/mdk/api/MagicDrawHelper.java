@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2016>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2016>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
  *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
@@ -47,14 +47,13 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -85,15 +84,19 @@ public class MagicDrawHelper {
      *****************************************************************************************/
 
     public static ProjectDescriptor openProject(File file) throws IOException {
-        final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
+        return openProject(file.toURI());
+    }
+
+    public static ProjectDescriptor openProject(URI uri) throws IOException {
+        final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(uri);
         if (projectDescriptor == null) {
-            throw new IOException(Paths.get(file.toURI()).toString() + " could not generate a project descriptor.");
+            throw new IOException(uri.toString() + " could not generate a project descriptor.");
         }
         final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
         projectsManager.loadProject(projectDescriptor, true);
         final Project project = projectsManager.getActiveProject();
         if (project == null) {
-            throw new IOException(Paths.get(file.toURI()).toString() + " could not be loaded into MagicDraw.");
+            throw new IOException(uri.toString() + " could not be loaded into MagicDraw.");
         }
         return projectDescriptor;
     }
@@ -110,7 +113,6 @@ public class MagicDrawHelper {
     public static void closeProject() {
         Application.getInstance().getProjectsManager().closeProject();
     }
-
 
 
     /*****************************************************************************************
@@ -391,7 +393,8 @@ public class MagicDrawHelper {
 
     public static Class createBlock(String name, Element owner) {
         Class newBlock = createClass(name, owner);
-        Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958", Project.getProject(owner));
+        Element stereo = Converters.getIdToElementConverter()
+                .apply("_11_5EAPbeta_be00301_1147424179914_458922_958", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }
@@ -442,7 +445,7 @@ public class MagicDrawHelper {
 
     public static Class createDocument(String name, Element owner) {
         Class newDocument = createClass(name, owner);
-        Stereotype sysmlDocument = Utils.getDocumentStereotype();
+        Stereotype sysmlDocument = Utils.getDocumentStereotype(Project.getProject(owner));
         StereotypesHelper.addStereotype(newDocument, sysmlDocument);
         return newDocument;
     }
@@ -462,7 +465,8 @@ public class MagicDrawHelper {
 
     public static Property createPartProperty(String name, Element owner) {
         Property newProp = createProperty(name, owner, null, null, null, null, null);
-        Element stereo = ElementFinder.getElementByID("_15_0_be00301_1199377756297_348405_2678", Project.getProject(owner));
+        Element stereo = Converters.getIdToElementConverter()
+                .apply("_15_0_be00301_1199377756297_348405_2678", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }
@@ -530,7 +534,7 @@ public class MagicDrawHelper {
 
     public static Component createSiteCharComponent(String name, Element owner) {
         Component comp = createComponent(name, owner);
-        Component genTarget = Utils.getSiteCharacterizationComponent();
+        Component genTarget = Utils.getSiteCharacterizationComponent(Project.getProject(owner));
         createGeneralization("", comp, comp, genTarget);
         createDependency("", comp, comp, owner);
         return comp;
@@ -544,7 +548,7 @@ public class MagicDrawHelper {
 
     public static Class createView(String name, Element owner) {
         Class newView = createClass(name, owner);
-        Stereotype sysmlView = Utils.getViewStereotype();
+        Stereotype sysmlView = Utils.getViewStereotype(Project.getProject(owner));
         StereotypesHelper.addStereotype(newView, sysmlView);
         return newView;
     }
