@@ -23,7 +23,6 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-//import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
@@ -38,7 +37,6 @@ import org.apache.http.entity.ContentType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,8 +52,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
     private List<ValidationSuite> vss = new ArrayList<>();
 
-    public DeltaSyncRunner(boolean shouldCommmit, boolean shouldCommitDeletes, boolean shouldUpdate) {
-        this.shouldCommit = shouldCommmit;
+    public DeltaSyncRunner(boolean shouldCommit, boolean shouldCommitDeletes, boolean shouldUpdate) {
+        this.shouldCommit = shouldCommit;
         this.shouldCommitDeletes = shouldCommitDeletes;
         this.shouldUpdate = shouldUpdate;
     }
@@ -337,15 +335,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
 //                    Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
 //                    OutputQueue.getInstance().offer(request);
-                } catch (IOException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                } catch (IOException | URISyntaxException | ServerException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] An exception has occurred, see logs for additional information. Sync aborted. All changes will be attempted at next update.");
                     e.printStackTrace();
-                } catch (URISyntaxException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
-                    e.printStackTrace();
-                } catch (ServerException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected server exception. See logs for more information.");
-                    e.printStackTrace();
+                    return;
                 }
                 shouldLogNoLocalChanges = false;
             }
@@ -363,15 +356,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
 //                Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(deleteElements.size()) + " local element" + (deleteElements.size() != 1 ? "s" : "") + " on the MMS.");
 //                OutputQueue.getInstance().offer(request);
-            } catch (IOException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+            } catch (IOException | URISyntaxException | ServerException e) {
+                Application.getInstance().getGUILog().log("[ERROR] An exception has occurred, see logs for additional information. Sync aborted. All changes will be attempted at next update.");
                 e.printStackTrace();
-            } catch (URISyntaxException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
-                e.printStackTrace();
-            } catch (ServerException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected server exception. See logs for more information.");
-                e.printStackTrace();
+                return;
             }
             shouldLogNoLocalChanges = false;
         }
