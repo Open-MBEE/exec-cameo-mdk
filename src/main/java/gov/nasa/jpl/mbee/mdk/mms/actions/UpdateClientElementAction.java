@@ -170,18 +170,20 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                                 if (element == null) {
                                     continue;
                                 }
-                                try {
-                                    ModelElementsManager.getInstance().removeElement(element);
-                                } catch (ReadOnlyElementException | RuntimeException e) {
-                                    exception = e;
-                                }
-                                if (exception == null) {
-                                    successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
-                                }
-                                else {
-                                    (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(element, "[DELETE FAILED] " + exception.getMessage());
-                                    failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
-                                }
+                                project.removeElementByID(element);
+
+//                                try {
+//                                    ModelElementsManager.getInstance().removeElement(element);
+//                                } catch (ReadOnlyElementException | RuntimeException e) {
+//                                    exception = e;
+//                                }
+//                                if (exception == null) {
+//                                    successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
+//                                }
+//                                else {
+//                                    (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(element, "[DELETE FAILED] " + exception.getMessage());
+//                                    failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
+//                                }
                             }
 
                             if (localSyncTransactionCommitListener != null) {

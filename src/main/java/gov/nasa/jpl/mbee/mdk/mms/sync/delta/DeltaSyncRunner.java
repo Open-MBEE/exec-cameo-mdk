@@ -281,13 +281,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it does not exist. Skipping.");
                             continue;
                         }
-                        if (!element.isEditable()) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is not editable. Skipping.");
-                            }
-                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
-                            continue;
-                        }
+//                        if (!element.isEditable()) {
+//                            if (MDUtils.isDeveloperMode()) {
+//                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is not editable. Skipping.");
+//                            }
+//                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
+//                            continue;
+//                        }
                         jmsElementsToUpdateLocally.put(id, new Pair<>(objectNode, element));
                         break;
                     case DELETED:
@@ -295,13 +295,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it doesn't exist. Skipping.");
                             continue;
                         }
-                        if (!element.isEditable()) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is not editable. Skipping.");
-                            }
-                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
-                            continue;
-                        }
+//                        if (!element.isEditable()) {
+//                            if (MDUtils.isDeveloperMode()) {
+//                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is not editable. Skipping.");
+//                            }
+//                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
+//                            continue;
+//                        }
                         jmsElementsToDeleteLocally.put(id, element);
                         break;
                 }

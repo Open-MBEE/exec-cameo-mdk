@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
@@ -17,6 +18,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.impl.UMLFactoryImpl;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
+
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -24,6 +26,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
+
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.emf.ecore.*;
@@ -94,9 +97,9 @@ public class EMFImporter implements JsonToElementFunction {
                 CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
                 EDITABLE = new PreProcessor(
                         (objectNode, project, strict, element) -> {
-                            if (!element.isEditable()) {
-                                throw new ReadOnlyElementException(element);
-                            }
+//                            if (!element.isEditable()) {
+//                                throw new ReadOnlyElementException(element);
+//                            }
                             return element;
                         }
                 ),
