@@ -534,11 +534,11 @@ public class MMSUtils {
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
             JsonNode arrayNode;
             if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-                JsonNode value;
+                JsonNode projectId, orgId;
                 for (JsonNode projectNode : arrayNode) {
-                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                            && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                        return value.asText();
+                    if (((projectId = projectNode.get(MDKConstants.ID_KEY)) != null) && projectId.isTextual() && projectId.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                            && ((orgId = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && orgId.isTextual() && !orgId.asText().isEmpty()) {
+                        return orgId.asText();
                     }
                 }
             }
