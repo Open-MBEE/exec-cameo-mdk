@@ -62,7 +62,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         }
 
         JFrame selectionDialog = new JFrame();
-        String org = JOptionPane.showInputDialog(selectionDialog, "[DEVELOPER] Input MMS org.");
+        String org = JOptionPane.showInputDialog(selectionDialog, "Input MMS org.");
         if (org == null) {
             Application.getInstance().getGUILog().log("[INFO] Org commit cancelled.");
             return null;
@@ -72,6 +72,10 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             return null;
         }
         String orgId = org.toLowerCase().replaceAll("\\s+", "_").replaceAll("[^\\w]", "");
+        if (orgId.isEmpty() || orgId.matches("^[_]*$")) {
+            Application.getInstance().getGUILog().log("[ERROR] Org name \"" + org + "\" generates an invalid ID. Org commit cancelled.");
+            return null;
+        }
 
         File responseFile;
         try {

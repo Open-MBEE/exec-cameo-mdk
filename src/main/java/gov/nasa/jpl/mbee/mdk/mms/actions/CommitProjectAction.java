@@ -13,7 +13,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
@@ -100,29 +99,30 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 return null;
             }
             HashMap<String, String> mmsOrgsMap = new HashMap<>();
+            mmsOrgsMap.put("[Create new org...]", "[new]");
             if (response != null) {
                 JsonNode arrayNode;
                 if ((arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
                     for (JsonNode orgNode : arrayNode) {
                         JsonNode name, id;
-                        if ((name = orgNode.get(MDKConstants.NAME_KEY)) != null && name.isTextual() && (id = orgNode.get(MDKConstants.ID_KEY)) != null && id.isTextual()) {
+                        if ((name = orgNode.get(MDKConstants.NAME_KEY)) != null && name.isTextual() && !name.asText().isEmpty()
+                                && (id = orgNode.get(MDKConstants.ID_KEY)) != null && id.isTextual() && !id.asText().isEmpty()) {
                             mmsOrgsMap.put(name.asText(), id.asText());
                         }
                     }
                 }
             }
             String[] mmsOrgs = mmsOrgsMap.keySet().toArray(new String[mmsOrgsMap.keySet().size()]);
-            if (mmsOrgs.length > 0) {
-                JFrame selectionDialog = new JFrame();
-                String selection = (String) JOptionPane.showInputDialog(selectionDialog, "Select MMS org:",
-                        "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
+            Arrays.sort(mmsOrgs);
+            JFrame selectionDialog = new JFrame();
+            String selection = (String) JOptionPane.showInputDialog(selectionDialog, "Select MMS org:",
+                    "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
+            if (selection != null) {
                 orgId = mmsOrgsMap.get(selection);
-            }
-            else {
-                Application.getInstance().getGUILog().log("[WARNING] No orgs were returned from MMS.");
-            }
-            if ((orgId == null || orgId.isEmpty()) && MDUtils.isDeveloperMode()) {
-                orgId = new CommitOrgAction(project).commitAction();
+                // trigger commit org action if user selects create new org
+                if (orgId.equals("[new]")) {
+                    orgId = new CommitOrgAction(project).commitAction();
+                }
             }
         }
 

@@ -294,16 +294,15 @@ public class MMSUtils {
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
-
-        System.out.println("MMS Request [POST] " + request.getURI().toString());
         if (progressStatus == null) {
             try (CloseableHttpClient httpclient = HttpClients.createDefault();
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
+                responseCode.set(response.getStatusLine().getStatusCode());
+                System.out.println("MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
                 if (inputStream != null) {
                     responseBody.set(generateMmsOutput(inputStream, responseFile));
                 }
-                responseCode.set(response.getStatusLine().getStatusCode());
             }
         }
         else {
@@ -314,10 +313,11 @@ public class MMSUtils {
                 try (CloseableHttpClient httpclient = HttpClients.createDefault();
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()){
+                    responseCode.set(response.getStatusLine().getStatusCode());
+                    System.out.println("MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
                     if (inputStream != null) {
                         responseBody.set(generateMmsOutput(inputStream, responseFile));
                     }
-                    responseCode.set(response.getStatusLine().getStatusCode());
                     threadedExceptionType.set(null);
                     threadedExceptionMessage.set("");
                 } catch (IOException e) {
