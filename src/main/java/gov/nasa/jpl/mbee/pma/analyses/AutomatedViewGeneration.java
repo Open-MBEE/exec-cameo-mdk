@@ -25,6 +25,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AutomatedViewGeneration extends CommandLine {
 
@@ -33,25 +34,26 @@ public class AutomatedViewGeneration extends CommandLine {
     // needed because CommandLine redirects it, and we want the output
     private static final PrintStream stdout = System.out;
 
+    private boolean twLogin = false,
+            twLoaded = false;
+
     // cancel handler stuff
     // cancel is set when the cancelHandler is triggered. it is used as a flag so the running program can discontinue normal flow, throw a cancel exception, and notify the waiting cancelHandler
     // running is used to indicate whether we are in docweb scope or not. this is needed because the cancel handler will trigger before we're fully loaded and then be stuck waiting for notification that never comes
-    private static boolean debug = false,
-            cancel = false,
-            running = false,
-            twLogin = false,
-            twLoaded = false;
+    private AtomicBoolean cancel = new AtomicBoolean(false),
+            running = new AtomicBoolean(true);
 
-    private static byte error = 0;
+    private byte error = 0;
 
-    private static Project project;
+    private Project project;
 
-    private static final List<String> viewList = new ArrayList<>(),
-            messageLog = new ArrayList<>();
+    private final List<String> messageLog = new ArrayList<>();
 
-    private static InterruptTrap cancelHandler;
+    private InterruptTrap cancelHandler;
 
-    private static final Object lock = new Object();
+    private final Object lock = new Object();
+
+    private final int cancelDelay = 15;
 
     /*//////////////////////////////////////////////////////////////
      *
@@ -67,7 +69,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
             // start the cancel handler so we don't terminate in the middle of a view sync operation and so we can force logout if logged in to teamwork
             cancelHandler = new InterruptTrap();
-//            Runtime.getRuntime().addShutdownHook(cancelHandler);
+            Runtime.getRuntime().addShutdownHook(cancelHandler);
 
             System.out.println("\n**********************\n");
             System.out.println("[INFO] Performing automated view generation.");
@@ -105,14 +107,14 @@ public class AutomatedViewGeneration extends CommandLine {
                 System.out.println("[OPERATION] Logging out of teamwork");
                 EsiUtils.getTeamworkService().logout();
             }
+            running.set(false);
             try {
                 synchronized (lock) {
-                    running = false;
-                    if (cancel) {
+                    if (cancel.get()) {
                         lock.notify();
                     }
                     else {
-//                        Runtime.getRuntime().removeShutdownHook(cancelHandler);
+                        Runtime.getRuntime().removeShutdownHook(cancelHandler);
                         if (error == 0) {
                             reportStatus("completed");
                             System.out.println("[INFO] Automated View Generation completed without errors.");
@@ -121,7 +123,6 @@ public class AutomatedViewGeneration extends CommandLine {
                             reportStatus("failed");
                             System.out.println("[WARNING] Automated View Generation did not finish successfully. Operations were logged in MDNotificationWindowText.html.");
                         }
-//                System.exit(error);
                     }
                 }
             } catch (IOException e) {
@@ -193,10 +194,6 @@ public class AutomatedViewGeneration extends CommandLine {
         logMessage(message);
         MDKHelper.setMMSLoginCredentials(parser.getOptionValue("mmsUsername"), parser.getOptionValue("mmsPassword"));
 
-//        if (!(parser.hasOption("mmsHost") && parser.hasOption("mmsPort"))) {
-//            illegalStateFailure("[FAILURE] Unable to specify MMS credentials, one or more of the required mms parameters were missing.");
-//        }
-
         if (!(parser.hasOption("projectId") && parser.hasOption("refId") && parser.hasOption("targetViewId"))) {
             illegalStateFailure("[FAILURE] Unable to load project, one or more of the required ID parameters were missing.");
         }
@@ -207,14 +204,14 @@ public class AutomatedViewGeneration extends CommandLine {
         ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(new java.net.URI(uri));
         // if updated projectDescriptor is now null, error out and indicate branch problem
         if (projectDescriptor == null) {
-            illegalStateFailure("[FAILURE] Unable to find TeamworkCloud project " + uri);
+            illegalStateFailure("[FAILURE] Unable to find TeamworkCloud project " + uri + ".");
         }
         // we have a valid project descriptor, so load the associated project
         Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
 
         // if not access to project, loaded project will be null, so error out
         if (Application.getInstance().getProject() == null) {
-            illegalStateFailure("[FAILURE] User does not have permission to load " + projectDescriptor.getRepresentationString());
+            illegalStateFailure("[FAILURE] User does not have permission to load " + projectDescriptor.getRepresentationString() + ".");
         }
         twLoaded = true;
         project = Application.getInstance().getProject();
@@ -336,7 +333,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private void checkCancel() throws InterruptedException {
         synchronized (lock) {
-            if (cancel) {
+            if (cancel.get()) {
                 error = 127;
                 throw new InterruptedException("Cancel signal received.");
             }
@@ -392,6 +389,9 @@ public class AutomatedViewGeneration extends CommandLine {
     }
 
     private void reportStatus(String status) throws IOException {
+//        if (!(parser.hasOption("mmsHost") && parser.hasOption("mmsPort"))) {
+//            illegalStateFailure("[FAILURE] Unable to specify MMS credentials, one or more of the required mms parameters were missing.");
+//        }
 //        System.out.println("Updating status: " + status);
 //        Map<String, String> envvars = System.getenv();
 //        String JOB_ID;
@@ -438,8 +438,8 @@ public class AutomatedViewGeneration extends CommandLine {
     private class InterruptTrap extends Thread {
         @Override
         public void run() {
-            if (running) {
-                cancel = true;
+            if (running.get()) {
+                cancel.set(true);
                 try {
                     reportStatus("aborting");
                 } catch (IOException e) {
@@ -447,19 +447,18 @@ public class AutomatedViewGeneration extends CommandLine {
                 }
                 synchronized (lock) {
                     System.setOut(AutomatedViewGeneration.stdout);
-                    String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: 15min).";
+                    String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + cancelDelay + " min).";
                     try {
                         logMessage(msg);
                     } catch (FileNotFoundException | UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
                     try {
-                        int mins = 15;
-                        for (int i = 0; i < mins * 12; i++) {
-                            if (!running) {
+                        for (int i = 0; i < cancelDelay; i++) {
+                            if (!running.get()) {
                                 break;
                             }
-                            lock.wait(5000);
+                            lock.wait(60 * 1000);
                         }
                     } catch (InterruptedException ignored) {
                     }
@@ -470,7 +469,7 @@ public class AutomatedViewGeneration extends CommandLine {
                     e.printStackTrace();
                 }
                 Runtime.getRuntime().removeShutdownHook(cancelHandler);
-                Runtime.getRuntime().halt(error);
+//                Runtime.getRuntime().halt(error);
             }
         }
     }
