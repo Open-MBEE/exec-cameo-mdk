@@ -43,6 +43,6 @@ java -Xmx4096M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \
        -Dlogback.configurationFile="$MAGICDRAW_HOME/data/logback.xml" \
        -Dsun.locale.formatasdefault=true \
        -Dcom.nomagic.magicdraw.launcher=gov.nasa.jpl.mbee.pma.analyses.AutomatedViewGeneration \
-       com.nomagic.osgi.launcher.ProductionFrameworkLauncher -verbose "$@"
+       com.nomagic.osgi.launcher.ProductionFrameworkLauncher "$@"
 
 exit $?
