@@ -1,10 +1,17 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.tomsawyer.magicdraw.action.TSMDPluginModelViewportProvider;
+import com.tomsawyer.magicdraw.integrator.TSAssociationReader;
+import com.tomsawyer.magicdraw.integrator.TSClassifierReader;
+import com.tomsawyer.magicdraw.integrator.TSPropertyReader;
+import com.tomsawyer.model.schema.TSSchema;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
@@ -12,10 +19,13 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.generator.DiagramTableTool;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-
+import com.tomsawyer.magicdraw.utilities.TSMagicDrawPluginAccessor;
+import com.tomsawyer.model.*;
+import com.tomsawyer.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class GenericTable extends Table {
 
@@ -108,12 +118,38 @@ public class GenericTable extends Table {
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         List<DocumentElement> res = new ArrayList<DocumentElement>();
         DiagramTableTool dtt = new DiagramTableTool();
+        Set<String> providers = TSMagicDrawPluginAccessor.getProviders();
+        TSMDPluginModelViewportProvider provider =
+                TSMagicDrawPluginAccessor.getProvider(providers.iterator().next());
+
+        TSModel model = provider.getModel();
+        TSSchema schema = provider.getDiagramDrawing().getViewDefinition().getSchema();
+
+        TSClassifierReader reader = new TSClassifierReader();
+        TSAssociationReader associationReader = new TSAssociationReader();
+        TSPropertyReader propertyReader = new TSPropertyReader();
         if (getIgnore()) {
             return res;
         }
         int tableCount = 0;
         List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
         for (Object e : targets) {
+            if(e instanceof BaseElement){
+                BaseElement mdElement = (BaseElement) e;
+                if (reader.isQualifyingElement(mdElement)) {
+                    model.addElement(reader.readElement(mdElement, model, schema));
+                }else if(associationReader.isQualifyingElement(mdElement)) {
+                    model.addElement(associationReader.readElement(mdElement, model, schema));
+                } else if(propertyReader.isQualifyingElement(mdElement)){
+                    model.addElement(propertyReader.readElement(mdElement,model,schema));
+                }else{
+                    System.out.println(mdElement.getClassType() + " doesnt qualify for TomSawyer.");
+                }
+            }
+
+
+
+
             if (e instanceof Diagram) {
                 Diagram diagram = (Diagram) e;
                 if (Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()

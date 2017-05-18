@@ -1,15 +1,24 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
+import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import com.tomsawyer.magicdraw.action.TSMDPluginModelViewportProvider;
+import com.tomsawyer.magicdraw.integrator.*;
+import com.tomsawyer.magicdraw.utilities.TSMagicDrawPluginAccessor;
+import com.tomsawyer.model.TSModel;
+import com.tomsawyer.model.schema.TSSchema;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.*;
 import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.Table;
@@ -71,6 +80,19 @@ public class TomSawyerDiagram extends Query {
 
     }
 
+//    public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+//        List<Element> elements = new ArrayList<>();
+//        for (Object ob : this.getTargets()) {
+//            if (ob instanceof Element) {
+//                elements.add((Element) ob);
+//            }
+//        }
+//        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram(elements);
+//        dbts.setType(type);
+//        return Collections.singletonList(dbts);
+//
+//    }
+
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         List<Element> elements = new ArrayList<>();
         for (Object ob : this.getTargets()) {
@@ -80,7 +102,29 @@ public class TomSawyerDiagram extends Query {
         }
         DBTomSawyerDiagram dbts = new DBTomSawyerDiagram(elements);
         dbts.setType(type);
-        return Collections.singletonList(dbts);
 
+
+        SampleDelegateExtension delegate = new SampleDelegateExtension();
+        delegate.addObjectsToShow(elements);
+        delegate.init("myViewId","myViewName", "Block Definition Diagram");
+        try
+        {
+            delegate.loadData();
+        }
+        catch (Exception exception)
+        {
+            exception.printStackTrace();
+            JOptionPane.showMessageDialog(null, exception.getMessage());
+        }
+
+        TSStandardWindowComponentContent windowComponentContent =
+                new TSStandardWindowComponentContent(delegate);
+
+
+
+
+
+
+            return Collections.singletonList(dbts);
     }
 }
