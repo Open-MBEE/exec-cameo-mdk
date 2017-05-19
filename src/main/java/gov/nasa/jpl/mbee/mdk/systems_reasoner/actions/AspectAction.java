@@ -84,15 +84,15 @@ public class AspectAction extends SRAction {
                             }
                         }
                     }
-                    if (!aspectFound) {
-                        AspectRemedyAction ara = new AspectRemedyAction(aspected, aspect);
-                        ara.run();
-                    }
+//                    if (!aspectFound) {
+//                        AspectRemedyAction ara = new AspectRemedyAction(aspected, aspect);
+//                        ara.run();
+//                    }
                 }
             }
         }
 
-        if (!aspectDefinitionFound) {
+//        if (!aspectDefinitionFound) {
             ElementSelectionDlgFactory.initMultiple(dlg, set, sei, new ArrayList<Object>());
             dlg.setSelectionMode(SelectionMode.MULTIPLE_MODE);
             if (dlg != null) {
@@ -116,7 +116,7 @@ public class AspectAction extends SRAction {
                     ValidateAction.validate(aspectedClasses);
                 }
             }
-        }
+//        }
         SessionManager.getInstance().closeSession();
     }
 
