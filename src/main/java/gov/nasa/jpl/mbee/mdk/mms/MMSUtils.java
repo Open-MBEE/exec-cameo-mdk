@@ -229,8 +229,8 @@ public class MMSUtils {
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
             throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
-        System.out.println("Request Body: " + requestFile.getPath());
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+            System.out.println("[INFO] Request Body: " + requestFile.getPath());
             Application.getInstance().getGUILog().log("[INFO] Request Body: " + requestFile.getPath());
         }
         else {
@@ -290,7 +290,9 @@ public class MMSUtils {
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
+        if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+            System.out.println("[INFO] MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
+        }
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
@@ -299,7 +301,9 @@ public class MMSUtils {
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
-                System.out.println("MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
+                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                    System.out.println("[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
+                }
                 if (inputStream != null) {
                     responseBody.set(generateMmsOutput(inputStream, responseFile));
                 }
@@ -314,7 +318,9 @@ public class MMSUtils {
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()){
                     responseCode.set(response.getStatusLine().getStatusCode());
-                    System.out.println("MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
+                    if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                        System.out.println("[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
+                    }
                     if (inputStream != null) {
                         responseBody.set(generateMmsOutput(inputStream, responseFile));
                     }
@@ -385,8 +391,8 @@ public class MMSUtils {
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-                System.out.println("Response Body: " + responseFile.getPath());
                 if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                    System.out.println("[INFO] Response Body: " + responseFile.getPath());
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
                 } else {
                     responseFile.deleteOnExit();

@@ -53,7 +53,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private final Object lock = new Object();
 
-    private final int cancelDelay = 15;
+    private final int CANCEL_DELAY = 15;
 
     /*//////////////////////////////////////////////////////////////
      *
@@ -76,7 +76,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
             MDKOptionsGroup.getMDKOptions().setLogJson(parser.hasOption("debug"));
             if (parser.hasOption("debug")) {
-                System.out.println("[DEBUG] JSON will be saved." + MDKOptionsGroup.getMDKOptions().isLogJson());
+                System.out.println("[DEBUG] JSON will be saved. " + MDKOptionsGroup.getMDKOptions().isLogJson());
             }
 
             // login TeamworkCloud, set MMS credentials
@@ -203,7 +203,7 @@ public class AutomatedViewGeneration extends CommandLine {
         String uri = "twcloud:/" + parser.getOptionValue("projectId") + "/" + parser.getOptionValue("refId");
         ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(new java.net.URI(uri));
         // if updated projectDescriptor is now null, error out and indicate branch problem
-        if (projectDescriptor == null) {
+        if (projectDescriptor == null || projectDescriptor.getRepresentationString() == null) {
             illegalStateFailure("[FAILURE] Unable to find TeamworkCloud project " + uri + ".");
         }
         // we have a valid project descriptor, so load the associated project
@@ -211,7 +211,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
         // if not access to project, loaded project will be null, so error out
         if (Application.getInstance().getProject() == null) {
-            illegalStateFailure("[FAILURE] User does not have permission to load " + projectDescriptor.getRepresentationString() + ".");
+            illegalStateFailure("[FAILURE] User " + parser.getOptionValue("mmsUsername") + " does not have permission to load " + projectDescriptor.getRepresentationString() + ".");
         }
         twLoaded = true;
         project = Application.getInstance().getProject();
@@ -220,15 +220,13 @@ public class AutomatedViewGeneration extends CommandLine {
         while (!messageLog.isEmpty()) {
             Application.getInstance().getGUILog().log(messageLog.remove(0));
         }
-        message = "Opened TeamworkCloud project (preceding timestamps may be invalid).";
+        message = "[INFO] Opened Teamwork Cloud project. Note: preceding timestamps may be invalid.";
         logMessage(message);
         checkCancel();
     }
 
     /**
-     * Generates views and commits images for each document / view in the docList
-     * sequentially. If an element is not found, skips generation and continues
-     * through list, and will throw an exception at the end.
+     * Generates views and commits images for target view, recursively if the option was specified.
      *
      * @throws FileNotFoundException        one or more documents not found in project, or logMessage failure
      * @throws InterruptedException         cancel triggered and caught by cancel handler
@@ -447,18 +445,18 @@ public class AutomatedViewGeneration extends CommandLine {
                 }
                 synchronized (lock) {
                     System.setOut(AutomatedViewGeneration.stdout);
-                    String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + cancelDelay + " min).";
+                    String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + CANCEL_DELAY + " min).";
                     try {
                         logMessage(msg);
                     } catch (FileNotFoundException | UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
                     try {
-                        for (int i = 0; i < cancelDelay; i++) {
+                        for (int i = 0; i < CANCEL_DELAY * 10; i++) {
                             if (!running.get()) {
                                 break;
                             }
-                            lock.wait(60 * 1000);
+                            lock.wait(6 * 1000);
                         }
                     } catch (InterruptedException ignored) {
                     }
