@@ -184,21 +184,21 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             } catch (ServerException | IOException | URISyntaxException e) {
                 if (progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
+                    Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
                     return;
                 }
-                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Skipping sync. All changes will be re-attempted in the next sync.");
                 e.printStackTrace();
                 return;
             }
 
             if (progressStatus.isCancel()) {
-                Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be attempted at next update.");
                 return;
             }
 
             if (response == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS server. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
             JsonNode elementsArrayNode = response.get("elements");
@@ -309,7 +309,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         if (progressStatus.isCancel()) {
-            Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
+            Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
             return;
         }
 
@@ -336,7 +336,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 //                    Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
 //                    OutputQueue.getInstance().offer(request);
                 } catch (IOException | URISyntaxException | ServerException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] An exception has occurred, see logs for additional information. Sync aborted. All changes will be attempted at next update.");
+                    Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
                     e.printStackTrace();
                     return;
                 }
@@ -357,7 +357,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 //                Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(deleteElements.size()) + " local element" + (deleteElements.size() != 1 ? "s" : "") + " on the MMS.");
 //                OutputQueue.getInstance().offer(request);
             } catch (IOException | URISyntaxException | ServerException e) {
-                Application.getInstance().getGUILog().log("[ERROR] An exception has occurred, see logs for additional information. Sync aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
                 e.printStackTrace();
                 return;
             }
