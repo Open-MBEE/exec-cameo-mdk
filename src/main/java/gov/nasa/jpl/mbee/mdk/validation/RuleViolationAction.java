@@ -7,7 +7,6 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
@@ -16,7 +15,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 
-public abstract class RuleViolationAction extends MMSAction implements IRuleViolationAction {
+public abstract class RuleViolationAction extends MDAction implements IRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
 
