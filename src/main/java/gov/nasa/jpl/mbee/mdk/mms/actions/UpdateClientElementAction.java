@@ -7,9 +7,12 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.commands.Command;
+import com.nomagic.magicdraw.commands.CommandHistory;
+import com.nomagic.magicdraw.commands.MacroCommand;
+import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
@@ -160,8 +163,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                             if (localSyncTransactionCommitListener != null) {
                                 localSyncTransactionCommitListener.setDisabled(true);
                             }
-                            if (!SessionManager.getInstance().isSessionCreated()) {
-                                SessionManager.getInstance().createSession(UpdateClientElementAction.class.getName() + " Deletes");
+                            if (!SessionManager.getInstance().isSessionCreated(project)) {
+                                SessionManager.getInstance().createSession(project, UpdateClientElementAction.class.getName() + " Deletes");
                             }
 
                             for (String id : elementsToDelete) {
@@ -170,27 +173,28 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                                 if (element == null) {
                                     continue;
                                 }
-                                project.removeElementByID(element);
-
-//                                try {
-//                                    ModelElementsManager.getInstance().removeElement(element);
-//                                } catch (ReadOnlyElementException | RuntimeException e) {
-//                                    exception = e;
-//                                }
-//                                if (exception == null) {
-//                                    successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
-//                                }
-//                                else {
-//                                    (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(element, "[DELETE FAILED] " + exception.getMessage());
-//                                    failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
-//                                }
+                                try {
+                                    Command command = RemoveCommandCreator.getCommand(element);
+                                    command.execute();
+                                    MacroCommand macroCommand = CommandHistory.getCommandForAppend(element);
+                                    macroCommand.add(command);
+                                } catch (RuntimeException e) {
+                                    exception = e;
+                                }
+                                if (exception == null) {
+                                    successfulChangeValidationRule.addViolation(project.getPrimaryModel(), "[" + Changelog.ChangeType.DELETED.name() + "] " + element.getHumanName());
+                                }
+                                else {
+                                    failedChangeValidationRule.addViolation(element, "[DELETE FAILED] " + exception.getMessage());
+                                    failedChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
+                                }
                             }
 
                             if (localSyncTransactionCommitListener != null) {
                                 localSyncTransactionCommitListener.setDisabled(false);
                             }
-                            if (SessionManager.getInstance().isSessionCreated()) {
-                                SessionManager.getInstance().closeSession();
+                            if (SessionManager.getInstance().isSessionCreated(project)) {
+                                SessionManager.getInstance().closeSession(project);
                             }
                         }
                     }
