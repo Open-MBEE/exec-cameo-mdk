@@ -160,10 +160,16 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         //modelLoad.addAction(mda);
         ActionsCategory models = getCategory(manager, "MMSModel", "MMSModel", modelLoad);
         if (MDUtils.isDeveloperMode()) {
-            if (e instanceof Model && manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
-                models.addAction(new CommitProjectAction(project, false, true));
-                models.addAction(new CommitProjectAction(project, true, true));
+            if (e instanceof Model) {
+                if (manager.getActionFor(CommitOrgAction.DEFAULT_ID) == null) {
+                    models.addAction(new CommitOrgAction(project, true));
+                }
+                if (manager.getActionFor(CommitProjectAction.DEFAULT_ID) == null) {
+                    models.addAction(new CommitProjectAction(project, false, true));
+                    models.addAction(new CommitProjectAction(project, true, true));
+                }
             }
+
         }
         if (manager.getActionFor(ValidateElementRecursivelyAction.DEFAULT_ID) == null) {
             models.addAction(new ValidateElementRecursivelyAction(es, "Validate Models"));
