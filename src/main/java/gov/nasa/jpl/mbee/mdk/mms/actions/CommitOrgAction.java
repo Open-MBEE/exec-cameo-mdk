@@ -43,7 +43,6 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         return false;
     }
 
-
     @Override
     public void execute(Collection<Annotation> annos) {
     }
@@ -63,13 +62,18 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         }
 
         JFrame selectionDialog = new JFrame();
-        String org = JOptionPane.showInputDialog(selectionDialog, "[DEVELOPER] Input MMS org.");
+        String org = JOptionPane.showInputDialog(selectionDialog, "Input MMS org.");
         if (org == null) {
             Application.getInstance().getGUILog().log("[INFO] Org commit cancelled.");
             return null;
         }
         if (org.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit org without name. Org commit cancelled.");
+            return null;
+        }
+        String orgId = org.toLowerCase().replaceAll("\\s+", "_").replaceAll("[^\\w]", "");
+        if (orgId.isEmpty() || orgId.matches("^[_]*$")) {
+            Application.getInstance().getGUILog().log("[ERROR] Org name \"" + org + "\" generates an invalid ID. Org commit cancelled.");
             return null;
         }
 
@@ -81,11 +85,15 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                 JsonNode arrayNode;
                 if (response != null && (arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
                     for (JsonNode orgNode : arrayNode) {
-                        JsonNode value;
-                        if ((value = orgNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                            if (value.asText().equals(org)) {
-                                Application.getInstance().getGUILog().log("[WARNING] Org already exists. Org commit cancelled.");
-                                return org;
+                        JsonNode name, id;
+                        if ((name = orgNode.get(MDKConstants.NAME_KEY)) != null && name.isTextual() && (id = orgNode.get(MDKConstants.ID_KEY)) != null && id.isTextual()) {
+                            if (name.asText().equals(org)) {
+                                Application.getInstance().getGUILog().log("[WARNING] An org with name \"" + org + "\" already exists. Org commit cancelled.");
+                                return id.asText();
+                            }
+                            if (id.asText().equals(orgId)) {
+                                Application.getInstance().getGUILog().log("[WARNING] An org with ID \"" + orgId + "\" already exists. Org commit cancelled.");
+                                return id.asText();
                             }
                         }
                     }
@@ -100,7 +108,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         // build post data
         LinkedList<ObjectNode> orgs = new LinkedList<>();
         ObjectNode orgNode =JacksonUtils.getObjectMapper().createObjectNode();
-        orgNode.put(MDKConstants.ID_KEY, org);
+        orgNode.put(MDKConstants.ID_KEY, orgId);
         orgNode.put(MDKConstants.NAME_KEY, org);
         orgs.add(orgNode);
 
@@ -114,7 +122,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             e.printStackTrace();
             return null;
         }
-        return org;
+        return orgId;
     }
 
 }
