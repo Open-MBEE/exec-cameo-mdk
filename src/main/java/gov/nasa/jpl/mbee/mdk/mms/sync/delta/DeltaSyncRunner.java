@@ -333,8 +333,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
                     Request request = new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes");
                     MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
-//                    Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
-//                    OutputQueue.getInstance().offer(request);
                 } catch (IOException | URISyntaxException | ServerException e) {
                     Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
                     e.printStackTrace();
@@ -354,8 +352,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
                 Request request = new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes");
                 MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
-//                Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(deleteElements.size()) + " local element" + (deleteElements.size() != 1 ? "s" : "") + " on the MMS.");
-//                OutputQueue.getInstance().offer(request);
             } catch (IOException | URISyntaxException | ServerException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
                 e.printStackTrace();
