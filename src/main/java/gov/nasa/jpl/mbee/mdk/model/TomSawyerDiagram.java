@@ -1,24 +1,25 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
-import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.ui.ProjectWindow;
+import com.nomagic.magicdraw.ui.ProjectWindowListener;
+import com.nomagic.magicdraw.ui.WindowComponentInfo;
+import com.nomagic.magicdraw.ui.WindowsManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import com.tomsawyer.magicdraw.action.TSMDPluginModelViewportProvider;
-import com.tomsawyer.magicdraw.integrator.*;
+import com.tomsawyer.magicdraw.action.SampleDelegateExtension;
+import com.tomsawyer.magicdraw.action.TSActionConstants;
+import com.tomsawyer.magicdraw.action.TSBaseDiagramAction;
 import com.tomsawyer.magicdraw.utilities.TSMagicDrawPluginAccessor;
-import com.tomsawyer.model.TSModel;
-import com.tomsawyer.model.schema.TSSchema;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.*;
 import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.Table;
@@ -33,7 +34,10 @@ public class TomSawyerDiagram extends Query {
     public void setType(diagramType type) {
         this.type = type;
     }
-
+    protected static final String BDD_DRAWING_VIEW_NAME = "Block Definition Diagram";
+    protected static final String IBD_DRAWING_VIEW_NAME = "Internal Block Diagram";
+    protected static final String STATE_MACHINE_DRAWING_VIEW_NAME = "State Machine";
+    protected static final String ACTIVITY_DIAGRAM_DRAWING_VIEW_NAME = "Activity Diagram";
     public enum diagramType {
         Block_Definition_Diagram, Internal_Block_Diagram, State_Machine_Diagram, Activity_Diagram, Sequence_Diagram, Table
     }
@@ -59,7 +63,7 @@ public class TomSawyerDiagram extends Query {
                     setType(Block_Definition_Diagram);
                     break;
                 case "Internal_Block_Diagram":
-                    setType(Block_Definition_Diagram);
+                    setType(Internal_Block_Diagram);
                     break;
                 case "State_Machine_Diagram":
                     setType(State_Machine_Diagram);
@@ -100,28 +104,65 @@ public class TomSawyerDiagram extends Query {
                 elements.add((Element) ob);
             }
         }
-        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram(elements);
-        dbts.setType(type);
-
 
         SampleDelegateExtension delegate = new SampleDelegateExtension();
-        delegate.addObjectsToShow(elements);
-        delegate.init("myViewId","myViewName", "Block Definition Diagram");
-        try
-        {
-            delegate.loadData();
+        delegate.addObjectsToShow(elements); //Johannes' method.
+        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram(elements);
+        if(type !=null) {
+
+            dbts.setType(type);
+
+
+
+            switch (type) {
+                case Block_Definition_Diagram:
+                    delegate.init("bdd", "Docgen Generated Block Diagram", BDD_DRAWING_VIEW_NAME);
+                    break;
+                case Internal_Block_Diagram:
+                    delegate.init("ibd", "Docgen Generated Internal Block Diagram", IBD_DRAWING_VIEW_NAME);
+                    break;
+                case State_Machine_Diagram:
+                    delegate.init("sm", "Docgen Generated State Machine Diagram", STATE_MACHINE_DRAWING_VIEW_NAME);
+                    break;
+                case Activity_Diagram:
+                    delegate.init("ad", "Docgen Generated Activity Diagram", ACTIVITY_DIAGRAM_DRAWING_VIEW_NAME);
+                    break;
+                case Sequence_Diagram:
+                    delegate.init("sequence diagram not implemented", "equence diagram not implemented", BDD_DRAWING_VIEW_NAME);
+                    break;
+                case Table:
+                    delegate.init("table not implemented", "table not implemented", BDD_DRAWING_VIEW_NAME);
+                    break;
+                default:
+            }
+        }else{
+            delegate.init("bdd", "Docgen Generated Block Diagram", BDD_DRAWING_VIEW_NAME);
         }
-        catch (Exception exception)
-        {
-            exception.printStackTrace();
-            JOptionPane.showMessageDialog(null, exception.getMessage());
-        }
 
-        TSStandardWindowComponentContent windowComponentContent =
-                new TSStandardWindowComponentContent(delegate);
+            try {
+                delegate.loadData();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+                JOptionPane.showMessageDialog(null, exception.getMessage());
+            }
+
+            TSStandardWindowComponentContent windowComponentContent =
+                    new TSStandardWindowComponentContent(delegate);
+
+            ProjectWindow window = new ProjectWindow(new WindowComponentInfo(
+                    delegate.getId(),
+                    delegate.getName(),
+                    TSActionConstants.WINDOW_ICON,
+                    WindowsManager.SIDE_EAST,
+                    WindowsManager.STATE_DOCKED,
+                    false),
+                    windowComponentContent);
 
 
+            Application.getInstance().getMainFrame().getProjectWindowsManager().addWindow(
+                    window);
 
+            windowComponentContent.setDividerLocation(0.7);
 
 
 
