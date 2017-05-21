@@ -31,19 +31,14 @@ import java.util.zip.Checksum;
 
 public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
-    private JSONObject views = new JSONObject();
-    private Stack<JSONArray> sibviews = new Stack<>(); //sibling views (array of view ids)
     private Stack<List<Element>> sibviewsElements = new Stack<>();
     private Stack<Set<String>> viewElements = new Stack<>(); //ids of view elements
     private Map<String, ObjectNode> images = new HashMap<>();
     protected boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
-    private static String FILE_EXTENSION = "svg";
 
     private Map<From, String> sourceMapping = new HashMap<>();
-    private JSONObject view2view = new JSONObject(); //parent view id to array of children view ids (from sibviews)
     private Map<Element, List<Element>> view2viewElements = new HashMap<>();
-    private JSONArray noSections = new JSONArray();
     private boolean doc;
     protected Set<Element> elementSet = new HashSet<>();
 
@@ -67,7 +62,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private boolean main = false; //for ems 2.2 reference tree, only consider generated pe from main view and 
     //not nested tables/lists since those are embedded in json blob, main is false for Table and List Visitor
 
-    private InstanceSpecification viewDocHack = null;
+    private InstanceSpecification viewDocHack;
     private PresentationElementUtils viu = new PresentationElementUtils();
 
     public DBAlfrescoVisitor(boolean recurse) {
@@ -92,8 +87,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBBook book) {
-        JSONArray childviews = new JSONArray();
-        sibviews.push(childviews);
         sibviewsElements.push(new ArrayList<Element>());
 
         if (book.getFrom() != null) {
@@ -120,7 +113,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         if (doc) {
             endView(book.getFrom());
         }
-        sibviews.pop();
         sibviewsElements.pop();
     }
 
@@ -130,8 +122,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public void visit(DBImage image) {
+    protected JSONObject getJSONForDBImage(DBImage image) {
         //need to populate view elements with elements in image
         JSONObject entry = new JSONObject();
         ObjectNode imageEntry = JacksonUtils.getObjectMapper().createObjectNode();
@@ -145,7 +136,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         // create image file
         String userhome = System.getProperty("user.home");
-        File directory = null;
+        File directory;
         if (userhome != null) {
             directory = new File(userhome + File.separator + "mdkimages");
         }
@@ -181,7 +172,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         // Lets rename the file to have the hash code
         // make sure this matches what's in the View Editor ImageResource.java
-        String svgCrcFilename = Converters.getElementToIdConverter().apply(image.getImage()) + "_latest" + FILE_EXTENSION;
+        String FILE_EXTENSION = "svg";
         //gl.log("Exporting diagram to: " + svgDiagramFile.getAbsolutePath());
 
         // keep record of all images found
@@ -195,6 +186,13 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         entry.put("type", "Image");
         entry.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(image.getImage()));
         entry.put("title", image.getTitle());
+        return entry;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void visit(DBImage image) {
+        JSONObject entry = getJSONForDBImage(image);
 
         //for ems 2.2 reference tree
         if (!main) {
@@ -209,7 +207,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), (image.getTitle() == null ? "image" : image.getTitle()), parentSec, null);
         newpe.peek().add(ipe);
-        Application.getInstance().getProject().getElementsFactory().createInstanceValueInstance();
     }
 
     @SuppressWarnings("unchecked")
@@ -316,16 +313,11 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             startView(eview);
 
             for (DocumentElement de : section.getChildren()) {
-                // if (recurse || !(de instanceof DBSection))
                 if (!recurse && de instanceof DBSection && ((DBSection) de).isView()) {
                     break;
                 }
                 de.accept(this);
                 addManualInstances(false);
-            }
-            //sibviews.pop();
-            if (section.isNoSection()) {
-                noSections.add(Converters.getElementToIdConverter().apply(eview));
             }
             endView(eview);
         }
@@ -349,13 +341,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @Override
     public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
-        //  super.visit(tomSawyerDiagram);
-        //`  tomSawyerDiagram.accept();
         JSONObject entry = new JSONObject();
-        // entry.put("sourceType", "text");
         entry.put("type", "Tsp");
         entry.put("tstype", tomSawyerDiagram.getShortType().toString());
-        // here enter a list of all the elements we need.
         JSONArray elements = new JSONArray();
         for (Element elem : tomSawyerDiagram.getElements()) {
             elements.add(Converters.getElementToIdConverter().apply(elem));
@@ -407,14 +395,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //
         Set<String> viewE = new HashSet<>();
         viewElements.push(viewE);
-        //MDEV-443 add view exposed elements to view elements
-        /*for (Element exposed: Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                DocGen3Profile.queriesStereotype, 1, false, 1))
-            addToElements(exposed);*/
-        sibviews.peek().add(Converters.getElementToIdConverter().apply(e));
         sibviewsElements.peek().add(e);
-        JSONArray childViews = new JSONArray();
-        sibviews.push(childViews);
         sibviewsElements.push(new ArrayList<>());
 
         //for ems 2.2 reference tree
@@ -438,17 +419,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     public void endView(Element e) {
         JSONArray viewEs = new JSONArray();
         viewEs.addAll(viewElements.pop());
-        //MDEV #673: update code to use the
-        //specialization element.
-        //
-        JSONObject view = (JSONObject) views.get(Converters.getElementToIdConverter().apply(e));
-
-        view.put("displayedElements", viewEs);
-        view.put("allowedElements", viewEs);
-        if (recurse && !doc) {
-            view.put("childrenViews", sibviews.peek());
-        }
-        view2view.put(Converters.getElementToIdConverter().apply(e), sibviews.pop());
         view2viewElements.put(e, sibviewsElements.pop());
 
         //for ems 2.2 reference tree
@@ -479,9 +449,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         newSection.put("type", "Section");
         newSection.put("name", section.getTitle());
-
-        JSONArray secArray = new JSONArray();
-        newSection.put("contains", secArray);
 
         //for ems 2.2 reference tree
         InstanceSpecification sec = null;
@@ -527,21 +494,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentUnusedInstances.pop();
     }
 
-    @Deprecated
-    public JSONObject getViews() {
-        return views;
-    }
-
-    public JSONObject getHierarchy() {
-        return view2view;
-    }
-
     public Map<Element, List<Element>> getHierarchyElements() {
         return view2viewElements;
-    }
-
-    public JSONArray getNosections() {
-        return noSections;
     }
 
     public Map<Element, JSONArray> getView2Elements() {
