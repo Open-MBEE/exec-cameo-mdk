@@ -36,11 +36,12 @@ public class OclQueryConfigurator implements BrowserContextAMConfigurator, Diagr
     }
 
     public void configure(ActionsManager manager, PresentationElement... elements) {
-        ActionsCategory category = (ActionsCategory) manager.getActionFor(MDKPlugin.MAIN_TOOLBAR_CATEGORY_NAME);
+        ActionsCategory category = manager.getCategory(MDKPlugin.MAIN_TOOLBAR_CATEGORY_NAME);
         if (category == null) {
             category = new MDActionsCategory(MDKPlugin.MAIN_TOOLBAR_CATEGORY_NAME, MDKPlugin.MAIN_TOOLBAR_CATEGORY_NAME, null, ActionsGroups.APPLICATION_RELATED);
             category.setNested(true);
         }
+        manager.removeCategory(category);
         manager.addCategory(category);
         category.addAction(new OclQueryAction());
         category.addAction(new ValidateConstraintsAction());
