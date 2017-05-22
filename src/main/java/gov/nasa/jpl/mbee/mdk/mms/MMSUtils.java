@@ -294,16 +294,15 @@ public class MMSUtils {
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
-
-        System.out.println("MMS Request [POST] " + request.getURI().toString());
         if (progressStatus == null) {
             try (CloseableHttpClient httpclient = HttpClients.createDefault();
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
+                responseCode.set(response.getStatusLine().getStatusCode());
+                System.out.println("MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
                 if (inputStream != null) {
                     responseBody.set(generateMmsOutput(inputStream, responseFile));
                 }
-                responseCode.set(response.getStatusLine().getStatusCode());
             }
         }
         else {
@@ -314,10 +313,11 @@ public class MMSUtils {
                 try (CloseableHttpClient httpclient = HttpClients.createDefault();
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()){
+                    responseCode.set(response.getStatusLine().getStatusCode());
+                    System.out.println("MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
                     if (inputStream != null) {
                         responseBody.set(generateMmsOutput(inputStream, responseFile));
                     }
-                    responseCode.set(response.getStatusLine().getStatusCode());
                     threadedExceptionType.set(null);
                     threadedExceptionMessage.set("");
                 } catch (IOException e) {
@@ -534,11 +534,11 @@ public class MMSUtils {
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
             JsonNode arrayNode;
             if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-                JsonNode value;
+                JsonNode projectId, orgId;
                 for (JsonNode projectNode : arrayNode) {
-                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                            && ((value = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                        return value.asText();
+                    if (((projectId = projectNode.get(MDKConstants.ID_KEY)) != null) && projectId.isTextual() && projectId.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                            && ((orgId = projectNode.get(MDKConstants.ORG_ID_KEY)) != null) && orgId.isTextual() && !orgId.asText().isEmpty()) {
+                        return orgId.asText();
                     }
                 }
             }
