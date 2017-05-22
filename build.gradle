@@ -9,7 +9,7 @@ if (buildTag == null || buildTag.isEmpty()) {
     version += '-SNAPSHOT'
 }
 else if (buildTag != version) {
-    throw new GradleException('Version mismatch.')
+    throw new GradleException('Version mismatch: ' + version + ' => ' + buildTag)
 }
 group = (buildAccess == 'internal' ? 'gov.nasa.jpl.cae.magicdraw.mdk' : 'org.openmbee.magicdraw.mdk')
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
