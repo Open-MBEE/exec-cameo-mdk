@@ -159,7 +159,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Failed to create JMS connection factory.");
                 return false;
             }
-            String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(); // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(project); // weblogic can't have '/' in id
 
             JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
