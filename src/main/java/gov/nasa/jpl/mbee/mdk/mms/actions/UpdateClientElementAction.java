@@ -52,6 +52,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
     private final Project project;
 
     private final Changelog<String, ObjectNode> failedChangelog = new Changelog<>();
+    private final Changelog<String, Void> successfulChangelog = new Changelog<>();
 
     private ValidationSuite validationSuite = new ValidationSuite("Update Changelog");
     private ValidationRule editableValidationRule = new ValidationRule("Element Editability", "The element to be updated shall be editable.", ViolationSeverity.WARNING),
@@ -120,6 +121,10 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
 
     public Changelog<String, ObjectNode> getFailedChangelog() {
         return failedChangelog;
+    }
+
+    public Changelog<String, Void> getSuccessfulChangelog() {
+        return successfulChangelog;
     }
 
     @Override
@@ -247,7 +252,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                     copyActionsCategory.addAction(new ClipboardAction("ID", sysmlId));
                     JsonNode diff = null;
                     if (element != null) {
-                        copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + element.getID()));
+                        copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + element.getLocalID()));
                         ObjectNode elementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
                         if (elementObjectNode != null) {
                             try {
@@ -282,7 +287,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                     copyActionsCategory.setNested(true);
                     validationRuleViolation.addAction(copyActionsCategory);
                     copyActionsCategory.addAction(new ClipboardAction("ID", sysmlId));
-                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + element.getID()));
+                    copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + element.getLocalID()));
                     try {
                         copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(clientElementObjectNode)));
                     } catch (JsonProcessingException ignored) {
@@ -299,7 +304,9 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 }
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                     for (Map.Entry<String, Pair<Element, ObjectNode>> entry : changelog.get(changeType).entrySet()) {
-                        successfulChangeValidationRule.addViolation(new ValidationRuleViolation(entry.getValue().getKey(), "Source: [" + SyncElement.Type.MMS.name() + "] | Type: [" + changeType.name() + "] | Target: [" + SyncElement.Type.LOCAL.name() + "]"));
+                        Element successElement = entry.getValue().getKey();
+                        successfulChangeValidationRule.addViolation(new ValidationRuleViolation(successElement, "Source: [" + SyncElement.Type.MMS.name() + "] | Type: [" + changeType.name() + "] | Target: [" + SyncElement.Type.LOCAL.name() + "]"));
+                        successfulChangelog.addChange(successElement.getLocalID(), null, changeType);
                     }
                 }
             }

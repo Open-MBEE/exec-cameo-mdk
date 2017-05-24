@@ -62,7 +62,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 objectNode = preProcessor.getFunction().apply(element, project, objectNode);
             } catch (RuntimeException e) {
                 e.printStackTrace();
-                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getID() + " in " + project.getName());
+                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getLocalID() + " in " + project.getName());
             }
             if (objectNode == null) {
                 return null;

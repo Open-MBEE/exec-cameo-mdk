@@ -84,37 +84,30 @@ public class AspectAction extends SRAction {
                             }
                         }
                     }
-                    if (!aspectFound) {
-                        AspectRemedyAction ara = new AspectRemedyAction(aspected, aspect);
-                        ara.run();
-                    }
                 }
             }
         }
+        ElementSelectionDlgFactory.initMultiple(dlg, set, sei, new ArrayList<Object>());
+        dlg.setSelectionMode(SelectionMode.MULTIPLE_MODE);
+        if (dlg != null) {
+            dlg.setVisible(true);
+            if (dlg.isOkClicked() && dlg.getSelectedElements() != null && !dlg.getSelectedElements().isEmpty()) {
+                final List<Classifier> aspectedClasses = new ArrayList<>();
 
-        if (!aspectDefinitionFound) {
-            ElementSelectionDlgFactory.initMultiple(dlg, set, sei, new ArrayList<Object>());
-            dlg.setSelectionMode(SelectionMode.MULTIPLE_MODE);
-            if (dlg != null) {
-                dlg.setVisible(true);
-                if (dlg.isOkClicked() && dlg.getSelectedElements() != null && !dlg.getSelectedElements().isEmpty()) {
-                    final List<Classifier> aspectedClasses = new ArrayList<>();
-
-                    for (final BaseElement be : dlg.getSelectedElements()) {
-                        if (be instanceof Classifier) {
-                            final Classifier aspect = (Classifier) be;
-                            for (final Classifier aspected : classifiers) {
-                                Stereotype aspectSt = Utils.getStereotype(project, "aspect");
-                                Utils.createDependencyWithStereotype(aspected, aspect, aspectSt);
-                                aspectedClasses.add(aspected);
-                                AspectRemedyAction ara = new AspectRemedyAction(aspected, aspect);
-                                ara.run();
-                            }
+                for (final BaseElement be : dlg.getSelectedElements()) {
+                    if (be instanceof Classifier) {
+                        final Classifier aspect = (Classifier) be;
+                        for (final Classifier aspected : classifiers) {
+                            Stereotype aspectSt = Utils.getStereotype(project, "aspect");
+                            Utils.createDependencyWithStereotype(aspected, aspect, aspectSt);
+                            aspectedClasses.add(aspected);
+                            AspectRemedyAction ara = new AspectRemedyAction(aspected, aspect);
+                            ara.run();
                         }
                     }
-
-                    ValidateAction.validate(aspectedClasses);
                 }
+
+                ValidateAction.validate(aspectedClasses);
             }
         }
         SessionManager.getInstance().closeSession();

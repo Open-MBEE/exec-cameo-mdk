@@ -384,7 +384,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             updateClientElementAction.run(progressStatus);
 
             failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
-
+            successfulJmsChangelog = updateClientElementAction.getSuccessfulChangelog();
             listener.setDisabled(false);
         }
 
@@ -476,7 +476,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         listener.setDisabled(false);
 
         // SUCCESS
-
         failure = false;
     }
 
