@@ -279,7 +279,7 @@ public class DocumentGenerator {
                         if (ex instanceof Diagram) {
                             String diagramType = Application.getInstance().getProject().getDiagram((Diagram) ex).getDiagramType().getType();
                             if(diagramType.equals("Generic Table") ||diagramType.equals("Instance Table") || diagramType.equals("Verify Requirement Matrix") || diagramType.equals("SysML Allocation Matrix") || diagramType.equals("Satisfy Requirement Matrix")){
-                                GenericTable gt = new GenericTable();
+                                MatricesAndTables gt = new MatricesAndTables();
                                 List<Object> tables = new ArrayList<Object>();
                                 tables.add(ex);
                                 gt.setTargets(tables);
@@ -736,7 +736,7 @@ public class DocumentGenerator {
             dge = new DependencyMatrix();
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.genericTableStereotype)) {
-            dge = new GenericTable();
+            dge = new MatricesAndTables();
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.tableStructureStereotype)) {
             // Get all the variables or whatever

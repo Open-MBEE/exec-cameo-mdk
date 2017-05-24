@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.properties.*;
+import com.nomagic.magicdraw.uml.DiagramType;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
@@ -21,10 +22,11 @@ import gov.nasa.jpl.mbee.mdk.util.Matrix;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class GenericTable extends Table {
+public class MatricesAndTables extends Table {
 
     private List<String> headers;
     private boolean skipIfNoDoc;
@@ -33,6 +35,109 @@ public class GenericTable extends Table {
         add("QPROP:Element:CUSTOM_IMAGE");
     }};
     private int numCols = 0;
+    private String genericTableName = "Generic Table";
+    private String instanceTableName = "Instance Table";
+
+
+    @Override
+    public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        List<DocumentElement> res = new ArrayList<DocumentElement>();
+        if (getIgnore()) {
+            return res;
+        }
+
+        // SessionManager.getInstance().createSession(Application.getInstance().getProject(), "Reading Generic Table");
+        int tableCount = 0;
+        List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
+        for (Object e : targets) {
+            if (e instanceof Diagram) {
+                Diagram diagram = (Diagram) e;
+                DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
+
+                if (diagramType.getType().equals(genericTableName) ||diagramType.getType().equals(instanceTableName)) {
+                    DBTable t = new DBTable();
+                    GenericTableManager gtm = new GenericTableManager();
+                    List<String> columnIds = gtm.getColumnIds(diagram);
+                    t.setHeaders(getHeaders(diagram, columnIds, gtm));
+                    List<Element> rowElements = gtm.getRowElements(diagram);
+                    t.setBody(getBody(diagram, rowElements, columnIds, gtm, forViewEditor));
+                    if (getTitles() != null && getTitles().size() > tableCount) {
+                        t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
+                    } else {
+                        t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
+                    }
+                    if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
+                        t.setCaption(getCaptions().get(tableCount));
+                    } else {
+                        t.setCaption(ModelHelper.getComment(diagram));
+                    }
+                    t.setCols(numCols);
+                    res.add(t);
+                    t.setStyle(getStyle());
+                    tableCount++;
+                }else {
+                    MatrixData matrixData;
+                    if (MatrixDataHelper.isRebuildNeeded(diagram)){
+                        matrixData = MatrixDataHelper.buildMatrix(diagram);
+                    } else {
+                        matrixData = MatrixDataHelper.getMatrixData(diagram);
+                    }
+
+                    DependencyMatrixTool tool = new DependencyMatrixTool();
+                    Matrix matrix = tool.getMatrix(diagram);
+                    List<Element> rowElements = matrix.getRows();
+                    List<Element> columnElements = matrix.getColumns();
+                    DBTable t = new DBTable();
+                    List<List<DocumentElement>> matrixResult = new ArrayList<>();
+                    List<String> columnHeaders = new ArrayList<>();
+                    for (Element rowElement : rowElements) {
+                        List<DocumentElement> matrixcolumn = new ArrayList<>();
+                        if(rowElement instanceof NamedElement) {
+                            matrixcolumn.add(new DBText(((NamedElement) rowElement).getName()));
+                        }else{
+                            matrixcolumn.add(new DBText(rowElement.getHumanName()));
+                        }
+                        for (Element columnElement : columnElements) {
+                             AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
+                            if(val.getDescription() != null){
+                                if(val.isEditable()) {
+                                    matrixcolumn.add(new DBText("&#10004;")); // HTML Check mark
+                                }else {
+                                    matrixcolumn.add(new DBText("&#10003;"));
+                                }
+                            }else {
+                                matrixcolumn.add(new DBText(""));
+                            }
+                        }
+                        matrixResult.add(matrixcolumn);
+                    }
+                    for (Element element : columnElements) {
+                        if(element instanceof NamedElement){
+                            columnHeaders.add(((NamedElement) element).getName());
+                        }
+                    }
+                    t.setHeaders(getHeaders(diagram, columnHeaders, null));
+                    t.setBody(matrixResult);
+                    if (getTitles() != null && getTitles().size() > tableCount) {
+                        t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
+                    } else {
+                        t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
+                    }
+                    if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
+                        t.setCaption(getCaptions().get(tableCount));
+                    } else {
+                        t.setCaption(ModelHelper.getComment(diagram));
+                    }
+                    t.setCols(numCols);
+                    res.add(t);
+                    t.setStyle(getStyle());
+                    tableCount++;
+                }
+            }
+        }
+
+         return res;
+    }
 
     public List<List<DocumentElement>> getHeaders(Diagram d, List<String> columnIds, GenericTableManager gtm) {
         List<List<DocumentElement>> res = new ArrayList<List<DocumentElement>>();
@@ -163,113 +268,7 @@ public class GenericTable extends Table {
         headers = h;
     }
 
-    @Override
-    public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
-        List<DocumentElement> res = new ArrayList<DocumentElement>();
-        if (getIgnore()) {
-            return res;
-        }
 
-        SessionManager.getInstance().createSession(Application.getInstance().getProject(), "Reading Generic Table");
-        int tableCount = 0;
-        List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
-        for (Object e : targets) {
-            if (e instanceof Diagram) {
-                Diagram diagram = (Diagram) e;
-                if (Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
-                        .equals("Generic Table") ||Application.getInstance().getProject().getDiagram(diagram).getDiagramType().getType()
-                        .equals("Instance Table")) {
-                    DBTable t = new DBTable();
-
-                    GenericTableManager gtm = new GenericTableManager();
-
-                    List<String> columnIds = gtm.getColumnIds(diagram);
-                    t.setHeaders(getHeaders(diagram, columnIds, gtm));
-                    List<Element> rowElements = gtm.getRowElements(diagram);
-                    t.setBody(getBody(diagram, rowElements, columnIds, gtm, forViewEditor));
-                    if (getTitles() != null && getTitles().size() > tableCount) {
-                        t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
-                    } else {
-                        t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
-                    }
-                    if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
-                        t.setCaption(getCaptions().get(tableCount));
-                    } else {
-                        t.setCaption(ModelHelper.getComment(diagram));
-                    }
-                    t.setCols(numCols);
-                    res.add(t);
-                    t.setStyle(getStyle());
-                    tableCount++;
-                }else {
-                    MatrixData matrixData;
-                     if (MatrixDataHelper.isRebuildNeeded(diagram)){
-                        matrixData = MatrixDataHelper.buildMatrix(diagram);
-                    } else {
-                        matrixData = MatrixDataHelper.getMatrixData(diagram);
-                    }
-
-                    DependencyMatrixTool tool = new DependencyMatrixTool();
-                    Matrix matrix = tool.getMatrix(diagram);
-                    List<Element> rowElements = matrix.getRows();
-                    List<Element> columnElements = matrix.getColumns();
-
-                    //Collection<Element> columnElements = matrixData.getColumnElements();
-                    //Collection<Element> rowElements = matrixData.getRowElements();
-
-                    DBTable t = new DBTable();
-                    List<List<DocumentElement>> matrixResult = new ArrayList<>();
-                    List<String> columnHeaders = new ArrayList<>();
-                    for (Element rowElement : rowElements) {
-                        List<DocumentElement> matrixcolumn = new ArrayList<>();
-                        if(rowElement instanceof NamedElement) {
-                            matrixcolumn.add(new DBText(((NamedElement) rowElement).getName()));
-                        }else{
-                            matrixcolumn.add(new DBText(rowElement.getHumanName()));
-                        }
-                        for (Element columnElement : columnElements) {
-                           // List<Relation> relationships = matrix.getRelation(rowElement, columnElement);
-                            AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
-                            if(val.getDescription() != null){
-                                if(val.isEditable()) {
-                                    matrixcolumn.add(new DBText("&#10004;"));
-                                }else {
-                                    matrixcolumn.add(new DBText("&#10003;"));
-                                }
-                            }else {
-                                matrixcolumn.add(new DBText(""));
-                            }
-                        }
-                        matrixResult.add(matrixcolumn);
-                    }
-                    for (Element element : columnElements) {
-                        if(element instanceof NamedElement){
-                            columnHeaders.add(((NamedElement) element).getName());
-                        }
-                    }
-                    t.setHeaders(getHeaders(diagram, columnHeaders, null));
-                    t.setBody(matrixResult);
-                    if (getTitles() != null && getTitles().size() > tableCount) {
-                        t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
-                    } else {
-                        t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
-                    }
-                    if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
-                        t.setCaption(getCaptions().get(tableCount));
-                    } else {
-                        t.setCaption(ModelHelper.getComment(diagram));
-                    }
-                    t.setCols(numCols);
-                    res.add(t);
-                    t.setStyle(getStyle());
-                    tableCount++;
-                }
-            }
-        }
-
-        SessionManager.getInstance().closeSession(Application.getInstance().getProject());
-        return res;
-    }
 
     @SuppressWarnings("unchecked")
     @Override

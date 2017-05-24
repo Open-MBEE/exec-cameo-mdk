@@ -53,36 +53,6 @@ public class Matrix {
         return var1;
     }
 
-//    public List<Relation> getRelation(Element var1, Element var2) {
-//        ArrayList var3 = new ArrayList();
-//        this.matrix.buildIfDirty();
-//
-//        try {
-//            AbstractMatrixCell var4 = this.matrix.getMatrixData().getValue(var1, var2);
-//            Iterator var5 = var4.getDependencies().iterator();
-//
-//            while(var5.hasNext()) {
-//                DependencyEntry var6 = (DependencyEntry)var5.next();
-//                if(var6 != null) {
-//                    String var7 = var6.getType();
-//                    String var8 = var6.getName();
-//                    String var9 = var6.getDirection().toString();
-//                    Element var10 = null;
-//                    List var11 = var6.getCause();
-//                    if(var11 != null && var11.size() == 1) {
-//                        var10 = (Element)var11.get(0);
-//                    }
-//
-//                    var3.add(new Relation(var7, var10, var8, var9));
-//                }
-//            }
-//        } catch (Exception var12) {
-//            ;
-//        }
-//
-//        return var3;
-//    }
-
     public DependencyMatrix getMatrix() {
         return this.matrix;
     }
