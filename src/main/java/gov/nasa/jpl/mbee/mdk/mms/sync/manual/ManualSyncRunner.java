@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.manual;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -8,25 +7,21 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -86,20 +81,19 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
-            Collection<String> directGetIDs = new HashSet<>();
-            clientElements.forEach(pair -> directGetIDs.add(pair.getKey().getLocalID()));
+            Set<String> clientElementIds = clientElements.stream().map(pair -> pair.getKey().getLocalID()).collect(Collectors.toCollection(LinkedHashSet::new));
             try {
-                File recursiveResponseFile, directResponseFile, responseFile;
+                File recursiveResponseFile, traversedResponseFile, responseFile;
 
                 recursiveResponseFile = collectServerElementsRecursively(project, element, depth, progressStatus);
                 if (recursiveResponseFile != null) {
                     responseFiles.add(recursiveResponseFile);
                 }
 
-                if (directGetIDs.size() > 1) {
-                    directResponseFile = MMSUtils.getElements(project, directGetIDs, progressStatus);
-                    if (directResponseFile != null) {
-                        responseFiles.add(directResponseFile);
+                if (clientElementIds.size() > 1) {
+                    traversedResponseFile = MMSUtils.getElements(project, clientElementIds, progressStatus);
+                    if (traversedResponseFile != null) {
+                        responseFiles.add(traversedResponseFile);
                     }
                 }
 
