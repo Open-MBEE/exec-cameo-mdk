@@ -336,18 +336,6 @@ public class ImportCSVAction extends SRAction {
 
     }
 
-    private Property findRedefiningProperyOf(Property memberEnd, Collection<Classifier> thislinesClassValues) {
-        Classifier newType = findMatchingSubclass((Classifier) memberEnd.getType(), thislinesClassValues);
-        for (Property property : newType.getAttribute()) {
-            for (RedefinableElement redefinableElement : property.getRedefinedElement()) {
-                if (redefinableElement.equals(memberEnd)) {
-                    return property;
-                }
-            }
-        }
-        return null;
-    }
-
     private Classifier findMatchingSubclass(Classifier general, Collection<Classifier> thisLinesClasses) {
         for (Classifier cl : thisLinesClasses) {
             if (cl != null) {
@@ -416,8 +404,6 @@ public class ImportCSVAction extends SRAction {
      */
     private static String getSeparator() {
         String separator = null;
-//       separator = JOptionPane.showInputDialog("Provide separator (use only a single character).",
-//                csvSeparator);
         if (separator == null) {
             separator = csvSeparator;
         }
