@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
@@ -20,8 +22,7 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.jms.*;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JMSMessageListener implements MessageListener, ExceptionListener {
@@ -119,7 +120,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                         if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply(elementJsonNode, project, false, project.getPrimaryModel()) == null) {
                             continue;
                         }
-                    } catch (ImportException | ReadOnlyElementException ignored) {
+                    } catch (ImportException ignored) {
                         continue;
                     }
                     inMemoryJMSChangelog.addChange(id, null, entry.getValue());
@@ -128,18 +129,30 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
         }
         else if (syncedJsonNode != null && syncedJsonNode.isObject()) {
-            JsonNode senderJsonNode, sourceJsonNode;
-            if ((senderJsonNode = syncedJsonNode.get("sender")) != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername(project))
-                    && (sourceJsonNode = messageJsonNode.get("source")) != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw")) {
+            JsonNode sourceJsonNode;
+            if ((sourceJsonNode = messageJsonNode.get("source")) != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw")) {
                 return;
             }
             Changelog<String, Void> syncedChangelog = SyncElements.buildChangelog((ObjectNode) syncedJsonNode);
             if (syncedChangelog.isEmpty()) {
                 return;
             }
+            Collection<String> ignoredIds;
+            if (project.isRemote()) {
+                ignoredIds = new HashSet<>();
+                Collection<Element> locks = EsiUtils.getLockService(project).getLockedByMe();
+                for (Element lock : locks) {
+                    ignoredIds.add(lock.getLocalID());
+                }
+            }
+            else {
+                ignoredIds = Collections.emptyList();
+            }
             for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                 Map<String, ObjectNode> inMemoryJMSChanges = inMemoryJMSChangelog.get(changeType);
-                syncedChangelog.get(changeType).keySet().forEach(inMemoryJMSChanges::remove);
+                Set<String> keys = syncedChangelog.get(changeType).keySet();
+                keys.removeAll(ignoredIds);
+                keys.forEach(inMemoryJMSChanges::remove);
             }
             int size = syncedChangelog.flattenedSize();
             if (MDUtils.isDeveloperMode()) {
