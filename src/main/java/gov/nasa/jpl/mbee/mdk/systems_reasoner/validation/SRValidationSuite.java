@@ -40,7 +40,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
         return associationInheritanceRule;
     }
 
-    private static final ValidationRule associationInheritanceRule = new ValidationRule("Association inheritance missing.", "The association of the specialized element does not inherit from its general counterpart.", ViolationSeverity.ERROR);
+    private static final ValidationRule associationInheritanceRule = new ValidationRule("Association inheritance missing.", "The association of the specialized element does not inherit from its general classifier.", ViolationSeverity.ERROR);
 
     {
         this.addValidationRule(generalMissingRule);

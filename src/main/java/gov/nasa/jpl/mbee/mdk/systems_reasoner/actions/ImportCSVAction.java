@@ -37,6 +37,10 @@ public class ImportCSVAction extends SRAction {
     private static Classifier selectedClassifier;
     private static int row = 0;
     private static Namespace container;
+    private String literalBoolean = "_16_5_1_12c903cb_1245415335546_39033_4086";
+    private String  literalInteger = "_16_5_1_12c903cb_1245415335546_8641_4088";
+    private String  literalReal = "_11_5EAPbeta_be00301_1147431819399_50461_1671";
+    private String  literalString = "_16_5_1_12c903cb_1245415335546_479030_4092";
 
     public ImportCSVAction(Classifier classifier) {
         super(DEFAULT_ID);
@@ -78,19 +82,19 @@ public class ImportCSVAction extends SRAction {
                     if (dlg.isOkClicked() && dlg.getSelectedElement() != null && dlg.getSelectedElement() instanceof Namespace) {
                         container = (Namespace) dlg.getSelectedElement();
                         SessionManager.getInstance().createSession("change");
-                        gl.log("Starting CSV import.");
+                        gl.log("[INFO] Starting CSV import.");
                         CSVReader reader = new CSVReader(new FileReader(savefile), separator.charAt(0));
                         importFromCsv(reader, createdElements);
                         checkForRedefinedElements(createdElements);
                         reader.close();
                         SessionManager.getInstance().closeSession();
                         checkForAssociationInheritance(createdElements);
-                        gl.log("CSV import finished.");
+                        gl.log("[INFO] CSV import finished.");
                     }
                 } catch (IOException ex) {
-                    gl.log("CSV import failed:");
+                     gl.log("[ERROR] CSV import failed. Reason: " + ex.getMessage());
                     SessionManager.getInstance().cancelSession();
-                    gl.log(ex.getMessage());
+                    ex.printStackTrace();
                     for (StackTraceElement s : ex.getStackTrace()) {
                         gl.log("\t" + s.toString());
                     }
@@ -184,7 +188,7 @@ public class ImportCSVAction extends SRAction {
                                     Utils.createGeneralization(selectedClassifier, topClass);
                                     topClass.setName(line[jj]);
                                     thisLinesClasses.put(null, topClass);
-                                    Application.getInstance().getGUILog().log("Creating new " + selectedClassifier.getName() + " named " + topClass.getName() + " for line " + row + ".");
+                                    Application.getInstance().getGUILog().log("[INFO] Creating new " + selectedClassifier.getName() + " named " + topClass.getName() + " for line " + row + ".");
                                 } else {
                                     if (jj == elementName) {
                                         thisLinesClasses.put(null, previousLinesClasses.get(null));
@@ -262,7 +266,7 @@ public class ImportCSVAction extends SRAction {
         createdClassifier.getGeneralization().clear();
         Utils.createGeneralization(generalClassifier, createdClassifier);
         createdClassifier.setName(line[index]);
-        Application.getInstance().getGUILog().log("Creating new " + generalClassifier.getName() + " named " + createdClassifier.getName() + " for line " + row + ".");
+        Application.getInstance().getGUILog().log("[INFO] Creating new " + generalClassifier.getName() + " named " + createdClassifier.getName() + " for line " + row + ".");
         return createdClassifier;
     }
 
@@ -285,20 +289,26 @@ public class ImportCSVAction extends SRAction {
                         if (((Property) el).getType() instanceof DataType) {
                             if (!valueFromCSV.isEmpty()) {
                                 try {
-                                    if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_479030_4092")) {
+                                    if (((Property) el).getType().getID().equals(literalString)) {
                                         vs = UMLFactory.eINSTANCE.createLiteralString();
                                         ((LiteralString) vs).setValue(valueFromCSV);
-                                    } else if (((Property) el).getType().getID().equals("_11_5EAPbeta_be00301_1147431819399_50461_1671")) {
-                                        double val = Double.parseDouble(valueFromCSV);
-                                        vs = UMLFactory.eINSTANCE.createLiteralReal();
-                                        ((LiteralReal) vs).setValue(val);
-                                    } else if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_39033_4086")) {
-                                        vs = UMLFactory.eINSTANCE.createLiteralBoolean();
-                                        ((LiteralBoolean) vs).setValue(Boolean.parseBoolean(valueFromCSV));
-                                    } else if (((Property) el).getType().getID().equals("_16_5_1_12c903cb_1245415335546_8641_4088")) {
-                                        int val = Integer.parseInt(valueFromCSV);
-                                        vs = UMLFactory.eINSTANCE.createLiteralInteger();
-                                        ((LiteralInteger) vs).setValue(val);
+                                    } else {
+                                        if (((Property) el).getType().getID().equals(literalReal)) {
+                                            double val = Double.parseDouble(valueFromCSV);
+                                            vs = UMLFactory.eINSTANCE.createLiteralReal();
+                                            ((LiteralReal) vs).setValue(val);
+                                        } else {
+                                            if (((Property) el).getType().getID().equals(literalBoolean)) {
+                                                vs = UMLFactory.eINSTANCE.createLiteralBoolean();
+                                                ((LiteralBoolean) vs).setValue(Boolean.parseBoolean(valueFromCSV));
+                                            } else {
+                                                if (((Property) el).getType().getID().equals(literalInteger)) {
+                                                    int val = Integer.parseInt(valueFromCSV);
+                                                    vs = UMLFactory.eINSTANCE.createLiteralInteger();
+                                                    ((LiteralInteger) vs).setValue(val);
+                                                }
+                                            }
+                                        }
                                     }
                                 } catch (NumberFormatException nf) {
                                     Application.getInstance().getGUILog().log("[WARNING] Value in line " + row + " for property " + el.getName() + " not correct. Reason: " + nf.getMessage());
@@ -318,7 +328,7 @@ public class ImportCSVAction extends SRAction {
                         }
                     }
                 } else {
-                    Application.getInstance().getGUILog().log("Property for " + el.getName() + " not created.");
+                    Application.getInstance().getGUILog().log("[WARNING] Property for " + el.getName() + " not created.");
 
                 }
             }
