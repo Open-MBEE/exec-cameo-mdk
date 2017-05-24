@@ -216,6 +216,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         list.accept(l);
         viewElements.peek().addAll(l.getListElements());
         elementSet.addAll(l.getElementSet());
+        images.putAll(l.getImages());
 
         //for ems 2.2 reference tree
         if (!main) {
@@ -370,6 +371,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         table.accept(v);
         viewElements.peek().addAll(v.getTableElements());
         elementSet.addAll(v.getElementSet());
+        images.putAll(v.getImages());
 
         //for ems 2.2 reference tree
         if (!main) {
