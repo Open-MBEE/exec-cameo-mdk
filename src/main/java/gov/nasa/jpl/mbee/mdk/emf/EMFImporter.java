@@ -47,11 +47,11 @@ public class EMFImporter implements JsonToElementFunction {
     protected List<EStructuralFeatureOverride> eStructuralFeatureOverrides;
 
     @Override
-    public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException, ReadOnlyElementException {
+    public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
         return convert(objectNode, project, strict);
     }
 
-    private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException, ReadOnlyElementException {
+    private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
         JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
         /*if (jsonNode == null || !jsonNode.isTextual()) {
             return null;
@@ -97,9 +97,6 @@ public class EMFImporter implements JsonToElementFunction {
                 CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
                 EDITABLE = new PreProcessor(
                         (objectNode, project, strict, element) -> {
-//                            if (!element.isEditable()) {
-//                                throw new ReadOnlyElementException(element);
-//                            }
                             return element;
                         }
                 ),
@@ -484,17 +481,17 @@ public class EMFImporter implements JsonToElementFunction {
 
     @FunctionalInterface
     public interface PreProcessorFunction {
-        Element apply(ObjectNode objectNode, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
+        Element apply(ObjectNode objectNode, Project project, boolean strict, Element element) throws ImportException;
     }
 
     @FunctionalInterface
     interface DeserializationFunction {
-        Object apply(String key, JsonNode jsonNode, boolean ignoreMultiplicity, ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
+        Object apply(String key, JsonNode jsonNode, boolean ignoreMultiplicity, ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
     }
 
     @FunctionalInterface
     protected interface ImportFunction {
-        Element apply(ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
+        Element apply(ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
     }
 
     @FunctionalInterface

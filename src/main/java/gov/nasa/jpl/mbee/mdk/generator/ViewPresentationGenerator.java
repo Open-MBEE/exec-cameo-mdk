@@ -408,7 +408,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             if (element instanceof InstanceSpecification) {
                                 instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(instanceObjectNode, (InstanceSpecification) element));
                             }
-                        } catch (ImportException | ReadOnlyElementException e) {
+                        } catch (ImportException e) {
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + instanceObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             instanceObjectNodesIterator.remove();
                         }
@@ -432,7 +432,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             if (element instanceof Slot) {
                                 slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotObjectNode, (Slot) element));
                             }
-                        } catch (ImportException | ReadOnlyElementException e) {
+                        } catch (ImportException e) {
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             slotObjectNodesIterator.remove();
                         }
