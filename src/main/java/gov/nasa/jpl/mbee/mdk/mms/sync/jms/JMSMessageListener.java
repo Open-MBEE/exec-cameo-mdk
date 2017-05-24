@@ -129,8 +129,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         }
         else if (syncedJsonNode != null && syncedJsonNode.isObject()) {
             JsonNode senderJsonNode, sourceJsonNode;
-            if ((senderJsonNode = syncedJsonNode.get("sender")) != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername(project))
-                    && (sourceJsonNode = messageJsonNode.get("source")) != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw")) {
+            if ((sourceJsonNode = messageJsonNode.get("source")) != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw")) {
                 return;
             }
             Changelog<String, Void> syncedChangelog = SyncElements.buildChangelog((ObjectNode) syncedJsonNode);
