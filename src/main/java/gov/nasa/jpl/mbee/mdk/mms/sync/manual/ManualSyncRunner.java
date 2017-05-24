@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,11 +86,23 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
+            Collection<String> directGetIDs = new HashSet<>();
+            clientElements.forEach(pair -> directGetIDs.add(pair.getKey().getLocalID()));
             try {
-                File responseFile = collectServerElementsRecursively(project, element, depth, progressStatus);
-                if (responseFile != null) {
-                    responseFiles.add(responseFile);
+                File recursiveResponseFile, directResponseFile, responseFile;
+
+                recursiveResponseFile = collectServerElementsRecursively(project, element, depth, progressStatus);
+                if (recursiveResponseFile != null) {
+                    responseFiles.add(recursiveResponseFile);
                 }
+
+                if (directGetIDs.size() > 1) {
+                    directResponseFile = MMSUtils.getElements(project, directGetIDs, progressStatus);
+                    if (directResponseFile != null) {
+                        responseFiles.add(directResponseFile);
+                    }
+                }
+
                 if (element == project.getPrimaryModel() && depth != 0) {
                     // scan of initial return for holding bin is expensive. assume it's not there and request anyway
                     if (progressStatus.isCancel()) {
