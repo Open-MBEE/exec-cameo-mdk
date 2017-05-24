@@ -37,8 +37,8 @@ public class TicketUtils {
      *
      * @return username
      */
-    public static String getUsername() {
-        return username;
+    public static String getUsername(Project project) {
+        return ticketMappings.get(project).getUsername();
     }
 
     /**
@@ -250,7 +250,7 @@ public class TicketUtils {
                 }
                 // parse response
                 if (ticket != null) {
-                    ticketMappings.put(project, new TicketMapping(project, ticket));
+                    ticketMappings.put(project, new TicketMapping(project, username, ticket));
                 }
             }
         }, "Logging in to MMS", true, 0);
@@ -265,11 +265,13 @@ public class TicketUtils {
     }
 
     private static class TicketMapping {
-        private String ticket;
+        final private String ticket;
+        final private String username;
         private ScheduledExecutorService ticketRenewer;
 
-        TicketMapping(final Project project, String ticket) {
+        TicketMapping(Project project, String username, String ticket) {
             this.ticket = ticket;
+            this.username = username;
             this.ticketRenewer = Executors.newScheduledThreadPool(1);
             // intentionally catching exceptions here, to avoid scheduled thread suspension
             final Runnable renewTicket = () -> {
@@ -293,6 +295,10 @@ public class TicketUtils {
 
         public String getTicket() {
             return this.ticket;
+        }
+
+        public String getUsername() {
+            return this.username;
         }
 
         public ScheduledExecutorService getTicketRenewer() {
