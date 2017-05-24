@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.uml.DiagramType;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -277,8 +278,8 @@ public class DocumentGenerator {
                     //if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
                     for (Element ex : elementImports) {
                         if (ex instanceof Diagram) {
-                            String diagramType = Application.getInstance().getProject().getDiagram((Diagram) ex).getDiagramType().getType();
-                            if(diagramType.equals("Generic Table") ||diagramType.equals("Instance Table") || diagramType.equals("Verify Requirement Matrix") || diagramType.equals("SysML Allocation Matrix") || diagramType.equals("Satisfy Requirement Matrix")){
+                            DiagramType diagramType = Application.getInstance().getProject().getDiagram((Diagram) ex).getDiagramType();
+                            if(diagramType.isTypeOf(DiagramType.GENERIC_TABLE)||diagramType.getType().equals(MatricesAndTables.INSTANCE_TABLE) || diagramType.getType().equals(MatricesAndTables.VERIFY_REQUIREMENTS_MATRIX) || diagramType.getType().equals(MatricesAndTables.ALLOCATION_MATRIX) || diagramType.getType().equals(MatricesAndTables.SATISFY_REQUIREMENTS_MATRIX)){
                                 MatricesAndTables gt = new MatricesAndTables();
                                 List<Object> tables = new ArrayList<Object>();
                                 tables.add(ex);

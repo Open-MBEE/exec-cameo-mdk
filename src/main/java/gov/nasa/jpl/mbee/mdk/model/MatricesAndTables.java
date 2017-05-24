@@ -5,7 +5,6 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.dependencymatrix.configuration.MatrixDataHelper;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.properties.*;
 import com.nomagic.magicdraw.uml.DiagramType;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -22,11 +21,15 @@ import gov.nasa.jpl.mbee.mdk.util.Matrix;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class MatricesAndTables extends Table {
+
+    public static final String INSTANCE_TABLE  = "Instance Table";
+    public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement Matrix";
+    public static final String ALLOCATION_MATRIX = "SysML Allocation Matrix";
+    public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement Matrix";
 
     private List<String> headers;
     private boolean skipIfNoDoc;
@@ -35,8 +38,6 @@ public class MatricesAndTables extends Table {
         add("QPROP:Element:CUSTOM_IMAGE");
     }};
     private int numCols = 0;
-    private String genericTableName = "Generic Table";
-    private String instanceTableName = "Instance Table";
 
 
     @Override
@@ -54,7 +55,7 @@ public class MatricesAndTables extends Table {
                 Diagram diagram = (Diagram) e;
                 DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
 
-                if (diagramType.getType().equals(genericTableName) ||diagramType.getType().equals(instanceTableName)) {
+                if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) ||diagramType.getType().equals(INSTANCE_TABLE)) {
                     DBTable t = new DBTable();
                     GenericTableManager gtm = new GenericTableManager();
                     List<String> columnIds = gtm.getColumnIds(diagram);
