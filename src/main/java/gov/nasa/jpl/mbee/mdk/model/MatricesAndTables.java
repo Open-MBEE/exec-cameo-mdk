@@ -5,6 +5,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.dependencymatrix.configuration.MatrixDataHelper;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
+import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.DependencyEntry;
 import com.nomagic.magicdraw.properties.*;
 import com.nomagic.magicdraw.uml.DiagramType;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -53,7 +54,6 @@ public class MatricesAndTables extends Table {
             if (e instanceof Diagram) {
                 Diagram diagram = (Diagram) e;
                 DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
-
                 if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) ||diagramType.getType().equals(INSTANCE_TABLE)) {
                     DBTable t = new DBTable();
                     GenericTableManager gtm = new GenericTableManager();
@@ -99,6 +99,10 @@ public class MatricesAndTables extends Table {
                         }
                         for (Element columnElement : columnElements) {
                              AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
+//                            Collection<DependencyEntry> dependencies = val.getDependencies();
+//                            for (DependencyEntry dependency : dependencies) {
+//                                System.out.println("dep: " + dependency.getName());
+//                            }
                             if(val.getDescription() != null){
                                 if(val.isEditable()) {
                                     matrixcolumn.add(new DBText("&#10004;")); // HTML Check mark
