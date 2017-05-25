@@ -279,7 +279,7 @@ public class DocumentGenerator {
                     for (Element ex : elementImports) {
                         if (ex instanceof Diagram) {
                             DiagramType diagramType = Application.getInstance().getProject().getDiagram((Diagram) ex).getDiagramType();
-                            if(diagramType.isTypeOf(DiagramType.GENERIC_TABLE)||diagramType.getType().equals(MatricesAndTables.INSTANCE_TABLE) || diagramType.getType().equals(MatricesAndTables.VERIFY_REQUIREMENTS_MATRIX) || diagramType.getType().equals(MatricesAndTables.ALLOCATION_MATRIX) || diagramType.getType().equals(MatricesAndTables.SATISFY_REQUIREMENTS_MATRIX)){
+                            if(diagramType.isTypeOf(DiagramType.GENERIC_TABLE)||diagramType.isTypeOf(DiagramType.DEPENDENCY_MATRIX)||diagramType.getType().equals(MatricesAndTables.INSTANCE_TABLE) || diagramType.getType().equals(MatricesAndTables.VERIFY_REQUIREMENTS_MATRIX) || diagramType.getType().equals(MatricesAndTables.ALLOCATION_MATRIX) || diagramType.getType().equals(MatricesAndTables.SATISFY_REQUIREMENTS_MATRIX)){
                                 MatricesAndTables gt = new MatricesAndTables();
                                 List<Object> tables = new ArrayList<Object>();
                                 tables.add(ex);

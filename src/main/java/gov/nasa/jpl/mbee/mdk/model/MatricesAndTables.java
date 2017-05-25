@@ -47,7 +47,6 @@ public class MatricesAndTables extends Table {
             return res;
         }
 
-        // SessionManager.getInstance().createSession(Application.getInstance().getProject(), "Reading Generic Table");
         int tableCount = 0;
         List<Object> targets = isSortElementsByName() ? Utils.sortByName(getTargets()) : getTargets();
         for (Object e : targets) {
