@@ -55,7 +55,6 @@ public class MMSViewLinkAction extends MDAction {
                     && !StereotypesHelper.hasStereotypeOrDerived(element, documentStereotype)) {
                 continue;
             }
-            Project project = Project.getProject(element);
 
             // build url
             URIBuilder uriBase = MMSUtils.getServiceUri(project);

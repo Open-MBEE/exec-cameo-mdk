@@ -27,6 +27,19 @@ public class DBAlfrescoListVisitor extends DBAlfrescoVisitor {
 
     @SuppressWarnings("unchecked")
     @Override
+    public void visit(DBImage image) {
+        JSONObject entry = getJSONForDBImage(image);
+        if (image.getFrom() != null && image.getFromProperty() != null) {
+            // TODO how necessary is this?
+            if (Converters.getElementToJsonConverter().apply(image.getFrom(), Project.getProject(image.getFrom())) != null) {
+                this.listelements.add(Converters.getElementToIdConverter().apply(image.getFrom()));
+            }
+        }
+        curitem.add(entry);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
     public void visit(DBList list) {
         if (listjson.containsKey("type")) {
             DBAlfrescoListVisitor inner = new DBAlfrescoListVisitor(recurse);

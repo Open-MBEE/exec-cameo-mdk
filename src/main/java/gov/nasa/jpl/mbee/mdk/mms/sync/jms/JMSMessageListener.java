@@ -101,9 +101,16 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
         if (!messageJsonNode.isObject()) {
             return;
         }
-        JsonNode refsJsonNode = messageJsonNode.get("refs");
-        JsonNode syncedJsonNode = messageJsonNode.get("synced");
+
+        JsonNode refsJsonNode = messageJsonNode.get("refs"),
+                syncedJsonNode = messageJsonNode.get("synced"),
+                sourceJsonNode = messageJsonNode.get("source"),
+                senderJsonNode = messageJsonNode.get("sender");
+
         if (refsJsonNode != null && refsJsonNode.isObject()) {
+            if (sourceJsonNode != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw")) {
+                return;
+            }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
                 JsonNode changeJsonNode = refsJsonNode.get(entry.getKey());
                 if (changeJsonNode == null || !changeJsonNode.isArray()) {
@@ -129,8 +136,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
         }
         else if (syncedJsonNode != null && syncedJsonNode.isObject()) {
-            JsonNode senderJsonNode;
-            if ((senderJsonNode = syncedJsonNode.get("sender")) != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername(project))) {
+            if (senderJsonNode != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername(project))) {
                 return;
             }
             Changelog<String, Void> syncedChangelog = SyncElements.buildChangelog((ObjectNode) syncedJsonNode);
@@ -156,7 +162,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
             int size = syncedChangelog.flattenedSize();
             if (MDUtils.isDeveloperMode()) {
-                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Cleared " + size + " MMS element change" + (size != 1 ? "s" : "") + " as a result of another client syncing the model.");
+                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Cleared up to " + size + " MMS element change" + (size != 1 ? "s" : "") + " as a result of another client syncing the model.");
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
         }
