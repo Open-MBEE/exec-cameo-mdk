@@ -66,6 +66,7 @@ public class MMSViewLinkAction extends MDAction {
 
             // include this in the host portion of the uri. not technically correct, but it prevents the # from being converted and breaking things
             uriBase.setHost(uriBase.getHost() +  "/alfresco/mmsapp/mms.html#");
+            uriBase.setPath("");
 
             String uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
 
@@ -77,12 +78,13 @@ public class MMSViewLinkAction extends MDAction {
             ArrayList<Element> viewChain = new ArrayList<>();
             viewChain.add(element);
             for (int i = 0; i < viewChain.size(); i++) {
-                if (StereotypesHelper.hasStereotype(viewChain.get(i), documentStereotype)) {
-                    documents.add(viewChain.get(i));
+                Element currentView = viewChain.get(i);
+                if (StereotypesHelper.hasStereotype(currentView, documentStereotype)) {
+                    documents.add(currentView);
                 }
                 // create set of hierarchy children so we can ignore those ends and only climb the hierarchy
                 Set<Element> childViews = new HashSet<>();
-                for (Property prop : ((Class) viewChain.get(i)).getOwnedAttribute()) {
+                for (Property prop : ((Class) currentView).getOwnedAttribute()) {
                     if (!(prop.getType() instanceof Class)) {
                         continue;
                     }
@@ -94,7 +96,7 @@ public class MMSViewLinkAction extends MDAction {
                     childViews.add(type);
                 }
                 // check each association end, if it's a non-child view/document then add it to chain for further processing
-                for (Relationship relation : viewChain.get(i).get_relationshipOfRelatedElement()) {
+                for (Relationship relation : currentView.get_relationshipOfRelatedElement()) {
                     if (!(relation instanceof Association)) {
                         continue;
                     }
@@ -139,7 +141,12 @@ public class MMSViewLinkAction extends MDAction {
             }
             else {
                 // build single link
-                uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                if (documents.isEmpty()) {
+                    uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                }
+                else {
+                    uriPath += "/documents/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                }
                 // just open it if possible
                 if (Desktop.isDesktopSupported()) {
                     try {
