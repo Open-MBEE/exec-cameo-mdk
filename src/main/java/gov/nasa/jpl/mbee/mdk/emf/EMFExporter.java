@@ -99,14 +99,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (element instanceof Model && project.getPrimaryModel() == element) {
             return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
         }
-
-/*
-        // different handling of ids for remote and local projects
-        if (project != null && project.isRemote()) {
-            // remote project properly maintain the local id of all elements, so just use that
-            return element.getLocalID();
-        }
- */
         // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the jms sync counts in some cases (annoying, but ultimately harmless)
         if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
             return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
