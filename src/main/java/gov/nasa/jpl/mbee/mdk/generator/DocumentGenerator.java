@@ -21,8 +21,8 @@ import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
-import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.model.*;
+import gov.nasa.jpl.mbee.mdk.util.*;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -279,13 +279,14 @@ public class DocumentGenerator {
                     for (Element ex : elementImports) {
                         if (ex instanceof Diagram) {
                             DiagramType diagramType = Application.getInstance().getProject().getDiagram((Diagram) ex).getDiagramType();
-                            if(diagramType.isTypeOf(DiagramType.GENERIC_TABLE)||diagramType.isTypeOf(DiagramType.DEPENDENCY_MATRIX)||diagramType.getType().equals(MatricesAndTables.INSTANCE_TABLE) || diagramType.getType().equals(MatricesAndTables.VERIFY_REQUIREMENTS_MATRIX) || diagramType.getType().equals(MatricesAndTables.ALLOCATION_MATRIX) || diagramType.getType().equals(MatricesAndTables.SATISFY_REQUIREMENTS_MATRIX)){
-                                MatricesAndTables gt = new MatricesAndTables();
+                            if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.isTypeOf(DiagramType.DEPENDENCY_MATRIX) || diagramType.getType().equals(GenericTable.INSTANCE_TABLE) || diagramType.getType().equals(GenericTable.VERIFY_REQUIREMENTS_MATRIX) || diagramType.getType().equals(GenericTable.ALLOCATION_MATRIX) || diagramType.getType().equals(GenericTable.SATISFY_REQUIREMENTS_MATRIX)) {
+                                GenericTable gt = new GenericTable();
                                 List<Object> tables = new ArrayList<Object>();
                                 tables.add(ex);
                                 gt.setTargets(tables);
                                 viewSection.addElement(gt);
-                            } else {
+                            }
+                            else {
                                 Image image = new Image();
                                 List<Object> images = new ArrayList<Object>();
                                 images.add(ex);
@@ -737,7 +738,7 @@ public class DocumentGenerator {
             dge = new DependencyMatrix();
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.genericTableStereotype)) {
-            dge = new MatricesAndTables();
+            dge = new GenericTable();
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.tableStructureStereotype)) {
             // Get all the variables or whatever

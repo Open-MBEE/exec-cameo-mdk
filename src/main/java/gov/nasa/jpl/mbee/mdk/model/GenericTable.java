@@ -5,7 +5,6 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.dependencymatrix.configuration.MatrixDataHelper;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
-import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.DependencyEntry;
 import com.nomagic.magicdraw.properties.*;
 import com.nomagic.magicdraw.uml.DiagramType;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -18,19 +17,19 @@ import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.util.DependencyMatrixTool;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.util.Matrix;
+import gov.nasa.jpl.mbee.mdk.util.MatrixUtil;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MatricesAndTables extends Table {
+public class GenericTable extends Table {
 
-    public static final String INSTANCE_TABLE  = "Instance Table";
-    public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement Matrix";
-    public static final String ALLOCATION_MATRIX = "SysML Allocation Matrix";
-    public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement Matrix";
+    public static final String INSTANCE_TABLE = "Instance Table";
+    public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement MatrixUtil";
+    public static final String ALLOCATION_MATRIX = "SysML Allocation MatrixUtil";
+    public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement MatrixUtil";
 
     private List<String> headers;
     private boolean skipIfNoDoc;
@@ -54,7 +53,7 @@ public class MatricesAndTables extends Table {
             if (e instanceof Diagram) {
                 Diagram diagram = (Diagram) e;
                 DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
-                if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) ||diagramType.getType().equals(INSTANCE_TABLE)) {
+                if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.getType().equals(INSTANCE_TABLE)) {
                     DBTable t = new DBTable();
                     GenericTableManager gtm = new GenericTableManager();
                     List<String> columnIds = gtm.getColumnIds(diagram);
@@ -63,28 +62,32 @@ public class MatricesAndTables extends Table {
                     t.setBody(getBody(diagram, rowElements, columnIds, gtm, forViewEditor));
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
-                    } else {
+                    }
+                    else {
                         t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
                     }
                     if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
                         t.setCaption(getCaptions().get(tableCount));
-                    } else {
+                    }
+                    else {
                         t.setCaption(ModelHelper.getComment(diagram));
                     }
                     t.setCols(numCols);
                     res.add(t);
                     t.setStyle(getStyle());
                     tableCount++;
-                }else {
+                }
+                else {
                     MatrixData matrixData;
-                    if (MatrixDataHelper.isRebuildNeeded(diagram)){
+                    if (MatrixDataHelper.isRebuildNeeded(diagram)) {
                         matrixData = MatrixDataHelper.buildMatrix(diagram);
-                    } else {
+                    }
+                    else {
                         matrixData = MatrixDataHelper.getMatrixData(diagram);
                     }
 
                     DependencyMatrixTool tool = new DependencyMatrixTool();
-                    Matrix matrix = tool.getMatrix(diagram);
+                    MatrixUtil matrix = tool.getMatrix(diagram);
                     List<Element> rowElements = matrix.getRows();
                     List<Element> columnElements = matrix.getColumns();
                     DBTable t = new DBTable();
@@ -92,31 +95,34 @@ public class MatricesAndTables extends Table {
                     List<String> columnHeaders = new ArrayList<>();
                     for (Element rowElement : rowElements) {
                         List<DocumentElement> matrixcolumn = new ArrayList<>();
-                        if(rowElement instanceof NamedElement) {
+                        if (rowElement instanceof NamedElement) {
                             matrixcolumn.add(new DBText(((NamedElement) rowElement).getName()));
-                        }else{
+                        }
+                        else {
                             matrixcolumn.add(new DBText(rowElement.getHumanName()));
                         }
                         for (Element columnElement : columnElements) {
-                             AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
+                            AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
 //                            Collection<DependencyEntry> dependencies = val.getDependencies();
 //                            for (DependencyEntry dependency : dependencies) {
 //                                System.out.println("dep: " + dependency.getName());
 //                            }
-                            if(val.getDescription() != null){
-                                if(val.isEditable()) {
+                            if (val.getDescription() != null) {
+                                if (val.isEditable()) {
                                     matrixcolumn.add(new DBText("&#10004;")); // HTML Check mark
-                                }else {
+                                }
+                                else {
                                     matrixcolumn.add(new DBText("&#10003;"));
                                 }
-                            }else {
+                            }
+                            else {
                                 matrixcolumn.add(new DBText(""));
                             }
                         }
                         matrixResult.add(matrixcolumn);
                     }
                     for (Element element : columnElements) {
-                        if(element instanceof NamedElement){
+                        if (element instanceof NamedElement) {
                             columnHeaders.add(((NamedElement) element).getName());
                         }
                     }
@@ -124,12 +130,14 @@ public class MatricesAndTables extends Table {
                     t.setBody(matrixResult);
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
-                    } else {
+                    }
+                    else {
                         t.setTitle(getTitlePrefix() + (diagram).getName() + getTitleSuffix());
                     }
                     if (getCaptions() != null && getCaptions().size() > tableCount && isShowCaptions()) {
                         t.setCaption(getCaptions().get(tableCount));
-                    } else {
+                    }
+                    else {
                         t.setCaption(ModelHelper.getComment(diagram));
                     }
                     t.setCols(numCols);
@@ -140,7 +148,7 @@ public class MatricesAndTables extends Table {
             }
         }
 
-         return res;
+        return res;
     }
 
     public List<List<DocumentElement>> getHeaders(Diagram d, List<String> columnIds, GenericTableManager gtm) {
@@ -151,25 +159,28 @@ public class MatricesAndTables extends Table {
                 row.add(new DBText(h));
             }
             res.add(row);
-        } else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGenProfile.headersChoosable)) {
+        }
+        else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGenProfile.headersChoosable)) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d, DocGenProfile.headersChoosable, "headers")) {
                 row.add(new DBText(h));
             }
             res.add(row);
-        } else {
+        }
+        else {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             int count = 0;
             for (String columnid : columnIds) {
-                if(gtm == null) {
-                    if(count == 0){
+                if (gtm == null) {
+                    if (count == 0) {
                         row.add(new DBText(""));
                         count++;
                         numCols++;
                     }
                     row.add(new DBText(columnid));
                     numCols++;
-                }else {
+                }
+                else {
                     if (count == 0) {
                         count++;
                         continue;
@@ -203,7 +214,7 @@ public class MatricesAndTables extends Table {
                 if (skipColumnIDs.contains(cid)) {
                     continue;
                 }
-                 DBTableEntry entry = new DBTableEntry();
+                DBTableEntry entry = new DBTableEntry();
 
 
                 Property cellValue = gtm.getCellValue(d, e, cid);
@@ -212,31 +223,36 @@ public class MatricesAndTables extends Table {
                     if (cellelement instanceof NamedElement) {
                         entry.addElement(new DBParagraph(((NamedElement) cellelement).getName(), cellelement, From.NAME));
                     }
-                } else if (cellValue instanceof StringProperty) {
-                    if(cid.contains("documentation")){
+                }
+                else if (cellValue instanceof StringProperty) {
+                    if (cid.contains("documentation")) {
                         entry.addElement(new DBParagraph(cellValue.getValue(), e, From.DOCUMENTATION));
 
-                    }else {
+                    }
+                    else {
                         entry.addElement(new DBParagraph(cellValue.getValue()));
                     }
-                } else if (cellValue instanceof ElementListProperty) {
+                }
+                else if (cellValue instanceof ElementListProperty) {
                     for (Element listEl : ((ElementListProperty) cellValue).getValue()) {
                         if (listEl instanceof NamedElement) {
                             entry.addElement(new DBParagraph(((NamedElement) listEl).getName(), listEl, From.NAME));
                         }
                     }
-                } else if(cellValue instanceof ElementInstanceProperty) {
+                }
+                else if (cellValue instanceof ElementInstanceProperty) {
                     //Object mval = cellValue.mValue;
                     Object value = cellValue.getValue();
 
-                    if(value instanceof List){
+                    if (value instanceof List) {
                         for (Object o : (List) value) {
-                            if(o instanceof InstanceSpecification){
-                                 entry.addElement(new DBParagraph(((InstanceSpecification) o).getName(), (Element) o, From.NAME));
+                            if (o instanceof InstanceSpecification) {
+                                entry.addElement(new DBParagraph(((InstanceSpecification) o).getName(), (Element) o, From.NAME));
                             }
                         }
                     }
-                }else {
+                }
+                else {
                     System.out.print("[WARNING] Not added : " + cellValue.toString() + ".");
                 }
                 row.add(entry);
@@ -254,11 +270,13 @@ public class MatricesAndTables extends Table {
             for (int i = 0; i < a.length; i++) {
                 res.addAll(getTableValues(a[i]));
             }
-        } else if (o instanceof Collection) {
+        }
+        else if (o instanceof Collection) {
             for (Object oo : (Collection) o) {
                 res.addAll(getTableValues(oo));
             }
-        } else if (o != null) {
+        }
+        else if (o != null) {
             res.add(o);
         }
         return res;
@@ -271,7 +289,6 @@ public class MatricesAndTables extends Table {
     public void setHeaders(List<String> h) {
         headers = h;
     }
-
 
 
     @SuppressWarnings("unchecked")

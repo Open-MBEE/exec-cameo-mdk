@@ -14,10 +14,10 @@ import java.util.Comparator;
 import javax.annotation.CheckForNull;
 
 @OpenApiAll
-public class Matrix {
+public class MatrixUtil {
     private DependencyMatrix matrix;
 
-    public Matrix(DependencyMatrix var1) {
+    public MatrixUtil(DependencyMatrix var1) {
         this.setMatrix(var1);
     }
 
@@ -64,7 +64,7 @@ public class Matrix {
     private static void sortElements(List<Element> var0) {
         if(!var0.isEmpty()) {
             boolean var1 = AutoIdManager.getInstance((BaseElement)var0.get(0)).isShowNumberTag();
-            var0.sort(new Matrix.ElementComparator(var1));
+            var0.sort(new MatrixUtil.ElementComparator(var1));
         }
 
     }
