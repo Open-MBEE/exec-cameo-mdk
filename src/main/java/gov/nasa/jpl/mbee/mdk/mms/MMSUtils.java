@@ -290,7 +290,11 @@ public class MMSUtils {
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        System.out.println("MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
+        String requestSummary = "MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
+        System.out.println(requestSummary);
+        if (MDUtils.isDeveloperMode()) {
+            Application.getInstance().getGUILog().log(requestSummary);
+        }
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
@@ -299,7 +303,11 @@ public class MMSUtils {
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
-                System.out.println("MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
+                String responseSummary = "MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+                System.out.println(responseSummary);
+                if (MDUtils.isDeveloperMode()) {
+                    Application.getInstance().getGUILog().log(responseSummary);
+                }
                 if (inputStream != null) {
                     responseBody.set(generateMmsOutput(inputStream, responseFile));
                 }
