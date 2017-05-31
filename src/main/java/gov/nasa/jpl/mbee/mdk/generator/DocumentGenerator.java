@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.uml.DiagramType;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -20,8 +21,8 @@ import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
-import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.model.*;
+import gov.nasa.jpl.mbee.mdk.util.*;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -277,11 +278,21 @@ public class DocumentGenerator {
                     //if (expose.size() == 1 && expose.get(0) instanceof Diagram) {
                     for (Element ex : elementImports) {
                         if (ex instanceof Diagram) {
-                            Image image = new Image();
-                            List<Object> images = new ArrayList<Object>();
-                            images.add(ex);
-                            image.setTargets(images);
-                            viewSection.addElement(image);
+                            DiagramType diagramType = Application.getInstance().getProject().getDiagram((Diagram) ex).getDiagramType();
+                            if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.isTypeOf(DiagramType.DEPENDENCY_MATRIX) || diagramType.getType().equals(GenericTable.INSTANCE_TABLE) || diagramType.getType().equals(GenericTable.VERIFY_REQUIREMENTS_MATRIX) || diagramType.getType().equals(GenericTable.ALLOCATION_MATRIX) || diagramType.getType().equals(GenericTable.SATISFY_REQUIREMENTS_MATRIX)) {
+                                GenericTable gt = new GenericTable();
+                                List<Object> tables = new ArrayList<Object>();
+                                tables.add(ex);
+                                gt.setTargets(tables);
+                                viewSection.addElement(gt);
+                            }
+                            else {
+                                Image image = new Image();
+                                List<Object> images = new ArrayList<Object>();
+                                images.add(ex);
+                                image.setTargets(images);
+                                viewSection.addElement(image);
+                            }
                         }
                     }
                 }
