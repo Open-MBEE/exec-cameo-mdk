@@ -23,7 +23,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     public static final String ID = "Specialize Structure";
     public static final String ID_RECURSIVE = "Specialize Structure Recursively";
     public static final String ID_RECURSIVE_INDIVIDUAL = "Specialize Recursively & Individually";
-    private SRAction validateAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
+    private SRAction validateAction = null, importCSVAction = null, specializeStructureRecursiveAction = null, specializeStructureAction = null, createBSTAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
 
     @Override
     public int getPriority() {
@@ -62,6 +62,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         createInstanceMenuAction = null;
         instance2BSTAction = null;
         aspectAction = null;
+        importCSVAction = null;
         copyAction = null;
 
         ActionsCategory category = (ActionsCategory) manager.getActionFor("SRMain");
@@ -94,6 +95,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             }
         }
         category.addAction(copyAction);
+        category.addAction(importCSVAction);
         category.addAction(specializeStructureAction);
         category.addAction(specializeStructureRecursiveAction);
         category.addAction(createBSTAction);
@@ -162,6 +164,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         if (element instanceof Classifier) {
             final Classifier classifier = (Classifier) element;
             validateAction = new ValidateAction(classifier);
+            importCSVAction = new ImportCSVAction(classifier);
             ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
 
             specializeStructureAction = new SpecializeStructureAction(classifier, false, ID, false, false);
