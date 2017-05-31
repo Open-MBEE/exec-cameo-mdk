@@ -16,8 +16,6 @@ import java.util.Iterator;
 
 @OpenApiAll
 public class DependencyMatrixTool extends Tool {
-    private static final long serialVersionUID = 3181889276894499167L;
-
     public DependencyMatrixTool() {
     }
 

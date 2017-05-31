@@ -103,10 +103,6 @@ public class GenericTable extends Table {
                         }
                         for (Element columnElement : columnElements) {
                             AbstractMatrixCell val = matrixData.getValue(rowElement, columnElement);
-//                            Collection<DependencyEntry> dependencies = val.getDependencies();
-//                            for (DependencyEntry dependency : dependencies) {
-//                                System.out.println("dep: " + dependency.getName());
-//                            }
                             if (val.getDescription() != null) {
                                 if (val.isEditable()) {
                                     matrixcolumn.add(new DBText("&#10004;")); // HTML Check mark
@@ -197,8 +193,7 @@ public class GenericTable extends Table {
     }
 
 
-    public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds,
-                                               GenericTableManager gtm, boolean forViewEditor) {
+    public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds, GenericTableManager gtm, boolean forViewEditor) {
         List<List<DocumentElement>> res = new ArrayList<>();
         for (Element e : rowElements) {
             if (skipIfNoDoc && ModelHelper.getComment(e).trim().isEmpty()) {
@@ -241,7 +236,6 @@ public class GenericTable extends Table {
                     }
                 }
                 else if (cellValue instanceof ElementInstanceProperty) {
-                    //Object mval = cellValue.mValue;
                     Object value = cellValue.getValue();
 
                     if (value instanceof List) {
@@ -253,7 +247,7 @@ public class GenericTable extends Table {
                     }
                 }
                 else {
-                    System.out.print("[WARNING] Not added : " + cellValue.toString() + ".");
+                    System.out.print("[WARNING] Cell value omitted: " + cellValue.toString() + ".");
                 }
                 row.add(entry);
             }
@@ -262,7 +256,6 @@ public class GenericTable extends Table {
         return res;
     }
 
-    @SuppressWarnings("rawtypes")
     public List<Object> getTableValues(Object o) {
         List<Object> res = new ArrayList<>();
         if (o instanceof Object[]) {
