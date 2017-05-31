@@ -75,9 +75,11 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
 
         if (elements.size() > 1) {
             category = handleMultipleNodes(category, manager, elements);
-        } else if (elements.size() == 1) {
+        }
+        else if (elements.size() == 1) {
             category = handleSingleNode(category, manager, elements.get(0));
-        } else {
+        }
+        else {
             return;
         }
 
@@ -123,7 +125,8 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
                 if (element instanceof Classifier) {
                     classifiers.add((Classifier) element);
                     validatableElements.add(element);
-                } else if (element instanceof InstanceSpecification) {
+                }
+                else if (element instanceof InstanceSpecification) {
                     instances.add((InstanceSpecification) element);
                     validatableElements.add(element);
                 }
@@ -174,13 +177,15 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             if (classifier instanceof Behavior) {
 
             }
-        } else if (element instanceof InstanceSpecification) {
+        }
+        else if (element instanceof InstanceSpecification) {
             final InstanceSpecification instance = (InstanceSpecification) element;
             validateAction = new ValidateAction(instance);
             ArrayList<InstanceSpecification> insts = new ArrayList();
             insts.add(instance);
             instance2BSTAction = new Instance2BSTAction(insts);
-        } else {
+        }
+        else {
             return null;
         }
         return category;

@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
+import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
@@ -73,12 +74,14 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
             if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(elementToBeRedefined)) {
                 redefinedElement = (RedefinableElement) p;
                 break;
-            } else if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
+            }
+            else if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
                 if (isMatchingStructuralFeature(p, elementToBeRedefined)) {
                     redefinedElement = (RedefinableElement) p;
                     redefinedElement.getRedefinedElement().add(elementToBeRedefined);
                     break;
-                } else if (p instanceof Connector && elementToBeRedefined instanceof Connector) {
+                }
+                else if (p instanceof Connector && elementToBeRedefined instanceof Connector) {
                     if (((Connector) p).getEnd() != null && ((Connector) elementToBeRedefined).getEnd() != null) {
                         if (((Connector) p).getEnd().get(0).getRole() != null && ((Connector) elementToBeRedefined).getEnd().get(0).getRole() != null) {
                             if (isMatchingStructuralFeature(((Connector) p).getEnd().get(0).getRole(), (((Connector) elementToBeRedefined).getEnd().get(0).getRole()))) {
@@ -91,7 +94,8 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
                                 }
                             }
                         }
-                    } else {
+                    }
+                    else {
                         Application.getInstance().getGUILog().log("[WARNING] Behavioral Features (Operations and Receptions) are not handled.");
                     }
                 }
@@ -104,13 +108,26 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         }
         if (elementToBeRedefined instanceof Property) {
             if (((Property) elementToBeRedefined).getAssociation() != null) {
-                Utils.createInheritingAssociation((Property) elementToBeRedefined, classifierOfProp, (Property) redefinedElement);
+                createInheritingAssociation((Property) elementToBeRedefined, classifierOfProp, (Property) redefinedElement);
             }
         }
         if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
             CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, classifierOfProp, true, traveled, visited, isIndividual);
         }
         return redefinedElement;
+    }
+
+    public static void createInheritingAssociation(Property generalProperty, Classifier classifierOfnewProperty, Property newProperty) {
+        Association generalAssociation = generalProperty.getAssociation();
+        Association newAssociation = UMLFactory.eINSTANCE.createAssociation();
+        newAssociation.setName(generalAssociation.getName());
+        Property ownedEnd = UMLFactory.eINSTANCE.createProperty();
+        ownedEnd.setOwner(newAssociation);
+        ownedEnd.setType(classifierOfnewProperty);
+        Utils.createGeneralization(generalAssociation, newAssociation);
+        newAssociation.setOwner(classifierOfnewProperty.getOwner());
+        newAssociation.getMemberEnd().add(newProperty);
+        newAssociation.getOwnedEnd().add(ownedEnd);
     }
 
     private static boolean isMatchingStructuralFeature(NamedElement p, NamedElement elementToBeRedefined) {
@@ -120,7 +137,8 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
                     if (((TypedElement) p).getType().equals(((TypedElement) elementToBeRedefined).getType())) {
                         return true;
                     }
-                } else if (((TypedElement) elementToBeRedefined).getType() == null) {
+                }
+                else if (((TypedElement) elementToBeRedefined).getType() == null) {
                     return true;
                 }
             }

@@ -155,7 +155,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 }
                                 attributeMissingRule.addViolation(v);
                             }
-                        } else {
+                        }
+                        else {
                             if ((redefingEl.getName() == null && redefEl.getName() != null) || (redefingEl.getName() != null && !redefingEl.getName().equals(redefEl.getName()))) {
                                 final ValidationRuleViolation v = new ValidationRuleViolation(redefingEl, nameRule.getDescription() + ": [GENERAL] " + redefEl.getName() + " - [SPECIFIC] " + redefingEl.getName());
                                 v.addAction(new RenameElementAction(redefEl, redefingEl, "Update Specific"));
@@ -173,7 +174,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                             iterator.add(redefingTypdEl.getType());
                                             iterator.previous();
                                         }
-                                    } else {
+                                    }
+                                    else {
                                         final ValidationRuleViolation v = new ValidationRuleViolation(redefingTypdEl,
                                                 attributeTypeRule.getDescription() + ": [GENERAL] " + (redefableTypdEl.getType() != null ? redefableTypdEl.getType().getQualifiedName() : "null") + " - [SPECIFIC] "
                                                         + (redefingTypdEl.getType() != null ? redefingTypdEl.getType().getQualifiedName() : "null"));
@@ -187,7 +189,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                     }
                 }
 
-            } else if (element instanceof InstanceSpecification) {
+            }
+            else if (element instanceof InstanceSpecification) {
                 final InstanceSpecification instance = (InstanceSpecification) element;
 
                 for (final Slot slot : instance.getSlot()) {
@@ -264,16 +267,19 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if (hasAnAssociation(superChild)) {
                                     if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
                                         break assocRule;
-                                    } else {
+                                    }
+                                    else {
                                         v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
                                         associationInheritanceRule.addViolation(v);
                                     }
                                 }
-                            } else if (partType instanceof Classifier) {
+                            }
+                            else if (partType instanceof Classifier) {
                                 if (((Classifier) partType).getGeneral().contains(superPartType)) {
                                     if (hasInheritanceFromTo(((Property) child).getAssociation(), ((Property) superChild).getAssociation())) {
                                         break assocRule;
-                                    } else {
+                                    }
+                                    else {
                                         v.addAction(new AddInheritanceToAssociationAction(((Property) child).getAssociation(), ((Property) superChild).getAssociation()));
                                         associationInheritanceRule.addViolation(v);
                                     }
@@ -306,7 +312,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                         aspectFound = true;
                                     }
                                 }
-                            } else if (ownedElement instanceof CallBehaviorAction) {
+                            }
+                            else if (ownedElement instanceof CallBehaviorAction) {
                                 Behavior b = ((CallBehaviorAction) ownedElement).getBehavior();
                                 if (b.getGeneral().contains(el)) {
                                     aspectFound = true;
@@ -334,7 +341,8 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
     private static boolean hasInheritanceFromTo(Classifier classifier, Classifier general) {
         if (classifier != null) {
             return ModelHelper.getGeneralClassifiersRecursivelly(classifier).contains(general);
-        } else {
+        }
+        else {
             return false;
         }
     }
