@@ -646,12 +646,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                     mmsElementsToDelete.add(id);
                 }
             }
-            if (elementsToCommit.size() > 0) {
+            if (mmsElementsToDelete.size() > 0) {
                 Application.getInstance().getGUILog().log("Deleting " + mmsElementsToDelete.size() + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, elementsToCommit.size(), "View Generation"));
+                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, mmsElementsToDelete.size(), "View Generation"));
                 changed = true;
             }
 
