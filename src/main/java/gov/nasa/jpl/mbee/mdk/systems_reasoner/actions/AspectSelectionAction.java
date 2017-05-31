@@ -16,6 +16,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
 import gov.nasa.jpl.mbee.mdk.lib.Utils2;
 import gov.nasa.jpl.mbee.mdk.validation.actions.AspectRemedyAction;
@@ -66,18 +67,15 @@ public class AspectSelectionAction extends SRAction {
         // Check if the user has clicked "Ok".
         if (dlg.isOkClicked())
         {
-            // Get selected element in single selection mode.
-        //    BaseElement selected = dlg.getSelectedElement();
-
-            // Get selected elements in multiple selection mode.
             List<BaseElement> selected = dlg.getSelectedElements();
-
+            Element aspectStereotype = Converters.getIdToElementConverter().apply("_18_0_2_407019f_1449688347122_736579_14412", Application.getInstance().getProject());
             for(BaseElement be : selected){
                 System.out.println(be.getHumanName());
-                Stereotype aspectSt = Utils.getStereotype("aspect");
-                Utils.createDependencyWithStereotype(classToAddAspect, (Element) be, aspectSt);
-                AspectRemedyAction ara = new AspectRemedyAction(classToAddAspect, (Classifier) be);
-                ara.run();
+                if(aspectStereotype != null && aspectStereotype instanceof Stereotype) {
+                    Utils.createDependencyWithStereotype(classToAddAspect, (Element) be, (Stereotype) aspectStereotype);
+                    AspectRemedyAction ara = new AspectRemedyAction(classToAddAspect, (Classifier) be);
+                    ara.run();
+                }
             }
 
         }

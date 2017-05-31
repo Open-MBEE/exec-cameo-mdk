@@ -142,9 +142,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         // otherwise, add the classes to the ValidateAction action
         validateAction = new ValidateAction(validatableElements);
         category.addAction(validateAction);
-        if (!classifiers.isEmpty()) {
-         //   aspectAction = new AspectAction(classifiers);
-        }
+
         if (!instances.isEmpty()) {
             instance2BSTAction = new Instance2BSTAction(instances);
         }
@@ -163,17 +161,11 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             final Classifier classifier = (Classifier) element;
             validateAction = new ValidateAction(classifier);
             ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
-
             specializeStructureAction = new SpecializeStructureAction(classifier, false, ID, false, false);
             specializeStructureRecursiveAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE, true, false);
             createBSTAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE_INDIVIDUAL, true, true);
             createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
-          //  aspectAction = new AspectAction(classifier);
-            selectAspectAction = new AspectSelectionAction(classifier);
-
-            if (classifier instanceof Behavior) {
-
-            }
+             selectAspectAction = new AspectSelectionAction(classifier);
         }
         else if (element instanceof InstanceSpecification) {
             final InstanceSpecification instance = (InstanceSpecification) element;
