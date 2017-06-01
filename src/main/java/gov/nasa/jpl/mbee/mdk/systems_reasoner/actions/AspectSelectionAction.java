@@ -14,8 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.validation.actions.AspectRemedyAction;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
