@@ -23,7 +23,6 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
@@ -38,7 +37,6 @@ import org.apache.http.entity.ContentType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,8 +52,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
     private List<ValidationSuite> vss = new ArrayList<>();
 
-    public DeltaSyncRunner(boolean shouldCommmit, boolean shouldCommitDeletes, boolean shouldUpdate) {
-        this.shouldCommit = shouldCommmit;
+    public DeltaSyncRunner(boolean shouldCommit, boolean shouldCommitDeletes, boolean shouldUpdate) {
+        this.shouldCommit = shouldCommit;
         this.shouldCommitDeletes = shouldCommitDeletes;
         this.shouldUpdate = shouldUpdate;
     }
@@ -186,21 +184,21 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             } catch (ServerException | IOException | URISyntaxException e) {
                 if (progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
+                    Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
                     return;
                 }
-                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Sync aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Skipping sync. All changes will be re-attempted in the next sync.");
                 e.printStackTrace();
                 return;
             }
 
             if (progressStatus.isCancel()) {
-                Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be attempted at next update.");
                 return;
             }
 
             if (response == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS server. Sync aborted. All changes will be attempted at next update.");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS server. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
             JsonNode elementsArrayNode = response.get("elements");
@@ -311,7 +309,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         if (progressStatus.isCancel()) {
-            Application.getInstance().getGUILog().log("[INFO] Sync manually aborted. All changes will be attempted at next update.");
+            Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
             return;
         }
 
@@ -322,7 +320,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         boolean shouldLogNoLocalChanges = shouldCommit;
         if (shouldCommit && !localElementsToPost.isEmpty()) {
             progressStatus.setDescription("Committing creations and updates to MMS");
-
             LinkedList<ObjectNode> postElements = new LinkedList<>();
             for (Element element : localElementsToPost.values()) {
                 ObjectNode elementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
@@ -331,17 +328,15 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             if (postElements.size() > 0) {
-                Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(postElements.size()) + " local element" + (postElements.size() != 1 ? "s" : "") + " on the MMS.");
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
                     File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                    OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes"));
-                } catch (IOException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                    Request request = new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes");
+                    MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
+                } catch (IOException | URISyntaxException | ServerException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
                     e.printStackTrace();
-                } catch (URISyntaxException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
-                    e.printStackTrace();
+                    return;
                 }
                 shouldLogNoLocalChanges = false;
             }
@@ -352,17 +347,15 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         if (shouldCommit && shouldCommitDeletes && !deleteElements.isEmpty()) {
             progressStatus.setDescription("Committing deletions to MMS");
-            Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(deleteElements.size()) + " local element" + (deleteElements.size() != 1 ? "s" : "") + " on the MMS.");
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes"));
-            } catch (IOException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected JSON processing exception. See logs for more information.");
+                Request request = new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes");
+                MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
+            } catch (IOException | URISyntaxException | ServerException e) {
+                Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
                 e.printStackTrace();
-            } catch (URISyntaxException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Unexpected URI syntax exception. See logs for more information.");
-                e.printStackTrace();
+                return;
             }
             shouldLogNoLocalChanges = false;
         }
@@ -391,7 +384,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             updateClientElementAction.run(progressStatus);
 
             failedJmsChangelog = failedJmsChangelog.and(updateClientElementAction.getFailedChangelog(), (id, objectNode) -> null);
-
+            successfulJmsChangelog = updateClientElementAction.getSuccessfulChangelog();
             listener.setDisabled(false);
         }
 
@@ -483,7 +476,6 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         listener.setDisabled(false);
 
         // SUCCESS
-
         failure = false;
     }
 

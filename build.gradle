@@ -9,7 +9,10 @@ if (buildTag == null || buildTag.isEmpty()) {
     version += '-SNAPSHOT'
 }
 else if (buildTag != version) {
-    throw new GradleException('Version mismatch.')
+    throw new GradleException('Version mismatch: ' + version + ' => ' + buildTag)
+}
+else if (buildAccess == 'opensource') {
+    version += '-SNAPSHOT'
 }
 group = (buildAccess == 'internal' ? 'gov.nasa.jpl.cae.magicdraw.mdk' : 'org.openmbee.magicdraw.mdk')
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
@@ -40,14 +43,14 @@ repositories {
         maven {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
             credentials {
-                username project.getProperties().get('artifactoryUser')
+                username project.getProperties().get('artifactoryUsername')
                 password project.getProperties().get('artifactoryPassword')
             }
         }
         maven {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-release-virtual'
             credentials {
-                username project.getProperties().get('artifactoryUser')
+                username project.getProperties().get('artifactoryUsername')
                 password project.getProperties().get('artifactoryPassword')
             }
         }
@@ -225,7 +228,7 @@ class PreDist extends DefaultTask {
 }
 
 task preDist(type: PreDist, dependsOn: jar) {
-    humanVersion = version
+    humanVersion = version.endsWith('-SNAPSHOT') && buildAccess == 'opensource' && buildTag != null && !buildTag.isEmpty() ? version.replace('-SNAPSHOT', '') : version
     internalVersion = buildNumber
     groupName = 'gov.nasa.jpl.cae.magicdraw.mdk'
     buildTimestamp = timestamp
@@ -334,8 +337,8 @@ artifactory {
     contextUrl = (buildAccess == 'internal' ? 'https://cae-artifactory.jpl.nasa.gov/artifactory/' : 'https://oss.jfrog.org/artifactory/')
     publish {
         repository {
-            repoKey = (buildAccess == 'internal' ? 'maven-plugins' : 'oss') + '-' + (version.endsWith('SNAPSHOT') || buildAccess == 'opensource' ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
-            username = project.getProperties().get('artifactoryUser') // The publisher user name
+            repoKey = (buildAccess == 'internal' ? 'maven-libs' : 'oss') + '-' + (version.endsWith('SNAPSHOT') || buildAccess == 'opensource' ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
+            username = project.getProperties().get('artifactoryUsername') // The publisher user name
             password = project.getProperties().get('artifactoryPassword') // The publisher password
             maven = true
         }

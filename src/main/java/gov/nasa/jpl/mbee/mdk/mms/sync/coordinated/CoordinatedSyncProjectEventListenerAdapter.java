@@ -91,7 +91,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
             ObjectNode teamworkCommittedMessage = JacksonUtils.getObjectMapper().createObjectNode();
             teamworkCommittedMessage.put("source", "magicdraw");
-            teamworkCommittedMessage.put("sender", TicketUtils.getUsername());
+            teamworkCommittedMessage.put("sender", TicketUtils.getUsername(project));
             teamworkCommittedMessage.set("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
             try {
                 TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));

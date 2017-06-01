@@ -62,7 +62,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 objectNode = preProcessor.getFunction().apply(element, project, objectNode);
             } catch (RuntimeException e) {
                 e.printStackTrace();
-                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getID() + " in " + project.getName());
+                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getLocalID() + " in " + project.getName());
             }
             if (objectNode == null) {
                 return null;
@@ -95,10 +95,19 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         Element element = (Element) eObject;
         Project project = Project.getProject(element);
 
-        // custom handling of elements with non-fixed ids in local projects
+        // custom handling of primary model id
         if (element instanceof Model && project.getPrimaryModel() == element) {
             return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
         }
+
+/*
+        // different handling of ids for remote and local projects
+        if (project != null && project.isRemote()) {
+            // remote project properly maintain the local id of all elements, so just use that
+            return element.getLocalID();
+        }
+ */
+        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the jms sync counts in some cases (annoying, but ultimately harmless)
         if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
             return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
         }
@@ -115,13 +124,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
             }
         }
-//        // eObject is in local primary model OR TWC online copy of a local mount
-//        // NOTE: assumes that project.getLocationURI().isFile() === !project.isRemote()
-//        IProject iProject = ProjectUtilities.getAttachedProject(element);
-//        if ((iProject == null && !project.isRemote())
-//                || (iProject != null && iProject.getLocationURI().isFile())) {
-//            return element.getLocalID();
-//        }
         return element.getLocalID();
     }
 

@@ -5,13 +5,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
-import gov.nasa.jpl.mbee.mdk.MMSSyncPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -99,13 +97,19 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             e.printStackTrace();
             return;
         }
-        JsonNode sourceJsonNode;
-        if (!messageJsonNode.isObject() || ((sourceJsonNode = messageJsonNode.get("source")) != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw"))) {
+        if (!messageJsonNode.isObject()) {
             return;
         }
-        JsonNode refsJsonNode = messageJsonNode.get("refs");
-        JsonNode syncedJsonNode = messageJsonNode.get("synced");
+
+        JsonNode refsJsonNode = messageJsonNode.get("refs"),
+                syncedJsonNode = messageJsonNode.get("synced"),
+                sourceJsonNode = messageJsonNode.get("source"),
+                senderJsonNode = messageJsonNode.get("sender");
+
         if (refsJsonNode != null && refsJsonNode.isObject()) {
+            if (sourceJsonNode != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw")) {
+                return;
+            }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
                 JsonNode changeJsonNode = refsJsonNode.get(entry.getKey());
                 if (changeJsonNode == null || !changeJsonNode.isArray()) {
@@ -131,8 +135,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
         }
         else if (syncedJsonNode != null && syncedJsonNode.isObject()) {
-            JsonNode senderJsonNode = messageJsonNode.get("sender");
-            if (senderJsonNode != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername())) {
+            if (senderJsonNode != null && senderJsonNode.isTextual() && senderJsonNode.asText().equals(TicketUtils.getUsername(project))) {
                 return;
             }
             Changelog<String, Void> syncedChangelog = SyncElements.buildChangelog((ObjectNode) syncedJsonNode);
@@ -145,7 +148,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             }
             int size = syncedChangelog.flattenedSize();
             if (MDUtils.isDeveloperMode()) {
-                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Cleared " + size + " MMS element change" + (size != 1 ? "s" : "") + " as a result of another client syncing the model.");
+                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Cleared up to " + size + " MMS element change" + (size != 1 ? "s" : "") + " as a result of another client syncing the model.");
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
         }

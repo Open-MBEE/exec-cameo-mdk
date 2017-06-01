@@ -187,7 +187,7 @@ public class ElementValidator implements RunnableWithProgress {
         if (clientElement.getKey() instanceof NamedElement && ((NamedElement) clientElement.getKey()).getName() != null && !((NamedElement) clientElement.getKey()).getName().isEmpty()) {
             name = ((NamedElement) clientElement.getKey()).getName();
         }
-        finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[MISSING ON MMS] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getID(), clientElement, null, null);
+        finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[MISSING ON MMS] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getLocalID(), clientElement, null, null);
     }
 
     public void addElementEquivalenceViolation(Pair<Element, ObjectNode> clientElement, ObjectNode serverElement) {
@@ -198,7 +198,7 @@ public class ElementValidator implements RunnableWithProgress {
             if (clientElement.getKey() instanceof NamedElement && ((NamedElement) clientElement.getKey()).getName() != null && !((NamedElement) clientElement.getKey()).getName().isEmpty()) {
                 name = ((NamedElement) clientElement.getKey()).getName();
             }
-            finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[NOT EQUIVALENT] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getID(), clientElement, serverElement, diff);
+            finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[NOT EQUIVALENT] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getLocalID(), clientElement, serverElement, diff);
         }
     }
 
@@ -211,7 +211,7 @@ public class ElementValidator implements RunnableWithProgress {
         validationRuleViolation.addAction(copyActionsCategory);
         copyActionsCategory.addAction(new ClipboardAction("ID", id));
         if (clientElement != null) {
-            copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElement.getKey().getID()));
+            copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElement.getKey().getLocalID()));
             try {
                 copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(clientElement.getValue())));
             } catch (JsonProcessingException ignored) {

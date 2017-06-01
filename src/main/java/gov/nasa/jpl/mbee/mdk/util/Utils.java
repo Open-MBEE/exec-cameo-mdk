@@ -1407,7 +1407,9 @@ public class Utils {
 
     /********************************************** Direct Stereotype Utils **********************************************/
 
-    /*** SysML::Model Elements ***/
+    /***
+     * SysML::Model Elements
+     ***/
     public static Stereotype getConformsStereotype(Project project) {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
@@ -1428,7 +1430,9 @@ public class Utils {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
     }
 
-    /*** SysML Extensions::_Stereotypes ***/
+    /***
+     * SysML Extensions::_Stereotypes
+     ***/
     public static Stereotype getAccountableForStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1371599170030_696081_43276");
     }
@@ -1477,7 +1481,9 @@ public class Utils {
         return (Stereotype) project.getElementByID("_18_0_5_407019f_1462145965413_380403_14076");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Document Profile
+     ***/
     public static Stereotype getCommentStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_5_407019f_1337877314051_474317_11891");
     }
@@ -1490,7 +1496,9 @@ public class Utils {
         return (Stereotype) project.getElementByID("_16_5_4_409a058d_1259862803278_226185_1083");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers
+     ***/
     public static Stereotype getProductStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
     }
@@ -1508,19 +1516,25 @@ public class Utils {
         return (Stereotype) project.getElementByID("_17_0_1_232f03dc_1325612611695_581988_21583");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements
+     ***/
     public static Stereotype getPresentsStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1430628469999_419411_12119");
     }
 
     /********************************************** Direct Property Utils **********************************************/
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement
+     ***/
     public static Property getGeneratedFromViewProperty(Project project) {
         return (Property) project.getElementByID("_17_0_5_1_407019f_1430628276506_565_12080");
     }
 
-    /*** SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection ***/
+    /***
+     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection
+     ***/
     public static Property getGeneratedFromElementProperty(Project project) {
         return (Property) project.getElementByID("_17_0_5_1_407019f_1430628376067_525763_12104");
     }
@@ -1531,12 +1545,16 @@ public class Utils {
 
     /********************************************** Direct Component Utils **********************************************/
 
-    /*** SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library ***/
+    /***
+     * SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library
+     ***/
     public static Component getSiteCharacterizationComponent(Project project) {
         return (Component) project.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
     }
 
-    /********************************************** Constraint Utils **********************************************/
+    /**********************************************
+     * Constraint Utils
+     **********************************************/
     public static Constraint getViewConstraint(Element view) {
         if (view != null) {
             Collection<Constraint> constraints = view.get_constraintOfConstrainedElement();
@@ -1913,7 +1931,9 @@ public class Utils {
         return v;
     }
 
-    /************************* Getting element attributes and properties/values ****************************/
+    /*************************
+     * Getting element attributes and properties/values
+     ****************************/
 
     public enum AvailableAttribute {
         Name, Documentation, Value

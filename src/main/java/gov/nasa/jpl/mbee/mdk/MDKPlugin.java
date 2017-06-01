@@ -106,6 +106,9 @@ public class MDKPlugin extends Plugin {
 
         loadExtensionJars();
         configureEnvironmentOptions();
+
+        //   SpecificationDialogManager.getManager().addConfigurator(Element.class, new SpecificationNodeAspectsConfigurator());
+
     }
 
     @Override

@@ -13,7 +13,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
@@ -26,10 +25,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.*;
 
 public class CommitProjectAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -48,7 +44,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
     }
 
     public CommitProjectAction(Project project, boolean shouldCommitModel, boolean isDeveloperAction) {
-        super(shouldCommitModel ? COMMIT_MODEL_DEFAULT_ID : DEFAULT_ID, "Commit Project" + (shouldCommitModel ? " and Model" : "") + (isDeveloperAction ? " [DEVELOPER]" : ""), null, null);
+        super(shouldCommitModel ? COMMIT_MODEL_DEFAULT_ID : DEFAULT_ID, (isDeveloperAction ? "[DEVELOPER] " : "") + "Commit Project" + (shouldCommitModel ? " and Model" : ""), null, null);
         this.project = project;
         this.shouldCommitModel = shouldCommitModel;
     }
@@ -70,7 +66,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
     public String commitAction() {
         // '{"elements": [{"sysmlId": "123456", "name": "vetest", "type": "Project"}]}' -X POST "http://localhost:8080/alfresco/service/orgs/vetest/projects"
-        String org = null;
+        String orgId = null;
 
         // get orgs uri to check orgs / post project
         URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
@@ -81,7 +77,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // check for existing org, use that if it exists instead of prompting to select one
         try {
-            org = MMSUtils.getMmsOrg(project);
+            orgId = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
         } catch (IOException | URISyntaxException | ServerException e1) {
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
@@ -91,7 +87,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // check for org options if one isn't specified in the project already
         ObjectNode response;
-        if (org == null || org.isEmpty()) {
+        if (orgId == null || orgId.isEmpty()) {
             try {
                 File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
@@ -102,39 +98,41 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 e1.printStackTrace();
                 return null;
             }
-            ArrayList<String> mmsOrgsList = new ArrayList<>();
+            HashMap<String, String> mmsOrgsMap = new HashMap<>();
+            mmsOrgsMap.put("[Create new org...]", "[new]");
             if (response != null) {
                 JsonNode arrayNode;
                 if ((arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
                     for (JsonNode orgNode : arrayNode) {
-                        JsonNode value;
-                        if ((value = orgNode.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
-                            mmsOrgsList.add(value.asText());
+                        JsonNode name, id;
+                        if ((name = orgNode.get(MDKConstants.NAME_KEY)) != null && name.isTextual() && !name.asText().isEmpty()
+                                && (id = orgNode.get(MDKConstants.ID_KEY)) != null && id.isTextual() && !id.asText().isEmpty()) {
+                            mmsOrgsMap.put(name.asText(), id.asText());
                         }
                     }
                 }
             }
-            String[] mmsOrgs = mmsOrgsList.toArray(new String[mmsOrgsList.size()]);
-            if (mmsOrgs.length > 0) {
-                JFrame selectionDialog = new JFrame();
-                org = (String) JOptionPane.showInputDialog(selectionDialog, "Select MMS org:",
-                        "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
-            }
-            else {
-                Application.getInstance().getGUILog().log("[WARNING] No orgs were returned from MMS.");
-            }
-            if ((org == null || org.isEmpty()) && MDUtils.isDeveloperMode()) {
-                org = new CommitOrgAction(project).commitAction();
+            String[] mmsOrgs = mmsOrgsMap.keySet().toArray(new String[mmsOrgsMap.keySet().size()]);
+            Arrays.sort(mmsOrgs);
+            JFrame selectionDialog = new JFrame();
+            String selection = (String) JOptionPane.showInputDialog(selectionDialog, "Select MMS org:",
+                    "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
+            if (selection != null) {
+                orgId = mmsOrgsMap.get(selection);
+                // trigger commit org action if user selects create new org
+                if (orgId.equals("[new]")) {
+                    orgId = new CommitOrgAction(project).commitAction();
+                }
             }
         }
 
-        if (org == null || org.isEmpty()) {
+        if (orgId == null || orgId.isEmpty()) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit project without an org. Project commit cancelled.");
             return null;
         }
 
         // update request with project post path
-        requestUri.setPath(requestUri.getPath() + "/" + org + "/projects");
+        requestUri.setPath(requestUri.getPath() + "/" + orgId + "/projects");
         Collection<ObjectNode> projects = new LinkedList<>();
         projects.add(MMSUtils.getProjectObjectNode(project));
 
