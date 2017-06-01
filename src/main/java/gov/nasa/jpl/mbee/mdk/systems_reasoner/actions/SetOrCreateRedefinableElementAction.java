@@ -51,14 +51,29 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     }
 
     public static RedefinableElement redefineRedefinableElement(final Classifier subClassifier, final RedefinableElement elementToBeRedefined, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual, boolean isRecursive) {
-        if (elementToBeRedefined.isLeaf()) {
-            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " is a leaf. Cannot redefine further.");
-        }
-        if (!subClassifier.isEditable()) {
-            Application.getInstance().getGUILog().log(subClassifier.getQualifiedName() + " is not editable. Skipping redefinition.");
-            return null;
+        if (isNotRedefinable(subClassifier, elementToBeRedefined)) return null;
+
+
+        RedefinableElement redefinedElement = findExistingRedefiningElement(subClassifier, elementToBeRedefined);
+
+        if (redefinedElement == null) {
+            redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
+            redefinedElement.getRedefinedElement().removeAll(elementToBeRedefined.getRedefinedElement());
+            redefinedElement.getRedefinedElement().add(elementToBeRedefined);
         }
 
+        if (elementToBeRedefined instanceof Property) {
+            if (((Property) elementToBeRedefined).getAssociation() != null) {
+                createInheritingAssociation((Property) elementToBeRedefined, subClassifier, (Property) redefinedElement);
+            }
+        }
+        if (isRecursive && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
+            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, traveled, visited, isIndividual, isRecursive);
+        }
+        return redefinedElement;
+    }
+
+    private static RedefinableElement findExistingRedefiningElement(Classifier subClassifier, RedefinableElement elementToBeRedefined) {
         RedefinableElement redefinedElement = null;
         for (NamedElement p : subClassifier.getOwnedMember()) {
             if (p instanceof RedefinableElement && SRValidationSuite.doesEventuallyRedefine((RedefinableElement) p,elementToBeRedefined)){
@@ -91,21 +106,19 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
                 }
             }
         }
-        if (redefinedElement == null) {
-            redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
-            redefinedElement.getRedefinedElement().removeAll(elementToBeRedefined.getRedefinedElement());
-            redefinedElement.getRedefinedElement().add(elementToBeRedefined);
-
-        }
-        if (elementToBeRedefined instanceof Property) {
-            if (((Property) elementToBeRedefined).getAssociation() != null) {
-                createInheritingAssociation((Property) elementToBeRedefined, subClassifier, (Property) redefinedElement);
-            }
-        }
-        if (isRecursive && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
-            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, traveled, visited, isIndividual, isRecursive);
-        }
         return redefinedElement;
+    }
+
+    private static boolean isNotRedefinable(Classifier subClassifier, RedefinableElement elementToBeRedefined) {
+        if (elementToBeRedefined.isLeaf()) {
+            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " is a leaf. Cannot redefine further.");
+            return true;
+        }
+        if (!subClassifier.isEditable()) {
+            Application.getInstance().getGUILog().log(subClassifier.getQualifiedName() + " is not editable. Skipping redefinition.");
+            return true;
+        }
+        return false;
     }
 
     public static void createInheritingAssociation(Property generalProperty, Classifier classifierOfnewProperty, Property newProperty) {

@@ -93,15 +93,15 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
             redefinedAttribute.setType(special);
 
 
-            if (isRecursive) {
-                if (special instanceof Classifier) {
-                    for (final NamedElement ne : ((Classifier) special).getInheritedMember()) {
-                        if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-                            SetOrCreateRedefinableElementAction.redefineRedefinableElement((Classifier) special, (RedefinableElement) ne, traveled, visited, isIndividual, isRecursive);
-                        }
-                    }
-                }
-            }
+//            if (isRecursive) {
+//                if (special instanceof Classifier) {
+//                    for (final NamedElement ne : ((Classifier) special).getInheritedMember()) {
+//                        if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
+//                            SetOrCreateRedefinableElementAction.redefineRedefinableElement((Classifier) special, (RedefinableElement) ne, traveled, visited, isIndividual, isRecursive);
+//                        }
+//                    }
+//                }
+//            }
         }
         return true;
     }
