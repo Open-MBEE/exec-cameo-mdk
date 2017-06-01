@@ -43,10 +43,10 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
         createSpecializedType(property, parent, redefineAttributes, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual);
     }
 
-    public static final void createSpecializedType(final StructuralFeature redefinedAttribute, final Classifier parent, final boolean redefineAttributes, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual) {
+    public static final boolean createSpecializedType(final StructuralFeature redefinedAttribute, final Classifier parent, final boolean redefineAttributes, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual) {
         if (!parent.isEditable()) {
             Application.getInstance().getGUILog().log(parent.getQualifiedName() + " is not editable. Skipping creating specialization.");
-            return;
+            return true;
         }
         if (redefinedAttribute.getType() instanceof Classifier && !(redefinedAttribute.getType() instanceof Property)) {
             boolean hasTraveled = false;
@@ -63,8 +63,9 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
             }
             if (hasTraveled) {
                 Application.getInstance().getGUILog().log("[WARNING] Detected circular reference at " + redefinedAttribute.getQualifiedName() + ". Stopping recursion.");
-                return;
+                return false;
             }
+
             traveled.add(redefinedAttribute);
             for (final RedefinableElement re : redefinedAttribute.getRedefinedElement()) {
                 if (re instanceof RedefinableElement) {
@@ -72,6 +73,11 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
                 }
             }
             final Classifier general = (Classifier) redefinedAttribute.getType();
+            if (visited.contains(general)) {
+                Application.getInstance().getGUILog().log("[WARNING] Detected circular reference. Type  " + general.getQualifiedName() + " referenced by " + redefinedAttribute.getQualifiedName() + " was already visited. Stopping recursion.");
+                return false;
+            }
+
             Type special = null;
             if (!isIndividual && getExistingSpecial(redefinedAttribute) != null) {
                 special = getExistingSpecial(redefinedAttribute);
@@ -82,7 +88,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
                 special = speca.createSpecialClassifier(parent, traveled, visited);
             }
             if (special == null) {
-                return;
+                return true;
             }
 
             redefinedAttribute.setType(special);
@@ -90,12 +96,13 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
                 if (special instanceof Classifier) {
                     for (final NamedElement ne : ((Classifier) special).getInheritedMember()) {
                         if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-                            SetOrCreateRedefinableElementAction.redefineAttribute((Classifier) special, (RedefinableElement) ne, true, traveled, visited, isIndividual);
+                            SetOrCreateRedefinableElementAction.redefineRedefinableElement((Classifier) special, (RedefinableElement) ne, true, traveled, visited, isIndividual);
                         }
                     }
                 }
             }
         }
+        return true;
     }
 
     private static Type getExistingSpecial(StructuralFeature structuralFeature) {
