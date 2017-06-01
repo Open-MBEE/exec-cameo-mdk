@@ -204,7 +204,13 @@ public class ElementValidator implements RunnableWithProgress {
 
     public void finishViolation(ValidationRuleViolation validationRuleViolation, String id, Pair<Element, ObjectNode> clientElement, ObjectNode serverElement, JsonNode diff) {
         validationRuleViolation.addAction(new CommitClientElementAction(id, clientElement != null ? clientElement.getKey() : null, clientElement != null ? clientElement.getValue() : null, project));
-        validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElement != null ? clientElement.getKey() : null, serverElement, project));
+        validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElement != null ? clientElement.getKey() : null, serverElement, project) {
+            @Override
+            public void updateState() {
+                super.updateState();
+                setEnabled(clientElement != null && clientElement.getKey() != null && clientElement.getKey().isEditable());
+            }
+        });
 
         ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
         copyActionsCategory.setNested(true);
