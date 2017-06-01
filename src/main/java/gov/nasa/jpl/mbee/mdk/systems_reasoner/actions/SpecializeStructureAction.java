@@ -94,18 +94,29 @@ public class SpecializeStructureAction extends SRAction {
                 return null;
             }
         }
-        if (visited.contains(classifier)) {
 
-        }
         Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
         visited.add(specific);
         visited.add(classifier);
+        specific.getGeneralization().clear();
+        ArrayList<RedefinableElement> redefinedElements = new ArrayList<RedefinableElement>();
+        for (NamedElement namedElement : specific.getOwnedMember()) {
+            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf() && !(namedElement instanceof Classifier)) {
+                redefinedElements.add((RedefinableElement) namedElement);
+            }
+        }
         Utils.createGeneralization(classifier, specific);
+
+
         for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
-                final RedefinableElement redefEl = (RedefinableElement) ne;
-                SetOrCreateRedefinableElementAction.redefineAttribute(specific, redefEl, recursionMode, traveled, visited, individualMode);
+                final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
+                SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, recursionMode, traveled, visited, individualMode);
+                //redefinedElements.add(elementToBeRedefined);
             }
+        }
+        for (RedefinableElement redefinedElement : redefinedElements) {
+            redefinedElement.dispose();
         }
         return specific;
     }
