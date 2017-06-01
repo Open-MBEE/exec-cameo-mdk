@@ -43,10 +43,6 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         this.isIndividual = isIndividual;
     }
 
-    public SetOrCreateRedefinableElementAction() {
-        super(DEFAULT_NAME);
-    }
-
     public static RedefinableElement redefineRedefinableElement(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType, boolean isIndividual) {
         return redefineRedefinableElement(subClassifier, re, createSpecializedType, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual);
     }
@@ -65,12 +61,14 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
             if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(elementToBeRedefined)) {
                 redefinedElement = (RedefinableElement) p;
                 break;
-            } else if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
+            }
+            else if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
                 if (isMatchingStructuralFeature(p, elementToBeRedefined)) {
                     redefinedElement = (RedefinableElement) p;
                     redefinedElement.getRedefinedElement().add(elementToBeRedefined);
                     break;
-                } else if (p instanceof Connector && elementToBeRedefined instanceof Connector) {
+                }
+                else if (p instanceof Connector && elementToBeRedefined instanceof Connector) {
                     if (((Connector) p).getEnd() != null && ((Connector) elementToBeRedefined).getEnd() != null) {
                         if (((Connector) p).getEnd().get(0).getRole() != null && ((Connector) elementToBeRedefined).getEnd().get(0).getRole() != null) {
                             if (isMatchingStructuralFeature(((Connector) p).getEnd().get(0).getRole(), (((Connector) elementToBeRedefined).getEnd().get(0).getRole()))) {
@@ -83,7 +81,8 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
                                 }
                             }
                         }
-                    } else {
+                    }
+                    else {
                         Application.getInstance().getGUILog().log("[WARNING] Behavioral Features (Operations and Receptions) are not handled.");
                     }
                 }
@@ -99,11 +98,6 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
             CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, true, traveled, visited, isIndividual);
         }
         return redefinedElement;
-
-//        else {
-//            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " has already been redefined in " + subClassifier.getQualifiedName() + ".");
-//            return null;
-//        }
     }
 
     private static boolean isMatchingStructuralFeature(NamedElement p, NamedElement elementToBeRedefined) {
@@ -113,7 +107,8 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
                     if (((TypedElement) p).getType().equals(((TypedElement) elementToBeRedefined).getType())) {
                         return true;
                     }
-                } else if (((TypedElement) elementToBeRedefined).getType() == null) {
+                }
+                else if (((TypedElement) elementToBeRedefined).getType() == null) {
                     return true;
                 }
             }

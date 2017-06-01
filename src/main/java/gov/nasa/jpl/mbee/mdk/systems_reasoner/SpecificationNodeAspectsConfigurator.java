@@ -7,7 +7,6 @@ import com.nomagic.magicdraw.ui.dialogs.specifications.tree.node.IConfigurableNo
 import com.nomagic.magicdraw.ui.dialogs.specifications.tree.node.ISpecificationNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.AspectSelectionAction;
 
 import javax.swing.*;

@@ -7,25 +7,19 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
-import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.lib.Utils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils2;
 import gov.nasa.jpl.mbee.mdk.validation.actions.AspectRemedyAction;
-import scala.App;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class AspectSelectionAction extends SRAction {
@@ -53,25 +47,21 @@ public class AspectSelectionAction extends SRAction {
         final ElementSelectionDlg dlg = ElementSelectionDlgFactory.create(dialogParent);
         SessionManager.getInstance().createSession(Application.getInstance().getProject(), "Creating aspect.");
         final SelectElementTypes set = new SelectElementTypes(types, types, null, null);
-        final SelectElementInfo sei = new SelectElementInfo(true, false,
-                Application.getInstance().getProject().getModel().getOwner(), true);
-
-        // Collection<BaseElement> allElements = Application.getInstance().getProject().getAllElements();
+        final SelectElementInfo sei = new SelectElementInfo(true, false, Application.getInstance().getProject().getModel().getOwner(), true);
 
         ArrayList<Classifier> aspects = new ArrayList<>();
         findAspectsOfClassifier(aspects);
-        ElementSelectionDlgFactory.initMultiple(dlg,set,sei,aspects);
+        ElementSelectionDlgFactory.initMultiple(dlg, set, sei, aspects);
 
         dlg.show();
 
         // Check if the user has clicked "Ok".
-        if (dlg.isOkClicked())
-        {
+        if (dlg.isOkClicked()) {
             List<BaseElement> selected = dlg.getSelectedElements();
             Element aspectStereotype = Converters.getIdToElementConverter().apply("_18_0_2_407019f_1449688347122_736579_14412", Application.getInstance().getProject());
-            for(BaseElement be : selected){
+            for (BaseElement be : selected) {
                 System.out.println(be.getHumanName());
-                if(aspectStereotype != null && aspectStereotype instanceof Stereotype) {
+                if (aspectStereotype != null && aspectStereotype instanceof Stereotype) {
                     Utils.createDependencyWithStereotype(classToAddAspect, (Element) be, (Stereotype) aspectStereotype);
                     AspectRemedyAction ara = new AspectRemedyAction(classToAddAspect, (Classifier) be);
                     ara.run();
@@ -81,7 +71,6 @@ public class AspectSelectionAction extends SRAction {
         }
 
 
-
         SessionManager.getInstance().closeSession(Application.getInstance().getProject());
     }
 
@@ -89,21 +78,20 @@ public class AspectSelectionAction extends SRAction {
         boolean aspectDefinitionFound = false;
 
         for (Dependency d : classToAddAspect.getClientDependency()) {
-                boolean aspectFound = false;
-                Classifier aspect = null;
-                Stereotype s = StereotypesHelper.getAppliedStereotypeByString(d, "aspect");
-                if (s != null) {
-                    aspectDefinitionFound = true;
-                    for (Element el : d.getTarget()) {
-                        if (el instanceof Classifier) {
-                            aspect = (Classifier) el;
-                            for (Element ownedElement : classToAddAspect.getOwnedElement()) {
-                                if (ownedElement instanceof Property) {
-                                    Type type = ((TypedElement) ownedElement).getType();
-                                    if (type instanceof Classifier) {
-                                        if ((hasInheritanceFromTo((Classifier) type, aspect))) {
-                                            aspects.add((Classifier) type);
-                                         }
+            boolean aspectFound = false;
+            Classifier aspect = null;
+            Stereotype s = StereotypesHelper.getAppliedStereotypeByString(d, "aspect");
+            if (s != null) {
+                aspectDefinitionFound = true;
+                for (Element el : d.getTarget()) {
+                    if (el instanceof Classifier) {
+                        aspect = (Classifier) el;
+                        for (Element ownedElement : classToAddAspect.getOwnedElement()) {
+                            if (ownedElement instanceof Property) {
+                                Type type = ((TypedElement) ownedElement).getType();
+                                if (type instanceof Classifier) {
+                                    if ((hasInheritanceFromTo((Classifier) type, aspect))) {
+                                        aspects.add((Classifier) type);
                                     }
                                 }
                             }
@@ -111,6 +99,7 @@ public class AspectSelectionAction extends SRAction {
                     }
                 }
             }
+        }
 
         return aspectDefinitionFound;
     }
