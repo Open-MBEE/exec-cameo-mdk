@@ -1,6 +1,3 @@
-/**
- * Copyright (c) 2014 NoMagic, Inc. All Rights Reserved.
- */
 package gov.nasa.jpl.mbee.mdk.systems_reasoner;
 
 import com.nomagic.magicdraw.ui.dialogs.specifications.ISpecificationComponent;
@@ -25,7 +22,6 @@ public class SpecificationNodeAspectsConfigurator implements ISpecificationNodeC
     public void configure(IConfigurableNode node, Element element) {
         final IConfigurableNode myNode = ConfigurableNodeFactory.createConfigurableNode(new MyNode());
         node.insertNode(IConfigurableNode.DOCUMENTATION_HYPERLINKS, IConfigurableNode.Position.BEFORE, myNode);
-        //myNode.addNode(ConfigurableNodeFactory.createConfigurableNode(new MyInnerSpecificationNode()));
     }
 
     private static class MyNode implements ISpecificationNode {
@@ -78,11 +74,6 @@ public class SpecificationNodeAspectsConfigurator implements ISpecificationNodeC
                 AspectSelectionAction asa = new AspectSelectionAction((Classifier) specifiedElement);
                 ArrayList<Classifier> aspects = new ArrayList<Classifier>();
                 asa.findAspectsOfClassifier(aspects);
-                for (Classifier as : aspects) {
-                    for (Property p : as.getAttribute()) {
-                        //sb.append(" aspect: "+p.getName());
-                    }
-                }
             }
             return new JLabel(sb.toString());
         }
