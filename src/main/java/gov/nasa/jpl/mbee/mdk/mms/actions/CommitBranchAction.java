@@ -196,7 +196,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         Collection<ObjectNode> refsNodes = new LinkedList<>();
-        ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo, parentBranchId);
+        ObjectNode branchNode = BranchValidator.createRefObjectNode(project, branchInfo, parentBranchId);
         refsNodes.add(branchNode);
 
         if (parentCommitsBehind > 0 || parentCommitsAhead > 0) {

@@ -92,7 +92,7 @@ public class BranchValidator {
             targetBranches.add(EsiUtils.getCurrentBranch(primaryProject));
         }
         for (EsiUtils.EsiBranchInfo branch : targetBranches) {
-            ObjectNode branchJson = getRefObjectNode(project, branch, null);
+            ObjectNode branchJson = createRefObjectNode(project, branch, null);
             if (branchJson == null) {
                 continue;
             }
@@ -199,7 +199,7 @@ public class BranchValidator {
         }
     }
 
-    public static ObjectNode getRefObjectNode(Project project, EsiUtils.EsiBranchInfo branchInfo, String parentRefId) {
+    public static ObjectNode createRefObjectNode(Project project, EsiUtils.EsiBranchInfo branchInfo, String parentRefId) {
         ObjectNode refObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         String name = branchInfo.getName();
         if (name.equals("master")) {

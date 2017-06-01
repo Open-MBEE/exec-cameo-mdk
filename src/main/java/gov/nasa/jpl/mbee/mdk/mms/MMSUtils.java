@@ -136,12 +136,81 @@ public class MMSUtils {
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
         //do cancellable request if progressStatus exists
-        Utils.guilog("[INFO] Searching for " + elementIds.size() + " elements from server...");
+        Application.getInstance().getGUILog().log("[INFO] Searching for " + elementIds.size() + " elements from server...");
         if (progressStatus != null) {
             return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
         return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
+
+    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        return getCredentialsTicket(project, null, username, password, progressStatus);
+    }
+
+    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
+    }
+
+    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
+        if (requestUri == null) {
+            return null;
+        }
+        requestUri.setPath(requestUri.getPath() + "/api/login");
+        requestUri.clearParameters();
+
+        //build request
+        URI requestDest = requestUri.build();
+        HttpRequestBase request = new HttpPost(requestDest);
+
+        request.addHeader("Content-Type", "application/json");
+        request.addHeader("charset", (Consts.UTF_8).displayName());
+
+        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
+        credentials.put("username", username);
+        credentials.put("password", password);
+        String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
+        ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
+
+        // do request
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        sendMMSRequest(project, request, progressStatus, responseJson);
+        JsonNode value;
+        if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
+            return value.asText();
+        }
+        return null;
+    }
+
+    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
+        URIBuilder requestUri = MMSUtils.getServiceUri(project);
+        if (requestUri == null) {
+            return "";
+        }
+        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticket);
+        requestUri.clearParameters();
+
+        //build request
+        URI requestDest = requestUri.build();
+        HttpRequestBase request = new HttpGet(requestDest);
+
+        // do request
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        sendMMSRequest(project, request, progressStatus, responseJson);
+
+        // parse response
+        JsonNode value;
+        if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
+            return value.asText();
+        }
+        return "";
+    }
+
+
 
     /**
      * General purpose method for making http requests for file upload.
@@ -404,63 +473,6 @@ public class MMSUtils {
         }
     }
 
-    public static String sendCredentials(Project project, String username, String password, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null) {
-            return null;
-        }
-        requestUri.setPath(requestUri.getPath() + "/api/login");
-        requestUri.clearParameters();
-
-        //build request
-        URI requestDest = requestUri.build();
-        HttpRequestBase request = new HttpPost(requestDest);
-
-        request.addHeader("Content-Type", "application/json");
-        request.addHeader("charset", (Consts.UTF_8).displayName());
-
-        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-        credentials.put("username", username);
-        credentials.put("password", password);
-        String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
-        ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
-
-        // do request
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-        sendMMSRequest(project, request, progressStatus, responseJson);
-        JsonNode value;
-        if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
-            return value.asText();
-        }
-        return null;
-    }
-
-    public static String validateCredentials(Project project, String ticket, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null) {
-            return "";
-        }
-        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticket);
-        requestUri.clearParameters();
-
-        //build request
-        URI requestDest = requestUri.build();
-        HttpRequestBase request = new HttpGet(requestDest);
-
-        // do request
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-        sendMMSRequest(project, request, progressStatus, responseJson);
-
-        // parse response
-        JsonNode value;
-        if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
-            return value.asText();
-        }
-        return "";
-    }
-
     private static boolean processResponse(int responseCode, InputStream responseStream, Project project) {
         boolean throwServerException = false;
         JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
@@ -479,7 +491,9 @@ public class MMSUtils {
 
         if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
             Application.getInstance().getGUILog().log("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried.");
-            MMSLogoutAction.logoutAction(project);
+            if (project != null) {
+                MMSLogoutAction.logoutAction(project);
+            }
             throwServerException = true;
         }
         // if we got messages out, we hit a valid endpoint and got a valid response and either a 200 or a 404 is an acceptable response code. If not, throw is already true.
@@ -491,7 +505,6 @@ public class MMSUtils {
             // big flashing red letters that the action failed, or as close as we're going to get
             Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[ERROR] Operation failed due to server error. Server code: " + responseCode + "</span>" +
                     "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>"); // hidden characters for easy search
-//            Utils.showPopupMessage("Action failed. See notification window for details.");
         }
         return !throwServerException;
     }
@@ -551,26 +564,6 @@ public class MMSUtils {
         return null;
     }
 
-    public static String getUri(Project project)
-            throws IOException, URISyntaxException, ServerException {
-        URIBuilder uriBuilder = getServiceProjectsUri(project);
-        File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
-        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-            JsonNode arrayNode;
-            if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-                JsonNode value;
-                for (JsonNode projectNode : arrayNode) {
-                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                            && ((value = projectNode.get(MDKConstants.URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                        return value.asText();
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     /**
      * Returns a URIBuilder object with a path = "/alfresco/service". Used as the base for all of the rest of the
      * URIBuilder generating convenience classes.
@@ -580,7 +573,15 @@ public class MMSUtils {
      * @throws URISyntaxException
      */
     public static URIBuilder getServiceUri(Project project) {
-        String urlString = getServerUrl(project);
+        return getServiceUri(project, null);
+    }
+
+    public static URIBuilder getServiceUri(String baseUrl) {
+        return getServiceUri(null, baseUrl);
+    }
+
+    private static URIBuilder getServiceUri(Project project, String baseUrl) {
+        String urlString = project == null ? baseUrl : getServerUrl(project);
         if (urlString == null) {
             return null;
         }
@@ -597,7 +598,7 @@ public class MMSUtils {
         }
 
         uri.setPath("/alfresco/service");
-        if (TicketUtils.isTicketSet(project)) {
+        if (project != null && TicketUtils.isTicketSet(project)) {
             uri.setParameter("alf_ticket", TicketUtils.getTicket(project));
         }
         return uri;
@@ -611,7 +612,15 @@ public class MMSUtils {
      * @return URIBuilder
      */
     public static URIBuilder getServiceOrgsUri(Project project) {
-        URIBuilder siteUri = getServiceUri(project);
+        return getServiceOrgsUri(project, null);
+    }
+
+    public static URIBuilder getServiceOrgsUri(String baseUrl) {
+        return getServiceOrgsUri(null, baseUrl);
+    }
+
+    private static URIBuilder getServiceOrgsUri(Project project, String baseUrl) {
+        URIBuilder siteUri = getServiceUri(project, baseUrl);
         if (siteUri == null) {
             return null;
         }
@@ -620,13 +629,21 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}"
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects"
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
     public static URIBuilder getServiceProjectsUri(Project project) {
-        URIBuilder projectUri = getServiceUri(project);
+        return getServiceProjectsUri(project, null);
+    }
+
+    public static URIBuilder getServiceProjectsUri(String baseUrl) {
+        return getServiceProjectsUri(null, baseUrl);
+    }
+
+    private static URIBuilder getServiceProjectsUri(Project project, String baseUrl) {
+        URIBuilder projectUri = getServiceUri(project, baseUrl);
         if (projectUri == null) {
             return null;
         }
@@ -635,22 +652,30 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs/{$WORKSPACE_ID}"
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs"
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
     public static URIBuilder getServiceProjectsRefsUri(Project project) {
-        URIBuilder refsUri = getServiceProjectsUri(project);
+        return getServiceProjectsRefsUri(project, null, null);
+    }
+
+    public static URIBuilder getServiceProjectsRefsUri(String baseUrl, String projectId) {
+        return getServiceProjectsRefsUri(null, baseUrl, projectId);
+    }
+
+    private static URIBuilder getServiceProjectsRefsUri(Project project, String baseUrl, String projectId) {
+        URIBuilder refsUri = getServiceProjectsUri(project, baseUrl);
         if (refsUri == null) {
             return null;
         }
-        refsUri.setPath(refsUri.getPath() + "/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/refs");
+        refsUri.setPath(refsUri.getPath() + "/" + (project == null ? projectId : Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())) + "/refs");
         return refsUri;
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs/{$WORKSPACE_ID}/elements/${ELEMENT_ID}"
+     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs/{REF_ID}/elements"
      * if element is not null
      *
      * @param project The project to gather the mms url and site name information from
@@ -674,27 +699,6 @@ public class MMSUtils {
         return name;
     }
 
-    public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject());
-    }
 
-    public static ObjectNode getProjectObjectNode(IProject iProject) {
-        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
-        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
-        String resourceId = "";
-        if (ProjectUtilities.getProject(iProject).isRemote()) {
-            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
-        }
-        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
-        String categoryId = "";
-        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject && !resourceId.isEmpty()) {
-            categoryId = EsiUtils.getCategoryID(resourceId);
-        }
-        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        projectObjectNode.put(MDKConstants.URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
-        return projectObjectNode;
-    }
 
 }

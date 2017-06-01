@@ -15,6 +15,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
+import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import org.apache.http.client.utils.URIBuilder;
@@ -134,7 +135,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // update request with project post path
         requestUri.setPath(requestUri.getPath() + "/" + orgId + "/projects");
         Collection<ObjectNode> projects = new LinkedList<>();
-        projects.add(MMSUtils.getProjectObjectNode(project));
+        projects.add(ProjectValidator.createProjectObjectNode(project));
 
         // do project post request
         try {

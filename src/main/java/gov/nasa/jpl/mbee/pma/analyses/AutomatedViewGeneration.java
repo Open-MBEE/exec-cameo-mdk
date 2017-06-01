@@ -1,5 +1,7 @@
 package gov.nasa.jpl.mbee.pma.analyses;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -11,8 +13,11 @@ import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
@@ -20,6 +25,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.commons.cli.*;
+import org.apache.http.client.utils.URIBuilder;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -187,7 +193,7 @@ public class AutomatedViewGeneration extends CommandLine {
             throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, InterruptedException, URISyntaxException {
         String message;
 
-        if (!(parser.hasOption("mmsUsername") && parser.hasOption("mmsPassword"))) {
+        if (!(parser.hasOption("mmsUsername") && parser.hasOption("mmsPassword") && parser.hasOption("mmsHost") && parser.hasOption("mmsPort"))) {
             illegalStateFailure("[FAILURE] Unable to specify MMS credentials, one or more of the required mms parameters were missing.");
         }
         message = "[OPERATION] Specifying MMS credentials.";
@@ -197,14 +203,67 @@ public class AutomatedViewGeneration extends CommandLine {
         if (!(parser.hasOption("projectId") && parser.hasOption("refId") && parser.hasOption("targetViewId"))) {
             illegalStateFailure("[FAILURE] Unable to load project, one or more of the required ID parameters were missing.");
         }
+
+        message = "[OPERATION] Resolving Teamwork Cloud project URI parameters.";
+        logMessage(message);
+
+        String projectTwcId = "",
+                branchTwcId = "",
+                ticketStore;
+        ObjectNode projectsNode = JacksonUtils.getObjectMapper().createObjectNode(),
+                refsNode = JacksonUtils.getObjectMapper().createObjectNode();
+
+        try {
+            ticketStore = MMSUtils.getCredentialsTicket(parser.getOptionValue("mmsHost"), parser.getOptionValue("mmsUsername"), parser.getOptionValue("mmsPassword"), null);
+            URIBuilder mmsProjectUri = MMSUtils.getServiceProjectsUri(parser.getOptionValue("mmsHost"));
+            mmsProjectUri.setParameter("alf_ticket", ticketStore).setPath(mmsProjectUri.getPath() + "/" + parser.getOptionValue("projectId"));
+            MMSUtils.sendMMSRequest(null, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsProjectUri), null, projectsNode);
+            if (!parser.getOptionValue("refId").equals("master")) {
+                URIBuilder mmsRefUri = MMSUtils.getServiceProjectsRefsUri(parser.getOptionValue("mmsHost"), parser.getOptionValue("projectId"));
+                mmsRefUri.setParameter("alf_ticket", ticketStore).setPath(mmsRefUri.getPath() + "/" + parser.getOptionValue("refId"));
+                MMSUtils.sendMMSRequest(null, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsRefUri), null, refsNode);
+            }
+        } catch (IOException | ServerException e) {
+            illegalStateFailure("[FAILURE] Unable to load project, exception occurred while resolving one of the required project URI parameters.");
+            e.printStackTrace();
+        }
+
+        JsonNode arrayNode, idNode;
+        if ((arrayNode = projectsNode.get("projects")) != null && arrayNode.isArray()) {
+            for (JsonNode projectNode : arrayNode) {
+                if (projectNode.isObject()
+                        && (idNode = projectNode.get(MDKConstants.ID_KEY)) != null && idNode.isTextual() && idNode.asText().equals((parser.getOptionValue(("projectId"))))
+                        && (idNode = projectNode.get(MDKConstants.TWC_ID_KEY)) != null && idNode.isTextual()) {
+                    projectTwcId = idNode.asText();
+                }
+            }
+        }
+        if ((arrayNode = refsNode.get("refs")) != null && arrayNode.isArray()) {
+            for (JsonNode refNode : arrayNode) {
+                if (refNode.isObject()
+                        && (idNode = refNode.get(MDKConstants.ID_KEY)) != null && idNode.isTextual() && idNode.asText().equals((parser.getOptionValue(("projectId"))))
+                        && (idNode = refNode.get(MDKConstants.TWC_ID_KEY)) != null && idNode.isTextual()) {
+                    branchTwcId = idNode.asText();
+                }
+            }
+        }
+
+        if (projectTwcId.isEmpty() || (branchTwcId.isEmpty() && !parser.getOptionValue("refId").equals("master"))) {
+            illegalStateFailure("[FAILURE] Unable to load project, failed to resolve one or more of the required project URI parameters.");
+        }
+
         message = "[OPERATION] Loading Teamwork Cloud project.";
         logMessage(message);
 
-        String uri = "twcloud:/" + parser.getOptionValue("projectId") + "/" + parser.getOptionValue("refId");
-        ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(new java.net.URI(uri));
+        java.net.URI ugh = new java.net.URI("twcloud:/" + projectTwcId);
+
+        java.net.URI projectUri = new URIBuilder().setScheme("twcloud").setHost(projectTwcId).setPath(branchTwcId).build();
+//        String uri = "twcloud:/" + parser.getOptionValue("projectId") + "/" + parser.getOptionValue("refId");
+//        ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(projectUri);
+        ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(ugh);
         // if updated projectDescriptor is now null, error out and indicate branch problem
         if (projectDescriptor == null || projectDescriptor.getRepresentationString() == null) {
-            illegalStateFailure("[FAILURE] Unable to find TeamworkCloud project " + uri + ".");
+            illegalStateFailure("[FAILURE] Unable to find TeamworkCloud project " + projectUri.toString() + ".");
         }
         // we have a valid project descriptor, so load the associated project
         Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
