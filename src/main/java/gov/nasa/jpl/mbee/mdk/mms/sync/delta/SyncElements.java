@@ -28,7 +28,6 @@ import java.util.*;
  * Created by igomes on 7/25/16.
  */
 
-//@donbot update json simple to jackson
 public class SyncElements {
     private static final String CLEAR_SUFFIX = "_clear";
     private static final DateFormat NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
@@ -182,11 +181,16 @@ public class SyncElements {
     }
 
     public static Changelog<String, Void> buildChangelog(SyncElement syncElement) {
+        Changelog<String, Void> changelog = new Changelog<>();
+        return buildChangelog(changelog, syncElement);
+    }
+
+    public static Changelog<String, Void> buildChangelog(Changelog changelog, SyncElement syncElement) {
         String comment = ModelHelper.getComment(syncElement.getElement());
         try {
             JsonNode jsonNode = JacksonUtils.getObjectMapper().readTree(comment);
             if (jsonNode != null && jsonNode.isObject()) {
-                return buildChangelog((ObjectNode) jsonNode);
+                return buildChangelog(changelog, (ObjectNode) jsonNode);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -196,6 +200,10 @@ public class SyncElements {
 
     public static Changelog<String, Void> buildChangelog(ObjectNode objectNode) {
         Changelog<String, Void> changelog = new Changelog<>();
+        return buildChangelog(changelog, objectNode);
+    }
+
+    public static Changelog<String, Void> buildChangelog(Changelog changelog, ObjectNode objectNode) {
         for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
             JsonNode jsonNode = objectNode.get(changeType.name().toLowerCase());
             if (jsonNode == null || !jsonNode.isArray()) {
