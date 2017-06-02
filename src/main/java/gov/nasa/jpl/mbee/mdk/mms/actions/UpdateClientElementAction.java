@@ -258,18 +258,18 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             };
             Changelog<String, Pair<Element, ObjectNode>> changelog = emfBulkImporter.apply(elementsToUpdate, project, progressStatus);
             for (Map.Entry<Pair<Element, ObjectNode>, Exception> entry : emfBulkImporter.getFailedElementMap().entrySet()) {
-                Element element = entry.getKey().getKey();
-                ObjectNode objectNode = entry.getKey().getValue();
-                Exception exception = entry.getValue();
-                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
+                Element entryElement = entry.getKey().getKey();
+                ObjectNode entryObjectNode = entry.getKey().getValue();
+                Exception entryException = entry.getValue();
+                JsonNode sysmlIdJsonNode = entryObjectNode.get(MDKConstants.ID_KEY);
                 if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                     continue;
                 }
-                String sysmlId = sysmlIdJsonNode.asText();
+                String entryId = sysmlIdJsonNode.asText();
                 // TODO Abstract this stuff to a converter @donbot
                 String name = null;
-                if (element == null || Project.isElementDisposed(element)) {
-                    JsonNode nameJsonNode = objectNode.get(MDKConstants.NAME_KEY);
+                if (entryElement == null || Project.isElementDisposed(entryElement)) {
+                    JsonNode nameJsonNode = entryObjectNode.get(MDKConstants.NAME_KEY);
                     if (nameJsonNode != null && nameJsonNode.isTextual()) {
                         name = nameJsonNode.asText("<>");
                     }
@@ -277,33 +277,32 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         name = "<>";
                     }
                 }
-                ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(element != null && !Project.isElementDisposed(element) ? element : project.getPrimaryModel(), "["
-                        + (element != null && !Project.isElementDisposed(element) ? "UPDATE" : "CREATE") + " FAILED]" + (element == null || Project.isElementDisposed(element) ? " " + objectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + sysmlId : "")
-                        + ((element == null || Project.isElementDisposed(element)) && exception != null ? " -" : "") + (exception != null ? " " + (exception instanceof ReadOnlyElementException ? "Element is not editable." : exception.getMessage()) : ""));
-                ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
-                addUpdateElementActions(validationRuleViolation, element, sysmlId, objectNode);
-                (exception instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(validationRuleViolation);
-                failedChangelog.addChange(sysmlId, objectNode, element != null && !Project.isElementDisposed(element) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
+                ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(entryElement != null && !Project.isElementDisposed(entryElement) ? entryElement : project.getPrimaryModel(), "["
+                        + (entryElement != null && !Project.isElementDisposed(entryElement) ? "UPDATE" : "CREATE") + " FAILED]" + (entryElement == null || Project.isElementDisposed(entryElement) ? " " + entryObjectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + entryId : "")
+                        + ((entryElement == null || Project.isElementDisposed(entryElement)) && entryException != null ? " -" : "") + (entryException != null ? " " + (entryException instanceof ReadOnlyElementException ? "Element is not editable." : entryException.getMessage()) : ""));
+                addUpdateElementActions(validationRuleViolation, entryElement, entryId, entryObjectNode);
+                (entryException instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(validationRuleViolation);
+                failedChangelog.addChange(entryId, entryObjectNode, entryElement != null && !Project.isElementDisposed(entryElement) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
-                Element element = entry.getKey();
-                String sysmlId = element.getLocalID();
-                ObjectNode clientElementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
-                ObjectNode serverElementObjectNode = entry.getValue();
-                JsonNode diff = JsonPatchFunction.getInstance().apply(clientElementObjectNode, serverElementObjectNode);
+                Element entryElement = entry.getKey();
+                String entryId = entryElement.getLocalID();
+                ObjectNode entryClientElementObjectNode = Converters.getElementToJsonConverter().apply(entryElement, project);
+                ObjectNode entryServerElementObjectNode = entry.getValue();
+                JsonNode diff = JsonPatchFunction.getInstance().apply(entryClientElementObjectNode, entryServerElementObjectNode);
 
                 ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(entry.getKey(), "[NOT EQUIVALENT]");
                 ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
                 copyActionsCategory.setNested(true);
                 validationRuleViolation.addAction(copyActionsCategory);
-                copyActionsCategory.addAction(new ClipboardAction("ID", sysmlId));
-                copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + element.getLocalID()));
+                copyActionsCategory.addAction(new ClipboardAction("ID", entryId));
+                copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + entryElement.getLocalID()));
                 try {
-                    copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(clientElementObjectNode)));
+                    copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(entryClientElementObjectNode)));
                 } catch (JsonProcessingException ignored) {
                 }
                 try {
-                    copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(serverElementObjectNode)));
+                    copyActionsCategory.addAction(new ClipboardAction("MMS JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(entryServerElementObjectNode)));
                 } catch (JsonProcessingException ignored) {
                 }
                 try {
