@@ -33,7 +33,7 @@ public class SpecializeStructureAction extends SRAction {
         UNSPECIALIZABLE_CLASSIFIERS.add(PrimitiveType.class);
     }
 
-    private final boolean recursionMode;
+    private final boolean isRecursive;
     private final boolean individualMode;
     private Classifier classifier;
     private ArrayList<Namespace> recursionList;
@@ -44,7 +44,7 @@ public class SpecializeStructureAction extends SRAction {
         this.classifier = classifier;
         recursionList = new ArrayList<>();
         this.isValidationMode = isValidationMode;
-        this.recursionMode = isRecursive;
+        this.isRecursive = isRecursive;
         this.individualMode = isIndividual;
     }
 
@@ -103,6 +103,7 @@ public class SpecializeStructureAction extends SRAction {
         for (NamedElement namedElement : specific.getOwnedMember()) {
             if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf() && !(namedElement instanceof Classifier)) {
                 redefinedElements.add((RedefinableElement) namedElement);
+                ((RedefinableElement) namedElement).getRedefinedElement().clear();
             }
         }
         Utils.createGeneralization(classifier, specific);
@@ -111,13 +112,13 @@ public class SpecializeStructureAction extends SRAction {
         for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                 final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
-                SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, recursionMode, traveled, visited, individualMode);
+                SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, traveled, visited, individualMode, isRecursive);
                 //redefinedElements.add(elementToBeRedefined);
             }
         }
-        for (RedefinableElement redefinedElement : redefinedElements) {
-            redefinedElement.dispose();
-        }
+//        for (RedefinableElement redefinedElement : redefinedElements) {
+//            redefinedElement.dispose();
+//        }
         return specific;
     }
 

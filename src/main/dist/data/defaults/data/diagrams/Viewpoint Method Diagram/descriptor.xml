@@ -121,6 +121,9 @@
                         <stereotype id="_17_0_2_3_407019f_1375477696989_696093_29350"/>
                     </custom>
                 </group>
+                <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode" description="StructuredQuery" listAsElement="false" opposite="false" id="IDaction_1496357935371_619362_0">
+                    <stereotype id="_17_0_1_244d03ea_1319512564304_251824_28229"/>
+                </custom>
             </actions>
         </category>
         <category name="Templates" id="action_category_1326673608860_693478_0" expandedByDefault="true">
