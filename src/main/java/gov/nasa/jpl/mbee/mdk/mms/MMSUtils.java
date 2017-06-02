@@ -554,26 +554,6 @@ public class MMSUtils {
         return null;
     }
 
-    public static String getUri(Project project)
-            throws IOException, URISyntaxException, ServerException {
-        URIBuilder uriBuilder = getServiceProjectsUri(project);
-        File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
-        try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-            ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
-            JsonNode arrayNode;
-            if (((arrayNode = response.get("projects")) != null) && arrayNode.isArray()) {
-                JsonNode value;
-                for (JsonNode projectNode : arrayNode) {
-                    if (((value = projectNode.get(MDKConstants.ID_KEY)) != null) && value.isTextual() && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                            && ((value = projectNode.get(MDKConstants.URI_KEY)) != null) && value.isTextual() && !value.asText().isEmpty()) {
-                        return value.asText();
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
     /**
      * Returns a URIBuilder object with a path = "/alfresco/service". Used as the base for all of the rest of the
      * URIBuilder generating convenience classes.
@@ -675,29 +655,6 @@ public class MMSUtils {
             name = name.substring(0, name.length() - 1);
         }
         return name;
-    }
-
-    public static ObjectNode getProjectObjectNode(Project project) {
-        return getProjectObjectNode(project.getPrimaryProject());
-    }
-
-    public static ObjectNode getProjectObjectNode(IProject iProject) {
-        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
-        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
-        String resourceId = "";
-        if (ProjectUtilities.getProject(iProject).isRemote()) {
-            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
-        }
-        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
-        String categoryId = "";
-        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject && !resourceId.isEmpty()) {
-            categoryId = EsiUtils.getCategoryID(resourceId);
-        }
-        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        projectObjectNode.put(MDKConstants.URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
-        return projectObjectNode;
     }
 
 }
