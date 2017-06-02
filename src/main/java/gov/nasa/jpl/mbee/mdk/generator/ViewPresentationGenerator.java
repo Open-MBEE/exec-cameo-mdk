@@ -4,10 +4,13 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.commands.Command;
+import com.nomagic.magicdraw.commands.CommandHistory;
+import com.nomagic.magicdraw.commands.MacroCommand;
+import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
@@ -188,15 +191,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 for (Map.Entry<Element, Constraint> entry : viewConstraintHashMap.entrySet()) {
                     Constraint constraint = entry.getValue();
-                    if (!constraint.isEditable()) {
-                        updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + ">  could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
-                        failure = true;
-                        continue;
-                    }
                     Application.getInstance().getGUILog().log("Deleting legacy view constraint: " + Converters.getElementToIdConverter().apply(constraint));
                     try {
-                        ModelElementsManager.getInstance().removeElement(constraint);
-                    } catch (ReadOnlyElementException e) {
+                        Command command = RemoveCommandCreator.getCommand(constraint);
+                        command.execute();
+                        MacroCommand macroCommand = CommandHistory.getCommandForAppend(constraint);
+                        macroCommand.add(command);
+                    } catch (RuntimeException e) {
                         updateFailed.addViolation(new ValidationRuleViolation(constraint, "[UPDATE FAILED] This view constraint <" + constraint.getLocalID() + "> could not be deleted automatically and needs to be deleted to prevent ID conflicts."));
                         failure = true;
                     }
@@ -407,7 +408,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             if (element instanceof InstanceSpecification) {
                                 instanceSpecificationMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(instanceObjectNode, (InstanceSpecification) element));
                             }
-                        } catch (ImportException | ReadOnlyElementException e) {
+                        } catch (ImportException e) {
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import instance specification " + instanceObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             instanceObjectNodesIterator.remove();
                         }
@@ -431,7 +432,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                             if (element instanceof Slot) {
                                 slotMap.put(Converters.getElementToIdConverter().apply(element), new Pair<>(slotObjectNode, (Slot) element));
                             }
-                        } catch (ImportException | ReadOnlyElementException e) {
+                        } catch (ImportException e) {
                             Application.getInstance().getGUILog().log("[WARNING] Failed to import slot " + slotObjectNode.get(MDKConstants.ID_KEY) + ": " + e.getMessage());
                             slotObjectNodesIterator.remove();
                         }
@@ -708,8 +709,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             for (Element element : elementsToDelete) {
                 try {
-                    ModelElementsManager.getInstance().removeElement(element);
-                } catch (ReadOnlyElementException ignored) {
+                    Command command = RemoveCommandCreator.getCommand(element);
+                    command.execute();
+                    MacroCommand macroCommand = CommandHistory.getCommandForAppend(element);
+                    macroCommand.add(command);
+                } catch (RuntimeException ignored) {
                     System.out.println("Could not clean up " + element.getLocalID());
                 }
             }

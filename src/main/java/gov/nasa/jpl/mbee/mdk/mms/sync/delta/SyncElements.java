@@ -3,11 +3,13 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.delta;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.commands.Command;
+import com.nomagic.magicdraw.commands.CommandHistory;
+import com.nomagic.magicdraw.commands.MacroCommand;
+import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -28,7 +30,6 @@ import java.util.*;
  * Created by igomes on 7/25/16.
  */
 
-//@donbot update json simple to jackson
 public class SyncElements {
     private static final String CLEAR_SUFFIX = "_clear";
     private static final DateFormat NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
@@ -111,8 +112,12 @@ public class SyncElements {
             if (clearedSyncElement == null) {
                 // delete dangling clear blocks
                 try {
-                    ModelElementsManager.getInstance().removeElement(clearElement);
-                } catch (ReadOnlyElementException e) {
+                    Command command = RemoveCommandCreator.getCommand(clearElement);
+                    command.execute();
+                    MacroCommand macroCommand = CommandHistory.getCommandForAppend(clearElement);
+                    macroCommand.add(command);
+                } catch (RuntimeException e) {
+                    System.out.println("Unable to delete clearElement " + clearElement.getName());
                     e.printStackTrace();
                 }
                 continue;
@@ -122,9 +127,21 @@ public class SyncElements {
                 continue;
             }
             try {
-                ModelElementsManager.getInstance().removeElement(clearedSyncElement.getElement());
-                ModelElementsManager.getInstance().removeElement(clearElement);
-            } catch (ReadOnlyElementException e) {
+                Command command = RemoveCommandCreator.getCommand(clearedSyncElement.getElement());
+                command.execute();
+                MacroCommand macroCommand = CommandHistory.getCommandForAppend(clearedSyncElement.getElement());
+                macroCommand.add(command);
+            } catch (RuntimeException e) {
+                System.out.println("Unable to delete clearedSyncElement " + clearedSyncElement.getElement().getName());
+                e.printStackTrace();
+            }
+            try {
+                Command command = RemoveCommandCreator.getCommand(clearElement);
+                command.execute();
+                MacroCommand macroCommand = CommandHistory.getCommandForAppend(clearElement);
+                macroCommand.add(command);
+            } catch (RuntimeException e) {
+                System.out.println("Unable to delete clearElement " + clearElement.getName());
                 e.printStackTrace();
             }
         }
@@ -156,9 +173,12 @@ public class SyncElements {
             }
             if (syncElement.getElement().isEditable()) {
                 try {
-                    ModelElementsManager.getInstance().removeElement(syncElement.getElement());
-                    continue;
-                } catch (ReadOnlyElementException e) {
+                    Command command = RemoveCommandCreator.getCommand(syncElement.getElement());
+                    command.execute();
+                    MacroCommand macroCommand = CommandHistory.getCommandForAppend(syncElement.getElement());
+                    macroCommand.add(command);
+                } catch (RuntimeException e) {
+                    System.out.println("Unable to delete clearedSyncElement " + syncElement.getElement().getName());
                     e.printStackTrace();
                 }
             }
@@ -182,11 +202,16 @@ public class SyncElements {
     }
 
     public static Changelog<String, Void> buildChangelog(SyncElement syncElement) {
+        Changelog<String, Void> changelog = new Changelog<>();
+        return buildChangelog(changelog, syncElement);
+    }
+
+    public static Changelog<String, Void> buildChangelog(Changelog changelog, SyncElement syncElement) {
         String comment = ModelHelper.getComment(syncElement.getElement());
         try {
             JsonNode jsonNode = JacksonUtils.getObjectMapper().readTree(comment);
             if (jsonNode != null && jsonNode.isObject()) {
-                return buildChangelog((ObjectNode) jsonNode);
+                return buildChangelog(changelog, (ObjectNode) jsonNode);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -196,6 +221,10 @@ public class SyncElements {
 
     public static Changelog<String, Void> buildChangelog(ObjectNode objectNode) {
         Changelog<String, Void> changelog = new Changelog<>();
+        return buildChangelog(changelog, objectNode);
+    }
+
+    public static Changelog<String, Void> buildChangelog(Changelog changelog, ObjectNode objectNode) {
         for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
             JsonNode jsonNode = objectNode.get(changeType.name().toLowerCase());
             if (jsonNode == null || !jsonNode.isArray()) {

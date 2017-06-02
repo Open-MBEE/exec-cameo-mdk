@@ -298,7 +298,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                 progressStatus.setIndeterminate(initialProgressStatusIndeterminate);
             }
         }
-        return changelog;
+        return (changelog == null ? new Changelog<>() : changelog);
     }
 
     private static void preloadRecursively(EObject eObject) {
