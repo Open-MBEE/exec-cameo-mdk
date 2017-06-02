@@ -206,9 +206,15 @@ public class ElementValidator implements RunnableWithProgress {
         validationRuleViolation.addAction(new CommitClientElementAction(id, clientElement != null ? clientElement.getKey() : null, clientElement != null ? clientElement.getValue() : null, project));
         validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElement != null ? clientElement.getKey() : null, serverElement, project) {
             @Override
-            public void updateState() {
-                super.updateState();
-                setEnabled(clientElement != null && clientElement.getKey() != null && clientElement.getKey().isEditable());
+            protected ValidationRuleViolation editableElementViolation(Element element, ObjectNode objectNode, String sysmlId) {
+                if (element != null && !element.isEditable()) {
+                    if (objectNode == null) {
+                        return new ValidationRuleViolation(element, "[DELETE FAILED] " + element.getHumanName() + " is not editable.");
+                    }
+                    return new ValidationRuleViolation(!Project.isElementDisposed(element) ? element : Project.getProject(element).getPrimaryModel(),
+                            "[" + (!Project.isElementDisposed(element) ? "UPDATE" : "CREATE") + " FAILED] " + (Project.isElementDisposed(element) ? sysmlId : element.getHumanName()) + " is not editable.");
+                }
+                return null;
             }
         });
 
