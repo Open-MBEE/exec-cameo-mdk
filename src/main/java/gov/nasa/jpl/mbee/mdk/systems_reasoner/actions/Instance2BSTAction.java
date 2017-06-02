@@ -73,7 +73,7 @@ public class Instance2BSTAction extends SRAction {
         for (final Slot slot : instance.getSlot()) {
             if (slot.getDefiningFeature() instanceof Property) {
                 final Property property = (Property) slot.getDefiningFeature();
-                final Property redefinedAttribute = (Property) SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, property, false, true);
+                final Property redefinedAttribute = (Property) SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, property,true, false);
 
                 if (!slot.hasValue()) {
                     continue;

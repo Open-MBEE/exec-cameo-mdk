@@ -326,11 +326,10 @@ public class PresentationElementUtils {
         String name;
         if (pe.isViewDocHack()) {
             newspec = new JSONObject();
-            newspec.put("source", Converters.getElementToIdConverter().apply(is));
             newspec.put("type", "Paragraph");
+            newspec.put("sourceType", "reference");
+            newspec.put("source", Converters.getElementToIdConverter().apply(pe.getView()));
             newspec.put("sourceProperty", "documentation");
-            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + Converters.getElementToIdConverter().apply(pe.getView()) + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
-            ModelHelper.setComment(is, transclude);
             name = "View Documentation";
             classifier = tparaC;
         }
