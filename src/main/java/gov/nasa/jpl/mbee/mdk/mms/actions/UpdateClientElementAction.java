@@ -149,8 +149,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
     public void run(ProgressStatus progressStatus) {
         validationSuite.getValidationRules().forEach(validationRule -> validationRule.getViolations().clear());
         LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-        elementsToUpdate = (elementsToUpdate == null ? Collections.EMPTY_LIST : elementsToUpdate);
-        elementsToDelete = (elementsToDelete == null ? Collections.EMPTY_LIST : elementsToDelete);
+        elementsToUpdate = (elementsToUpdate == null ? Collections.emptyList() : elementsToUpdate);
+        elementsToDelete = (elementsToDelete == null ? Collections.emptyList() : elementsToDelete);
         if (elementsToUpdate.isEmpty() && elementsToDelete.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] No MMS changes to update locally.");
             return;
