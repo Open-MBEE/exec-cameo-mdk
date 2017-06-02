@@ -20,19 +20,19 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
+import gov.nasa.jpl.mbee.mdk.actions.LockAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
-import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.validation.*;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.validation.*;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
@@ -155,28 +155,34 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             Application.getInstance().getGUILog().log("[INFO] No MMS changes to update locally.");
             return;
         }
-        // check elementsToUpdate against editableElementViolation function, and remove if appropriate (allows overriding of the function to remove elements under different conditions)
-        Collection<ObjectNode> removedObjects = new ArrayList<>();
+        // check elementsToUpdate against getEditableValidationRuleViolation function, and remove if appropriate (allows overriding of the function to remove elements under different conditions)
+        Collection<ObjectNode> elementsToNotUpdate = new ArrayList<>();
         for (ObjectNode currentObjectNode : elementsToUpdate) {
             Element currentElement = null;
             JsonNode idValue;
-            String currentId = "";
+            String currentId = null;
             if ((idValue = currentObjectNode.get(MDKConstants.ID_KEY)) != null && idValue.isTextual() && !(currentId = idValue.asText()).isEmpty()) {
                 currentElement = Converters.getIdToElementConverter().apply(currentId, project);
             }
-            if (currentElement == null || project.isDisposed(currentElement)) {
+            if (currentElement == null && currentId == null) {
+                elementsToNotUpdate.add(currentObjectNode);
                 continue;
             }
-            ValidationRuleViolation validationRuleViolation = editableElementViolation(currentElement, currentObjectNode, currentId);
+            ValidationRuleViolation validationRuleViolation = getEditableValidationRuleViolation(currentElement, currentObjectNode, currentId);
             if (validationRuleViolation != null) {
+                if (element != null && !element.isEditable()) {
+                    validationRuleViolation.addAction(new LockAction(element, false));
+                    validationRuleViolation.addAction(new LockAction(element, true));
+                }
                 addUpdateElementActions(validationRuleViolation, currentElement, currentId, currentObjectNode);
                 editableValidationRule.addViolation(validationRuleViolation);
-                failedChangelog.addChange(currentId, currentObjectNode, (!Project.isElementDisposed(currentElement) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED));
-                removedObjects.add(currentObjectNode);
+                failedChangelog.addChange(currentId, currentObjectNode, (currentElement != null && !project.isDisposed(currentElement) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED));
+                elementsToNotUpdate.add(currentObjectNode);
             }
         }
-        elementsToUpdate.removeAll(removedObjects);
+        elementsToUpdate.removeAll(elementsToNotUpdate);
         boolean initialAutoNumbering = Application.getInstance().getProject().getOptions().isAutoNumbering();
+        Application.getInstance().getProject().getOptions().setAutoNumbering(false);
         if (localSyncTransactionCommitListener != null) {
             localSyncTransactionCommitListener.setDisabled(true);
         }
@@ -184,7 +190,6 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             if (!elementsToUpdate.isEmpty()) {
                 Application.getInstance().getGUILog().log("[INFO] Attempting to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " locally.");
             }
-            Application.getInstance().getProject().getOptions().setAutoNumbering(false);
             EMFBulkImporter emfBulkImporter = new EMFBulkImporter(NAME) {
                 @Override
                 public void onSuccess() {
@@ -201,8 +206,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                             continue;
                         }
 
-                        // check elements against editableElementViolation function, and continue if they should not be deleted (allows overriding of the function to remove elements under different conditions)
-                        ValidationRuleViolation validationRuleViolation = editableElementViolation(element, null, id);
+                        // check elements against getEditableValidationRuleViolation function, and continue if they should not be deleted (allows overriding of the function to remove elements under different conditions)
+                        ValidationRuleViolation validationRuleViolation = getEditableValidationRuleViolation(element, null, id);
                         if (validationRuleViolation != null) {
                             addUpdateElementActions(validationRuleViolation, element, id, null);
                             editableValidationRule.addViolation(validationRuleViolation);
@@ -341,7 +346,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         this.elementsToDelete = elementsToDelete;
     }
 
-    protected ValidationRuleViolation editableElementViolation(Element element, ObjectNode objectNode, String sysmlId) {
+    protected ValidationRuleViolation getEditableValidationRuleViolation(Element element, ObjectNode objectNode, String sysmlId) {
         return null;
     }
 
