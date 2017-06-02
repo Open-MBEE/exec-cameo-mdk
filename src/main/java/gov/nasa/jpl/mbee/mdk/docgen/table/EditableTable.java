@@ -1,31 +1,3 @@
-/*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
- * U.S. Government sponsorship acknowledged.
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are 
- * permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
- * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.docgen.table;
 
 import au.com.bytecode.opencsv.CSVReader;
@@ -40,7 +12,8 @@ import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -237,7 +210,7 @@ public class EditableTable extends JDialog {
 
         private void importFromCsv(CSVReader reader) throws IOException {
             GUILog gl = Application.getInstance().getGUILog();
-            Project prj = Application.getInstance().getProject();
+            Project project = Application.getInstance().getProject();
             List<List<PropertyEnum>> what = ntable.getWhatToChange();
             List<PropertyEnum> whatCol = ntable.getWhatToChangeCol();
             String[] line = reader.readNext(); // ignore header
@@ -251,12 +224,13 @@ public class EditableTable extends JDialog {
                 // gl.log("line: " + props.toString());
                 int col = 0;
                 for (int c = 0; c < props.length; c = c + 2) {
-                    if (props[c].equals("")) {
+                    if (props[c].isEmpty()) {
                         col++;
                         continue;
                     }
                     PropertyEnum whatToChange = null;
-                    BaseElement e = prj.getElementByID(props[c]);
+                    BaseElement e = Converters.getIdToElementConverter()
+                            .apply(props[c], project);
                     String value = props[c + 1];
                     if (what != null && what.size() > row && what.get(row).size() > col) {
                         whatToChange = what.get(row).get(col);
@@ -271,7 +245,7 @@ public class EditableTable extends JDialog {
                     }
 
                     if (e != null) {
-                        if (el instanceof Element && ((Element) el).getID().equals(props[c])) {
+                        if (el instanceof Element && Converters.getElementToIdConverter().apply((Element) el).equals(props[c])) {
                             if (e.isEditable()) {
                                 try {
                                     String curValue = (String) ntable.getValueAt(row, col);
@@ -279,7 +253,7 @@ public class EditableTable extends JDialog {
                                     if (e instanceof Property && whatToChange == PropertyEnum.VALUE) {
                                         if (UML2ModelUtil.getDefault(((Property) e)) == null
                                                 || !UML2ModelUtil.getDefault(((Property) e)).equals(value)) {
-                                            if (value.equals("")) {
+                                            if (value.isEmpty()) {
                                                 int ok = JOptionPane.showConfirmDialog(null,
                                                         "You're about to set the value of "
                                                                 + ((NamedElement) e).getQualifiedName()
@@ -307,7 +281,7 @@ public class EditableTable extends JDialog {
                                     }
                                     else if (e instanceof NamedElement && whatToChange == PropertyEnum.NAME) {
                                         if (!((NamedElement) e).getName().equals(value)) {
-                                            if (value.equals("")) {
+                                            if (value.isEmpty()) {
                                                 int ok = JOptionPane.showConfirmDialog(null,
                                                         "You're about to set the name of "
                                                                 + ((NamedElement) e).getQualifiedName()
@@ -443,7 +417,7 @@ public class EditableTable extends JDialog {
                 for (int j = 0; j < cols; j++) {
                     Object mdo = m.get(i).get(j);
                     if (mdo != null && mdo instanceof Element) {
-                        s.add(((Element) mdo).getID());
+                        s.add(Converters.getElementToIdConverter().apply((Element) mdo));
                     }
                     else {
                         s.add("");

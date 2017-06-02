@@ -1,39 +1,12 @@
-/*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
- * U.S. Government sponsorship acknowledged.
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are 
- * permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * @author Johannes Gross
- ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.emf;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
+import com.nomagic.ci.persistence.IAttachedProject;
+import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -44,9 +17,10 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.stream.MDKCollectors;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
@@ -84,7 +58,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             if (nestedValueSpecification && preProcessor == PreProcessor.VALUE_SPECIFICATION) {
                 continue;
             }
-            objectNode = preProcessor.getFunction().apply(element, project, objectNode);
+            try {
+                objectNode = preProcessor.getFunction().apply(element, project, objectNode);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getLocalID() + " in " + project.getName());
+            }
             if (objectNode == null) {
                 return null;
             }
@@ -93,7 +72,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             ExportFunction function = Arrays.stream(EStructuralFeatureOverride.values())
                     .filter(override -> override.getPredicate().test(element, eStructuralFeature)).map(EStructuralFeatureOverride::getFunction)
                     .findAny().orElse(DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION);
-            objectNode = function.apply(element, project, eStructuralFeature, objectNode);
+            try {
+                objectNode = function.apply(element, project, eStructuralFeature, objectNode);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                System.err.println(element);
+            }
             if (objectNode == null) {
                 return null;
             }
@@ -105,27 +89,36 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (eObject == null) {
             return null;
         }
-        Project project;
-        if (eObject instanceof Model && (project = Project.getProject((Model) eObject)).getPrimaryModel() == eObject) {
-            return project.getPrimaryProject().getProjectID() + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
+        if (!(eObject instanceof Element)) {
+            return EcoreUtil.getID(eObject);
         }
-        if (eObject instanceof InstanceSpecification && ((InstanceSpecification) eObject).getStereotypedElement() != null) {
-            return getEID(((InstanceSpecification) eObject).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
+        Element element = (Element) eObject;
+        Project project = Project.getProject(element);
+
+        // custom handling of primary model id
+        if (element instanceof Model && project.getPrimaryModel() == element) {
+            return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
+        }
+
+        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the jms sync counts in some cases (annoying, but ultimately harmless)
+        // NOTE - this spoofing is replicated in LocalSyncTransactionListener in order to properly add / remove elements in the unsynched queue. any updates here should be replicated there as well.
+        if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
+            return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
         }
         /*if (eObject instanceof TimeExpression && ((TimeExpression) eObject).get_timeEventOfWhen() != null) {
             return getEID(((TimeExpression) eObject).get_timeEventOfWhen()) + MDKConstants.TIME_EXPRESSION_ID_SUFFIX;
         }*/
-        if (eObject instanceof ValueSpecification && ((ValueSpecification) eObject).getOwningSlot() != null) {
-            ValueSpecification slotValue = (ValueSpecification) eObject;
+        if (element instanceof ValueSpecification && ((ValueSpecification) element).getOwningSlot() != null) {
+            ValueSpecification slotValue = (ValueSpecification) element;
             return getEID(slotValue.getOwningSlot()) + MDKConstants.SLOT_VALUE_ID_SEPARATOR + slotValue.getOwningSlot().getValue().indexOf(slotValue) + "-" + slotValue.eClass().getName().toLowerCase();
         }
-        if (eObject instanceof Slot) {
-            Slot slot = (Slot) eObject;
-            if (slot.getOwningInstance() != null && ((Slot) eObject).getDefiningFeature() != null) {
-                return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
+        if (element instanceof Slot) {
+            Slot slot = (Slot) element;
+            if (slot.getOwningInstance() != null && ((Slot) element).getDefiningFeature() != null) {
+                return getEID(slot.getOwningInstance()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
             }
         }
-        return EcoreUtil.getID(eObject);
+        return element.getLocalID();
     }
 
     private static void dumpUMLPackageLiterals() {
@@ -147,49 +140,19 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     }
 
     private enum PreProcessor {
-        TYPE(
-                (element, project, objectNode) -> {
-                    String type = element.eClass().getName();
-                    /*if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getDocumentStereotype())) {
-                        type = "Document";
-                    }
-                    else if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getViewStereotype())) {
-                        type = "View";
-                    }*/
-                    objectNode.put(MDKConstants.TYPE_KEY, type);
-                    return objectNode;
-                }
-        ),
-        DOCUMENTATION(
-                (element, project, objectNode) -> {
-                    objectNode.put("documentation", ModelHelper.getComment(element));
-                    return objectNode;
-                }
-        ),
         APPLIED_STEREOTYPE(
                 (element, project, objectNode) -> {
+                    if (element instanceof Model && !element.equals(project.getPrimaryModel())) {
+                        return objectNode;
+                    }
                     ArrayNode applied = StereotypesHelper.getStereotypes(element).stream().map(stereotype -> TextNode.valueOf(getEID(stereotype))).collect(MDKCollectors.toArrayNode());
                     objectNode.set("_appliedStereotypeIds", applied);
                     return objectNode;
                 }
         ),
-        SITE_CHARACTERIZATION(
-                (element, project, objectNode) -> {
-                    if (element instanceof Package) {
-                        objectNode.put("_isSite", Utils.isSiteChar((Package) element));
-                    }
-                    return objectNode;
-                }
+        ATTACHED_PROJECT(
+                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && !(element instanceof Model) ? null : objectNode
         ),
-        VALUE_SPECIFICATION(
-                (element, project, objectNode) -> element instanceof ValueSpecification ? null : objectNode
-        ),
-        /*CONNECTOR_END(
-                (element, project, objectNode) -> element instanceof ConnectorEnd ? null : objectNode
-        ),
-        DIAGRAM(
-                (element, project, objectNode) -> element instanceof Diagram ? null : objectNode
-        ),*/
         COMMENT(
                 (element, project, objectNode) -> {
                     if (!(element instanceof Comment)) {
@@ -199,16 +162,104 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     return comment.getAnnotatedElement().size() == 1 && comment.getAnnotatedElement().iterator().next() == comment.getOwner() ? null : objectNode;
                 }
         ),
-        SYNC(
-                (element, project, objectNode) -> element == null || element.getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
-                        element.getOwner() != null && element.getOwner().getID().endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
+        /*CONNECTOR_END(
+                (element, project, objectNode) -> element instanceof ConnectorEnd ? null : objectNode
         ),
-        ATTACHED_PROJECT(
-                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) ? null : objectNode
+        DIAGRAM(
+                (element, project, objectNode) -> element instanceof Diagram ? null : objectNode
+        ),*/
+        DIAGRAM_TYPE(
+                (element, project, objectNode) -> {
+                    if (element instanceof Diagram) {
+                        objectNode.put(MDKConstants.DIAGRAM_TYPE_KEY, ((Diagram) element).get_representation() != null ? ((Diagram) element).get_representation().getType() : null);
+                    }
+                    return objectNode;
+                }
+        ),
+        DOCUMENTATION(
+                (element, project, objectNode) -> {
+                    if (element instanceof Model && !element.equals(project.getPrimaryModel())) {
+                        return objectNode;
+                    }
+                    objectNode.put("documentation", ModelHelper.getComment(element));
+                    return objectNode;
+                }
+        ),
+        MOUNT(
+                (element, project, objectNode) -> {
+                    if (!(element instanceof Model)
+                            || element.equals(project.getPrimaryModel())
+                            || objectNode.has(MDKConstants.MOUNTED_ELEMENT_ID_KEY)) {
+                        return objectNode;
+                    }
+                    IProject iProject = ProjectUtilities.getProjectFor(element);
+                    if (!(iProject instanceof IAttachedProject)) {
+                        return null;
+                    }
+                    IAttachedProject attachedProject = (IAttachedProject) iProject;
+                    boolean isRemote = ProjectUtilities.isRemote(attachedProject) && !attachedProject.getLocationURI().isFile();
+
+                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX);
+                    objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject));
+                    String branchName;
+                    EsiUtils.EsiBranchInfo esiBranchInfo = null;
+                    if (isRemote && (esiBranchInfo = EsiUtils.getCurrentBranch(attachedProject)) == null) {
+                        return null;
+                    }
+                    if (!isRemote || (branchName = esiBranchInfo.getName()) == null || branchName.equals("trunk")) {
+                        branchName = "master";
+                    }
+                    objectNode.put(MDKConstants.REF_ID_KEY, branchName);
+                    objectNode.put(MDKConstants.TWC_VERSION_KEY, isRemote ? ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()) : -1);
+                    objectNode.put(MDKConstants.URI_KEY, attachedProject.getProjectDescriptor().getLocationUri().toString());
+                    return objectNode;
+                }
+        ),
+        SITE_CHARACTERIZATION(
+                (element, project, objectNode) -> {
+                    if (element instanceof Model) {
+                        return objectNode;
+                    }
+                    if (element instanceof Package) {
+                        objectNode.put("_isSite", Utils.isSiteChar(project, (Package) element));
+                    }
+                    return objectNode;
+                }
+        ),
+        SYNC(
+                (element, project, objectNode) -> element == null || Converters.getElementToIdConverter().apply(element).endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ||
+                        element.getOwner() != null && Converters.getElementToIdConverter().apply(element.getOwner()).endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode
+        ),
+        // TWC_ID is disabled indefinitely, due to our inability to update the ID and associated issues
+//        TWC_ID(
+//                (element, project, objectNode) -> {
+//                    if (project.isRemote()) {
+//                        objectNode.put(MDKConstants.TWC_ID_KEY, element.getID());
+//                    }
+//                    return objectNode;
+//                }
+//        ),
+        TYPE(
+                (element, project, objectNode) -> {
+                    String type = element instanceof Model && !element.equals(project.getPrimaryModel()) ? "Mount" : element.eClass().getName();
+                    objectNode.put(MDKConstants.TYPE_KEY, type);
+                    return objectNode;
+                }
+        ),
+        VALUE_SPECIFICATION(
+                (element, project, objectNode) -> {
+                    Element e = element;
+                    do {
+                        if (e instanceof ValueSpecification) {
+                            return null;
+                        }
+                    } while ((e = e.getOwner()) != null);
+                    return objectNode;
+                }
         ),
         VIEW(
                 (element, project, objectNode) -> {
-                    Stereotype viewStereotype = Utils.getViewStereotype();
+                    Stereotype viewStereotype = Utils.getViewStereotype(project);
                     if (viewStereotype == null || !StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
                         return objectNode;
                     }
@@ -217,14 +268,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         return objectNode;
                     }
                     objectNode.set(MDKConstants.CONTENTS_KEY, DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null));
-                    return objectNode;
-                }
-        ),
-        DIAGRAM_TYPE(
-                (element, project, objectNode) -> {
-                    if (element instanceof Diagram) {
-                        objectNode.put(MDKConstants.DIAGRAM_TYPE_KEY, ((Diagram) element).get_representation() != null ? ((Diagram) element).get_representation().getType() : null);
-                    }
                     return objectNode;
                 }
         );
@@ -246,13 +289,18 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         }
         else if (object instanceof Collection) {
             ArrayNode arrayNode = JacksonUtils.getObjectMapper().createArrayNode();
-            for (Object o : ((Collection<?>) object)) {
-                JsonNode serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
-                if (serialized == null && o != null) {
-                    // failed to serialize; taking the conservative approach and returning entire thing as null
-                    return NullNode.getInstance();
+            try {
+                for (Object o : ((Collection<?>) object)) {
+                    JsonNode serialized = EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(o, project, eStructuralFeature);
+                    if (serialized == null && o != null) {
+                        // failed to serialize; taking the conservative approach and returning entire thing as null
+                        return NullNode.getInstance();
+                    }
+                    arrayNode.add(serialized);
                 }
-                arrayNode.add(serialized);
+            } catch (UnsupportedOperationException e) {
+                e.printStackTrace();
+                System.err.println("Object: " + object.getClass());
             }
             return arrayNode;
         }
@@ -262,10 +310,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         }
         else if (eStructuralFeature instanceof EReference && object instanceof EObject) {
             return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)), project, eStructuralFeature);
-        }
-        else if (eStructuralFeature.getEType() instanceof EDataType) {
-            return TextNode.valueOf(EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object));
-            //return ((Enumerator) object).getLiteral();
         }
         else if (object instanceof String) {
             return TextNode.valueOf((String) object);
@@ -296,6 +340,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         }
         else if (object instanceof byte[]) {
             return BinaryNode.valueOf((byte[]) object);
+        }
+        else if (eStructuralFeature.getEType() instanceof EDataType) {
+            return TextNode.valueOf(EcoreUtil.convertToString((EDataType) eStructuralFeature.getEType(), object));
+            //return ((Enumerator) object).getLiteral();
         }
         // if we get here we have no idea what to do with this object
         return NullNode.getInstance();
@@ -334,7 +382,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     /*if (element instanceof ValueSpecification && !(element instanceof TimeExpression)) {
                         return objectNode;
                     }*/
-                    objectNode.put(MDKConstants.SYSML_ID_KEY, getEID(element));
+                    objectNode.put(MDKConstants.ID_KEY, getEID(element));
                     return objectNode;
                 }
         ),
@@ -347,7 +395,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     }*/
                     //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, UMLPackage.Literals.ELEMENT__OWNER, objectNode);
                     // safest way to prevent circular references, like with ValueSpecifications
-                    objectNode.put(MDKConstants.OWNER_ID_KEY, project.getPrimaryModel() == element ? project.getPrimaryProject().getProjectID() : getEID(owner));
+                    objectNode.put(MDKConstants.OWNER_ID_KEY, element instanceof Model ? Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) : getEID(owner));
                     return objectNode;
                 }
         ),
@@ -357,6 +405,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         OWNED(
                 (element, eStructuralFeature) -> eStructuralFeature.getName().startsWith("owned") && !eStructuralFeature.isOrdered(),
+                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
+        NESTED(
+                (element, eStructuralFeature) -> eStructuralFeature.getName().startsWith("nested"),
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
         PACKAGED_ELEMENT(
@@ -418,6 +470,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         UML_CLASS(
                 (element, eStructuralFeature) -> eStructuralFeature == UMLPackage.Literals.CLASSIFIER__UML_CLASS || eStructuralFeature == UMLPackage.Literals.PROPERTY__UML_CLASS || eStructuralFeature == UMLPackage.Literals.OPERATION__UML_CLASS,
                 EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
+        ),
+        MOUNT(
+                (element, eStructuralFeature) -> element instanceof Model,
+                (element, project, eStructuralFeature, objectNode) -> (objectNode.get(MDKConstants.TYPE_KEY).asText().equals("Mount") ? EMPTY_E_STRUCTURAL_FEATURE_FUNCTION : DEFAULT_E_STRUCTURAL_FEATURE_FUNCTION).apply(element, project, eStructuralFeature, objectNode)
         );
 
         private BiPredicate<Element, EStructuralFeature> predicate;

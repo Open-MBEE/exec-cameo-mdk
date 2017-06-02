@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2016>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2016>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
  *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
@@ -35,12 +35,9 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.core.project.ProjectsManager;
-import com.nomagic.magicdraw.merge.MergeUtil;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork.application.TeamworkUtils;
-import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
@@ -50,15 +47,13 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-import com.nomagic.utils.ErrorHandler;
-import gov.nasa.jpl.mbee.mdk.ems.ReferenceException;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -89,15 +84,19 @@ public class MagicDrawHelper {
      *****************************************************************************************/
 
     public static ProjectDescriptor openProject(File file) throws IOException {
-        final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
+        return openProject(file.toURI());
+    }
+
+    public static ProjectDescriptor openProject(URI uri) throws IOException {
+        final ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(uri);
         if (projectDescriptor == null) {
-            throw new IOException(Paths.get(file.toURI()).toString() + " could not generate a project descriptor.");
+            throw new IOException(uri.toString() + " could not generate a project descriptor.");
         }
         final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
         projectsManager.loadProject(projectDescriptor, true);
         final Project project = projectsManager.getActiveProject();
         if (project == null) {
-            throw new IOException(Paths.get(file.toURI()).toString() + " could not be loaded into MagicDraw.");
+            throw new IOException(uri.toString() + " could not be loaded into MagicDraw.");
         }
         return projectDescriptor;
     }
@@ -114,7 +113,6 @@ public class MagicDrawHelper {
     public static void closeProject() {
         Application.getInstance().getProjectsManager().closeProject();
     }
-
 
 
     /*****************************************************************************************
@@ -177,48 +175,6 @@ public class MagicDrawHelper {
         Application instance = Application.getInstance();
         instance.getGUILog().log(s);
         System.out.println(s);
-    }
-
-    /*****************************************************************************************
-     *
-     * Teamwork Lock Functions
-     *
-     *****************************************************************************************/
-
-    /**
-     * Returns the user who holds a lock on the element, or null if there is no
-     * lock holder
-     *
-     * @param target The element you want the lock information from
-     */
-    public static boolean confirmElementLocked(Element target) {
-        List<Element> lockedElements = new ArrayList<Element>();
-        lockedElements.addAll(TeamworkUtils.getLockedElement(Application.getInstance().getProject(), null));
-        return lockedElements.contains(target);
-    }
-
-    /**
-     * Commits to teamwork and releases locks in a robust manner.
-     * <p>
-     * Note - this is a time consuming operation when elements are created outside of the __MMSSync__ folder
-     *
-     * @param user
-     * @param commitMessage
-     * @return
-     */
-    public static boolean teamworkCommitReleaseLocks(String user, String commitMessage) {
-        Project prj = Application.getInstance().getProject();
-        Collection<Element> lockedElements = TeamworkUtils.getLockedElement(prj, user);
-        Element syncpkg = ElementFinder.getElement("Package", "__MMSSync__");
-        if (syncpkg != null) {
-            lockedElements.addAll(ElementFinder.findElements(syncpkg));
-        }
-        boolean success = TeamworkUtils.commitProject(prj, commitMessage, null, lockedElements, null);
-        lockedElements = TeamworkUtils.getLockedElement(prj, user);
-        if (syncpkg == null || !lockedElements.isEmpty()) {
-            TeamworkUtils.unlockElement(Application.getInstance().getProject(), ElementFinder.getModelRoot(), true, true, true);
-        }
-        return success;
     }
 
     /*****************************************************************************************
@@ -437,7 +393,8 @@ public class MagicDrawHelper {
 
     public static Class createBlock(String name, Element owner) {
         Class newBlock = createClass(name, owner);
-        Element stereo = ElementFinder.getElementByID("_11_5EAPbeta_be00301_1147424179914_458922_958", Project.getProject(owner));
+        Element stereo = Converters.getIdToElementConverter()
+                .apply("_11_5EAPbeta_be00301_1147424179914_458922_958", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }
@@ -488,7 +445,7 @@ public class MagicDrawHelper {
 
     public static Class createDocument(String name, Element owner) {
         Class newDocument = createClass(name, owner);
-        Stereotype sysmlDocument = Utils.getDocumentStereotype();
+        Stereotype sysmlDocument = Utils.getDocumentStereotype(Project.getProject(owner));
         StereotypesHelper.addStereotype(newDocument, sysmlDocument);
         return newDocument;
     }
@@ -508,7 +465,8 @@ public class MagicDrawHelper {
 
     public static Property createPartProperty(String name, Element owner) {
         Property newProp = createProperty(name, owner, null, null, null, null, null);
-        Element stereo = ElementFinder.getElementByID("_15_0_be00301_1199377756297_348405_2678", Project.getProject(owner));
+        Element stereo = Converters.getIdToElementConverter()
+                .apply("_15_0_be00301_1199377756297_348405_2678", Project.getProject(owner));
         if (!(stereo instanceof Stereotype)) {
             return null;
         }
@@ -576,7 +534,7 @@ public class MagicDrawHelper {
 
     public static Component createSiteCharComponent(String name, Element owner) {
         Component comp = createComponent(name, owner);
-        Component genTarget = Utils.getSiteCharacterizationComponent();
+        Component genTarget = Utils.getSiteCharacterizationComponent(Project.getProject(owner));
         createGeneralization("", comp, comp, genTarget);
         createDependency("", comp, comp, owner);
         return comp;
@@ -590,7 +548,7 @@ public class MagicDrawHelper {
 
     public static Class createView(String name, Element owner) {
         Class newView = createClass(name, owner);
-        Stereotype sysmlView = Utils.getViewStereotype();
+        Stereotype sysmlView = Utils.getViewStereotype(Project.getProject(owner));
         StereotypesHelper.addStereotype(newView, sysmlView);
         return newView;
     }
@@ -630,95 +588,4 @@ public class MagicDrawHelper {
         ModelHelper.setClientElement(dr, source);
         ModelHelper.setSupplierElement(dr, target);
     }
-
-
-    /******************************************************************************************************
-     *
-     * Deprecated methods to deal with when appropriate
-     *
-     ******************************************************************************************************/
-
-    /**
-     * Creates a specified number of diagrams in the open project
-     *
-     * @param num number of diagrams to be created.
-     */
-    @Deprecated
-    public static void createDiagrams(int num) {
-        for (int i = 0; i < num; i++) {
-            try {
-                ModelElementsManager.getInstance().createDiagram(DiagramTypeConstants.UML_CLASS_DIAGRAM,
-                        (Namespace) ElementFinder.getModelRoot());
-            } catch (ReadOnlyElementException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * 3-way merge - merge branch changes to trunk.
-     *
-     * @param projectName remote project name.
-     * @param branchName  branch name.
-     * @return merged project.
-     * @throws java.rmi.RemoteException remote exception.
-     */
-    @Deprecated
-    public static void mergeToTrunk(String projectName, String branchName) throws Exception {
-        final ProjectDescriptor trunkDescriptor = TeamworkUtils.getRemoteProjectDescriptorByQualifiedName(projectName);
-
-        // load target project (trunk head)
-        final ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
-        projectsManager.loadProject(trunkDescriptor, true);
-        final Project targetProject = projectsManager.getActiveProject();
-        projectsManager.closeProject();
-
-        // ancestor is 1st version from trunk
-        final ProjectDescriptor ancestor = createProjectDescriptor(projectName, trunkDescriptor, 1);
-
-        // source is 2nd version from branch
-        String branchedProjectName = TeamworkUtils.generateProjectQualifiedName(projectName,
-                new String[]{branchName});
-        final ProjectDescriptor branchDescriptor = TeamworkUtils
-                .getRemoteProjectDescriptorByQualifiedName(branchedProjectName);
-        final ProjectDescriptor source = createProjectDescriptor(branchedProjectName, branchDescriptor, 2);
-
-        // merge project (prefer low memory usage to performance)
-        MergeUtil.merge(targetProject, source, ancestor, MergeUtil.ConflictResolution.TARGET_PREFERRED,
-                new SimpleErrorHandler(), MergeUtil.Optimization.MEMORY);
-    }
-
-    @Deprecated
-    public static ProjectDescriptor createProjectDescriptor(String projectName, ProjectDescriptor projectDescriptor,
-                                                            int version) {
-        final String remoteID = ProjectDescriptorsFactory.getRemoteID(projectDescriptor.getURI());
-        return ProjectDescriptorsFactory.createRemoteProjectDescriptor(remoteID, projectName, version);
-    }
-
-    @Deprecated
-    public static void renameElement(NamedElement targetElement, String targetString) {
-    }
-
-    @Deprecated
-    public static void twcCommitReleaseLocks(String teamworkUsername, String targetString) {
-    }
-
-    @Deprecated
-    public static Element copyAndPaste(Element sourceElement, Element targetElement) {
-        return null;
-    }
-
-    @Deprecated
-    public static void createDiagrams(int i, Package testElementHolder) {
-    }
-
-    @Deprecated
-    private static class SimpleErrorHandler implements ErrorHandler<Exception> {
-        @Override
-        public void error(Exception ex) throws Exception {
-            // just print stack trace
-            ex.printStackTrace();
-        }
-    }
-
 }

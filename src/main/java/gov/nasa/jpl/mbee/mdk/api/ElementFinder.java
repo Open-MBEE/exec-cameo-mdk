@@ -1,29 +1,29 @@
 /*******************************************************************************
- * Copyright (c) <2016>, California Institute of Technology ("Caltech").  
+ * Copyright (c) <2016>, California Institute of Technology ("Caltech").
  * U.S. Government sponsorship acknowledged.
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are 
+ * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
  *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
+ *  - Redistributions of source code must retain the above copyright notice, this list of
  *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
+ *  - Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other materials
  *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
+ *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory,
+ *    nor the names of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+ * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
@@ -54,7 +54,7 @@ public class ElementFinder {
      * @param parent The top level element whose owned elements you want to select
      */
     public static List<Element> findElements(Element parent) {
-        List<Element> elements = new ArrayList<Element>();
+        List<Element> elements = new ArrayList<>();
         elements.add(parent);
         elements.addAll(parent.getOwnedElement());
         Element current;
@@ -143,7 +143,7 @@ public class ElementFinder {
                 retrievedElements.add((NamedElement) elem);
             }
         }
-        System.out.println("Found " + retrievedElements.size() + " NamedElement(s) conaining name " + elementName);
+        System.out.println("Found " + retrievedElements.size() + " NamedElement(s) containing name " + elementName);
         if (retrievedElements.size() > 0) {
             return retrievedElements;
         }
@@ -188,7 +188,7 @@ public class ElementFinder {
         if (elements == null) {
             return null;
         }
-        List<Element> retrievedElements = new ArrayList<Element>();
+        List<Element> retrievedElements = new ArrayList<>();
         for (Element elem : elements) {
             if (elem.getHumanType().equals(elementType)) {
                 retrievedElements.add(elem);
@@ -226,13 +226,13 @@ public class ElementFinder {
         if (owner == null) {
             owner = getModelRoot();
         }
-        ArrayList<Element> elements = new ArrayList<Element>();
+        ArrayList<Element> elements = new ArrayList<>();
         elements.add(owner);
         elements.addAll(owner.getOwnedElement());
         Element current;
         for (int i = 0; i < elements.size(); i++) {
             current = elements.get(i);
-            if (current.getHumanName().equals(type + (name.equals("") ? "" : " " + name))) {
+            if (current.getHumanName().equals(type + (name.isEmpty() ? "" : " " + name))) {
                 return current;
             }
             if (current.hasOwnedElement()) {
@@ -254,22 +254,10 @@ public class ElementFinder {
     }
 
     /**
-     * Finds the indicated element based on the ID
-     *
-     * @param targetID String containing target ID in project
-     * @return
-     */
-    public static Element getElementByID(String targetID, Project project) {
-        Element target = (Element) project.getElementByID(targetID);
-        return target;
-    }
-
-    /**
      * Finds an element within the passed project's primary model. Does not search other modules loaded in project.
      *
      * @param qualifiedName in the format of magicdraw's qualified name: ex "Package::hello::world
-     * @param project project to search the primary model on
-     *
+     * @param project       project to search the primary model on
      * @return found element, or null if not found
      */
     @Deprecated

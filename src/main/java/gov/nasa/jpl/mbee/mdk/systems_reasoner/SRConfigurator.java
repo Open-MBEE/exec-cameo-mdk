@@ -20,8 +20,10 @@ import java.util.List;
 public class SRConfigurator implements BrowserContextAMConfigurator, DiagramContextAMConfigurator {
 
     public static final String NAME = "Systems Reasoner";
-
-    private SRAction validateAction = null, createSpecificAction = null, ontoBehaviorAction = null, instance2BSTAction = null, createInstanceMenuAction = null, aspectAction, copyAction = null;
+    public static final String ID = "Specialize Structure";
+    public static final String ID_RECURSIVE = "Specialize Structure Recursively";
+    public static final String ID_RECURSIVE_INDIVIDUAL = "Specialize Recursively & Individually";
+    private SRAction validateAction, importCSVAction, specializeStructureRecursiveAction, specializeStructureAction, createBSTAction, ontoBehaviorAction, instance2BSTAction, createInstanceMenuAction, aspectAction, selectAspectAction;
 
     @Override
     public int getPriority() {
@@ -54,11 +56,14 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         // refresh the actions for every new click (or selection)
         validateAction = null;
         ontoBehaviorAction = null;
-        createSpecificAction = null;
+        specializeStructureRecursiveAction = null;
+        specializeStructureAction = null;
+        createBSTAction = null;
         createInstanceMenuAction = null;
         instance2BSTAction = null;
         aspectAction = null;
-        copyAction = null;
+        importCSVAction = null;
+        selectAspectAction = null;
 
         ActionsCategory category = (ActionsCategory) manager.getActionFor("SRMain");
         if (category == null) {
@@ -89,12 +94,14 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
                 category.addAction(ontoBehaviorAction);
             }
         }
-        category.addAction(copyAction);
-        category.addAction(createSpecificAction);
+        category.addAction(importCSVAction);
+        category.addAction(selectAspectAction);
+        category.addAction(specializeStructureAction);
+        category.addAction(specializeStructureRecursiveAction);
+        category.addAction(createBSTAction);
         category.addAction(createInstanceMenuAction);
         category.addAction(instance2BSTAction);
         category.addAction(aspectAction);
-        //category.addAction(new TestAction());
 
         category.getActions().clear();
         category.setUseActionForDisable(true);
@@ -136,9 +143,7 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
         // otherwise, add the classes to the ValidateAction action
         validateAction = new ValidateAction(validatableElements);
         category.addAction(validateAction);
-        if (!classifiers.isEmpty()) {
-            aspectAction = new AspectAction(classifiers);
-        }
+
         if (!instances.isEmpty()) {
             instance2BSTAction = new Instance2BSTAction(instances);
         }
@@ -151,20 +156,18 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
             return null;
         }
         if (element instanceof Package) {
-            copyAction = new CopyAction(element);
+            selectAspectAction = new CopyAction(element);
         }
         if (element instanceof Classifier) {
             final Classifier classifier = (Classifier) element;
             validateAction = new ValidateAction(classifier);
+            importCSVAction = new ImportCSVAction(classifier);
             ontoBehaviorAction = new CreateOntoBehaviorBlocks(classifier, false);
-            createSpecificAction = new CreateSpecificAction(classifier, false);
+            specializeStructureAction = new SpecializeStructureAction(classifier, false, ID, false, false);
+            specializeStructureRecursiveAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE, true, false);
+            createBSTAction = new SpecializeStructureAction(classifier, false, ID_RECURSIVE_INDIVIDUAL, true, true);
             createInstanceMenuAction = new CreateInstanceMenuAction(classifier);
-            aspectAction = new AspectAction(classifier);
-            copyAction = new CopyAction(element);
-
-            if (classifier instanceof Behavior) {
-
-            }
+            selectAspectAction = new AspectSelectionAction(classifier);
         }
         else if (element instanceof InstanceSpecification) {
             final InstanceSpecification instance = (InstanceSpecification) element;

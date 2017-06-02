@@ -3,7 +3,8 @@ package gov.nasa.jpl.mbee.mdk.api.docgen;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+
 import java.util.function.Function;
 
 /**
@@ -18,12 +19,14 @@ public abstract class ElementReference<E extends Element> implements Function<Pr
 
     @Override
     public E apply(Project project) {
-        BaseElement element = project.getElementByID(getID());
+        BaseElement element = Converters.getIdToElementConverter()
+                .apply(getID(), project);
         E e = convertInstanceOfObject(element, getElementClass());
         if (e != null) {
             return e;
         }
-        element = ElementFinder.getElementByID(getID(), project);
+        element = Converters.getIdToElementConverter()
+                .apply(getID(), project);
         e = convertInstanceOfObject(element, getElementClass());
         return e;
     }

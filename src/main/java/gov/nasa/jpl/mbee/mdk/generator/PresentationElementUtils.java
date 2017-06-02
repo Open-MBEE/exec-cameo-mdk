@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
@@ -12,7 +12,8 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -23,31 +24,40 @@ import java.util.*;
 public class PresentationElementUtils {
     public static final String ID_SUFFIX = "_pei";
 
-    private Classifier paraC = PresentationElementEnum.OPAQUE_PARAGRAPH.get().apply(Application.getInstance().getProject()),
-            tparaC = PresentationElementEnum.PARAGRAPH.get().apply(Application.getInstance().getProject()),
-            tableC = PresentationElementEnum.OPAQUE_TABLE.get().apply(Application.getInstance().getProject()),
-            listC = PresentationElementEnum.OPAQUE_LIST.get().apply(Application.getInstance().getProject()),
-            imageC = PresentationElementEnum.OPAQUE_IMAGE.get().apply(Application.getInstance().getProject()),
-            sectionC = PresentationElementEnum.OPAQUE_SECTION.get().apply(Application.getInstance().getProject()),
-            tsectionC = PresentationElementEnum.SECTION.get().apply(Application.getInstance().getProject());
-    private Stereotype presentsStereotype = Utils.getPresentsStereotype(),
-            productStereotype = Utils.getProductStereotype(),
-            viewClassStereotype = Utils.getViewClassStereotype();
-    private Property generatedFromView = Utils.getGeneratedFromViewProperty(),
-            generatedFromElement = Utils.getGeneratedFromElementProperty();
+    private Project project;
 
-    private ElementsFactory ef = Application.getInstance().getProject().getElementsFactory();
+    private Classifier paraC,
+            tparaC,
+            tableC,
+            listC,
+            imageC,
+            sectionC,
+            tsectionC;
 
-    public Stereotype getPresentsStereotype() {
-        return presentsStereotype;
-    }
+    private Stereotype presentsStereotype,
+            productStereotype,
+            viewClassStereotype;
 
-    public Stereotype getProductStereotype() {
-        return productStereotype;
-    }
+    private Property generatedFromView,
+            generatedFromElement;
 
-    public Stereotype getViewClassStereotype() {
-        return viewClassStereotype;
+    private ElementsFactory ef;
+
+    {
+        this.project = Application.getInstance().getProject();
+        this.paraC = PresentationElementEnum.OPAQUE_PARAGRAPH.get().apply(project);
+        this.tparaC = PresentationElementEnum.PARAGRAPH.get().apply(project);
+        this.tableC = PresentationElementEnum.OPAQUE_TABLE.get().apply(project);
+        this.listC = PresentationElementEnum.OPAQUE_LIST.get().apply(project);
+        this.imageC = PresentationElementEnum.OPAQUE_IMAGE.get().apply(project);
+        this.sectionC = PresentationElementEnum.OPAQUE_SECTION.get().apply(project);
+        this.tsectionC = PresentationElementEnum.SECTION.get().apply(project);
+        this.presentsStereotype = Utils.getPresentsStereotype(project);
+        this.productStereotype = Utils.getProductStereotype(project);
+        this.viewClassStereotype = Utils.getViewClassStereotype(project);
+        this.generatedFromView = Utils.getGeneratedFromViewProperty(project);
+        this.generatedFromElement = Utils.getGeneratedFromElementProperty(project);
+        this.ef = project.getElementsFactory();
     }
 
     public static Expression getViewOrSectionExpression(Element viewOrSection) {
@@ -115,7 +125,7 @@ public class PresentationElementUtils {
                         try {
                             JSONObject ob = (JSONObject) (new JSONParser()).parse(((LiteralString) is.getSpecification()).getValue());
                             //TODO sourceProperty json key migration? @donbot
-                            if (view.getID().equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
+                            if (Converters.getElementToIdConverter().apply(view).equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
                                 viewinstance = false; //a view doc instance
                                 res.setViewDocHack(is);
                             }
@@ -291,7 +301,7 @@ public class PresentationElementUtils {
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-            is.setID(MDKConstants.HIDDEN_ID_PREFIX + is.getID() + ID_SUFFIX);
+            is.setID(MDKConstants.HIDDEN_ID_PREFIX + Converters.getElementToIdConverter().apply(is) + ID_SUFFIX);
             if (!pe.isViewDocHack()) {
                 Slot s = ef.createSlotInstance();
                 s.setOwner(is);
@@ -316,11 +326,10 @@ public class PresentationElementUtils {
         String name;
         if (pe.isViewDocHack()) {
             newspec = new JSONObject();
-            newspec.put("source", is.getID());
             newspec.put("type", "Paragraph");
+            newspec.put("sourceType", "reference");
+            newspec.put("source", Converters.getElementToIdConverter().apply(pe.getView()));
             newspec.put("sourceProperty", "documentation");
-            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + pe.getView().getID() + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
-            ModelHelper.setComment(is, transclude);
             name = "View Documentation";
             classifier = tparaC;
         }
@@ -376,14 +385,23 @@ public class PresentationElementUtils {
 
     //return bfs view order
     public List<Element> getViewProcessOrder(Element start, Map<Element, List<Element>> view2view) {
-        List<Element> res = new ArrayList<Element>();
-        Queue<Element> toProcess = new LinkedList<Element>();
+        List<Element> res = new ArrayList<>();
+        Queue<Element> toProcess = new LinkedList<>();
+        HashSet<Element> processed = new HashSet<>();
         toProcess.add(start);
         while (!toProcess.isEmpty()) {
             Element next = toProcess.remove();
             res.add(next);
+            processed.add(next);
             if (view2view.containsKey(next)) {
-                toProcess.addAll(view2view.get(next));
+                for (Element element : view2view.get(next)) {
+                    if (!processed.contains(element)) {
+                        toProcess.add(element);
+                    }
+                    else {
+                        Application.getInstance().getGUILog().log("[WARNING] Circular view order detected for " + element.getHumanName() + ". View will not be added to the ordering an additional time.");
+                    }
+                }
             }
         }
         return res;
@@ -396,7 +414,7 @@ public class PresentationElementUtils {
         }
         c = ef.createConstraintInstance();
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        c.setID(view.getID() + "_vc");
+        c.setID(Converters.getElementToIdConverter().apply(view) + "_vc");
         c.setOwner(view);
         c.getConstrainedElement().add(view);
         return c;
@@ -406,7 +424,7 @@ public class PresentationElementUtils {
         Constraint c = getOrCreateViewConstraint(view);
         Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : ef.createExpressionInstance();
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        expression.setID(view.getID() + "_vc_expression");
+        expression.setID(Converters.getElementToIdConverter().apply(view) + "_vc_expression");
         expression.setOwner(c);
         List<InstanceValue> instanceValues = new ArrayList<>(instanceSpecifications.size());
         Iterator<ValueSpecification> operandIterator = expression.getOperand().iterator();

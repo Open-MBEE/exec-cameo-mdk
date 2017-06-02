@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
-import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
@@ -8,7 +8,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-import gov.nasa.jpl.mbee.mdk.lib.Utils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.util.List;
 import java.util.Stack;
@@ -16,23 +17,29 @@ import java.util.Stack;
 
 public class HierarchyMigrationVisitor extends AbstractModelVisitor {
 
-    private Stereotype ourExpose = Utils.getExposeStereotype();
-    private Stereotype docS = Utils.getDocumentStereotype();
-    private Stereotype viewS = Utils.getViewClassStereotype();
-    private Stereotype conformS = Utils.getConformsStereotype();
-
+    private Element owner;
+    private Project project;
     private Stack<Class> parentView;
     private ElementsFactory ef;
-    private Element owner;
+    private Stereotype ourExpose,
+            docS,
+            viewS,
+            conformS;
     private boolean preserveId = false;
     private boolean cannotChangeId = false;
 
     public HierarchyMigrationVisitor(Element owner, boolean id) {
         this.owner = owner;
-        parentView = new Stack<Class>();
-        ef = Application.getInstance().getProject().getElementsFactory();
-        Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
-        preserveId = id;
+        this.project = Project.getProject(owner);
+        this.ourExpose = Utils.getExposeStereotype(project);
+        this.docS = Utils.getDocumentStereotype(project);
+        this.viewS = Utils.getViewClassStereotype(project);
+        this.conformS = Utils.getConformsStereotype(project);
+
+        this.parentView = new Stack<Class>();
+        this.ef = project.getElementsFactory();
+        project.getCounter().setCanResetIDForObject(true);
+        this.preserveId = id;
     }
 
     public boolean changeIdFailed() {
@@ -87,8 +94,8 @@ public class HierarchyMigrationVisitor extends AbstractModelVisitor {
     private void setId(Element old, Element neww) {
         if (old.isEditable()) {
             if (!(old instanceof Diagram)) {
-                String oldId = old.getID();
-                String newId = neww.getID();
+                String oldId = Converters.getElementToIdConverter().apply(old);
+                String newId = Converters.getElementToIdConverter().apply(neww);
                 neww.setID(oldId);
                 old.setID(newId);
             }

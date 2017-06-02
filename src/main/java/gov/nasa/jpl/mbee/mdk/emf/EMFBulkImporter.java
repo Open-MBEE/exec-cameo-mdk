@@ -13,11 +13,14 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.annotations.SessionManaged;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
-import gov.nasa.jpl.mbee.mdk.ems.ImportException;
-import gov.nasa.jpl.mbee.mdk.ems.json.JsonEquivalencePredicate;
-import gov.nasa.jpl.mbee.mdk.lib.Changelog;
-import gov.nasa.jpl.mbee.mdk.lib.MDUtils;
-import gov.nasa.jpl.mbee.mdk.lib.Pair;
+import gov.nasa.jpl.mbee.mdk.json.ImportException;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
+import org.eclipse.emf.common.util.TreeIterator;
+import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.util.EcoreUtil;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -38,10 +41,14 @@ public class EMFBulkImporter implements BulkImportFunction {
 
     private final BiFunction<String, Project, Element> bulkIdToElementConverter = (id, project) -> {
         Element element = Converters.getIdToElementConverter().apply(id, project);
-        System.out.println("[NO CACHE] " + id + " -> " + element);
+        if (MDUtils.isDeveloperMode()) {
+            System.out.println("[NO CACHE] " + id + " -> " + element);
+        }
         if (element == null && elementCache != null) {
             element = elementCache.get(id);
-            System.out.println("[CACHE] " + id + " -> " + element);
+            if (MDUtils.isDeveloperMode()) {
+                System.out.println("[CACHE] " + id + " -> " + element);
+            }
         }
         return element;
     };
@@ -66,6 +73,8 @@ public class EMFBulkImporter implements BulkImportFunction {
             progressStatus.setMax(objectNodes.size() * 3);
             progressStatus.setCurrent(0);
         }
+
+        project.getModels().forEach(EMFBulkImporter::preloadRecursively);
 
         try {
             objectNodes = new ArrayList<>(objectNodes);
@@ -107,8 +116,8 @@ public class EMFBulkImporter implements BulkImportFunction {
 
                 List<ObjectNode> retryObjectNodes = new ArrayList<>();
 
-                if (SessionManager.getInstance().isSessionCreated()) {
-                    SessionManager.getInstance().cancelSession();
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().cancelSession(project);
                 }
                 SessionManager.getInstance().createSession(project, sessionName + " x" + objectNodes.size() + " #" + ++sessionCount);
                 if (progressStatus != null) {
@@ -119,7 +128,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                 Iterator<ObjectNode> iterator = objectNodes.iterator();
                 while (iterator.hasNext()) {
                     ObjectNode objectNode = iterator.next();
-                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                     String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : null;
                     if (MDUtils.isDeveloperMode()) {
                         System.out.println("[ATTEMPT 1] Attempting " + sysmlId);
@@ -135,7 +144,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                         }
                         // Element may fail to create on first pass, ex: Diagram (because owner doesn't exist yet + custom creation), so we need to retry after everything else.
                         retryObjectNodes.add(objectNode);
-                        //failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), importException);
+                        //failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.ID_KEY).asText(), project), objectNode), importException);
                         //iterator.remove();
                         //continue bulkImport;
                     }
@@ -156,7 +165,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                 }
 
                 for (ObjectNode objectNode : retryObjectNodes) {
-                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                     String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : null;
                     if (MDUtils.isDeveloperMode()) {
                         System.out.println("[ATTEMPT 1.5] Attempting " + sysmlId);
@@ -172,7 +181,8 @@ public class EMFBulkImporter implements BulkImportFunction {
                         if (MDUtils.isDeveloperMode()) {
                             System.err.println("[FAILED 1.5] Could not create " + sysmlId);
                         }
-                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), exception);
+                        Element element = Converters.getIdToElementConverter().apply(sysmlId, project);
+                        failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ? element : null, objectNode), exception);
                         objectNodes.remove(objectNode);
                         continue bulkImport;
                     }
@@ -190,7 +200,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                 iterator = objectNodes.iterator();
                 while (iterator.hasNext()) {
                     ObjectNode objectNode = iterator.next();
-                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                    JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                     String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
                     if (MDUtils.isDeveloperMode()) {
                         System.out.println("[ATTEMPT 2] Attempting " + sysmlId);
@@ -206,7 +216,8 @@ public class EMFBulkImporter implements BulkImportFunction {
                         if (MDUtils.isDeveloperMode()) {
                             System.err.println("[FAILED 2] Could not import " + sysmlId);
                         }
-                        failedElementMap.put(new Pair<>(Converters.getIdToElementConverter().apply(objectNode.get(MDKConstants.SYSML_ID_KEY).asText(), project), objectNode), exception);
+                        Element element = Converters.getIdToElementConverter().apply(sysmlId, project);
+                        failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ? element : null, objectNode), exception);
                         iterator.remove();
                         continue bulkImport;
                     }
@@ -228,8 +239,8 @@ public class EMFBulkImporter implements BulkImportFunction {
 
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
                     for (Map.Entry<String, Pair<Element, ObjectNode>> entry : changelog.get(changeType).entrySet()) {
-                        Element element = entry.getValue().getFirst();
-                        ObjectNode objectNode = entry.getValue().getSecond();
+                        Element element = entry.getValue().getKey();
+                        ObjectNode objectNode = entry.getValue().getValue();
 
                         Collection<ModelValidationResult> results = validator.validateChanges(Collections.singleton(element));
 
@@ -238,18 +249,18 @@ public class EMFBulkImporter implements BulkImportFunction {
                             if (MDUtils.isDeveloperMode()) {
                                 System.err.println("[FAILED 3] " + result.toString());
                             }
-                            failedElementMap.put(new Pair<>(element, objectNode), new ImportException(element, objectNode, "Element failed validation after importing. Reason: " + result.getReason()));
+                            failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ?  element : null, objectNode), new ImportException(element, objectNode, "Element failed validation after importing. Reason: " + result.getReason()));
                             objectNodes.remove(objectNode);
                             continue bulkImport;
                         }
 
                         if (element.isInvalid()) {
                             if (MDUtils.isDeveloperMode()) {
-                                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.SYSML_ID_KEY);
+                                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
                                 String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
                                 System.err.println("[FAILED 4] Could not create " + sysmlId);
                             }
-                            failedElementMap.put(new Pair<>(element, objectNode), new ImportException(element, objectNode, "Element was found to be invalid after importing."));
+                            failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ?  element : null, objectNode), new ImportException(element, objectNode, "Element was found to be invalid after importing."));
                             objectNodes.remove(objectNode);
                             continue bulkImport;
                         }
@@ -265,14 +276,21 @@ public class EMFBulkImporter implements BulkImportFunction {
                     }
                 }
 
-                if (SessionManager.getInstance().isSessionCreated()) {
-                    SessionManager.getInstance().closeSession();
+                if (failedElementMap.isEmpty()) {
+                    onSuccess();
+                }
+
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
                 }
                 break;
             }
         } finally {
-            if (SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().cancelSession();
+            if (SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().cancelSession(project);
+            }
+            if (!failedElementMap.isEmpty()) {
+                onFailure();
             }
             if (progressStatus != null) {
                 progressStatus.setDescription(initialProgressStatusDescription);
@@ -280,7 +298,19 @@ public class EMFBulkImporter implements BulkImportFunction {
                 progressStatus.setIndeterminate(initialProgressStatusIndeterminate);
             }
         }
-        return changelog;
+        return (changelog == null ? new Changelog<>() : changelog);
+    }
+
+    private static void preloadRecursively(EObject eObject) {
+        for (final TreeIterator<Object> allProperContents = EcoreUtil.getAllProperContents(eObject, true); allProperContents.hasNext(); allProperContents.next()) {
+            // just iterate to load contents
+        }
+    }
+
+    public void onSuccess() {
+    }
+
+    public void onFailure() {
     }
 
     public String getSessionName() {

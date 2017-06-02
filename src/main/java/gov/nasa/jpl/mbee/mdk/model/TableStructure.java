@@ -1,31 +1,3 @@
-/*******************************************************************************
- * Copyright (c) <2013>, California Institute of Technology ("Caltech").  
- * U.S. Government sponsorship acknowledged.
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification, are 
- * permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice, this list of 
- *    conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright notice, this list 
- *    of conditions and the following disclaimer in the documentation and/or other materials 
- *    provided with the distribution.
- *  - Neither the name of Caltech nor its operating division, the Jet Propulsion Laboratory, 
- *    nor the names of its contributors may be used to endorse or promote products derived 
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS 
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER  
- * OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
- * POSSIBILITY OF SUCH DAMAGE.
- ******************************************************************************/
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.magicdraw.core.Application;
@@ -38,14 +10,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import gov.nasa.jpl.mbee.mdk.DocGen3Profile;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.generator.GenerationContext;
-import gov.nasa.jpl.mbee.mdk.lib.*;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import java.util.*;
 
@@ -162,26 +135,26 @@ public class TableStructure extends Table {
         while (outs != null && outs.size() == 1) {
             curNode = outs.iterator().next().getTarget();
             TableColumn col = null;
-            if (GeneratorUtils.hasStereotypeByString(curNode, DocGen3Profile.tableAttributeColumnStereotype)) {
+            if (GeneratorUtils.hasStereotypeByString(curNode, DocGenProfile.tableAttributeColumnStereotype)) {
                 col = new TableAttributeColumn();
                 Object attr = GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tableAttributeColumnStereotype, "desiredAttribute", null);
+                        DocGenProfile.tableAttributeColumnStereotype, "desiredAttribute", null);
                 ((TableAttributeColumn) col).attribute = (attr instanceof EnumerationLiteral)
                         ? Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName()) : null;
             }
             else if (GeneratorUtils.hasStereotypeByString(curNode,
-                    DocGen3Profile.tableExpressionColumnStereotype)) {
+                    DocGenProfile.tableExpressionColumnStereotype)) {
                 col = new TableExpressionColumn();
                 ((TableExpressionColumn) col).expression = (String) GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tableExpressionColumnStereotype, "expression", null);
+                        DocGenProfile.tableExpressionColumnStereotype, "expression", null);
                 ((TableExpressionColumn) col).iterate = (Boolean) GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tableExpressionColumnStereotype, "iterate", true);
+                        DocGenProfile.tableExpressionColumnStereotype, "iterate", true);
             }
             else if (GeneratorUtils.hasStereotypeByString(curNode,
-                    DocGen3Profile.tablePropertyColumnStereotype)) {
+                    DocGenProfile.tablePropertyColumnStereotype)) {
                 col = new TablePropertyColumn();
                 ((TablePropertyColumn) col).property = (Property) GeneratorUtils.getObjectProperty(curNode,
-                        DocGen3Profile.tablePropertyColumnStereotype, "desiredProperty", null);
+                        DocGenProfile.tablePropertyColumnStereotype, "desiredProperty", null);
             }
             else if (GeneratorUtils.hasStereotypeByString(curNode, "TableColumnGroup")) {
                 col = new TableColumnGroup();
@@ -194,7 +167,7 @@ public class TableStructure extends Table {
                 outs = curNode.getOutgoing();
                 continue;
             }
-            col.editable = (Boolean) GeneratorUtils.getObjectProperty(curNode, DocGen3Profile.editableChoosable, "editable", true);
+            col.editable = (Boolean) GeneratorUtils.getObjectProperty(curNode, DocGenProfile.editableChoosable, "editable", true);
             col.activityNode = curNode;
             if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction) curNode).getBehavior() != null) {
                 col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction) curNode).getBehavior());
@@ -269,7 +242,7 @@ public class TableStructure extends Table {
                 }
                 else {
                     /*for (final Element ee : resultElements) {
-                		Application.getInstance().getGUILog().log(e instanceof NamedElement ? ((NamedElement) ee).getQualifiedName() : ee.getHumanName());
+                        Application.getInstance().getGUILog().log(e instanceof NamedElement ? ((NamedElement) ee).getQualifiedName() : ee.getHumanName());
                 	}
                 	Application.getInstance().getGUILog().log(resultElements.toString());*/
                     for (Element re : resultElements) {
@@ -388,7 +361,7 @@ public class TableStructure extends Table {
             for (List<Pair<Reference, Boolean>> cell : row) {
                 DBTableEntry entry = new DBTableEntry();
                 for (Pair<Reference, Boolean> pair : cell) {
-                    Reference cellPart = pair.getFirst();
+                    Reference cellPart = pair.getKey();
                     //Common.addReferenceToDBHasContent(cellPart, entry);
                     if (cellPart.result instanceof DocGenElement) {
                         DocBookOutputVisitor nested = new DocBookOutputVisitor(forViewEditor, outputDir);
@@ -396,7 +369,7 @@ public class TableStructure extends Table {
                         ((DocGenElement) cellPart.result).accept(nested);
                     }
                     else {
-                        Common.addReferenceToDBHasContent(cellPart, entry, pair.getSecond());
+                        Common.addReferenceToDBHasContent(cellPart, entry, pair.getValue());
                     }
                 }
                 tableRow.add(entry);
@@ -404,7 +377,7 @@ public class TableStructure extends Table {
             body.add(tableRow);
         }
         table.setBody(body);
-        if (title != null && !title.equals("") && titles.isEmpty()) {
+        if (title != null && !title.isEmpty() && titles.isEmpty()) {
             titles.add(title);
         }
         setTableThings(table);
@@ -421,7 +394,7 @@ public class TableStructure extends Table {
         List<Pair<Reference, Boolean>> colRefs = getCellReferences(row, col);
         List<Object> colData = new ArrayList<Object>();
         for (Pair<Reference, Boolean> pair : colRefs) {
-            colData.add(pair.getFirst().result);
+            colData.add(pair.getKey().result);
         }
         return colData;
     }
