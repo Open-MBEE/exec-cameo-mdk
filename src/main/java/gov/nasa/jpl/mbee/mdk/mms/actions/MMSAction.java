@@ -17,6 +17,7 @@ public class MMSAction extends MDAction {
 
     @Override
     public void updateState() {
+        super.updateState();
         setEnabled(TicketUtils.isTicketSet(Application.getInstance().getProject()) && !disabled);
     }
 
@@ -27,6 +28,5 @@ public class MMSAction extends MDAction {
     public static boolean isDisabled() {
         return disabled;
     }
-
 
 }

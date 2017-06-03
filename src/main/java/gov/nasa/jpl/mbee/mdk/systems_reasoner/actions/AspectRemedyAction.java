@@ -79,10 +79,8 @@ public class AspectRemedyAction extends GenericRuleViolationAction {
 
         final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
 
-        Collection<?> emptyCollection = new ArrayList<String>();
-        special.getOwnedMember().retainAll(emptyCollection);
-        special.getGeneralization().retainAll(emptyCollection);
-
+        special.getOwnedMember().clear();
+        special.getGeneralization().clear();
         SpecializeClassifierAction.specialize(special, general);
         return special;
     }

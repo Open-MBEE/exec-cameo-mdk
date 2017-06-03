@@ -84,11 +84,11 @@ public class ProjectValidator {
         projectExistenceValidationRule.addViolation(v);
     }
 
-    public static ObjectNode createProjectObjectNode(Project project) {
-        return createProjectObjectNode(project.getPrimaryProject());
+    public static ObjectNode generateProjectObjectNode(Project project) {
+        return generateProjectObjectNode(project.getPrimaryProject());
     }
 
-    public static ObjectNode createProjectObjectNode(IProject iProject) {
+    public static ObjectNode generateProjectObjectNode(IProject iProject) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
         projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
@@ -103,7 +103,6 @@ public class ProjectValidator {
             categoryId = EsiUtils.getCategoryID(resourceId);
         }
         projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        projectObjectNode.put(MDKConstants.URI_KEY, iProject.getProjectDescriptor().getLocationUri().toString());
         return projectObjectNode;
     }
 

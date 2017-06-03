@@ -135,7 +135,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // update request with project post path
         requestUri.setPath(requestUri.getPath() + "/" + orgId + "/projects");
         Collection<ObjectNode> projects = new LinkedList<>();
-        projects.add(ProjectValidator.createProjectObjectNode(project));
+        projects.add(ProjectValidator.generateProjectObjectNode(project));
 
         // do project post request
         try {

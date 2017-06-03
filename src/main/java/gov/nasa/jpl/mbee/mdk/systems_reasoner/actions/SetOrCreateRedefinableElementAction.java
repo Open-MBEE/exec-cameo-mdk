@@ -4,7 +4,9 @@ import com.nomagic.magicdraw.copypaste.CopyPasting;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.CreateSpecializedTypeAction;
+import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.validation.SRValidationSuite;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
@@ -20,12 +22,12 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
 
     private Classifier subClassifier;
     private RedefinableElement re;
-    private boolean recursion;
-    private String name;
+     private String name;
     private boolean isIndividual;
+    private boolean isRecursive;
 
-    public SetOrCreateRedefinableElementAction(final Classifier clazz, final RedefinableElement re, boolean isIndividual) {
-        this(clazz, re, false, DEFAULT_NAME, isIndividual);
+    public SetOrCreateRedefinableElementAction(final Classifier targetForRedefEl, final RedefinableElement elementToBeRedefined, boolean isIndividual) {
+        this(targetForRedefEl, elementToBeRedefined, false, DEFAULT_NAME, isIndividual);
     }
 
     /**
@@ -39,43 +41,47 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         super(name);
         this.subClassifier = targetForRedefEl;
         this.re = elementToBeRedefined;
-        this.recursion = recursion;
+        this.isRecursive = recursion;
         this.name = name;
         this.isIndividual = isIndividual;
     }
 
-    public SetOrCreateRedefinableElementAction(Classifier specific, RedefinableElement elementToBeRedefined, List<RedefinableElement> traveled, boolean recursionMode, String name, boolean individualMode) {
-        super(name);
-        this.subClassifier = specific;
-        this.re = elementToBeRedefined;
-        this.recursion = recursionMode;
-        this.name = name;
-        this.isIndividual = individualMode;
+    public static RedefinableElement redefineRedefinableElement(final Classifier subClassifier, final RedefinableElement re, boolean isIndividual, boolean isRecursive) {
+        return redefineRedefinableElement(subClassifier, re, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual, isRecursive);
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier subClassifier, final RedefinableElement re, final boolean createSpecializedType, boolean isIndividual) {
-        return redefineAttribute(subClassifier, re, createSpecializedType, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual);
+    public static RedefinableElement redefineRedefinableElement(final Classifier subClassifier, final RedefinableElement elementToBeRedefined, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual, boolean isRecursive) {
+        if (isNotRedefinable(subClassifier, elementToBeRedefined)) return null;
+
+
+        RedefinableElement redefinedElement = findExistingRedefiningElement(subClassifier, elementToBeRedefined);
+
+        if (redefinedElement == null) {
+            redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
+            redefinedElement.getRedefinedElement().removeAll(elementToBeRedefined.getRedefinedElement());
+            redefinedElement.getRedefinedElement().add(elementToBeRedefined);
+        }
+
+        if (elementToBeRedefined instanceof Property) {
+            if (((Property) elementToBeRedefined).getAssociation() != null) {
+                createInheritingAssociation((Property) elementToBeRedefined, subClassifier, (Property) redefinedElement);
+            }
+        }
+        if (isRecursive && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
+            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, traveled, visited, isIndividual, isRecursive);
+        }
+        return redefinedElement;
     }
 
-    public static RedefinableElement redefineAttribute(final Classifier classifierOfProp, final RedefinableElement elementToBeRedefined, final boolean createSpecializedType, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual) {
-        if (elementToBeRedefined.isLeaf()) {
-            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " is a leaf. Cannot redefine further.");
-        }
-
-        if (!classifierOfProp.isEditable()) {
-            Application.getInstance().getGUILog().log(classifierOfProp.getQualifiedName() + " is not editable. Skipping redefinition.");
-            return null;
-        }
-
+    private static RedefinableElement findExistingRedefiningElement(Classifier subClassifier, RedefinableElement elementToBeRedefined) {
         RedefinableElement redefinedElement = null;
-        for (NamedElement p : classifierOfProp.getOwnedMember()) {
-            System.out.println("Handling: " + p.getName() + " and " + elementToBeRedefined.getName());
-            if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(elementToBeRedefined)) {
+        for (NamedElement p : subClassifier.getOwnedMember()) {
+            if (p instanceof RedefinableElement && SRValidationSuite.doesEventuallyRedefine((RedefinableElement) p,elementToBeRedefined)){
                 redefinedElement = (RedefinableElement) p;
                 break;
             }
-            else if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
-                if (isMatchingStructuralFeature(p, elementToBeRedefined)) {
+            else if (p instanceof RedefinableElement){// && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
+                if (isMatchingTypedElement(p, elementToBeRedefined)) {
                     redefinedElement = (RedefinableElement) p;
                     redefinedElement.getRedefinedElement().add(elementToBeRedefined);
                     break;
@@ -83,9 +89,9 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
                 else if (p instanceof Connector && elementToBeRedefined instanceof Connector) {
                     if (((Connector) p).getEnd() != null && ((Connector) elementToBeRedefined).getEnd() != null) {
                         if (((Connector) p).getEnd().get(0).getRole() != null && ((Connector) elementToBeRedefined).getEnd().get(0).getRole() != null) {
-                            if (isMatchingStructuralFeature(((Connector) p).getEnd().get(0).getRole(), (((Connector) elementToBeRedefined).getEnd().get(0).getRole()))) {
+                            if (isMatchingTypedElement(((Connector) p).getEnd().get(0).getRole(), (((Connector) elementToBeRedefined).getEnd().get(0).getRole()))) {
                                 if (((Connector) p).getEnd().size() > 1) {
-                                    if (isMatchingStructuralFeature(((Connector) p).getEnd().get(1).getRole(), (((Connector) elementToBeRedefined).getEnd().get(1).getRole()))) {
+                                    if (isMatchingTypedElement(((Connector) p).getEnd().get(1).getRole(), (((Connector) elementToBeRedefined).getEnd().get(1).getRole()))) {
                                         redefinedElement = (RedefinableElement) p;
                                         redefinedElement.getRedefinedElement().add(elementToBeRedefined);
                                         break;
@@ -100,25 +106,39 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
                 }
             }
         }
-        if (redefinedElement == null) {
-            redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, classifierOfProp, false);
-            redefinedElement.getRedefinedElement().add(elementToBeRedefined);
-        }
-
-        if (createSpecializedType && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
-//            SpecializeStructureAction speca = new SpecializeStructureAction(classifierOfProp, false, "", isIndividual, isIndividual);
-//            speca.createSpecialClassifier()
-            CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, classifierOfProp, true, traveled, visited, isIndividual);
-        }
         return redefinedElement;
-
-//        else {
-//            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " has already been redefined in " + classifierOfProp.getQualifiedName() + ".");
-//            return null;
-//        }
     }
 
-    private static boolean isMatchingStructuralFeature(NamedElement p, NamedElement elementToBeRedefined) {
+    private static boolean isNotRedefinable(Classifier subClassifier, RedefinableElement elementToBeRedefined) {
+        if (elementToBeRedefined.isLeaf()) {
+            Application.getInstance().getGUILog().log(elementToBeRedefined.getQualifiedName() + " is a leaf. Cannot redefine further.");
+            return true;
+        }
+        if (!subClassifier.isEditable()) {
+            Application.getInstance().getGUILog().log(subClassifier.getQualifiedName() + " is not editable. Skipping redefinition.");
+            return true;
+        }
+        return false;
+    }
+
+    public static void createInheritingAssociation(Property generalProperty, Classifier classifierOfnewProperty, Property newProperty) {
+        Association generalAssociation = generalProperty.getAssociation();
+        Association newAssociation = UMLFactory.eINSTANCE.createAssociation();
+        newAssociation.setName(generalAssociation.getName());
+        Property ownedEnd = UMLFactory.eINSTANCE.createProperty();
+        ownedEnd.setOwner(newAssociation);
+        ownedEnd.setType(classifierOfnewProperty);
+        Utils.createGeneralization(generalAssociation, newAssociation);
+        if(classifierOfnewProperty.getOwner() != null) {
+            newAssociation.setOwner(classifierOfnewProperty.getOwner());
+        }else{
+            throw new NullPointerException("owner of classifier null!");
+        }
+        newAssociation.getMemberEnd().add(newProperty);
+        newAssociation.getOwnedEnd().add(ownedEnd);
+    }
+
+    private static boolean isMatchingTypedElement(NamedElement p, NamedElement elementToBeRedefined) {
         if (p.getName().equals(elementToBeRedefined.getName())) {
             if (p instanceof TypedElement && elementToBeRedefined instanceof TypedElement) {
                 if (((TypedElement) p).getType() != null) {
@@ -136,7 +156,7 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
 
     @Override
     public void run() {
-        redefineAttribute(subClassifier, re, recursion, isIndividual);
+        redefineRedefinableElement(subClassifier, re, isIndividual, isRecursive);
     }
 
     @Override

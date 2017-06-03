@@ -8,8 +8,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -359,8 +357,10 @@ public class MMSUtils {
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-            System.out.println("[INFO] MMS Request [" + request.getMethod() + "] " + request.getURI().toString());
+        String requestSummary = "MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
+        System.out.println(requestSummary);
+        if (MDUtils.isDeveloperMode()) {
+            Application.getInstance().getGUILog().log(requestSummary);
         }
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
@@ -370,8 +370,10 @@ public class MMSUtils {
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
-                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                    System.out.println("[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
+                String responseSummary = "MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+                System.out.println(responseSummary);
+                if (MDUtils.isDeveloperMode()) {
+                    Application.getInstance().getGUILog().log(responseSummary);
                 }
                 if (inputStream != null) {
                     responseBody.set(generateMmsOutput(inputStream, responseFile));
@@ -698,7 +700,5 @@ public class MMSUtils {
         }
         return name;
     }
-
-
 
 }

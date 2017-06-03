@@ -23,18 +23,23 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
     private static final String NAME = "SR Validate";
     private List<Element> elements;
 
-    private static final ValidationRule generalMissingRule = new ValidationRule("Missing General", "General is missing in generalization", ViolationSeverity.ERROR),
-            generalNotClassRule = new ValidationRule("General Not Class", "General is not of type class", ViolationSeverity.ERROR),
-            attributeMissingRule = new ValidationRule("Missing Owned Redefinable Element", "Owned RedefinableElement is missing", ViolationSeverity.ERROR),
-            aspectMissingRule = new ValidationRule("Missing Defined Aspect", "An aspect is defined but not realized", ViolationSeverity.ERROR),
-            nameRule = new ValidationRule("Naming Inconsistency", "Names are inconsistent", ViolationSeverity.WARNING),
-            subsetsRule = new ValidationRule("Redefined Property Subset Missing.", "Subset missing.", ViolationSeverity.WARNING),
-            attributeTypeRule = new ValidationRule("Attribute Type Inconsistency", "Attribute types are inconsistent", ViolationSeverity.WARNING),
-            generalSpecificNameRule = new ValidationRule("General Specific Name Inconsistency", "General and specific names are inconsistent", ViolationSeverity.INFO),
-    // orphanAttributeRule = new ValidationRule("Potential Orphan", "First degree attribute is never redefined", ViolationSeverity.WARNING);
-    instanceClassifierExistenceRule = new ValidationRule("Instance Classifier Unspecified", "Instance classifier is not specified", ViolationSeverity.ERROR),
-            missingSlotsRule = new ValidationRule("Missing Slot(s) Detected", "Missing slot(s) detected", ViolationSeverity.ERROR),
-            associationInheritanceRule = new ValidationRule("Association inheritance missing.", "The association of the specialized element does not inherit from its general counterpart.", ViolationSeverity.ERROR);
+    private static final ValidationRule generalMissingRule = new ValidationRule("Missing General", "General is missing in generalization", ViolationSeverity.ERROR);
+    private static final ValidationRule generalNotClassRule = new ValidationRule("General Not Class", "General is not of type class", ViolationSeverity.ERROR);
+    private static final ValidationRule attributeMissingRule = new ValidationRule("Missing Owned Redefinable Element", "Owned RedefinableElement is missing", ViolationSeverity.ERROR);
+    private static final ValidationRule aspectMissingRule = new ValidationRule("Missing Defined Aspect", "An aspect is defined but not realized", ViolationSeverity.ERROR);
+    private static final ValidationRule nameRule = new ValidationRule("Naming Inconsistency", "Names are inconsistent", ViolationSeverity.WARNING);
+    private static final ValidationRule subsetsRule = new ValidationRule("Redefined Property Subset Missing.", "Subset missing.", ViolationSeverity.WARNING);
+    private static final ValidationRule attributeTypeRule = new ValidationRule("Attribute Type Inconsistency", "Attribute types are inconsistent", ViolationSeverity.WARNING);
+    private static final ValidationRule generalSpecificNameRule = new ValidationRule("General Specific Name Inconsistency", "General and specific names are inconsistent", ViolationSeverity.INFO);
+    private static final ValidationRule// orphanAttributeRule = new ValidationRule("Potential Orphan", "First degree attribute is never redefined", ViolationSeverity.WARNING);
+            instanceClassifierExistenceRule = new ValidationRule("Instance Classifier Unspecified", "Instance classifier is not specified", ViolationSeverity.ERROR);
+    private static final ValidationRule missingSlotsRule = new ValidationRule("Missing Slot(s) Detected", "Missing slot(s) detected", ViolationSeverity.ERROR);
+
+    public static ValidationRule getAssociationInheritanceRule() {
+        return associationInheritanceRule;
+    }
+
+    private static final ValidationRule associationInheritanceRule = new ValidationRule("Association inheritance missing.", "The association of the specialized element does not inherit from its general classifier.", ViolationSeverity.ERROR);
 
     {
         this.addValidationRule(generalMissingRule);
@@ -106,10 +111,9 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                         for (Element p : classifier.getOwnedElement()) {
                             if (p instanceof RedefinableElement) {
                                 if (doesEventuallyRedefine((RedefinableElement) p, redefEl)) {
-                                    // if (p instanceof RedefinableElement && ((RedefinableElement) p).getRedefinedElement().contains(redefinableElement)) {
                                     redefingEl = (RedefinableElement) p;
-                                    if(redefingEl instanceof Property && redefEl instanceof Property) {
-                                        if(!((Property) redefEl).getSubsettedProperty().isEmpty()) {
+                                    if (redefingEl instanceof Property && redefEl instanceof Property) {
+                                        if (!((Property) redefEl).getSubsettedProperty().isEmpty()) {
                                             final ValidationRuleViolation v = new ValidationRuleViolation(classifier, subsetsRule.getDescription() + ": " + redefEl.getQualifiedName());
                                             v.addAction(new SubsetRedefinedProperty((Property) redefEl, (Property) redefingEl));
                                             attributeTypeRule.addViolation(v);
@@ -128,8 +132,6 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 }
                             }
                             if (!redefinedInContext) {
-                                // Composite tag added, so user can make an educated decision on whether to specialize or not. Non-composite properties are typically not specialized in the context of the Block Specific Type,
-                                // but there could be a number of valid reasons to do so.
                                 final ValidationRuleViolation v = new ValidationRuleViolation(classifier, (ne instanceof Property && ((Property) ne).isComposite() ? "[COMPOSITE] " : "") +
                                         (redefEl instanceof TypedElement && ((TypedElement) redefEl).getType() != null ? "[TYPED] " : "") + attributeMissingRule.getDescription() + ": " + redefEl.getQualifiedName());
                                 for (final Property p : classifier.getAttribute()) {
@@ -138,13 +140,16 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                     }
                                 }
                                 if (ne instanceof RedefinableElement) {
-                                    // why was this a requirement? One should be able to redefine any property regardless of aggregation, by my understanding.
-                                    //if (!((Property) ne).isComposite()) {
                                     v.addAction(new SetOrCreateRedefinableElementAction(classifier, redefEl, false));
                                     if (redefEl instanceof TypedElement) { // && ((TypedElement) redefEl).getType() != null
+                                        // Composite tag added, so user can make an educated decision on whether to specialize or not. Non-composite properties are typically not specialized in the context of the Block Specific Type,
+                                        // but there could be a number of valid reasons to do so.
+                                        // Non-aggregation properties should only be redefined but the type not be specialized.
+                                        // if (!((Property) ne).isComposite()) {
                                         // intentionally showing this option even if the type isn't specializable so the user doesn't have to go through
                                         // grouping them separately to validate. It will just ignore and log if a type isn't specializable.
                                         v.addAction(new SetOrCreateRedefinableElementAction(classifier, redefEl, true, "Redefine Attribute & Specialize Types Recursively & Individually", true));
+                                        // }
                                     }
                                 }
                                 attributeMissingRule.addViolation(v);
@@ -164,7 +169,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                                 if ((redefingTypdEl.getType() == null && redefableTypdEl.getType() != null) || (redefingTypdEl.getType() != null && redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier
                                         && !doesEventuallyGeneralizeTo((Classifier) redefingTypdEl.getType(), (Classifier) redefableTypdEl.getType()))) {
                                     if (redefingTypdEl.getType() instanceof Classifier && redefableTypdEl.getType() instanceof Classifier && ((Classifier) redefingTypdEl.getType()).getGeneral().contains(redefableTypdEl.getType())) {
-                                        if(!elements.contains(redefableTypdEl.getType())) {
+                                        if (!elements.contains(redefableTypdEl.getType())) {
                                             iterator.add(redefingTypdEl.getType());
                                             iterator.previous();
                                         }
@@ -247,7 +252,7 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
         }
     }
 
-    private void checkAssociationsForInheritance(Classifier classifier, Classifier general) {
+    public static void checkAssociationsForInheritance(Classifier classifier, Classifier general) {
         assocRule:
         for (Element child : classifier.getOwnedElement()) {
             if (child instanceof Property) {
@@ -327,12 +332,12 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
         }
     }
 
-    private boolean hasAnAssociation(Element superChild) {
+    private static boolean hasAnAssociation(Element superChild) {
         return ((Property) superChild).getAssociation() != null;
 
     }
 
-    private boolean hasInheritanceFromTo(Classifier classifier, Classifier general) {
+    private static boolean hasInheritanceFromTo(Classifier classifier, Classifier general) {
         if (classifier != null) {
             return ModelHelper.getGeneralClassifiersRecursivelly(classifier).contains(general);
         }
