@@ -145,25 +145,36 @@ public class TomSawyerDiagram extends Query {
                 exception.printStackTrace();
                 JOptionPane.showMessageDialog(null, exception.getMessage());
             }
+            if(type.equals(Internal_Block_Diagram)) {
+                delegate.postLoadDataIBDAction();
+            }else{
+                delegate.postLoadDataGetUUID();
+            }
+            boolean showInMD = true;
 
-            TSStandardWindowComponentContent windowComponentContent =
-                    new TSStandardWindowComponentContent(delegate);
+            if(showInMD) {
+                TSStandardWindowComponentContent windowComponentContent =
+                        new TSStandardWindowComponentContent(delegate);
 
-            ProjectWindow window = new ProjectWindow(new WindowComponentInfo(
-                    delegate.getId(),
-                    delegate.getName(),
-                    TSActionConstants.WINDOW_ICON,
-                    WindowsManager.SIDE_EAST,
-                    WindowsManager.STATE_DOCKED,
-                    false),
-                    windowComponentContent);
+                ProjectWindow window = new ProjectWindow(new WindowComponentInfo(
+                        delegate.getId(),
+                        delegate.getName(),
+                        TSActionConstants.WINDOW_ICON,
+                        WindowsManager.SIDE_EAST,
+                        WindowsManager.STATE_DOCKED,
+                        false),
+                        windowComponentContent);
 
 
-            Application.getInstance().getMainFrame().getProjectWindowsManager().addWindow(
-                    window);
+                Application.getInstance().getMainFrame().getProjectWindowsManager().addWindow(
+                        window);
 
-            windowComponentContent.setDividerLocation(0.7);
-
+                windowComponentContent.setDividerLocation(0.7);
+            }
+            boolean printForDocgen = true;
+            if(printForDocgen){
+                delegate.getDiagramDrawing().getSwingCanvas();
+            }
 
 
             return Collections.singletonList(dbts);
