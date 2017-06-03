@@ -211,7 +211,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     }
                     objectNode.put(MDKConstants.REF_ID_KEY, branchName);
                     objectNode.put(MDKConstants.TWC_VERSION_KEY, isRemote ? ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()) : -1);
-                    objectNode.put(MDKConstants.URI_KEY, attachedProject.getProjectDescriptor().getLocationUri().toString());
                     return objectNode;
                 }
         ),
