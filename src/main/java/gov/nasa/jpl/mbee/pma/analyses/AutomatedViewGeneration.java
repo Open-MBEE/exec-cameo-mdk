@@ -241,31 +241,44 @@ public class AutomatedViewGeneration extends CommandLine {
         if ((arrayNode = refsNode.get("refs")) != null && arrayNode.isArray()) {
             for (JsonNode refNode : arrayNode) {
                 if (refNode.isObject()
-                        && (idNode = refNode.get(MDKConstants.ID_KEY)) != null && idNode.isTextual() && idNode.asText().equals((parser.getOptionValue(("projectId"))))
+                        && (idNode = refNode.get(MDKConstants.ID_KEY)) != null && idNode.isTextual() && idNode.asText().equals((parser.getOptionValue(("refId"))))
                         && (idNode = refNode.get(MDKConstants.TWC_ID_KEY)) != null && idNode.isTextual()) {
                     branchTwcId = idNode.asText();
                 }
             }
         }
 
-        if (projectTwcId.isEmpty() || (branchTwcId.isEmpty() && !parser.getOptionValue("refId").equals("master"))) {
-            illegalStateFailure("[FAILURE] Unable to load project, failed to resolve one or more of the required project URI parameters.");
+        if (projectTwcId.isEmpty()) {
+            illegalStateFailure("[FAILURE] Unable to load project, failed to resolve project ID.");
+        }
+
+        ProjectDescriptor projectDescriptor = null;
+        try {
+            Collection<ProjectDescriptor> descriptors = EsiUtils.getRemoteProjectDescriptors();
+            for (ProjectDescriptor descriptor : descriptors) {
+                if (descriptor.getURI().getPath().startsWith("/" + projectTwcId)) {
+                    projectDescriptor = descriptor;
+                    break;
+                }
+            }
+        } catch (Exception e1) {
+            illegalStateFailure("[FAILURE] Unable to find project descriptor on Teamwork Cloud.");
+        }
+        if (!branchTwcId.isEmpty()) {
+            projectDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, java.util.UUID.fromString(branchTwcId));
+        }
+        else if (!parser.getOptionValue("refId").equals("master")) {
+            projectDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, java.util.UUID.fromString(parser.getOptionValue("refId")));
+        }
+        else {
+            illegalStateFailure("[FAILURE] Unable to load project, failed to resolve branch ID.");
         }
 
         message = "[OPERATION] Loading Teamwork Cloud project.";
         logMessage(message);
 
-        java.net.URI ugh = new java.net.URI("twcloud:/" + projectTwcId);
-
-        java.net.URI projectUri = new URIBuilder().setScheme("twcloud").setHost(projectTwcId).setPath(branchTwcId).build();
-//        String uri = "twcloud:/" + parser.getOptionValue("projectId") + "/" + parser.getOptionValue("refId");
+//        java.net.URI projectUri = new URIBuilder().setScheme("twcloud").setPath(projectTwcId + " / " + branchTwcId).build();
 //        ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(projectUri);
-        ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(ugh);
-        // if updated projectDescriptor is now null, error out and indicate branch problem
-        if (projectDescriptor == null || projectDescriptor.getRepresentationString() == null) {
-            illegalStateFailure("[FAILURE] Unable to find TeamworkCloud project " + projectUri.toString() + ".");
-        }
-        // we have a valid project descriptor, so load the associated project
         Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
 
         // if not access to project, loaded project will be null, so error out
