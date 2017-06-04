@@ -645,7 +645,7 @@ public class MMSUtils {
         }
         // using master for main ref, but need to replace with ref id for any other
         String refId = "master";
-        if (!EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName().equals("trunk")) {
+        if (project.isRemote() && !EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName().equals("trunk")) {
             refId = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getID().toString();
         }
         elementUri.setPath(elementUri.getPath() + "/" + refId + "/elements");
