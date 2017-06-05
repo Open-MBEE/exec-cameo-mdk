@@ -524,7 +524,7 @@ public class AutomatedViewGeneration extends CommandLine {
         statusNode.put("ticket", ticketStore);
         statusNode.put("property", "jobStatus");
         statusNode.put("value", status);
-        URIBuilder pmaUri = new URIBuilder("https://" + );
+        URIBuilder pmaUri = new URIBuilder();
         // http://{pmaHost}:{pmaPort}/projects/{projectId}/refs/{refId}/jobs/{jobElementId}/instances/{jenkinsBuildNumber}/{jobPropertyName}?mmsServer={mmsServer}
         pmaUri.setScheme("https");
         pmaUri.setHost(parser.getOptionValue(PMA_HOST));
