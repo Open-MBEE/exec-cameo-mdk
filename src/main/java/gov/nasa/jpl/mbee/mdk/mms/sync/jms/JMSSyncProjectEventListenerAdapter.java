@@ -112,7 +112,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
     private static boolean initDurable(Project project) {
         String projectID = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
-        String workspaceID = MDUtils.getWorkspace(project);
+        String workspaceID = MDUtils.getBranchId(project);
 
         // verify logged in to appropriate places
         if (!TicketUtils.isTicketSet(project)) {

@@ -170,12 +170,11 @@ public class MDUtils {
         return type;
     }
 
-    public static String getWorkspace(Project project) {
-        if (!project.isRemote()) {
-            return "master";
+    public static String getBranchId(Project project) {
+        if (project.isRemote() && !EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName().equals("trunk")) {
+            return EsiUtils.getCurrentBranch(project.getPrimaryProject()).getID().toString();
         }
-        String twcBranch = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
-        return (twcBranch.equals("trunk") ? "master" : twcBranch);
+        return "master";
     }
 
     public static long getRemoteVersion(Project project) {
