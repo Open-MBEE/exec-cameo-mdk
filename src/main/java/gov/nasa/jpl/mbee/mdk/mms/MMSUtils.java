@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -494,7 +493,6 @@ public class MMSUtils {
             // big flashing red letters that the action failed, or as close as we're going to get
             Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[ERROR] Operation failed due to server error. Server code: " + responseCode + "</span>" +
                     "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>"); // hidden characters for easy search
-//            Utils.showPopupMessage("Action failed. See notification window for details.");
         }
         return !throwServerException;
     }
@@ -644,8 +642,7 @@ public class MMSUtils {
         if (elementUri == null) {
             return null;
         }
-        // TODO review MDUtils.getWorkspace() to make sure it's returning the appropriate thing for branches
-        elementUri.setPath(elementUri.getPath() + "/" + MDUtils.getWorkspace(project) + "/elements");
+        elementUri.setPath(elementUri.getPath() + "/" + MDUtils.getBranchId(project) + "/elements");
         return elementUri;
     }
 
