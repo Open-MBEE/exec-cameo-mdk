@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -688,8 +689,12 @@ public class MMSUtils {
         if (elementUri == null) {
             return null;
         }
-        // TODO review MDUtils.getWorkspace() to make sure it's returning the appropriate thing for branches
-        elementUri.setPath(elementUri.getPath() + "/" + MDUtils.getWorkspace(project) + "/elements");
+        // using master for main ref, but need to replace with ref id for any other
+        String refId = "master";
+        if (project.isRemote() && !EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName().equals("trunk")) {
+            refId = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getID().toString();
+        }
+        elementUri.setPath(elementUri.getPath() + "/" + refId + "/elements");
         return elementUri;
     }
 

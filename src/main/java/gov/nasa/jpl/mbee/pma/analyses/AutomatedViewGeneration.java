@@ -264,14 +264,13 @@ public class AutomatedViewGeneration extends CommandLine {
         } catch (Exception e1) {
             illegalStateFailure("[FAILURE] Unable to find project descriptor on Teamwork Cloud.");
         }
+
+        // modify project descriptor with branch information
         if (!branchTwcId.isEmpty()) {
             projectDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, java.util.UUID.fromString(branchTwcId));
         }
         else if (!parser.getOptionValue("refId").equals("master")) {
             projectDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, java.util.UUID.fromString(parser.getOptionValue("refId")));
-        }
-        else {
-            illegalStateFailure("[FAILURE] Unable to load project, failed to resolve branch ID.");
         }
 
         message = "[OPERATION] Loading Teamwork Cloud project.";
