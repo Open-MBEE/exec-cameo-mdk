@@ -105,9 +105,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
 
         // LOCK SYNC FOLDER
-        listener.setDisabled(true);
-        SyncElements.lockSyncFolder(project);
-        listener.setDisabled(false);
+
+        //listener.setDisabled(true);
+        //SyncElements.lockSyncFolder(project);
+        //listener.setDisabled(false);
 
         // DOWNLOAD MMS MESSAGES IF ASYNC CONSUMER IS DISABLED
 
