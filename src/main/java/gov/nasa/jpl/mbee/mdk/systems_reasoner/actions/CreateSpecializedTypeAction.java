@@ -77,7 +77,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
             Type special = null;
             if (isIndividual || (isRecursive && getExistingSpecial(redefinedAttribute) == null)){
                 SpecializeStructureAction speca = new SpecializeStructureAction(general, false, "", isRecursive, isIndividual);
-                special = speca.createSpecialClassifier(parent, traveled, visited);
+                special = speca.createSpecialClassifier(parent, new ArrayList<>(traveled), visited);
             }
             else if(getExistingSpecial(redefinedAttribute) != null) {
                 special = getExistingSpecial(redefinedAttribute);
