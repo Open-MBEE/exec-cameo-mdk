@@ -81,7 +81,7 @@ public class AutomatedViewGeneration extends CommandLine {
             GENERATE_RECURSIVELY = "generateRecursively",
             PMA_HOST = "pmaHost",
             PMA_PORT = "pmaPort",
-            JOB_ELEMENT_ID = "jobElementId",
+            PMA_JOB_ID = "pmaJobId",
             DEBUG = "debug",
             VERBOSE = "verbose";
 
@@ -107,7 +107,17 @@ public class AutomatedViewGeneration extends CommandLine {
             System.out.println("\n**********************\n");
             System.out.println("[INFO] Performing automated view generation.");
 
-            ticketStore = MMSUtils.getCredentialsTicket("https://" + parser.getOptionValue(MMS_HOST), parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD), null);
+            String mmsUrl = "https://" + parser.getOptionValue(MMS_HOST);
+            if (parser.hasOption(MMS_PORT)) {
+                try {
+                    mmsUrl = mmsUrl + ":" + parser.getOptionValue(MMS_PORT);
+                }
+                catch (NumberFormatException nfe) {
+                    String message = "[WARNING] Invalid mmsPort specified in options. Will attempt to access MMS without a port.";
+                    logMessage(message);
+                }
+            }
+            ticketStore = MMSUtils.getCredentialsTicket(mmsUrl, parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD), null);
             reportStatus("Started");
 
             MDKOptionsGroup.getMDKOptions().setLogJson(parser.hasOption(DEBUG));
@@ -385,11 +395,11 @@ public class AutomatedViewGeneration extends CommandLine {
         Option projectIdOption = new Option(PROJECT_ID, true, "Project ID.");
         Option refIdOption = new Option(REF_ID, true, "Ref (branch) ID.");
         Option targetViewIdOption = new Option(TARGET_VIEW_ID, true, "Target view element ID.");
-        Option generateRecursivelyOption = new Option("generateRecursively", "Generate views or target children recursively?");
+        Option generateRecursivelyOption = new Option(GENERATE_RECURSIVELY, "Generate views or target children recursively?");
 
         Option pmaHostOption = new Option(PMA_HOST, true, "PMA server host name.");
         Option pmaPortOption = new Option(PMA_PORT, true, "PMA server port number.");
-        Option jobElementIdOption = new Option(JOB_ELEMENT_ID, true, "PMA job instance element ID");
+        Option pmaInstanceIdOption = new Option(PMA_JOB_ID, true, "PMA job instance element ID");
 
         Option debugOption = new Option(DEBUG, "");
 
@@ -415,7 +425,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
         parserOptions.addOption(pmaHostOption);
         parserOptions.addOption(pmaPortOption);
-        parserOptions.addOption(jobElementIdOption);
+        parserOptions.addOption(pmaInstanceIdOption);
 
         parserOptions.addOption(debugOption);
         parserOptions.addOption(verboseOption);
@@ -514,13 +524,18 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private void reportStatus(String status) throws FileNotFoundException, UnsupportedEncodingException {
         String message;
-        if (!(parser.hasOption(PMA_HOST) && parser.hasOption(JOB_ELEMENT_ID) && System.getenv("BUILD_NUMBER") != null)) {
-            message = "[WARNING] Unable to report status to PMA server, one of more of the required PMA parameters were missing. Status: " + status;
+        if (!parser.hasOption(PMA_HOST)) {
+            message = "[WARNING] Unable to report status to PMA server, pmaHost is not defined.";
             logMessage(message);
             return;
         }
-        ObjectNode responseNode = JacksonUtils.getObjectMapper().createObjectNode(),
-                statusNode = JacksonUtils.getObjectMapper().createObjectNode();
+        String buildNumber = System.getenv("BUILD_NUMBER");
+        if (buildNumber == null || buildNumber.isEmpty()) {
+            message = "[WARNING] Unable to report status to PMA server, BUILD_NUMBER environment variable not available.";
+            logMessage(message);
+            return;
+        }
+        ObjectNode statusNode = JacksonUtils.getObjectMapper().createObjectNode();
         statusNode.put("ticket", ticketStore);
         statusNode.put("property", "jobStatus");
         statusNode.put("value", status);
@@ -537,16 +552,15 @@ public class AutomatedViewGeneration extends CommandLine {
                 logMessage(message);
             }
         }
-        pmaUri.setScheme("https");
-        String path = "projects/" + parser.getOptionValue(PROJECT_ID) + "/refs/" + parser.getOptionValue(REF_ID)
-                + "/jobs/" + parser.getOptionValue(JOB_ELEMENT_ID) + "/instances/" + System.getenv("BUILD_NUMBER") + "/jobStatus";
+        String path = "/projects/" + parser.getOptionValue(PROJECT_ID) + "/refs/" + parser.getOptionValue(REF_ID)
+                + "/jobs/" + parser.getOptionValue(PMA_JOB_ID) + "/instances/" + buildNumber + "/jobStatus";
         pmaUri.setPath(path);
         pmaUri.setParameter("mmsServer", parser.getOptionValue(MMS_HOST));
         StringEntity jsonBody = null;
         try {
             jsonBody = new StringEntity(statusNode.toString());
         } catch (UnsupportedEncodingException e) {
-            message = "[ERROR] Unable to update PMA status, exception occurred while creating status update json.";
+            message = "[WARNING] Unable to update PMA status, exception occurred while creating status update json.";
             logMessage(message);
             e.printStackTrace();
             return;
@@ -558,7 +572,7 @@ public class AutomatedViewGeneration extends CommandLine {
             request.addHeader("Content-Type", "application/json");
             request.setEntity(jsonBody);
         } catch (URISyntaxException e) {
-            message = "[ERROR] Unable to update PMA status, exception occurred while creating HTTP request.";
+            message = "[WARNING] Unable to update PMA status, exception occurred while creating HTTP request.";
             logMessage(message);
             e.printStackTrace();
             return;
@@ -569,7 +583,7 @@ public class AutomatedViewGeneration extends CommandLine {
              InputStream inputStream = response.getEntity().getContent()) {
             int responseCode = response.getStatusLine().getStatusCode();
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                message = "[WARNING] Status reporting did not complete successfully. Code: " + responseCode;
+                message = "[WARNING] PMA status update failed, execution returned error status. Code: " + responseCode;
                 logMessage(message);
                 if (inputStream != null) {
                     message = "  Message: " + IOUtils.toString(inputStream);
@@ -577,7 +591,7 @@ public class AutomatedViewGeneration extends CommandLine {
                 }
             }
         } catch (IOException e) {
-            message = "[ERROR] Unable of PMA status failed, exception occurred during HTTP connection.";
+            message = "[WARNING] PMA status update failed, exception occurred during HTTP connection.";
             logMessage(message);
             e.printStackTrace();
         }
