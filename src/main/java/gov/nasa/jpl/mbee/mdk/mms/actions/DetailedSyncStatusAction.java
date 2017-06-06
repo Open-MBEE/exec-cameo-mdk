@@ -76,7 +76,7 @@ public class DetailedSyncStatusAction extends SRAction {
         }
         Project project = Application.getInstance().getProject();
         for (SyncElement.Type syncElementType : SyncElement.Type.values()) {
-            Collection<SyncElement> syncElements = SyncElements.getAllOfType(project, syncElementType);
+            Collection<SyncElement> syncElements = SyncElements.getAllByType(project, syncElementType);
             for (SyncElement syncElement : syncElements) {
                 Changelog<String, Void> changelog = SyncElements.buildChangelog(syncElement);
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {

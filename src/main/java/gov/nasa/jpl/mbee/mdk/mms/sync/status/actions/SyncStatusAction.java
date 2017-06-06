@@ -80,7 +80,7 @@ public class SyncStatusAction extends SRAction {
             }
             totalInMemoryLocalChangedCount[0] = inMemoryLocalCreatedCount[0] + inMemoryLocalUpdatedCount[0] + inMemoryLocalDeletedCount[0];
 
-            for (SyncElement localSyncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
+            for (SyncElement localSyncElement : SyncElements.getAllByType(project, SyncElement.Type.LOCAL)) {
                 SyncElements.buildChangelog(localPersistedChangelog, localSyncElement);
             }
             persistedLocalCreatedCount[0] += localPersistedChangelog.get(Changelog.ChangeType.CREATED).size();
@@ -98,7 +98,7 @@ public class SyncStatusAction extends SRAction {
             }
             totalInMemoryJmsChangedCount[0] = inMemoryJmsCreatedCount[0] + inMemoryJmsUpdatedCount[0] + inMemoryJmsDeletedCount[0];
 
-            for (SyncElement mmsSyncElement : SyncElements.getAllOfType(project, SyncElement.Type.MMS)) {
+            for (SyncElement mmsSyncElement : SyncElements.getAllByType(project, SyncElement.Type.MMS)) {
                 SyncElements.buildChangelog(mmsPersistedChangelog, mmsSyncElement);
             }
             persistedJmsCreatedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.CREATED).size();

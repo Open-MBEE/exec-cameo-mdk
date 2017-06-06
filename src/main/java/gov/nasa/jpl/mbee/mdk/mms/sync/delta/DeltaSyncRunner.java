@@ -137,7 +137,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         Changelog<String, Element> persistedLocalChangelog = new Changelog<>();
         //JSONObject persistedLocalChanges = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
-        Collection<SyncElement> persistedLocalSyncElements = SyncElements.getAllOfType(project, SyncElement.Type.LOCAL);
+        Collection<SyncElement> persistedLocalSyncElements = SyncElements.getAllByType(project, SyncElement.Type.LOCAL);
         for (SyncElement syncElement : persistedLocalSyncElements) {
             persistedLocalChangelog = persistedLocalChangelog.and(SyncElements.buildChangelog(syncElement), (key, value) -> Converters.getIdToElementConverter().apply(key, project));
         }
@@ -151,7 +151,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // BUILD COMPLETE MMS CHANGELOG
 
         Changelog<String, Void> persistedJmsChangelog = new Changelog<>();
-        Collection<SyncElement> persistedJmsSyncElements = SyncElements.getAllOfType(project, SyncElement.Type.MMS);
+        Collection<SyncElement> persistedJmsSyncElements = SyncElements.getAllByType(project, SyncElement.Type.MMS);
         //JSONObject persistedJmsChanges = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "jms");
         for (SyncElement syncElement : persistedJmsSyncElements) {
             persistedJmsChangelog = persistedJmsChangelog.and(SyncElements.buildChangelog(syncElement));
