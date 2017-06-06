@@ -34,8 +34,6 @@ public class DBTomSawyerDiagram extends DocumentElement {
             case Table:
                 return shortDiagramType.Table;
         }
-
-
         return null;
     }
 
