@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.pma.analyses;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.esi.api.exceptions.LoginException;
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -199,7 +200,7 @@ public class AutomatedViewGeneration extends CommandLine {
      */
 
     private void loginTeamwork()
-            throws FileNotFoundException, UnsupportedEncodingException, InterruptedException, IllegalAccessException {
+            throws FileNotFoundException, UnsupportedEncodingException, InterruptedException, IllegalAccessException, IllegalStateException {
         // disable all mdk popup warnings
         MDKHelper.setPopupsDisabled(true);
 
@@ -208,8 +209,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
         ITeamworkService twcService = EsiUtils.getTeamworkService();
         twcService.login(new ServerLoginInfo(parser.getOptionValue(TWC_HOST) + ":" + parser.getOptionValue(TWC_PORT),
-                parser.getOptionValue(TWC_USERNAME) , parser.getOptionValue(TWC_PASSWORD) , true), true);
-
+                parser.getOptionValue(TWC_USERNAME), parser.getOptionValue(TWC_PASSWORD), true), true);
         if (!twcService.isConnected()) {
             illegalStateFailure("[FAILURE] Unable to log in to Teamwork Cloud with specified credentials.");
         }
@@ -228,7 +228,7 @@ public class AutomatedViewGeneration extends CommandLine {
      * @throws RemoteException              error getting the projectDescriptor back from the twUtil
      */
     private void loadTeamworkProject()
-            throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, InterruptedException, URISyntaxException {
+            throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, IllegalStateException, InterruptedException, URISyntaxException {
         String message;
 
         message = "[OPERATION] Specifying MMS credentials.";
@@ -293,9 +293,14 @@ public class AutomatedViewGeneration extends CommandLine {
         } catch (Exception e1) {
             illegalStateFailure("[FAILURE] Unable to find project descriptor on Teamwork Cloud.");
         }
+        if (projectDescriptor == null) {
+            illegalStateFailure("[FAILURE] Unable to find project descriptor on Teamwork Cloud.");
+        }
+        assert projectDescriptor != null;
 
         // modify project descriptor with branch information
         if (!branchTwcId.isEmpty()) {
+
             projectDescriptor = EsiUtils.getDescriptorByBranchID(projectDescriptor, java.util.UUID.fromString(branchTwcId));
         }
         else if (!parser.getOptionValue(REF_ID).equals("master")) {
@@ -305,8 +310,6 @@ public class AutomatedViewGeneration extends CommandLine {
         message = "[OPERATION] Loading Teamwork Cloud project.";
         logMessage(message);
 
-//        java.net.URI projectUri = new URIBuilder().setScheme("twcloud").setPath(projectTwcId + " / " + branchTwcId).build();
-//        ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createProjectDescriptor(projectUri);
         Application.getInstance().getProjectsManager().loadProject(projectDescriptor, true);
 
         // if not access to project, loaded project will be null, so error out
@@ -345,6 +348,7 @@ public class AutomatedViewGeneration extends CommandLine {
         if (targetView == null) {
             illegalStateFailure("[ERROR] Unable to find element \"" + parser.getOptionValue(TARGET_VIEW_ID) + "\"");
         }
+        assert targetView != null;
         OutputSyncRunner.clearLastExceptionPair();
         message = "[OPERATION] Generating " + targetView.getHumanName() + (parser.hasOption(GENERATE_RECURSIVELY) ? " views recursively." : ".");
         logMessage(message);
@@ -539,8 +543,9 @@ public class AutomatedViewGeneration extends CommandLine {
         statusNode.put("ticket", ticketStore);
         statusNode.put("property", "jobStatus");
         statusNode.put("value", status);
-        URIBuilder pmaUri = new URIBuilder();
+
         // http://{pmaHost}:{pmaPort}/projects/{projectId}/refs/{refId}/jobs/{jobElementId}/instances/{jenkinsBuildNumber}/{jobPropertyName}?mmsServer={mmsServer}
+        URIBuilder pmaUri = new URIBuilder();
         pmaUri.setScheme("https");
         pmaUri.setHost(parser.getOptionValue(PMA_HOST));
         if (parser.hasOption(PMA_PORT)) {
@@ -556,7 +561,7 @@ public class AutomatedViewGeneration extends CommandLine {
                 + "/jobs/" + parser.getOptionValue(PMA_JOB_ID) + "/instances/" + buildNumber + "/jobStatus";
         pmaUri.setPath(path);
         pmaUri.setParameter("mmsServer", parser.getOptionValue(MMS_HOST));
-        StringEntity jsonBody = null;
+        StringEntity jsonBody;
         try {
             jsonBody = new StringEntity(statusNode.toString());
         } catch (UnsupportedEncodingException e) {
@@ -566,7 +571,7 @@ public class AutomatedViewGeneration extends CommandLine {
             return;
         }
 
-        HttpPost request = null;
+        HttpPost request;
         try {
             request = new HttpPost(pmaUri.build());
             request.addHeader("Content-Type", "application/json");
