@@ -102,7 +102,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             try {
                 TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));
                 successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_REF_ID, MDUtils.getWorkspace(project) + "_mdk");
+                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_REF_ID, MDUtils.getBranchId(project) + "_mdk");
                 jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
                 int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
                 Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
