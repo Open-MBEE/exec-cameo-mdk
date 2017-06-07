@@ -56,7 +56,7 @@ public class TicketUtils {
             return false;
         }
         String ticket = ticketMappings.get(project).getTicket();
-        return MMSUtils.validateCredentials(project, ticket, progressStatus).equals(username);
+        return MMSUtils.validateCredentialsTicket(project, ticket, progressStatus).equals(username);
     }
 
     /**
@@ -242,7 +242,7 @@ public class TicketUtils {
             public void run(ProgressStatus progressStatus) {
                 String ticket;
                 try {
-                    ticket = MMSUtils.sendCredentials(project, username, pass, progressStatus);
+                    ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
                 } catch (ServerException | IOException | URISyntaxException e) {
                     Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
                     e.printStackTrace();
