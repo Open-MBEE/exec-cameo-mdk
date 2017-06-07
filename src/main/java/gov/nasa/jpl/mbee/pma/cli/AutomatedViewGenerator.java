@@ -1,8 +1,7 @@
-package gov.nasa.jpl.mbee.pma.analyses;
+package gov.nasa.jpl.mbee.pma.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.esi.api.exceptions.LoginException;
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -41,7 +40,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AutomatedViewGeneration extends CommandLine {
+public class AutomatedViewGenerator extends CommandLine {
 
     private org.apache.commons.cli.CommandLine parser;
 
@@ -98,7 +97,7 @@ public class AutomatedViewGeneration extends CommandLine {
     protected byte execute() {
         try {
             // send output back to stdout
-            System.setOut(AutomatedViewGeneration.stdout);
+            System.setOut(AutomatedViewGenerator.stdout);
 
             // start the cancel handler so we don't terminate in the middle of a view sync operation and so we can force logout if logged in to teamwork
             cancelHandler = new InterruptTrap();
@@ -619,7 +618,7 @@ public class AutomatedViewGeneration extends CommandLine {
                     e.printStackTrace();
                 }
                 synchronized (lock) {
-                    System.setOut(AutomatedViewGeneration.stdout);
+                    System.setOut(AutomatedViewGenerator.stdout);
                     String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + CANCEL_DELAY + " min).";
                     try {
                         logMessage(msg);
