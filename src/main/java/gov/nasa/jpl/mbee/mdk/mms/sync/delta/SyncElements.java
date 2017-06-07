@@ -3,35 +3,39 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.delta;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.magicdraw.commands.Command;
+import com.nomagic.magicdraw.commands.CommandHistory;
+import com.nomagic.magicdraw.commands.MacroCommand;
+import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
-import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
-import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.LiteralString;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.PackageableElement;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by igomes on 7/25/16.
  */
 
-//@donbot update json simple to jackson
 public class SyncElements {
-    private static final String CLEAR_SUFFIX = "_clear";
-    private static final DateFormat NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH.mm.ss.SSSZ");
 
     private static String getSyncPackageID(Project project) {
         return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.SYNC_SYSML_ID_SUFFIX;
@@ -43,131 +47,47 @@ public class SyncElements {
         return folder instanceof Package ? (Package) folder : null;
     }
 
-    public static Collection<SyncElement> getAllOfType(Project project, SyncElement.Type type) {
+    public static Collection<SyncElement> getAllByType(Project project, SyncElement.Type type) {
         Package syncPackage = getSyncPackage(project);
         if (syncPackage == null) {
-            return Collections.emptySet();
+            return Collections.emptyList();
         }
-        Collection<PackageableElement> packagedElements = syncPackage.getPackagedElement();
-        Map<String, SyncElement> syncElements = new HashMap<>(packagedElements.size());
-        List<NamedElement> clearElements = new ArrayList<>(packagedElements.size());
-        for (Element element : packagedElements) {
-            if (!(element instanceof NamedElement)) {
-                continue;
-            }
-            String name = ((NamedElement) element).getName();
-            if (!name.startsWith(type.getPrefix())) {
-                continue;
-            }
-            if (name.endsWith(CLEAR_SUFFIX)) {
-                clearElements.add((NamedElement) element);
-                continue;
-            }
-            syncElements.put(name, new SyncElement((NamedElement) element, type));
-        }
-        for (NamedElement clearElement : clearElements) {
-            String name = clearElement.getName();
-            syncElements.remove(name.substring(0, name.length() - CLEAR_SUFFIX.length()));
-        }
-        return syncElements.values();
+        return syncPackage.getPackagedElement().stream().filter(element -> element.getName().startsWith(type.getPrefix())).map(element -> new SyncElement(element, type)).collect(Collectors.toList());
     }
 
     public static SyncElement setByType(Project project, SyncElement.Type type, String comment) {
+        getAllByType(project, type).stream().map(SyncElement::getElement).forEach(element -> {
+            try {
+                Command command = RemoveCommandCreator.getCommand(element);
+                command.execute();
+                MacroCommand macroCommand = CommandHistory.getCommandForAppend(element);
+                macroCommand.add(command);
+            } catch (RuntimeException e) {
+                System.out.println("Unable to delete sync element: " + element.getName());
+                e.printStackTrace();
+            }
+        });
+
+        project.getCounter().setCanResetIDForObject(true);
         Package syncPackage = getSyncPackage(project);
         if (syncPackage == null) {
-            project.getCounter().setCanResetIDForObject(true);
             syncPackage = project.getElementsFactory().createPackageInstance();
             syncPackage.setOwner(project.getModel());
             syncPackage.setName("__MMSSync__");
             syncPackage.setID(getSyncPackageID(project));
         }
-        Collection<PackageableElement> packagedElements = syncPackage.getPackagedElement();
-        Map<String, SyncElement> syncElements = new HashMap<>(packagedElements.size());
-        List<NamedElement> clearElements = new ArrayList<>(packagedElements.size());
-        for (Element element : packagedElements) {
-            if (!(element instanceof NamedElement)) {
-                continue;
-            }
-            String name = ((NamedElement) element).getName();
-            if (!name.startsWith(type.getPrefix())) {
-                continue;
-            }
-            if (name.endsWith(CLEAR_SUFFIX)) {
-                clearElements.add((NamedElement) element);
-                continue;
-            }
-            syncElements.put(name, new SyncElement((NamedElement) element, type));
-        }
 
-        // DELETE ALREADY CLEARED BLOCKS AND THEIR CLEAR BLOCKS (AND DANGLING CLEAR BLOCKS)
+        LiteralString literalString = project.getElementsFactory().createLiteralStringInstance();
+        literalString.setID(literalString.getID() + MDKConstants.SYNC_SYSML_ID_SUFFIX);
+        literalString.setValue(comment);
 
-        for (NamedElement clearElement : clearElements) {
-            if (!clearElement.isEditable()) {
-                continue;
-            }
-            String name = clearElement.getName();
-            String clearedElementName = name.substring(0, name.length() - CLEAR_SUFFIX.length());
-            SyncElement clearedSyncElement = syncElements.get(clearedElementName);
-            if (clearedSyncElement == null) {
-                // delete dangling clear blocks
-                try {
-                    ModelElementsManager.getInstance().removeElement(clearElement);
-                } catch (ReadOnlyElementException e) {
-                    e.printStackTrace();
-                }
-                continue;
-            }
-            syncElements.remove(clearedElementName);
-            if (!clearedSyncElement.getElement().isEditable()) {
-                continue;
-            }
-            try {
-                ModelElementsManager.getInstance().removeElement(clearedSyncElement.getElement());
-                ModelElementsManager.getInstance().removeElement(clearElement);
-            } catch (ReadOnlyElementException e) {
-                e.printStackTrace();
-            }
-        }
+        InstanceSpecification instanceSpecification = project.getElementsFactory().createInstanceSpecificationInstance();
+        instanceSpecification.setID(instanceSpecification.getID() + MDKConstants.SYNC_SYSML_ID_SUFFIX);
+        instanceSpecification.setOwningPackage(syncPackage);
+        instanceSpecification.setName(type.toString().toLowerCase() + "_" + ZonedDateTime.now().format(DATE_TIME_FORMATTER));
+        instanceSpecification.setSpecification(literalString);
 
-        // PERSIST CONTENT
-
-        boolean isReusing = false;
-        NamedElement newSyncElementElement = null;
-        for (SyncElement syncElement : syncElements.values()) {
-            if (syncElement.getElement().isEditable()) {
-                newSyncElementElement = syncElement.getElement();
-                isReusing = true;
-                break;
-            }
-        }
-        if (newSyncElementElement == null) {
-            newSyncElementElement = project.getElementsFactory().createClassInstance();
-            newSyncElementElement.setOwner(syncPackage);
-        }
-        newSyncElementElement.setName(type.getPrefix() + "_" + NAME_DATE_FORMAT.format(new Date()));
-        ModelHelper.setComment(newSyncElementElement, comment);
-
-        // DELETE/CLEAR ALL OLD SYNC ELEMENTS OF SAME TYPE AND DANGLING CLEAR BLOCKS
-
-        for (SyncElement syncElement : syncElements.values()) {
-            // so it doesn't delete the one that we just updated
-            if (isReusing && syncElement.getElement() == newSyncElementElement) {
-                continue;
-            }
-            if (syncElement.getElement().isEditable()) {
-                try {
-                    ModelElementsManager.getInstance().removeElement(syncElement.getElement());
-                    continue;
-                } catch (ReadOnlyElementException e) {
-                    e.printStackTrace();
-                }
-            }
-            NamedElement newClearElement = project.getElementsFactory().createClassInstance();
-            newClearElement.setName(syncElement.getElement().getName() + CLEAR_SUFFIX);
-            newClearElement.setOwner(syncPackage);
-        }
-
-        return new SyncElement(newSyncElementElement, type);
+        return new SyncElement(instanceSpecification, type);
     }
 
     @SuppressWarnings("unchecked")
@@ -182,20 +102,41 @@ public class SyncElements {
     }
 
     public static Changelog<String, Void> buildChangelog(SyncElement syncElement) {
-        String comment = ModelHelper.getComment(syncElement.getElement());
-        try {
-            JsonNode jsonNode = JacksonUtils.getObjectMapper().readTree(comment);
-            if (jsonNode != null && jsonNode.isObject()) {
-                return buildChangelog((ObjectNode) jsonNode);
+        Changelog<String, Void> changelog = new Changelog<>();
+        return buildChangelog(changelog, syncElement);
+    }
+
+    public static Changelog<String, Void> buildChangelog(Changelog changelog, SyncElement syncElement) {
+        InstanceSpecification syncInstance;
+        String body;
+        if (syncElement == null || syncElement.getElement() == null) {
+            return new Changelog<>();
+        }
+        else if (syncElement.getElement() instanceof InstanceSpecification && (syncInstance = (InstanceSpecification) syncElement.getElement()).getSpecification() instanceof LiteralString) {
+            body = ((LiteralString) syncInstance.getSpecification()).getValue();
+        }
+        else {
+            body = ModelHelper.getComment(syncElement.getElement());
+        }
+        if (body != null) {
+            try {
+                JsonNode jsonNode = JacksonUtils.getObjectMapper().readTree(body);
+                if (jsonNode != null && jsonNode.isObject()) {
+                    return buildChangelog(changelog, (ObjectNode) jsonNode);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return new Changelog<>();
     }
 
     public static Changelog<String, Void> buildChangelog(ObjectNode objectNode) {
         Changelog<String, Void> changelog = new Changelog<>();
+        return buildChangelog(changelog, objectNode);
+    }
+
+    public static Changelog<String, Void> buildChangelog(Changelog changelog, ObjectNode objectNode) {
         for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
             JsonNode jsonNode = objectNode.get(changeType.name().toLowerCase());
             if (jsonNode == null || !jsonNode.isArray()) {

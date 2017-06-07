@@ -201,7 +201,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentImageInstances.peek().isEmpty()) {
             i = currentImageInstances.peek().remove(0);
-            currentInstanceList.peek().remove(0);
+            currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -216,6 +216,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         list.accept(l);
         viewElements.peek().addAll(l.getListElements());
         elementSet.addAll(l.getElementSet());
+        images.putAll(l.getImages());
 
         //for ems 2.2 reference tree
         if (!main) {
@@ -224,7 +225,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentListInstances.peek().isEmpty()) {
             i = currentListInstances.peek().remove(0);
-            currentInstanceList.peek().remove(0);
+            currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -244,7 +245,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentParaInstances.peek().isEmpty()) {
             i = currentParaInstances.peek().remove(0);
-            currentInstanceList.peek().remove(0);
+            currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -281,7 +282,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentParaInstances.peek().isEmpty()) {
             i = currentParaInstances.peek().remove(0);
-            currentInstanceList.peek().remove(0);
+            currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -354,7 +355,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentTableInstances.peek().isEmpty()) {
             i = currentTableInstances.peek().remove(0);
-            currentInstanceList.remove(i);
+            currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
@@ -370,6 +371,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         table.accept(v);
         viewElements.peek().addAll(v.getTableElements());
         elementSet.addAll(v.getElementSet());
+        images.putAll(v.getImages());
 
         //for ems 2.2 reference tree
         if (!main) {
@@ -378,7 +380,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentTableInstances.peek().isEmpty()) {
             i = currentTableInstances.peek().remove(0);
-            currentInstanceList.peek().remove(0);
+            currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();

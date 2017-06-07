@@ -5,9 +5,9 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.MDActionsCategory;
+import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllViewsAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllViewsAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.ValidateBranchesAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 

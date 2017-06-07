@@ -62,7 +62,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 objectNode = preProcessor.getFunction().apply(element, project, objectNode);
             } catch (RuntimeException e) {
                 e.printStackTrace();
-                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getID() + " in " + project.getName());
+                System.out.println("EXCEPTION: " + element.getHumanName() + " | " + element.getLocalID() + " in " + project.getName());
             }
             if (objectNode == null) {
                 return null;
@@ -95,10 +95,13 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         Element element = (Element) eObject;
         Project project = Project.getProject(element);
 
-        // custom handling of elements with non-fixed ids in local projects
+        // custom handling of primary model id
         if (element instanceof Model && project.getPrimaryModel() == element) {
             return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
         }
+
+        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the jms sync counts in some cases (annoying, but ultimately harmless)
+        // NOTE - this spoofing is replicated in LocalSyncTransactionListener in order to properly add / remove elements in the unsynched queue. any updates here should be replicated there as well.
         if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
             return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
         }
@@ -112,16 +115,9 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         if (element instanceof Slot) {
             Slot slot = (Slot) element;
             if (slot.getOwningInstance() != null && ((Slot) element).getDefiningFeature() != null) {
-                return getEID(slot.getOwner()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
+                return getEID(slot.getOwningInstance()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
             }
         }
-//        // eObject is in local primary model OR TWC online copy of a local mount
-//        // NOTE: assumes that project.getLocationURI().isFile() === !project.isRemote()
-//        IProject iProject = ProjectUtilities.getAttachedProject(element);
-//        if ((iProject == null && !project.isRemote())
-//                || (iProject != null && iProject.getLocationURI().isFile())) {
-//            return element.getLocalID();
-//        }
         return element.getLocalID();
     }
 
@@ -215,7 +211,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     }
                     objectNode.put(MDKConstants.REF_ID_KEY, branchName);
                     objectNode.put(MDKConstants.TWC_VERSION_KEY, isRemote ? ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()) : -1);
-                    objectNode.put(MDKConstants.URI_KEY, attachedProject.getProjectDescriptor().getLocationUri().toString());
                     return objectNode;
                 }
         ),

@@ -86,7 +86,7 @@ public class ClassUtils {
      * Get the Field of the Class of the object with the given fieldName using
      * reflection.
      *
-     * @param o                  the object whose field is sought
+     * @param o         the object whose field is sought
      * @param fieldName
      * @return the Field of the Class
      */
@@ -141,8 +141,8 @@ public class ClassUtils {
     /**
      * Try to convert an object into one of the specified class.
      *
-     * @param o         the object to convert into type cls
-     * @param cls       the {@link Class} of the object to return
+     * @param o   the object to convert into type cls
+     * @param cls the {@link Class} of the object to return
      * @return an object of the type specified or null if the conversion was
      * unsuccessful.
      */

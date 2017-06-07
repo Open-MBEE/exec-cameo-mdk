@@ -22,31 +22,31 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 
     private static final long serialVersionUID = 1L;
     private static final String DEFAULT_NAME = "Create Specialized Classifier";
+    private final boolean isRecursive;
 
     private Property property;
     private Classifier parent;
-    private boolean redefineAttributes;
     private String name;
     private boolean isIndividual;
 
 
-    public CreateSpecializedTypeAction(final Property property, final Classifier parent, final boolean redefineAttributes, final String name, boolean isIndividual) {
+    public CreateSpecializedTypeAction(final Property property, final Classifier parent, final String name, boolean isIndividual, boolean isRecursive) {
         super(name);
         this.property = property;
         this.parent = parent;
-        this.redefineAttributes = redefineAttributes;
         this.name = name;
         this.isIndividual = isIndividual;
+        this.isRecursive = isRecursive;
     }
 
-    public static final void createSpecializedType(final Property property, final Classifier parent, final boolean redefineAttributes, boolean isIndividual) {
-        createSpecializedType(property, parent, redefineAttributes, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual);
+    public static final void createSpecializedType(final Property property, final Classifier parent, boolean isIndividual, boolean isRecursive) {
+        createSpecializedType(property, parent, new ArrayList<RedefinableElement>(), new ArrayList<Classifier>(), isIndividual, isRecursive);
     }
 
-    public static final void createSpecializedType(final StructuralFeature redefinedAttribute, final Classifier parent, final boolean redefineAttributes, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual) {
+    public static final boolean createSpecializedType(final StructuralFeature redefinedAttribute, final Classifier parent, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual, boolean isRecursive) {
         if (!parent.isEditable()) {
             Application.getInstance().getGUILog().log(parent.getQualifiedName() + " is not editable. Skipping creating specialization.");
-            return;
+            return true;
         }
         if (redefinedAttribute.getType() instanceof Classifier && !(redefinedAttribute.getType() instanceof Property)) {
             boolean hasTraveled = false;
@@ -63,39 +63,47 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
             }
             if (hasTraveled) {
                 Application.getInstance().getGUILog().log("[WARNING] Detected circular reference at " + redefinedAttribute.getQualifiedName() + ". Stopping recursion.");
-                return;
+                return false;
             }
+
             traveled.add(redefinedAttribute);
             for (final RedefinableElement re : redefinedAttribute.getRedefinedElement()) {
                 if (re instanceof RedefinableElement) {
                     traveled.add(re);
                 }
             }
+
             final Classifier general = (Classifier) redefinedAttribute.getType();
             Type special = null;
-            if (!isIndividual && getExistingSpecial(redefinedAttribute) != null) {
+            if (isIndividual || (isRecursive && getExistingSpecial(redefinedAttribute) == null)) {
+                SpecializeStructureAction speca = new SpecializeStructureAction(general, false, "", isRecursive, isIndividual);
+                special = speca.createSpecialClassifier(parent, new ArrayList<>(traveled), visited);
+            }
+            else if (getExistingSpecial(redefinedAttribute) != null) {
                 special = getExistingSpecial(redefinedAttribute);
             }
-            else {
-                // special = createSpecializedClassifier(general, parent, redefinedAttribute);
-                SpecializeStructureAction speca = new SpecializeStructureAction(general, false, "", redefineAttributes, isIndividual);
-                special = speca.createSpecialClassifier(parent, traveled, visited);
-            }
-            if (special == null) {
-                return;
+            else if (visited.contains(general)) {
+                Application.getInstance().getGUILog().log("[WARNING] Detected circular reference. Type  " + general.getQualifiedName() + " referenced by " + redefinedAttribute.getQualifiedName() + " was already visited. Stopping recursion.");
+                return false;
             }
 
-            redefinedAttribute.setType(special);
-            if (redefineAttributes) {
-                if (special instanceof Classifier) {
-                    for (final NamedElement ne : ((Classifier) special).getInheritedMember()) {
-                        if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
-                            SetOrCreateRedefinableElementAction.redefineAttribute((Classifier) special, (RedefinableElement) ne, true, traveled, visited, isIndividual);
-                        }
-                    }
-                }
+            if (special == null) {
+                return true;
             }
+            redefinedAttribute.setType(special);
+
+
+//            if (isRecursive) {
+//                if (special instanceof Classifier) {
+//                    for (final NamedElement ne : ((Classifier) special).getInheritedMember()) {
+//                        if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf()) {
+//                            SetOrCreateRedefinableElementAction.redefineRedefinableElement((Classifier) special, (RedefinableElement) ne, traveled, visited, isIndividual, isRecursive);
+//                        }
+//                    }
+//                }
+//            }
         }
+        return true;
     }
 
     private static Type getExistingSpecial(StructuralFeature structuralFeature) {
@@ -160,7 +168,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 
     @Override
     public void run() {
-        CreateSpecializedTypeAction.createSpecializedType(property, parent, redefineAttributes, isIndividual);
+        CreateSpecializedTypeAction.createSpecializedType(property, parent, isIndividual, isRecursive);
     }
 
     @Override

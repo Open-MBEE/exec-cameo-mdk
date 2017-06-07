@@ -20,11 +20,11 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,7 +117,8 @@ public class ElementValidator implements RunnableWithProgress {
                                     Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);
                                     if (currentClientElement == null) {
                                         addMissingInClientViolation(currentServerElement);
-                                    } else {
+                                    }
+                                    else {
                                         addElementEquivalenceViolation(currentClientElement, currentServerElement);
                                     }
                                 }
@@ -187,7 +188,7 @@ public class ElementValidator implements RunnableWithProgress {
         if (clientElement.getKey() instanceof NamedElement && ((NamedElement) clientElement.getKey()).getName() != null && !((NamedElement) clientElement.getKey()).getName().isEmpty()) {
             name = ((NamedElement) clientElement.getKey()).getName();
         }
-        finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[MISSING ON MMS] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getID(), clientElement, null, null);
+        finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[MISSING ON MMS] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getLocalID(), clientElement, null, null);
     }
 
     public void addElementEquivalenceViolation(Pair<Element, ObjectNode> clientElement, ObjectNode serverElement) {
@@ -198,20 +199,32 @@ public class ElementValidator implements RunnableWithProgress {
             if (clientElement.getKey() instanceof NamedElement && ((NamedElement) clientElement.getKey()).getName() != null && !((NamedElement) clientElement.getKey()).getName().isEmpty()) {
                 name = ((NamedElement) clientElement.getKey()).getName();
             }
-            finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[NOT EQUIVALENT] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getID(), clientElement, serverElement, diff);
+            finishViolation(new ValidationRuleViolation(clientElement.getKey(), "[NOT EQUIVALENT] " + clientElement.getKey().getHumanType() + " " + name), clientElement.getKey().getLocalID(), clientElement, serverElement, diff);
         }
     }
 
     public void finishViolation(ValidationRuleViolation validationRuleViolation, String id, Pair<Element, ObjectNode> clientElement, ObjectNode serverElement, JsonNode diff) {
         validationRuleViolation.addAction(new CommitClientElementAction(id, clientElement != null ? clientElement.getKey() : null, clientElement != null ? clientElement.getValue() : null, project));
-        validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElement != null ? clientElement.getKey() : null, serverElement, project));
+        validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElement != null ? clientElement.getKey() : null, serverElement, project) {
+            @Override
+            protected ValidationRuleViolation getEditableValidationRuleViolation(Element element, ObjectNode objectNode, String sysmlId) {
+                if (element != null && !element.isEditable()) {
+                    if (objectNode == null) {
+                        return new ValidationRuleViolation(element, "[DELETE FAILED] " + element.getHumanName() + " is not editable.");
+                    }
+                    return new ValidationRuleViolation(!project.isDisposed(element) ? element : project.getPrimaryModel(),
+                            "[" + (!project.isDisposed(element) ? "UPDATE" : "CREATE") + " FAILED] " + (project.isDisposed(element) ? (sysmlId != null ? sysmlId : "<>") : element.getHumanName()) + " is not editable.");
+                }
+                return null;
+            }
+        });
 
         ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
         copyActionsCategory.setNested(true);
         validationRuleViolation.addAction(copyActionsCategory);
         copyActionsCategory.addAction(new ClipboardAction("ID", id));
         if (clientElement != null) {
-            copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElement.getKey().getID()));
+            copyActionsCategory.addAction(new ClipboardAction("Element Hyperlink", "mdel://" + clientElement.getKey().getLocalID()));
             try {
                 copyActionsCategory.addAction(new ClipboardAction("Local JSON", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(clientElement.getValue())));
             } catch (JsonProcessingException ignored) {

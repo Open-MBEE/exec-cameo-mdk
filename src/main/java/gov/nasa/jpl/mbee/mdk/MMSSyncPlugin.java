@@ -61,6 +61,8 @@ public class MMSSyncPlugin extends Plugin {
         Application.getInstance().getProjectsManager().addProjectListener(jmsSyncProjectEventListenerAdapter = new JMSSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(syncStatusProjectEventListenerAdapter = new SyncStatusProjectEventListenerAdapter());
 
+        Application.getInstance().addSaveParticipant(coordinatedSyncProjectEventListenerAdapter);
+
         CookieSet cookieSet = Application.getInstance().getCookieSet();
         CloseCookie closeCookie = (CloseCookie) cookieSet.getCookie(CloseCookie.class);
         if (closeCookie != null) {

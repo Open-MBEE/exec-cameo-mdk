@@ -10,9 +10,9 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.jms.JMSUtils;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.jms.*;
 import javax.naming.NameNotFoundException;
@@ -80,10 +80,11 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (jmsSyncProjectMapping == null || jmsSyncProjectMapping.getJmsMessageListener() == null || !jmsSyncProjectMapping.getJmsMessageListener().isDisabled()) {
             return;
         }
-        if (jmsSyncProjectMapping.getJmsMessageListener() == null)
-        if (!shouldEnableJMS(project)) {
-            jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
-            return;
+        if (jmsSyncProjectMapping.getJmsMessageListener() == null) {
+            if (!shouldEnableJMS(project)) {
+                jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
+                return;
+            }
         }
         boolean initialized = initDurable(project);
         jmsSyncProjectMapping.getJmsMessageListener().setDisabled(!initialized);
@@ -112,7 +113,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
     private static boolean initDurable(Project project) {
         String projectID = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
-        String workspaceID = MDUtils.getWorkspace(project);
+        String workspaceID = MDUtils.getBranchId(project);
 
         // verify logged in to appropriate places
         if (!TicketUtils.isTicketSet(project)) {
@@ -159,7 +160,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Failed to create JMS connection factory.");
                 return false;
             }
-            String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(); // weblogic can't have '/' in id
+            String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(project); // weblogic can't have '/' in id
 
             JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 

@@ -6,8 +6,6 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.actions.LockAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
@@ -15,6 +13,8 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
@@ -76,7 +76,7 @@ public class DetailedSyncStatusAction extends SRAction {
         }
         Project project = Application.getInstance().getProject();
         for (SyncElement.Type syncElementType : SyncElement.Type.values()) {
-            Collection<SyncElement> syncElements = SyncElements.getAllOfType(project, syncElementType);
+            Collection<SyncElement> syncElements = SyncElements.getAllByType(project, syncElementType);
             for (SyncElement syncElement : syncElements) {
                 Changelog<String, Void> changelog = SyncElements.buildChangelog(syncElement);
                 for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {

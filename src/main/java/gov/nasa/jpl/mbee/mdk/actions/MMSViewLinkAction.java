@@ -9,9 +9,9 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ui.ViewEditorLinkForm;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -55,7 +55,6 @@ public class MMSViewLinkAction extends MDAction {
                     && !StereotypesHelper.hasStereotypeOrDerived(element, documentStereotype)) {
                 continue;
             }
-            Project project = Project.getProject(element);
 
             // build url
             URIBuilder uriBase = MMSUtils.getServiceUri(project);
@@ -66,24 +65,26 @@ public class MMSViewLinkAction extends MDAction {
             //projects/PROJECT-ID_5_17_16_1_31_54_PM_5fc737b6_154bba92ecd_4cc1_cae_tw_jpl_nasa_gov_127_0_0_1/master/documents/_18_5_83a025f_1491339810716_846504_4332/views/_18_5_83a025f_1491339810716_846504_4332
 
             // include this in the host portion of the uri. not technically correct, but it prevents the # from being converted and breaking things
-            uriBase.setHost(uriBase.getHost() +  "/alfresco/mmsapp/mms.html#");
+            uriBase.setHost(uriBase.getHost() + "/alfresco/mmsapp/mms.html#");
+            uriBase.setPath("");
 
             String uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
 
             String branchName = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
-            uriPath +=  "/" + (branchName.equals("trunk") ? "master" : branchName);
+            uriPath += "/" + (branchName.equals("trunk") ? "master" : branchName);
 
             // collect document parents from hierarchy
             Set<Element> documents = new HashSet<>();
             ArrayList<Element> viewChain = new ArrayList<>();
             viewChain.add(element);
             for (int i = 0; i < viewChain.size(); i++) {
-                if (StereotypesHelper.hasStereotype(viewChain.get(i), documentStereotype)) {
-                    documents.add(viewChain.get(i));
+                Element currentView = viewChain.get(i);
+                if (StereotypesHelper.hasStereotype(currentView, documentStereotype)) {
+                    documents.add(currentView);
                 }
                 // create set of hierarchy children so we can ignore those ends and only climb the hierarchy
                 Set<Element> childViews = new HashSet<>();
-                for (Property prop : ((Class) viewChain.get(i)).getOwnedAttribute()) {
+                for (Property prop : ((Class) currentView).getOwnedAttribute()) {
                     if (!(prop.getType() instanceof Class)) {
                         continue;
                     }
@@ -95,7 +96,7 @@ public class MMSViewLinkAction extends MDAction {
                     childViews.add(type);
                 }
                 // check each association end, if it's a non-child view/document then add it to chain for further processing
-                for (Relationship relation : viewChain.get(i).get_relationshipOfRelatedElement()) {
+                for (Relationship relation : currentView.get_relationshipOfRelatedElement()) {
                     if (!(relation instanceof Association)) {
                         continue;
                     }
@@ -140,7 +141,12 @@ public class MMSViewLinkAction extends MDAction {
             }
             else {
                 // build single link
-                uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                if (documents.isEmpty()) {
+                    uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                }
+                else {
+                    uriPath += "/documents/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                }
                 // just open it if possible
                 if (Desktop.isDesktopSupported()) {
                     try {

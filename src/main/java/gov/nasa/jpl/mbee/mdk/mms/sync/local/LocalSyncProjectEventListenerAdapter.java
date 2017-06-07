@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.local;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,7 +70,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public static class LocalSyncProjectMapping {
         private LocalSyncTransactionCommitListener localSyncTransactionCommitListener;
 
-        public LocalSyncProjectMapping (Project project) {
+        public LocalSyncProjectMapping(Project project) {
             localSyncTransactionCommitListener = new LocalSyncTransactionCommitListener(project);
         }
 

@@ -3,9 +3,9 @@ package gov.nasa.jpl.mbee.mdk.systems_reasoner.actions;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.validation.SRValidationSuite;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.util.Utils2;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.validation.SRValidationSuite;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class ValidateAction extends SRAction {
 		}*/
 
         //ProgressStatusRunner.runWithProgressStatus(new ValidateModelRunner(start), "Validating Model", true, 0);
-		
+
         /*if (!ExportUtility.checkBaseline()) {    
             return;
         }
