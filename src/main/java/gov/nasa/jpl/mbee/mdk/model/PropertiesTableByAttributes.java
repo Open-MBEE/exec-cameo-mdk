@@ -12,10 +12,10 @@ import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTable;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertiesTable;
+import gov.nasa.jpl.mbee.mdk.model.actions.EditPropertiesTableAction;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.util.Utils2;
-import gov.nasa.jpl.mbee.mdk.model.actions.EditPropertiesTableAction;
 
 import java.util.*;
 

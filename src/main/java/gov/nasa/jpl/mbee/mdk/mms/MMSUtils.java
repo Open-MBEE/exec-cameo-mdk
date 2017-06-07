@@ -1,17 +1,18 @@
 package gov.nasa.jpl.mbee.mdk.mms;
 
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -19,11 +20,10 @@ import gov.nasa.jpl.mbee.mdk.http.HttpDeleteWithBody;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
@@ -37,6 +37,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -46,8 +47,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.swing.*;
 
 public class MMSUtils {
 
@@ -209,7 +208,6 @@ public class MMSUtils {
     }
 
 
-
     /**
      * General purpose method for making http requests for file upload.
      *
@@ -315,7 +313,7 @@ public class MMSUtils {
             arrayName = "refs";
         }
         try (FileOutputStream outputStream = new FileOutputStream(requestFile);
-                JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
+             JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
             jsonGenerator.writeStartObject();
             jsonGenerator.writeArrayFieldStart(arrayName);
             for (Object node : nodes) {
@@ -387,7 +385,7 @@ public class MMSUtils {
                 // create client, execute request, parse response, store in thread safe buffer to return to calling method for later closing
                 try (CloseableHttpClient httpclient = HttpClients.createDefault();
                      CloseableHttpResponse response = httpclient.execute(request);
-                     InputStream inputStream = response.getEntity().getContent()){
+                     InputStream inputStream = response.getEntity().getContent()) {
                     responseCode.set(response.getStatusLine().getStatusCode());
                     if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
                         System.out.println("[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
@@ -433,7 +431,8 @@ public class MMSUtils {
                     responseJson.put(currentField.getKey(), currentField.getValue());
                 }
             }
-        } else {
+        }
+        else {
             try (InputStream inputStream = new FileInputStream(responseFile)) {
                 if (!processResponse(responseCode.get(), inputStream, project)) {
                     throw new ServerException(responseFile.getAbsolutePath(), responseCode.get());
@@ -465,12 +464,14 @@ public class MMSUtils {
                 if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
                     System.out.println("[INFO] Response Body: " + responseFile.getPath());
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
-                } else {
+                }
+                else {
                     responseFile.deleteOnExit();
                 }
             }
             return "";
-        } else {
+        }
+        else {
             return IOUtils.toString(inputStream);
         }
     }

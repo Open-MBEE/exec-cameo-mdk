@@ -80,7 +80,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         File responseFile;
         try {
             responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
-            try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)){
+            try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
                 JsonNode arrayNode;
                 if (response != null && (arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
@@ -107,7 +107,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
 
         // build post data
         LinkedList<ObjectNode> orgs = new LinkedList<>();
-        ObjectNode orgNode =JacksonUtils.getObjectMapper().createObjectNode();
+        ObjectNode orgNode = JacksonUtils.getObjectMapper().createObjectNode();
         orgNode.put(MDKConstants.ID_KEY, orgId);
         orgNode.put(MDKConstants.NAME_KEY, org);
         orgs.add(orgNode);

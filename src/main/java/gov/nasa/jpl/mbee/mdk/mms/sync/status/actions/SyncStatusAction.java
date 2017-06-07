@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.status.actions;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
@@ -11,6 +10,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.ui.SyncStatusFrame;
+import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import javax.annotation.CheckForNull;
@@ -80,7 +80,7 @@ public class SyncStatusAction extends SRAction {
             }
             totalInMemoryLocalChangedCount[0] = inMemoryLocalCreatedCount[0] + inMemoryLocalUpdatedCount[0] + inMemoryLocalDeletedCount[0];
 
-            for (SyncElement localSyncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
+            for (SyncElement localSyncElement : SyncElements.getAllByType(project, SyncElement.Type.LOCAL)) {
                 SyncElements.buildChangelog(localPersistedChangelog, localSyncElement);
             }
             persistedLocalCreatedCount[0] += localPersistedChangelog.get(Changelog.ChangeType.CREATED).size();
@@ -98,7 +98,7 @@ public class SyncStatusAction extends SRAction {
             }
             totalInMemoryJmsChangedCount[0] = inMemoryJmsCreatedCount[0] + inMemoryJmsUpdatedCount[0] + inMemoryJmsDeletedCount[0];
 
-            for (SyncElement mmsSyncElement : SyncElements.getAllOfType(project, SyncElement.Type.MMS)) {
+            for (SyncElement mmsSyncElement : SyncElements.getAllByType(project, SyncElement.Type.MMS)) {
                 SyncElements.buildChangelog(mmsPersistedChangelog, mmsSyncElement);
             }
             persistedJmsCreatedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.CREATED).size();

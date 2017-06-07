@@ -4,9 +4,9 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.Suite;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.model.DocGenValidationDBSwitch;
 import gov.nasa.jpl.mbee.mdk.model.UserScript;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import java.awt.event.ActionEvent;

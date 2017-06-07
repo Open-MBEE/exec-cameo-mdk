@@ -6,9 +6,9 @@ import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.model.AssociationNumberingVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.event.ActionEvent;
 

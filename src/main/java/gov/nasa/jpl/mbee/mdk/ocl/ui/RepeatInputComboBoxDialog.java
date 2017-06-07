@@ -1,9 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.ocl.ui;
 
+import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.util.Debug;
 import gov.nasa.jpl.mbee.mdk.util.MoreToString;
 import gov.nasa.jpl.mbee.mdk.util.Utils2;
-import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;

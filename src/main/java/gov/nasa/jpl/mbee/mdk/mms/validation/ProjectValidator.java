@@ -61,7 +61,7 @@ public class ProjectValidator {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS projects. Project validation cancelled. Reason: " + e.getMessage());
             return;
-       }
+        }
         JsonNode projectsJson;
         if ((projectsJson = response.get("projects")) != null && projectsJson.isArray()) {
             JsonNode value;
