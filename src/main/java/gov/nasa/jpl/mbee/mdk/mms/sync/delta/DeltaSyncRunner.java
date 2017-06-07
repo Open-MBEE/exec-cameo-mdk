@@ -9,15 +9,16 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
@@ -27,10 +28,9 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.*;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -103,6 +103,25 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+
+        // UPDATE LOCKS
+
+        ILockProjectService lockService = EsiUtils.getLockService(project);
+        if (lockService == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Teamwork Cloud lock service unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
+            return;
+        }
+
+        listener.setDisabled(true);
+        try {
+            lockService.updateLocks(progressStatus);
+        } catch (RuntimeException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Failed to update locks from Teamwork Cloud. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        } finally {
+            listener.setDisabled(false);
+        }
 
         // LOCK SYNC FOLDER
 
@@ -282,13 +301,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it does not exist. Skipping.");
                             continue;
                         }
-//                        if (!element.isEditable()) {
-//                            if (MDUtils.isDeveloperMode()) {
-//                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is not editable. Skipping.");
-//                            }
-//                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
-//                            continue;
-//                        }
+                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
+                            if (MDUtils.isDeveloperMode()) {
+                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is locked by someone else. Skipping.");
+                            }
+                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
+                            continue;
+                        }
                         jmsElementsToUpdateLocally.put(id, new Pair<>(objectNode, element));
                         break;
                     case DELETED:
@@ -296,13 +315,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it doesn't exist. Skipping.");
                             continue;
                         }
-//                        if (!element.isEditable()) {
-//                            if (MDUtils.isDeveloperMode()) {
-//                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is not editable. Skipping.");
-//                            }
-//                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
-//                            continue;
-//                        }
+                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
+                            if (MDUtils.isDeveloperMode()) {
+                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is locked by someone else. Skipping.");
+                            }
+                            failedJmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
+                            continue;
+                        }
                         jmsElementsToDeleteLocally.put(id, element);
                         break;
                 }
