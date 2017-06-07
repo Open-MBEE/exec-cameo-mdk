@@ -25,8 +25,8 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
@@ -202,8 +202,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         failure = true;
                     }
                 }
-            }
-            finally {
+            } finally {
                 if (SessionManager.getInstance().isSessionCreated(project)) {
                     SessionManager.getInstance().closeSession(project);
                 }

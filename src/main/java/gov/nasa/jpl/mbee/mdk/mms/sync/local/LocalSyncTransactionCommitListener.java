@@ -11,16 +11,18 @@ import com.nomagic.uml2.transaction.TransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -140,7 +142,8 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                                         String owningInstanceId = spoofedIdMapping.containsKey(owningInstance.getLocalID()) ? spoofedIdMapping.get(owningInstance.getLocalID()) : Converters.getElementToIdConverter().apply(owningInstance);
                                         spoofedId = owningInstanceId + spoofedId;
                                         spoofedIdMapping.put(sourceElement.getLocalID(), spoofedId);
-                                    } else if (!spoofedId.startsWith(Converters.getElementToIdConverter().apply(owningInstance))) {
+                                    }
+                                    else if (!spoofedId.startsWith(Converters.getElementToIdConverter().apply(owningInstance))) {
                                         System.out.println("[WARNING] Spoofed element ID already exists with a different owning instance id component.");
                                     }
                                 }
@@ -155,7 +158,8 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
                                     if (spoofedId.endsWith(MDKConstants.SLOT_ID_SEPARATOR)) {
                                         spoofedId = spoofedId + Converters.getElementToIdConverter().apply(definingFeature);
                                         spoofedIdMapping.put(sourceElement.getLocalID(), spoofedId);
-                                    } else if (!spoofedId.endsWith(Converters.getElementToIdConverter().apply(definingFeature))) {
+                                    }
+                                    else if (!spoofedId.endsWith(Converters.getElementToIdConverter().apply(definingFeature))) {
                                         System.out.println("[WARNING] Spoofed element ID already exists with a different defining feature id component.");
                                     }
                                 }

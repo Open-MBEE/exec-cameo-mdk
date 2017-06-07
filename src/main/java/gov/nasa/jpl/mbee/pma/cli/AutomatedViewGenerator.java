@@ -10,20 +10,18 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
-
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -37,7 +35,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AutomatedViewGenerator extends CommandLine {
@@ -111,8 +112,7 @@ public class AutomatedViewGenerator extends CommandLine {
             if (parser.hasOption(MMS_PORT)) {
                 try {
                     mmsUrl = mmsUrl + ":" + parser.getOptionValue(MMS_PORT);
-                }
-                catch (NumberFormatException nfe) {
+                } catch (NumberFormatException nfe) {
                     String message = "[WARNING] Invalid mmsPort specified in options. Will attempt to access MMS without a port.";
                     logMessage(message);
                 }
@@ -478,7 +478,7 @@ public class AutomatedViewGenerator extends CommandLine {
     }
 
     private void logMessage(String msg) throws FileNotFoundException, UnsupportedEncodingException {
-        if (msg.isEmpty()){
+        if (msg.isEmpty()) {
             return;
         }
         System.out.println(msg);
@@ -550,8 +550,7 @@ public class AutomatedViewGenerator extends CommandLine {
         if (parser.hasOption(PMA_PORT)) {
             try {
                 pmaUri.setPort(Integer.parseInt(parser.getOptionValue(PMA_PORT)));
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
                 message = "[WARNING] Invalid pmaPort specified in options. Will attempt to report status without a port.";
                 logMessage(message);
             }

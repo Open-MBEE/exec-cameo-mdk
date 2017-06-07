@@ -22,7 +22,7 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
 
     private Classifier subClassifier;
     private RedefinableElement re;
-     private String name;
+    private String name;
     private boolean isIndividual;
     private boolean isRecursive;
 
@@ -51,7 +51,9 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     }
 
     public static RedefinableElement redefineRedefinableElement(final Classifier subClassifier, final RedefinableElement elementToBeRedefined, final List<RedefinableElement> traveled, List<Classifier> visited, boolean isIndividual, boolean isRecursive) {
-        if (isNotRedefinable(subClassifier, elementToBeRedefined)) return null;
+        if (isNotRedefinable(subClassifier, elementToBeRedefined)) {
+            return null;
+        }
 
 
         RedefinableElement redefinedElement = findExistingRedefiningElement(subClassifier, elementToBeRedefined);
@@ -76,11 +78,11 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     private static RedefinableElement findExistingRedefiningElement(Classifier subClassifier, RedefinableElement elementToBeRedefined) {
         RedefinableElement redefinedElement = null;
         for (NamedElement p : subClassifier.getOwnedMember()) {
-            if (p instanceof RedefinableElement && SRValidationSuite.doesEventuallyRedefine((RedefinableElement) p,elementToBeRedefined)){
+            if (p instanceof RedefinableElement && SRValidationSuite.doesEventuallyRedefine((RedefinableElement) p, elementToBeRedefined)) {
                 redefinedElement = (RedefinableElement) p;
                 break;
             }
-            else if (p instanceof RedefinableElement){// && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
+            else if (p instanceof RedefinableElement) {// && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
                 if (isMatchingTypedElement(p, elementToBeRedefined)) {
                     redefinedElement = (RedefinableElement) p;
                     redefinedElement.getRedefinedElement().add(elementToBeRedefined);
@@ -129,9 +131,10 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         ownedEnd.setOwner(newAssociation);
         ownedEnd.setType(classifierOfnewProperty);
         Utils.createGeneralization(generalAssociation, newAssociation);
-        if(classifierOfnewProperty.getOwner() != null) {
+        if (classifierOfnewProperty.getOwner() != null) {
             newAssociation.setOwner(classifierOfnewProperty.getOwner());
-        }else{
+        }
+        else {
             throw new NullPointerException("owner of classifier null!");
         }
         newAssociation.getMemberEnd().add(newProperty);

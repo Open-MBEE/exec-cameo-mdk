@@ -136,7 +136,7 @@ public class OutputQueueStatusAction extends SRAction {
                 counter++;
             }
             /*table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-			if (table.getModel() instanceof AbstractTableModel) {
+            if (table.getModel() instanceof AbstractTableModel) {
 				((AbstractTableModel) table.getModel()).fireTableStructureChanged();
 			}*/
             table.repaint();

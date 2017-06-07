@@ -30,7 +30,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public static MDKOptionsGroup getMDKOptions() {
-        MDKOptionsGroup group =  (MDKOptionsGroup) Application.getInstance().getEnvironmentOptions().getGroup(ID);
+        MDKOptionsGroup group = (MDKOptionsGroup) Application.getInstance().getEnvironmentOptions().getGroup(ID);
         if (group == null) {
             if (tempInstance == null) {
                 tempInstance = new MDKOptionsGroup();

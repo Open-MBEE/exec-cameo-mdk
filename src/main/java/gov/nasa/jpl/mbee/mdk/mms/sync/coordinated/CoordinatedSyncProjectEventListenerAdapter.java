@@ -12,16 +12,16 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.annotation.CheckForNull;
 import javax.jms.JMSException;
@@ -59,10 +59,10 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (tempDisabled) {
             return;
         }*/
-        if ( (project.isRemote() && !savedInServer)
+        if ((project.isRemote() && !savedInServer)
                 || !StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")
                 || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
-                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled() ) {
+                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
             // skip csync
             return;
         }

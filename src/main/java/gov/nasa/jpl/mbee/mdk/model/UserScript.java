@@ -14,10 +14,10 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.validation.Suite;
 import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
-import gov.nasa.jpl.mbee.mdk.util.ScriptRunner;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserEditableTableAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
+import gov.nasa.jpl.mbee.mdk.util.ScriptRunner;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 
 import javax.script.ScriptException;
