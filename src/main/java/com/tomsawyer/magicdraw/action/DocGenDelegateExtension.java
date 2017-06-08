@@ -28,6 +28,12 @@ public class DocGenDelegateExtension extends TSRenderDiagramDelegate
 {
     private List<Element> elements;
 
+    public Element getIbdContextElement() {
+        return ibdContextElement;
+    }
+
+    private Element ibdContextElement;
+
     @Override
    public void doDataLoad() throws IOException, TSIntegratorException
    {
@@ -43,9 +49,9 @@ public class DocGenDelegateExtension extends TSRenderDiagramDelegate
           TSContextReader contextReader = new TSContextReader();
           TSStereotypeReader stereotypeReader = new TSStereotypeReader();
 
-          List<TSMagicDrawElementReader> localObjectReaderList = this.getLocalObjectReaders(this.drawingViewName);
-          localObjectReaderList.add(propertyReader);
-          localObjectReaderList.add(stereotypeReader);
+          List<TSMagicDrawElementReader> viewReaderList = this.getLocalObjectReaders(this.drawingViewName);
+          viewReaderList.add(propertyReader);
+          viewReaderList.add(stereotypeReader);
 
           Set<Stereotype> stereotypes = StereotypesHelper.getAllAssignedStereotypes(elements);
           for (Stereotype stereotype : stereotypes) {
@@ -55,9 +61,12 @@ public class DocGenDelegateExtension extends TSRenderDiagramDelegate
           if(this.drawingViewName.equals(IBD_DRAWING_VIEW_NAME)) {
               if(!elements.isEmpty()) {
                   BaseElement contextElement = elements.get(0);
-
+                  if(contextElement instanceof Element) {
+                      ibdContextElement = (Element) contextElement;
+                  }
                   HashSet<Element> requiredIBDElements = new HashSet<Element>();
                   requiredIBDElements.add((Element) contextElement);
+                  // TODO test nesting in IBDs and add recursion to these methods.
                   if (contextElement instanceof Class) {
                       for (Property property : ((Class) contextElement).getOwnedAttribute()) {
                           requiredIBDElements.add(property);
@@ -74,7 +83,7 @@ public class DocGenDelegateExtension extends TSRenderDiagramDelegate
                       }
                   }
                   for (Element element : requiredIBDElements) {
-                      for (TSMagicDrawElementReader reader : localObjectReaderList) {
+                      for (TSMagicDrawElementReader reader : viewReaderList) {
                           if (reader.isQualifyingElement(element)) {
                               this.dataModel.addElement(reader.readElement(element, this.dataModel, this.schema));
                               break;
@@ -87,7 +96,7 @@ public class DocGenDelegateExtension extends TSRenderDiagramDelegate
               }
           }else {
               for (Element element : elements) {
-                  for (TSMagicDrawElementReader reader : localObjectReaderList) {
+                  for (TSMagicDrawElementReader reader : viewReaderList) {
                       if (reader.isQualifyingElement(element)) {
                           this.dataModel.addElement(reader.readElement(element, this.dataModel, this.schema));
                           break;

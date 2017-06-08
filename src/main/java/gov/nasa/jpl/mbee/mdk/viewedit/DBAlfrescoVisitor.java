@@ -346,20 +346,22 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         entry.put("type", "Tsp");
         entry.put("tstype", tomSawyerDiagram.getShortType().toString());
         JSONArray elements = new JSONArray();
-        for (Element elem : tomSawyerDiagram.getElements()) {
-            elements.add(Converters.getElementToIdConverter().apply(elem));
+        for (String elem : tomSawyerDiagram.getElementIDs()) {
+            elements.add(elem);
         }
-
+        if(tomSawyerDiagram.getShortType().equals(DBTomSawyerDiagram.shortDiagramType.IBD)){
+            entry.put("context", tomSawyerDiagram.getContext());
+        }
         entry.put("elements", elements);
 
         InstanceSpecification i = null;
-        if (!currentTableInstances.peek().isEmpty()) {
-            i = currentTableInstances.peek().remove(0);
-            currentInstanceList.peek().remove(i);
+        if (!currentImageInstances.peek().isEmpty()) {
+            i = currentImageInstances.peek().remove(0);
+            currentImageInstances.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.TABLE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
         System.out.println(entry.toJSONString());
         newpe.peek().add(ipe);
     }

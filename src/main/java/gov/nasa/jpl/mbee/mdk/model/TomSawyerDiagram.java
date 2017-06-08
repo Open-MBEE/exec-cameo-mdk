@@ -14,6 +14,7 @@ import com.tomsawyer.magicdraw.action.DocGenDelegateExtension;
 import com.tomsawyer.magicdraw.action.TSActionConstants;
 import com.tomsawyer.util.preference.TSPreferenceData;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
@@ -52,8 +53,9 @@ public class TomSawyerDiagram extends Query {
     }
 
 
-    public TomSawyerDiagram() {
+    public TomSawyerDiagram(int i) {
         super();
+        this.imagenum = i;
     }
 
     @SuppressWarnings("unchecked")
@@ -90,19 +92,8 @@ public class TomSawyerDiagram extends Query {
         }
     }
 
-//    public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
-//        List<Element> elements = new ArrayList<>();
-//        for (Object ob : this.getTargets()) {
-//            if (ob instanceof Element) {
-//                elements.add((Element) ob);
-//            }
-//        }
-//        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram(elements);
-//        dbts.setType(type);
-//        return Collections.singletonList(dbts);
-//
-//    }
 
+    @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         List<Element> elements = new ArrayList<>();
         for (Object ob : this.getTargets()) {
@@ -113,24 +104,25 @@ public class TomSawyerDiagram extends Query {
 
         DocGenDelegateExtension delegate = new DocGenDelegateExtension();
         delegate.addObjectsToShow(elements); //Johannes' method.
-        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram(elements);
+        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram();
+
         if (type != null) {
             dbts.setType(type);
             switch (type) {
                 case Block_Definition_Diagram:
-                    delegate.init("bdd", "Docgen Generated Block Diagram", BDD_DRAWING_VIEW_NAME);
+                    delegate.init("bdd"+imagenum++, "Docgen Generated Block Diagram " , BDD_DRAWING_VIEW_NAME);
                     break;
                 case Internal_Block_Diagram:
-                    delegate.init("ibd", "Docgen Generated Internal Block Diagram", IBD_DRAWING_VIEW_NAME);
+                    delegate.init("ibd"+imagenum++, "Docgen Generated Internal Block Diagram ", IBD_DRAWING_VIEW_NAME);
                     break;
                 case State_Machine_Diagram:
-                    delegate.init("sm", "Docgen Generated State Machine Diagram", STATE_MACHINE_DRAWING_VIEW_NAME);
+                    delegate.init("sm"+imagenum++, "Docgen Generated State Machine Diagram ", STATE_MACHINE_DRAWING_VIEW_NAME);
                     break;
                 case Activity_Diagram:
-                    delegate.init("ad", "Docgen Generated Activity Diagram", ACTIVITY_DIAGRAM_DRAWING_VIEW_NAME);
+                    delegate.init("ad"+imagenum++, "Docgen Generated Activity Diagram", ACTIVITY_DIAGRAM_DRAWING_VIEW_NAME);
                     break;
                 case Sequence_Diagram:
-                    delegate.init("sequence diagram not implemented", "equence diagram not implemented", BDD_DRAWING_VIEW_NAME);
+                    delegate.init("sequence diagram not implemented", "sequence diagram not implemented", BDD_DRAWING_VIEW_NAME);
                     break;
                 case Table:
                     delegate.init("table not implemented", "table not implemented", BDD_DRAWING_VIEW_NAME);
@@ -138,7 +130,7 @@ public class TomSawyerDiagram extends Query {
                 default:
             }
         } else {
-            delegate.init("bdd", "Docgen Generated Block Diagram", BDD_DRAWING_VIEW_NAME);
+            delegate.init("bdd"+imagenum++, "Docgen Generated Block Diagram", BDD_DRAWING_VIEW_NAME);
         }
         try {
             delegate.loadData();
@@ -147,36 +139,38 @@ public class TomSawyerDiagram extends Query {
             JOptionPane.showMessageDialog(null, exception.getMessage());
         }
         Set<String> viewElements = null;
-        if (type.equals(Internal_Block_Diagram)) {
-            delegate.postLoadDataIBDAction();
-            viewElements = delegate.postLoadDataGetUUID();
+
+        if (forViewEditor) {
+            if (type.equals(Internal_Block_Diagram)) {
+                delegate.postLoadDataIBDAction();
+                viewElements = delegate.postLoadDataGetUUID();
+                dbts.setContext(delegate.getIbdContextElement());
+                dbts.setElements(viewElements);
+            } else {
+                viewElements = delegate.postLoadDataGetUUID();
+                dbts.setElements(viewElements);
+            }
+            return Collections.singletonList(dbts);
         } else {
-            viewElements = delegate.postLoadDataGetUUID();
-        }
 
 
-        boolean showInMD = true;
-        if (showInMD) {
-            TSStandardWindowComponentContent windowComponentContent =
-                    new TSStandardWindowComponentContent(delegate);
-            ProjectWindow window = new ProjectWindow(new WindowComponentInfo(delegate.getId(), delegate.getName(), TSActionConstants.WINDOW_ICON, WindowsManager.SIDE_EAST, WindowsManager.STATE_DOCKED, false), windowComponentContent);
-            Application.getInstance().getMainFrame().getProjectWindowsManager().addWindow(window);
-            windowComponentContent.setDividerLocation(0.7);
-        }
+            boolean showInMD = true;
+            if (showInMD) {
+                TSStandardWindowComponentContent windowComponentContent =
+                        new TSStandardWindowComponentContent(delegate);
+                ProjectWindow window = new ProjectWindow(new WindowComponentInfo(delegate.getId(), delegate.getName(), TSActionConstants.WINDOW_ICON, WindowsManager.SIDE_EAST, WindowsManager.STATE_DOCKED, false), windowComponentContent);
+                Application.getInstance().getMainFrame().getProjectWindowsManager().addWindow(window);
+                Runnable runnable = null;
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        windowComponentContent.setDividerLocation(0.7);
+                    }
+                });
+            }
 
-        boolean printForDocgen = true;
-        if (printForDocgen) {
             TSViewportCanvas canvas = delegate.getDiagramDrawing().getCanvas();
             TSPreferenceData preferenceData = new TSPreferenceData();
-            FileOutputStream stream = null;
-            String svgfilename = this.type + ".svg";
-            File svgdiagramFile = new File(outputDir, svgfilename);
-
-            try {
-                stream = new FileOutputStream(svgdiagramFile);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
 
             TSSVGImageCanvasPreferenceTailor imageCanvasTailor = new TSSVGImageCanvasPreferenceTailor(preferenceData);
 
@@ -196,14 +190,31 @@ public class TomSawyerDiagram extends Query {
             renderingTailor.setDrawHighlightState(false);
             renderingTailor.setDrawHoverState(false);
 
+            FileOutputStream stream = null;
+            String svgfilename = this.type +"" + imagenum + ".svg";
+            File svgdiagramFile = new File(outputDir, svgfilename);
+
+            try {
+                stream = new FileOutputStream(svgdiagramFile);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
             TSSVGImageCanvas imageCanvas = new TSSVGImageCanvas(canvas.getGraphManager(), stream);
 
             imageCanvas.setDisplayCanvas(canvas);
             imageCanvas.setPreferenceData(preferenceData);
             imageCanvas.paint();
+
+            DBImage myImage = new DBImage();
+            myImage.setCaption(delegate.getName());
+            myImage.setTitle(delegate.getName());
+            myImage.setIsTomSawyerImage(true);
+            myImage.setOutputDir(outputDir);
+            myImage.setImageFileName(svgfilename);
+
+            return Collections.singletonList(myImage);
+
+
         }
-
-
-        return Collections.singletonList(dbts);
     }
 }

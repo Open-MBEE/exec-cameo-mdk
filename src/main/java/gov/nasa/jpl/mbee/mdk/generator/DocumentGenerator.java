@@ -52,6 +52,7 @@ public class DocumentGenerator {
             ourExpose;
     private boolean hierarchyOnly;
     private boolean addViewDoc = true; //whether to add default view doc
+    private int tsviewnumber = 0;
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
         this(e, null, wlog, true);
@@ -764,7 +765,7 @@ public class DocumentGenerator {
             dge = new TemporalDiff();
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.tomsawyerDiagramStereotype)) {
-            dge = new TomSawyerDiagram();
+            dge = new TomSawyerDiagram(tsviewnumber++);
 
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.javaExtensionStereotype, true)) {
