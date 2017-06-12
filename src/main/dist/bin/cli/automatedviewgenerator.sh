@@ -1,9 +1,10 @@
 #!/bin/bash
 
-#usage: ./automatedviewgeneration.sh [-debug] [-generateRecursively] [-h]
-#       [-mmsHost <arg>] [-mmsPassword <arg>] [-mmsPort <arg>]
-#       [-mmsUsername <arg>] [-pmaHost <arg>] [-pmaJobId <arg>] [-pmaPort
-#       <arg>] [-projectId <arg>] [-refId <arg>] [-targetViewId <arg>]
+#usage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-debug]
+#       [-generateRecursively] [-h] [-mmsHost <arg>] [-mmsPassword <arg>]
+#       [-mmsPort <arg>] [-mmsUsername <arg>] [-pmaHost <arg>]
+#       [-pmaJobId <arg>] [-pmaPort <arg>] [-projectId <arg>]
+#       [-refId <arg>] [-targetViewId <arg>]
 #       [-twcHost <arg>] [-twcPassword <arg>] [-twcPort <arg>]
 #       [-twcUsername <arg>] [-verbose]
 
@@ -48,7 +49,7 @@ java -Xmx4096M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \
        -Desi.system.config="$MAGICDRAW_HOME/data/application.conf" \
        -Dlogback.configurationFile="$MAGICDRAW_HOME/data/logback.xml" \
        -Dsun.locale.formatasdefault=true \
-       -Dcom.nomagic.magicdraw.launcher=gov.nasa.jpl.mbee.pma.analyses.AutomatedViewGeneration \
+       -Dcom.nomagic.magicdraw.launcher=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator \
        com.nomagic.osgi.launcher.ProductionFrameworkLauncher "$@"
 
 exit $?

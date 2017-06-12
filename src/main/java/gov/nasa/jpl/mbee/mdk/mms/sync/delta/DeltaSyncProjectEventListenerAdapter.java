@@ -5,19 +5,17 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /*
  * This class is responsible for taking action when a project is opened.
@@ -35,7 +33,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     static {
         CHANGELOG_FUNCTIONS.put(SyncElement.Type.LOCAL, project -> {
             Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
-            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.LOCAL)) {
+            for (SyncElement syncElement : SyncElements.getAllByType(project, SyncElement.Type.LOCAL)) {
                 combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
             }
             LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
@@ -46,7 +44,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         });
         CHANGELOG_FUNCTIONS.put(SyncElement.Type.MMS, project -> {
             Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
-            for (SyncElement syncElement : SyncElements.getAllOfType(project, SyncElement.Type.MMS)) {
+            for (SyncElement syncElement : SyncElements.getAllByType(project, SyncElement.Type.MMS)) {
                 combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
             }
             JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
@@ -63,7 +61,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         if (!save) {
             return;
         }
-        if (!StereotypesHelper.hasStereotype(project.getModel(), "ModelManagementSystem")) {
+        if (!StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
             return;
         }
         persistChanges(project);

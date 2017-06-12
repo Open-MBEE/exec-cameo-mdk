@@ -7,11 +7,11 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.util.Debug;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.util.Utils2;
-import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import org.eclipse.ocl.ParserException;
 
 import java.util.ArrayList;

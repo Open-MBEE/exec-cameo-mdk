@@ -14,9 +14,9 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.annotations.SessionManaged;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
+import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.ecore.EObject;
@@ -249,7 +249,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                             if (MDUtils.isDeveloperMode()) {
                                 System.err.println("[FAILED 3] " + result.toString());
                             }
-                            failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ?  element : null, objectNode), new ImportException(element, objectNode, "Element failed validation after importing. Reason: " + result.getReason()));
+                            failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ? element : null, objectNode), new ImportException(element, objectNode, "Element failed validation after importing. Reason: " + result.getReason()));
                             objectNodes.remove(objectNode);
                             continue bulkImport;
                         }
@@ -260,7 +260,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                                 String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
                                 System.err.println("[FAILED 4] Could not create " + sysmlId);
                             }
-                            failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ?  element : null, objectNode), new ImportException(element, objectNode, "Element was found to be invalid after importing."));
+                            failedElementMap.put(new Pair<>(element != null && !element.isInvalid() && !project.isDisposed(element) ? element : null, objectNode), new ImportException(element, objectNode, "Element was found to be invalid after importing."));
                             objectNodes.remove(objectNode);
                             continue bulkImport;
                         }

@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.jms;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -19,7 +18,6 @@ import javax.jms.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Hashtable;

@@ -403,7 +403,7 @@ task testAVG(type: JavaExec) {
     errorOutput = System.err
 
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx4000M', '-Xss1024M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.nomagic.magicdraw.launcher=gov.nasa.jpl.mbee.pma.analyses.AutomatedViewGeneration']
+    jvmArgs = ['-Xmx4000M', '-Xss1024M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.nomagic.magicdraw.launcher=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator']
     // arguments to pass to the application
     args '-twprj', 'ID_10_20_16_12_01_59_AM__58f6714a_157e0e07e65__7ffd_LMC_055004_192_168_1_27', '-doclist', '_18_0_2_bec02f9_1444944948911_779834_74342', '-crdlc', '../../resources/mms.properties', '-twbrn', 'Branch2'
 }

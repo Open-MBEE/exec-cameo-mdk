@@ -40,7 +40,7 @@ OutputQueue extends LinkedBlockingQueue<Request> {
         if (this.size() >= _rowNum) {
             Request toBeRemoved = (Request) this.toArray()[_rowNum - 1];
             if (toBeRemoved != null && toBeRemoved.getRequest() != null) {
-                log.info("[INFO] Removing a queue: " + ((HttpEntityEnclosingRequestBase)toBeRemoved.getRequest()).getEntity().toString());
+                log.info("[INFO] Removing a queue: " + ((HttpEntityEnclosingRequestBase) toBeRemoved.getRequest()).getEntity().toString());
             }
             super.remove(toBeRemoved);
         }

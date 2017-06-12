@@ -1,7 +1,8 @@
-package gov.nasa.jpl.mbee.pma.analyses;
+package gov.nasa.jpl.mbee.pma.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -17,12 +18,12 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
@@ -37,10 +38,13 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AutomatedViewGeneration extends CommandLine {
+public class AutomatedViewGenerator extends CommandLine {
 
     private org.apache.commons.cli.CommandLine parser;
     private org.apache.commons.cli.Options parserOptions;
@@ -99,7 +103,7 @@ public class AutomatedViewGeneration extends CommandLine {
     protected byte execute() {
         try {
             // send output back to stdout
-            System.setOut(AutomatedViewGeneration.stdout);
+            System.setOut(AutomatedViewGenerator.stdout);
             if (parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
                 displayHelp();
                 return 1;
@@ -116,8 +120,7 @@ public class AutomatedViewGeneration extends CommandLine {
             if (parser.hasOption(MMS_PORT)) {
                 try {
                     mmsUrl = mmsUrl + ":" + parser.getOptionValue(MMS_PORT);
-                }
-                catch (NumberFormatException nfe) {
+                } catch (NumberFormatException nfe) {
                     String message = "[WARNING] Invalid mmsPort specified in options. Will attempt to access MMS without a port.";
                     logMessage(message);
                 }
@@ -455,7 +458,7 @@ public class AutomatedViewGeneration extends CommandLine {
 
     private void displayHelp() {
         HelpFormatter formatter = new HelpFormatter();
-        String usage = "./automatedviewgeneration.sh";
+        String usage = "$MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh";
         String header = "The associated script manages the settings and configuration options necessary to launch a " +
                 "MagicDraw CommandLine program in the OSGI framework. This tool must be launched with the associated " +
                 "shell script or a similar manual configuration; it will not run directly. ";
@@ -504,7 +507,7 @@ public class AutomatedViewGeneration extends CommandLine {
     }
 
     private void logMessage(String msg) throws FileNotFoundException, UnsupportedEncodingException {
-        if (msg.isEmpty()){
+        if (msg.isEmpty()) {
             return;
         }
         System.out.println(msg);
@@ -576,8 +579,7 @@ public class AutomatedViewGeneration extends CommandLine {
         if (parser.hasOption(PMA_PORT)) {
             try {
                 pmaUri.setPort(Integer.parseInt(parser.getOptionValue(PMA_PORT)));
-            }
-            catch (NumberFormatException nfe) {
+            } catch (NumberFormatException nfe) {
                 message = "[WARNING] Invalid pmaPort specified in options. Will attempt to report status without a port.";
                 logMessage(message);
             }
@@ -644,7 +646,7 @@ public class AutomatedViewGeneration extends CommandLine {
                     e.printStackTrace();
                 }
                 synchronized (lock) {
-                    System.setOut(AutomatedViewGeneration.stdout);
+                    System.setOut(AutomatedViewGenerator.stdout);
                     String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + CANCEL_DELAY + " min).";
                     try {
                         logMessage(msg);
