@@ -1,5 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.nomagic.magicdraw.commands.Command;
+import com.nomagic.magicdraw.commands.CommandHistory;
+import com.nomagic.magicdraw.commands.MacroCommand;
+import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -422,7 +426,26 @@ public class PresentationElementUtils {
 
     public void updateOrCreateConstraintFromInstanceSpecifications(Element view, List<InstanceSpecification> instanceSpecifications) {
         Constraint c = getOrCreateViewConstraint(view);
-        Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : ef.createExpressionInstance();
+        // It was necessary to delete the old expression and make a new one, because expression.getOperand().addAll(instanceValues) would return false in seemingly random, albeit consistent, views.
+        Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : null;
+        List<ValueSpecification> operands = Collections.emptyList();
+        if (expression != null) {
+            operands = new ArrayList<>(expression.getOperand());
+            operands.forEach(operand -> operand.setExpression(null));
+            try {
+                Command command = RemoveCommandCreator.getCommand(expression);
+                command.execute();
+                MacroCommand macroCommand = CommandHistory.getCommandForAppend(expression);
+                macroCommand.add(command);
+            } catch (RuntimeException ignored) {
+                System.out.println("Could not clean up " + expression.getLocalID());
+                return;
+            }
+        }
+        expression = ef.createExpressionInstance();
+        for (ValueSpecification operand : operands) {
+            operand.setExpression(expression);
+        }
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
         expression.setID(Converters.getElementToIdConverter().apply(view) + "_vc_expression");
         expression.setOwner(c);
