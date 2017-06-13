@@ -26,9 +26,9 @@ import java.util.List;
 public class GenericTable extends Table {
 
     public static final String INSTANCE_TABLE = "Instance Table";
-    public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement MatrixUtil";
-    public static final String ALLOCATION_MATRIX = "SysML Allocation MatrixUtil";
-    public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement MatrixUtil";
+    public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement Matrix";
+    public static final String ALLOCATION_MATRIX = "SysML Allocation Matrix";
+    public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement Matrix";
 
     private List<String> headers;
     private boolean skipIfNoDoc;
