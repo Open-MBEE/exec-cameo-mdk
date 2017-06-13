@@ -8,7 +8,6 @@ import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
 import com.nomagic.magicdraw.properties.*;
 import com.nomagic.magicdraw.uml.DiagramType;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -33,7 +32,7 @@ public class GenericTable extends Table {
 
     private List<String> headers;
     private boolean skipIfNoDoc;
-    private static ArrayList<String> skipColumnIDs = new ArrayList<String>() {{
+    private static ArrayList<String> skipColumnIds = new ArrayList<String>() {{
         add("QPROP:Element:isEncapsulated");
         add("QPROP:Element:CUSTOM_IMAGE");
     }};
@@ -55,11 +54,10 @@ public class GenericTable extends Table {
                 DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
                 if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.getType().equals(INSTANCE_TABLE)) {
                     DBTable t = new DBTable();
-                    GenericTableManager gtm = new GenericTableManager();
-                    List<String> columnIds = gtm.getColumnIds(diagram);
-                    t.setHeaders(getHeaders(diagram, columnIds, gtm));
-                    List<Element> rowElements = gtm.getRowElements(diagram);
-                    t.setBody(getBody(diagram, rowElements, columnIds, gtm, forViewEditor));
+                    List<String> columnIds = GenericTableManager.getColumnIds(diagram);
+                    t.setHeaders(getHeaders(diagram, columnIds));
+                    List<Element> rowElements = GenericTableManager.getRowElements(diagram);
+                    t.setBody(getBody(diagram, rowElements, columnIds, forViewEditor));
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
                     }
@@ -122,7 +120,7 @@ public class GenericTable extends Table {
                             columnHeaders.add(((NamedElement) element).getName());
                         }
                     }
-                    t.setHeaders(getHeaders(diagram, columnHeaders, null));
+                    t.setHeaders(getHeaders(diagram, columnHeaders));
                     t.setBody(matrixResult);
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
@@ -147,7 +145,7 @@ public class GenericTable extends Table {
         return res;
     }
 
-    public List<List<DocumentElement>> getHeaders(Diagram d, List<String> columnIds, GenericTableManager gtm) {
+    public List<List<DocumentElement>> getHeaders(Diagram genericTable, List<String> columnIds) {
         List<List<DocumentElement>> res = new ArrayList<List<DocumentElement>>();
         if (this.headers != null && !this.headers.isEmpty()) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
@@ -156,35 +154,17 @@ public class GenericTable extends Table {
             }
             res.add(row);
         }
-        else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGenProfile.headersChoosable)) {
-            List<DocumentElement> row = new ArrayList<DocumentElement>();
-            for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d, DocGenProfile.headersChoosable, "headers")) {
-                row.add(new DBText(h));
-            }
-            res.add(row);
-        }
         else {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             int count = 0;
-            for (String columnid : columnIds) {
-                if (gtm == null) {
-                    if (count == 0) {
-                        row.add(new DBText(""));
-                        count++;
-                        numCols++;
-                    }
-                    row.add(new DBText(columnid));
-                    numCols++;
+            for (String columnId : columnIds) {
+                if (count == 0) {
+                    count++;
+                    continue;
                 }
-                else {
-                    if (count == 0) {
-                        count++;
-                        continue;
-                    }
-                    if (!skipColumnIDs.contains(columnid)) {
-                        row.add(new DBText(gtm.getColumnNameById(d, columnid)));
-                        numCols++;
-                    }
+                if (!skipColumnIds.contains(columnId)) {
+                    row.add(new DBText(GenericTableManager.getColumnNameById(genericTable, columnId)));
+                    numCols++;
                 }
             }
             res.add(row);
@@ -193,7 +173,7 @@ public class GenericTable extends Table {
     }
 
 
-    public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds, GenericTableManager gtm, boolean forViewEditor) {
+    public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds, boolean forViewEditor) {
         List<List<DocumentElement>> res = new ArrayList<>();
         for (Element e : rowElements) {
             if (skipIfNoDoc && ModelHelper.getComment(e).trim().isEmpty()) {
@@ -206,13 +186,12 @@ public class GenericTable extends Table {
                     count++;
                     continue;
                 }
-                if (skipColumnIDs.contains(cid)) {
+                if (skipColumnIds.contains(cid)) {
                     continue;
                 }
                 DBTableEntry entry = new DBTableEntry();
 
-
-                Property cellValue = gtm.getCellValue(d, e, cid);
+                Property cellValue = GenericTableManager.getCellValue(d, e, cid);
                 if (cellValue instanceof ElementProperty) {
                     Element cellelement = ((ElementProperty) cellValue).getElement();
                     if (cellelement instanceof NamedElement) {

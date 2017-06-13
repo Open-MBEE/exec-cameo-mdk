@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
@@ -37,9 +38,11 @@ public class DocumentWriter implements RunnableWithProgress {
         arg0.setIndeterminate(true);
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(realfile));
-            gl.log("output dir: " + dir.getAbsolutePath());
+            gl.log("Output directory: " + dir.getAbsolutePath());
+            SessionManager.getInstance().createSession(Application.getInstance().getProject(), DocBookOutputVisitor.class.getSimpleName());
             DocBookOutputVisitor visitor = new DocBookOutputVisitor(false, dir.getAbsolutePath());
             dge.accept(visitor);
+            SessionManager.getInstance().closeSession(Application.getInstance().getProject());
             DBBook book = visitor.getBook();
             if (book != null) {
                 // List<DocumentElement> books = dge.getDocumentElement();
