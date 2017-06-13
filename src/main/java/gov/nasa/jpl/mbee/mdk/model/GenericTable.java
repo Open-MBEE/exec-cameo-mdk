@@ -54,9 +54,9 @@ public class GenericTable extends Table {
                 DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
                 if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.getType().equals(INSTANCE_TABLE)) {
                     DBTable t = new DBTable();
-                    List<String> columnIds = GenericTableManager.getColumnIds(diagram);
+                    List<String> columnIds = GenericTableManager.getVisibleColumnIds(diagram);
                     t.setHeaders(getHeaders(diagram, columnIds));
-                    List<Element> rowElements = GenericTableManager.getRowElements(diagram);
+                    List<Element> rowElements = GenericTableManager.getVisibleRowElements(diagram);
                     t.setBody(getBody(diagram, rowElements, columnIds, forViewEditor));
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
@@ -206,6 +206,9 @@ public class GenericTable extends Table {
                     else {
                         entry.addElement(new DBParagraph(cellValue.getValue()));
                     }
+                }
+                else if (cellValue instanceof NumberProperty) {
+                    entry.addElement(new DBParagraph(cellValue.getValue()));
                 }
                 else if (cellValue instanceof ElementListProperty) {
                     for (Element listEl : ((ElementListProperty) cellValue).getValue()) {
