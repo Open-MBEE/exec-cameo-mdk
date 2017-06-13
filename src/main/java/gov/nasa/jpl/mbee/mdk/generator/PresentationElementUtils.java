@@ -428,10 +428,7 @@ public class PresentationElementUtils {
         Constraint c = getOrCreateViewConstraint(view);
         // It was necessary to delete the old expression and make a new one, because expression.getOperand().addAll(instanceValues) would return false in seemingly random, albeit consistent, views.
         Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : null;
-        List<ValueSpecification> operands = Collections.emptyList();
         if (expression != null) {
-            operands = new ArrayList<>(expression.getOperand());
-            operands.forEach(operand -> operand.setExpression(null));
             try {
                 Command command = RemoveCommandCreator.getCommand(expression);
                 command.execute();
@@ -442,30 +439,16 @@ public class PresentationElementUtils {
                 return;
             }
         }
-        expression = ef.createExpressionInstance();
-        for (ValueSpecification operand : operands) {
-            operand.setExpression(expression);
-        }
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+        expression = ef.createExpressionInstance();
         expression.setID(Converters.getElementToIdConverter().apply(view) + "_vc_expression");
         expression.setOwner(c);
-        List<InstanceValue> instanceValues = new ArrayList<>(instanceSpecifications.size());
-        Iterator<ValueSpecification> operandIterator = expression.getOperand().iterator();
-        while (operandIterator.hasNext()) {
-            ValueSpecification valueSpecification = operandIterator.next();
-            if (!(valueSpecification instanceof InstanceValue)) {
-                operandIterator.remove();
-                continue;
-            }
-            instanceValues.add((InstanceValue) valueSpecification);
-        }
         for (int i = 0; i < instanceSpecifications.size(); i++) {
-            InstanceValue instanceValue = i < instanceValues.size() ? instanceValues.get(i) : ef.createInstanceValueInstance();
+            InstanceValue instanceValue = ef.createInstanceValueInstance();
+            instanceValue.setID(expression.getLocalID() + "_" + i);
             instanceValue.setInstance(instanceSpecifications.get(i));
-            instanceValues.add(instanceValue);
+            expression.getOperand().add(instanceValue);
         }
-        expression.getOperand().clear();
-        expression.getOperand().addAll(instanceValues);
     }
 
     public void updateOrCreateConstraintFromPresentationElements(Element view, List<PresentationElementInstance> presentationElementInstances) {
