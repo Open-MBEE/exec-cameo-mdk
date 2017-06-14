@@ -136,10 +136,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             Document dge = dg.parseDocument(true, recurse, false);
             new PostProcessor().process(dge);
 
+            SessionManager.getInstance().createSession(project, DocBookOutputVisitor.class.getSimpleName());
+            if (!SessionManager.getInstance().isSessionCreated(project)) {
+                Application.getInstance().getGUILog().log("[ERROR] MagicDraw session creation failed. View generation aborted. Please restart MagicDraw and try again.");
+                failure = true;
+                return;
+            }
+
             DocBookOutputVisitor docBookOutputVisitor = new DocBookOutputVisitor(true);
             dge.accept(docBookOutputVisitor);
+
+            SessionManager.getInstance().closeSession(project);
+
             DBBook book = docBookOutputVisitor.getBook();
-            // TODO ??
             if (book == null) {
                 return;
             }
