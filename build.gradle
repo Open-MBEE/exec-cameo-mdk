@@ -77,7 +77,7 @@ configurations {
 dependencies {
     // Production code requires MagicDraw patches to compile
     if (buildAccess == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0-rc4-SNAPSHOT', ext: 'zip'
+        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0', ext: 'zip'
     }
     else {
         preCompile group: 'com.nomagic', name: 'magicdraw', version: '185sp1', classifier: 'MagicDraw_185_sp1_no_install', ext: 'zip'
