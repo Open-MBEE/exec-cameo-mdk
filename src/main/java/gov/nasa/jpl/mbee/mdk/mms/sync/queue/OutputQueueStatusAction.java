@@ -161,7 +161,7 @@ public class OutputQueueStatusAction extends SRAction {
                     if (modelRow == 0) {
                         //Utils.guilog("Cancel Pressed.");
                         OutputQueue.getInstance().setCurrent(null); //let the table update when it actually moves on
-		                    /*SwingUtilities.invokeLater(new Runnable() {
+                            /*SwingUtilities.invokeLater(new Runnable() {
 		                        @Override
 		                        public void run() {
 		                            OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();

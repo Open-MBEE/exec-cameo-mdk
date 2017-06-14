@@ -123,7 +123,7 @@ public class CreateSlotsAction extends GenericRuleViolationAction {
                     }
                     if (!subsettingProperties.isEmpty()) {
                         /*System.out.println("I AM SUBSETTED: " + property.getQualifiedName());
-						for (final Property subsettingProperty : property.get_propertyOfSubsettedProperty()) {
+                        for (final Property subsettingProperty : property.get_propertyOfSubsettedProperty()) {
 							System.out.println(subsettingProperty.getQualifiedName());
 						}*/
                         boolean missingDependency = false;
