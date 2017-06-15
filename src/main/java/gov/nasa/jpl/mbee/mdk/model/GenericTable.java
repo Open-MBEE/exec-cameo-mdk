@@ -29,6 +29,7 @@ public class GenericTable extends Table {
     public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement Matrix";
     public static final String ALLOCATION_MATRIX = "SysML Allocation Matrix";
     public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement Matrix";
+    public static final String REQUIREMENTS_TABLE = "Requirement Table";
 
     private List<String> headers;
     private boolean skipIfNoDoc;
@@ -52,11 +53,16 @@ public class GenericTable extends Table {
             if (e instanceof Diagram) {
                 Diagram diagram = (Diagram) e;
                 DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
-                if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.getType().equals(INSTANCE_TABLE)) {
+                if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.getType().equals(INSTANCE_TABLE) || diagramType.getType().equals(REQUIREMENTS_TABLE)) {
                     DBTable t = new DBTable();
                     List<String> columnIds = GenericTableManager.getVisibleColumnIds(diagram);
-                    t.setHeaders(getHeaders(diagram, columnIds));
-                    List<Element> rowElements = GenericTableManager.getVisibleRowElements(diagram);
+                    t.setHeaders(getHeaders(diagram, columnIds, false));
+                    List<Element> rowElements = null;
+                    try {
+                        rowElements = GenericTableManager.getVisibleRowElements(diagram);
+                    }catch(NullPointerException np){
+                        rowElements = GenericTableManager.getRowElements(diagram);
+                    }
                     t.setBody(getBody(diagram, rowElements, columnIds, forViewEditor));
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
@@ -120,7 +126,7 @@ public class GenericTable extends Table {
                             columnHeaders.add(((NamedElement) element).getName());
                         }
                     }
-                    t.setHeaders(getHeaders(diagram, columnHeaders));
+                    t.setHeaders(getHeaders(diagram, columnHeaders, true));
                     t.setBody(matrixResult);
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
@@ -145,7 +151,7 @@ public class GenericTable extends Table {
         return res;
     }
 
-    public List<List<DocumentElement>> getHeaders(Diagram genericTable, List<String> columnIds) {
+    public List<List<DocumentElement>> getHeaders(Diagram genericTable, List<String> columnIds, boolean isMatrix) {
         List<List<DocumentElement>> res = new ArrayList<List<DocumentElement>>();
         if (this.headers != null && !this.headers.isEmpty()) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
@@ -158,13 +164,24 @@ public class GenericTable extends Table {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             int count = 0;
             for (String columnId : columnIds) {
-                if (count == 0) {
-                    count++;
-                    continue;
-                }
-                if (!skipColumnIds.contains(columnId)) {
-                    row.add(new DBText(GenericTableManager.getColumnNameById(genericTable, columnId)));
+                if (isMatrix) {
+                    if (count == 0) {
+                        row.add(new DBText(""));
+                        count++;
+                        numCols++;
+                    }
+                    row.add(new DBText(columnId));
                     numCols++;
+                }
+                else {
+                    if (count == 0) {
+                        count++;
+                        continue;
+                    }
+                    if (!skipColumnIds.contains(columnId)) {
+                        row.add(new DBText(GenericTableManager.getColumnNameById(genericTable, columnId)));
+                        numCols++;
+                    }
                 }
             }
             res.add(row);
@@ -228,8 +245,23 @@ public class GenericTable extends Table {
                         }
                     }
                 }
+                else if (cellValue instanceof AbstractChoiceProperty){
+                    if(cellValue instanceof ChoiceProperty){
+                        int index = ((ChoiceProperty) cellValue).getIndex();
+                        if(index > -1) {
+                            Object choice = ((ChoiceProperty) cellValue).getChoice().get(index);
+                            entry.addElement(new DBParagraph(choice.toString()));
+                        }
+                    }else {
+                        for (Object choice : ((AbstractChoiceProperty) cellValue).getChoice()) {
+                            if (choice instanceof String) {
+                                entry.addElement(new DBParagraph(choice.toString()));
+                            }
+                        }
+                    }
+                }
                 else {
-                    System.out.print("[WARNING] Cell value omitted: " + cellValue.toString() + ".");
+                    Application.getInstance().getGUILog().log("[WARNING] Cell value omitted: " + cellValue.toString() + ".");
                 }
                 row.add(entry);
             }
