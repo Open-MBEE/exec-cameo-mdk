@@ -5,7 +5,9 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
+import com.nomagic.magicdraw.core.project.ProjectsManager;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.ui.MainFrame;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
@@ -48,6 +50,7 @@ import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -1756,6 +1759,18 @@ public class Utils {
 
         Package dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
         if (dummyvs == null) {
+            try {
+                ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
+                File file = new File(Application.environment().getProfilesDirectory() + "SysML Extensions.mdxml");
+                ProjectDescriptor projectDescriptor =
+                        ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
+                projectsManager.useModule(project, projectDescriptor);
+                dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
+            } catch(Exception e){
+                // didnt work but was worth a try.
+            }
+        }
+        if(dummyvs == null){
             Application.getInstance().getGUILog().log("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
             return;
         }
