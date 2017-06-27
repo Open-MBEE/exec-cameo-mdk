@@ -81,7 +81,11 @@ public class TicketUtils {
      * Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
     public static boolean acquireMmsTicket(Project project) {
-        if (!username.isEmpty() && !password.isEmpty()) {
+        if (MMSUtils.getServerUrl(project) == null) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
+            return false;
+        }
+        else if (!username.isEmpty() && !password.isEmpty()) {
             return acquireTicket(project, password);
         }
         else if (!Utils.isPopupsDisabled()) {
@@ -92,7 +96,7 @@ public class TicketUtils {
             return acquireTicket(project, password);
         }
         else {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
+            Application.getInstance().getGUILog().log("[ERROR] No credentials have been specified and dialog popups are disabled. Skipping login.");
             return false;
         }
     }
@@ -102,8 +106,6 @@ public class TicketUtils {
      * Stores the entered username for future use / convenience, passes the entered password to acquireTicket().
      */
     private static String getUserCredentialsDialog() {
-        // Pop up dialog for logging into Alfresco
-
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new GridLayout(2, 2));
 
