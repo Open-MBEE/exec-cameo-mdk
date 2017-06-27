@@ -39,6 +39,8 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         return true;
     }
 
+
+    // TODO call postImage with generated key (uuid).
     public static boolean postImage(Project project, String key, Map<String, ObjectNode> is) {
         if (is == null || is.get(key) == null) {
             Utils.guilog("[ERROR] Image data with id " + key + " not found.");
