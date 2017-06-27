@@ -216,7 +216,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     if (!isRemote || (branchName = esiBranchInfo.getName()) == null || branchName.equals("trunk")) {
                         branchName = "master";
                     }
-                    objectNode.put(MDKConstants.REF_ID_KEY, branchName);
+                    objectNode.put(MDKConstants.MOUNTED_REF_ID_KEY, branchName);
                     objectNode.put(MDKConstants.TWC_VERSION_KEY, isRemote ? ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()) : -1);
                     return objectNode;
                 },
@@ -294,7 +294,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         String key = iterator.next();
                         if (key.equals(MDKConstants.MOUNTED_ELEMENT_ID_KEY)
                                 || key.equals(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY)
-                                || key.equals(MDKConstants.REF_ID_KEY)
+                                || key.equals(MDKConstants.MOUNTED_REF_ID_KEY)
                                 || key.equals(MDKConstants.TWC_VERSION_KEY)
                                 || key.equals(MDKConstants.TYPE_KEY)
                                 || key.equals(MDKConstants.ID_KEY)
