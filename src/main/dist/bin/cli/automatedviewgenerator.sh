@@ -1,10 +1,17 @@
 #!/bin/bash
 
-#example command
-#./automatedviewgenerator.sh --mmsHost $MMS_HOST --mmsPort $MMS_PORT --mmsUsername $MMS_USERNAME --mmsPassword $MMS_PASSWORD \
-# --twcHost $TWC_HOST --twcPort $TWC_PORT --twcUsername $TWC_USERNAME --twcPassword $TWC_PASSWORD \
-# --projectId $PROJECT_ID --refId $REF_ID --targetViewId $TARGET_VIEW_ID --generateRecursively \
-# --jobId $JOB_ID
+#usage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-debug]
+#       [-generateRecursively] [-h] [-mmsHost <arg>] [-mmsPassword <arg>]
+#       [-mmsPort <arg>] [-mmsUsername <arg>] [-pmaHost <arg>]
+#       [-pmaJobId <arg>] [-pmaPort <arg>] [-projectId <arg>]
+#       [-refId <arg>] [-targetViewId <arg>]
+#       [-twcHost <arg>] [-twcPassword <arg>] [-twcPort <arg>]
+#       [-twcUsername <arg>] [-verbose]
+
+#This script manages the settings and configuration options
+#necessary to launch a MagicDraw CommandLine program in the OSGI framework.
+#This tool must be launched with the associated shell script or a similar
+#manual configuration; it will not run directly.
 
 if [ -z "$MAGICDRAW_HOME" ]; then
     echo "MAGICDRAW_HOME environment variable not set, please set it to the MagicDraw installation folder"
