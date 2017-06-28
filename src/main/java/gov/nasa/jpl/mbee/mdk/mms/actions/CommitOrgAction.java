@@ -100,7 +100,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                 }
             }
         } catch (IOException | URISyntaxException | ServerException e) {
-            Application.getInstance().getGUILog().log("[WARNING] Exception occurred while getting MMS orgs. Aborting org creation. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS orgs. Aborting org creation. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -116,9 +116,9 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         // do post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
-            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+            MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
         } catch (IOException | ServerException | URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
         }

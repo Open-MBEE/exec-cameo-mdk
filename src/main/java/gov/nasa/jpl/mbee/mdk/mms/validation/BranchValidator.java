@@ -119,7 +119,7 @@ public class BranchValidator {
         URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
         if (requestUri == null) {
             errors = true;
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation cancelled.");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation aborted.");
             return;
         }
         try {
@@ -148,7 +148,7 @@ public class BranchValidator {
         } catch (IOException | URISyntaxException | ServerException e) {
             errors = true;
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS branches. Branch validation cancelled. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS branches. Branch validation aborted. Reason: " + e.getMessage());
             return;
         }
 
