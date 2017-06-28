@@ -72,8 +72,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 new Thread(() -> MMSLoginAction.loginAction(project)).start();
                 return;
             }
-        } catch (ServerException | IOException | URISyntaxException e) {
-            Utils.guilog("[ERROR] Exception occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
+        } catch (IOException | URISyntaxException | ServerException e) {
+            Utils.guilog("[ERROR] An error occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             new Thread(() -> MMSLoginAction.loginAction(project)).start();
             return;
         }
@@ -202,12 +202,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (ServerException | IOException | URISyntaxException e) {
+            } catch (IOException | URISyntaxException | ServerException e) {
                 if (progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
                     return;
                 }
-                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Skipping sync. All changes will be re-attempted in the next sync.");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;
             }
@@ -354,7 +354,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     Request request = new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes");
                     MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
                 } catch (IOException | URISyntaxException | ServerException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
+                    Application.getInstance().getGUILog().log("[ERROR] An error occurred. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                     e.printStackTrace();
                     return;
                 }
@@ -373,7 +373,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Request request = new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes");
                 MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
             } catch (IOException | URISyntaxException | ServerException e) {
-                Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;
             }

@@ -44,7 +44,7 @@ public class ProjectValidator {
     public void validate() {
         URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
         if (requestUri == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Project validation cancelled.");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Project validation aborted.");
             errors = true;
             return;
         }
@@ -59,7 +59,7 @@ public class ProjectValidator {
         } catch (IOException | ServerException | URISyntaxException e) {
             errors = true;
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS projects. Project validation cancelled. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS projects. Project validation aborted. Reason: " + e.getMessage());
             return;
         }
         JsonNode projectsJson;

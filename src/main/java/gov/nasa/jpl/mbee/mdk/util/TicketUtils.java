@@ -239,21 +239,18 @@ public class TicketUtils {
         credentials.put("password", pass);
 
         // do request
-        ProgressStatusRunner.runWithProgressStatus(new RunnableWithProgress() {
-            @Override
-            public void run(ProgressStatus progressStatus) {
-                String ticket;
-                try {
-                    ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
-                } catch (ServerException | IOException | URISyntaxException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
-                    e.printStackTrace();
-                    return;
-                }
-                // parse response
-                if (ticket != null) {
-                    ticketMappings.put(project, new TicketMapping(project, username, ticket));
-                }
+        ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
+            String ticket;
+            try {
+                ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
+            } catch (IOException | URISyntaxException | ServerException e) {
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
+                e.printStackTrace();
+                return;
+            }
+            // parse response
+            if (ticket != null) {
+                ticketMappings.put(project, new TicketMapping(project, username, ticket));
             }
         }, "Logging in to MMS", true, 0);
 
@@ -285,8 +282,8 @@ public class TicketUtils {
                             Application.getInstance().getGUILog().log("[INFO] MMS credentials are expired or invalid.");
                             MMSLogoutAction.logoutAction(project);
                         }
-                    } catch (ServerException | IOException | URISyntaxException e) {
-                        Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained). Reason: " + e.getMessage());
+                    } catch (IOException | URISyntaxException | ServerException e) {
+                        Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking ticket validity. Ticket will be retained for re-validation. Reason: " + e.getMessage());
                         e.printStackTrace();
                     }
                 } catch (Exception ignored) {

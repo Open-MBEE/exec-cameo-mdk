@@ -81,7 +81,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             orgId = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;
         }
@@ -95,7 +95,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
             } catch (IOException | URISyntaxException | ServerException e1) {
-                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
                 return null;
             }
@@ -150,7 +150,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 Thread.sleep(5000);
             }
         } catch (IOException | URISyntaxException | ServerException | InterruptedException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;
         }

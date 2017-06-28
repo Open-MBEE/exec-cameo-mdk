@@ -146,7 +146,7 @@ public class SyncElements {
                 if (jsonNode1 == null || !jsonNode1.isTextual()) {
                     continue;
                 }
-                changelog.addChange(jsonNode1.asText(), null, changeType);
+                changelog.addChange(jsonNode1.asText(), (Void) null, changeType);
             }
         }
         return changelog;

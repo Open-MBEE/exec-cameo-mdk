@@ -33,7 +33,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
     private final Project project;
     private final int depth;
 
-    // TODO Move me to common sync pre-conditions @donbot
     private ValidationSuite validationSuite = new ValidationSuite("Manual Sync Validation");
     private ElementValidator elementValidator;
 
@@ -51,7 +50,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         ProjectValidator pv = new ProjectValidator(project);
         pv.validate();
         if (pv.hasErrors()) {
-            Application.getInstance().getGUILog().log("[ERROR] Manual sync can not complete and will be skipped.");
+            Application.getInstance().getGUILog().log("[ERROR] Project validation could not be completed. Manual validation aborted.");
             return;
         }
         if (pv.getValidationSuite().hasErrors()) {
@@ -63,7 +62,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             BranchValidator bv = new BranchValidator(project);
             bv.validate(null, false);
             if (bv.hasErrors()) {
-                Application.getInstance().getGUILog().log("[ERROR] Manual sync can not complete and will be skipped.");
+                Application.getInstance().getGUILog().log("[ERROR] Branch validation could not be completed. Manual validation aborted.");
                 return;
             }
             if (bv.getValidationSuite().hasErrors()) {
@@ -100,7 +99,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 if (element == project.getPrimaryModel() && depth != 0) {
                     // scan of initial return for holding bin is expensive. assume it's not there and request anyway
                     if (progressStatus.isCancel()) {
-                        Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
                     responseFile = collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus);
@@ -109,7 +107,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
 
                     if (progressStatus.isCancel()) {
-                        Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
                         return;
                     }
                     responseFile = collectServerModuleElementsRecursively(project, 0, progressStatus);
@@ -118,14 +115,14 @@ public class ManualSyncRunner implements RunnableWithProgress {
                     }
                 }
             } catch (ServerException | URISyntaxException | IOException e) {
-                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting elements from the server. Aborting manual sync.");
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting elements from the server. Manual sync aborted. Reason: " + e.getMessage());
                 e.printStackTrace();
                 validationSuite = null;
                 return;
             }
             if (responseFiles.isEmpty()) {
                 if (!progressStatus.isCancel()) {
-                    Application.getInstance().getGUILog().log("[ERROR] Failed to get elements from the server. Aborting manual sync.");
+                    Application.getInstance().getGUILog().log("[ERROR] Failed to get elements from the server. Manual sync aborted.");
                 }
                 validationSuite = null;
                 return;
@@ -133,7 +130,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
             progressStatus.increase();
         }
         if (progressStatus.isCancel()) {
-            Application.getInstance().getGUILog().log("[INFO] Manual sync cancelled by user. Aborting.");
             return;
         }
         elementValidator = new ElementValidator("Element Validation", clientElements, null, project, responseFiles);
