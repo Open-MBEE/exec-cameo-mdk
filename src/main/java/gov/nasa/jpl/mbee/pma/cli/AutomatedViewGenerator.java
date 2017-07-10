@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.pma.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -10,6 +11,7 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -22,6 +24,7 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
+
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -44,6 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AutomatedViewGenerator extends CommandLine {
 
     private org.apache.commons.cli.CommandLine parser;
+    private org.apache.commons.cli.Options parserOptions;
 
     // needed because CommandLine redirects it, and we want the output
     private static final PrintStream stdout = System.out;
@@ -83,6 +87,7 @@ public class AutomatedViewGenerator extends CommandLine {
             PMA_HOST = "pmaHost",
             PMA_PORT = "pmaPort",
             PMA_JOB_ID = "pmaJobId",
+            HELP = "help",
             DEBUG = "debug",
             VERBOSE = "verbose";
 
@@ -99,10 +104,13 @@ public class AutomatedViewGenerator extends CommandLine {
         try {
             // send output back to stdout
             System.setOut(AutomatedViewGenerator.stdout);
+            if (parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
+                displayHelp();
+                return 1;
+            }
 
             // start the cancel handler so we don't terminate in the middle of a view sync operation and so we can force logout if logged in to teamwork
             cancelHandler = new InterruptTrap();
-            validateParser();
             Runtime.getRuntime().addShutdownHook(cancelHandler);
 
             System.out.println("\n**********************\n");
@@ -385,31 +393,35 @@ public class AutomatedViewGenerator extends CommandLine {
      */
     @Override
     protected void parseArgs(String[] args) throws ParseException {
-        Option mmsHostOption = new Option(MMS_HOST, true, "MMS host name.");
-        Option mmsPortOption = new Option(MMS_PORT, true, "MMS port number.");
-        Option mmsUsernameOption = new Option(MMS_USERNAME, true, "MMS username.");
-        Option mmsPasswordOption = new Option(MMS_PASSWORD, true, "MMS password.");
+        Option helpOption = new Option("h", HELP, false, "print this message");
 
-        Option twcHostOption = new Option(TWC_HOST, true, "Teamwork Cloud host name.");
-        Option twcPortOption = new Option(TWC_PORT, true, "Teamwork Cloud port number.");
-        Option twcUsernameOption = new Option(TWC_USERNAME, true, "Teamwork Cloud username.");
-        Option twcPasswordOption = new Option(TWC_PASSWORD, true, "Teamwork Cloud password.");
+        Option mmsHostOption = new Option(MMS_HOST, true, "use value for the MMS host name");
+        Option mmsPortOption = new Option(MMS_PORT, true, "use value for the MMS port number");
+        Option mmsUsernameOption = new Option(MMS_USERNAME, true, "use value for the MMS username");
+        Option mmsPasswordOption = new Option(MMS_PASSWORD, true, "use value for the MMS password");
 
-        Option projectIdOption = new Option(PROJECT_ID, true, "Project ID.");
-        Option refIdOption = new Option(REF_ID, true, "Ref (branch) ID.");
-        Option targetViewIdOption = new Option(TARGET_VIEW_ID, true, "Target view element ID.");
-        Option generateRecursivelyOption = new Option(GENERATE_RECURSIVELY, "Generate views or target children recursively?");
+        Option twcHostOption = new Option(TWC_HOST, true, "use value for the Teamwork Cloud host name");
+        Option twcPortOption = new Option(TWC_PORT, true, "use value for the Teamwork Cloud port number");
+        Option twcUsernameOption = new Option(TWC_USERNAME, true, "use value for the Teamwork Cloud username");
+        Option twcPasswordOption = new Option(TWC_PASSWORD, true, "use value for the Teamwork Cloud password");
 
-        Option pmaHostOption = new Option(PMA_HOST, true, "PMA server host name.");
-        Option pmaPortOption = new Option(PMA_PORT, true, "PMA server port number.");
-        Option pmaInstanceIdOption = new Option(PMA_JOB_ID, true, "PMA job instance element ID");
+        Option projectIdOption = new Option(PROJECT_ID, true, "use value for the target project ID");
+        Option refIdOption = new Option(REF_ID, true, "use value for  the target ref (branch) ID");
+        Option targetViewIdOption = new Option(TARGET_VIEW_ID, true, "use value for the target view element ID");
+        Option generateRecursivelyOption = new Option(GENERATE_RECURSIVELY, "generate child views of target recursively");
 
-        Option debugOption = new Option(DEBUG, "");
+        Option pmaHostOption = new Option(PMA_HOST, true, "use value for the PMA server host name; a missing value will disable status reporting");
+        Option pmaPortOption = new Option(PMA_PORT, true, "use value for the PMA server port number");
+        Option pmaInstanceIdOption = new Option(PMA_JOB_ID, true, "use value for the PMA job instance element ID; a missing value will disable status reporting");
+
+        Option debugOption = new Option(DEBUG, "print debug messages from cli program to console");
 
         // verbose option is understood by magicdraw to output information to command line. included here since the arg is also passed in here, and it causes errors if not expected
-        Option verboseOption = new Option(VERBOSE, "");
+        Option verboseOption = new Option(VERBOSE, "\"-verbose\" - print all MagicDraw log messages to console");
 
-        Options parserOptions = new Options();
+        parserOptions = new Options();
+
+        parserOptions.addOption(helpOption);
 
         parserOptions.addOption(mmsHostOption);
         parserOptions.addOption(mmsPortOption);
@@ -434,10 +446,26 @@ public class AutomatedViewGenerator extends CommandLine {
         parserOptions.addOption(verboseOption);
 
         CommandLineParser commandLineParser = new BasicParser();
-        parser = commandLineParser.parse(parserOptions, args);
+        try {
+            parser = commandLineParser.parse(parserOptions, args);
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+            displayHelp();
+            throw e;
+        }
     }
 
-    private void validateParser() throws FileNotFoundException, UnsupportedEncodingException {
+    private void displayHelp() {
+        HelpFormatter formatter = new HelpFormatter();
+        String usage = "$MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh";
+        String header = "The associated script manages the settings and configuration options necessary to launch a " +
+                "MagicDraw CommandLine program in the OSGI framework. This tool must be launched with the associated " +
+                "shell script or a similar manual configuration; it will not run directly. ";
+        formatter.printHelp(usage, header, parserOptions, "", true);
+    }
+
+    private boolean validateParser() throws FileNotFoundException, UnsupportedEncodingException {
         List<String> requiredOptions = new LinkedList<>();
         requiredOptions.add(MMS_HOST);
         requiredOptions.add(MMS_USERNAME);
@@ -463,9 +491,10 @@ public class AutomatedViewGenerator extends CommandLine {
                 message += missingOption + ", ";
             }
             message = message.substring(0, message.length() - 2) + ".";
-            System.out.println(message);
-            illegalStateFailure("[FAILURE] Unable to perform automated view generation without all of the above parameters.");
+            logMessage(message);
+            return false;
         }
+        return true;
     }
 
     private void checkCancel() throws InterruptedException {

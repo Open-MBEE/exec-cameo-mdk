@@ -205,54 +205,6 @@ public class JMSUtils {
         return outputMsgSelector;
     }
 
-    public static void initializeDurableQueue(Project project, String workspace) {
-        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
-        Connection connection = null;
-        Session session = null;
-        MessageConsumer consumer = null;
-        try {
-            JMSUtils.JMSInfo jmsInfo = null;
-            try {
-                jmsInfo = JMSUtils.getJMSInfo(project);
-            } catch (ServerException e) {
-                e.printStackTrace();
-            }
-            String url = jmsInfo != null ? jmsInfo.getUrl() : null;
-            if (url == null) {
-                return;
-            }
-            ConnectionFactory connectionFactory = JMSUtils.createConnectionFactory(jmsInfo);
-            if (connectionFactory == null) {
-                return;
-            }
-            connection = connectionFactory.createConnection();
-            String subscriberId = projectId + "/" + workspace;
-            connection.setClientID(subscriberId);
-            // connection.setExceptionListener(this);
-            session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
-            String messageSelector = JMSUtils.constructSelectorString(projectId, workspace);
-            Topic topic = session.createTopic("master");
-            consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
-            connection.start();
-        } catch (JMSException e1) {
-            e1.printStackTrace();
-        } finally {
-            try {
-                if (consumer != null) {
-                    consumer.close();
-                }
-                if (session != null) {
-                    session.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (JMSException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public static class JMSInfo {
         private final String url;
         private final boolean isFromService;

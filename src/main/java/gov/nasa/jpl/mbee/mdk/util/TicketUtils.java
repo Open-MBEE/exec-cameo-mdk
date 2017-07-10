@@ -81,7 +81,11 @@ public class TicketUtils {
      * Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
     public static boolean acquireMmsTicket(Project project) {
-        if (!username.isEmpty() && !password.isEmpty()) {
+        if (MMSUtils.getServerUrl(project) == null) {
+            Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
+            return false;
+        }
+        else if (!username.isEmpty() && !password.isEmpty()) {
             return acquireTicket(project, password);
         }
         else if (!Utils.isPopupsDisabled()) {
@@ -92,7 +96,7 @@ public class TicketUtils {
             return acquireTicket(project, password);
         }
         else {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to login to MMS. No credentials have been specified, and dialog popups are disabled.");
+            Application.getInstance().getGUILog().log("[ERROR] No credentials have been specified and dialog popups are disabled. Skipping login.");
             return false;
         }
     }
@@ -102,8 +106,6 @@ public class TicketUtils {
      * Stores the entered username for future use / convenience, passes the entered password to acquireTicket().
      */
     private static String getUserCredentialsDialog() {
-        // Pop up dialog for logging into Alfresco
-
         JPanel userPanel = new JPanel();
         userPanel.setLayout(new GridLayout(2, 2));
 
@@ -237,21 +239,18 @@ public class TicketUtils {
         credentials.put("password", pass);
 
         // do request
-        ProgressStatusRunner.runWithProgressStatus(new RunnableWithProgress() {
-            @Override
-            public void run(ProgressStatus progressStatus) {
-                String ticket;
-                try {
-                    ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
-                } catch (ServerException | IOException | URISyntaxException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unexpected error while acquiring credentials. Reason: " + e.getMessage());
-                    e.printStackTrace();
-                    return;
-                }
-                // parse response
-                if (ticket != null) {
-                    ticketMappings.put(project, new TicketMapping(project, username, ticket));
-                }
+        ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
+            String ticket;
+            try {
+                ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
+            } catch (IOException | URISyntaxException | ServerException e) {
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
+                e.printStackTrace();
+                return;
+            }
+            // parse response
+            if (ticket != null) {
+                ticketMappings.put(project, new TicketMapping(project, username, ticket));
             }
         }, "Logging in to MMS", true, 0);
 
@@ -283,8 +282,8 @@ public class TicketUtils {
                             Application.getInstance().getGUILog().log("[INFO] MMS credentials are expired or invalid.");
                             MMSLogoutAction.logoutAction(project);
                         }
-                    } catch (ServerException | IOException | URISyntaxException e) {
-                        Application.getInstance().getGUILog().log("[ERROR] Unexpected error checking ticket validity (ticket will be retained). Reason: " + e.getMessage());
+                    } catch (IOException | URISyntaxException | ServerException e) {
+                        Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking ticket validity. Ticket will be retained for re-validation. Reason: " + e.getMessage());
                         e.printStackTrace();
                     }
                 } catch (Exception ignored) {

@@ -258,9 +258,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     viewResponse = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (ServerException | IOException | URISyntaxException e) {
+            } catch (IOException | URISyntaxException | ServerException e) {
                 failure = true;
-                Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred. View generation aborted. Please check your network connection or view logs for more information. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;
             }
@@ -326,9 +326,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                             instanceAndSlotResponse = JacksonUtils.parseJsonObject(jsonParser);
                         }
-                    } catch (ServerException | IOException | URISyntaxException e) {
+                    } catch (IOException | URISyntaxException | ServerException e) {
                         failure = true;
-                        Application.getInstance().getGUILog().log("[WARNING] Server error occurred. Please check your network connection or view logs for more information.");
+                        Application.getInstance().getGUILog().log("[ERROR] An error occurred. View generation aborted. Please check your network connection or view logs for more information. Reason: " + e.getMessage());
                         e.printStackTrace();
                         SessionManager.getInstance().cancelSession(project);
                         return;

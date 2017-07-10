@@ -1755,6 +1755,21 @@ public class Utils {
         }
 
         Package dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
+        // Auto-mounting proof of concept (untested)
+        /*
+        if (dummyvs == null) {
+            try {
+                ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
+                File file = new File(Application.environment().getProfilesDirectory() + "SysML Extensions.mdxml");
+                ProjectDescriptor projectDescriptor =
+                        ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
+                projectsManager.useModule(project, projectDescriptor);
+                dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
+            } catch(Exception e){
+                // didnt work but was worth a try.
+            }
+        }
+        */
         if (dummyvs == null) {
             Application.getInstance().getGUILog().log("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
             return;

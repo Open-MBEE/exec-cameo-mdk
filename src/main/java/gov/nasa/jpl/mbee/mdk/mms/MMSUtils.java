@@ -504,11 +504,13 @@ public class MMSUtils {
             throwServerException = true;
         }
 
+        /*
         if (throwServerException) {
             // big flashing red letters that the action failed, or as close as we're going to get
             Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[ERROR] Operation failed due to server error. Server code: " + responseCode + "</span>" +
                     "<span style=\"color:#FFFFFF; font-weight:bold\"> !!!!!</span>"); // hidden characters for easy search
         }
+        */
         return !throwServerException;
     }
 

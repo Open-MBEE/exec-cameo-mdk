@@ -99,7 +99,7 @@ public class EMFImporter implements JsonToElementFunction {
                 ),
                 DOCUMENTATION = new PreProcessor(
                         (objectNode, project, strict, element) -> {
-                            JsonNode jsonNode = objectNode.get("documentation");
+                            JsonNode jsonNode = objectNode.get(MDKConstants.DOCUMENTATION_KEY);
                             if (jsonNode != null && jsonNode.isTextual()) {
                                 ModelHelper.setComment(element, jsonNode.asText());
                             }
@@ -131,9 +131,6 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         String type = jsonNode.asText();
-                        /*if (type.equals("View") || type.equals("Document")) {
-                            type = "Class";
-                        }*/
                         if (type.equals(UMLPackage.Literals.DIAGRAM.getName())) {
                             JsonNode diagramTypeJsonNode = objectNode.get(MDKConstants.DIAGRAM_TYPE_KEY);
                             if (diagramTypeJsonNode == null || !diagramTypeJsonNode.isTextual()) {
@@ -143,7 +140,6 @@ public class EMFImporter implements JsonToElementFunction {
                             if (ownerJsonNode == null || !ownerJsonNode.isTextual()) {
                                 return null;
                             }
-                            // TODO CHANGE ME @donbot
                             Element owner = idToElementConverter.apply(ownerJsonNode.asText(), project);
                             if (owner == null || !(owner instanceof Namespace)) {
                                 return null;

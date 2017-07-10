@@ -38,13 +38,6 @@ public class MMSViewLinkAction extends MDAction {
         this.project = Project.getProject(elements.iterator().next());
     }
 
-    public MMSViewLinkAction(Element element) {
-        super(DEFAULT_ID, "Open in View Editor", null, null);
-        this.targetElements = new ArrayList<>();
-        this.targetElements.add(element);
-        this.project = Project.getProject(element);
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         Stereotype documentStereotype = Utils.getDocumentStereotype(project);
@@ -132,7 +125,7 @@ public class MMSViewLinkAction extends MDAction {
                         }
                     }
                 } catch (URISyntaxException se) {
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");
+                    Application.getInstance().getGUILog().log("[ERROR] An error occurred while generating View Editor links for " + element.getHumanName() + ". Unable to proceed.");
                     return;
                 }
                 // and display
@@ -156,7 +149,7 @@ public class MMSViewLinkAction extends MDAction {
                         }
                         Desktop.getDesktop().browse(uriBase.setPath(uriPath).build());
                     } catch (URISyntaxException | IOException e1) {
-                        Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + uriBase.toString());
+                        Application.getInstance().getGUILog().log("[ERROR] An error occurred while opening the View Editor page. Link: " + uriBase.toString());
                         e1.printStackTrace();
                     }
                 }
@@ -192,7 +185,7 @@ public class MMSViewLinkAction extends MDAction {
                 try {
                     desktop.browse(uri);
                 } catch (IOException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] Exception occurred while opening the View Editor page. Link: " + uri.toString());
+                    Application.getInstance().getGUILog().log("[ERROR] An error occurred while opening the View Editor page. Link: " + uri.toString());
                 }
             }
             else {

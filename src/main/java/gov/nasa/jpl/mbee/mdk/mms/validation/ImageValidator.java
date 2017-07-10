@@ -82,8 +82,8 @@ public class ImageValidator {
                         rule.addViolation(v);
                     }
                 }
-            } catch (ServerException | IOException | URISyntaxException e1) {
-                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while validating image " + key + ". Image validation cancelled. Reason: " + e1.getMessage());
+            } catch (IOException | URISyntaxException | ServerException e1) {
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred while validating image " + key + ". Image validation aborted. Reason: " + e1.getMessage());
                 e1.printStackTrace();
                 continue;
             }
