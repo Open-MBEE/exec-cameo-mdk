@@ -20,7 +20,7 @@ deployment:
     owner: Open-MBEE
     commands:
       - "./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish"
-      - "curl -X POST -u $ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD https://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/mdk/$CIRCLE_BUILD_NUM?params=releaseVersion=$CIRCLE_TAG -H 'Content-Length: 0'"
+      - "curl -X POST -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_PASSWORD https://oss.jfrog.org/api/plugins/build/promote/snapshotsToBintray/mdk/$CIRCLE_BUILD_NUM?params=releaseVersion=$CIRCLE_TAG -H 'Content-Length: 0'"
   snapshot:
     branch: "/((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/"
     owner: Open-MBEE

@@ -14,7 +14,9 @@ else if (buildTag != version) {
 else if (buildAccess == 'opensource') {
     version += '-SNAPSHOT'
 }
-group = (buildAccess == 'internal' ? 'gov.nasa.jpl.cae.magicdraw.mdk' : 'org.openmbee.magicdraw.mdk')
+if (buildAccess == 'internal') {
+    group = group.replace('org.openmbee', 'gov.nasa.jpl.cae')
+}
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
 String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 String[] classpathLibraries = ['lib/patch.jar', 'lib/md.jar', 'lib/md_api.jar', 'lib/md_common.jar', 'lib/md_common_api.jar', 'lib/md_common_test.jar', 'lib/tw_common.jar', 'lib/tw_common_api.jar', 'lib/launcher.jar', 'lib/activation.jar', 'lib/annotation.jar', 'lib/batik.jar', 'lib/bundles/ch.qos.logback.classic_1.0.13.jar', 'lib/bundles/ch.qos.logback.core_1.0.13.jar', 'lib/bundles/cmof_1.4.0.201704261213/cmof14.jar', 'lib/bundles/cmof_1.4.0.201704261213/tas.jar', 'lib/bundles/com.esotericsoftware.kryo_2.22.0.201401231130.jar', 'lib/bundles/com.google.gson_2.7.0.jar', 'lib/bundles/com.google.guava_18.0.0.jar', 'lib/bundles/com.nomagic.annotations_1.0.0/com.nomagic.annotation-1.0.jar', 'lib/bundles/com.nomagic.ci.binary_17.0.5.v20170426-1207.jar', 'lib/bundles/com.nomagic.ci.metamodel.project_17.0.5.v20170426-1207.jar', 'lib/bundles/com.nomagic.ci.persistence.local_17.0.5.v20170426-1207.jar', 'lib/bundles/com.nomagic.ci.persistence_17.0.5.v20170426-1207.jar', 'lib/bundles/com.nomagic.ci.services_17.0.5.v20170426-1207.jar', 'lib/bundles/com.nomagic.ci_17.0.5.v20170426-1207.jar', 'lib/bundles/com.nomagic.magicdraw.ce_18.1.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.core.diagram_18.1.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.core.project.options_18.1.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.core_1.0.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.esi.binary.metamodel_18.1.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.esi.esiproject_18.1.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.esi.uuidmap_18.1.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.foundation_2.0.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.osgi.fragment_1.0.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.security_18.3.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw.uml2_2.5.0.201704261213.jar', 'lib/bundles/com.nomagic.magicdraw_17.0.5.201704261213.jar', 'lib/bundles/com.teamdev.jxbrowser.chromium.internal.linux32_6.13.0.jar', 'lib/bundles/com.teamdev.jxbrowser.chromium.internal.linux64_6.13.0.jar', 'lib/bundles/com.teamdev.jxbrowser.chromium.internal.mac_6.13.0.jar', 'lib/bundles/com.teamdev.jxbrowser.chromium.internal.win32_6.13.0.jar', 'lib/bundles/com.teamdev.jxbrowser.chromium_6.13.0.jar', 'lib/bundles/com.typesafe.config_1.3.0.jar', 'lib/bundles/de.schlichtherle.truezip_7.4.3.v20170426-1207/lib/truezip-driver-zip-7.4.3.jar', 'lib/bundles/de.schlichtherle.truezip_7.4.3.v20170426-1207/lib/truezip-kernel-7.4.3.jar', 'lib/bundles/gnu.trove_3.0.3/lib/trove-3.0.3.jar', 'lib/bundles/io.dropwizard.metrics.core_3.1.2.jar', 'lib/bundles/io.netty.buffer_4.0.37.Final.jar', 'lib/bundles/io.netty.codec_4.0.37.Final.jar', 'lib/bundles/io.netty.common_4.0.37.Final.jar', 'lib/bundles/io.netty.handler_4.0.37.Final.jar', 'lib/bundles/io.netty.transport_4.0.37.Final.jar', 'lib/bundles/javax.jmi_1.0.0.201704261213/javax_jmi-1_0-fr.jar', 'lib/bundles/joda-time_2.9.1.jar', 'lib/bundles/lz4-java_1.3.0.jar', 'lib/bundles/org.apache.commons.codec_1.6.0.v201305230611.jar', 'lib/bundles/org.apache.commons.collections_3.2.1.jar', 'lib/bundles/org.apache.commons.compress_1.3.0.jar', 'lib/bundles/org.apache.commons.io_2.4.0.jar', 'lib/bundles/org.apache.commons.lang_2.6.0.v201404270220.jar', 'lib/bundles/org.apache.directory.api_1.0.0.jar', 'lib/bundles/org.apache.log4j_1.2.15.v201005080500.jar', 'lib/bundles/org.apache.servicemix.bundles.jsr305_2.0.1.1.jar', 'lib/bundles/org.eclipse.core.contenttype_3.4.200.v20140207-1251.jar', 'lib/bundles/org.eclipse.core.jobs_3.6.0.v20140424-0053.jar', 'lib/bundles/org.eclipse.core.runtime_3.10.0.v20140318-2214.jar', 'lib/bundles/org.eclipse.emf.common_2.10.1.v20140901-1043.jar', 'lib/bundles/org.eclipse.emf.ecore.change_2.10.0.v20140901-1043.jar', 'lib/bundles/org.eclipse.emf.ecore.xmi_2.10.1.v20140901-1043.jar', 'lib/bundles/org.eclipse.emf.ecore_2.10.1.v20140901-1043.jar', 'lib/bundles/org.eclipse.emf.edit_2.10.1.v20140901-1055.jar', 'lib/bundles/org.eclipse.equinox.app_1.3.200.v20130910-1609.jar', 'lib/bundles/org.eclipse.equinox.common_3.6.200.v20130402-1505.jar', 'lib/bundles/org.eclipse.equinox.ds_1.4.200.v20131126-2331.jar', 'lib/bundles/org.eclipse.equinox.preferences_3.5.200.v20140224-1527.jar', 'lib/bundles/org.eclipse.equinox.registry_3.5.400.v20140428-1507.jar', 'lib/bundles/org.eclipse.equinox.util_1.0.500.v20130404-1337.jar', 'lib/bundles/org.eclipse.osgi.services_3.4.0.v20140312-2051.jar', 'lib/bundles/org.eclipse.osgi_3.10.1.v20140909-1633.jar', 'lib/bundles/org.eclipse.uml2.common_1.5.0.v200905041045.jar', 'lib/bundles/org.hamcrest.core_1.3.0.v201303031735.jar', 'lib/bundles/org.jboss.netty_3.10.6.Final.jar', 'lib/bundles/org.json_1.0.0.255610281323.jar', 'lib/bundles/org.junit_4.11.0.v201303080030/junit.jar', 'lib/bundles/org.uncommons.maths_1.2.2.201301151508/lib/uncommons-maths-1.2.2a.jar', 'lib/bundles/slf4j.api_1.7.7.jar', 'lib/com.nomagic.osgi.launcher-17.0.5-SNAPSHOT.jar', 'lib/commons-compress-1.3.jar', 'lib/commons-httpclient-3.1.jar', 'lib/commons-logging-1.0.4.jar', 'lib/concurrent.jar', 'lib/EccpressoAll.jar', 'lib/ehcache-2.10.1.jar', 'lib/flexlm.jar', 'lib/graphics/clibwrapper_jiio.jar', 'lib/graphics/freehep-base.jar', 'lib/graphics/freehep-graphics2d.jar', 'lib/graphics/freehep-graphicsio-emf.jar', 'lib/graphics/freehep-graphicsio-ps.jar', 'lib/graphics/freehep-graphicsio.jar', 'lib/graphics/jai_imageio.jar', 'lib/gson-2.2.4.jar', 'lib/HTMLEditorLight.jar', 'lib/javassist.jar', 'lib/jhall.jar', 'lib/jide-action.jar', 'lib/jide-charts.jar', 'lib/jide-common.jar', 'lib/jide-components.jar', 'lib/jide-dock.jar', 'lib/jide-editor.jar', 'lib/jide-gantt.jar', 'lib/jide-grids.jar', 'lib/jide-shortcut.jar', 'lib/jimi.jar', 'lib/jmyspell-core-1.0.0-beta-2.jar', 'lib/jna.jar', 'lib/jnp-client.jar', 'lib/jtidy-sources.zip', 'lib/jtidy.jar', 'lib/lucene-analyzers-common-4.10.3.jar', 'lib/lucene-core-4.10.3.jar', 'lib/webservice/axis-config.jar', 'lib/webservice/axis.jar', 'lib/webservice/commons-discovery-0.2.jar', 'lib/webservice/jaxrpc.jar', 'lib/webservice/mdserviceclient.jar', 'lib/webservice/rsclient.jar', 'lib/webservice/wsdl4j-1.5.1.jar', 'lib/xalan.jar', 'lib/y.jar']
@@ -75,16 +77,6 @@ configurations {
 
 // In this section you declare the dependencies for your production and test code
 dependencies {
-    // Production code requires MagicDraw patches to compile
-    if (buildAccess == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0', ext: 'zip'
-    }
-    else {
-        preCompile group: 'com.nomagic', name: 'magicdraw', version: '185sp1', classifier: 'MagicDraw_185_sp1_no_install', ext: 'zip'
-        preCompile group: 'com.nomagic', name: 'sysml', version: '185sp1', classifier: 'SysML_Plugin_185_sp1_bundle', ext: 'zip'
-        preCompile group: 'com.nomagic', name: 'cst', version: '185sp1', classifier: 'Cameo_Simulation_Toolkit_185_sp1', ext: 'zip'
-    }
-    
     // SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
     // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
@@ -130,18 +122,27 @@ dependencies {
     // Apache HTTP
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
     compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.2'
+
+    // Test Dependencies
+    //testCompile 'junit:junit:4.11'
+    testCompile group: 'org.gradle', name: 'gradle-core', version: '3.1'
     
-    // Other dependencies we're unable to resolve via repositories
+    // Other dependencies we're unable to resolve via standard repositories
+
+    if (buildAccess == 'internal') {
+        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.0.0', ext: 'zip'
+    }
+    else {
+        preCompile group: 'com.nomagic', name: 'magicdraw', version: '185sp1', classifier: 'MagicDraw_185_sp1_no_install', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'sysml', version: '185sp1', classifier: 'SysML_Plugin_185_sp1_bundle', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'cst', version: '185sp1', classifier: 'Cameo_Simulation_Toolkit_185_sp1', ext: 'zip'
+    }
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/' + it })
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
-    
-	// Test Dependencies
-    //testCompile 'junit:junit:4.11'
-    testCompile group: 'org.gradle', name: 'gradle-core', version: '3.1'
 }
 
 task extractDependencies {
@@ -230,7 +231,7 @@ class PreDist extends DefaultTask {
 task preDist(type: PreDist, dependsOn: jar) {
     humanVersion = version.endsWith('-SNAPSHOT') && buildAccess == 'opensource' && buildTag != null && !buildTag.isEmpty() ? version.replace('-SNAPSHOT', '') : version
     internalVersion = buildNumber
-    groupName = 'gov.nasa.jpl.cae.magicdraw.mdk'
+    groupName = magicdDrawGroupName
     buildTimestamp = timestamp
     descriptor = descriptorFile
 }
