@@ -107,6 +107,9 @@ public class Converters {
                 }*/
                 if (id.contains(MDKConstants.SLOT_ID_SEPARATOR) && !id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
                     String[] sections = id.split(MDKConstants.SLOT_ID_SEPARATOR);
+                    if (sections.length < 2) {
+                        return null;
+                    }
                     Element owningInstance = Converters.getIdToElementConverter().apply(sections[0], project);
                     Element definingFeature = Converters.getIdToElementConverter().apply(sections[1], project);
                     if (!(owningInstance instanceof InstanceSpecification) || !(definingFeature instanceof StructuralFeature)) {
