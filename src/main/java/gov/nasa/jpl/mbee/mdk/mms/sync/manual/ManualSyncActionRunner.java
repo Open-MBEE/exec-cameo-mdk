@@ -8,10 +8,12 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
 
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ManualSyncActionRunner<A extends NMAction & AnnotationAction> implements RunnableWithProgress {

@@ -1,5 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+import com.nomagic.magicdraw.commands.Command;
+import com.nomagic.magicdraw.commands.CommandHistory;
+import com.nomagic.magicdraw.commands.MacroCommand;
+import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -326,11 +330,10 @@ public class PresentationElementUtils {
         String name;
         if (pe.isViewDocHack()) {
             newspec = new JSONObject();
-            newspec.put("source", Converters.getElementToIdConverter().apply(is));
             newspec.put("type", "Paragraph");
+            newspec.put("sourceType", "reference");
+            newspec.put("source", Converters.getElementToIdConverter().apply(pe.getView()));
             newspec.put("sourceProperty", "documentation");
-            String transclude = "<p>&nbsp;</p><p><mms-transclude-doc data-mms-eid=\"" + Converters.getElementToIdConverter().apply(pe.getView()) + "\">[cf." + ((NamedElement) pe.getView()).getName() + ".doc]</mms-transclude-doc></p><p>&nbsp;</p>";
-            ModelHelper.setComment(is, transclude);
             name = "View Documentation";
             classifier = tparaC;
         }
@@ -423,27 +426,29 @@ public class PresentationElementUtils {
 
     public void updateOrCreateConstraintFromInstanceSpecifications(Element view, List<InstanceSpecification> instanceSpecifications) {
         Constraint c = getOrCreateViewConstraint(view);
-        Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : ef.createExpressionInstance();
+        // It was necessary to delete the old expression and make a new one, because expression.getOperand().addAll(instanceValues) would return false in seemingly random, albeit consistent, views.
+        Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : null;
+        if (expression != null) {
+            try {
+                Command command = RemoveCommandCreator.getCommand(expression);
+                command.execute();
+                MacroCommand macroCommand = CommandHistory.getCommandForAppend(expression);
+                macroCommand.add(command);
+            } catch (RuntimeException ignored) {
+                System.out.println("Could not clean up " + expression.getLocalID());
+                return;
+            }
+        }
         Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
+        expression = ef.createExpressionInstance();
         expression.setID(Converters.getElementToIdConverter().apply(view) + "_vc_expression");
         expression.setOwner(c);
-        List<InstanceValue> instanceValues = new ArrayList<>(instanceSpecifications.size());
-        Iterator<ValueSpecification> operandIterator = expression.getOperand().iterator();
-        while (operandIterator.hasNext()) {
-            ValueSpecification valueSpecification = operandIterator.next();
-            if (!(valueSpecification instanceof InstanceValue)) {
-                operandIterator.remove();
-                continue;
-            }
-            instanceValues.add((InstanceValue) valueSpecification);
-        }
         for (int i = 0; i < instanceSpecifications.size(); i++) {
-            InstanceValue instanceValue = i < instanceValues.size() ? instanceValues.get(i) : ef.createInstanceValueInstance();
+            InstanceValue instanceValue = ef.createInstanceValueInstance();
+            instanceValue.setID(expression.getLocalID() + "_" + i);
             instanceValue.setInstance(instanceSpecifications.get(i));
-            instanceValues.add(instanceValue);
+            expression.getOperand().add(instanceValue);
         }
-        expression.getOperand().clear();
-        expression.getOperand().addAll(instanceValues);
     }
 
     public void updateOrCreateConstraintFromPresentationElements(Element view, List<PresentationElementInstance> presentationElementInstances) {

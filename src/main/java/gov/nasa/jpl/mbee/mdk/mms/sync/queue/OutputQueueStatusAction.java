@@ -136,7 +136,7 @@ public class OutputQueueStatusAction extends SRAction {
                 counter++;
             }
             /*table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-			if (table.getModel() instanceof AbstractTableModel) {
+            if (table.getModel() instanceof AbstractTableModel) {
 				((AbstractTableModel) table.getModel()).fireTableStructureChanged();
 			}*/
             table.repaint();
@@ -161,7 +161,7 @@ public class OutputQueueStatusAction extends SRAction {
                     if (modelRow == 0) {
                         //Utils.guilog("Cancel Pressed.");
                         OutputQueue.getInstance().setCurrent(null); //let the table update when it actually moves on
-		                    /*SwingUtilities.invokeLater(new Runnable() {
+                            /*SwingUtilities.invokeLater(new Runnable() {
 		                        @Override
 		                        public void run() {
 		                            OutputQueueStatusConfigurator.getOutputQueueStatusAction().update();

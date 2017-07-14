@@ -15,6 +15,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
+import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import org.apache.http.client.utils.URIBuilder;
@@ -80,7 +81,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             orgId = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
         } catch (IOException | URISyntaxException | ServerException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;
         }
@@ -94,7 +95,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
             } catch (IOException | URISyntaxException | ServerException e1) {
-                Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
                 return null;
             }
@@ -134,7 +135,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // update request with project post path
         requestUri.setPath(requestUri.getPath() + "/" + orgId + "/projects");
         Collection<ObjectNode> projects = new LinkedList<>();
-        projects.add(MMSUtils.getProjectObjectNode(project));
+        projects.add(ProjectValidator.generateProjectObjectNode(project));
 
         // do project post request
         try {
@@ -149,7 +150,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 Thread.sleep(5000);
             }
         } catch (IOException | URISyntaxException | ServerException | InterruptedException e1) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;
         }

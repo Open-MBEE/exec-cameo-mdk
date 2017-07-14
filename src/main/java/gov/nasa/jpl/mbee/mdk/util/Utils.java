@@ -21,20 +21,11 @@ import com.nomagic.magicdraw.validation.ValidationRunData;
 import com.nomagic.magicdraw.validation.ui.ValidationResultsWindowManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
-import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallOperationAction;
-import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
-import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
-import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ActivityPartition;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectableElement;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
-import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.ConnectorEnd;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -53,7 +44,6 @@ import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.validation.*;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
@@ -1765,6 +1755,21 @@ public class Utils {
         }
 
         Package dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
+        // Auto-mounting proof of concept (untested)
+        /*
+        if (dummyvs == null) {
+            try {
+                ProjectsManager projectsManager = Application.getInstance().getProjectsManager();
+                File file = new File(Application.environment().getProfilesDirectory() + "SysML Extensions.mdxml");
+                ProjectDescriptor projectDescriptor =
+                        ProjectDescriptorsFactory.createProjectDescriptor(file.toURI());
+                projectsManager.useModule(project, projectDescriptor);
+                dummyvs = (Package) project.getElementByID("_17_0_2_407019f_1354124289134_280378_12909");
+            } catch(Exception e){
+                // didnt work but was worth a try.
+            }
+        }
+        */
         if (dummyvs == null) {
             Application.getInstance().getGUILog().log("You don't have SysML Extensions mounted! You need it in order for the validations to show.");
             return;

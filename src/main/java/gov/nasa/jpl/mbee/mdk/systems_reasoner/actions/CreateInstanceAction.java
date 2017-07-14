@@ -89,9 +89,9 @@ public class CreateInstanceAction extends GenericRuleViolationAction {
 
         final List<NamedElement> inheritedMembers = new ArrayList<NamedElement>();
         inheritedMembers.addAll(classifier.getInheritedMember());
-		
+
 		/*if (safetyNet++ > 1000) {
-			Application.getInstance().getGUILog().log("Exceeded safety net max instantiations. Aborting...");
+            Application.getInstance().getGUILog().log("Exceeded safety net max instantiations. Aborting...");
 			throw new RuntimeException("Show me stack");
 			//return instance;
 		}*/

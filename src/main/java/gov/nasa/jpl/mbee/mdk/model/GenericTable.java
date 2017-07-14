@@ -31,13 +31,14 @@ import java.util.List;
 public class GenericTable extends Table {
 
     public static final String INSTANCE_TABLE = "Instance Table";
-    public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement MatrixUtil";
-    public static final String ALLOCATION_MATRIX = "SysML Allocation MatrixUtil";
-    public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement MatrixUtil";
+    public static final String VERIFY_REQUIREMENTS_MATRIX = "Verify Requirement Matrix";
+    public static final String ALLOCATION_MATRIX = "SysML Allocation Matrix";
+    public static final String SATISFY_REQUIREMENTS_MATRIX = "Satisfy Requirement Matrix";
+    public static final String REQUIREMENTS_TABLE = "Requirement Table";
 
     private List<String> headers;
     private boolean skipIfNoDoc;
-    private static ArrayList<String> skipColumnIDs = new ArrayList<String>() {{
+    private static ArrayList<String> skipColumnIds = new ArrayList<String>() {{
         add("QPROP:Element:isEncapsulated");
         add("QPROP:Element:CUSTOM_IMAGE");
     }};
@@ -57,13 +58,17 @@ public class GenericTable extends Table {
             if (e instanceof Diagram) {
                 Diagram diagram = (Diagram) e;
                 DiagramType diagramType = Application.getInstance().getProject().getDiagram(diagram).getDiagramType();
-                if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.getType().equals(INSTANCE_TABLE)) {
+                if (diagramType.isTypeOf(DiagramType.GENERIC_TABLE) || diagramType.getType().equals(INSTANCE_TABLE) || diagramType.getType().equals(REQUIREMENTS_TABLE)) {
                     DBTable t = new DBTable();
-                    GenericTableManager gtm = new GenericTableManager();
-                    List<String> columnIds = gtm.getColumnIds(diagram);
-                    t.setHeaders(getHeaders(diagram, columnIds, gtm));
-                    List<Element> rowElements = gtm.getRowElements(diagram);
-                    t.setBody(getBody(diagram, rowElements, columnIds, gtm, forViewEditor));
+                    List<String> columnIds = GenericTableManager.getVisibleColumnIds(diagram);
+                    t.setHeaders(getHeaders(diagram, columnIds, false));
+                    List<Element> rowElements = null;
+                    try {
+                        rowElements = GenericTableManager.getVisibleRowElements(diagram);
+                    }catch(NullPointerException np){
+                        rowElements = GenericTableManager.getRowElements(diagram);
+                    }
+                    t.setBody(getBody(diagram, rowElements, columnIds, forViewEditor));
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
                     }
@@ -126,7 +131,7 @@ public class GenericTable extends Table {
                             columnHeaders.add(((NamedElement) element).getName());
                         }
                     }
-                    t.setHeaders(getHeaders(diagram, columnHeaders, null));
+                    t.setHeaders(getHeaders(diagram, columnHeaders, true));
                     t.setBody(matrixResult);
                     if (getTitles() != null && getTitles().size() > tableCount) {
                         t.setTitle(getTitlePrefix() + getTitles().get(tableCount) + getTitleSuffix());
@@ -151,7 +156,7 @@ public class GenericTable extends Table {
         return res;
     }
 
-    public List<List<DocumentElement>> getHeaders(Diagram d, List<String> columnIds, GenericTableManager gtm) {
+    public List<List<DocumentElement>> getHeaders(Diagram genericTable, List<String> columnIds, boolean isMatrix) {
         List<List<DocumentElement>> res = new ArrayList<List<DocumentElement>>();
         if (this.headers != null && !this.headers.isEmpty()) {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
@@ -160,24 +165,17 @@ public class GenericTable extends Table {
             }
             res.add(row);
         }
-        else if (StereotypesHelper.hasStereotypeOrDerived(d, DocGenProfile.headersChoosable)) {
-            List<DocumentElement> row = new ArrayList<DocumentElement>();
-            for (String h : (List<String>) StereotypesHelper.getStereotypePropertyValue(d, DocGenProfile.headersChoosable, "headers")) {
-                row.add(new DBText(h));
-            }
-            res.add(row);
-        }
         else {
             List<DocumentElement> row = new ArrayList<DocumentElement>();
             int count = 0;
-            for (String columnid : columnIds) {
-                if (gtm == null) {
+            for (String columnId : columnIds) {
+                if (isMatrix) {
                     if (count == 0) {
                         row.add(new DBText(""));
                         count++;
                         numCols++;
                     }
-                    row.add(new DBText(columnid));
+                    row.add(new DBText(columnId));
                     numCols++;
                 }
                 else {
@@ -185,8 +183,8 @@ public class GenericTable extends Table {
                         count++;
                         continue;
                     }
-                    if (!skipColumnIDs.contains(columnid)) {
-                        row.add(new DBText(gtm.getColumnNameById(d, columnid)));
+                    if (!skipColumnIds.contains(columnId)) {
+                        row.add(new DBText(GenericTableManager.getColumnNameById(genericTable, columnId)));
                         numCols++;
                     }
                 }
@@ -197,7 +195,7 @@ public class GenericTable extends Table {
     }
 
 
-    public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds, GenericTableManager gtm, boolean forViewEditor) {
+    public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds, boolean forViewEditor) {
         List<List<DocumentElement>> res = new ArrayList<>();
         for (Element e : rowElements) {
             if (skipIfNoDoc && ModelHelper.getComment(e).trim().isEmpty()) {
@@ -210,13 +208,12 @@ public class GenericTable extends Table {
                     count++;
                     continue;
                 }
-                if (skipColumnIDs.contains(cid)) {
+                if (skipColumnIds.contains(cid)) {
                     continue;
                 }
                 DBTableEntry entry = new DBTableEntry();
 
-
-                Property cellValue = gtm.getCellValue(d, e, cid);
+                Property cellValue = GenericTableManager.getCellValue(d, e, cid);
                 if (cellValue instanceof ElementProperty) {
                     Element cellelement = ((ElementProperty) cellValue).getElement();
                     if (cellelement instanceof NamedElement) {
@@ -231,6 +228,9 @@ public class GenericTable extends Table {
                     else {
                         entry.addElement(new DBParagraph(cellValue.getValue()));
                     }
+                }
+                else if (cellValue instanceof NumberProperty) {
+                    entry.addElement(new DBParagraph(cellValue.getValue()));
                 }
                 else if (cellValue instanceof ElementListProperty) {
                     for (Element listEl : ((ElementListProperty) cellValue).getValue()) {
@@ -250,8 +250,23 @@ public class GenericTable extends Table {
                         }
                     }
                 }
+                else if (cellValue instanceof AbstractChoiceProperty){
+                    if(cellValue instanceof ChoiceProperty){
+                        int index = ((ChoiceProperty) cellValue).getIndex();
+                        if(index > -1) {
+                            Object choice = ((ChoiceProperty) cellValue).getChoice().get(index);
+                            entry.addElement(new DBParagraph(choice.toString()));
+                        }
+                    }else {
+                        for (Object choice : ((AbstractChoiceProperty) cellValue).getChoice()) {
+                            if (choice instanceof String) {
+                                entry.addElement(new DBParagraph(choice.toString()));
+                            }
+                        }
+                    }
+                }
                 else {
-                    System.out.print("[WARNING] Cell value omitted: " + cellValue.toString() + ".");
+                    Application.getInstance().getGUILog().log("[WARNING] Cell value omitted: " + cellValue.toString() + ".");
                 }
                 row.add(entry);
             }

@@ -2,12 +2,10 @@ package gov.nasa.jpl.mbee.mdk.util;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
 
 @Deprecated
 public class MdDebug extends Debug {

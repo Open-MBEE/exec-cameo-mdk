@@ -8,11 +8,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.*;
-import gov.nasa.jpl.mbee.mdk.validation.IndeterminateProgressMonitorProxy;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
+import gov.nasa.jpl.mbee.mdk.validation.*;
 
 import java.util.ArrayList;
 import java.util.List;

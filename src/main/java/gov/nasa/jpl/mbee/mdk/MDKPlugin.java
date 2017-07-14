@@ -72,7 +72,7 @@ public class MDKPlugin extends Plugin {
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
         System.setProperty("jsse.enableSNIExtension", "false");
         if (MDUtils.isDeveloperMode()) {
-            System.setProperty("org.apache.commons.logging.Log","org.apache.commons.logging.impl.SimpleLog");
+            System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
             System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
             System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http.wire", "INFO");
         }

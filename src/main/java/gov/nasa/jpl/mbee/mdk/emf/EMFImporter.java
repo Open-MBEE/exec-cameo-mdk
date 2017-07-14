@@ -44,11 +44,11 @@ public class EMFImporter implements JsonToElementFunction {
     protected List<EStructuralFeatureOverride> eStructuralFeatureOverrides;
 
     @Override
-    public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException, ReadOnlyElementException {
+    public Changelog.Change<Element> apply(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
         return convert(objectNode, project, strict);
     }
 
-    private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException, ReadOnlyElementException {
+    private synchronized Changelog.Change<Element> convert(ObjectNode objectNode, Project project, Boolean strict) throws ImportException {
         JsonNode jsonNode = objectNode.get(MDKConstants.ID_KEY);
         /*if (jsonNode == null || !jsonNode.isTextual()) {
             return null;
@@ -94,15 +94,12 @@ public class EMFImporter implements JsonToElementFunction {
                 CREATE = getCreatePreProcessor(Converters.getIdToElementConverter()),
                 EDITABLE = new PreProcessor(
                         (objectNode, project, strict, element) -> {
-                            if (!element.isEditable()) {
-                                throw new ReadOnlyElementException(element);
-                            }
                             return element;
                         }
                 ),
                 DOCUMENTATION = new PreProcessor(
                         (objectNode, project, strict, element) -> {
-                            JsonNode jsonNode = objectNode.get("documentation");
+                            JsonNode jsonNode = objectNode.get(MDKConstants.DOCUMENTATION_KEY);
                             if (jsonNode != null && jsonNode.isTextual()) {
                                 ModelHelper.setComment(element, jsonNode.asText());
                             }
@@ -134,9 +131,6 @@ public class EMFImporter implements JsonToElementFunction {
                             return null;
                         }
                         String type = jsonNode.asText();
-                        /*if (type.equals("View") || type.equals("Document")) {
-                            type = "Class";
-                        }*/
                         if (type.equals(UMLPackage.Literals.DIAGRAM.getName())) {
                             JsonNode diagramTypeJsonNode = objectNode.get(MDKConstants.DIAGRAM_TYPE_KEY);
                             if (diagramTypeJsonNode == null || !diagramTypeJsonNode.isTextual()) {
@@ -146,7 +140,6 @@ public class EMFImporter implements JsonToElementFunction {
                             if (ownerJsonNode == null || !ownerJsonNode.isTextual()) {
                                 return null;
                             }
-                            // TODO CHANGE ME @donbot
                             Element owner = idToElementConverter.apply(ownerJsonNode.asText(), project);
                             if (owner == null || !(owner instanceof Namespace)) {
                                 return null;
@@ -166,8 +159,7 @@ public class EMFImporter implements JsonToElementFunction {
                         try {
                             UMLFactory.eINSTANCE.setRepository(project.getRepository());
                             eObject = UMLFactory.eINSTANCE.create((EClass) eClassifier);
-                        }
-                        finally {
+                        } finally {
                             UMLFactory.eINSTANCE.setRepository(initialRepository);
                         }
                         if (!(eObject instanceof Element)) {
@@ -481,17 +473,17 @@ public class EMFImporter implements JsonToElementFunction {
 
     @FunctionalInterface
     public interface PreProcessorFunction {
-        Element apply(ObjectNode objectNode, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
+        Element apply(ObjectNode objectNode, Project project, boolean strict, Element element) throws ImportException;
     }
 
     @FunctionalInterface
     interface DeserializationFunction {
-        Object apply(String key, JsonNode jsonNode, boolean ignoreMultiplicity, ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
+        Object apply(String key, JsonNode jsonNode, boolean ignoreMultiplicity, ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
     }
 
     @FunctionalInterface
     protected interface ImportFunction {
-        Element apply(ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException, ReadOnlyElementException;
+        Element apply(ObjectNode objectNode, EStructuralFeature eStructuralFeature, Project project, boolean strict, Element element) throws ImportException;
     }
 
     @FunctionalInterface

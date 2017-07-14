@@ -181,7 +181,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             }
         } catch (IOException | URISyntaxException | ServerException e) {
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS branches. Branch commit aborted. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS branches. Branch commit aborted. Reason: " + e.getMessage());
             return;
         }
         if (parentBranchJsonNode == null) {
@@ -196,7 +196,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         Collection<ObjectNode> refsNodes = new LinkedList<>();
-        ObjectNode branchNode = BranchValidator.getRefObjectNode(project, branchInfo, parentBranchId);
+        ObjectNode branchNode = BranchValidator.generateRefObjectNode(project, branchInfo, parentBranchId);
         refsNodes.add(branchNode);
 
         if (parentCommitsBehind > 0 || parentCommitsAhead > 0) {
@@ -213,7 +213,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
             MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | URISyntaxException | ServerException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
             e.printStackTrace();
             return;
         }

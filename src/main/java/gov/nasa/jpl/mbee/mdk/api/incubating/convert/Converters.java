@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.mdk.api.incubating.convert;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -108,6 +107,9 @@ public class Converters {
                 }*/
                 if (id.contains(MDKConstants.SLOT_ID_SEPARATOR) && !id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
                     String[] sections = id.split(MDKConstants.SLOT_ID_SEPARATOR);
+                    if (sections.length < 2) {
+                        return null;
+                    }
                     Element owningInstance = Converters.getIdToElementConverter().apply(sections[0], project);
                     Element definingFeature = Converters.getIdToElementConverter().apply(sections[1], project);
                     if (!(owningInstance instanceof InstanceSpecification) || !(definingFeature instanceof StructuralFeature)) {

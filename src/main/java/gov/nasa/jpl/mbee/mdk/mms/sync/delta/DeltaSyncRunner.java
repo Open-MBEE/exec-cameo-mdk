@@ -9,15 +9,16 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
@@ -27,10 +28,9 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.*;
+import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -72,8 +72,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 new Thread(() -> MMSLoginAction.loginAction(project)).start();
                 return;
             }
-        } catch (ServerException | IOException | URISyntaxException e) {
-            Utils.guilog("[ERROR] Exception occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
+        } catch (IOException | URISyntaxException | ServerException e) {
+            Utils.guilog("[ERROR] An error occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             new Thread(() -> MMSLoginAction.loginAction(project)).start();
             return;
         }
@@ -104,10 +104,30 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
 
-        // LOCK SYNC FOLDER
+        // UPDATE LOCKS
+
+        ILockProjectService lockService = EsiUtils.getLockService(project);
+        if (lockService == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Teamwork Cloud lock service unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
+            return;
+        }
+
         listener.setDisabled(true);
-        SyncElements.lockSyncFolder(project);
-        listener.setDisabled(false);
+        try {
+            lockService.updateLocks(progressStatus);
+        } catch (RuntimeException e) {
+            Application.getInstance().getGUILog().log("[ERROR] Failed to update locks from Teamwork Cloud. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        } finally {
+            listener.setDisabled(false);
+        }
+
+        // LOCK SYNC FOLDER
+
+        //listener.setDisabled(true);
+        //SyncElements.lockSyncFolder(project);
+        //listener.setDisabled(false);
 
         // DOWNLOAD MMS MESSAGES IF ASYNC CONSUMER IS DISABLED
 
@@ -137,7 +157,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         Changelog<String, Element> persistedLocalChangelog = new Changelog<>();
         //JSONObject persistedLocalChanges = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "update");
-        Collection<SyncElement> persistedLocalSyncElements = SyncElements.getAllOfType(project, SyncElement.Type.LOCAL);
+        Collection<SyncElement> persistedLocalSyncElements = SyncElements.getAllByType(project, SyncElement.Type.LOCAL);
         for (SyncElement syncElement : persistedLocalSyncElements) {
             persistedLocalChangelog = persistedLocalChangelog.and(SyncElements.buildChangelog(syncElement), (key, value) -> Converters.getIdToElementConverter().apply(key, project));
         }
@@ -151,7 +171,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // BUILD COMPLETE MMS CHANGELOG
 
         Changelog<String, Void> persistedJmsChangelog = new Changelog<>();
-        Collection<SyncElement> persistedJmsSyncElements = SyncElements.getAllOfType(project, SyncElement.Type.MMS);
+        Collection<SyncElement> persistedJmsSyncElements = SyncElements.getAllByType(project, SyncElement.Type.MMS);
         //JSONObject persistedJmsChanges = DeltaSyncProjectEventListenerAdapter.getUpdatesOrFailed(Application.getInstance().getProject(), "jms");
         for (SyncElement syncElement : persistedJmsSyncElements) {
             persistedJmsChangelog = persistedJmsChangelog.and(SyncElements.buildChangelog(syncElement));
@@ -182,12 +202,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (ServerException | IOException | URISyntaxException e) {
+            } catch (IOException | URISyntaxException | ServerException e) {
                 if (progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
                     return;
                 }
-                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Skipping sync. All changes will be re-attempted in the next sync.");
+                Application.getInstance().getGUILog().log("[ERROR] Cannot get elements from MMS. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;
             }
@@ -281,9 +301,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it does not exist. Skipping.");
                             continue;
                         }
-                        if (!element.isEditable()) {
+                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
                             if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is not editable. Skipping.");
+                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is locked by someone else. Skipping.");
                             }
                             failedJmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
                             continue;
@@ -295,9 +315,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it doesn't exist. Skipping.");
                             continue;
                         }
-                        if (!element.isEditable()) {
+                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
                             if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is not editable. Skipping.");
+                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is locked by someone else. Skipping.");
                             }
                             failedJmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                             continue;
@@ -334,7 +354,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     Request request = new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes");
                     MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
                 } catch (IOException | URISyntaxException | ServerException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
+                    Application.getInstance().getGUILog().log("[ERROR] An error occurred. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                     e.printStackTrace();
                     return;
                 }
@@ -353,7 +373,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Request request = new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes");
                 MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
             } catch (IOException | URISyntaxException | ServerException e) {
-                Application.getInstance().getGUILog().log("[ERROR] An exception has occurred. See logs for additional information. Skipping sync. All changes will be re-attempted in the next sync.");
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;
             }

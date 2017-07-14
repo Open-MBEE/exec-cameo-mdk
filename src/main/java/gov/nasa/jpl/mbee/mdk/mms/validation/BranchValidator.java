@@ -1,8 +1,10 @@
 package gov.nasa.jpl.mbee.mdk.mms.validation;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nomagic.actions.ActionsCategory;
 import com.nomagic.ci.persistence.IPrimaryProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -11,6 +13,7 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
+import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -38,14 +41,16 @@ public class BranchValidator {
     private boolean errors;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
     //    private ValidationRule twcMissingBranchValidationRule = new ValidationRule("Missing in Client", "Branch shall exist in TWC if it exists in MMS.", ViolationSeverity.WARNING);
-    private ValidationRule mmsMissingBranchValidationRule = new ValidationRule("Missing on Server", "Branch shall exist in MMS if it exists in Teamwork Cloud.", ViolationSeverity.WARNING);
-    private ValidationRule branchEquivalenceValidationRule = new ValidationRule("Branch Equivalence", "Branch shall be represented in MagicDraw and MMS equivalently.", ViolationSeverity.WARNING);
+    private ValidationRule mmsMissingBranchValidationRule = new ValidationRule("Missing on Server", "Branch shall exist in MMS if it exists in Teamwork Cloud.", ViolationSeverity.ERROR);
+    private ValidationRule branchEquivalenceValidationRule = new ValidationRule("Branch Equivalence", "Branch shall be represented in MagicDraw and MMS equivalently.", ViolationSeverity.ERROR);
+    private ValidationRule mmsBuildingBranchValidationRule = new ValidationRule("Building on Server", "Branch shall be completely built on MMS before it is used.", ViolationSeverity.WARNING);
 
     public BranchValidator(Project project) {
         this.project = project;
 //        validationSuite.addValidationRule(twcMissingBranchValidationRule);
         validationSuite.addValidationRule(mmsMissingBranchValidationRule);
         validationSuite.addValidationRule(branchEquivalenceValidationRule);
+        validationSuite.addValidationRule(mmsBuildingBranchValidationRule);
     }
 
     public void validate(ProgressStatus progressStatus, boolean allBranches) {
@@ -92,15 +97,15 @@ public class BranchValidator {
             targetBranches.add(EsiUtils.getCurrentBranch(primaryProject));
         }
         for (EsiUtils.EsiBranchInfo branch : targetBranches) {
-            ObjectNode branchJson = getRefObjectNode(project, branch, null);
+            ObjectNode branchJson = generateRefObjectNode(project, branch, null);
             if (branchJson == null) {
                 continue;
             }
             branchJson.remove(MDKConstants.PARENT_REF_ID_KEY);
             JsonNode value;
             String entryKey;
-            if ((value = branchJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                entryKey = branchJson.get(MDKConstants.ID_KEY).asText();
+            if ((value = branchJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
+                entryKey = value.asText();
                 if (allBranches || entryKey.equals(currentBranch)) {
                     clientBranches.put(entryKey, new Pair<>(branch, branchJson));
                 }
@@ -114,11 +119,8 @@ public class BranchValidator {
         URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
         if (requestUri == null) {
             errors = true;
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation cancelled.");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation aborted.");
             return;
-        }
-        if (!allBranches) {
-            requestUri.setPath(requestUri.getPath() + "/" + currentBranch);
         }
         try {
             HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
@@ -134,8 +136,8 @@ public class BranchValidator {
                         ObjectNode refObjectNode = (ObjectNode) refJson;
                         refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
                         String entryKey;
-                        if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                            entryKey = refObjectNode.get(MDKConstants.ID_KEY).asText();
+                        if ((value = refObjectNode.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
+                            entryKey = value.asText();
                             if (allBranches || entryKey.equals(currentBranch)) {
                                 serverBranches.put(entryKey, refObjectNode);
                             }
@@ -146,7 +148,7 @@ public class BranchValidator {
         } catch (IOException | URISyntaxException | ServerException e) {
             errors = true;
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] Exception occurred while getting MMS branches. Branch validation cancelled. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS branches. Branch validation aborted. Reason: " + e.getMessage());
             return;
         }
 
@@ -181,17 +183,30 @@ public class BranchValidator {
                 v.addAction(new CommitBranchAction(key, project, clientBranch.getKey(), false));
                 v.addAction(new CommitBranchAction(key, project, clientBranch.getKey(), true));
                 mmsMissingBranchValidationRule.addViolation(v);
-
             }
             else {
-                JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
-                if (diff == null || diff.size() == 0) {
+                JsonNode statusNode;
+                if ((statusNode = serverBranch.get(MDKConstants.STATUS_KEY)) != null && statusNode.isTextual() && !statusNode.asText().equals(MDKConstants.REF_CREATED_STATUS)) {
+                    ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH BUILDING ON MMS] The Teamwork Cloud branch \"" + clientBranch.getKey().getName() + "\" is still being built on MMS and is not ready for use.");
+                    mmsBuildingBranchValidationRule.addViolation(v);
                     continue;
                 }
-                ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + clientBranch.getKey().getName() + "\" is not equivalent to the corresponding MMS branch.");
-                v.addAction(new CommitBranchAction(key, project, clientBranch.getKey(), false));
-                v.addAction(new CommitBranchAction(key, project, clientBranch.getKey(), true));
-                branchEquivalenceValidationRule.addViolation(v);
+                serverBranch.remove(MDKConstants.STATUS_KEY);
+                JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
+                if (diff != null && diff.isArray() && diff.size() > 0) {
+                    ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + clientBranch.getKey().getName() + "\" is not equivalent to the corresponding MMS branch.");
+                    v.addAction(new CommitBranchAction(key, project, clientBranch.getKey(), false));
+                    v.addAction(new CommitBranchAction(key, project, clientBranch.getKey(), true));
+                    ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
+                    copyActionsCategory.setNested(true);
+                    v.addAction(copyActionsCategory);
+                    try {
+                        copyActionsCategory.addAction(new ClipboardAction("Diff", JacksonUtils.getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(diff)));
+                    } catch (JsonProcessingException ignored) {
+                    }
+                    branchEquivalenceValidationRule.addViolation(v);
+                    continue;
+                }
             }
             if (progressStatus != null) {
                 progressStatus.increase();
@@ -199,7 +214,7 @@ public class BranchValidator {
         }
     }
 
-    public static ObjectNode getRefObjectNode(Project project, EsiUtils.EsiBranchInfo branchInfo, String parentRefId) {
+    public static ObjectNode generateRefObjectNode(Project project, EsiUtils.EsiBranchInfo branchInfo, String parentRefId) {
         ObjectNode refObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
         String name = branchInfo.getName();
         if (name.equals("master")) {
@@ -208,12 +223,10 @@ public class BranchValidator {
         if (name.equals("trunk")) {
             name = "master";
         }
-        String id = !name.equals("master") ? branchInfo.getID().toString() : "master";
-        ProjectDescriptor projectDescriptor = EsiUtils.getDescriptorByBranchID(ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project), branchInfo.getID());
-
-        refObjectNode.put(MDKConstants.ID_KEY, id);
+        String twcId = !name.equals("master") ? branchInfo.getID().toString() : "master";
+        refObjectNode.put(MDKConstants.ID_KEY, twcId);
+        refObjectNode.put(MDKConstants.TWC_ID_KEY, twcId);
         refObjectNode.put(MDKConstants.NAME_KEY, name);
-        refObjectNode.put(MDKConstants.URI_KEY, projectDescriptor.getURI().toString());
         refObjectNode.put(MDKConstants.TYPE_KEY, "Branch");
         refObjectNode.put(MDKConstants.PARENT_REF_ID_KEY, parentRefId);
         return refObjectNode;

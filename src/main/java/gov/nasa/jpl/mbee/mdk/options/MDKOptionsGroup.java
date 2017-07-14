@@ -16,6 +16,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     public static final String ID = "options.mdk";
     public static final String GROUP = "GROUP";
+    private static MDKOptionsGroup tempInstance = null;
 
     public static final String LOG_JSON_ID = "LOG_JSON_ID",
             PERSIST_CHANGELOG_ID = "PERSIST_CHANGELOG_ID",
@@ -29,7 +30,14 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public static MDKOptionsGroup getMDKOptions() {
-        return (MDKOptionsGroup) Application.getInstance().getEnvironmentOptions().getGroup(ID);
+        MDKOptionsGroup group = (MDKOptionsGroup) Application.getInstance().getEnvironmentOptions().getGroup(ID);
+        if (group == null) {
+            if (tempInstance == null) {
+                tempInstance = new MDKOptionsGroup();
+            }
+            return tempInstance;
+        }
+        return group;
     }
 
     public boolean isLogJson() {

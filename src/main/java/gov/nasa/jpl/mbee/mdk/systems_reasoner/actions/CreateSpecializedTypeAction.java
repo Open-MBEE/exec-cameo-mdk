@@ -26,7 +26,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 
     private Property property;
     private Classifier parent;
-     private String name;
+    private String name;
     private boolean isIndividual;
 
 
@@ -34,7 +34,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
         super(name);
         this.property = property;
         this.parent = parent;
-         this.name = name;
+        this.name = name;
         this.isIndividual = isIndividual;
         this.isRecursive = isRecursive;
     }
@@ -75,11 +75,11 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
 
             final Classifier general = (Classifier) redefinedAttribute.getType();
             Type special = null;
-            if (isIndividual || (isRecursive && getExistingSpecial(redefinedAttribute) == null)){
+            if (isIndividual || (isRecursive && getExistingSpecial(redefinedAttribute) == null)) {
                 SpecializeStructureAction speca = new SpecializeStructureAction(general, false, "", isRecursive, isIndividual);
-                special = speca.createSpecialClassifier(parent, traveled, visited);
+                special = speca.createSpecialClassifier(parent, new ArrayList<>(traveled), visited);
             }
-            else if(getExistingSpecial(redefinedAttribute) != null) {
+            else if (getExistingSpecial(redefinedAttribute) != null) {
                 special = getExistingSpecial(redefinedAttribute);
             }
             else if (visited.contains(general)) {

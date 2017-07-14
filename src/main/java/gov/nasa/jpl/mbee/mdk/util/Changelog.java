@@ -2,7 +2,6 @@ package gov.nasa.jpl.mbee.mdk.util;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
 
 import java.util.*;
 import java.util.function.BiFunction;

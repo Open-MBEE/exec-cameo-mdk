@@ -11,7 +11,6 @@ import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
 import java.lang.Class;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
