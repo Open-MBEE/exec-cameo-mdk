@@ -101,14 +101,13 @@ public class MDKPlugin extends Plugin {
         acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
+        EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
+
         MMSSyncPlugin.getInstance().init();
         (new Thread(new OutputSyncRunner())).start();
 
         loadExtensionJars();
         configureEnvironmentOptions();
-
-        //   SpecificationDialogManager.getManager().addConfigurator(Element.class, new SpecificationNodeAspectsConfigurator());
-
     }
 
     @Override
