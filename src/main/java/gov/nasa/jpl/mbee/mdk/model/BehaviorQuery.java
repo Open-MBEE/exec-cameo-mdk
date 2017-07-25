@@ -49,9 +49,9 @@ public class BehaviorQuery extends Query {
 
         Map<String, Object> defaultInputs = new LinkedHashMap<>();
         defaultInputs.put("context", this);
+        defaultInputs.put("exposedElements", targets);
         defaultInputs.put("forViewEditor", forViewEditor);
         defaultInputs.put("outputDirectory", outputDir);
-        defaultInputs.put("targets", targets);
         for (Map.Entry<String, Object> input : defaultInputs.entrySet()) {
             if (!inputs.containsKey(input.getKey())) {
                 continue;
