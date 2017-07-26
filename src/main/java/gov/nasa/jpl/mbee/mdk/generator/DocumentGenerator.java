@@ -351,8 +351,7 @@ public class DocumentGenerator {
                     next2 = next;
                 }
                 else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.templateStereotype)
-                        || b != null
-                        && StereotypesHelper.hasStereotypeOrDerived(b, DocGenProfile.templateStereotype)) {
+                        || b != null) {
                     parseResults = parseQuery(next, parent);
                     next2 = next;
                 }
@@ -723,7 +722,6 @@ public class DocumentGenerator {
      * @return
      */
     private Query parseTemplate(ActivityNode an) {
-
         Query dge = null;
         if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.imageStereotype)) {
             dge = new Image();
@@ -794,6 +792,9 @@ public class DocumentGenerator {
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.simulateStereotype, true)) {
             dge = new Simulate();
+        }
+        else if (an instanceof CallBehaviorAction && ((CallBehaviorAction) an).getBehavior() != null) {
+            dge = new BehaviorQuery((CallBehaviorAction) an);
         }
         return dge;
     }
