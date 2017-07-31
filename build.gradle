@@ -5,13 +5,10 @@ import java.util.zip.ZipFile
 
 String buildAccess = project.getProperties().getOrDefault('buildAccess', 'opensource')
 String buildTag = project.getProperties().get('buildTag')
-if (buildTag == null || buildTag.isEmpty()) {
-    version += '-SNAPSHOT'
+if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
+    throw new GradleException('Version mismatch.')
 }
-else if (buildTag != version) {
-    throw new GradleException('Version mismatch: ' + version + ' => ' + buildTag)
-}
-else if (buildAccess == 'opensource') {
+if (buildTag == null || buildTag.isEmpty() || project.getProperties().getOrDefault('artifactoryRepository', '').toLowerCase().contains('snapshot')) {
     version += '-SNAPSHOT'
 }
 if (buildAccess == 'internal') {
