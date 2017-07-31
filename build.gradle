@@ -369,6 +369,7 @@ bintray {
     user = project.getProperties().get('bintrayUser')
     key = project.getProperties().get('bintrayKey')
     publications = ['mavenJava']
+    publish = true
     pkg {
         repo = project.getProperties().get('bintrayRepo')
         name = rootProject.name
