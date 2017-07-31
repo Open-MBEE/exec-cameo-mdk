@@ -19,6 +19,7 @@ public class Converters {
     private static JsonToElementFunction JSON_TO_ELEMENT_CONVERTER;
     private static Function<Element, String> ELEMENT_TO_ID_CONVERTER;
     private static BiFunction<String, Project, Element> ID_TO_ELEMENT_CONVERTER;
+    private static Function<Element, String> ELEMENT_TO_HUMAN_NAME_CONVERTER;
     private static Function<Project, String> PROJECT_TO_ID_CONVERTER;
     private static Function<IProject, String> IPROJECT_TO_ID_CONVERTER;
 
@@ -107,6 +108,9 @@ public class Converters {
                 }*/
                 if (id.contains(MDKConstants.SLOT_ID_SEPARATOR) && !id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
                     String[] sections = id.split(MDKConstants.SLOT_ID_SEPARATOR);
+                    if (sections.length < 2) {
+                        return null;
+                    }
                     Element owningInstance = Converters.getIdToElementConverter().apply(sections[0], project);
                     Element definingFeature = Converters.getIdToElementConverter().apply(sections[1], project);
                     if (!(owningInstance instanceof InstanceSpecification) || !(definingFeature instanceof StructuralFeature)) {
@@ -118,6 +122,18 @@ public class Converters {
             };
         }
         return ID_TO_ELEMENT_CONVERTER;
+    }
+
+    public static Function<Element, String> getElementToHumanNameConverter() {
+        if (ELEMENT_TO_HUMAN_NAME_CONVERTER == null) {
+            ELEMENT_TO_HUMAN_NAME_CONVERTER = element -> {
+                if (element == null) {
+                    return null;
+                }
+                return element.getHumanName() + " (" + Converters.getElementToIdConverter().apply(element) + ")";
+            };
+        }
+        return ELEMENT_TO_HUMAN_NAME_CONVERTER;
     }
 
     public static Function<Project, String> getProjectToIdConverter() {

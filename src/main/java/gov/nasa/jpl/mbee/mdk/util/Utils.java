@@ -678,7 +678,11 @@ public class Utils {
         }
         List<java.lang.Class<?>> javaClasses = new ArrayList<java.lang.Class<?>>();
         for (Class c : metaclasses) {
-            javaClasses.add(StereotypesHelper.getClassOfMetaClass(c));
+            java.lang.Class classOfMetaClass = StereotypesHelper.getClassOfMetaClass(c);
+            if (classOfMetaClass == null) {
+                continue;
+            }
+            javaClasses.add(classOfMetaClass);
         }
         return collectDirectedRelatedElementsByRelationshipJavaClasses(e, javaClasses, direction, depth);
     }
