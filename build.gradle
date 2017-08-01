@@ -8,7 +8,7 @@ String buildTag = project.getProperties().get('buildTag')
 if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
     throw new GradleException('Version mismatch.')
 }
-if (buildTag == null || buildTag.isEmpty() || buildAccess == 'opensource') {
+if (buildTag == null || buildTag.isEmpty() || project.getProperties().getOrDefault('artifactoryRepository', '').toLowerCase().contains('snapshot')) {
     version += '-SNAPSHOT'
 }
 if (buildAccess == 'internal') {
@@ -230,7 +230,7 @@ class PreDist extends DefaultTask {
 }
 
 task preDist(type: PreDist, dependsOn: jar) {
-    humanVersion = version.endsWith('-SNAPSHOT') && buildAccess == 'opensource' && buildTag != null && !buildTag.isEmpty() ? version.replace('-SNAPSHOT', '') : version
+    humanVersion = version.endsWith('-SNAPSHOT') && buildTag != null && !buildTag.isEmpty() ? version.replace('-SNAPSHOT', '') : version
     internalVersion = buildNumber
     groupName = magicdDrawGroupName
     buildTimestamp = timestamp
@@ -337,12 +337,12 @@ publishing {
 }
 
 artifactory {
-    contextUrl = (buildAccess == 'internal' ? 'https://cae-artifactory.jpl.nasa.gov/artifactory/' : 'https://oss.jfrog.org/artifactory/')
+    contextUrl = project.getProperties().get('artifactoryUrl')
     publish {
         repository {
-            repoKey = (buildAccess == 'internal' ? 'maven-libs' : 'oss') + '-' + (version.endsWith('SNAPSHOT') || buildAccess == 'opensource' ? 'snapshot' : 'release') + '-local' // The Artifactory repository key to publish to
-            username = project.getProperties().get('artifactoryUsername') // The publisher user name
-            password = project.getProperties().get('artifactoryPassword') // The publisher password
+            repoKey = project.getProperties().get('artifactoryRepository')
+            username = project.getProperties().get('artifactoryUsername')
+            password = project.getProperties().get('artifactoryPassword')
             maven = true
         }
         defaults {
