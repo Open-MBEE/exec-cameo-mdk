@@ -8,7 +8,7 @@ String buildTag = project.getProperties().get('buildTag')
 if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
     throw new GradleException('Version mismatch.')
 }
-if (buildTag == null || buildTag.isEmpty() || project.getProperties().getOrDefault('artifactoryRepository', '').toLowerCase().contains('snapshot')) {
+if (buildTag == null || buildTag.isEmpty() || buildAccess == 'opensource') {
     version += '-SNAPSHOT'
 }
 if (buildAccess == 'internal') {
