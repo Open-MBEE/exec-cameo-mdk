@@ -55,15 +55,15 @@ public class UtilsTest {
 
     @Test
     public void _utils_getConformsStereotype() {
-        BaseElement test = Utils.getConformsStereotype(project);
+        BaseElement test = Utils.getConformStereotype(project);
         Assert.assertNotNull(test);
         System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Conform"));
     }
 
     @Test
-    public void _utils_get18ExposeStereotype() {
-        BaseElement test = Utils.get18ExposeStereotype(project);
+    public void _utils_getExposeStereotype() {
+        BaseElement test = Utils.getExposeStereotype(project);
         Assert.assertNotNull(test);
         System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
@@ -180,20 +180,6 @@ public class UtilsTest {
         BaseElement test = Utils.getCommentStereotype(project);
         Assert.assertNotNull(test);
         Assert.assertTrue(((Stereotype)test).getName().equals("Comment"));
-    }
-
-    @Test
-    public void _utils_getSysML14ConformsStereotype() {
-        BaseElement test = Utils.getSysML14ConformsStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Conforms"));
-    }
-
-    @Test
-    public void _utils_getExposeStereotype() {
-        BaseElement test = Utils.getExposeStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
     }
 
     @Test

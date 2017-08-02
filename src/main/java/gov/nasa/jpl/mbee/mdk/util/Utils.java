@@ -1404,11 +1404,11 @@ public class Utils {
     /***
      * SysML::Model Elements
      ***/
-    public static Stereotype getConformsStereotype(Project project) {
+    public static Stereotype getConformStereotype(Project project) {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
 
-    public static Stereotype get18ExposeStereotype(Project project) {
+    public static Stereotype getExposeStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_5beta_17530432_1382587480303_325976_12505");
     }
 
@@ -1480,14 +1480,6 @@ public class Utils {
      ***/
     public static Stereotype getCommentStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_5_407019f_1337877314051_474317_11891");
-    }
-
-    public static Stereotype getSysML14ConformsStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_407019f_1389807639137_860750_29082");
-    }
-
-    public static Stereotype getExposeStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_16_5_4_409a058d_1259862803278_226185_1083");
     }
 
     /***

@@ -186,10 +186,8 @@ public class DocumentValidator {
     private ActivityEdgeFactory aef;
     private boolean fatal;
     private Stereotype sysmlview;
-    private Stereotype conforms;
-    private Stereotype conforms14;
-    private Stereotype md18expose;
-    private Stereotype ourExpose;
+    private Stereotype conform;
+    private Stereotype expose;
     private Project project;
 
     public DocumentValidator(Element e) {
@@ -197,10 +195,8 @@ public class DocumentValidator {
         project = Project.getProject(e);
 
         sysmlview = Utils.getViewStereotype(project);
-        conforms = Utils.getConformsStereotype(project);
-        conforms14 = Utils.getSysML14ConformsStereotype(project);
-        md18expose = Utils.get18ExposeStereotype(project);
-        ourExpose = Utils.getExposeStereotype(project);
+        conform = Utils.getConformStereotype(project);
+        expose = Utils.getExposeStereotype(project);
 
 
         log = Application.getInstance().getGUILog();
@@ -291,10 +287,7 @@ public class DocumentValidator {
         }
         dg.addVertex(view);
         List<Element> viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
-                conforms, 1, false, 1);
-        if (viewpoints.isEmpty()) {
-            viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, conforms14, 1, false, 1);
-        }
+                conform, 1, true, 1);
         if (viewpoints.size() > 1) {
             multipleViewpoints.addViolation(view, multipleViewpoints.getDescription());
         }
@@ -340,11 +333,7 @@ public class DocumentValidator {
             List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view,
                     PackageImport.class, 1, 1);
             List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
-                    ourExpose, 1, false, 1);
-            if (md18expose != null) {
-                queries.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
-                        md18expose, 1, false, 1));
-            }
+                    expose, 1, true, 1);
             elementImports.addAll(packageImports);
             elementImports.addAll(queries);
             if (elementImports.isEmpty()) {
@@ -628,7 +617,7 @@ public class DocumentValidator {
         }
         for (ValidationRuleViolation e : multipleViewpoints.getViolations()) {
             pw.println(error + ((NamedElement) e.getElement()).getQualifiedName()
-                    + " conforms to multiple viewpoints!");
+                    + " conform to multiple viewpoints!");
         }
         for (ValidationRuleViolation e : missingViewpointErrors.getViolations()) {
             pw.println(warning + ((NamedElement) e.getElement()).getQualifiedName()

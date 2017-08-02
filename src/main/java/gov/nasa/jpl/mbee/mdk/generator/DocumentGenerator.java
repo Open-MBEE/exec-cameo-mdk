@@ -46,10 +46,8 @@ public class DocumentGenerator {
     private Document doc;
     private Stereotype sysmlview,
             product,
-            conforms,
-            ourConforms,
-            md18expose,
-            ourExpose;
+            conform,
+            expose;
     private boolean hierarchyOnly;
     private boolean addViewDoc = true; //whether to add default view doc
 
@@ -70,10 +68,8 @@ public class DocumentGenerator {
         this.project = Project.getProject(e);
         this.product = Utils.getProductStereotype(project);
         this.sysmlview = Utils.getViewStereotype(project);
-        this.conforms = Utils.getConformsStereotype(project);
-        this.ourConforms = Utils.getSysML14ConformsStereotype(project);//StereotypesHelper.getStereotype(Application.getInstance().getProject(), "SysML1.4.Conforms");
-        this.md18expose = Utils.get18ExposeStereotype(project);
-        this.ourExpose = Utils.getExposeStereotype(project);
+        this.conform = Utils.getConformStereotype(project);
+        this.expose = Utils.getExposeStereotype(project);
         this.doc = new Document();
         this.context = new GenerationContext(new Stack<>(), null, dv, Application.getInstance().getGUILog());
         this.addViewDoc = addViewDoc;
@@ -128,10 +124,7 @@ public class DocumentGenerator {
     }
 
     public Section parseView(Element view) {
-        Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conforms);
-        if (viewpoint == null) {
-            viewpoint = GeneratorUtils.findStereotypedRelationship(view, ourConforms);
-        }
+        Element viewpoint = GeneratorUtils.findStereotypedRelationship(view, conform);
         Section viewSection = new Section(); // Section is a misnomer, should be
         // View
         viewSection.setView(true);
@@ -145,21 +138,18 @@ public class DocumentGenerator {
                 view, ElementImport.class, 1, 1);
         List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
                 view, PackageImport.class, 1, 1);
-        List<Element> expose = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
-                view, ourExpose, 1, false, 1);
-        if (md18expose != null) {
-            expose.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, md18expose, 1, false, 1));
-        }
+        List<Element> exposed = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
+                view, this.expose, 1, true, 1);
         List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                view, DocGenProfile.oldQueriesStereotype, 1, false, 1);
+                view, DocGenProfile.oldQueriesStereotype, 1, true, 1);
         if (elementImports == null) {
             elementImports = new ArrayList<Element>();
         }
         if (packageImports != null) {
             elementImports.addAll(packageImports);
         }
-        if (expose != null) {
-            elementImports.addAll(expose); // all three import/queries
+        if (exposed != null) {
+            elementImports.addAll(exposed); // all three import/queries
         }
         // relationships are
         // interpreted the same
@@ -172,14 +162,14 @@ public class DocumentGenerator {
             for (TypedElement te : ((Class) view).get_typedElementOfType()) {
                 if (te instanceof Property && ((Property) te).getAggregation() == AggregationKindEnum.COMPOSITE) {
                     elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(te,
-                            ourExpose, 1, false, 1));
+                            expose, 1, true, 1));
                 }
             }
         }
         viewSection.setExposes(elementImports);
 
         if (!hierarchyOnly) {
-            if (viewpoint != null && viewpoint instanceof Class) { // view conforms
+            if (viewpoint != null && viewpoint instanceof Class) { // view conform
                 // to a viewpoint
                 if (!(view instanceof Diagram)) { // if it's a diagram, people most
                     // likely put image query in
