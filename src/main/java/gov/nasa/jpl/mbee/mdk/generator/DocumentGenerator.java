@@ -340,8 +340,9 @@ public class DocumentGenerator {
             boolean evaluatedConstraintsForNext = false;
             if (next instanceof CallBehaviorAction
                     || next instanceof StructuredActivityNode
-                    && StereotypesHelper
-                    .hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)) {
+                    && (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)
+                        ||
+                        StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.c3PlotStereotype))) {
                 Behavior b = (next instanceof CallBehaviorAction) ? ((CallBehaviorAction) next).getBehavior()
                         : null;
                 if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.sectionStereotype)
@@ -351,7 +352,8 @@ public class DocumentGenerator {
                     next2 = next;
                 }
                 else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.templateStereotype)
-                        || b != null) {
+                        || b != null
+                        && StereotypesHelper.hasStereotypeOrDerived(b, DocGenProfile.templateStereotype)) {
                     parseResults = parseQuery(next, parent);
                     next2 = next;
                 }
@@ -722,6 +724,7 @@ public class DocumentGenerator {
      * @return
      */
     private Query parseTemplate(ActivityNode an) {
+
         Query dge = null;
         if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.imageStereotype)) {
             dge = new Image();
@@ -793,9 +796,10 @@ public class DocumentGenerator {
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.simulateStereotype, true)) {
             dge = new Simulate();
         }
-        else if (an instanceof CallBehaviorAction && ((CallBehaviorAction) an).getBehavior() != null) {
-            dge = new BehaviorQuery((CallBehaviorAction) an);
+        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.c3PlotStereotype, true)) {
+            dge = new C3Plot(context.getValidator());
         }
+
         return dge;
     }
 

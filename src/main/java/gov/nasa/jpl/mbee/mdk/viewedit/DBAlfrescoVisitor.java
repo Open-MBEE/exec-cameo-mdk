@@ -339,7 +339,28 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         DBHTMLVisitor html = new DBHTMLVisitor();
         simplelist.accept(html);
     }
+    @Override
+    public void visit(DBC3Plot c3plot){
+        JSONObject entry = new JSONObject();
+        entry.put("options", c3plot.getOptions());
+        entry.put("functions", c3plot.getFunctions());
+        DBTable table = c3plot.getTable();
+        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse);
+        table.accept(v);
+        entry.put("table", v.getObject());
+        entry.put("type", "Plot");
 
+        InstanceSpecification i = null;
+        if (!currentTableInstances.peek().isEmpty()) {
+            i = currentTableInstances.peek().remove(0);
+            currentInstanceList.remove(i);
+        }
+
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.TABLE, currentView.peek(), "c3 plot", parentSec, null);
+        System.out.println(entry.toJSONString());
+        newpe.peek().add(ipe);
+    }
     @Override
     public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
         JSONObject entry = new JSONObject();

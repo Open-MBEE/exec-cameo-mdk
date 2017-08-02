@@ -121,4 +121,6 @@ public class DocGenProfile {
     public static final String viewCommentStereotype = "ViewComment";
 
     public static final String constraintStereotype = "Constraint";
+
+    public static final String c3PlotStereotype="C3Plot";
 }
