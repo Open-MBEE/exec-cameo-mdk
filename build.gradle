@@ -126,7 +126,7 @@ dependencies {
     //testCompile 'junit:junit:4.11'
     testCompile group: 'org.gradle', name: 'gradle-core', version: '3.1'
 
-    testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.0.0'
+    testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.0.1'
     
     // Other dependencies we're unable to resolve via standard repositories
 
@@ -497,7 +497,7 @@ test.dependsOn installDist
 task testrailPublish(type: JavaExec) {
     classpath configurations.testPublish
     main = 'org.openmbee.testrail.cli.JUnitPublisher'
-    def arguments = [ '--directory', 'build/test-results/test' ]
+    def arguments = [ '--directory', 'build/test-results/test', '--milestone', version.replace('-SNAPSHOT', '') ]
     def s
     if ((s = project.getProperties().get('testrailHost')) != null) {
         arguments.addAll('--host', s)
