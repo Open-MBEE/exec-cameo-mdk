@@ -192,18 +192,19 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBImage image) {
-        JSONObject entry = getJSONForDBImage(image);
-
-        //for ems 2.2 reference tree
         if (!main) {
             return;
         }
+        String id;
+        if (image.getFrom() != null && (id = Converters.getElementToIdConverter().apply(image.getFrom())) != null) {
+            viewElements.peek().add(id);
+        }
+        JSONObject entry = getJSONForDBImage(image);
         InstanceSpecification i = null;
         if (!currentImageInstances.peek().isEmpty()) {
             i = currentImageInstances.peek().remove(0);
             currentInstanceList.peek().remove(i);
         }
-
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), (image.getTitle() == null ? "image" : image.getTitle()), parentSec, null);
         newpe.peek().add(ipe);
@@ -212,16 +213,15 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBList list) {
+        if (!main) {
+            return;
+        }
         DBAlfrescoListVisitor l = new DBAlfrescoListVisitor(recurse);
         list.accept(l);
         viewElements.peek().addAll(l.getListElements());
         elementSet.addAll(l.getElementSet());
         images.putAll(l.getImages());
 
-        //for ems 2.2 reference tree
-        if (!main) {
-            return;
-        }
         InstanceSpecification i = null;
         if (!currentListInstances.peek().isEmpty()) {
             i = currentListInstances.peek().remove(0);
@@ -236,12 +236,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBParagraph para) {
-        JSONObject entry = getJSONForDBParagraph(para);
-
-        //for ems 2.2 reference tree
         if (!main) {
             return;
         }
+        String id;
+        if (para.getFrom() != null && (id = Converters.getElementToIdConverter().apply(para.getFrom())) != null) {
+            viewElements.peek().add(id);
+        }
+        JSONObject entry = getJSONForDBParagraph(para);
         InstanceSpecification i = null;
         if (!currentParaInstances.peek().isEmpty()) {
             i = currentParaInstances.peek().remove(0);
@@ -273,12 +275,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBText text) {
-        JSONObject entry = getJSONForDBText(text);
-
-        //for ems 2.2 reference tree
         if (!main) {
             return;
         }
+        String id;
+        if (text.getFrom() != null && (id = Converters.getElementToIdConverter().apply(text.getFrom())) != null) {
+            viewElements.peek().add(id);
+        }
+        JSONObject entry = getJSONForDBText(text);
         InstanceSpecification i = null;
         if (!currentParaInstances.peek().isEmpty()) {
             i = currentParaInstances.peek().remove(0);
@@ -342,6 +346,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @Override
     public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
+        String id;
+        if (tomSawyerDiagram.getFrom() != null && (id = Converters.getElementToIdConverter().apply(tomSawyerDiagram.getFrom())) != null) {
+            viewElements.peek().add(id);
+        }
         JSONObject entry = new JSONObject();
         entry.put("type", "Tsp");
         entry.put("tstype", tomSawyerDiagram.getShortType().toString());
@@ -367,16 +375,15 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTable table) {
+        if (!main) {
+            return;
+        }
         DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse);
         table.accept(v);
         viewElements.peek().addAll(v.getTableElements());
         elementSet.addAll(v.getElementSet());
         images.putAll(v.getImages());
 
-        //for ems 2.2 reference tree
-        if (!main) {
-            return;
-        }
         InstanceSpecification i = null;
         if (!currentTableInstances.peek().isEmpty()) {
             i = currentTableInstances.peek().remove(0);
