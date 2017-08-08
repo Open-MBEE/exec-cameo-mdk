@@ -12,6 +12,7 @@ import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.*;
@@ -95,7 +96,11 @@ public class SpecializeStructureAction extends SRAction {
             }
         }
 
-        Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container);
+        Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, container, true);
+        if (specific == null) {
+            Application.getInstance().getGUILog().log("[ERROR] Failed to create specialized classifier for " + Converters.getElementToHumanNameConverter().apply(classifier) + " in " + Converters.getElementToHumanNameConverter().apply(container) + ". Aborting specialization.");
+            return null;
+        }
         visited.add(specific);
         visited.add(classifier);
         specific.getGeneralization().clear();

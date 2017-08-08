@@ -183,7 +183,10 @@ public class ImportCSVAction extends SRAction {
                         else {
                             if (sortedColumns.get(jj) == null) {
                                 if (!line[jj].isEmpty()) {
-                                    Classifier topClass = (Classifier) CopyPasting.copyPasteElement(selectedClassifier, container);
+                                    Classifier topClass = (Classifier) CopyPasting.copyPasteElement(selectedClassifier, container, true);
+                                    if (topClass == null) {
+                                        continue;
+                                    }
                                     topClass.getOwnedMember().clear();
                                     topClass.getGeneralization().clear();
                                     Utils.createGeneralization(selectedClassifier, topClass);
@@ -267,7 +270,10 @@ public class ImportCSVAction extends SRAction {
 
     private Classifier createNewSubElement(String[] line, int index, Classifier generalClassifier) {
 
-        Classifier createdClassifier = (Classifier) CopyPasting.copyPasteElement(generalClassifier, container);
+        Classifier createdClassifier = (Classifier) CopyPasting.copyPasteElement(generalClassifier, container, true);
+        if (createdClassifier == null) {
+            return createdClassifier;
+        }
         createdClassifier.getOwnedMember().clear();
         createdClassifier.getGeneralization().clear();
         Utils.createGeneralization(generalClassifier, createdClassifier);

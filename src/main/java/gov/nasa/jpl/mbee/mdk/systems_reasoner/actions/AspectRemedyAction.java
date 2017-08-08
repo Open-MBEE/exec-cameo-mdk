@@ -76,7 +76,10 @@ public class AspectRemedyAction extends GenericRuleViolationAction {
             }
         }
 
-        final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
+        final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent, true);
+        if (special == null) {
+            return null;
+        }
 
         special.getOwnedMember().clear();
         special.getGeneralization().clear();

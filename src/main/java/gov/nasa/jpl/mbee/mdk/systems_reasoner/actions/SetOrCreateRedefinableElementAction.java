@@ -60,6 +60,9 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
 
         if (redefinedElement == null) {
             redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
+            if (redefinedElement == null) {
+                return null;
+            }
             redefinedElement.getRedefinedElement().removeAll(elementToBeRedefined.getRedefinedElement());
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
         }
