@@ -89,14 +89,10 @@ public class C3Plot extends TableStructure
     @Override
     public void initialize() {
 
-        Boolean reverse = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.c3PlotStereotype, "reverse", false);
-
-        String options = (String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.c3PlotStereotype, "options", "");
-        String functions = (String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.c3PlotStereotype, "functions", "");
-        setReverse(reverse);
+        String options = ((String) GeneratorUtils.getObjectProperty(dgElement,
+                DocGenProfile.c3PlotStereotype, "options", "")).replace("'", "\\'").replace("\"", "'");
+        String functions = ((String) GeneratorUtils.getObjectProperty(dgElement,
+                DocGenProfile.c3PlotStereotype, "functions", "")).replace("'", "\\'").replace("\"", "'");
         setOptions(options);
         setFunctions(functions);
 
