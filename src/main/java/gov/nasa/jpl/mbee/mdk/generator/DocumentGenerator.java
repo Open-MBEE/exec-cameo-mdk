@@ -92,17 +92,7 @@ public class DocumentGenerator {
     public Document parseDocument(boolean singleView, boolean recurse, boolean hierarchyOnly) {
         this.hierarchyOnly = hierarchyOnly;
         if (StereotypesHelper.hasStereotypeOrDerived(start, sysmlview)) {
-            if (start instanceof Package
-                    || start instanceof Diagram
-                    //|| StereotypesHelper.hasStereotype(start, DocGenProfile.documentViewStereotype,
-                    //       "Document Profile")
-                    || GeneratorUtils.findStereotypedRelationship(start, DocGenProfile.firstStereotype) != null
-                    || GeneratorUtils.findStereotypedRelationship(start, DocGenProfile.nextStereotype) != null
-                    || GeneratorUtils.findStereotypedRelationship(start, DocGenProfile.nosectionStereotype) != null) {
-                ViewParser vp = new ViewParser(this, singleView, recurse, doc, start);
-                vp.parse();
-            }
-            else if (start instanceof Class) {
+            if (start instanceof Class) {
                 ProductViewParser vp = new ProductViewParser(this, singleView, recurse, doc, start);
                 vp.parse();
             }
@@ -128,10 +118,6 @@ public class DocumentGenerator {
         Section viewSection = new Section(); // Section is a misnomer, should be
         // View
         viewSection.setView(true);
-
-        if (StereotypesHelper.hasStereotype(view, DocGenProfile.appendixViewStereotype)) {
-            viewSection.isAppendix(true);
-        }
         viewSection.setViewpoint(viewpoint);
 
         List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(
@@ -140,8 +126,6 @@ public class DocumentGenerator {
                 view, PackageImport.class, 1, 1);
         List<Element> exposed = Utils.collectDirectedRelatedElementsByRelationshipStereotype(
                 view, this.expose, 1, true, 1);
-        List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                view, DocGenProfile.oldQueriesStereotype, 1, true, 1);
         if (elementImports == null) {
             elementImports = new ArrayList<Element>();
         }
@@ -150,11 +134,6 @@ public class DocumentGenerator {
         }
         if (exposed != null) {
             elementImports.addAll(exposed); // all three import/queries
-        }
-        // relationships are
-        // interpreted the same
-        if (queries != null) {
-            elementImports.addAll(queries); // all three import/queries
         }
         // relationships are
         // interpreted the same
@@ -246,11 +225,6 @@ public class DocumentGenerator {
                     image.setTargets(images);
                     String caption = (String) StereotypesHelper.getStereotypePropertyFirst(view,
                             DocGenProfile.dgviewStereotype, "caption");
-                    // Check for old stereotype name for backwards compatibility
-                    if (caption == null) {
-                        caption = (String) StereotypesHelper.getStereotypePropertyFirst(view,
-                                DocGenProfile.oldDgviewStereotype, "caption");
-                    }
                     List<String> captions = new ArrayList<String>();
                     captions.add(caption);
                     image.setCaptions(captions);
@@ -491,8 +465,6 @@ public class DocumentGenerator {
             List<Element> elements =
                     Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next,
                             DocGenProfile.queriesStereotype, 1, false, 1);
-            elements.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next,
-                    DocGenProfile.oldQueriesStereotype, 1, false, 1));
             targets = Utils2.asList(elements, Object.class);
         }
         if ((targets == null || targets.isEmpty()) && next instanceof CallBehaviorAction
@@ -504,9 +476,6 @@ public class DocumentGenerator {
                         Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
                                 ((CallBehaviorAction) next).getBehavior(), DocGenProfile.queriesStereotype, 1, false,
                                 1);
-                elements.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
-                        ((CallBehaviorAction) next).getBehavior(), DocGenProfile.oldQueriesStereotype, 1,
-                        false, 1));
                 targets = Utils2.asList(elements, Object.class);
             }
         }
@@ -534,13 +503,6 @@ public class DocumentGenerator {
                 "ignore", false);
         Boolean loop = (Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.sectionStereotype,
                 "loop", false);
-        Boolean isAppendix = false;
-
-        if (StereotypesHelper.hasStereotype(cba, DocGenProfile.appendixStereotype)
-                || (cba.getBehavior() != null && StereotypesHelper.hasStereotype(cba.getBehavior(),
-                DocGenProfile.appendixStereotype))) {
-            isAppendix = true;
-        }
         String title = (String) GeneratorUtils.getObjectProperty(cba, DocGenProfile.sectionStereotype,
                 "title", "");
         if (title == null || title.isEmpty()) {
@@ -556,7 +518,6 @@ public class DocumentGenerator {
                     target.add(e);
                     context.pushTargets(target);
                     Section sec = new Section();
-                    sec.isAppendix(isAppendix);
                     sec.setTitlePrefix(titlePrefix);
                     sec.setTitleSuffix(titleSuffix);
                     if (e instanceof NamedElement) {
@@ -582,7 +543,6 @@ public class DocumentGenerator {
         }
         else {
             Section sec = new Section();
-            sec.isAppendix(isAppendix);
             sec.setTitlePrefix(titlePrefix);
             sec.setTitleSuffix(titleSuffix);
             sec.setTitle(title);
@@ -722,21 +682,12 @@ public class DocumentGenerator {
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.bulletedListStereotype)) {
             dge = new BulletedList();
         }
-        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.dependencyMatrixStereotype)) {
-            dge = new DependencyMatrix();
-        }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.genericTableStereotype)) {
             dge = new GenericTable();
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.tableStructureStereotype)) {
             // Get all the variables or whatever
             dge = new TableStructure(context.getValidator());
-        }
-        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.combinedMatrixStereotype)) {
-            dge = new CombinedMatrix();
-        }
-        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.customTableStereotype)) {
-            dge = new CustomTable();
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.userScriptStereotype, true)) {
             dge = new UserScript();
@@ -751,7 +702,7 @@ public class DocumentGenerator {
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.temporalDiffStereotype)) {
             dge = new TemporalDiff();
         }
-        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.tomsawyerDiagramStereotype)) {
+        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.tomSawyerDiagramStereotype)) {
             dge = new TomSawyerDiagram();
 
         }

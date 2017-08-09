@@ -11,8 +11,6 @@ import gov.nasa.jpl.mbee.mdk.model.Section;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
 /**
- * This parses the view structure constructed using First, Next, NoSection
- * dependencies
  *
  * @author dlam
  */
@@ -33,20 +31,12 @@ public class ViewParser {
     }
 
     public Section parse() {
-        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGenProfile.documentViewStereotype, "Document Profile");
+        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGenProfile.documentViewStereotype);
         if (StereotypesHelper.hasStereotypeOrDerived(start, documentView)) {
-            doc.setDgElement(start); // only set the DgElement if this is
-            // actually a document view, this affects
-            // processing down the line for various
-            // things (like docweb visitors)
-            Element first = GeneratorUtils.findStereotypedRelationship(start, DocGenProfile.firstStereotype);
-            if (first != null) {
-                return parseView(first, doc, true, false);
-            }
+            doc.setDgElement(start);
         }
         else {// starting from regular view, not document
-            return parseView(start, doc, true, true);
+            return parseView(start, doc);
         }
         return null;
     }
@@ -54,71 +44,10 @@ public class ViewParser {
     /**
      * @param view       current view
      * @param parent     parent view
-     * @param section    should current view be a section
-     * @param singleView parse only one view
-     * @param recurse    if singleView is true, but want all children view from top
-     *                   view
-     * @param top        is current view the top view
      */
-    private Section parseView(Element view, Container parent, boolean section, boolean top) {
+    private Section parseView(Element view, Container parent) {
         Section viewSection = dg.parseView(view);
-
         parent.addElement(viewSection);
-        if (!section && parent instanceof Section) // parent can be Document, in
-        // which case this view must
-        // be a section
-        {
-            viewSection.setNoSection(true);
-        }
-
-        if (!singleView) { // does everything from here including nexts
-            Element content = GeneratorUtils.findStereotypedRelationship(view,
-                    DocGenProfile.nosectionStereotype);
-            if (content != null && section) // current view is a section,
-            // nosection children should go
-            // under it
-            {
-                parseView(content, viewSection, false, false);
-            }
-            if (content != null && !section) // current view is not a section,
-            // further nosection children
-            // should be siblings
-            {
-                parseView(content, parent, false, false);
-            }
-            Element first = GeneratorUtils.findStereotypedRelationship(view, DocGenProfile.firstStereotype);
-            if (first != null) {
-                parseView(first, viewSection, true, false);
-            }
-            Element next = GeneratorUtils.findStereotypedRelationship(view, DocGenProfile.nextStereotype);
-            if (next != null) {
-                parseView(next, parent, true, false);
-            }
-
-        }
-        else if (recurse) {// single view, but recursive (gets everything
-            // underneath view including view, but not nexts
-            // from the top view
-            Element content = GeneratorUtils.findStereotypedRelationship(view,
-                    DocGenProfile.nosectionStereotype);
-            if (content != null && section) {
-                parseView(content, viewSection, false, false);
-            }
-            if (content != null && !section) {
-                parseView(content, parent, false, false);
-            }
-            Element first = GeneratorUtils.findStereotypedRelationship(view, DocGenProfile.firstStereotype);
-            if (first != null) {
-                parseView(first, viewSection, true, false);
-            }
-            if (!top) {
-                Element next = GeneratorUtils
-                        .findStereotypedRelationship(view, DocGenProfile.nextStereotype);
-                if (next != null) {
-                    parseView(next, parent, true, false);
-                }
-            }
-        }
         return viewSection;
     }
 }

@@ -37,7 +37,7 @@ public class TomSawyerDiagram extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        Object enumliteral = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.tomsawyerDiagramStereotype,
+        Object enumliteral = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.tomSawyerDiagramStereotype,
                 "diagram_type", false);
         if (enumliteral instanceof String) {
             setType(diagramType.valueOf(enumliteral.toString()));

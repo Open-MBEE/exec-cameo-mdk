@@ -343,42 +343,7 @@ public class DocumentValidator {
         else if (!(view instanceof Diagram)) {
             missingViewpointErrors.addViolation(view, missingViewpointErrors.getDescription());
         }
-        if (view instanceof Package) {
-            List<Dependency> firsts = getOutgoingDependencies(view, DocGenProfile.firstStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGenProfile.firstStereotype, 1, false, 1);
-            List<Dependency> nexts = getOutgoingDependencies(view, DocGenProfile.nextStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGenProfile.nextStereotype, 1, false, 1);
-            List<Dependency> contents = getOutgoingDependencies(view, DocGenProfile.nosectionStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGenProfile.nosectionStereotype, 1, false, 1);
-            if (contents.size() > 1) {
-                multipleContentErrors.addViolation(view, multipleContentErrors.getDescription());
-            }
-            if (!section && (!firsts.isEmpty() || !nexts.isEmpty())) {
-                nonView2View.addViolation(view, nonView2View.getDescription());
-            }
-            if (firsts.size() > 1) {
-                multipleFirstErrors.addViolation(view, multipleFirstErrors.getDescription());
-            }
-            if (nexts.size() > 1) {
-                multipleNextErrors.addViolation(view, multipleNextErrors.getDescription());
-            }
-            for (Dependency c : contents) {
-                Element nosection = ModelHelper.getSupplierElement(c);
-                validateView((NamedElement) nosection, false);
-                dg.addEdge(view, (NamedElement) nosection, c);
-            }
-            for (Dependency f : firsts) {
-                Element first = ModelHelper.getSupplierElement(f);
-                validateView((NamedElement) first, true);
-                dg.addEdge(view, (NamedElement) first, f);
-            }
-            for (Dependency n : nexts) {
-                Element next = ModelHelper.getSupplierElement(n);
-                validateView((NamedElement) next, true);
-                dg.addEdge(view, (NamedElement) next, n);
-            }
-        }
-        else if (view instanceof Class) {
+        if (view instanceof Class) {
             for (Property p : ((Class) view).getOwnedAttribute()) {
                 if (p.getType() != null && StereotypesHelper.hasStereotypeOrDerived(p.getType(), sysmlview)) {
                     validateView(p.getType(), true);
@@ -1002,15 +967,4 @@ public class DocumentValidator {
         }
         return constraints;
     }
-
-    public static List<Dependency> getOutgoingDependencies(Element source, String s) {
-        List<Dependency> result = new ArrayList<Dependency>();
-        for (DirectedRelationship dr : source.get_directedRelationshipOfSource()) {
-            if (StereotypesHelper.hasStereotype(dr, s) && dr instanceof Dependency) {
-                result.add((Dependency) dr);
-            }
-        }
-        return result;
-    }
-
 }

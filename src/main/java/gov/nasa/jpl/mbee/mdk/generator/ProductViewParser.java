@@ -29,8 +29,6 @@ public class ProductViewParser {
     private Document doc;
     private boolean recurse;
     private boolean singleView;
-    private Set<Element> noSections;
-    private Set<Element> excludeViews;
     private Stereotype productS;
     private boolean product;
     private List<Class> visitedViews;
@@ -52,16 +50,6 @@ public class ProductViewParser {
             product = true;
             doc.setProduct(true);
             doc.setDgElement(start);
-            List<Element> noSections = StereotypesHelper.getStereotypePropertyValue(start,
-                    productS, "noSections");
-            List<Element> excludeViews = StereotypesHelper.getStereotypePropertyValue(start,
-                    productS, "excludeViews");
-            this.noSections = new HashSet<Element>(noSections);
-            this.excludeViews = new HashSet<Element>(excludeViews);
-        }
-        else {
-            noSections = new HashSet<Element>();
-            excludeViews = new HashSet<Element>();
         }
     }
 
@@ -89,17 +77,14 @@ public class ProductViewParser {
     /**
      * @param view
      * @param parent    parent view the current view should go under
-     * @param nosection whether current view is a nosection
      */
-    private void parseView(Class view, Container parent, boolean nosection, boolean recurse) {
+    private void parseView(Class view, Container parent, boolean recurse) {
         if (visitedViews.contains(view)) {
             Application.getInstance().getGUILog().log("[WARNING] View " + view.getName() + " has already been visited. Skipping view.");
         }
         else {
             visitedViews.add(view);
-            String viewname = view.getName();
             Section viewSection = dg.parseView(view);
-            viewSection.setNoSection(nosection);
             parent.addElement(viewSection);
             if (recurse) {
                 handleViewChildren(view, viewSection);
@@ -109,29 +94,19 @@ public class ProductViewParser {
     }
 
     private void handleViewChildren(Class view, Container viewSection) {
-        List<Pair<Class, AggregationKind>> childSections = new ArrayList<>(),
-                childNoSections = new ArrayList<>();
+        List<Pair<Class, AggregationKind>> childSections = new ArrayList<>();
         for (Property prop : view.getOwnedAttribute()) {
             if (!(prop.getType() instanceof Class)) {
                 continue;
             }
             Class type = (Class) prop.getType();
-            if (type == null || !StereotypesHelper.hasStereotypeOrDerived(type, dg.getView())
-                    || excludeViews.contains(prop) || excludeViews.contains(type)) {
+            if (type == null || !StereotypesHelper.hasStereotypeOrDerived(type, dg.getView())) {
                 continue;
             }
-            if (noSections.contains(prop) || noSections.contains(type)) {
-                childNoSections.add(new Pair<>(type, prop.getAggregation()));
-            }
-            else {
-                childSections.add(new Pair<>(type, prop.getAggregation()));
-            }
-        }
-        for (Pair<Class, AggregationKind> pair : childNoSections) {
-            parseView(pair.getKey(), viewSection, true, !AggregationKindEnum.NONE.equals(pair.getValue()));
+            childSections.add(new Pair<>(type, prop.getAggregation()));
         }
         for (Pair<Class, AggregationKind> pair : childSections) {
-            parseView(pair.getKey(), viewSection, false, !AggregationKindEnum.NONE.equals(pair.getValue()));
+            parseView(pair.getKey(), viewSection, !AggregationKindEnum.NONE.equals(pair.getValue()));
         }
     }
 }
