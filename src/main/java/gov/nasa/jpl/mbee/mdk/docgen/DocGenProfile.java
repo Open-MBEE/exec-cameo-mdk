@@ -12,6 +12,7 @@ public class DocGenProfile {
     public static final String viewpointStereotype = "Viewpoint";
     public static final String viewStereotype = "View";
     public static final String dgviewStereotype = "view";
+    public static final String appendixViewStereotype = "AppendixView";
     public static final String structuredQueryStereotype = "StructuredQuery";
     public static final String tableStereotype = "Table";
     public static final String bulletedListStereotype = "BulletedList";

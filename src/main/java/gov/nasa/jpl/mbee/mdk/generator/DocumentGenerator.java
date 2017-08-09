@@ -118,6 +118,9 @@ public class DocumentGenerator {
         Section viewSection = new Section(); // Section is a misnomer, should be
         // View
         viewSection.setView(true);
+        if (StereotypesHelper.hasStereotypeOrDerived(view, DocGenProfile.appendixViewStereotype)) {
+            viewSection.isAppendix(true);
+        }
         viewSection.setViewpoint(viewpoint);
 
         List<Element> elementImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(

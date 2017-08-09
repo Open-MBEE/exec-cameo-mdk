@@ -10,6 +10,7 @@ import java.util.List;
  * @author dlam
  */
 public class Section extends Container {
+    private boolean isAppendix;
     private boolean isChapter;
     private String id;
     private boolean isView;
@@ -18,8 +19,12 @@ public class Section extends Container {
     private List<Element> exposes; //if view, the elements exposed
     private Element loopElement; //if dynamic section, the element that generated this section (if looped)
 
-    public Section() {
-        isChapter = false;
+    public void isAppendix(boolean a) {
+        isAppendix = a;
+    }
+
+    public boolean isAppendix() {
+        return isAppendix;
     }
 
     public void isChapter(boolean c) {

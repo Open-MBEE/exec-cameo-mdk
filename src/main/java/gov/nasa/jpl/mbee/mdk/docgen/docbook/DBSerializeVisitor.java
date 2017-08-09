@@ -370,7 +370,10 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             id = " xml:id=\"" + section.getId() + "\"";
             ids.add(section.getId());
         }
-        if (section.isChapter()) {
+        if (section.isAppendix()) {
+            out.append("<appendix" + id +">\n");
+        }
+        else if (section.isChapter()) {
             out.append("<chapter" + id + ">\n");
         }
         else {
@@ -378,7 +381,10 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         }
         out.append("<info><title>" + DocGenUtils.fixString(section.getTitle()) + "</title></info>\n");
         out.append(inString);
-        if (section.isChapter()) {
+        if (section.isAppendix()) {
+            out.append("</appendix>\n");
+        }
+        else if (section.isChapter()) {
             out.append("</chapter>\n");
         }
         else {

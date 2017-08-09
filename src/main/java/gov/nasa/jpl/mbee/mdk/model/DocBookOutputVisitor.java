@@ -66,6 +66,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         DBSection sec = new DBSection();
         sec.setDgElement(section);
         sec.setFrom(section.getDgElement());
+        sec.isAppendix(section.isAppendix());
         sec.isChapter(section.isChapter());
         sec.setView(section.isView());
         String title = "";
