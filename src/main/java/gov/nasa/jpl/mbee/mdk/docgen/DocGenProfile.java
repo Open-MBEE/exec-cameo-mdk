@@ -2,6 +2,8 @@ package gov.nasa.jpl.mbee.mdk.docgen;
 
 @Deprecated
 public class DocGenProfile {
+    public static final String PROFILE_NAME = "DocGen Language";
+
     public static final String sectionStereotype = "Dynamic View";
     public static final String paragraphStereotype = "Paragraph";
     public static final String documentStereotype = "zzDocument";

@@ -361,22 +361,22 @@ public class Paragraph extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        String body = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.paragraphStereotype,
-                "body", null);
+        String body = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.paragraphStereotype,
+                "body", DocGenProfile.PROFILE_NAME, null);
         setText(body);
-        Object doOcl = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.paragraphStereotype,
-                "evaluateOcl", null);
+        Object doOcl = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.paragraphStereotype,
+                "evaluateOcl", DocGenProfile.PROFILE_NAME, null);
         if (doOcl != null) {
             tryOcl = Utils.isTrue(doOcl, true);
         }
-        Object iter = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.paragraphStereotype,
-                "iterate", null);
+        Object iter = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.paragraphStereotype,
+                "iterate", DocGenProfile.PROFILE_NAME, null);
         if (iter != null) {
             iterate = Utils.isTrue(iter, false); // TODO -- use this!
         }
 
-        Object attr = GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.attributeChoosable, "desiredAttribute", null);
+        Object attr = GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.attributeChoosable, "desiredAttribute", DocGenProfile.PROFILE_NAME, null);
         if (attr instanceof EnumerationLiteral) {
             attribute = Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName());
             if (attribute != null) {
@@ -384,9 +384,8 @@ public class Paragraph extends Query {
             }
         }
 
-        setStereotypeProperties((List<Property>) GeneratorUtils
-                .getListProperty(dgElement, DocGenProfile.stereotypePropertyChoosable,
-                        "stereotypeProperties", new ArrayList<Property>()));
+        setStereotypeProperties((List<Property>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.stereotypePropertyChoosable,
+                        "stereotypeProperties", DocGenProfile.PROFILE_NAME, new ArrayList<Property>()));
     }
 
 

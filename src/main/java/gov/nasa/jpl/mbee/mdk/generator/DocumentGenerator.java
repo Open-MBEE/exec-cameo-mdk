@@ -158,7 +158,7 @@ public class DocumentGenerator {
                     String viewDoc = ModelHelper.getComment(view);
                     if (viewDoc != null && addViewDoc) {
                         Paragraph para = new Paragraph(viewDoc);
-                        //if ((Boolean)GeneratorUtils.getObjectProperty(view, DocGenProfile.editableChoosable, "editable", true)) {
+                        //if ((Boolean)GeneratorUtils.getStereotypePropertyFirst(view, DocGenProfile.editableChoosable, "editable", true)) {
                         para.setDgElement(view);
                         para.setFrom(From.DOCUMENTATION);
                         //}
@@ -193,8 +193,8 @@ public class DocumentGenerator {
                 }
                 if (b != null) { // parse and execute viewpoint behavior, giving it
                     // the imported/queried elements
-                    Boolean addVPElements = (Boolean) GeneratorUtils.getObjectProperty(b,
-                            DocGenProfile.methodStereotype, "includeViewpointElements", false);
+                    Boolean addVPElements = (Boolean) GeneratorUtils.getStereotypePropertyFirst(b,
+                            DocGenProfile.methodStereotype, "includeViewpointElements", DocGenProfile.PROFILE_NAME, false);
 
                     if (elementImports.isEmpty()) {
                         elementImports.add(view); // if view does not import/query
@@ -334,20 +334,20 @@ public class DocumentGenerator {
                 }
             }
             else if (next instanceof StructuredActivityNode) {
-                Boolean loop = (Boolean) GeneratorUtils.getObjectProperty(next,
-                        DocGenProfile.structuredQueryStereotype, "loop", false);
-                Boolean ignore = (Boolean) GeneratorUtils.getObjectProperty(next,
-                        DocGenProfile.structuredQueryStereotype, "ignore", false);
-                Boolean createSections = (Boolean) GeneratorUtils.getObjectProperty(next,
-                        DocGenProfile.structuredQueryStereotype, "createSections", false);
-                Boolean useContextNameAsTitle = (Boolean) GeneratorUtils.getObjectProperty(next,
-                        DocGenProfile.structuredQueryStereotype, "useSectionNameAsTitle", false);
-                String titlePrefix = (String) GeneratorUtils.getObjectProperty(next,
-                        DocGenProfile.structuredQueryStereotype, "titlePrefix", "");
-                String titleSuffix = (String) GeneratorUtils.getObjectProperty(next,
-                        DocGenProfile.structuredQueryStereotype, "titleSuffix", "");
-                List<String> titles = (List<String>) GeneratorUtils.getListProperty(next,
-                        DocGenProfile.structuredQueryStereotype, "titles", null);
+                Boolean loop = (Boolean) GeneratorUtils.getStereotypePropertyFirst(next,
+                        DocGenProfile.structuredQueryStereotype, "loop", DocGenProfile.PROFILE_NAME, false);
+                Boolean ignore = (Boolean) GeneratorUtils.getStereotypePropertyFirst(next,
+                        DocGenProfile.structuredQueryStereotype, "ignore", DocGenProfile.PROFILE_NAME, false);
+                Boolean createSections = (Boolean) GeneratorUtils.getStereotypePropertyFirst(next,
+                        DocGenProfile.structuredQueryStereotype, "createSections", DocGenProfile.PROFILE_NAME, false);
+                Boolean useContextNameAsTitle = (Boolean) GeneratorUtils.getStereotypePropertyFirst(next,
+                        DocGenProfile.structuredQueryStereotype, "useSectionNameAsTitle", DocGenProfile.PROFILE_NAME, false);
+                String titlePrefix = (String) GeneratorUtils.getStereotypePropertyFirst(next,
+                        DocGenProfile.structuredQueryStereotype, "titlePrefix", DocGenProfile.PROFILE_NAME, "");
+                String titleSuffix = (String) GeneratorUtils.getStereotypePropertyFirst(next,
+                        DocGenProfile.structuredQueryStereotype, "titleSuffix", DocGenProfile.PROFILE_NAME, "");
+                List<String> titles = (List<String>) GeneratorUtils.getStereotypePropertyValue(next,
+                        DocGenProfile.structuredQueryStereotype, "titles", DocGenProfile.PROFILE_NAME, null);
                 if (titles == null) {
                     titles = new ArrayList<String>();
                 }
@@ -489,22 +489,22 @@ public class DocumentGenerator {
     // it won't show up on view editor
     private List<Section> parseSection(CallBehaviorAction cba, Container parent) {
         List<Section> sections = new ArrayList<Section>();
-        String titlePrefix = (String) GeneratorUtils.getObjectProperty(cba, DocGenProfile.sectionStereotype,
-                "titlePrefix", "");
-        String titleSuffix = (String) GeneratorUtils.getObjectProperty(cba, DocGenProfile.sectionStereotype,
-                "titleSuffix", "");
-        Boolean useContextNameAsTitle = (Boolean) GeneratorUtils.getObjectProperty(cba,
-                DocGenProfile.sectionStereotype, "useSectionNameAsTitle", false);
-        String stringIfEmpty = (String) GeneratorUtils.getObjectProperty(cba,
-                DocGenProfile.sectionStereotype, "stringIfEmpty", "");
-        Boolean skipIfEmpty = (Boolean) GeneratorUtils.getObjectProperty(cba,
-                DocGenProfile.sectionStereotype, "skipIfEmpty", false);
-        Boolean ignore = (Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.sectionStereotype,
-                "ignore", false);
-        Boolean loop = (Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.sectionStereotype,
-                "loop", false);
-        String title = (String) GeneratorUtils.getObjectProperty(cba, DocGenProfile.sectionStereotype,
-                "title", "");
+        String titlePrefix = (String) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.sectionStereotype,
+                "titlePrefix", DocGenProfile.PROFILE_NAME, "");
+        String titleSuffix = (String) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.sectionStereotype,
+                "titleSuffix", DocGenProfile.PROFILE_NAME, "");
+        Boolean useContextNameAsTitle = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba,
+                DocGenProfile.sectionStereotype, "useSectionNameAsTitle", DocGenProfile.PROFILE_NAME, false);
+        String stringIfEmpty = (String) GeneratorUtils.getStereotypePropertyFirst(cba,
+                DocGenProfile.sectionStereotype, "stringIfEmpty", DocGenProfile.PROFILE_NAME, "");
+        Boolean skipIfEmpty = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba,
+                DocGenProfile.sectionStereotype, "skipIfEmpty", DocGenProfile.PROFILE_NAME, false);
+        Boolean ignore = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.sectionStereotype,
+                "ignore", DocGenProfile.PROFILE_NAME, false);
+        Boolean loop = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.sectionStereotype,
+                "loop", DocGenProfile.PROFILE_NAME, false);
+        String title = (String) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.sectionStereotype,
+                "title", DocGenProfile.PROFILE_NAME, "");
         if (title == null || title.isEmpty()) {
             title = cba.getName();
             if (title.isEmpty() && cba.getBehavior() != null) {
@@ -561,18 +561,18 @@ public class DocumentGenerator {
     @SuppressWarnings("unchecked")
     public Object parseQuery(ActivityNode an, Container parent) {
         Object result = null;
-        String titlePrefix = (String) GeneratorUtils.getObjectProperty(an, DocGenProfile.templateStereotype,
-                "titlePrefix", "");
-        String titleSuffix = (String) GeneratorUtils.getObjectProperty(an, DocGenProfile.templateStereotype,
-                "titleSuffix", "");
-        Boolean useContextNameAsTitle = (Boolean) GeneratorUtils.getObjectProperty(an,
-                DocGenProfile.templateStereotype, "useSectionNameAsTitle", false);
-        Boolean ignore = (Boolean) GeneratorUtils.getObjectProperty(an, DocGenProfile.templateStereotype,
-                "ignore", false);
-        Boolean loop = (Boolean) GeneratorUtils.getObjectProperty(an, DocGenProfile.templateStereotype,
-                "loop", false);
-        List<String> titles = (List<String>) GeneratorUtils.getListProperty(an,
-                DocGenProfile.templateStereotype, "titles", new ArrayList<String>());
+        String titlePrefix = (String) GeneratorUtils.getStereotypePropertyFirst(an, DocGenProfile.templateStereotype,
+                "titlePrefix", DocGenProfile.PROFILE_NAME, "");
+        String titleSuffix = (String) GeneratorUtils.getStereotypePropertyFirst(an, DocGenProfile.templateStereotype,
+                "titleSuffix", DocGenProfile.PROFILE_NAME, "");
+        Boolean useContextNameAsTitle = (Boolean) GeneratorUtils.getStereotypePropertyFirst(an,
+                DocGenProfile.templateStereotype, "useSectionNameAsTitle", DocGenProfile.PROFILE_NAME, false);
+        Boolean ignore = (Boolean) GeneratorUtils.getStereotypePropertyFirst(an, DocGenProfile.templateStereotype,
+                "ignore", DocGenProfile.PROFILE_NAME, false);
+        Boolean loop = (Boolean) GeneratorUtils.getStereotypePropertyFirst(an, DocGenProfile.templateStereotype,
+                "loop", DocGenProfile.PROFILE_NAME, false);
+        List<String> titles = (List<String>) GeneratorUtils.getStereotypePropertyValue(an,
+                DocGenProfile.templateStereotype, "titles", DocGenProfile.PROFILE_NAME, new ArrayList<String>());
         boolean structured = false;
         if (StereotypesHelper.hasStereotypeOrDerived(an, DocGenProfile.structuredQueryStereotype)
                 || (an instanceof CallBehaviorAction && ((CallBehaviorAction) an).getBehavior() != null && StereotypesHelper
@@ -582,8 +582,8 @@ public class DocumentGenerator {
         }
         List<Object> targets = getTargets(an, getContext());
         if (structured && !ignore && an instanceof CallBehaviorAction) {
-            Boolean createSections = (Boolean) GeneratorUtils.getObjectProperty(an,
-                    DocGenProfile.structuredQueryStereotype, "createSections", false);
+            Boolean createSections = (Boolean) GeneratorUtils.getStereotypePropertyFirst(an,
+                    DocGenProfile.structuredQueryStereotype, "createSections", DocGenProfile.PROFILE_NAME, false);
             if (loop) {
                 List<Section> sections = new ArrayList<Section>();
                 int count = 0;

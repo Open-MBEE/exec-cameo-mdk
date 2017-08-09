@@ -1,12 +1,14 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.model.Document;
@@ -16,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.model.docmeta.Revision;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class GeneratorUtils {
@@ -53,21 +56,19 @@ public class GeneratorUtils {
         return null;
     }
 
-    public static Object getObjectProperty(Element e, String stereotype, String property, Object defaultValue) {
-        Object value = StereotypesHelper.getStereotypePropertyFirst(e, stereotype, property);
-        if (value == null && e instanceof CallBehaviorAction && ((CallBehaviorAction) e).getBehavior() != null) {
-            value = StereotypesHelper.getStereotypePropertyFirst(((CallBehaviorAction) e).getBehavior(), stereotype, property);
-        }
-        if (value == null) {
-            value = defaultValue;
-        }
-        return value;
+    public static Object getStereotypePropertyFirst(Element element, String stereotypeName, String propertyName, String profileName, Object defaultValue) {
+        Collection<?> values = getStereotypePropertyValue(element, stereotypeName, propertyName, profileName, Collections.emptyList());
+        return !values.isEmpty() ? values.iterator().next() : defaultValue;
     }
 
-    public static List<?> getListProperty(Element e, String stereotype, String property, List<?> defaultValue) {
-        List<?> value = StereotypesHelper.getStereotypePropertyValue(e, stereotype, property);
-        if (value.isEmpty() && e instanceof CallBehaviorAction && ((CallBehaviorAction) e).getBehavior() != null) {
-            value = StereotypesHelper.getStereotypePropertyValue(((CallBehaviorAction) e).getBehavior(), stereotype, property);
+    public static List<?> getStereotypePropertyValue(Element element, String stereotypeName, String propertyName, String profileName, List<?> defaultValue) {
+        Project project = Project.getProject(element);
+        Profile profile = StereotypesHelper.getProfile(project, profileName);
+        Stereotype stereotype = StereotypesHelper.getStereotype(project, stereotypeName, profile);
+        List<?> value = StereotypesHelper.getStereotypePropertyValue(element, stereotype, propertyName);
+        Behavior behavior;
+        if (value.isEmpty() && element instanceof CallBehaviorAction && (behavior = ((CallBehaviorAction) element).getBehavior()) != null) {
+            value = StereotypesHelper.getStereotypePropertyValue(behavior, stereotype, propertyName);
         }
         if (value.isEmpty()) {
             value = defaultValue;
