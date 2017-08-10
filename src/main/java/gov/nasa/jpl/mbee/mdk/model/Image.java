@@ -81,7 +81,7 @@ public class Image extends Query {
 
                     String doc = ModelHelper.getComment(diagram);
                     if (doc != null && (forViewEditor || (!doc.trim().isEmpty() && !getDoNotShow()))) {
-                        if ((Boolean) GeneratorUtils.getObjectProperty(diagram, DocGenProfile.editableChoosable, "editable", true)) {
+                        if ((Boolean) GeneratorUtils.getStereotypePropertyFirst(diagram, DocGenProfile.editableChoosable, "editable", DocGenProfile.PROFILE_NAME, true)) {
                             res.add(new DBParagraph(doc, diagram, From.DOCUMENTATION));
                         }
                         else {
@@ -99,12 +99,12 @@ public class Image extends Query {
     @Override
     public void initialize() {
         // TODO Auto-generated method stub
-        Boolean doNotShow = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.imageStereotype, "doNotShow", false);
-        setCaptions((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.hasCaptions,
-                "captions", new ArrayList<String>()));
-        setShowCaptions((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.hasCaptions,
-                "showCaptions", true));
+        Boolean doNotShow = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.imageStereotype, "doNotShow", DocGenProfile.PROFILE_NAME, false);
+        setCaptions((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.hasCaptions,
+                "captions", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
+        setShowCaptions((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.hasCaptions,
+                "showCaptions", DocGenProfile.PROFILE_NAME, true));
         setDoNotShow(doNotShow);
     }
 

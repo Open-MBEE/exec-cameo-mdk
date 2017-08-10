@@ -1,40 +1,31 @@
 package gov.nasa.jpl.mbee.mdk.docgen;
 
-
+@Deprecated
 public class DocGenProfile {
+    public static final String PROFILE_NAME = "DocGen Language";
+
     public static final String sectionStereotype = "Dynamic View";
     public static final String paragraphStereotype = "Paragraph";
     public static final String documentStereotype = "zzDocument";
     public static final String imageStereotype = "Image";
-    public static final String nextStereotype = "Next";
-    public static final String firstStereotype = "First";
-    public static final String oldQueriesStereotype = "Queries";
     public static final String queriesStereotype = "Expose";
-    public static final String nosectionStereotype = "NoSection";
-    public static final String appendixStereotype = "zzAppendix";
     public static final String viewpointStereotype = "Viewpoint";
     public static final String viewStereotype = "View";
     public static final String dgviewStereotype = "view";
-    public static final String oldDgviewStereotype = "DGView";
     public static final String appendixViewStereotype = "AppendixView";
     public static final String structuredQueryStereotype = "StructuredQuery";
     public static final String tableStereotype = "Table";
     public static final String bulletedListStereotype = "BulletedList";
     public static final String temporalDiffStereotype = "TemporalDiff";
-    public static final String combinedMatrixStereotype = "zzCombinedMatrix";
     public static final String methodStereotype = "Method";
-    public static final String tomsawyerDiagramStereotype = "TomSawyerDiagram";
+    public static final String tomSawyerDiagramStereotype = "TomSawyerDiagram";
 
-
-    public static final String customTableStereotype = "zzCustomTable";
     public static final String tableStructureStereotype = "TableStructure";
     public static final String tablePropertyColumnStereotype = "TablePropertyColumn";
     public static final String tableExpressionColumnStereotype = "TableExpressionColumn";
     public static final String tableAttributeColumnStereotype = "TableAttributeColumn";
-    public static final String tableSumRowStereotype = "TableSumRow";
     public static final String tableColumnStereotype = "TableColumn";
 
-    public static final String dependencyMatrixStereotype = "zzDependencyMatrix";
     public static final String genericTableStereotype = "GenericTable";
     public static final String hierarchicalPropertiesTableStereotype = "HierarchicalPropertiesTable";
     public static final String propertiesTableByAttributesStereotype = "PropertiesTableByAttributes";
@@ -49,11 +40,6 @@ public class DocGenProfile {
     public static final String collectionStereotype = "CollectionAndFilterGroup";
     public static final String documentMetaStereotype = "DocumentMeta";
     public static final String documentViewStereotype = "Product";
-    public static final String accountableForStereotype = "accountableFor";
-    public static final String approvesStereotype = "approves";
-    public static final String concursStereotype = "concurs";
-    public static final String projectStaffStereotype = "ProjectStaff";
-    public static final String roleStereotype = "Role";
 
     public static final String filterDiagramTypeStereotype = "FilterByDiagramType";
     public static final String filterNameStereotype = "FilterByNames";
@@ -82,11 +68,9 @@ public class DocGenProfile {
     public static final String diagramTypeChoosable = "DiagramTypeChoosable";
     public static final String expressionChoosable = "ExpressionChoosable";
     public static final String expression = "Expression";
-    public static final String sortable = "Sortable";
     public static final String propertyChoosable = "PropertyChoosable";
     public static final String attributeChoosable = "AttributeChoosable";
     public static final String editableChoosable = "EditableChoosable";
-    public static final String expressionLibrary = "ExpressionLibrary";
 
     public static final String stereotypePropertyChoosable = "StereotypePropertiesChoosable";
     public static final String documentationChoosable = "DocumentationChoosable";
@@ -98,8 +82,6 @@ public class DocGenProfile {
     public static final String docSkippable = "DocumentationSkippable";
 
     public static final String parallel = "Parallel";
-    public static final String intersection = "Intersection";
-    public static final String union = "Union";
     public static final String removeDuplicates = "RemoveDuplicates";
 
     public static final String sortByName = "SortByName";
@@ -107,18 +89,12 @@ public class DocGenProfile {
     public static final String sortByProperty = "SortByProperty";
     public static final String sortByExpression = "SortByExpression";
 
-    public static final String conformStereotype = "Conforms";
-
     public static final String templateStereotype = "FormattingAndDisplayTemplate";
 
     public static final String collectFilterStereotype = "CollectOrFilter";
     public static final String ignorableStereotype = "Ignorable";
 
     public static final String editableTableStereotype = "EditableTable";
-    public static final String sysmlProfile = "SysML";
-
-    public static final String documentCommentStereotype = "DocumentComment";
-    public static final String viewCommentStereotype = "ViewComment";
 
     public static final String constraintStereotype = "Constraint";
 }

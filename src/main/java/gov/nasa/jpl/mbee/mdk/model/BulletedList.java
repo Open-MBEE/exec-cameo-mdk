@@ -55,20 +55,19 @@ public class BulletedList extends Table {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        Boolean showTargets = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.bulletedListStereotype, "showTargets", false);
-        Boolean showSPN = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.bulletedListStereotype, "showStereotypePropertyNames", false);
-        Boolean ordered = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.bulletedListStereotype, "orderedList", false);
+        Boolean showTargets = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.bulletedListStereotype, "showTargets", DocGenProfile.PROFILE_NAME, false);
+        Boolean showSPN = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.bulletedListStereotype, "showStereotypePropertyNames", DocGenProfile.PROFILE_NAME, false);
+        Boolean ordered = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.bulletedListStereotype, "orderedList", DocGenProfile.PROFILE_NAME, false);
         setShowTargets(showTargets);
         setShowStereotypePropertyNames(showSPN);
         setOrderedList(ordered);
-        setIncludeDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.documentationChoosable, "includeDoc", false));
-        setStereotypeProperties((List<Property>) GeneratorUtils
-                .getListProperty(dgElement, DocGenProfile.stereotypePropertyChoosable,
-                        "stereotypeProperties", new ArrayList<Property>()));
+        setIncludeDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.documentationChoosable, "includeDoc", DocGenProfile.PROFILE_NAME, false));
+        setStereotypeProperties((List<Property>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.stereotypePropertyChoosable,
+                        "stereotypeProperties", DocGenProfile.PROFILE_NAME, new ArrayList<Property>()));
     }
 
     @Override

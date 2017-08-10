@@ -169,8 +169,6 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             us.setDgElement(e);
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGenProfile.queriesStereotype, 1, false, 1);
-            targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGenProfile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(Utils2.asList(targets, Object.class));
             if (manager.getActionFor(RunUserValidationScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserValidationScriptAction(us, true));
@@ -182,8 +180,6 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             us.setDgElement(e);
             List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
                     DocGenProfile.queriesStereotype, 1, false, 1);
-            targets.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGenProfile.oldQueriesStereotype, 1, false, 1));
             us.setTargets(Utils2.asList(targets, Object.class));
             if (manager.getActionFor(RunUserScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserScriptAction(us, true));

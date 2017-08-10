@@ -41,8 +41,8 @@ public class BasicConstraint implements Constraint {
     }
 
     public static boolean iterateViewpointConstrraint(Element vpConstraint) {
-        Boolean iterate = (Boolean) GeneratorUtils.getObjectProperty(vpConstraint,
-                DocGenProfile.viewpointConstraintStereotype, "iterate", true);
+        Boolean iterate = (Boolean) GeneratorUtils.getStereotypePropertyFirst(vpConstraint,
+                DocGenProfile.viewpointConstraintStereotype, "iterate", DocGenProfile.PROFILE_NAME, true);
         // Boolean iterate = getBooleanPropertyValue( vpConstraint,
         // DocGenProfile.expressionChoosable, "iterate" );
         boolean result = !Boolean.FALSE.equals(iterate);
@@ -50,8 +50,8 @@ public class BasicConstraint implements Constraint {
     }
 
     public static boolean reportedViewpointConstrraint(Element vpConstraint) {
-        Boolean report = (Boolean) GeneratorUtils.getObjectProperty(vpConstraint,
-                DocGenProfile.viewpointConstraintStereotype, "validationReport", false);
+        Boolean report = (Boolean) GeneratorUtils.getStereotypePropertyFirst(vpConstraint,
+                DocGenProfile.viewpointConstraintStereotype, "validationReport", DocGenProfile.PROFILE_NAME, false);
         boolean result = Boolean.TRUE.equals(report);
         return result;
     }
@@ -353,8 +353,8 @@ public class BasicConstraint implements Constraint {
                 expr = DocGenUtils.fixString(asUmlConstraint(e).getSpecification());
             }
             else if (GeneratorUtils.hasStereotypeByString(e, DocGenProfile.constraintStereotype, true)) {
-                Object v = GeneratorUtils.getObjectProperty(e, DocGenProfile.constraintStereotype,
-                        "expression", null);
+                Object v = GeneratorUtils.getStereotypePropertyFirst(e, DocGenProfile.constraintStereotype,
+                        "expression", DocGenProfile.PROFILE_NAME, null);
                 expr = v.toString();
             }
         }

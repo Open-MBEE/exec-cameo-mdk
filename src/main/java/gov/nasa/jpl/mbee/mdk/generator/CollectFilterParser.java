@@ -52,7 +52,6 @@ public class CollectFilterParser {
      *
      * @param a
      * @param in
-     * @param context TODO
      * @return
      */
     public static List<Element> startCollectAndFilterSequence(ActivityNode a, List<Element> in) {
@@ -166,33 +165,32 @@ public class CollectFilterParser {
     private static List<Element> collectAndFilter(CallBehaviorAction cba, List<Element> in) {
         //System.out.println("collectAndFilter(): cba=" + MoreToString.Helper.toLongString( cba ) );
         //System.out.println("collectAndFilter(): in[" + in.size() + "]=" + MoreToString.Helper.toLongString( in ) );
-        Integer depth = (Integer) GeneratorUtils.getObjectProperty(cba, DocGenProfile.depthChoosable,
-                "depth", 0);
-        int direction = ((Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.directionChoosable,
-                "directionOut", true)) ? 1 : 2;
-        List<Stereotype> stereotypes = (List<Stereotype>) GeneratorUtils.getListProperty(cba,
-                DocGenProfile.stereotypeChoosable, "stereotypes", new ArrayList<Stereotype>());
-        List<Class> metaclasses = (List<Class>) GeneratorUtils.getListProperty(cba,
-                DocGenProfile.metaclassChoosable, "metaclasses", new ArrayList<Class>());
-        Boolean derived = (Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.derivedChoosable,
-                "considerDerived", true);
-        List<String> names = (List<String>) GeneratorUtils.getListProperty(cba, DocGenProfile.nameChoosable,
-                "names", new ArrayList<String>());
-        List<String> diagramTypes = Utils.getElementNames((List<NamedElement>) GeneratorUtils.getListProperty(
-                cba, DocGenProfile.diagramTypeChoosable, "diagramTypes", new ArrayList<NamedElement>()));
-        Boolean include = (Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.includeChoosable,
-                "include", true);
-        List<Property> stereotypeProperties = (List<Property>) GeneratorUtils
-                .getListProperty(cba, DocGenProfile.stereotypePropertyChoosable, "stereotypeProperties",
-                        new ArrayList<Property>());
-        Boolean inherited = (Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.inheritedChoosable,
-                "includeInherited", false);
-        EnumerationLiteral asso = (EnumerationLiteral) GeneratorUtils.getObjectProperty(cba,
-                DocGenProfile.associationChoosable, "associationType", null);
-        String expression = (String) GeneratorUtils.getObjectProperty(cba, DocGenProfile.expressionChoosable,
-                "expression", null);
-        Boolean iterate = (Boolean) GeneratorUtils.getObjectProperty(cba, DocGenProfile.expressionChoosable,
-                "iterate", true);
+        Integer depth = (Integer) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.depthChoosable,
+                "depth", DocGenProfile.PROFILE_NAME, 0);
+        int direction = ((Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.directionChoosable,
+                "directionOut", DocGenProfile.PROFILE_NAME, true)) ? 1 : 2;
+        List<Stereotype> stereotypes = (List<Stereotype>) GeneratorUtils.getStereotypePropertyValue(cba,
+                DocGenProfile.stereotypeChoosable, "stereotypes", DocGenProfile.PROFILE_NAME, new ArrayList<Stereotype>());
+        List<Class> metaclasses = (List<Class>) GeneratorUtils.getStereotypePropertyValue(cba,
+                DocGenProfile.metaclassChoosable, "metaclasses", DocGenProfile.PROFILE_NAME, new ArrayList<Class>());
+        Boolean derived = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.derivedChoosable,
+                "considerDerived", DocGenProfile.PROFILE_NAME, true);
+        List<String> names = (List<String>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.nameChoosable,
+                "names", DocGenProfile.PROFILE_NAME, new ArrayList<String>());
+        List<String> diagramTypes = Utils.getElementNames((List<NamedElement>) GeneratorUtils.getStereotypePropertyValue(
+                cba, DocGenProfile.diagramTypeChoosable, "diagramTypes", DocGenProfile.PROFILE_NAME, new ArrayList<NamedElement>()));
+        Boolean include = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.includeChoosable,
+                "include", DocGenProfile.PROFILE_NAME, true);
+        List<Property> stereotypeProperties = (List<Property>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.stereotypePropertyChoosable, "stereotypeProperties",
+                DocGenProfile.PROFILE_NAME, new ArrayList<Property>());
+        Boolean inherited = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.inheritedChoosable,
+                "includeInherited", DocGenProfile.PROFILE_NAME, false);
+        EnumerationLiteral asso = (EnumerationLiteral) GeneratorUtils.getStereotypePropertyFirst(cba,
+                DocGenProfile.associationChoosable, "associationType", DocGenProfile.PROFILE_NAME, null);
+        String expression = (String) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.expressionChoosable,
+                "expression", DocGenProfile.PROFILE_NAME, null);
+        Boolean iterate = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.expressionChoosable,
+                "iterate", DocGenProfile.PROFILE_NAME, true);
         AggregationKind associationType = null;
         if (asso != null) {
             if (asso.getName().equals("composite")) {
@@ -363,7 +361,7 @@ public class CollectFilterParser {
             stereotypeProperty = "expression";
         }
 
-        Object o = GeneratorUtils.getObjectProperty(cba, sortStereotype, stereotypeProperty, null);
+        Object o = GeneratorUtils.getStereotypePropertyFirst(cba, sortStereotype, stereotypeProperty, DocGenProfile.PROFILE_NAME, null);
 
         if (o instanceof Property && isProp) {
             ordered = Utils.sortByProperty(in, (Property) o);
@@ -382,9 +380,9 @@ public class CollectFilterParser {
                     + ", but the property/attribute is the wrong type: " + o);
             return ordered;
         }
-        o = GeneratorUtils.getObjectProperty(cba, sortStereotype, "reverse", false);
+        o = GeneratorUtils.getStereotypePropertyFirst(cba, sortStereotype, "reverse", DocGenProfile.PROFILE_NAME, false);
         if (o == null) {
-            o = GeneratorUtils.getObjectProperty(cba, sortStereotype, "invertOrder", false);
+            o = GeneratorUtils.getStereotypePropertyFirst(cba, sortStereotype, "invertOrder", DocGenProfile.PROFILE_NAME, false);
         }
 
         Boolean b = null;
