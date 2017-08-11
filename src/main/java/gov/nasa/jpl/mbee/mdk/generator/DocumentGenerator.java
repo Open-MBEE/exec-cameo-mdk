@@ -317,11 +317,6 @@ public class DocumentGenerator {
                     parseResults = parseSection((CallBehaviorAction) next, parent);
                     next2 = next;
                 }
-                else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.templateStereotype)
-                        || b != null) {
-                    parseResults = parseQuery(next, parent);
-                    next2 = next;
-                }
                 else if (StereotypesHelper.hasStereotypeOrDerived(next,
                         DocGenProfile.collectFilterStereotype)
                         || b != null
@@ -334,6 +329,11 @@ public class DocumentGenerator {
                     pushed++;
                     next2 = context.getCurrentNode();
                     evaluatedConstraintsForNext = true;
+                }
+                else if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.templateStereotype)
+                        || b != null) {
+                    parseResults = parseQuery(next, parent);
+                    next2 = next;
                 }
             }
             else if (next instanceof StructuredActivityNode) {
@@ -464,7 +464,7 @@ public class DocumentGenerator {
         // TODO -- REVIEW -- shouldn't this be a list of Objects?!
         List<Object> targets = StereotypesHelper.getStereotypePropertyValue(next,
                 DocGenProfile.templateStereotype, "targets");
-        if (targets == null || targets.isEmpty()) {
+        if (targets.isEmpty()) {
             List<Element> elements =
                     Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(next,
                             DocGenProfile.queriesStereotype, 1, false, 1);
@@ -482,7 +482,7 @@ public class DocumentGenerator {
                 targets = Utils2.asList(elements, Object.class);
             }
         }
-        if (targets.isEmpty() && !context.targetsEmpty()) {
+        if (targets == null || targets.isEmpty() && !context.targetsEmpty()) {
             targets = context.peekTargets();
         }
         return Utils.removeDuplicates(targets);
