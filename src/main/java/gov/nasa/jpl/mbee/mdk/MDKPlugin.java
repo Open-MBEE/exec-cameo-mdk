@@ -4,6 +4,7 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.commandline.CommandLineActionManager;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
@@ -19,6 +20,7 @@ import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -108,6 +110,7 @@ public class MDKPlugin extends Plugin {
 
         loadExtensionJars();
         configureEnvironmentOptions();
+        CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
     }
 
     @Override

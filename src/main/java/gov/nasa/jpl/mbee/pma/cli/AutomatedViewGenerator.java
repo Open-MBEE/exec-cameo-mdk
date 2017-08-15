@@ -3,7 +3,7 @@ package gov.nasa.jpl.mbee.pma.cli;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import com.nomagic.magicdraw.commandline.CommandLine;
+import com.nomagic.magicdraw.commandline.CommandLineAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
@@ -44,7 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AutomatedViewGenerator extends CommandLine {
+public class AutomatedViewGenerator implements CommandLineAction {
 
     private org.apache.commons.cli.CommandLine parser;
     private org.apache.commons.cli.Options parserOptions;
@@ -100,11 +100,12 @@ public class AutomatedViewGenerator extends CommandLine {
     /*//////////////////////////////////////////////////////////////
 
     @Override
-    protected byte execute() {
+    public byte execute(String[] args) {
         try {
             // send output back to stdout
             System.setOut(AutomatedViewGenerator.stdout);
-            if (parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
+            boolean parsed = parseArgs(args);
+            if (!parsed || parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
                 displayHelp();
                 return 1;
             }
@@ -391,8 +392,7 @@ public class AutomatedViewGenerator extends CommandLine {
      *
      * @param args Argument string array from the console
      */
-    @Override
-    protected void parseArgs(String[] args) throws ParseException {
+    private boolean parseArgs(String[] args) throws ParseException {
         Option helpOption = new Option("h", HELP, false, "print this message");
 
         Option mmsHostOption = new Option(MMS_HOST, true, "use value for the MMS host name");
@@ -451,9 +451,9 @@ public class AutomatedViewGenerator extends CommandLine {
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
-            displayHelp();
-            throw e;
+            return false;
         }
+        return true;
     }
 
     private void displayHelp() {
