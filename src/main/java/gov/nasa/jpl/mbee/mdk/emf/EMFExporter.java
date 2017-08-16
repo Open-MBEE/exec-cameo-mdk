@@ -275,10 +275,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         return objectNode;
                     }
                     Constraint viewConstraint = Utils.getViewConstraint(element);
-                    if (viewConstraint == null) {
-                        return objectNode;
-                    }
-                    objectNode.set(MDKConstants.CONTENTS_KEY, DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null));
+                    objectNode.set(MDKConstants.CONTENTS_KEY, viewConstraint != null ? DEFAULT_SERIALIZATION_FUNCTION.apply(viewConstraint.getSpecification(), project, null) : null);
                     return objectNode;
                 },
                 Type.PRE
