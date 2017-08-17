@@ -49,9 +49,6 @@ public class AutomatedViewGenerator implements CommandLineAction {
     private org.apache.commons.cli.CommandLine parser;
     private org.apache.commons.cli.Options parserOptions;
 
-    // needed because CommandLine redirects it, and we want the output
-    private static final PrintStream stdout = System.out;
-
     private boolean twLogin = false,
             twLoaded = false;
 
@@ -102,8 +99,6 @@ public class AutomatedViewGenerator implements CommandLineAction {
     @Override
     public byte execute(String[] args) {
         try {
-            // send output back to stdout
-            System.setOut(AutomatedViewGenerator.stdout);
             boolean parsed = parseArgs(args);
             if (!parsed || parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
                 displayHelp();
@@ -646,7 +641,6 @@ public class AutomatedViewGenerator implements CommandLineAction {
                     e.printStackTrace();
                 }
                 synchronized (lock) {
-                    System.setOut(AutomatedViewGenerator.stdout);
                     String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + CANCEL_DELAY + " min).";
                     try {
                         logMessage(msg);

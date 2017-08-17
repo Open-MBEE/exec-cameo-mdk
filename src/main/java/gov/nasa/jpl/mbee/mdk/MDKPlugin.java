@@ -81,6 +81,8 @@ public class MDKPlugin extends Plugin {
         // This somehow allows things to be loaded to evaluate opaque expressions or something.
         EvaluationConfigurator.getInstance().registerBinaryImplementers(this.getClass().getClassLoader());
 
+        CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
+
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);
@@ -110,7 +112,6 @@ public class MDKPlugin extends Plugin {
 
         loadExtensionJars();
         configureEnvironmentOptions();
-        CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
     }
 
     @Override
