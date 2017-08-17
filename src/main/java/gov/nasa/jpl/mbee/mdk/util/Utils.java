@@ -1395,20 +1395,16 @@ public class Utils {
         return results;
     }
 
+    @Deprecated
     public static Stereotype getStereotype(Project project, String stereotypeName) {
         return StereotypesHelper.getStereotype(project, stereotypeName);
     }
 
-    /********************************************** Direct Stereotype Utils **********************************************/
-
-    /***
-     * SysML::Model Elements
-     ***/
-    public static Stereotype getConformsStereotype(Project project) {
+    public static Stereotype getConformStereotype(Project project) {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
 
-    public static Stereotype get18ExposeStereotype(Project project) {
+    public static Stereotype getExposeStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_5beta_17530432_1382587480303_325976_12505");
     }
 
@@ -1424,17 +1420,6 @@ public class Utils {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
     }
 
-    /***
-     * SysML Extensions::_Stereotypes
-     ***/
-    public static Stereotype getAccountableForStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1371599170030_696081_43276");
-    }
-
-    public static Stereotype getApprovesStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1375464433330_503144_31131");
-    }
-
     public static Stereotype getAspectStereotype(Project project) {
         return (Stereotype) project.getElementByID("_18_0_2_407019f_1449688347122_736579_14412");
     }
@@ -1443,56 +1428,10 @@ public class Utils {
         return (Stereotype) project.getElementByID("_17_0_5_1_8660276_1407362513794_939259_26181");
     }
 
-    public static Stereotype getConcursStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1375464334580_276276_31083");
-    }
-
-    public static Stereotype getDirectedConnectorStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1404149304683_834035_15551");
-    }
-
     public static Stereotype getDocumentStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_2_3_87b0275_1371477871400_792964_43374");
     }
 
-    public static Stereotype getJobStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_18_0_5_407019f_1458258829038_313297_14086");
-    }
-
-    public static Stereotype getPrecedesStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1404148746390_373063_15528");
-    }
-
-    public static Stereotype getProjectStaffStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_8850274_1368737927790_384872_57206");
-    }
-
-    public static Stereotype getRoleStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_8850274_1368582235157_5746_56799");
-    }
-
-    public static Stereotype getTicketStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_18_0_5_407019f_1462145965413_380403_14076");
-    }
-
-    /***
-     * SysML Extensions::DocGen::MDK EMP Client::Document Profile
-     ***/
-    public static Stereotype getCommentStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_5_407019f_1337877314051_474317_11891");
-    }
-
-    public static Stereotype getSysML14ConformsStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_407019f_1389807639137_860750_29082");
-    }
-
-    public static Stereotype getExposeStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_16_5_4_409a058d_1259862803278_226185_1083");
-    }
-
-    /***
-     * SysML Extensions::DocGen::MDK EMP Client::Document Profile::Containers
-     ***/
     public static Stereotype getProductStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
     }
@@ -1501,34 +1440,15 @@ public class Utils {
         return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1382549095816_841656_29288");
     }
 
-    public static Stereotype getExpressionLibraryStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1382560401073_180081_29279");
-    }
-
     @Deprecated
     public static Stereotype getViewClassStereotype(Project project) {
         return (Stereotype) project.getElementByID("_17_0_1_232f03dc_1325612611695_581988_21583");
     }
 
-    /***
-     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements
-     ***/
-    public static Stereotype getPresentsStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_5_1_407019f_1430628469999_419411_12119");
-    }
-
-    /********************************************** Direct Property Utils **********************************************/
-
-    /***
-     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement
-     ***/
     public static Property getGeneratedFromViewProperty(Project project) {
         return (Property) project.getElementByID("_17_0_5_1_407019f_1430628276506_565_12080");
     }
 
-    /***
-     * SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection
-     ***/
     public static Property getGeneratedFromElementProperty(Project project) {
         return (Property) project.getElementByID("_17_0_5_1_407019f_1430628376067_525763_12104");
     }
@@ -1537,11 +1457,6 @@ public class Utils {
         return (Property) project.getElementByID("_18_0_2_407019f_1433361787467_278914_14410");
     }
 
-    /********************************************** Direct Component Utils **********************************************/
-
-    /***
-     * SysML Extensions::Model Management Helpers::Model Management Profile::Site Package Characterization::Library
-     ***/
     public static Component getSiteCharacterizationComponent(Project project) {
         return (Component) project.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
     }

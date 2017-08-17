@@ -55,15 +55,15 @@ public class UtilsTest {
 
     @Test
     public void _utils_getConformsStereotype() {
-        BaseElement test = Utils.getConformsStereotype(project);
+        BaseElement test = Utils.getConformStereotype(project);
         Assert.assertNotNull(test);
         System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Conform"));
     }
 
     @Test
-    public void _utils_get18ExposeStereotype() {
-        BaseElement test = Utils.get18ExposeStereotype(project);
+    public void _utils_getExposeStereotype() {
+        BaseElement test = Utils.getExposeStereotype(project);
         Assert.assertNotNull(test);
         System.out.println(((Stereotype)test).getName());
         Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
@@ -92,20 +92,6 @@ public class UtilsTest {
     }
 
     @Test
-    public void _utils_getAccountableForStereotype() {
-        BaseElement test = Utils.getAccountableForStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("accountableFor"));
-    }
-
-    @Test
-    public void _utils_getApprovesStereotype() {
-        BaseElement test = Utils.getApprovesStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("approves"));
-    }
-
-    @Test
     public void _utils_getAspectStereotype() {
         BaseElement test = Utils.getAspectStereotype(project);
         Assert.assertNotNull(test);
@@ -120,80 +106,10 @@ public class UtilsTest {
     }
 
     @Test
-    public void _utils_getConcursStereotype() {
-        BaseElement test = Utils.getConcursStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("concurs"));
-    }
-
-    @Test
-    public void _utils_getDirectedConnectorStereotype() {
-        BaseElement test = Utils.getDirectedConnectorStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("DirectedConnector"));
-    }
-
-    @Test
     public void _utils_getDocumentStereotype() {
         BaseElement test = Utils.getDocumentStereotype(project);
         Assert.assertNotNull(test);
         Assert.assertTrue(((Stereotype)test).getName().equals("Document"));
-    }
-
-    @Test
-    public void _utils_getJobStereotype() {
-        BaseElement test = Utils.getJobStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Job"));
-    }
-
-    @Test
-    public void _utils_getPrecedesStereotype() {
-        BaseElement test = Utils.getPrecedesStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("precedes"));
-    }
-
-    @Test
-    public void _utils_getProjectStaffStereotype() {
-        BaseElement test = Utils.getProjectStaffStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("ProjectStaff"));
-    }
-
-    @Test
-    public void _utils_getRoleStereotype() {
-        BaseElement test = Utils.getRoleStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Role"));
-    }
-
-    @Test
-    public void _utils_getTicketStereotype() {
-        BaseElement test = Utils.getTicketStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Ticket"));
-    }
-
-    @Test
-    public void _utils_getCommentStereotype() {
-        BaseElement test = Utils.getCommentStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Comment"));
-    }
-
-    @Test
-    public void _utils_getSysML14ConformsStereotype() {
-        BaseElement test = Utils.getSysML14ConformsStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Conforms"));
-    }
-
-    @Test
-    public void _utils_getExposeStereotype() {
-        BaseElement test = Utils.getExposeStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
     }
 
     @Test
@@ -208,13 +124,6 @@ public class UtilsTest {
         BaseElement test = Utils.getViewClassStereotype(project);
         Assert.assertNotNull(test);
         Assert.assertTrue(((Stereotype)test).getName().equals("view"));
-    }
-
-    @Test
-    public void _utils_getPresentsStereotype() {
-        BaseElement test = Utils.getPresentsStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("presents"));
     }
 
     /********************************************** Direct Property Utils **********************************************/

@@ -69,7 +69,6 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         sec.isAppendix(section.isAppendix());
         sec.isChapter(section.isChapter());
         sec.setView(section.isView());
-        sec.isNoSection(section.isNoSection());
         String title = "";
         if (section.getTitle() != null && !section.getTitle().isEmpty()) {
             title = section.getTitle();
@@ -91,13 +90,6 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         visitChildren(section);
         parent.pop();
 
-        if (section.isNoSection()) {
-            for (DocumentElement de : sec.getChildren()) {
-                if (de instanceof DBTable) {
-                    de.setId(section.getId());
-                }
-            }
-        }
         if (sec.getChildren().isEmpty() && !forViewEditor) {
             if (section.getSkipIfEmpty()) {
                 return;

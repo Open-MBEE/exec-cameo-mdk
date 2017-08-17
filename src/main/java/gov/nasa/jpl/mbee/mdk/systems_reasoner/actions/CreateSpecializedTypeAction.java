@@ -142,14 +142,17 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
             }
         }
         // System.out.println(general.getQualifiedName());
-        //   final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent);
+        //   final Classifier special = (Classifier) CopyPasting.copyPasteElement(general, parent, true);
 
         // Collection<?> emptyCollection = new ArrayList<String>();
         // special.getOwnedMember().retainAll(emptyCollection);
         //  special.getGeneralization().retainAll(emptyCollection);
 
 
-        Classifier specific = (Classifier) CopyPasting.copyPasteElement(general, parent);
+        Classifier specific = (Classifier) CopyPasting.copyPasteElement(general, parent, true);
+        if (specific == null) {
+            return null;
+        }
 
         ArrayList<NamedElement> members = new ArrayList<>();
         for (NamedElement ne : specific.getOwnedMember()) {

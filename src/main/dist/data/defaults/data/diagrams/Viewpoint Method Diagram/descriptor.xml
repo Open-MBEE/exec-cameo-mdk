@@ -10,9 +10,6 @@
                 <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode" description="StructuredQuery" listAsElement="false" opposite="false" id="IDaction_1326673811877_323585_0">
                     <stereotype id="_17_0_1_244d03ea_1319512564304_251824_28229"/>
                 </custom>
-                <custom type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment" description="Constraint" listAsElement="false" opposite="false" id="IDaction_1378922788177_786380_0">
-                    <stereotype id="_17_0_2_3_e81034b_1378851810674_213698_29406"/>
-                </custom>
             </actions>
         </category>
         <category name="Collect/Filter/Sort" id="action_category_1326671921803_43207_0" expandedByDefault="true">
@@ -140,10 +137,7 @@
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="ViewpointConstraint" listAsElement="false" opposite="false" id="IDaction_1383599191103_493373_0">
                     <stereotype id="_17_0_2_3_407019f_1383246724224_41450_29079"/>
                 </custom>
-                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="CombinedMatrix [Dep.]" listAsElement="false" opposite="false" id="IDaction_1326673898547_833383_0">
-                    <stereotype id="_17_0_1_244d03ea_1319497133286_670328_26584"/>
-                </custom>
-                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="GenericTable [Dep.]" listAsElement="false" opposite="false" id="IDaction_1326673915972_347362_0">
+                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="GenericTable" listAsElement="false" opposite="false" id="IDaction_1326673915972_347362_0">
                     <stereotype id="_17_0_1_244d03ea_1319498258297_961829_27083"/>
                 </custom>
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="PropertiesTableByAttributes" listAsElement="false" opposite="false" id="IDaction_1326673932826_551943_0">

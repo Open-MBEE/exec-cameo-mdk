@@ -1,12 +1,14 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.model.Document;
@@ -16,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.model.docmeta.Revision;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class GeneratorUtils {
@@ -53,29 +56,22 @@ public class GeneratorUtils {
         return null;
     }
 
-    public static Object getObjectProperty(Element e, String stereotype, String property, Object defaultt) {
-        Object value = StereotypesHelper.getStereotypePropertyFirst(e, stereotype, property);
-        if (value == null && e instanceof CallBehaviorAction && ((CallBehaviorAction) e).getBehavior() != null) {
-            value = StereotypesHelper.getStereotypePropertyFirst(((CallBehaviorAction) e).getBehavior(),
-                    stereotype, property);
-        }
-        if (value == null) {
-            value = defaultt;
-        }
-        return value;
+    public static Object getStereotypePropertyFirst(Element element, String stereotypeName, String propertyName, String profileName, Object defaultValue) {
+        Collection<?> values = getStereotypePropertyValue(element, stereotypeName, propertyName, profileName, Collections.emptyList());
+        return !values.isEmpty() ? values.iterator().next() : defaultValue;
     }
 
-    @SuppressWarnings("unchecked")
-    public static List<? extends Object> getListProperty(Element e, String stereotype, String property,
-                                                         List<? extends Object> defaultt) {
-        List<? extends Object> value = StereotypesHelper.getStereotypePropertyValue(e, stereotype, property);
-        if ((value == null || value.isEmpty()) && e instanceof CallBehaviorAction
-                && ((CallBehaviorAction) e).getBehavior() != null) {
-            value = StereotypesHelper.getStereotypePropertyValue(((CallBehaviorAction) e).getBehavior(),
-                    stereotype, property);
+    public static List<?> getStereotypePropertyValue(Element element, String stereotypeName, String propertyName, String profileName, List<?> defaultValue) {
+        Project project = Project.getProject(element);
+        Profile profile = StereotypesHelper.getProfile(project, profileName);
+        Stereotype stereotype = StereotypesHelper.getStereotype(project, stereotypeName, profile);
+        List<?> value = StereotypesHelper.getStereotypePropertyValue(element, stereotype, propertyName);
+        Behavior behavior;
+        if (value.isEmpty() && element instanceof CallBehaviorAction && (behavior = ((CallBehaviorAction) element).getBehavior()) != null) {
+            value = StereotypesHelper.getStereotypePropertyValue(behavior, stereotype, propertyName);
         }
-        if (value == null || value.isEmpty()) {
-            value = defaultt;
+        if (value.isEmpty()) {
+            value = defaultValue;
         }
         return value;
     }
@@ -109,7 +105,7 @@ public class GeneratorUtils {
         doc.setMetadata(meta);
 
         Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGenProfile.documentViewStereotype, "Document Profile");
+                DocGenProfile.documentViewStereotype);
         // documentMeta Backwards Compatibility
         String title = (String) StereotypesHelper.getStereotypePropertyFirst(start,
                 DocGenProfile.documentMetaStereotype, "title");
@@ -232,109 +228,12 @@ public class GeneratorUtils {
         // Collect author information
         List<String> Author = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView,
                 "Author");
-
-        List<String> authorCollect = new ArrayList<String>();
-        List<Element> roles = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start,
-                DocGenProfile.accountableForStereotype, 2, false, 1);
-        String s = "1,2,3,4,5";
-        for (Element r : roles) {
-
-            String t = ((NamedElement) r).getName();
-            s = "1,2," + t + "4,5";
-            Collection<Element> rAttrs = r.getOwnedElement();
-            for (Element rA : rAttrs) {
-                String f = ((NamedElement) rA).getName();
-                if (f.isEmpty()) {
-                }
-                else {
-                    s = f + ",2," + t + "4,5";
-                    Type rT = ((TypedElement) rA).getType();
-                    // if StereotypesHelper.hasSereotype(rT,
-                    // DocGenProfile.projectStaffStereotype) {
-                    String o = (String) StereotypesHelper.getStereotypePropertyFirst(rT,
-                            DocGenProfile.projectStaffStereotype, "Organization");
-                    String d = (String) StereotypesHelper.getStereotypePropertyFirst(rT,
-                            DocGenProfile.projectStaffStereotype, "Division");
-                    s = f + ",," + t + "," + o + "," + d;
-                    authorCollect.add(s);
-                }
-            }
-        }
-        if (Author.isEmpty()) {
-            Author = authorCollect;
-        }
-
         // Collect approver information
         List<String> Approver = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView,
                 "Approver");
-        List<String> approverCollect = new ArrayList<String>();
-
-        List<Element> aprvrs = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start,
-                DocGenProfile.approvesStereotype, 1, false, 1);
-        for (Element a : aprvrs) {
-            List<Property> aM = ((Association) a).getMemberEnd();
-            String f = "";
-            String o = "";
-            String t = "";
-            String d = "";
-            for (Property aR : aM) {
-                Element aT = aR.getType();
-
-                if (StereotypesHelper.hasStereotype(aT, DocGenProfile.projectStaffStereotype)) {
-                    f = aR.getName();
-                    o = (String) StereotypesHelper.getStereotypePropertyFirst(aT,
-                            DocGenProfile.projectStaffStereotype, "Organization");
-                    d = (String) StereotypesHelper.getStereotypePropertyFirst(aT,
-                            DocGenProfile.projectStaffStereotype, "Division");
-                }
-                else if (StereotypesHelper.hasStereotype(aT, DocGenProfile.roleStereotype)) {
-                    t = ((NamedElement) aT).getName();
-                }
-            }
-            String z = f + ",," + t + "," + o + "," + d;
-            if (z != ",,,,") {
-                approverCollect.add(z);
-            }
-        }
-        if (Approver.isEmpty()) {
-            Approver = approverCollect;
-        }
-
         // Collect concurrence information
         List<String> Concurrence = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView,
                 "Concurrence");
-        List<String> concurCollect = new ArrayList<String>();
-
-        List<Element> cncr = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(start,
-                DocGenProfile.concursStereotype, 1, false, 1);
-        for (Element c : cncr) {
-            List<Property> cM = ((Association) c).getMemberEnd();
-            String f = "";
-            String o = "";
-            String t = "";
-            String d = "";
-            for (Property cR : cM) {
-                Element cT = cR.getType();
-
-                if (StereotypesHelper.hasStereotype(cT, DocGenProfile.projectStaffStereotype)) {
-                    f = cR.getName();
-                    o = (String) StereotypesHelper.getStereotypePropertyFirst(cT,
-                            DocGenProfile.projectStaffStereotype, "Organization");
-                    d = (String) StereotypesHelper.getStereotypePropertyFirst(cT,
-                            DocGenProfile.projectStaffStereotype, "Division");
-                }
-                else if (StereotypesHelper.hasStereotype(cT, DocGenProfile.roleStereotype)) {
-                    t = ((NamedElement) cT).getName();
-                }
-            }
-            String z = f + ",," + t + "," + o + "," + d;
-            if (z != ",,,,") {
-                concurCollect.add(z);
-            }
-        }
-        if (Concurrence.isEmpty()) {
-            Concurrence = concurCollect;
-        }
 
         doc.setChunkFirstSections(chunkFirstSections);
         doc.setChunkSectionDepth(chunkSectionDepth);

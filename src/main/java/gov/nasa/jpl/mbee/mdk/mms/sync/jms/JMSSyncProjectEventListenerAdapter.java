@@ -37,8 +37,8 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 if (TicketUtils.isTicketSet(project)) {
                     initializeJMS(project);
                 }
-                else {
-                    MMSLoginAction.loginAction(project);
+                else if (!MMSLoginAction.loginAction(project) && project.isRemote()) {
+                    Application.getInstance().getGUILog().log("[WARNING] Not logged in to MMS. You must be logged in to MMS prior to committing.");
                     // loginAction contains a call to initializeJMS on a successful ticket get
                 }
             }).start();

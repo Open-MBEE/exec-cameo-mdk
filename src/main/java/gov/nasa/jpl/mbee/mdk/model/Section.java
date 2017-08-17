@@ -14,16 +14,10 @@ public class Section extends Container {
     private boolean isChapter;
     private String id;
     private boolean isView;
-    private boolean isNoSection;
 
     private Element viewpoint; //if view, the viewpoint
     private List<Element> exposes; //if view, the elements exposed
     private Element loopElement; //if dynamic section, the element that generated this section (if looped)
-
-    public Section() {
-        isAppendix = false;
-        isChapter = false;
-    }
 
     public void isAppendix(boolean a) {
         isAppendix = a;
@@ -51,14 +45,6 @@ public class Section extends Container {
 
     public boolean isView() {
         return this.isView;
-    }
-
-    public void setNoSection(boolean b) {
-        this.isNoSection = b;
-    }
-
-    public boolean isNoSection() {
-        return this.isNoSection;
     }
 
     public String getId() {

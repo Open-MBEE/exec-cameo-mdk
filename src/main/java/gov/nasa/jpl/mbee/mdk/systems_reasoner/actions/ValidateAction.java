@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.systems_reasoner.actions;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -33,11 +34,10 @@ public class ValidateAction extends SRAction {
 
     public static void validate(final List<? extends Element> elements) {
         final List<Element> elems = new ArrayList<>();
-        Project project = Project.getProject(elements.iterator().next());
         elems.addAll(elements);
         final SRValidationSuite svs = new SRValidationSuite(elems);
         svs.run();
-        Utils.displayValidationWindow(project, svs, "Systems Reasoner Validation");
+        Utils.displayValidationWindow(Application.getInstance().getProject(), svs, "Systems Reasoner Validation");
         /*for (final Generalization g : clazz.getGeneralization()) {
             if (g.getGeneral() != null)
 				System.out.println(g.getGeneral());

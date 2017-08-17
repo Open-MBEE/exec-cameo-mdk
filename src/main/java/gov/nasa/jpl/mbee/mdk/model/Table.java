@@ -126,24 +126,24 @@ public abstract class Table extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        setCaptions((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.hasCaptions,
-                "captions", new ArrayList<String>()));
-        setShowCaptions((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.hasCaptions,
-                "showCaptions", true));
+        setCaptions((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.hasCaptions,
+                "captions", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
+        setShowCaptions((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.hasCaptions,
+                "showCaptions", DocGenProfile.PROFILE_NAME, true));
         setStereotypeProperties((List<Property>) GeneratorUtils
-                .getListProperty(dgElement, DocGenProfile.stereotypePropertyChoosable,
-                        "stereotypeProperties", new ArrayList<Property>()));
-        setIncludeDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.documentationChoosable, "includeDoc", false));
-        setStyle((String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.tableStereotype, "style",
-                null));
-        setColwidths((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.tableStereotype,
-                "colwidths", new ArrayList<String>()));
-        setTranspose((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.tableStereotype,
-                "transpose", false));
-        setHideHeaders((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.tableStereotype,
-                "hideHeaders", false));
-        setShowIfEmpty((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.tableStereotype,
-                "showIfEmpty", false));
+                .getStereotypePropertyValue(dgElement, DocGenProfile.stereotypePropertyChoosable,
+                        "stereotypeProperties", DocGenProfile.PROFILE_NAME, new ArrayList<Property>()));
+        setIncludeDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.documentationChoosable, "includeDoc", DocGenProfile.PROFILE_NAME, false));
+        setStyle((String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype, "style",
+                DocGenProfile.PROFILE_NAME, null));
+        setColwidths((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.tableStereotype,
+                "colwidths", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
+        setTranspose((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
+                "transpose", DocGenProfile.PROFILE_NAME, false));
+        setHideHeaders((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
+                "hideHeaders", DocGenProfile.PROFILE_NAME, false));
+        setShowIfEmpty((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
+                "showIfEmpty", DocGenProfile.PROFILE_NAME, false));
     }
 }

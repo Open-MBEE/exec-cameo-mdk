@@ -53,6 +53,9 @@ public class Instance2BSTAction extends SRAction {
 
         final Classifier classifier = instance.getClassifier().get(0);
         final Classifier specific = (Classifier) CopyPasting.copyPasteElement(classifier, instance.getOwner(), true);
+        if (specific == null) {
+            return null;
+        }
         for (final Generalization generalization : specific.getGeneralization()) {
             generalization.dispose();
         }
@@ -100,7 +103,7 @@ public class Instance2BSTAction extends SRAction {
         return specific;
     }
 
-    public static Property processAttribute(final Property property, final ValueSpecification value, final InstanceSpecification lastInstance, final Element owner, final Map<InstanceSpecification, Classifier> traveled) {
+    public static void processAttribute(final Property property, final ValueSpecification value, final InstanceSpecification lastInstance, final Element owner, final Map<InstanceSpecification, Classifier> traveled) {
         //final ValueSpecification value = slot.getValue().get(0);
         if (value instanceof InstanceValue && ((InstanceValue) value).getInstance() != null) {
             final Classifier nestedClassifier = instance2BST(((InstanceValue) value).getInstance(), lastInstance, owner, traveled);
@@ -111,9 +114,11 @@ public class Instance2BSTAction extends SRAction {
         }
         else {
             final ValueSpecification defaultValue = (ValueSpecification) CopyPasting.copyPasteElement(value, null, false);
+            if (defaultValue == null) {
+                return;
+            }
             property.setDefaultValue(defaultValue);
         }
-        return null;
     }
 
 }

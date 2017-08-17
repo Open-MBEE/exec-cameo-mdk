@@ -365,35 +365,30 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             }
             inString = "<para>" + section.getStringIfEmpty() + "</para>\n";
         }
-        if (!section.isNoSection()) {
-            String id = "";
-            if (section.getId() != null && !ids.contains(section.getId())) {
-                id = " xml:id=\"" + section.getId() + "\"";
-                ids.add(section.getId());
-            }
-            if (section.isAppendix()) {
-                out.append("<appendix" + id + ">\n");
-            }
-            else if (section.isChapter()) {
-                out.append("<chapter" + id + ">\n");
-            }
-            else {
-                out.append("<section" + id + ">\n");
-            }
-            out.append("<info><title>" + DocGenUtils.fixString(section.getTitle()) + "</title></info>\n");
-            out.append(inString);
-            if (section.isAppendix()) {
-                out.append("</appendix>\n");
-            }
-            else if (section.isChapter()) {
-                out.append("</chapter>\n");
-            }
-            else {
-                out.append("</section>\n");
-            }
+        String id = "";
+        if (section.getId() != null && !ids.contains(section.getId())) {
+            id = " xml:id=\"" + section.getId() + "\"";
+            ids.add(section.getId());
+        }
+        if (section.isAppendix()) {
+            out.append("<appendix" + id +">\n");
+        }
+        else if (section.isChapter()) {
+            out.append("<chapter" + id + ">\n");
         }
         else {
-            out.append(inString);
+            out.append("<section" + id + ">\n");
+        }
+        out.append("<info><title>" + DocGenUtils.fixString(section.getTitle()) + "</title></info>\n");
+        out.append(inString);
+        if (section.isAppendix()) {
+            out.append("</appendix>\n");
+        }
+        else if (section.isChapter()) {
+            out.append("</chapter>\n");
+        }
+        else {
+            out.append("</section>\n");
         }
     }
 

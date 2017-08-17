@@ -151,7 +151,9 @@ public class CreateSlotsAction extends GenericRuleViolationAction {
                         for (final Property subsettingProperty : subsettingProperties) {
                             for (final ValueSpecification vs : implicitCache.get(subsettingProperty).getValue()) {
                                 final ValueSpecification clonedValueSpec = (ValueSpecification) CopyPasting.copyPasteElement(vs, slot, false);
-                                slot.getValue().add(clonedValueSpec);
+                                if (clonedValueSpec != null) {
+                                    slot.getValue().add(clonedValueSpec);
+                                }
                             }
                         }
                         slot.setOwningInstance(instance);
@@ -194,6 +196,9 @@ public class CreateSlotsAction extends GenericRuleViolationAction {
     public static ValueSpecification createValueSpecification(final Property property, final InstanceSpecification instance, final Slot slot, final boolean recurse, final Map<Classifier, InstanceSpecification> traveled) {
         if (property.getDefaultValue() != null) {
             final ValueSpecification clonedValue = (ValueSpecification) CopyPasting.copyPasteElement(property.getDefaultValue(), slot, false);
+            if (clonedValue == null) {
+                return null;
+            }
             slot.getValue().add(clonedValue);
             return clonedValue;
         }

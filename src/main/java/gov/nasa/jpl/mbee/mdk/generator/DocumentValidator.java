@@ -186,10 +186,8 @@ public class DocumentValidator {
     private ActivityEdgeFactory aef;
     private boolean fatal;
     private Stereotype sysmlview;
-    private Stereotype conforms;
-    private Stereotype conforms14;
-    private Stereotype md18expose;
-    private Stereotype ourExpose;
+    private Stereotype conform;
+    private Stereotype expose;
     private Project project;
 
     public DocumentValidator(Element e) {
@@ -197,10 +195,8 @@ public class DocumentValidator {
         project = Project.getProject(e);
 
         sysmlview = Utils.getViewStereotype(project);
-        conforms = Utils.getConformsStereotype(project);
-        conforms14 = Utils.getSysML14ConformsStereotype(project);
-        md18expose = Utils.get18ExposeStereotype(project);
-        ourExpose = Utils.getExposeStereotype(project);
+        conform = Utils.getConformStereotype(project);
+        expose = Utils.getExposeStereotype(project);
 
 
         log = Application.getInstance().getGUILog();
@@ -291,10 +287,7 @@ public class DocumentValidator {
         }
         dg.addVertex(view);
         List<Element> viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
-                conforms, 1, false, 1);
-        if (viewpoints.isEmpty()) {
-            viewpoints = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view, conforms14, 1, false, 1);
-        }
+                conform, 1, true, 1);
         if (viewpoints.size() > 1) {
             multipleViewpoints.addViolation(view, multipleViewpoints.getDescription());
         }
@@ -340,11 +333,7 @@ public class DocumentValidator {
             List<Element> packageImports = Utils.collectDirectedRelatedElementsByRelationshipJavaClass(view,
                     PackageImport.class, 1, 1);
             List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
-                    ourExpose, 1, false, 1);
-            if (md18expose != null) {
-                queries.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(view,
-                        md18expose, 1, false, 1));
-            }
+                    expose, 1, true, 1);
             elementImports.addAll(packageImports);
             elementImports.addAll(queries);
             if (elementImports.isEmpty()) {
@@ -354,42 +343,7 @@ public class DocumentValidator {
         else if (!(view instanceof Diagram)) {
             missingViewpointErrors.addViolation(view, missingViewpointErrors.getDescription());
         }
-        if (view instanceof Package) {
-            List<Dependency> firsts = getOutgoingDependencies(view, DocGenProfile.firstStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGenProfile.firstStereotype, 1, false, 1);
-            List<Dependency> nexts = getOutgoingDependencies(view, DocGenProfile.nextStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGenProfile.nextStereotype, 1, false, 1);
-            List<Dependency> contents = getOutgoingDependencies(view, DocGenProfile.nosectionStereotype);//Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(view,
-            //DocGenProfile.nosectionStereotype, 1, false, 1);
-            if (contents.size() > 1) {
-                multipleContentErrors.addViolation(view, multipleContentErrors.getDescription());
-            }
-            if (!section && (!firsts.isEmpty() || !nexts.isEmpty())) {
-                nonView2View.addViolation(view, nonView2View.getDescription());
-            }
-            if (firsts.size() > 1) {
-                multipleFirstErrors.addViolation(view, multipleFirstErrors.getDescription());
-            }
-            if (nexts.size() > 1) {
-                multipleNextErrors.addViolation(view, multipleNextErrors.getDescription());
-            }
-            for (Dependency c : contents) {
-                Element nosection = ModelHelper.getSupplierElement(c);
-                validateView((NamedElement) nosection, false);
-                dg.addEdge(view, (NamedElement) nosection, c);
-            }
-            for (Dependency f : firsts) {
-                Element first = ModelHelper.getSupplierElement(f);
-                validateView((NamedElement) first, true);
-                dg.addEdge(view, (NamedElement) first, f);
-            }
-            for (Dependency n : nexts) {
-                Element next = ModelHelper.getSupplierElement(n);
-                validateView((NamedElement) next, true);
-                dg.addEdge(view, (NamedElement) next, n);
-            }
-        }
-        else if (view instanceof Class) {
+        if (view instanceof Class) {
             for (Property p : ((Class) view).getOwnedAttribute()) {
                 if (p.getType() != null && StereotypesHelper.hasStereotypeOrDerived(p.getType(), sysmlview)) {
                     validateView(p.getType(), true);
@@ -628,7 +582,7 @@ public class DocumentValidator {
         }
         for (ValidationRuleViolation e : multipleViewpoints.getViolations()) {
             pw.println(error + ((NamedElement) e.getElement()).getQualifiedName()
-                    + " conforms to multiple viewpoints!");
+                    + " conform to multiple viewpoints!");
         }
         for (ValidationRuleViolation e : missingViewpointErrors.getViolations()) {
             pw.println(warning + ((NamedElement) e.getElement()).getQualifiedName()
@@ -1013,15 +967,4 @@ public class DocumentValidator {
         }
         return constraints;
     }
-
-    public static List<Dependency> getOutgoingDependencies(Element source, String s) {
-        List<Dependency> result = new ArrayList<Dependency>();
-        for (DirectedRelationship dr : source.get_directedRelationshipOfSource()) {
-            if (StereotypesHelper.hasStereotype(dr, s) && dr instanceof Dependency) {
-                result.add((Dependency) dr);
-            }
-        }
-        return result;
-    }
-
 }

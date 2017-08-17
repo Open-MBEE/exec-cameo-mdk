@@ -1,102 +1,37 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<diagram abbreviation="VD" baseType="Class Diagram" category="MDK" type="View Diagram" version="7">
+<diagram version="8" type="View Diagram" baseType="Class Diagram" abbreviation="VD" category="MDK">
     <toolbarConfiguration>
-        <baseCategory expandedByDefault="true" id="COMMON_ELEMENTS_STATIC" parentCategoryID="COMMON_ELEMENTS_STATIC"/>
-        <category expandedByDefault="true" id="action_category_1378760795058_456847_0" name="View Diagram">
+        <baseCategory id="COMMON_ELEMENTS_STATIC" parentCategoryID="COMMON_ELEMENTS_STATIC" expandedByDefault="true"/>
+        <category name="View Diagram" id="action_category_1378760795058_456847_0" expandedByDefault="true">
             <actions>
-                <custom description="Document" id="IDaction_1378760972112_50537_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
+                <custom type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class" description="Document" listAsElement="false" opposite="false" id="IDaction_1378760972112_50537_0">
                     <stereotype id="_17_0_2_3_87b0275_1371477871400_792964_43374"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager">
-                                <propertyManagerID>_17_0_2_3_407019f_1383678629443_122814_29328</propertyManagerID>
-                            </mdElement>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
                 </custom>
-                <custom description="View" id="IDaction_1378760887341_190598_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
-                    <stereotype id="_17_0_1_232f03dc_1325612611695_581988_21583"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager">
-                                <propertyManagerID>_17_0_2_3_407019f_1383678629443_466848_29329</propertyManagerID>
-                            </mdElement>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
+                <custom type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class" description="View" listAsElement="false" opposite="false" id="IDaction_1378760887341_190598_0">
+                    <stereotype id="_11_5EAPbeta_be00301_1147420760998_43940_227"/>
                 </custom>
-                <custom description="Viewpoint" id="IDaction_1378760931841_229013_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class">
+                <custom type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class" description="Viewpoint" listAsElement="false" opposite="false" id="IDaction_1378760931841_229013_0">
                     <stereotype id="_11_5EAPbeta_be00301_1147420812402_281263_364"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager">
-                                <propertyManagerID>_17_0_2_3_407019f_1383678629445_956792_29330</propertyManagerID>
-                            </mdElement>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
                 </custom>
-                <custom description="Method" id="IDaction_1389808057005_34439_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity">
+                <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activity" description="Method" listAsElement="false" opposite="false" id="IDaction_1389808057005_34439_0">
                     <stereotype id="_17_0_1_2_8c20286_1339091178652_692897_26954"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager"/>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
                 </custom>
-                <custom description="Stakeholder" id="IDaction_1389818410532_134142_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component">
-                    <stereotype id="_project-bundle_project_PackageableElement-project_u003aStakeholder_PackageableElement"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager"/>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
-                </custom>
+                <custom type="com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component" description="Stakeholder" listAsElement="false" opposite="false" id="IDaction_1389818410532_134142_0"/>
                 <standard action="ADD_DIRECTED_COMPOSITION"/>
                 <standard action="ADD_DIRECTED_AGGREGATION"/>
-                <custom description="AddressedTo" id="IDaction_1383678317623_75746_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency">
-                    <stereotype id="_17_0_2_3_407019f_1381797132779_823460_29420"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager">
-                                <propertyManagerID>_17_0_2_3_407019f_1383678629445_349963_29331</propertyManagerID>
-                            </mdElement>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
+                <custom type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency" description="Expose" listAsElement="false" opposite="false" id="IDaction_1378760996044_294568_0">
+                    <stereotype id="_17_0_5beta_17530432_1382587480303_325976_12505"/>
                 </custom>
-                <custom description="Covers" id="IDaction_1383678488690_544124_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency">
-                    <stereotype id="_17_0_2_3_407019f_1381797151017_175272_29444"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager">
-                                <propertyManagerID>_17_0_2_3_407019f_1383678629446_937620_29332</propertyManagerID>
-                            </mdElement>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
-                </custom>
-                <custom description="Expose" id="IDaction_1378760996044_294568_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency">
-                    <stereotype id="_16_5_4_409a058d_1259862803278_226185_1083"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager">
-                                <propertyManagerID>_17_0_2_3_407019f_1383678629446_600649_29333</propertyManagerID>
-                            </mdElement>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
-                </custom>
-                <custom description="Conforms" id="IDaction_1389808028890_615249_0" listAsElement="false" type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization">
-                    <stereotype id="_17_0_2_3_407019f_1389807639137_860750_29082"/>
-                    <defaults>
-                        <PropertyVisitorAcceptor xmlns:xmi="http://www.omg.org/spec/XMI/20110701">
-                            <mdElement elementClass="PropertyManager"/>
-                        </PropertyVisitorAcceptor>
-                    </defaults>
+                <custom type="com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Generalization" description="Conform" listAsElement="false" opposite="false" id="IDaction_1389808028890_615249_0">
+                    <stereotype id="_11_5EAPbeta_be00301_1147420728091_674481_152"/>
                 </custom>
             </actions>
         </category>
     </toolbarConfiguration>
-    <module location="/Applications/MagicDraw UML 17.0.2/profiles/MDK/SysML Extensions.mdxml" name="SysML Extensions.mdxml">
+    <module name="SysML Extensions.mdxml" location="/Users/igomes/mdk/build/install/profiles/SysML Extensions.mdxml">
         <root id="_17_0_1_2_8c20286_1339022620435_958581_14857"/>
     </module>
-    <module location="/Applications/MagicDraw UML 17.0.2/profiles/UML_Standard_Profile.mdzip" name="UML_Standard_Profile.mdzip">
+    <module name="UML_Standard_Profile.mdzip" location="/Users/igomes/mdk/build/install/profiles/UML_Standard_Profile.mdzip">
         <root id="magicdraw_uml_standard_profile_v_0001"/>
     </module>
     <manipulators>
@@ -111,8 +46,6 @@
         <path action="IDaction_1389808028890_615249_0">
             <target>IDaction_1378760931841_229013_0</target>
         </path>
-        <path action="IDaction_1383678317623_75746_0"/>
-        <path action="IDaction_1383678488690_544124_0"/>
         <path action="ADD_NOTE_ANCHOR">
             <target>ADD_NOTE</target>
             <target>ADD_HTML_NOTE</target>
@@ -121,4 +54,3 @@
         </path>
     </manipulators>
 </diagram>
-
