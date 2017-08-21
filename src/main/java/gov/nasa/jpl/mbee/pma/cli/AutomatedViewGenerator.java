@@ -88,6 +88,8 @@ public class AutomatedViewGenerator implements CommandLineAction {
             DEBUG = "debug",
             VERBOSE = "verbose";
 
+    private String separator = "\n***************\n";
+
     private final int CANCEL_DELAY = 15;
 
     /*//////////////////////////////////////////////////////////////
@@ -98,18 +100,17 @@ public class AutomatedViewGenerator implements CommandLineAction {
 
     @Override
     public byte execute(String[] args) {
+        // start the cancel handler so we don't terminate in the middle of a view sync operation and so we can force logout if logged in to teamwork
+        cancelHandler = new InterruptTrap();
+        Runtime.getRuntime().addShutdownHook(cancelHandler);
+
         try {
-            boolean parsed = parseArgs(args);
-            if (!parsed || parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
+            if (!parseArgs(args) || parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
                 displayHelp();
                 return 1;
             }
 
-            // start the cancel handler so we don't terminate in the middle of a view sync operation and so we can force logout if logged in to teamwork
-            cancelHandler = new InterruptTrap();
-            Runtime.getRuntime().addShutdownHook(cancelHandler);
-
-            System.out.println("\n**********************\n");
+            System.out.println(separator);
             System.out.println("[INFO] Performing automated view generation.");
 
             String mmsUrl = "https://" + parser.getOptionValue(MMS_HOST);
@@ -181,7 +182,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
                 e.printStackTrace();
             }
         }
-        System.out.println("\n**********************\n");
+        System.out.println(separator);
         return error;
     }
 
@@ -453,11 +454,8 @@ public class AutomatedViewGenerator implements CommandLineAction {
 
     private void displayHelp() {
         HelpFormatter formatter = new HelpFormatter();
-        String usage = "$MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh";
-        String header = "The associated script manages the settings and configuration options necessary to launch a " +
-                "MagicDraw CommandLine program in the OSGI framework. This tool must be launched with the associated " +
-                "shell script or a similar manual configuration; it will not run directly. ";
-        formatter.printHelp(usage, header, parserOptions, "", true);
+        String usage = separator + "$MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh";
+        formatter.printHelp(usage, separator, parserOptions, separator, true);
     }
 
     private boolean validateParser() throws FileNotFoundException, UnsupportedEncodingException {
