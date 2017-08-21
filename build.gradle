@@ -179,91 +179,6 @@ task extractDependencies {
 }
 compileJava.dependsOn extractDependencies
 
-class PreDist extends DefaultTask {
-    String humanVersion
-    String internalVersion
-    String groupName
-    String buildTimestamp
-    String descriptor
-
-    @TaskAction
-    void executeTask() {
-        project.copy {
-            from 'src/main/dist'
-            exclude 'template'
-            from 'src/main/dist/template'
-            into 'build/generated-dist'
-        }
-        project.copy {
-            from project.configurations.compile.resolvedConfiguration.resolvedArtifacts.file
-            from 'lib'
-            from project.jar
-            into "build/generated-dist/plugins/${groupName}"
-        }
-        project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
-            file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${groupName}")))
-        }
-
-        String pluginLibraries = ''
-        project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
-            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
-        }
-        project.copy {
-            from 'src/main/dist/template/plugins/${group}/plugin.xml'
-            filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + pluginLibraries) }
-            filter { String line -> line.replace('${human.version}', humanVersion) }
-            filter { String line -> line.replace('${internal.version}', internalVersion) }
-            into "build/generated-dist/plugins/${groupName}"
-        }
-
-        String descriptorFiles = ''
-        project.fileTree(dir: 'build/generated-dist').each { file ->
-            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '')
-            descriptorFiles += '\t\t<file from=\"' + relativePath + '\" to=\"' + relativePath + '\"/>' + System.lineSeparator()
-        }
-        project.copy {
-            from "src/main/dist/template/data/resourcemanager/${descriptor}"
-            filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + descriptorFiles) }
-            filter { String line -> line.replace('${human.version}', humanVersion) }
-            filter { String line -> line.replace('${internal.version}', internalVersion) }
-            filter { String line -> line.replace('${build.timestamp}', buildTimestamp) }
-            into 'build/generated-dist/data/resourcemanager'
-        }
-    }
-}
-
-task preDist(type: PreDist, dependsOn: jar) {
-    humanVersion = version.endsWith('-SNAPSHOT') && buildTag != null && !buildTag.isEmpty() ? version.replace('-SNAPSHOT', '') : version
-    internalVersion = buildNumber
-    groupName = magicdDrawGroupName
-    buildTimestamp = timestamp
-    descriptor = descriptorFile
-}
-
-distributions {
-    main {
-        contents {
-            exclude 'template'
-            from 'build/generated-dist'
-        }
-    }
-}
-
-task distTar(type: Tar, overwrite: true) {
-}
-assembleDist.dependsOn.remove distTar
-//tasks.remove(distTar)
-
-distZip {
-    includeEmptyDirs false
-    duplicatesStrategy DuplicatesStrategy.EXCLUDE
-    eachFile { file ->
-        file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
-    }
-}
-
-distZip.dependsOn preDist
-
 javadoc {
     options.addStringOption("sourcepath", "")
 }
@@ -302,7 +217,7 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
 
     manifest {
         attributes(
-            'Main-Class': 'gov.nasa.jpl.mbee.mdk.test.framework.GradleMagicDrawLauncher'
+                'Main-Class': 'gov.nasa.jpl.mbee.mdk.test.framework.GradleMagicDrawLauncher'
         )
     }
 }
@@ -311,6 +226,102 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
 }
+
+task javadocZip(type: Zip, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+class PreDist extends DefaultTask {
+    String humanVersion
+    String internalVersion
+    String groupName
+    String buildTimestamp
+    String descriptor
+
+    @TaskAction
+    void executeTask() {
+        project.copy {
+            from 'src/main/dist'
+            exclude 'template'
+            from 'src/main/dist/template'
+            into 'build/generated-dist'
+        }
+        project.copy {
+            from project.configurations.compile.resolvedConfiguration.resolvedArtifacts.file
+            from 'lib'
+            from project.jar
+            into "build/generated-dist/plugins/${groupName}"
+        }
+        project.copy {
+            from project.getTasks().getByName('javadocZip')
+            into "build/generated-dist/plugins/${groupName}/javadoc"
+        }
+        project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
+            file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${groupName}")))
+        }
+
+        String pluginLibraries = ''
+        project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
+            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
+        }
+        project.copy {
+            from 'src/main/dist/template/plugins/${group}/plugin.xml'
+            filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + pluginLibraries) }
+            filter { String line -> line.replace('${human.version}', humanVersion) }
+            filter { String line -> line.replace('${internal.version}', internalVersion) }
+            into "build/generated-dist/plugins/${groupName}"
+        }
+
+        String descriptorFiles = ''
+        project.fileTree(dir: 'build/generated-dist').each { file ->
+            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '')
+            descriptorFiles += '\t\t<file from=\"' + relativePath + '\" to=\"' + relativePath + '\"/>' + System.lineSeparator()
+        }
+        project.copy {
+            from "src/main/dist/template/data/resourcemanager/${descriptor}"
+            filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + descriptorFiles) }
+            filter { String line -> line.replace('${human.version}', humanVersion) }
+            filter { String line -> line.replace('${internal.version}', internalVersion) }
+            filter { String line -> line.replace('${build.timestamp}', buildTimestamp) }
+            into 'build/generated-dist/data/resourcemanager'
+        }
+    }
+}
+
+task preDist(type: PreDist) {
+    humanVersion = version.endsWith('-SNAPSHOT') && buildTag != null && !buildTag.isEmpty() ? version.replace('-SNAPSHOT', '') : version
+    internalVersion = buildNumber
+    groupName = magicdDrawGroupName
+    buildTimestamp = timestamp
+    descriptor = descriptorFile
+}
+preDist.dependsOn jar
+preDist.dependsOn javadocZip
+
+distributions {
+    main {
+        contents {
+            exclude 'template'
+            from 'build/generated-dist'
+        }
+    }
+}
+
+task distTar(type: Tar, overwrite: true) {
+}
+assembleDist.dependsOn.remove distTar
+//tasks.remove(distTar)
+
+distZip {
+    includeEmptyDirs false
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+    eachFile { file ->
+        file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
+    }
+}
+
+distZip.dependsOn preDist
 
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
