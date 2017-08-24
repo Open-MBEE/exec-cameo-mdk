@@ -529,6 +529,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
+        ImageValidator iv = new ImageValidator(images, images);
+        // this checks images generated from the local generation against what's on the web based on checksum
+        iv.validate(project);
+        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
+        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
+            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
+                if (!validationRuleViolation.getActions().isEmpty()) {
+                    validationRuleViolation.getActions().get(0).actionPerformed(null);
+                }
+            }
+        }
+
         try {
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
@@ -738,17 +750,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             if (localSyncTransactionCommitListener != null) {
                 localSyncTransactionCommitListener.setDisabled(false);
-            }
-        }
-        ImageValidator iv = new ImageValidator(images, images);
-        // this checks images generated from the local generation against what's on the web based on checksum
-        iv.validate(project);
-        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
-        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
-            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
-                if (!validationRuleViolation.getActions().isEmpty()) {
-                    validationRuleViolation.getActions().get(0).actionPerformed(null);
-                }
             }
         }
 
