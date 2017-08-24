@@ -38,7 +38,7 @@ public class TemporalDiff extends Table {
     @Override
     public void initialize() {
 
-        Object attr = GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "desiredAttribute", null);
+        Object attr = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "desiredAttribute", DocGenProfile.PROFILE_NAME, null);
         if (attr instanceof EnumerationLiteral) {
             attributeToCompare = Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName());
         }
@@ -54,10 +54,10 @@ public class TemporalDiff extends Table {
         else {
             tagAttr = "val";
         }
-        baseVersionTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "baseVersionTime", null);
-        compareToTime = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "compareToTime", "latest");
-        baseBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "baseBranch", null);
-        compareToBranchName = (String) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.temporalDiffStereotype, "compareToBranch", null);
+        baseVersionTime = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "baseVersionTime", DocGenProfile.PROFILE_NAME, null);
+        compareToTime = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "compareToTime", DocGenProfile.PROFILE_NAME, "latest");
+        baseBranchName = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "baseBranch", DocGenProfile.PROFILE_NAME, null);
+        compareToBranchName = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "compareToBranch", DocGenProfile.PROFILE_NAME, null);
     }
 
     @Override

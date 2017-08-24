@@ -83,7 +83,7 @@ public class InstanceViewpointAction extends MDAction {
         view.setName(name);
         StereotypesHelper.addStereotype(view, sysmlView);
         Generalization conforms = ef.createGeneralizationInstance();
-        StereotypesHelper.addStereotype(conforms, Utils.getSysML14ConformsStereotype(project));
+        StereotypesHelper.addStereotype(conforms, Utils.getConformStereotype(project));
         ModelHelper.setClientElement(conforms, view);
         ModelHelper.setSupplierElement(conforms, vp);
         conforms.setOwner(view);

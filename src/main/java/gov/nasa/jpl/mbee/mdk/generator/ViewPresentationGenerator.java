@@ -529,6 +529,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
+        ImageValidator iv = new ImageValidator(images, images);
+        // this checks images generated from the local generation against what's on the web based on checksum
+        iv.validate(project);
+        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
+        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
+            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
+                if (!validationRuleViolation.getActions().isEmpty()) {
+                    validationRuleViolation.getActions().get(0).actionPerformed(null);
+                }
+            }
+        }
+
         try {
             for (Element view : views) {
                 if (skippedViews.contains(view)) {
@@ -565,11 +577,14 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
                 Object o;
                 ObjectNode serverViewJson = (o = viewMap.get(Converters.getElementToIdConverter().apply(view))) != null ? ((ViewMapping) o).getObjectNode() : null;
-                if (!JsonEquivalencePredicate.getInstance().test(clientViewJson, serverViewJson)) {
+
+                ObjectNode clientViewContentsJson = clientViewJson.deepCopy().retain(MDKConstants.ID_KEY, MDKConstants.CONTENTS_KEY, MDKConstants.DISPLAYED_ELEMENT_IDS_KEY);
+                ObjectNode serverViewContentsJson = serverViewJson != null ? serverViewJson.deepCopy().retain(MDKConstants.ID_KEY, MDKConstants.CONTENTS_KEY, MDKConstants.DISPLAYED_ELEMENT_IDS_KEY) : null;
+                if (!JsonEquivalencePredicate.getInstance().test(clientViewContentsJson, serverViewContentsJson)) {
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("View diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonPatchFunction.getInstance().apply(clientViewJson, serverViewJson).toString());
+                        Application.getInstance().getGUILog().log("View contents diff for " + Converters.getElementToIdConverter().apply(view) + ": " + JsonPatchFunction.getInstance().apply(clientViewContentsJson, serverViewContentsJson).toString());
                     }
-                    elementsToCommit.add(clientViewJson);
+                    elementsToCommit.add(serverViewJson != null ? clientViewContentsJson : clientViewJson);
                 }
                 for (PresentationElementInstance presentationElementInstance : view2pe.get(view)) {
                     if (presentationElementInstance.getInstance() != null) {
@@ -738,17 +753,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }
             if (localSyncTransactionCommitListener != null) {
                 localSyncTransactionCommitListener.setDisabled(false);
-            }
-        }
-        ImageValidator iv = new ImageValidator(images, images);
-        // this checks images generated from the local generation against what's on the web based on checksum
-        iv.validate(project);
-        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
-        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
-            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
-                if (!validationRuleViolation.getActions().isEmpty()) {
-                    validationRuleViolation.getActions().get(0).actionPerformed(null);
-                }
             }
         }
 

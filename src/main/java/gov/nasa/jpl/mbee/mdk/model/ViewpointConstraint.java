@@ -61,12 +61,12 @@ public class ViewpointConstraint extends Query {
 
     @Override
     public void initialize() {
-        iterate = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.viewpointConstraintStereotype, "iterate", true);
-        expression = (String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.viewpointConstraintStereotype, "expression", "");
-        report = (Boolean) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.viewpointConstraintStereotype, "validationReport", false);
+        iterate = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.viewpointConstraintStereotype, "iterate", DocGenProfile.PROFILE_NAME, true);
+        expression = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.viewpointConstraintStereotype, "expression", DocGenProfile.PROFILE_NAME, "");
+        report = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.viewpointConstraintStereotype, "validationReport", DocGenProfile.PROFILE_NAME, false);
     }
 
 }

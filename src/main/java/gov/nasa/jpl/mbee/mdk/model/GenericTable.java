@@ -307,10 +307,10 @@ public class GenericTable extends Table {
     @Override
     public void initialize() {
         super.initialize();
-        setHeaders((List<String>) GeneratorUtils.getListProperty(dgElement, DocGenProfile.headersChoosable,
-                "headers", new ArrayList<String>()));
-        setSkipIfNoDoc((Boolean) GeneratorUtils.getObjectProperty(dgElement, DocGenProfile.docSkippable,
-                "skipIfNoDoc", false));
+        setHeaders((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.headersChoosable,
+                "headers", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
+        setSkipIfNoDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.docSkippable,
+                "skipIfNoDoc", DocGenProfile.PROFILE_NAME, false));
     }
 
 }

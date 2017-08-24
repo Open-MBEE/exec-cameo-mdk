@@ -136,24 +136,24 @@ public class TableStructure extends Table {
             TableColumn col = null;
             if (GeneratorUtils.hasStereotypeByString(curNode, DocGenProfile.tableAttributeColumnStereotype)) {
                 col = new TableAttributeColumn();
-                Object attr = GeneratorUtils.getObjectProperty(curNode,
-                        DocGenProfile.tableAttributeColumnStereotype, "desiredAttribute", null);
+                Object attr = GeneratorUtils.getStereotypePropertyFirst(curNode,
+                        DocGenProfile.tableAttributeColumnStereotype, "desiredAttribute", DocGenProfile.PROFILE_NAME, null);
                 ((TableAttributeColumn) col).attribute = (attr instanceof EnumerationLiteral)
                         ? Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName()) : null;
             }
             else if (GeneratorUtils.hasStereotypeByString(curNode,
                     DocGenProfile.tableExpressionColumnStereotype)) {
                 col = new TableExpressionColumn();
-                ((TableExpressionColumn) col).expression = (String) GeneratorUtils.getObjectProperty(curNode,
-                        DocGenProfile.tableExpressionColumnStereotype, "expression", null);
-                ((TableExpressionColumn) col).iterate = (Boolean) GeneratorUtils.getObjectProperty(curNode,
-                        DocGenProfile.tableExpressionColumnStereotype, "iterate", true);
+                ((TableExpressionColumn) col).expression = (String) GeneratorUtils.getStereotypePropertyFirst(curNode,
+                        DocGenProfile.tableExpressionColumnStereotype, "expression", DocGenProfile.PROFILE_NAME, null);
+                ((TableExpressionColumn) col).iterate = (Boolean) GeneratorUtils.getStereotypePropertyFirst(curNode,
+                        DocGenProfile.tableExpressionColumnStereotype, "iterate", DocGenProfile.PROFILE_NAME, true);
             }
             else if (GeneratorUtils.hasStereotypeByString(curNode,
                     DocGenProfile.tablePropertyColumnStereotype)) {
                 col = new TablePropertyColumn();
-                ((TablePropertyColumn) col).property = (Property) GeneratorUtils.getObjectProperty(curNode,
-                        DocGenProfile.tablePropertyColumnStereotype, "desiredProperty", null);
+                ((TablePropertyColumn) col).property = (Property) GeneratorUtils.getStereotypePropertyFirst(curNode,
+                        DocGenProfile.tablePropertyColumnStereotype, "desiredProperty", DocGenProfile.PROFILE_NAME, null);
             }
             else if (GeneratorUtils.hasStereotypeByString(curNode, "TableColumnGroup")) {
                 col = new TableColumnGroup();
@@ -166,7 +166,7 @@ public class TableStructure extends Table {
                 outs = curNode.getOutgoing();
                 continue;
             }
-            col.editable = (Boolean) GeneratorUtils.getObjectProperty(curNode, DocGenProfile.editableChoosable, "editable", true);
+            col.editable = (Boolean) GeneratorUtils.getStereotypePropertyFirst(curNode, DocGenProfile.editableChoosable, "editable", DocGenProfile.PROFILE_NAME, true);
             col.activityNode = curNode;
             if (curNode instanceof CallBehaviorAction && ((CallBehaviorAction) curNode).getBehavior() != null) {
                 col.bnode = GeneratorUtils.findInitialNode(((CallBehaviorAction) curNode).getBehavior());

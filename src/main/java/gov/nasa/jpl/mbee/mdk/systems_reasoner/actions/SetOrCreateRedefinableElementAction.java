@@ -60,19 +60,51 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
 
         if (redefinedElement == null) {
             redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
+            if (redefinedElement == null) {
+                return null;
+            }
             redefinedElement.getRedefinedElement().removeAll(elementToBeRedefined.getRedefinedElement());
             redefinedElement.getRedefinedElement().add(elementToBeRedefined);
         }
 
         if (elementToBeRedefined instanceof Property) {
             if (((Property) elementToBeRedefined).getAssociation() != null) {
-                createInheritingAssociation((Property) elementToBeRedefined, subClassifier, (Property) redefinedElement);
+                if(!existingAssociationInheritsFromGeneralAssociation(redefinedElement, (Property) elementToBeRedefined)) {
+                    createInheritingAssociation((Property) elementToBeRedefined, subClassifier, (Property) redefinedElement);
+                }
             }
         }
         if (isRecursive && redefinedElement instanceof Property && ((TypedElement) redefinedElement).getType() != null) {
             CreateSpecializedTypeAction.createSpecializedType((Property) redefinedElement, subClassifier, traveled, visited, isIndividual, isRecursive);
         }
         return redefinedElement;
+    }
+
+    private static boolean existingAssociationInheritsFromGeneralAssociation(RedefinableElement redefinedElement, Property elementToBeRedefined) {
+        if(redefinedElement instanceof Property) {
+            Association association = ((Property) redefinedElement).getAssociation();
+            Association general = elementToBeRedefined.getAssociation();
+            if(association != null) {
+                return eventuallyInherits(association, general);
+            }else{
+                return false;
+            }
+
+        }
+        return false;
+    }
+
+    private static boolean eventuallyInherits(Classifier association, Classifier general) {
+        if(association.getGeneral().contains(general)){
+            return true;
+        }else{
+            for (Classifier specific : association.getGeneral()) {
+                if(eventuallyInherits(specific, general)){
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     private static RedefinableElement findExistingRedefiningElement(Classifier subClassifier, RedefinableElement elementToBeRedefined) {

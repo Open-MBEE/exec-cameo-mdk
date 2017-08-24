@@ -61,9 +61,11 @@ public class RedefineActionAction extends GenericRuleViolationAction {
             }
             if (redefinedElement == null) {
                 redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(re, act, false);
+                if (redefinedElement == null) {
+                    return null;
+                }
                 if (redefinedElement instanceof Namespace) {
-                    Collection<?> emptyCollection = new ArrayList<String>();
-                    ((Namespace) redefinedElement).getOwnedMember().retainAll(emptyCollection);
+                    ((Namespace) redefinedElement).getOwnedMember().clear();
                 }
                 redefinedElement.getRedefinedElement().add(re);
                 if (createSpecializedType && redefinedElement instanceof Property && redefinedElement instanceof TypedElement && ((TypedElement) redefinedElement).getType() != null) {

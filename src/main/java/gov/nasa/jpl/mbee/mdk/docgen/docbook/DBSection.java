@@ -14,19 +14,18 @@ package gov.nasa.jpl.mbee.mdk.docgen.docbook;
  * @author dlam
  */
 public class DBSection extends DBHasContent {
-
     private boolean isAppendix;
     private boolean isChapter;
     private boolean skipIfEmpty;
-    private String stringIfEmpty;
+    private String stringIfEmpty = "";
     private boolean isView;
-    private boolean isNoSection;
 
-    public DBSection() {
-        isAppendix = false;
-        isChapter = false;
-        skipIfEmpty = false;
-        stringIfEmpty = "";
+    public void isAppendix(boolean a) {
+        isAppendix = a;
+    }
+
+    public boolean isAppendix() {
+        return isAppendix;
     }
 
     public void isChapter(boolean c) {
@@ -45,36 +44,12 @@ public class DBSection extends DBHasContent {
         return stringIfEmpty;
     }
 
-    public void setAppendix(boolean isAppendix) {
-        this.isAppendix = isAppendix;
-    }
-
-    public void setChapter(boolean isChapter) {
-        this.isChapter = isChapter;
-    }
-
     public void setSkipIfEmpty(boolean s) {
         skipIfEmpty = s;
     }
 
     public void setStringIfEmpty(String s) {
         stringIfEmpty = s;
-    }
-
-    public void isAppendix(boolean a) {
-        isAppendix = a;
-    }
-
-    public boolean isAppendix() {
-        return isAppendix;
-    }
-
-    public void isNoSection(boolean a) {
-        isNoSection = a;
-    }
-
-    public boolean isNoSection() {
-        return isNoSection;
     }
 
     public boolean isView() {

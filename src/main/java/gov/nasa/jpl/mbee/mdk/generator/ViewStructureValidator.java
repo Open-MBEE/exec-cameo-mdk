@@ -22,23 +22,23 @@ import java.util.Set;
 public class ViewStructureValidator {
 
     private Stereotype sysmlViewpoint;
-    private Stereotype sysmlConforms;
+    private Stereotype sysmlConform;
     private Stereotype sysmlView;
     private List<Element> missing = new ArrayList<>();
 
     public void validate(Element curView) {
         Project project = Project.getProject(curView);
         sysmlViewpoint = Utils.getViewpointStereotype(project);
-        sysmlConforms = Utils.getSysML14ConformsStereotype(project);
+        sysmlConform = Utils.getConformStereotype(project);
         sysmlView = Utils.getViewStereotype(project);
 
         List<Element> childrenViews = getChildrenViews(curView);
-        Element curViewpoint = getConforms(curView);
+        Element curViewpoint = getConform(curView);
         if (curViewpoint == null) {
             return;
         }
         List<Element> childrenViewpoints = getChildrenViewpoints(curViewpoint);
-        Set<Element> childrenConforms = getChildrenConforms(childrenViews);
+        Set<Element> childrenConforms = getChildrenConform(childrenViews);
         for (Element vp : childrenViewpoints) {
             if (!childrenConforms.contains(vp)) {
                 missing.add(vp);
@@ -66,20 +66,20 @@ public class ViewStructureValidator {
                 Utils.collectAssociatedElements(e, 1, AggregationKindEnum.COMPOSITE), sysmlView, true, true);
     }
 
-    private Element getConforms(Element v) {
+    private Element getConform(Element v) {
         List<Element> conforms = Utils.collectDirectedRelatedElementsByRelationshipStereotype(v,
-                sysmlConforms, 1, false, 1);
+                sysmlConform, 1, true, 1);
         if (conforms.isEmpty()) {
             return null;
         }
         return conforms.get(0);
     }
 
-    private Set<Element> getChildrenConforms(List<Element> views) {
+    private Set<Element> getChildrenConform(List<Element> views) {
         Set<Element> res = new HashSet<>();
         for (Element e : views) {
             res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotype(e,
-                    sysmlConforms, 1, false, 1));
+                    sysmlConform, 1, true, 1));
         }
         return res;
     }

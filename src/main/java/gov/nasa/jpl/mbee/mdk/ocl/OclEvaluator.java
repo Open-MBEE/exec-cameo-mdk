@@ -117,8 +117,8 @@ public class OclEvaluator {
 
     public static String queryElementToStringExpression(Element query) {
         String expr = null;
-        Object o = GeneratorUtils.getObjectProperty(query, DocGenProfile.expressionChoosable, "expression",
-                null);
+        Object o = GeneratorUtils.getStereotypePropertyFirst(query, DocGenProfile.expressionChoosable, "expression",
+                DocGenProfile.PROFILE_NAME, null);
         expr = queryObjectToStringExpression(o);
         if (notNullOrEndInQuestion(expr)) {
             return expr;
