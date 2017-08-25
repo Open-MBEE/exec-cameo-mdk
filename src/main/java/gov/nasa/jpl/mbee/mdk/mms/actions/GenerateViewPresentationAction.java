@@ -25,7 +25,7 @@ public class GenerateViewPresentationAction extends MMSAction {
     private boolean recurse;
 
     public GenerateViewPresentationAction(Set<Element> elements, boolean recurse) {
-        super(recurse ? RECURSE_DEFAULT_ID : DEFAULT_ID, "Generate View" + (recurse ? "s Recursively" : ""), null, null);
+        super(recurse ? RECURSE_DEFAULT_ID : DEFAULT_ID, "Generate View Contents" + (recurse ? " Recursively" : ""), null, null);
         this.elements = elements;
         this.project = Project.getProject(elements.iterator().next());
         this.recurse = recurse;
