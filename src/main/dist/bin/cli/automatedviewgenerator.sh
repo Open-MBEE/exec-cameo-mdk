@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # sage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-h] [-debug]
-#       [-mmsHost <arg>] [-mmsPassword <arg>] [-mmsPort <arg>] [-mmsUsername <arg>]
-#       [-twcHost <arg>] [-twcPassword <arg>] [-twcPort <arg>] [-twcUsername <arg>]
+#       [-mmsHost <arg>] [-mmsPort <arg>] [-mmsUsername <arg>] [-mmsPassword <arg>]
+#       [-twcHost <arg>] [-twcPort <arg>] [-twcUsername <arg>] [-twcPassword <arg>]
 #       [-pmaHost <arg>] [-pmaPort <arg>] [-pmaJobId <arg>]
 #       [-projectId <arg>] [-refId <arg>] [-targetViewId <arg>] [-generateRecursively]
 
