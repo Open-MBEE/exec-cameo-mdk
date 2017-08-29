@@ -1,17 +1,15 @@
 #!/bin/bash
 
-#usage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-debug]
-#       [-generateRecursively] [-h] [-mmsHost <arg>] [-mmsPassword <arg>]
-#       [-mmsPort <arg>] [-mmsUsername <arg>] [-pmaHost <arg>]
-#       [-pmaJobId <arg>] [-pmaPort <arg>] [-projectId <arg>]
-#       [-refId <arg>] [-targetViewId <arg>]
-#       [-twcHost <arg>] [-twcPassword <arg>] [-twcPort <arg>]
-#       [-twcUsername <arg>] [-verbose]
+# sage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-h] [-debug]
+#       [-mmsHost <arg>] [-mmsPassword <arg>] [-mmsPort <arg>] [-mmsUsername <arg>]
+#       [-twcHost <arg>] [-twcPassword <arg>] [-twcPort <arg>] [-twcUsername <arg>]
+#       [-pmaHost <arg>] [-pmaPort <arg>] [-pmaJobId <arg>]
+#       [-projectId <arg>] [-refId <arg>] [-targetViewId <arg>] [-generateRecursively]
 
-#This script manages the settings and configuration options
-#necessary to launch a MagicDraw CommandLine program in the OSGI framework.
-#This tool must be launched with the associated shell script or a similar
-#manual configuration; it will not run directly.
+# This script manages the settings and configuration options
+# necessary to launch a MagicDraw CommandLine program in the OSGI framework.
+# This tool must be launched with the associated shell script or a similar
+# manual configuration; it will not run directly.
 
 if [ -z "$MAGICDRAW_HOME" ]; then
     echo "ERROR: MAGICDRAW_HOME environment variable not set, script cannot proceed."
@@ -47,6 +45,6 @@ java -Xmx8192M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \
        -Dsun.locale.formatasdefault=true \
        -Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher \
        -Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator \
-       com.nomagic.osgi.launcher.ProductionFrameworkLauncher "$@"
+       com.nomagic.osgi.launcher.ProductionFrameworkLauncher -verbose "$@"
 
 exit $?
