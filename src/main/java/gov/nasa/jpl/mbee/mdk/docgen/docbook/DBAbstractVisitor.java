@@ -58,6 +58,9 @@ public abstract class DBAbstractVisitor implements IDBVisitor {
     public void visit(DBC3Plot c3plot){
     }
 
+    @Override
+    public void visit (DBPlot plot){}
+
 
     protected void visitChildren(DBHasContent d) {
         for (DocumentElement de : d.getChildren()) {

@@ -361,6 +361,30 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         System.out.println(entry.toJSONString());
         newpe.peek().add(ipe);
     }
+
+    @Override
+    public void visit(DBPlot plot){
+        JSONObject entry = new JSONObject();
+        entry.put("title", plot.getTitle());
+        entry.put("ptype", plot.getType());
+        entry.put("config", plot.getConfig());
+        DBTable table = plot.getTable();
+        DBAlfrescoTableVisitor v = new DBAlfrescoTableVisitor(this.recurse);
+        table.accept(v);
+        entry.put("table", v.getObject());
+        entry.put("type", "Plot");
+
+        InstanceSpecification i = null;
+        if (!currentTableInstances.peek().isEmpty()) {
+            i = currentTableInstances.peek().remove(0);
+            currentInstanceList.remove(i);
+        }
+
+        PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.TABLE, currentView.peek(), "plot", parentSec, null);
+        System.out.println(entry.toJSONString());
+        newpe.peek().add(ipe);
+    }
     @Override
     public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
         JSONObject entry = new JSONObject();

@@ -154,6 +154,9 @@
                 <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode" description="C3 Plot" listAsElement="false" opposite="false" id="IDaction_1326673971333_365713_0">
                     <stereotype id="_18_5_1_52c017d_1500053373295_474701_16206" />
                 </custom>
+                <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode" description="Plot" listAsElement="false" opposite="false" id="IDaction_1326673971333_365714_0">
+                    <stereotype id="_18_5_1_52c017d_1503939628868_359733_18064" />
+                </custom>
             </actions>
         </category>
     </toolbarConfiguration>

@@ -1,56 +1,61 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBPlot;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.mdk.util.Debug;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
-import  gov.nasa.jpl.mbee.mdk.docgen.docbook.DBC3Plot;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by mw107 on 7/5/2017.
  */
-public class C3Plot extends TableStructure
+public class Plot extends TableStructure
 {
-    protected String options;
-    protected String functions;
+    protected String title;
+    protected String type;
+    protected String config;
 
-    public C3Plot(DocumentValidator validator) {
+    public Plot(DocumentValidator validator) {
         super(validator);
     }
 
-    public String getOptions()
+    public String getTitle()
     {
-        return options;
+        return title;
     }
 
-    public void setOptions(String options)
+    public void setTitle(String title)
     {
-        this.options = options;
+        this.title = title;
     }
 
-    public String getFunctions()
+    public String getType() { return type;  }
+
+    public void setType (String type)
     {
-        return functions;
+        this.type = type;
     }
 
-    public void setFunctions(String functions)
+    public String getConfig()
     {
-        this.functions = functions;
+        return config;
+    }
+
+    public void setConfig(String config)
+    {
+        this.config = config;
     }
 
     @Override
@@ -67,12 +72,13 @@ public class C3Plot extends TableStructure
             return res;
         }
 
-        DBC3Plot c3p = new DBC3Plot();
-        c3p.setOptions(options);
-        c3p.setFunctions(functions);
+        DBPlot p = new DBPlot();
+        p.setTitle(title);
+        p.setType(type);
+        p.setConfig(config);
         List<DocumentElement> tres = super.visit(forViewEditor, outputDir);
-        c3p.setTable((DBTable)tres.get(0));
-        res.add(c3p);
+        p.setTable((DBTable)tres.get(0));
+        res.add(p);
         return res;
 
     }
@@ -81,12 +87,16 @@ public class C3Plot extends TableStructure
     @Override
     public void initialize() {
 
-        String options = ((String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.c3PlotStereotype, "options", "")).replace("'", "\\'").replace("\"", "'");
-        String functions = ((String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.c3PlotStereotype, "functions", "")).replace("'", "\\'").replace("\"", "'");
-        setOptions(options);
-        setFunctions(functions);
+        String title = ((String) GeneratorUtils.getObjectProperty(dgElement,
+                DocGenProfile.plotStereotype, "plot_title", "")).replace("'", "\\'").replace("\"", "'");
+        String config = ((String) GeneratorUtils.getObjectProperty(dgElement,
+                DocGenProfile.plotStereotype, "plot_config", "")).replace("'", "\\'").replace("\"", "'");
+        String type = ((String) GeneratorUtils.getObjectProperty(dgElement,
+                DocGenProfile.plotStereotype, "plot_type", "")).replace("'", "\\'").replace("\"", "'");
+
+        setTitle(title);
+        setConfig(config);
+        setType(type);
 
 
         //find dgelement for table structure.
