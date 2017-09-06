@@ -8,8 +8,8 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventLis
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueCloseCookie;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 
 /*
  * This class is responsible for performing automatic syncs with
@@ -68,7 +68,7 @@ public class MMSSyncPlugin extends Plugin {
         if (closeCookie != null) {
             cookieSet.remove(closeCookie);
         }
-        cookieSet.add(new OutputQueueCloseCookie(closeCookie));
+        cookieSet.add(new TaskRunner.TaskRunnerCloseCookie(closeCookie));
     }
 
     @Override

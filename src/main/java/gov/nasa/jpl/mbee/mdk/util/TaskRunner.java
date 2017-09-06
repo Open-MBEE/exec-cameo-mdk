@@ -1,10 +1,17 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
+import com.nomagic.magicdraw.cookies.CloseCookie;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.task.BackgroundTaskRunner;
 import com.nomagic.task.EmptyProgressStatus;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
@@ -212,6 +219,79 @@ public class TaskRunner {
         @Override
         public boolean isCancel() {
             return progressStatus.isCancel();
+        }
+    }
+
+    public static class TaskRunnerCloseCookie implements CloseCookie {
+
+        private final CloseCookie parentCloseCookie;
+
+        public TaskRunnerCloseCookie(CloseCookie closeCookie) {
+            parentCloseCookie = closeCookie;
+        }
+
+        @Override
+        public void close(byte b) {
+            Callable<Boolean> condition = () -> Arrays.stream(TaskRunner.ThreadExecutionStrategy.values()).allMatch(strategy -> strategy.getExecutor().getQueue().isEmpty() && strategy.getExecutor().getActiveCount() == 0);
+            try {
+                if (!condition.call()) {
+                    AtomicReference<JDialog> dialogReference = new AtomicReference<>();
+                    new Thread(() -> {
+                        try {
+                            while (dialogReference.get() == null || !condition.call()) {
+                                Thread.sleep(1000);
+                            }
+                        } catch (InterruptedException ignored) {
+                            Thread.currentThread().interrupt();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        JDialog dialog = dialogReference.get();
+                        if (dialog != null) {
+                            SwingUtilities.invokeLater(dialog::dispose);
+                        }
+                    }).start();
+                    JDialog dialog = createDialog();
+                    dialogReference.set(dialog);
+                    dialog.setVisible(true);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (parentCloseCookie != null) {
+                parentCloseCookie.close(b);
+            }
+        }
+
+        private static JDialog createDialog() {
+            JOptionPane pane = new JOptionPane("There are tasks running in the background. MagicDraw will automatically close when they have completed.\nCancelling background tasks or forcefully shutting down may result in loss of model parity.", JOptionPane.WARNING_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{});
+            JDialog dialog = pane.createDialog(null, "MDK Shutdown");
+            dialog.dispose();
+            dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            dialog.setUndecorated(true);
+            dialog.setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
+            dialog.setLocationRelativeTo(Application.getInstance().getMainFrame());
+            dialog.setAutoRequestFocus(false);
+            dialog.setAlwaysOnTop(Application.getInstance().getMainFrame().isActive());
+            Application.getInstance().getMainFrame().addWindowListener(new WindowAdapter() {
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void windowDeactivated(WindowEvent e) {
+                    dialog.setAlwaysOnTop(false);
+                    dialog.toBack();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void windowActivated(WindowEvent e) {
+                    dialog.setAlwaysOnTop(true);
+                }
+            });
+            return dialog;
         }
     }
 }

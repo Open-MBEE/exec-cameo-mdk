@@ -8,12 +8,13 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.awt.event.ActionEvent;
@@ -59,7 +60,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         if ((value = is.get(key).get("cs")) != null && value.isTextual()) {
             cs = value.asText();
         }
-        requestUri.setParameter("cs", cs);
+        requestUri.setParxameter("cs", cs);
 
         String extension = "";
         if ((value = is.get(key).get("extension")) != null && value.isTextual()) {
@@ -71,11 +72,18 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         if ((value = is.get(key).get("abspath")) != null && value.isTextual()) {
             filename = value.asText();
         }
-        File imageFile = new File(filename);
+        File file = new File(filename);
 
         try {
-            Request imageRequest = new Request(project, requestUri, imageFile, 1, "Image");
-            OutputQueue.getInstance().offer(imageRequest);
+            HttpRequestBase request = MMSUtils.buildImageRequest(requestUri, file);
+            TaskRunner.runWithProgressStatus(progressStatus -> {
+                try {
+                    MMSUtils.sendMMSRequest(project, request, progressStatus);
+                } catch (IOException | ServerException | URISyntaxException e) {
+                    // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                    e.printStackTrace();
+                }
+            }, "Image Create/Update", true, TaskRunner.ThreadExecutionStrategy.SINGLE);
         } catch (IOException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit image " + filename + ". Reason: " + e.getMessage());
             e.printStackTrace();
