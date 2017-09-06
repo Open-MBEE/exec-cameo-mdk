@@ -12,8 +12,6 @@ import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
@@ -98,13 +96,11 @@ public class MDKPlugin extends Plugin {
         acm.addContainmentBrowserContextConfigurator(srConfigurator);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srConfigurator);
 
-        acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
 
         MMSSyncPlugin.getInstance().init();
-        (new Thread(new OutputSyncRunner())).start();
 
         loadExtensionJars();
         configureEnvironmentOptions();

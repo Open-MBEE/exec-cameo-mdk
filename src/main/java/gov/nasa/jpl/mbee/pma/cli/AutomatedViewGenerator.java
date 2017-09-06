@@ -2,7 +2,6 @@ package gov.nasa.jpl.mbee.pma.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.nomagic.magicdraw.commandline.CommandLine;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -11,7 +10,6 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.ServerLoginInfo;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 import gov.nasa.jpl.mbee.mdk.api.MDKHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -19,12 +17,9 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
-
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -38,10 +33,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AutomatedViewGenerator extends CommandLine {
@@ -356,25 +348,28 @@ public class AutomatedViewGenerator extends CommandLine {
             illegalStateFailure("[ERROR] Unable to find element \"" + parser.getOptionValue(TARGET_VIEW_ID) + "\"");
         }
         assert targetView != null;
-        OutputSyncRunner.clearLastExceptionPair();
+        MMSUtils.getLastExceptionReference().set(null);
         message = "[OPERATION] Generating " + targetView.getHumanName() + (parser.hasOption(GENERATE_RECURSIVELY) ? " views recursively." : ".");
         logMessage(message);
         // LOG: the element which is being generated currently
 
         MDKHelper.generateViews(targetView, parser.hasOption(GENERATE_RECURSIVELY));
-        // wait is required for the auto-image commit, and it helps tie exceptions in output queue to their document
-        MDKHelper.mmsUploadWait();
-        if (OutputSyncRunner.getLastExceptionPair() != null) {
-            Pair<Request, Exception> current = OutputSyncRunner.getLastExceptionPair();
-            Exception e = current.getValue();
-            if (e instanceof ServerException && ((ServerException) e).getCode() == 403) {
+        while (true) {
+            if (Arrays.stream(TaskRunner.ThreadExecutionStrategy.values()).allMatch(strategy -> strategy.getExecutor().getQueue().isEmpty() && strategy.getExecutor().getActiveCount() == 0)) {
+                break;
+            }
+            Thread.sleep(1000);
+        }
+        Exception lastException = MMSUtils.getLastExceptionReference().get();
+        if (lastException != null) {
+            if (lastException instanceof ServerException && ((ServerException) lastException).getCode() == 403) {
                 message = "[ERROR] Unable to generate " + targetView.getHumanName() + ". User " + parser.getOptionValue(MMS_USERNAME) + " does not have permission to write to the MMS in this branch.";
                 logMessage(message);
             }
             else {
-                message = "[ERROR] Unexpected error while generating " + targetView.getHumanName() + ". Reason: " + e.getMessage();
+                message = "[ERROR] Unexpected error while generating " + targetView.getHumanName() + ". Reason: " + lastException.getMessage();
                 logMessage(message);
-                throw e;
+                throw lastException;
             }
         }
         checkCancel();
@@ -448,8 +443,7 @@ public class AutomatedViewGenerator extends CommandLine {
         CommandLineParser commandLineParser = new BasicParser();
         try {
             parser = commandLineParser.parse(parserOptions, args);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             displayHelp();
             throw e;
