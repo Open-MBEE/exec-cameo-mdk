@@ -60,7 +60,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         if ((value = is.get(key).get("cs")) != null && value.isTextual()) {
             cs = value.asText();
         }
-        requestUri.setParxameter("cs", cs);
+        requestUri.setParameter("cs", cs);
 
         String extension = "";
         if ((value = is.get(key).get("extension")) != null && value.isTextual()) {
