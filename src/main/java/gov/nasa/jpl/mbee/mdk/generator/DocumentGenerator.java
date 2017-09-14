@@ -342,8 +342,6 @@ public class DocumentGenerator {
                     || next instanceof StructuredActivityNode
                     && (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)
                         ||
-                        StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.c3PlotStereotype)
-                        ||
                         StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.plotStereotype)
                         )) {
                 Behavior b = (next instanceof CallBehaviorAction) ? ((CallBehaviorAction) next).getBehavior()
@@ -798,9 +796,6 @@ public class DocumentGenerator {
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.simulateStereotype, true)) {
             dge = new Simulate();
-        }
-        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.c3PlotStereotype, true)) {
-            dge = new C3Plot(context.getValidator());
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.plotStereotype, true)) {
             dge = new Plot(context.getValidator());

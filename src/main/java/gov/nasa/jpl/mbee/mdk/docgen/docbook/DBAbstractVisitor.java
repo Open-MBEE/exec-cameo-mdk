@@ -55,10 +55,6 @@ public abstract class DBAbstractVisitor implements IDBVisitor {
     }
 
     @Override
-    public void visit(DBC3Plot c3plot){
-    }
-
-    @Override
     public void visit (DBPlot plot){}
 
 

@@ -26,7 +26,5 @@ public interface IDBVisitor {
 
     void visit(DBTomSawyerDiagram tomSawyerDiagram);
 
-    void visit(DBC3Plot c3plot);
-
     void visit(DBPlot plot);
 }
