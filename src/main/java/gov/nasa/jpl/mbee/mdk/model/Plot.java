@@ -13,9 +13,12 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -88,11 +91,15 @@ public class Plot extends TableStructure
     public void initialize() {
 
         String title = ((String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.plotStereotype, "plot_title", "")).replace("'", "\\'").replace("\"", "'");
+                DocGenProfile.plotStereotype, "plotTitle", "")).replace("'", "\\'").replace("\"", "'");
         String config = ((String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.plotStereotype, "plot_config", "")).replace("'", "\\'").replace("\"", "'");
-        String type = ((String) GeneratorUtils.getObjectProperty(dgElement,
-                DocGenProfile.plotStereotype, "plot_type", "")).replace("'", "\\'").replace("\"", "'");
+                DocGenProfile.plotStereotype, "plotConfiguration", "")).replace("'", "\\'").replace("\"", "'");
+        String type = (String) StereotypesHelper.getStereotypePropertyValue(dgElement,DocGenProfile.plotStereotype, "plotType")
+                .stream()
+                .filter( p -> p instanceof EnumerationLiteral)
+                .map( p-> ((EnumerationLiteral)p).getName())
+                .findFirst()
+                .orElse("");
 
         setTitle(title);
         setConfig(config);
