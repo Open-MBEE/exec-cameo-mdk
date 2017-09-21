@@ -274,18 +274,12 @@ public class TaskRunner {
             dialog.setAutoRequestFocus(false);
             dialog.setAlwaysOnTop(Application.getInstance().getMainFrame().isActive());
             Application.getInstance().getMainFrame().addWindowListener(new WindowAdapter() {
-                /**
-                 * {@inheritDoc}
-                 */
                 @Override
                 public void windowDeactivated(WindowEvent e) {
                     dialog.setAlwaysOnTop(false);
                     dialog.toBack();
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
                 @Override
                 public void windowActivated(WindowEvent e) {
                     dialog.setAlwaysOnTop(true);

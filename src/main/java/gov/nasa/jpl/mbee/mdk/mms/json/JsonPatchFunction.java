@@ -26,7 +26,7 @@ public class JsonPatchFunction implements BiFunction<JsonNode, JsonNode, JsonNod
         return JsonDiff.asJson(client, server);
     }
 
-    private static void preProcess(JsonNode client, JsonNode server) {
+    public static void preProcess(JsonNode client, JsonNode server) {
         if (!(client instanceof ObjectNode) || !(server instanceof ObjectNode)) {
             return;
         }
