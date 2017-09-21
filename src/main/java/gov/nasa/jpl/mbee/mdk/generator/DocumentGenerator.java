@@ -736,6 +736,9 @@ public class DocumentGenerator {
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.plotStereotype, true)) {
             dge = new Plot(context.getValidator());
         }
+        else if (an instanceof CallBehaviorAction && ((CallBehaviorAction) an).getBehavior() != null) {
+            dge = new BehaviorQuery((CallBehaviorAction) an);
+        }
         return dge;
     }
 
