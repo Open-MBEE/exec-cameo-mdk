@@ -307,8 +307,10 @@ public class DocumentGenerator {
             boolean evaluatedConstraintsForNext = false;
             if (next instanceof CallBehaviorAction
                     || next instanceof StructuredActivityNode
-                    && StereotypesHelper
-                    .hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)) {
+                    && (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)
+                        ||
+                        StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.plotStereotype)
+                        )) {
                 Behavior b = (next instanceof CallBehaviorAction) ? ((CallBehaviorAction) next).getBehavior()
                         : null;
                 if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.sectionStereotype)
@@ -675,6 +677,7 @@ public class DocumentGenerator {
      * @return
      */
     private Query parseTemplate(ActivityNode an) {
+
         Query dge = null;
         if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.imageStereotype)) {
             dge = new Image();
@@ -737,8 +740,8 @@ public class DocumentGenerator {
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.simulateStereotype, true)) {
             dge = new Simulate();
         }
-        else if (an instanceof CallBehaviorAction && ((CallBehaviorAction) an).getBehavior() != null) {
-            dge = new BehaviorQuery((CallBehaviorAction) an);
+        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.plotStereotype, true)) {
+            dge = new Plot(context.getValidator());
         }
         return dge;
     }

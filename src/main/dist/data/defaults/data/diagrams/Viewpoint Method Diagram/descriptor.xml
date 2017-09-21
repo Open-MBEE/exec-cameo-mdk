@@ -145,6 +145,9 @@
                 </custom>
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="Simulate" listAsElement="false" opposite="false" id="IDaction_1486492071543_659574_0"/>
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="Other (like UserScripts)" listAsElement="false" opposite="false" id="IDaction_1326673971333_365712_0"/>
+                <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode" description="Plot" listAsElement="false" opposite="false" id="IDaction_1326673971333_365714_0">
+                    <stereotype id="_18_5_1_52c017d_1503939628868_359733_18064" />
+                </custom>
             </actions>
         </category>
     </toolbarConfiguration>
