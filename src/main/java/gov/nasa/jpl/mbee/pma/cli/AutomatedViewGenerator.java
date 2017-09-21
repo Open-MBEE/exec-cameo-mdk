@@ -2,7 +2,7 @@ package gov.nasa.jpl.mbee.pma.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.commandline.CommandLine;
+import com.nomagic.magicdraw.commandline.CommandLineAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectDescriptor;
@@ -36,13 +36,10 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AutomatedViewGenerator extends CommandLine {
+public class AutomatedViewGenerator implements CommandLineAction {
 
     private org.apache.commons.cli.CommandLine parser;
     private org.apache.commons.cli.Options parserOptions;
-
-    // needed because CommandLine redirects it, and we want the output
-    private static final PrintStream stdout = System.out;
 
     private boolean twLogin = false,
             twLoaded = false;
@@ -83,6 +80,8 @@ public class AutomatedViewGenerator extends CommandLine {
             DEBUG = "debug",
             VERBOSE = "verbose";
 
+    private String separator = "\n***************\n";
+
     private final int CANCEL_DELAY = 15;
 
     /*//////////////////////////////////////////////////////////////
@@ -92,20 +91,18 @@ public class AutomatedViewGenerator extends CommandLine {
     /*//////////////////////////////////////////////////////////////
 
     @Override
-    protected byte execute() {
+    public byte execute(String[] args) {
+        // start the cancel handler so we don't terminate in the middle of a view sync operation and so we can force logout if logged in to teamwork
+        cancelHandler = new InterruptTrap();
+        Runtime.getRuntime().addShutdownHook(cancelHandler);
+
         try {
-            // send output back to stdout
-            System.setOut(AutomatedViewGenerator.stdout);
-            if (parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
+            if (!parseArgs(args) || parser.hasOption(HELP) || parser.hasOption('h') || !validateParser()) {
                 displayHelp();
                 return 1;
             }
 
-            // start the cancel handler so we don't terminate in the middle of a view sync operation and so we can force logout if logged in to teamwork
-            cancelHandler = new InterruptTrap();
-            Runtime.getRuntime().addShutdownHook(cancelHandler);
-
-            System.out.println("\n**********************\n");
+            System.out.println(separator);
             System.out.println("[INFO] Performing automated view generation.");
 
             String mmsUrl = "https://" + parser.getOptionValue(MMS_HOST);
@@ -177,7 +174,7 @@ public class AutomatedViewGenerator extends CommandLine {
                 e.printStackTrace();
             }
         }
-        System.out.println("\n**********************\n");
+        System.out.println(separator);
         return error;
     }
 
@@ -386,8 +383,7 @@ public class AutomatedViewGenerator extends CommandLine {
      *
      * @param args Argument string array from the console
      */
-    @Override
-    protected void parseArgs(String[] args) throws ParseException {
+    private boolean parseArgs(String[] args) throws ParseException {
         Option helpOption = new Option("h", HELP, false, "print this message");
 
         Option mmsHostOption = new Option(MMS_HOST, true, "use value for the MMS host name");
@@ -445,18 +441,15 @@ public class AutomatedViewGenerator extends CommandLine {
             parser = commandLineParser.parse(parserOptions, args);
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            displayHelp();
-            throw e;
+            return false;
         }
+        return true;
     }
 
     private void displayHelp() {
         HelpFormatter formatter = new HelpFormatter();
-        String usage = "$MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh";
-        String header = "The associated script manages the settings and configuration options necessary to launch a " +
-                "MagicDraw CommandLine program in the OSGI framework. This tool must be launched with the associated " +
-                "shell script or a similar manual configuration; it will not run directly. ";
-        formatter.printHelp(usage, header, parserOptions, "", true);
+        String usage = separator + "$MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh";
+        formatter.printHelp(usage, separator, parserOptions, separator, true);
     }
 
     private boolean validateParser() throws FileNotFoundException, UnsupportedEncodingException {
@@ -640,7 +633,6 @@ public class AutomatedViewGenerator extends CommandLine {
                     e.printStackTrace();
                 }
                 synchronized (lock) {
-                    System.setOut(AutomatedViewGenerator.stdout);
                     String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + CANCEL_DELAY + " min).";
                     try {
                         logMessage(msg);
