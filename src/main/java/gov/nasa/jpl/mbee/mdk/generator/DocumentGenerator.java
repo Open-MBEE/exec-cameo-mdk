@@ -14,7 +14,6 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ForkNo
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
@@ -305,12 +304,7 @@ public class DocumentGenerator {
             Debug.outln("next = " + next.getHumanName() + ", " + Converters.getElementToIdConverter().apply(next));
             next2 = null;
             boolean evaluatedConstraintsForNext = false;
-            if (next instanceof CallBehaviorAction
-                    || next instanceof StructuredActivityNode
-                    && (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)
-                        ||
-                        StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.plotStereotype)
-                        )) {
+            if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype) || StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.plotStereotype))) {
                 Behavior b = (next instanceof CallBehaviorAction) ? ((CallBehaviorAction) next).getBehavior()
                         : null;
                 if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.sectionStereotype)
@@ -677,7 +671,6 @@ public class DocumentGenerator {
      * @return
      */
     private Query parseTemplate(ActivityNode an) {
-
         Query dge = null;
         if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.imageStereotype)) {
             dge = new Image();

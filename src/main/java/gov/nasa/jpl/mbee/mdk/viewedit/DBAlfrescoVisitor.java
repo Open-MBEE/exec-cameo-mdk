@@ -343,8 +343,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         DBHTMLVisitor html = new DBHTMLVisitor();
         simplelist.accept(html);
     }
+
     @Override
-    public void visit(DBPlot plot){
+    public void visit(DBPlot plot) {
         JSONObject entry = new JSONObject();
         entry.put("title", plot.getTitle());
         entry.put("ptype", plot.getType());
@@ -366,6 +367,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         System.out.println(entry.toJSONString());
         newpe.peek().add(ipe);
     }
+
     @Override
     public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
         String id;

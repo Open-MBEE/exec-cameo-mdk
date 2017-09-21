@@ -55,7 +55,8 @@ public abstract class DBAbstractVisitor implements IDBVisitor {
     }
 
     @Override
-    public void visit (DBPlot plot){}
+    public void visit(DBPlot plot) {
+    }
 
 
     protected void visitChildren(DBHasContent d) {
