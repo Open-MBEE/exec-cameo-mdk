@@ -11,6 +11,6 @@ public class OpaqueParagraph extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueParagraph";
+        return "SysML Extensions::DocGen::Presentation Elements::OpaqueParagraph";
     }
 }

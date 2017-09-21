@@ -12,6 +12,6 @@ public class Section extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Section";
+        return "SysML Extensions::DocGen::Presentation Elements::Section";
     }
 }

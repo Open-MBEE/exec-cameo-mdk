@@ -11,6 +11,6 @@ public class GeneratedFromActionProperty extends PresentationElementProperty {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromAction";
+        return "SysML Extensions::DocGen::Presentation Elements::PresentationElement::generatedFromAction";
     }
 }

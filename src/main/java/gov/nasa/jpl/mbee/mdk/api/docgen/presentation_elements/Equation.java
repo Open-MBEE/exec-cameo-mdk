@@ -11,6 +11,6 @@ public class Equation extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Equation";
+        return "SysML Extensions::DocGen::Presentation Elements::Equation";
     }
 }

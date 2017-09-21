@@ -23,7 +23,7 @@ public class OpaqueSection extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueSection";
+        return "SysML Extensions::DocGen::Presentation Elements::OpaqueSection";
     }
 
     @Override

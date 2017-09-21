@@ -11,6 +11,6 @@ public class OpaqueList extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueList";
+        return "SysML Extensions::DocGen::Presentation Elements::OpaqueList";
     }
 }

@@ -11,6 +11,6 @@ public class Image extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Image";
+        return "SysML Extensions::DocGen::Presentation Elements::Image";
     }
 }

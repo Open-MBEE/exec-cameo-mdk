@@ -11,6 +11,6 @@ public class OpaqueImage extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::OpaqueImage";
+        return "SysML Extensions::DocGen::Presentation Elements::OpaqueImage";
     }
 }
