@@ -51,6 +51,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stack<PresentationElementInstance> currentSection = new Stack<>(); //if currently in section, sections cannot cross views
     private Stack<List<InstanceSpecification>> currentInstanceList = new Stack<>();
     private Stack<List<InstanceSpecification>> currentTableInstances = new Stack<>();
+    private Stack<List<InstanceSpecification>> currentFigureInstances = new Stack<>();
     private Stack<List<InstanceSpecification>> currentListInstances = new Stack<>();
     private Stack<List<InstanceSpecification>> currentParaInstances = new Stack<>();
     private Stack<List<InstanceSpecification>> currentSectionInstances = new Stack<>();
@@ -357,13 +358,13 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         entry.put("type", "Plot");
 
         InstanceSpecification i = null;
-        if (!currentTableInstances.peek().isEmpty()) {
-            i = currentTableInstances.peek().remove(0);
+        if (!currentFigureInstances.peek().isEmpty()) {
+            i = currentFigureInstances.peek().remove(0);
             currentInstanceList.remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.TABLE, currentView.peek(), "plot", parentSec, null);
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.FIGURE, currentView.peek(), "plot", parentSec, null);
         System.out.println(entry.toJSONString());
         newpe.peek().add(ipe);
     }
@@ -385,13 +386,13 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         entry.put("elements", elements);
 
         InstanceSpecification i = null;
-        if (!currentTableInstances.peek().isEmpty()) {
-            i = currentTableInstances.peek().remove(0);
+        if (!currentFigureInstances.peek().isEmpty()) {
+            i = currentFigureInstances.peek().remove(0);
             currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.TABLE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.FIGURE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
         System.out.println(entry.toJSONString());
         newpe.peek().add(ipe);
     }
@@ -473,6 +474,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentParaInstances.pop();
         currentListInstances.pop();
         currentTableInstances.pop();
+        currentFigureInstances.pop();
         currentInstanceList.pop();
         currentUnusedInstances.pop();
     }
@@ -523,6 +525,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentParaInstances.pop();
         currentListInstances.pop();
         currentTableInstances.pop();
+        currentFigureInstances.pop();
         currentInstanceList.pop();
         currentUnusedInstances.pop();
     }
@@ -552,6 +555,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentInstanceList.push(info.getAll());
         currentImageInstances.push(info.getImages());
         currentTableInstances.push(info.getTables());
+        currentFigureInstances.push(info.getFigures());
         currentParaInstances.push(info.getParas());
         currentListInstances.push(info.getLists());
         currentSectionInstances.push(info.getSections());
@@ -626,6 +630,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private void processUnusedInstances(Element v) {
         for (InstanceSpecification is : currentTableInstances.peek()) {
             view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.TABLE, v, is.getName(), null, null));
+        }
+        for (InstanceSpecification is : currentFigureInstances.peek()) {
+            view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.FIGURE, v, is.getName(), null, null));
         }
         for (InstanceSpecification is : currentListInstances.peek()) {
             view2peOld.get(v).add(new PresentationElementInstance(is, null, PresentationElementEnum.LIST, v, is.getName(), null, null));

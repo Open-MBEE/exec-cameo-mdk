@@ -7,8 +7,10 @@ import java.util.function.Supplier;
  */
 public enum PresentationElementEnum implements Supplier<PresentationElement> {
     EQUATION(new Equation()),
+    FIGURE(new Figure()),
     IMAGE(new Image()),
     LIST(new List()),
+    OPAQUE_FIGURE(new OpaqueFigure()),
     OPAQUE_IMAGE(new OpaqueImage()),
     OPAQUE_LIST(new OpaqueList()),
     OPAQUE_PARAGRAPH(new OpaqueParagraph()),
