@@ -360,7 +360,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         InstanceSpecification i = null;
         if (!currentFigureInstances.peek().isEmpty()) {
             i = currentFigureInstances.peek().remove(0);
-            currentInstanceList.remove(i);
+            currentInstanceList.peek().remove(i);
         }
 
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
