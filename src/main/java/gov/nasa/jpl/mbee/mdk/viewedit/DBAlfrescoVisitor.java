@@ -62,7 +62,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private boolean main = false; //for ems 2.2 reference tree, only consider generated pe from main view and 
     //not nested tables/lists since those are embedded in json blob, main is false for Table and List Visitor
 
-    private InstanceSpecification viewDocHack;
     private PresentationElementUtils viu = new PresentationElementUtils();
 
     public DBAlfrescoVisitor(boolean recurse) {
@@ -415,12 +414,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         view2peOld.put(e, new ArrayList<>());
 
         processCurrentInstances(e, e);
-        if (currentInstanceList.peek().isEmpty()) { //new view, add view doc hack
-            PresentationElementInstance hack = new PresentationElementInstance(null, null, null, e, null, null, null);
-            hack.setManual(true);
-            hack.setViewDocHack(true);
-            newpe.peek().add(hack);
-        }
         addManualInstances(false);
     }
 
@@ -434,14 +427,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         view2elements.put(e, viewEs);
         addManualInstances(true);
         processUnusedInstances(e);
-        List<PresentationElementInstance> pes = newpe.pop();
-        if (pes.isEmpty()) {
-            //new view with nothing, auto add a pe that with cf that points to view doc
-            PresentationElementInstance hack = new PresentationElementInstance(null, null, null, e, null, null, null);
-            hack.setManual(true);
-            hack.setViewDocHack(true);
-            pes.add(hack);
-        }
         currentView.pop();
         currentManualInstances.pop();
         currentImageInstances.pop();
@@ -533,9 +518,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         currentSectionInstances.push(info.getSections());
         currentManualInstances.push(info.getManuals());
         currentUnusedInstances.push(info.getUnused());
-        if (info.getViewDocHack() != null) {
-            viewDocHack = info.getViewDocHack();
-        }
     }
 
     private InstanceSpecification findInstanceForSection(Element e) {
@@ -574,11 +556,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             InstanceSpecification is = instances.get(0);
             PresentationElementInstance pe = new PresentationElementInstance(is, null, null, null, null, null, null);
             pe.setManual(true);
-            if (is == viewDocHack) {
-                pe.setViewDocHack(true);
-                pe.setView(currentView.peek());
-                viewDocHack = null;
-            }
             newpe.peek().add(pe);
             manuals.remove(is);
             instances.remove(is);
@@ -587,11 +564,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             for (InstanceSpecification is : new ArrayList<InstanceSpecification>(manuals)) {
                 PresentationElementInstance pe = new PresentationElementInstance(is, null, null, null, null, null, null);
                 pe.setManual(true);
-                if (is == viewDocHack) {
-                    pe.setViewDocHack(true);
-                    pe.setView(currentView.peek());
-                    viewDocHack = null;
-                }
                 newpe.peek().add(pe);
                 manuals.remove(is);
                 instances.remove(is);

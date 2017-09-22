@@ -14,8 +14,6 @@ public class PresentationElementInfo {
     private List<InstanceSpecification> manuals;
     private List<InstanceSpecification> sections;
 
-    private InstanceSpecification viewDocHack;
-
     private List<InstanceSpecification> extraRef; //opaque instances that are referenced by > 1 view
     private List<InstanceSpecification> extraManualRef; //manual instances that are referenced by > 1 view
     private List<InstanceSpecification> unused; //unused instances in view instance package
@@ -95,14 +93,6 @@ public class PresentationElementInfo {
 
     public void setSections(List<InstanceSpecification> sections) {
         this.sections = sections;
-    }
-
-    public InstanceSpecification getViewDocHack() {
-        return viewDocHack;
-    }
-
-    public void setViewDocHack(InstanceSpecification viewDocHack) {
-        this.viewDocHack = viewDocHack;
     }
 
     public List<InstanceSpecification> getExtraRef() {
