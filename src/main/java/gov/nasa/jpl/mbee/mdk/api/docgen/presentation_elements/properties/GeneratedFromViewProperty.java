@@ -11,6 +11,6 @@ public class GeneratedFromViewProperty extends PresentationElementProperty {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::PresentationElement::generatedFromView";
+        return "SysML Extensions::DocGen::Presentation Elements::PresentationElement::generatedFromView";
     }
 }

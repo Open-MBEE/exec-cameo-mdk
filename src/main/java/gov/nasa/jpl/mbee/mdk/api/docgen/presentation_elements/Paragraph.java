@@ -11,6 +11,6 @@ public class Paragraph extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::Paragraph";
+        return "SysML Extensions::DocGen::Presentation Elements::Paragraph";
     }
 }

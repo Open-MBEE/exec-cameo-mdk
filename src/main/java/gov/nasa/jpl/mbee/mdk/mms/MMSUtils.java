@@ -22,6 +22,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.io.IOUtils;
@@ -46,11 +47,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MMSUtils {
 
     private static final int CHECK_CANCEL_DELAY = 100;
+    private static final AtomicReference<Exception> lastExceptionReference = new AtomicReference<>();
 
     private static String developerUrl = "";
 
@@ -58,12 +64,12 @@ public class MMSUtils {
         GET, POST, PUT, DELETE
     }
 
-    private enum ThreadRequestExceptionType {
-        IO_EXCEPTION, SERVER_EXCEPTION, URI_SYNTAX_EXCEPTION
-    }
-
     public enum JsonBlobType {
         ELEMENT_JSON, ELEMENT_ID, PROJECT, REF, ORG
+    }
+
+    public static AtomicReference<Exception> getLastExceptionReference() {
+        return lastExceptionReference;
     }
 
     public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
@@ -379,10 +385,8 @@ public class MMSUtils {
             }
         }
         else {
-            final AtomicReference<ThreadRequestExceptionType> threadedExceptionType = new AtomicReference<>();
-            final AtomicReference<String> threadedExceptionMessage = new AtomicReference<>();
-            Thread t = new Thread(() -> {
-                // create client, execute request, parse response, store in thread safe buffer to return to calling method for later closing
+            progressStatus.setIndeterminate(true);
+            Future<?> future = TaskRunner.runWithProgressStatus(() -> {
                 try (CloseableHttpClient httpclient = HttpClients.createDefault();
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()) {
@@ -393,30 +397,30 @@ public class MMSUtils {
                     if (inputStream != null) {
                         responseBody.set(generateMmsOutput(inputStream, responseFile));
                     }
-                    threadedExceptionType.set(null);
-                    threadedExceptionMessage.set("");
-                } catch (IOException e) {
-                    threadedExceptionType.set(ThreadRequestExceptionType.IO_EXCEPTION);
-                    threadedExceptionMessage.set(e.getMessage());
+                } catch (Exception e) {
+                    lastExceptionReference.set(e);
                     e.printStackTrace();
                 }
-            });
-            t.start();
+            }, null, TaskRunner.ThreadExecutionStrategy.NONE, true);
             try {
-                t.join(CHECK_CANCEL_DELAY);
-                while (t.isAlive()) {
-                    if (progressStatus.isCancel()) {
+                while (!future.isDone() && !future.isCancelled()) {
+                    try {
+                        future.get(CHECK_CANCEL_DELAY, TimeUnit.MILLISECONDS);
+                    } catch (ExecutionException | TimeoutException ignored) {
+
+                    } catch (InterruptedException e2) {
+                        Thread.currentThread().interrupt();
+                    }
+                    if (progressStatus.isCancel() && future.cancel(true)) {
                         Application.getInstance().getGUILog().log("[INFO] MMS request was manually cancelled.");
-                        //clean up thread?
                         return null;
                     }
-                    t.join(CHECK_CANCEL_DELAY);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            if (threadedExceptionType.get() == ThreadRequestExceptionType.IO_EXCEPTION) {
-                throw new IOException(threadedExceptionMessage.get());
+            if (lastExceptionReference.get() instanceof IOException) {
+                throw (IOException) lastExceptionReference.get();
             }
         }
         if (responseFile == null) {

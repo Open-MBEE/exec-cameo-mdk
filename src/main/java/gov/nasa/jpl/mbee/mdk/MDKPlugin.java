@@ -4,6 +4,7 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.commandline.CommandLineActionManager;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
@@ -12,20 +13,23 @@ import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator;
+import javafx.application.Platform;
+import javafx.stage.Stage;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class MDKPlugin extends Plugin {
     public static final String MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
@@ -33,6 +37,7 @@ public class MDKPlugin extends Plugin {
     private static String VERSION;
     public static ClassLoader extensionsClassloader;
     public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
+    private static javafx.application.Application APPLICATION;
 
     public MDKPlugin() {
         super();
@@ -43,6 +48,11 @@ public class MDKPlugin extends Plugin {
             VERSION = PluginUtils.getPlugins().stream().map(Plugin::getDescriptor).filter(descriptor -> descriptor.getName().equals("Model Development Kit")).map(PluginDescriptor::getVersion).findAny().orElse(null);
         }
         return VERSION;
+    }
+
+    @Nullable
+    public static javafx.application.Application getApplication() {
+        return APPLICATION;
     }
 
     public static void updateMainToolbarCategory() {
@@ -79,6 +89,8 @@ public class MDKPlugin extends Plugin {
         // This somehow allows things to be loaded to evaluate opaque expressions or something.
         EvaluationConfigurator.getInstance().registerBinaryImplementers(this.getClass().getClassLoader());
 
+        CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
+
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);
@@ -98,16 +110,15 @@ public class MDKPlugin extends Plugin {
         acm.addContainmentBrowserContextConfigurator(srConfigurator);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srConfigurator);
 
-        acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
 
         MMSSyncPlugin.getInstance().init();
-        (new Thread(new OutputSyncRunner())).start();
 
         loadExtensionJars();
         configureEnvironmentOptions();
+        initJavaFX();
     }
 
     @Override
@@ -157,4 +168,38 @@ public class MDKPlugin extends Plugin {
         mdkOptions.addEnvironmentChangeListener(mdkEnvOptionsListener);
     }
 
+    private void initJavaFX() {
+        new Thread(() -> {
+            try {
+                javafx.application.Application.launch(MDKApplication.class);
+                APPLICATION = MDKApplication.getInstance();
+            } catch (Exception | Error e) {
+                e.printStackTrace();
+            }
+        }, "JavaFX Init").start();
+    }
+
+    public static class MDKApplication extends javafx.application.Application {
+        static final CountDownLatch latch = new CountDownLatch(1);
+        private static MDKApplication INSTANCE;
+
+        public MDKApplication() {
+            INSTANCE = this;
+            latch.countDown();
+        }
+
+        @Override
+        public void start(Stage stage) throws Exception {
+            Platform.setImplicitExit(false);
+        }
+
+        protected static MDKApplication getInstance() {
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return INSTANCE;
+        }
+    }
 }

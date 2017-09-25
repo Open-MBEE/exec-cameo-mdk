@@ -1,0 +1,44 @@
+.hyperlink {
+    -fx-font-family: null;
+}
+
+.table-cell-add {
+    -fx-background: #e6ffed;
+    -fx-background-color: transparent, white, -fx-background;
+    -fx-background-insets: 0 0, 1 0, 1 1;
+}
+
+.table-cell-remove {
+    -fx-background: #ffeef0;
+    -fx-background-color: transparent, white, -fx-background;
+    -fx-background-insets: 0 0, 1 0, 1 1;
+}
+
+.table-cell-faint {
+    -fx-text-background-color: -fx-selection-bar-non-focused;
+    -fx-font-style: italic;
+    -fx-font-family: monospace;
+}
+
+.table-cell {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.list-view:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:focused,
+.tree-view:focused > .virtual-flow > .clipped-container > .sheet > .tree-cell:focused,
+.table-view:focused:row-selection > .virtual-flow > .clipped-container > .sheet > .table-row-cell:focused,
+.tree-table-view:focused:row-selection > .virtual-flow > .clipped-container > .sheet > .tree-table-row-cell:focused,
+.table-view:focused:cell-selection > .virtual-flow > .clipped-container > .sheet > .table-row-cell > .table-cell:focused,
+.tree-table-view:focused:cell-selection > .virtual-flow > .clipped-container > .sheet > .tree-table-row-cell > .tree-table-cell:focused {
+    -fx-background-color: -fx-cell-focus-inner-border, -fx-background;
+    -fx-background-insets: 0 0, 1 0;
+}
+
+.tree-cell > .tree-disclosure-node > .arrow,
+.tree-table-row-cell > .tree-disclosure-node > .arrow {
+    -fx-background-color: black;
+}
+
+.hyperlink {
+    -fx-padding: 1 2;
+}

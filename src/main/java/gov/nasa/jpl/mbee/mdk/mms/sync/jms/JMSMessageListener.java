@@ -107,7 +107,7 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
                 senderJsonNode = messageJsonNode.get("sender");
 
         if (refsJsonNode != null && refsJsonNode.isObject()) {
-            if (sourceJsonNode != null && sourceJsonNode.isTextual() && (sourceJsonNode.asText().startsWith("magicdraw") || sourceJsonNode.asText().startsWith("pma"))) {
+            if (sourceJsonNode != null && sourceJsonNode.isTextual() && sourceJsonNode.asText().startsWith("magicdraw")) {
                 return;
             }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {

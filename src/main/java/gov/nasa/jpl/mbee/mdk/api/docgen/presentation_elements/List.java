@@ -11,6 +11,6 @@ public class List extends PresentationElement {
 
     @Override
     public String getQualifiedName() {
-        return "SysML Extensions::DocGen::MDK EMP Client::Presentation Elements::List";
+        return "SysML Extensions::DocGen::Presentation Elements::List";
     }
 }

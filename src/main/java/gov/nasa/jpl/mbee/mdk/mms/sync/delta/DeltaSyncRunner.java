@@ -24,19 +24,20 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -347,13 +348,21 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     postElements.add(elementObjectNode);
                 }
             }
-            if (postElements.size() > 0) {
+            if (!postElements.isEmpty()) {
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
-                    File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                    Request request = new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, postElements.size(), "Sync Changes");
-                    MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
-                } catch (IOException | URISyntaxException | ServerException e) {
+                    File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
+
+                    HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                    TaskRunner.runWithProgressStatus(progressStatus1 -> {
+                        try {
+                            MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                        } catch (IOException | ServerException | URISyntaxException e) {
+                            // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                            e.printStackTrace();
+                        }
+                    }, "Sync Create/Update x" + NumberFormat.getInstance().format(postElements.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
+                } catch (IOException | URISyntaxException e) {
                     Application.getInstance().getGUILog().log("[ERROR] An error occurred. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                     e.printStackTrace();
                     return;
@@ -369,10 +378,17 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             progressStatus.setDescription("Committing deletions to MMS");
             URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
-                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
-                Request request = new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, deleteElements.size(), "Sync Changes");
-                MMSUtils.sendMMSRequest(request.getProject(), request.getRequest(), progressStatus);
-            } catch (IOException | URISyntaxException | ServerException e) {
+                File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                TaskRunner.runWithProgressStatus(progressStatus1 -> {
+                    try {
+                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                    } catch (IOException | ServerException | URISyntaxException e) {
+                        // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                        e.printStackTrace();
+                    }
+                }, "Sync Delete x" + NumberFormat.getInstance().format(deleteElements.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
+            } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred. Skipping sync. All changes will be re-attempted in the next sync. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;

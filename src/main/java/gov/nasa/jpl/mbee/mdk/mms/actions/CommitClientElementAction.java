@@ -9,11 +9,12 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -34,8 +35,6 @@ import java.util.List;
 // TODO Abstract this and update to a common class @donbot
 public class CommitClientElementAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
     private static final String DEFAULT_ID = "Commit Element to MMS";
-    private static final int COMMIT_ELEMENT_COUNT_THRESHOLD = Integer.MAX_VALUE;
-    private static final int COMPLETION_DELAY = 0;
 
     private final String elementID;
     private final Element element;
@@ -118,56 +117,38 @@ public class CommitClientElementAction extends RuleViolationAction implements An
     private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) throws JsonProcessingException {
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
-            int requestCapacity = elementsToUpdate.size() > COMMIT_ELEMENT_COUNT_THRESHOLD ? (elementsToUpdate.size() / COMMIT_ELEMENT_COUNT_THRESHOLD + (elementsToUpdate.size() % COMMIT_ELEMENT_COUNT_THRESHOLD != 0 ? 1 : 0)) * 2 : 1;
-            List<Request> requests = new ArrayList<>(requestCapacity);
-            List<ObjectNode> elementsToPost = new ArrayList<>(Math.min(elementsToUpdate.size(), COMMIT_ELEMENT_COUNT_THRESHOLD));
-            for (int i = 0; i < elementsToUpdate.size(); i++) {
-                elementsToPost.add(elementsToUpdate.get(i));
-                // send requests in chunks if above threshold
-                if (elementsToPost.size() == COMMIT_ELEMENT_COUNT_THRESHOLD || i + 1 == elementsToUpdate.size()) {
+            try {
+                File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
-                        File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToPost, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                        if (elementsToUpdate.size() > COMMIT_ELEMENT_COUNT_THRESHOLD) {
-                            int requestIndex = (i + 1) / COMMIT_ELEMENT_COUNT_THRESHOLD + ((i + 1) % COMMIT_ELEMENT_COUNT_THRESHOLD != 0 ? 1 : 0) - 1;
-                            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                            if (requestUri == null) {
-                                throw new IOException();
-                            }
-                            requestUri.addParameter("nodes", Boolean.toString(true));
-                            //requestUri.addParameter("edges", Boolean.toString(false));
-                            requests.add(requestIndex, new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
-                                    "Sync Changes - Nodes - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), COMPLETION_DELAY));
-                            requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                            if (requestUri == null) {
-                                throw new IOException();
-                            }
-                            //requestUri.addParameter("nodes", Boolean.toString(false));
-                            requestUri.addParameter("edges", Boolean.toString(true));
-                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(),
-                                    "Sync Changes - Edges - " + NumberFormat.getInstance().format(requestIndex + 1) + " / " + (requestCapacity / 2), COMPLETION_DELAY));
-                        }
-                        else {
-                            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                            requests.add(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON, elementsToPost.size(), "Sync Changes"));
-                        }
-                    } catch (IOException | URISyntaxException e) {
-                        Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
+                        MMSUtils.sendMMSRequest(project, request, progressStatus);
+                    } catch (IOException | ServerException | URISyntaxException e) {
+                        // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
-                        return;
                     }
-                    if (i + 1 != elementsToUpdate.size()) {
-                        elementsToPost = new ArrayList<>(Math.min(elementsToUpdate.size() - (i + 1), COMMIT_ELEMENT_COUNT_THRESHOLD));
-                    }
-                }
+                }, "Element Create/Update x" + NumberFormat.getInstance().format(elementsToUpdate.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
+            } catch (IOException | URISyntaxException e) {
+                Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
+                e.printStackTrace();
+                return;
             }
-            requests.forEach(request -> OutputQueue.getInstance().offer(request));
         }
         if (elementsToDelete != null && !elementsToDelete.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                OutputQueue.getInstance().offer((new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON, elementsToDelete.size(), "Sync Changes")));
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                TaskRunner.runWithProgressStatus(progressStatus -> {
+                    try {
+                        MMSUtils.sendMMSRequest(project, request, progressStatus);
+                    } catch (IOException | ServerException | URISyntaxException e) {
+                        // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                        e.printStackTrace();
+                    }
+                }, "Element Delete x" + NumberFormat.getInstance().format(elementsToDelete.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
             } catch (IOException | URISyntaxException e) {
                 Application.getInstance().getGUILog().log("[ERROR] Unexpected failure processing request. Reason: " + e.getMessage());
                 e.printStackTrace();

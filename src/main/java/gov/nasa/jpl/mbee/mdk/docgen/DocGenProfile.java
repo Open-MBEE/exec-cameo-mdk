@@ -97,4 +97,6 @@ public class DocGenProfile {
     public static final String editableTableStereotype = "EditableTable";
 
     public static final String constraintStereotype = "Constraint";
+
+    public static final String plotStereotype = "Plot";
 }

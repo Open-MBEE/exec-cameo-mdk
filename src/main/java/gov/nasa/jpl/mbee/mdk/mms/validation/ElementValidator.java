@@ -18,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitClientElementAction;
+import gov.nasa.jpl.mbee.mdk.mms.actions.ElementDiffAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
@@ -93,7 +94,7 @@ public class ElementValidator implements RunnableWithProgress {
 
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         Set<String> processedElementIds = new HashSet<>();
-        JsonToken current = null;
+        JsonToken current;
         for (File responseFile : serverElementFiles) {
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
@@ -218,6 +219,12 @@ public class ElementValidator implements RunnableWithProgress {
                 return null;
             }
         });
+        if (clientElement != null && clientElement.getValue() != null && serverElement != null && diff != null) {
+            JsonNode client = clientElement.getValue().deepCopy();
+            JsonNode server = serverElement.deepCopy();
+            JsonPatchFunction.preProcess(client, server);
+            validationRuleViolation.addAction(new ElementDiffAction(client, server, diff, project));
+        }
 
         ActionsCategory copyActionsCategory = new ActionsCategory("COPY", "Copy...");
         copyActionsCategory.setNested(true);

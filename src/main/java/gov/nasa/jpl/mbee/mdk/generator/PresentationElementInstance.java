@@ -17,7 +17,6 @@ public class PresentationElementInstance {
     private List<PresentationElementInstance> children; //if section
     private Element loopElement; //if section is generated from model element from docgen
     private boolean manual = false; //if manual is true, just use existing instance, not generated from docgen
-    private boolean viewDocHack = false; //if opaque para view doc generated, change it so it's not opaque and point to itself with a transclusion to view instead
 
     public PresentationElementInstance(InstanceSpecification instance, JSONObject spec, PresentationElementEnum type, Element view, String name, PresentationElementInstance parent, List<PresentationElementInstance> children) {
         this.instance = instance;
@@ -99,13 +98,5 @@ public class PresentationElementInstance {
 
     public void setLoopElement(Element loopElement) {
         this.loopElement = loopElement;
-    }
-
-    public boolean isViewDocHack() {
-        return viewDocHack;
-    }
-
-    public void setViewDocHack(boolean viewDocHack) {
-        this.viewDocHack = viewDocHack;
     }
 }

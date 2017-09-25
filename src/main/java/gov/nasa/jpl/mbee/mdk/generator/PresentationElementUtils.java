@@ -33,6 +33,7 @@ public class PresentationElementUtils {
     private Classifier paraC,
             tparaC,
             tableC,
+            figureC,
             listC,
             imageC,
             sectionC;
@@ -47,6 +48,7 @@ public class PresentationElementUtils {
         this.paraC = PresentationElementEnum.OPAQUE_PARAGRAPH.get().apply(project);
         this.tparaC = PresentationElementEnum.PARAGRAPH.get().apply(project);
         this.tableC = PresentationElementEnum.OPAQUE_TABLE.get().apply(project);
+        this.figureC = PresentationElementEnum.OPAQUE_FIGURE.get().apply(project);
         this.listC = PresentationElementEnum.OPAQUE_LIST.get().apply(project);
         this.imageC = PresentationElementEnum.OPAQUE_IMAGE.get().apply(project);
         this.sectionC = PresentationElementEnum.OPAQUE_SECTION.get().apply(project);
@@ -72,6 +74,7 @@ public class PresentationElementUtils {
 
     public PresentationElementInfo getCurrentInstances(Element viewOrSection, Element view) {
         List<InstanceSpecification> tables = new ArrayList<InstanceSpecification>();
+        List<InstanceSpecification> figures = new ArrayList<>();
         List<InstanceSpecification> lists = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> sections = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> paras = new ArrayList<InstanceSpecification>();
@@ -83,7 +86,7 @@ public class PresentationElementUtils {
         List<InstanceSpecification> opaque = new ArrayList<InstanceSpecification>();
         List<InstanceSpecification> extraManualRef = new ArrayList<InstanceSpecification>();
 
-        PresentationElementInfo res = new PresentationElementInfo(all, images, tables, lists, paras, sections, manuals, extraRef, extraManualRef, unused, opaque);
+        PresentationElementInfo res = new PresentationElementInfo(all, images, tables, figures, lists, paras, sections, manuals, extraRef, extraManualRef, unused, opaque);
         Expression e = getViewOrSectionExpression(viewOrSection);
         boolean isView = !(viewOrSection instanceof InstanceSpecification);
         if (e == null) {
@@ -98,8 +101,7 @@ public class PresentationElementUtils {
                 if (!is.getClassifier().isEmpty()) {
                     List<Classifier> iscs = is.getClassifier();
                     boolean viewinstance = false;
-                    if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(listC) ||
-                            iscs.contains(imageC) || iscs.contains(sectionC)) {
+                    if (iscs.contains(paraC) || iscs.contains(tableC) || iscs.contains(figureC) || iscs.contains(listC) || iscs.contains(imageC) || iscs.contains(sectionC)) {
                         for (Element el : is.getOwnedElement()) {
                             if (el instanceof Slot && ((Slot) el).getDefiningFeature() != null && ((Slot) el).getDefiningFeature().getName() != null && ((Slot) el).getDefiningFeature().getName().equals("generatedFromView") &&
                                     !((Slot) el).getValue().isEmpty() && ((Slot) el).getValue().get(0) instanceof ElementValue &&
@@ -122,7 +124,6 @@ public class PresentationElementUtils {
                             //TODO sourceProperty json key migration? @donbot
                             if (Converters.getElementToIdConverter().apply(view).equals(ob.get("sourceId")) && "documentation".equals(ob.get("sourceProperty"))) {
                                 viewinstance = false; //a view doc instance
-                                res.setViewDocHack(is);
                             }
                         } catch (Exception x) {
                         }
@@ -133,6 +134,9 @@ public class PresentationElementUtils {
                         }
                         else if (iscs.contains(tableC)) {
                             tables.add(is);
+                        }
+                        else if (iscs.contains(figureC)) {
+                            figures.add(is);
                         }
                         else if (iscs.contains(listC)) {
                             lists.add(is);
@@ -163,64 +167,54 @@ public class PresentationElementUtils {
 
     public InstanceSpecification updateOrCreateInstance(PresentationElementInstance pe, Package owner) {
         InstanceSpecification is = pe.getInstance();
-        if (is != null && pe.isManual() && !pe.isViewDocHack()) {
+        if (is != null && pe.isManual()) {
             return is;
         }
         if (is == null) {
             is = ef.createInstanceSpecificationInstance();
             Application.getInstance().getProject().getCounter().setCanResetIDForObject(true);
             is.setID(MDKConstants.HIDDEN_ID_PREFIX + Converters.getElementToIdConverter().apply(is) + ID_SUFFIX);
-            if (!pe.isViewDocHack()) {
-                Slot s = ef.createSlotInstance();
-                s.setOwner(is);
-                s.setOwningInstance(is);
-                s.setDefiningFeature(generatedFromView);
-                ElementValue ev = ef.createElementValueInstance();
-                ev.setElement(pe.getView());
-                s.getValue().add(ev);
-                if (pe.getType() == PresentationElementEnum.SECTION && pe.getLoopElement() != null) {
-                    Slot ss = ef.createSlotInstance();
-                    ss.setOwner(is);
-                    ss.setOwningInstance(is);
-                    ss.setDefiningFeature(generatedFromElement);
-                    ElementValue ev2 = ef.createElementValueInstance();
-                    ev2.setElement(pe.getLoopElement());
-                    ss.getValue().add(ev2);
-                }
+            Slot s = ef.createSlotInstance();
+            s.setOwner(is);
+            s.setOwningInstance(is);
+            s.setDefiningFeature(generatedFromView);
+            ElementValue ev = ef.createElementValueInstance();
+            ev.setElement(pe.getView());
+            s.getValue().add(ev);
+            if (pe.getType() == PresentationElementEnum.SECTION && pe.getLoopElement() != null) {
+                Slot ss = ef.createSlotInstance();
+                ss.setOwner(is);
+                ss.setOwningInstance(is);
+                ss.setDefiningFeature(generatedFromElement);
+                ElementValue ev2 = ef.createElementValueInstance();
+                ev2.setElement(pe.getLoopElement());
+                ss.getValue().add(ev2);
             }
         }
         JSONObject newspec = pe.getNewspec();
         Classifier classifier = null;
         String name;
-        if (pe.isViewDocHack()) {
-            newspec = new JSONObject();
-            newspec.put("type", "Paragraph");
-            newspec.put("sourceType", "reference");
-            newspec.put("source", Converters.getElementToIdConverter().apply(pe.getView()));
-            newspec.put("sourceProperty", "documentation");
-            name = "View Documentation";
-            classifier = tparaC;
+        if (pe.getType() == PresentationElementEnum.PARAGRAPH) {
+            classifier = paraC;
         }
-        else {
-            if (pe.getType() == PresentationElementEnum.PARAGRAPH) {
-                classifier = paraC;
-            }
-            else if (pe.getType() == PresentationElementEnum.TABLE) {
-                classifier = tableC;
-            }
-            else if (pe.getType() == PresentationElementEnum.LIST) {
-                classifier = listC;
-            }
-            else if (pe.getType() == PresentationElementEnum.IMAGE) {
-                classifier = imageC;
-            }
-            else if (pe.getType() == PresentationElementEnum.SECTION) {
-                classifier = sectionC;
-            }
-            name = pe.getName();
-            if (name == null || name.isEmpty()) {
-                name = "<>";
-            }
+        else if (pe.getType() == PresentationElementEnum.TABLE) {
+            classifier = tableC;
+        }
+        else if (pe.getType() == PresentationElementEnum.FIGURE) {
+            classifier = figureC;
+        }
+        else if (pe.getType() == PresentationElementEnum.LIST) {
+            classifier = listC;
+        }
+        else if (pe.getType() == PresentationElementEnum.IMAGE) {
+            classifier = imageC;
+        }
+        else if (pe.getType() == PresentationElementEnum.SECTION) {
+            classifier = sectionC;
+        }
+        name = pe.getName();
+        if (name == null || name.isEmpty()) {
+            name = "<>";
         }
         is.setName(name);
         is.getClassifier().clear();

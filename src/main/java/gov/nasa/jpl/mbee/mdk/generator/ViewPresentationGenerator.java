@@ -29,21 +29,17 @@ import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.json.simple.JSONArray;
@@ -51,6 +47,7 @@ import org.json.simple.JSONArray;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -647,11 +644,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // STAGE 5: Queueing upload of generated view instances
                 progressStatus.setDescription("Queueing upload of generated view instances");
                 progressStatus.setCurrent(5);
-                Application.getInstance().getGUILog().log("Updating/creating " + elementsToCommit.size() + " element" + (elementsToCommit.size() != 1 ? "s" : "") + " to generate views.");
+                Application.getInstance().getGUILog().log("Updating/creating " + NumberFormat.getInstance().format(elementsToCommit.size()) + " element" + (elementsToCommit.size() != 1 ? "s" : "") + " to generate views.");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, elementsToCommit.size(), "Sync Changes"));
+                File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                TaskRunner.runWithProgressStatus(progressStatus1 -> {
+                    try {
+                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                    } catch (IOException | ServerException | URISyntaxException e) {
+                        // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                        e.printStackTrace();
+                    }
+                }, "View Generation Create/Update x" + NumberFormat.getInstance().format(elementsToCommit.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
                 changed = true;
             }
 
@@ -671,11 +676,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
             if (mmsElementsToDelete.size() > 0) {
-                Application.getInstance().getGUILog().log("Deleting " + mmsElementsToDelete.size() + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
+                Application.getInstance().getGUILog().log("Deleting " + NumberFormat.getInstance().format(mmsElementsToDelete.size()) + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, mmsElementsToDelete.size(), "View Generation"));
+                File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                TaskRunner.runWithProgressStatus(progressStatus1 -> {
+                    try {
+                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                    } catch (IOException | ServerException | URISyntaxException e) {
+                        // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                        e.printStackTrace();
+                    }
+                }, "View Generate Delete x" + NumberFormat.getInstance().format(elementsToDelete.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
                 changed = true;
             }
 

@@ -143,7 +143,15 @@
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="PropertiesTableByAttributes" listAsElement="false" opposite="false" id="IDaction_1326673932826_551943_0">
                     <stereotype id="_17_0_1_407019f_1326235066484_404532_2489"/>
                 </custom>
-                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="Simulate" listAsElement="false" opposite="false" id="IDaction_1486492071543_659574_0"/>
+                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="TemporalDiff" listAsElement="false" opposite="false" id="IDaction_1506369984191_205202_0">
+                    <stereotype id="_18_0_5_407019f_1470005595314_374414_14088"/>
+                </custom>
+                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="Simulate" listAsElement="false" opposite="false" id="IDaction_1486492071543_659574_0">
+                    <stereotype id="_18_0_6_8bf0285_1480702282066_678566_13974"/>
+                </custom>
+                <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode" description="Plot" listAsElement="false" opposite="false" id="IDaction_1326673971333_365714_0">
+                    <stereotype id="_18_5_2_8bf0285_1506039168690_925234_16001"/>
+                </custom>
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="Other (like UserScripts)" listAsElement="false" opposite="false" id="IDaction_1326673971333_365712_0"/>
             </actions>
         </category>
