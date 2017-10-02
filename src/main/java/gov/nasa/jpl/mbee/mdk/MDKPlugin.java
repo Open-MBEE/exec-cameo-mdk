@@ -19,17 +19,14 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator;
-import javafx.application.Platform;
-import javafx.stage.Stage;
 
-import javax.annotation.Nullable;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class MDKPlugin extends Plugin {
     public static final String MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
@@ -37,7 +34,6 @@ public class MDKPlugin extends Plugin {
     private static String VERSION;
     public static ClassLoader extensionsClassloader;
     public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
-    private static javafx.application.Application APPLICATION;
 
     public MDKPlugin() {
         super();
@@ -48,11 +44,6 @@ public class MDKPlugin extends Plugin {
             VERSION = PluginUtils.getPlugins().stream().map(Plugin::getDescriptor).filter(descriptor -> descriptor.getName().equals("Model Development Kit")).map(PluginDescriptor::getVersion).findAny().orElse(null);
         }
         return VERSION;
-    }
-
-    @Nullable
-    public static javafx.application.Application getApplication() {
-        return APPLICATION;
     }
 
     public static void updateMainToolbarCategory() {
@@ -169,37 +160,21 @@ public class MDKPlugin extends Plugin {
     }
 
     private void initJavaFX() {
+        try {
+            Class.forName("javafx.application.Platform");
+        } catch (ClassNotFoundException e) {
+            System.err.println("[WARNING] JavaFX libraries are unavailable. Please add \"-Dorg.osgi.framework.bundle.parent=ext\" to the \"JAVA_ARGS\" line in your properties file(s) in your MagicDraw bin directory and restart.");
+            return;
+        }
         new Thread(() -> {
             try {
-                javafx.application.Application.launch(MDKApplication.class);
-                APPLICATION = MDKApplication.getInstance();
+                Class<?> clazz = Class.forName("gov.nasa.jpl.mbee.mdk.MDKApplication");
+                Method method = clazz.getMethod("main", String[].class);
+                method.invoke(null, new Object[]{new String[]{}});
             } catch (Exception | Error e) {
+                System.err.println("[WARNING] Failed to initialize JavaFX application. JavaFX functionality is disabled.");
                 e.printStackTrace();
             }
         }, "JavaFX Init").start();
-    }
-
-    public static class MDKApplication extends javafx.application.Application {
-        static final CountDownLatch latch = new CountDownLatch(1);
-        private static MDKApplication INSTANCE;
-
-        public MDKApplication() {
-            INSTANCE = this;
-            latch.countDown();
-        }
-
-        @Override
-        public void start(Stage stage) throws Exception {
-            Platform.setImplicitExit(false);
-        }
-
-        protected static MDKApplication getInstance() {
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return INSTANCE;
-        }
     }
 }
