@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.ui.ProjectWindow;
 import com.nomagic.magicdraw.ui.WindowComponentInfo;
 import com.nomagic.magicdraw.ui.WindowsManager;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.tomsawyer.canvas.TSViewportCanvas;
@@ -102,7 +103,8 @@ public class TomSawyerDiagram extends Query {
             }
         }
 
-        DocGenDelegateExtension delegate = new DocGenDelegateExtension();
+        Diagram diagram = null;
+        DocGenDelegateExtension delegate = new DocGenDelegateExtension(diagram);
         delegate.addObjectsToShow(elements); //Johannes' method.
         DBTomSawyerDiagram dbts = new DBTomSawyerDiagram();
 
@@ -152,8 +154,6 @@ public class TomSawyerDiagram extends Query {
             }
             return Collections.singletonList(dbts);
         } else {
-
-
             boolean showInMD = true;
             if (showInMD) {
                 TSStandardWindowComponentContent windowComponentContent =

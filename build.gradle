@@ -407,7 +407,7 @@ task runJava(type: JavaExec) {
     errorOutput = System.err
 
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.tomsawyer.licensing.licenseName=Jet Propulsion Laboratory, Systems Engineering Computer Aided Engineering, Tom Sawyer Version 8.0, Development Distribution', '-Dcom.tomsawyer.licensing.featureSet=DefaultFeatureSet', '-Dcom.tomsawyer.licensing.protocol=http', '-Dcom.tomsawyer.licensing.centralServerHostName=cae-lic02.jpl.nasa.gov', '-Dcom.tomsawyer.licensing.port=8993', '-Dcom.tomsawyer.licensing.path=tslicenseserver' ]
     // arguments to pass to the application
     args 'DEVELOPER'
 }
