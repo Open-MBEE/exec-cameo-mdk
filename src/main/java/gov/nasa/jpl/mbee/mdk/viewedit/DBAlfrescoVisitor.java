@@ -130,8 +130,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         //    addToElements(e);
         //}
         // export image - also keep track of exported images
-        DiagramPresentationElement diagram = Application.getInstance().getProject()
-                .getDiagram(image.getImage());
+        DiagramPresentationElement diagram = Application.getInstance().getProject().getDiagram(image.getImage());
         String svgFilename = Converters.getElementToIdConverter().apply(image.getImage());
 
         // create image file
@@ -149,10 +148,14 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         // export the image file
         File svgDiagramFile = new File(directory, svgFilename);
+        boolean initialUseSVGTestTag = Application.getInstance().getEnvironmentOptions().getGeneralOptions().isUseSVGTextTag();
+        Application.getInstance().getEnvironmentOptions().getGeneralOptions().setUseSVGTextTag(true);
         try {
             ImageExporter.export(diagram, ImageExporter.SVG, svgDiagramFile);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            Application.getInstance().getEnvironmentOptions().getGeneralOptions().setUseSVGTextTag(initialUseSVGTestTag);
         }
 
         // calculate the checksum
