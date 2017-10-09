@@ -49,7 +49,9 @@ public class GenericTable extends Table {
         if (getIgnore()) {
             return res;
         }
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Project.getProject(getDgElement())).getLocalSyncTransactionCommitListener();
+        // We really shouldn't be using Application.getInstance().getProject() here, but the context is already lost somewhere upstream :/
+        // dgElement won't always be there and there is no guarantee that it or the exposed element(s) aren't from a library
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
         listener.setDisabled(true);
         try {
             int tableCount = 0;
