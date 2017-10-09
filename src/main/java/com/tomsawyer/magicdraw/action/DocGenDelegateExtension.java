@@ -27,7 +27,7 @@ public class DocGenDelegateExtension extends TSRenderDiagramDelegate
     private List<Element> elements;
 
     public DocGenDelegateExtension(Diagram diagram) {
-        super(diagram);
+        super(null);
     }
 
     public Element getIbdContextElement() {
