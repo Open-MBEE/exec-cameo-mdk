@@ -48,7 +48,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
             Application.getInstance().getGUILog().log(parent.getQualifiedName() + " is not editable. Skipping creating specialization.");
             return true;
         }
-        if (redefinedAttribute.getType() instanceof Classifier && !(redefinedAttribute.getType() instanceof Property)) {
+        if (!(redefinedAttribute.getType() instanceof DataType) && !(redefinedAttribute.getType() instanceof Property)) {
             boolean hasTraveled = false;
             if (traveled.contains(redefinedAttribute)) {
                 hasTraveled = true;

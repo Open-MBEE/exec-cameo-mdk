@@ -18,7 +18,7 @@ import gov.nasa.jpl.mbee.mdk.util.Utils;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.lang.Class;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class SpecializeStructureAction extends SRAction {
@@ -113,8 +113,12 @@ public class SpecializeStructureAction extends SRAction {
         }
         Utils.createGeneralization(classifier, specific);
 
-
-        for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
+        Set<NamedElement> listOfAllMembers = new HashSet<>();
+        for (NamedElement namedElement : specific.getInheritedMember()) {
+            listOfAllMembers.add(namedElement);
+        }
+        filterRedefinedElements(listOfAllMembers);
+        for (final NamedElement ne : listOfAllMembers) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                 final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
                 SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, traveled, visited, individualMode, isRecursive);
@@ -125,6 +129,27 @@ public class SpecializeStructureAction extends SRAction {
 //            redefinedElement.dispose();
 //        }
         return specific;
+    }
+
+    /**
+     * Only leave the lowest element in the redefinition hierarchy.
+     * @param listOfAllMembers
+     */
+    private void filterRedefinedElements(Set<NamedElement> listOfAllMembers) {
+        List<RedefinableElement> removeElements = new ArrayList<>();
+        for (NamedElement member : listOfAllMembers) {
+            if(member instanceof RedefinableElement){
+                Collection<RedefinableElement> redefinedBy = ((RedefinableElement) member).getRedefinedElement();
+                for (RedefinableElement redefinableElement : redefinedBy) {
+                    removeElements.add((RedefinableElement) redefinableElement);
+                }
+            }
+        }
+        for (RedefinableElement removeElement : removeElements) {
+            if(listOfAllMembers.contains(removeElement)){
+                listOfAllMembers.remove(removeElement);
+            }
+        }
     }
 
     private void deleteDiagrams(Namespace specific, ArrayList<Diagram> diagrams) {
