@@ -107,15 +107,15 @@ public class SpecializeStructureAction extends SRAction {
         specific.getGeneralization().clear();
         ArrayList<RedefinableElement> redefinedElements = new ArrayList<RedefinableElement>();
         for (NamedElement namedElement : specific.getOwnedMember()) {
-            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf() && !(namedElement instanceof Classifier)) {
+            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf()){// && !(namedElement instanceof Classifier)) {
                 redefinedElements.add((RedefinableElement) namedElement);
                 ((RedefinableElement) namedElement).getRedefinedElement().clear();
             }
         }
         Utils.createGeneralization(classifier, specific);
 
-        Set<NamedElement> listOfAllMembers = new HashSet<>();//specific.getInheritedMember()
-        ClassifierHelper.collectInheritedAttributes(specific ,listOfAllMembers, false, true);
+        Set<NamedElement> listOfAllMembers = new HashSet<>(specific.getInheritedMember());//
+        //ClassifierHelper.collectInheritedAttributes(specific ,listOfAllMembers, false, true);
         List<NamedElement> removeElements = new ArrayList<>();
         for (NamedElement member : listOfAllMembers) {
             if(member instanceof RedefinableElement){
@@ -130,13 +130,13 @@ public class SpecializeStructureAction extends SRAction {
         for (final NamedElement ne : listOfAllMembers) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                 final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
-                SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, traveled, visited, individualMode, isRecursive);
-                //redefinedElements.add(elementToBeRedefined);
+                RedefinableElement redefinedElement = SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, traveled, visited, individualMode, isRecursive);
+                redefinedElements.remove(redefinedElement);
             }
         }
-//        for (RedefinableElement redefinedElement : redefinedElements) {
-//            redefinedElement.dispose();
-//        }
+        for (RedefinableElement redefinedElement : redefinedElements) {
+            redefinedElement.dispose();
+        }
         return specific;
     }
 
