@@ -9,6 +9,7 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
+import com.nomagic.uml2.ext.jmi.helpers.ClassifierHelper;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
@@ -113,11 +114,19 @@ public class SpecializeStructureAction extends SRAction {
         }
         Utils.createGeneralization(classifier, specific);
 
-        Set<NamedElement> listOfAllMembers = new HashSet<>();
-        for (NamedElement namedElement : specific.getInheritedMember()) {
-            listOfAllMembers.add(namedElement);
+        Set<NamedElement> listOfAllMembers = new HashSet<>();//specific.getInheritedMember()
+        ClassifierHelper.collectInheritedAttributes(specific ,listOfAllMembers, false, true);
+        List<NamedElement> removeElements = new ArrayList<>();
+        for (NamedElement member : listOfAllMembers) {
+            if(member instanceof RedefinableElement){
+                Collection<RedefinableElement> redefinedBy = ((RedefinableElement) member).getRedefinedElement();
+                removeElements.addAll(redefinedBy);
+            }else{
+                removeElements.add(member);
+            }
         }
-        filterRedefinedElements(listOfAllMembers);
+        listOfAllMembers.removeAll(removeElements);
+
         for (final NamedElement ne : listOfAllMembers) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                 final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
@@ -131,26 +140,6 @@ public class SpecializeStructureAction extends SRAction {
         return specific;
     }
 
-    /**
-     * Only leave the lowest element in the redefinition hierarchy.
-     * @param listOfAllMembers
-     */
-    private void filterRedefinedElements(Set<NamedElement> listOfAllMembers) {
-        List<RedefinableElement> removeElements = new ArrayList<>();
-        for (NamedElement member : listOfAllMembers) {
-            if(member instanceof RedefinableElement){
-                Collection<RedefinableElement> redefinedBy = ((RedefinableElement) member).getRedefinedElement();
-                for (RedefinableElement redefinableElement : redefinedBy) {
-                    removeElements.add((RedefinableElement) redefinableElement);
-                }
-            }
-        }
-        for (RedefinableElement removeElement : removeElements) {
-            if(listOfAllMembers.contains(removeElement)){
-                listOfAllMembers.remove(removeElement);
-            }
-        }
-    }
 
     private void deleteDiagrams(Namespace specific, ArrayList<Diagram> diagrams) {
         for (NamedElement ne : specific.getOwnedMember()) {
