@@ -156,6 +156,11 @@ public class SpecializeStructureAction extends SRAction {
 
 
     private void checkAssociationsForInheritance(Classifier classifier, Classifier general) {
+
+        if(classifier == null){
+            Application.getInstance().getGUILog().log("[ERROR] Can't check associations since classifier was not created. ");
+            return;
+        }
         assocRule:
         for (Element child : classifier.getOwnedElement()) {
             if (child instanceof Property) {
