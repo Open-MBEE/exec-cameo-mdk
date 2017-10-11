@@ -9,7 +9,6 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
 import com.nomagic.magicdraw.ui.dialogs.selection.SelectionMode;
-import com.nomagic.uml2.ext.jmi.helpers.ClassifierHelper;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
@@ -105,29 +104,30 @@ public class SpecializeStructureAction extends SRAction {
         visited.add(specific);
         visited.add(classifier);
         specific.getGeneralization().clear();
-        ArrayList<RedefinableElement> redefinedElements = new ArrayList<RedefinableElement>();
+        ArrayList<RedefinableElement> redefinedElements = new ArrayList<>();
         for (NamedElement namedElement : specific.getOwnedMember()) {
-            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf()){// && !(namedElement instanceof Classifier)) {
+            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf()) {
                 redefinedElements.add((RedefinableElement) namedElement);
                 ((RedefinableElement) namedElement).getRedefinedElement().clear();
             }
         }
         Utils.createGeneralization(classifier, specific);
 
-        Set<NamedElement> listOfAllMembers = new HashSet<>(specific.getInheritedMember());//
+        Set<NamedElement> members = new HashSet<>(specific.getInheritedMember());//
         //ClassifierHelper.collectInheritedAttributes(specific ,listOfAllMembers, false, true);
         List<NamedElement> removeElements = new ArrayList<>();
-        for (NamedElement member : listOfAllMembers) {
-            if(member instanceof RedefinableElement){
+        for (NamedElement member : members) {
+            if (member instanceof RedefinableElement) {
                 Collection<RedefinableElement> redefinedBy = ((RedefinableElement) member).getRedefinedElement();
                 removeElements.addAll(redefinedBy);
-            }else{
+            }
+            else {
                 removeElements.add(member);
             }
         }
-        listOfAllMembers.removeAll(removeElements);
+        members.removeAll(removeElements);
 
-        for (final NamedElement ne : listOfAllMembers) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
+        for (final NamedElement ne : members) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
             if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
                 final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
                 RedefinableElement redefinedElement = SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, traveled, visited, individualMode, isRecursive);
@@ -156,9 +156,7 @@ public class SpecializeStructureAction extends SRAction {
 
 
     private void checkAssociationsForInheritance(Classifier classifier, Classifier general) {
-
-        if(classifier == null){
-            Application.getInstance().getGUILog().log("[ERROR] Can't check associations since classifier was not created. ");
+        if (classifier == null) {
             return;
         }
         assocRule:
