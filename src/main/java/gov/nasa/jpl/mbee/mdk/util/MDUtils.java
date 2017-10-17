@@ -168,8 +168,9 @@ public class MDUtils {
     }
 
     public static String getBranchId(Project project) {
-        if (project.isRemote() && !EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName().equals("trunk")) {
-            return EsiUtils.getCurrentBranch(project.getPrimaryProject()).getID().toString();
+        EsiUtils.EsiBranchInfo branchInfo;
+        if (project.isRemote() && (branchInfo = EsiUtils.getCurrentBranch(project.getPrimaryProject())) != null && !branchInfo.getName().equals("trunk")) {
+            return branchInfo.getID().toString();
         }
         return "master";
     }
