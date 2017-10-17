@@ -89,7 +89,6 @@ public class SRValidationSuite extends ValidationSuite implements Runnable {
                     }
                 }
 
-
                 checkForAspects(classifier, classifier);
 
                 for (final Classifier general : classifier.getGeneral()) {
