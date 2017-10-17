@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.docgen.docbook;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class DBTomSawyerDiagram extends DocumentElement {
     }
 
     public String getContext() {
-        return context.getID();
+        return Converters.getElementToIdConverter().apply(context);
     }
 
     public void setContext(Element context) {
