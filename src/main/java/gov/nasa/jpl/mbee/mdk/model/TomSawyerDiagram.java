@@ -39,6 +39,7 @@ import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.Table;
 public class TomSawyerDiagram extends Query {
     private diagramType type;
     private int imagenum = 0;
+    private String typeName;
 
     public void setType(diagramType type) {
         this.type = type;
@@ -72,18 +73,23 @@ public class TomSawyerDiagram extends Query {
             switch (((EnumerationLiteral) enumliteral).getName()) {
                 case "Block_Definition_Diagram":
                     setType(Block_Definition_Diagram);
+                    typeName ="Block Definition Diagram";
                     break;
                 case "Internal_Block_Diagram":
                     setType(Internal_Block_Diagram);
+                    typeName ="Internal Block Diagram";
                     break;
                 case "State_Machine_Diagram":
                     setType(State_Machine_Diagram);
+                    typeName = "State Machine";
                     break;
                 case "Activity_Diagram":
                     setType(Activity_Diagram);
+                    typeName = "Activity Diagram";
                     break;
                 case "Sequence_Diagram":
                     setType(Sequence_Diagram);
+                    typeName = "Sequence Diagram";
                     break;
                 case "Table":
                     setType(Table);
@@ -103,8 +109,7 @@ public class TomSawyerDiagram extends Query {
             }
         }
 
-        Diagram diagram = null;
-        DocGenDelegateExtension delegate = new DocGenDelegateExtension(diagram);
+         DocGenDelegateExtension delegate = new DocGenDelegateExtension(elements.get(0), typeName);
         delegate.addObjectsToShow(elements); //Johannes' method.
         DBTomSawyerDiagram dbts = new DBTomSawyerDiagram();
 
@@ -144,7 +149,7 @@ public class TomSawyerDiagram extends Query {
 
         if (forViewEditor) {
             if (type.equals(Internal_Block_Diagram)) {
-                delegate.postLoadDataIBDAction();
+             //   delegate.postLoadDataIBDAction();
                 viewElements = delegate.postLoadDataGetUUID();
                 dbts.setContext(delegate.getIbdContextElement());
                 dbts.setElements(viewElements);
