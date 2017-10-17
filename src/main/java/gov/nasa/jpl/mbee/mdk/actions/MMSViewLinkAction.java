@@ -11,6 +11,7 @@ import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.ui.ViewEditorLinkForm;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
@@ -61,10 +62,7 @@ public class MMSViewLinkAction extends MDAction {
             uriBase.setHost(uriBase.getHost() + "/alfresco/mmsapp/mms.html#");
             uriBase.setPath("");
 
-            String uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
-
-            String branchName = EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName();
-            uriPath += "/" + (branchName.equals("trunk") ? "master" : branchName);
+            String uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/" + MDUtils.getBranchId(project);
 
             // collect document parents from hierarchy
             Set<Element> documents = new HashSet<>();
