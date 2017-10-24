@@ -7,6 +7,8 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -44,7 +46,10 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +60,7 @@ public class MMSUtils {
 
     private static final int CHECK_CANCEL_DELAY = 100;
     private static final AtomicReference<Exception> LAST_EXCEPTION = new AtomicReference<>();
-    private static final Map<Project, String> PROFILE_SERVER_CACHE = new HashMap<>(0);
+    private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
@@ -534,7 +539,7 @@ public class MMSUtils {
             urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
         }
         else if (ProjectUtilities.isStandardSystemProfile(project.getPrimaryProject())) {
-            urlString = PROFILE_SERVER_CACHE.get(project);
+            urlString = PROFILE_SERVER_CACHE.getIfPresent(project);
             if (urlString == null) {
                 urlString = JOptionPane.showInputDialog("Specify server URL for standard profile.", null);
             }
