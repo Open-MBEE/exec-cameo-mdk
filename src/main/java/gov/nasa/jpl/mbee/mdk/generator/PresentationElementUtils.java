@@ -6,20 +6,15 @@ import com.nomagic.magicdraw.commands.MacroCommand;
 import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
-import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
+import gov.nasa.jpl.mbee.mdk.api.docgen.uml.classes.PresentationElementClasses;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
 import java.util.*;
@@ -45,13 +40,13 @@ public class PresentationElementUtils {
 
     {
         this.project = Application.getInstance().getProject();
-        this.paraC = PresentationElementEnum.OPAQUE_PARAGRAPH.get().apply(project);
-        this.tparaC = PresentationElementEnum.PARAGRAPH.get().apply(project);
-        this.tableC = PresentationElementEnum.OPAQUE_TABLE.get().apply(project);
-        this.figureC = PresentationElementEnum.OPAQUE_FIGURE.get().apply(project);
-        this.listC = PresentationElementEnum.OPAQUE_LIST.get().apply(project);
-        this.imageC = PresentationElementEnum.OPAQUE_IMAGE.get().apply(project);
-        this.sectionC = PresentationElementEnum.OPAQUE_SECTION.get().apply(project);
+        this.paraC = PresentationElementClasses.OPAQUE_PARAGRAPH.get().apply(project);
+        this.tparaC = PresentationElementClasses.PARAGRAPH.get().apply(project);
+        this.tableC = PresentationElementClasses.OPAQUE_TABLE.get().apply(project);
+        this.figureC = PresentationElementClasses.OPAQUE_FIGURE.get().apply(project);
+        this.listC = PresentationElementClasses.OPAQUE_LIST.get().apply(project);
+        this.imageC = PresentationElementClasses.OPAQUE_IMAGE.get().apply(project);
+        this.sectionC = PresentationElementClasses.OPAQUE_SECTION.get().apply(project);
         this.generatedFromView = Utils.getGeneratedFromViewProperty(project);
         this.generatedFromElement = Utils.getGeneratedFromElementProperty(project);
         this.ef = project.getElementsFactory();
@@ -181,7 +176,7 @@ public class PresentationElementUtils {
             ElementValue ev = ef.createElementValueInstance();
             ev.setElement(pe.getView());
             s.getValue().add(ev);
-            if (pe.getType() == PresentationElementEnum.SECTION && pe.getLoopElement() != null) {
+            if (pe.getType() == PresentationElementClasses.SECTION && pe.getLoopElement() != null) {
                 Slot ss = ef.createSlotInstance();
                 ss.setOwner(is);
                 ss.setOwningInstance(is);
@@ -194,22 +189,22 @@ public class PresentationElementUtils {
         JSONObject newspec = pe.getNewspec();
         Classifier classifier = null;
         String name;
-        if (pe.getType() == PresentationElementEnum.PARAGRAPH) {
+        if (pe.getType() == PresentationElementClasses.PARAGRAPH) {
             classifier = paraC;
         }
-        else if (pe.getType() == PresentationElementEnum.TABLE) {
+        else if (pe.getType() == PresentationElementClasses.TABLE) {
             classifier = tableC;
         }
-        else if (pe.getType() == PresentationElementEnum.FIGURE) {
+        else if (pe.getType() == PresentationElementClasses.FIGURE) {
             classifier = figureC;
         }
-        else if (pe.getType() == PresentationElementEnum.LIST) {
+        else if (pe.getType() == PresentationElementClasses.LIST) {
             classifier = listC;
         }
-        else if (pe.getType() == PresentationElementEnum.IMAGE) {
+        else if (pe.getType() == PresentationElementClasses.IMAGE) {
             classifier = imageC;
         }
-        else if (pe.getType() == PresentationElementEnum.SECTION) {
+        else if (pe.getType() == PresentationElementClasses.SECTION) {
             classifier = sectionC;
         }
         name = pe.getName();
@@ -219,7 +214,7 @@ public class PresentationElementUtils {
         is.setName(name);
         is.getClassifier().clear();
         is.getClassifier().add(classifier);
-        if (pe.getType() == PresentationElementEnum.SECTION) { //assume all children pe have instance, caller should walk bottom up
+        if (pe.getType() == PresentationElementClasses.SECTION) { //assume all children pe have instance, caller should walk bottom up
             Expression expression = is.getSpecification() instanceof Expression ? (Expression) is.getSpecification() : ef.createExpressionInstance();
             expression.setOwner(is);
             List<InstanceValue> ivs = new ArrayList<>(pe.getChildren().size());

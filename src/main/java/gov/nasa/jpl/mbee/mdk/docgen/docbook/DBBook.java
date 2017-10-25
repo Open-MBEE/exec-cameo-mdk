@@ -11,9 +11,8 @@ public class DBBook extends DBHasContent {
 
     private String subtitle;
 
-    private Boolean RemoveBlankPages;
-
-    private boolean UseDefaultStylesheet;
+    private boolean removeBlankPages;
+    private boolean useDefaultStylesheet;
 
     private DocumentMeta metadata;
 
@@ -33,12 +32,12 @@ public class DBBook extends DBHasContent {
         return subtitle;
     }
 
-    public Boolean getRemoveBlankPages() {
-        return RemoveBlankPages;
+    public boolean getRemoveBlankPages() {
+        return removeBlankPages;
     }
 
     public boolean getUseDefaultStylesheet() {
-        return UseDefaultStylesheet;
+        return useDefaultStylesheet;
     }
 
     public void setSubtitle(String s) {
@@ -46,11 +45,11 @@ public class DBBook extends DBHasContent {
     }
 
     public void setRemoveBlankPages(Boolean s) {
-        RemoveBlankPages = s;
+        removeBlankPages = s;
     }
 
-    public void setUseDefaulStylesheet(boolean s) {
-        UseDefaultStylesheet = s;
+    public void setUseDefaultStylesheet(boolean s) {
+        useDefaultStylesheet = s;
     }
 
     @Override

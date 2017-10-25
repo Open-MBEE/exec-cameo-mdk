@@ -161,7 +161,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 ViewMapping viewMapping = viewMap.containsKey(Converters.getElementToIdConverter().apply(view)) ?
                         viewMap.get(Converters.getElementToIdConverter().apply(view)) : new ViewMapping();
                 viewMapping.setElement(view);
-                viewMapping.setDbBook(book);
+                viewMapping.setBook(book);
                 viewMap.put(Converters.getElementToIdConverter().apply(view), viewMapping);
             }
         }
@@ -493,7 +493,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         for (Element rootView : rootViews) {
             DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
             try {
-                viewMap.get(Converters.getElementToIdConverter().apply(rootView)).getDbBook().accept(dbAlfrescoVisitor);
+                viewMap.get(Converters.getElementToIdConverter().apply(rootView)).getBook().accept(dbAlfrescoVisitor);
             } catch (Exception e) {
                 Utils.printException(e);
                 e.printStackTrace();
@@ -807,7 +807,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         private Element element;
         private ObjectNode objectNode;
         private List<String> instanceIDs;
-        private DBBook dbBook;
+        private DBBook book;
 
         public Element getElement() {
             return element;
@@ -833,12 +833,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             this.instanceIDs = instanceIDs;
         }
 
-        public DBBook getDbBook() {
-            return dbBook;
+        public DBBook getBook() {
+            return book;
         }
 
-        public void setDbBook(DBBook dbBook) {
-            this.dbBook = dbBook;
+        public void setBook(DBBook book) {
+            this.book = book;
         }
     }
 

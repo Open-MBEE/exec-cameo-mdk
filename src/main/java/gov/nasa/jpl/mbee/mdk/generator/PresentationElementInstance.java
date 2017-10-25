@@ -2,7 +2,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
-import gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements.PresentationElementEnum;
+import gov.nasa.jpl.mbee.mdk.api.docgen.uml.classes.PresentationElementClasses;
 import org.json.simple.JSONObject;
 
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
 public class PresentationElementInstance {
     private InstanceSpecification instance; //existing instance, null if no existing instance to use
     private JSONObject newspec; //the to be json
-    private PresentationElementEnum type;
+    private PresentationElementClasses type;
     private Element view; //view that generated this pe, can be null if not generated
     private String name;
     private PresentationElementInstance parent; //section if applicable, otherwise null, use view
@@ -18,7 +18,7 @@ public class PresentationElementInstance {
     private Element loopElement; //if section is generated from model element from docgen
     private boolean manual = false; //if manual is true, just use existing instance, not generated from docgen
 
-    public PresentationElementInstance(InstanceSpecification instance, JSONObject spec, PresentationElementEnum type, Element view, String name, PresentationElementInstance parent, List<PresentationElementInstance> children) {
+    public PresentationElementInstance(InstanceSpecification instance, JSONObject spec, PresentationElementClasses type, Element view, String name, PresentationElementInstance parent, List<PresentationElementInstance> children) {
         this.instance = instance;
         this.newspec = spec;
         this.type = type;
@@ -44,11 +44,11 @@ public class PresentationElementInstance {
         this.newspec = newspec;
     }
 
-    public PresentationElementEnum getType() {
+    public PresentationElementClasses getType() {
         return type;
     }
 
-    public void setType(PresentationElementEnum type) {
+    public void setType(PresentationElementClasses type) {
         this.type = type;
     }
 

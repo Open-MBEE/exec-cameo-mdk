@@ -52,7 +52,7 @@ public class DocBookOutputVisitor extends AbstractModelVisitor {
         }
         book.setFrom(doc.getDgElement());
         book.setRemoveBlankPages(doc.getRemoveBlankPages());
-        book.setUseDefaulStylesheet(doc.getUseDefaultStylesheet());
+        book.setUseDefaultStylesheet(doc.getUseDefaultStylesheet());
         book.setMetadata(doc.getMetadata());
         parent.push(book);
         visitChildren(doc);
