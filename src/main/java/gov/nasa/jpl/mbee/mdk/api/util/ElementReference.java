@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.api.docgen;
+package gov.nasa.jpl.mbee.mdk.api.util;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;

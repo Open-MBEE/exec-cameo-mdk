@@ -1,9 +1,9 @@
-package gov.nasa.jpl.mbee.mdk.api.docgen.presentation_elements;
+package gov.nasa.jpl.mbee.mdk.api.docgen.uml.classes;
 
 /**
  * Created by igomes on 8/23/16.
  */
-public class Section extends PresentationElement {
+public class SectionClass extends PresentationElementClass {
 
     @Override
     public String getID() {

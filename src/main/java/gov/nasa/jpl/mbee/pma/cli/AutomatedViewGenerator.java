@@ -345,7 +345,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
             illegalStateFailure("[ERROR] Unable to find element \"" + parser.getOptionValue(TARGET_VIEW_ID) + "\"");
         }
         assert targetView != null;
-        MMSUtils.getLastExceptionReference().set(null);
+        MMSUtils.getLastException().set(null);
         message = "[OPERATION] Generating " + targetView.getHumanName() + (parser.hasOption(GENERATE_RECURSIVELY) ? " views recursively." : ".");
         logMessage(message);
         // LOG: the element which is being generated currently
@@ -357,7 +357,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
             }
             Thread.sleep(1000);
         }
-        Exception lastException = MMSUtils.getLastExceptionReference().get();
+        Exception lastException = MMSUtils.getLastException().get();
         if (lastException != null) {
             if (lastException instanceof ServerException && ((ServerException) lastException).getCode() == 403) {
                 message = "[ERROR] Unable to generate " + targetView.getHumanName() + ". User " + parser.getOptionValue(MMS_USERNAME) + " does not have permission to write to the MMS in this branch.";

@@ -27,11 +27,11 @@ public class MMSLoginAction extends MDAction {
 
     public static boolean loginAction(Project project) {
         if (project == null) {
-            Utils.showPopupMessage("You need to have a project open first!");
+            Utils.showPopupMessage("Please open the project you would like to log in to MMS for first.");
             return false;
         }
         if (project.isRemote() && (TeamworkUtils.getLoggedUserName() == null && EsiUtils.getTeamworkService().getConnectedUser() == null)) {
-            Utils.showPopupMessage("You need to be logged in to Teamwork Cloud first!");
+            Utils.showPopupMessage("Please login in to Teamwork Cloud before logging in to MMS.");
             return false;
         }
         if (!TicketUtils.acquireMmsTicket(project)) {

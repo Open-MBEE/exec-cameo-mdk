@@ -262,7 +262,7 @@ public class EMFImporter implements JsonToElementFunction {
             return jsonNode.asInt();
         }
         else if (jsonNode.isDouble()) {
-            jsonNode.asDouble();
+            return jsonNode.asDouble();
         }
         else if (jsonNode.isLong()) {
             return jsonNode.asLong();

@@ -16,6 +16,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import org.apache.http.client.utils.URIBuilder;
@@ -32,13 +33,10 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
     public static final String DEFAULT_ID = CommitProjectAction.class.getSimpleName();
     public static final String COMMIT_MODEL_DEFAULT_ID = DEFAULT_ID + "_Commit_Model";
+    public static final String NEW_ORG_VALUE = "*new*";
 
     private final Project project;
     private final boolean shouldCommitModel;
-
-    public CommitProjectAction(Project project) {
-        this(project, false, false);
-    }
 
     public CommitProjectAction(Project project, boolean shouldCommitModel) {
         this(project, shouldCommitModel, false);
@@ -67,7 +65,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
     public String commitAction() {
         // '{"elements": [{"sysmlId": "123456", "name": "vetest", "type": "Project"}]}' -X POST "http://localhost:8080/alfresco/service/orgs/vetest/projects"
-        String orgId = null;
+        String orgId;
 
         // get orgs uri to check orgs / post project
         URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
@@ -99,8 +97,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 e1.printStackTrace();
                 return null;
             }
-            HashMap<String, String> mmsOrgsMap = new HashMap<>();
-            mmsOrgsMap.put("[Create new org...]", "[new]");
+            List<Pair<String, String>> mmsOrgs = new ArrayList<>();
             if (response != null) {
                 JsonNode arrayNode;
                 if ((arrayNode = response.get("orgs")) != null && arrayNode.isArray()) {
@@ -108,20 +105,30 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                         JsonNode name, id;
                         if ((name = orgNode.get(MDKConstants.NAME_KEY)) != null && name.isTextual() && !name.asText().isEmpty()
                                 && (id = orgNode.get(MDKConstants.ID_KEY)) != null && id.isTextual() && !id.asText().isEmpty()) {
-                            mmsOrgsMap.put(name.asText(), id.asText());
+                            mmsOrgs.add(new Pair<String, String>(id.asText(), name.asText()) {
+                                @Override
+                                public String toString() {
+                                    return this.getValue() + (mmsOrgs.stream().filter(pair -> pair.getValue().equals(this.getValue())).count() > 1 ? " (" + this.getKey() + ")" : "");
+                                }
+                            });
                         }
                     }
                 }
             }
-            String[] mmsOrgs = mmsOrgsMap.keySet().toArray(new String[mmsOrgsMap.keySet().size()]);
-            Arrays.sort(mmsOrgs);
+            mmsOrgs.sort(Comparator.comparing(Pair::toString));
+            mmsOrgs.add(new Pair<String, String>(NEW_ORG_VALUE, "New...") {
+                @Override
+                public String toString() {
+                    return this.getValue();
+                }
+            });
             JFrame selectionDialog = new JFrame();
-            String selection = (String) JOptionPane.showInputDialog(selectionDialog, "Select MMS org:",
-                    "MMS Org Selector", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs, mmsOrgs[0]);
+            Pair<String, String> selection = (Pair<String, String>) JOptionPane.showInputDialog(selectionDialog, "Which MMS org should this project be created under?",
+                    "Choose MMS Org", JOptionPane.QUESTION_MESSAGE, null, mmsOrgs.toArray(), mmsOrgs.get(0));
             if (selection != null) {
-                orgId = mmsOrgsMap.get(selection);
+                orgId = selection.getKey();
                 // trigger commit org action if user selects create new org
-                if (orgId.equals("[new]")) {
+                if (orgId.equals(NEW_ORG_VALUE)) {
                     orgId = new CommitOrgAction(project).commitAction();
                 }
             }

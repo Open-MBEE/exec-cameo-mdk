@@ -7,9 +7,12 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -56,9 +59,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MMSUtils {
 
     private static final int CHECK_CANCEL_DELAY = 100;
-    private static final AtomicReference<Exception> lastExceptionReference = new AtomicReference<>();
-
-    private static String developerUrl = "";
+    private static final AtomicReference<Exception> LAST_EXCEPTION = new AtomicReference<>();
+    private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
@@ -68,8 +70,8 @@ public class MMSUtils {
         ELEMENT_JSON, ELEMENT_ID, PROJECT, REF, ORG
     }
 
-    public static AtomicReference<Exception> getLastExceptionReference() {
-        return lastExceptionReference;
+    public static AtomicReference<Exception> getLastException() {
+        return LAST_EXCEPTION;
     }
 
     public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
@@ -398,7 +400,7 @@ public class MMSUtils {
                         responseBody.set(generateMmsOutput(inputStream, responseFile));
                     }
                 } catch (Exception e) {
-                    lastExceptionReference.set(e);
+                    LAST_EXCEPTION.set(e);
                     e.printStackTrace();
                 }
             }, null, TaskRunner.ThreadExecutionStrategy.NONE, true);
@@ -419,8 +421,8 @@ public class MMSUtils {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            if (lastExceptionReference.get() instanceof IOException) {
-                throw (IOException) lastExceptionReference.get();
+            if (LAST_EXCEPTION.get() instanceof IOException) {
+                throw (IOException) LAST_EXCEPTION.get();
             }
         }
         if (responseFile == null) {
@@ -524,7 +526,7 @@ public class MMSUtils {
      * @throws IllegalStateException
      */
     public static String getServerUrl(Project project) throws IllegalStateException {
-        String urlString = null;
+        String urlString;
         if (project == null) {
             throw new IllegalStateException("Project is null.");
         }
@@ -536,16 +538,19 @@ public class MMSUtils {
         if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
             urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
         }
-        else {
-            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
-            return null;
-        }
-        if ((urlString == null || urlString.isEmpty())) {
-            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
-            if (MDUtils.isDeveloperMode()) {
-                urlString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the server URL:", developerUrl);
-                developerUrl = urlString;
+        else if (ProjectUtilities.isStandardSystemProfile(project.getPrimaryProject())) {
+            urlString = PROFILE_SERVER_CACHE.getIfPresent(project);
+            if (urlString == null) {
+                urlString = JOptionPane.showInputDialog("Specify server URL for standard profile.", null);
             }
+            if (urlString == null || urlString.trim().isEmpty()) {
+                return null;
+            }
+            PROFILE_SERVER_CACHE.put(project, urlString);
+        }
+        else {
+            Utils.showPopupMessage("The root element does not have the ModelManagementSystem stereotype.\nPlease apply it and specify the server information.");
+            return null;
         }
         if (urlString == null || urlString.isEmpty()) {
             return null;

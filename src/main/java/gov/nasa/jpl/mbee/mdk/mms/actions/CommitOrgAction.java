@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.UUID;
 
 public class CommitOrgAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
 
@@ -62,7 +63,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         }
 
         JFrame selectionDialog = new JFrame();
-        String org = JOptionPane.showInputDialog(selectionDialog, "Input MMS org.");
+        String org = JOptionPane.showInputDialog(selectionDialog, "Org name", "Create MMS Org", JOptionPane.QUESTION_MESSAGE);
         if (org == null) {
             Application.getInstance().getGUILog().log("[INFO] Org commit cancelled.");
             return null;
@@ -71,12 +72,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit org without name. Org commit cancelled.");
             return null;
         }
-        String orgId = org.toLowerCase().replaceAll("\\s+", "_").replaceAll("[^\\w]", "");
-        if (orgId.isEmpty() || orgId.matches("^[_]*$")) {
-            Application.getInstance().getGUILog().log("[ERROR] Org name \"" + org + "\" generates an invalid ID. Org commit cancelled.");
-            return null;
-        }
-
+        String orgId = UUID.randomUUID().toString();
         File responseFile;
         try {
             responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
@@ -88,12 +84,12 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                         JsonNode name, id;
                         if ((name = orgNode.get(MDKConstants.NAME_KEY)) != null && name.isTextual() && (id = orgNode.get(MDKConstants.ID_KEY)) != null && id.isTextual()) {
                             if (name.asText().equals(org)) {
-                                Application.getInstance().getGUILog().log("[WARNING] An org with name \"" + org + "\" already exists. Org commit cancelled.");
-                                return id.asText();
+                                Application.getInstance().getGUILog().log("[WARNING] An org with the name \"" + org + "\" already exists. Org commit cancelled.");
+                                return null;
                             }
                             if (id.asText().equals(orgId)) {
-                                Application.getInstance().getGUILog().log("[WARNING] An org with ID \"" + orgId + "\" already exists. Org commit cancelled.");
-                                return id.asText();
+                                Application.getInstance().getGUILog().log("[WARNING] An org with the ID \"" + orgId + "\" already exists. Org commit cancelled.");
+                                return null;
                             }
                         }
                     }

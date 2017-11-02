@@ -2,7 +2,6 @@ package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.generictable.GenericTableManager;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.dependencymatrix.configuration.MatrixDataHelper;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
@@ -49,7 +48,9 @@ public class GenericTable extends Table {
         if (getIgnore()) {
             return res;
         }
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Project.getProject(getDgElement())).getLocalSyncTransactionCommitListener();
+        // We really shouldn't be using Application.getInstance().getProject() here, but the context is already lost somewhere upstream :/
+        // dgElement won't always be there and there is no guarantee that it or the exposed element(s) aren't from a library
+        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
         listener.setDisabled(true);
         try {
             int tableCount = 0;

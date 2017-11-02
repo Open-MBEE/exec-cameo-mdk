@@ -139,11 +139,11 @@ public class Paragraph extends Query {
             Object v = Utils.getElementAttribute(e, attribute);
             if (!Utils2.isNullOrEmpty(v)) {
                 Object o;
-                DBParagraph dbParagraph = new DBParagraph(v, e, getFrom());
+                DBParagraph paragraph = new DBParagraph(v, e, getFrom());
                 if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGenProfile.editableChoosable, "editable")) instanceof Boolean) {
-                    dbParagraph.setEditable((Boolean) o);
+                    paragraph.setEditable((Boolean) o);
                 }
-                res.add(dbParagraph);
+                res.add(paragraph);
             }
         }
         else if (!Utils2.isNullOrEmpty(result)) {
@@ -159,11 +159,11 @@ public class Paragraph extends Query {
             else {
                 if (!Utils2.isNullOrEmpty(result)) {
                     Object o;
-                    DBParagraph dbParagraph = new DBParagraph(result);
+                    DBParagraph paragraph = new DBParagraph(result);
                     if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGenProfile.editableChoosable, "editable")) instanceof Boolean) {
-                        dbParagraph.setEditable((Boolean) o);
+                        paragraph.setEditable((Boolean) o);
                     }
-                    res.add(dbParagraph);
+                    res.add(paragraph);
                 }
             }
         }
@@ -222,26 +222,26 @@ public class Paragraph extends Query {
                 Stereotype paragraphStereotype = Utils.getStereotype(Application.getInstance().getProject(), DocGenProfile.paragraphStereotype);
                 Slot s = Utils.getSlot(getDgElement(), Utils.getStereotypePropertyByName(paragraphStereotype, "body"));
                 //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
-                DBParagraph dbParagraph;
+                DBParagraph paragraph;
                 if (s != null) {
-                    dbParagraph = new DBParagraph(getText(), s, From.DVALUE);
+                    paragraph = new DBParagraph(getText(), s, From.DVALUE);
                 }
                 else { // dgElement is not a Paragraph
                     if (getDgElement() != null && getFrom() != null) {
-                        dbParagraph = new DBParagraph(getText(), getDgElement(), getFrom());
+                        paragraph = new DBParagraph(getText(), getDgElement(), getFrom());
                     }
                     else if (getDgElement() != null) { // getFrom() must be null
-                        dbParagraph = new DBParagraph(getText(), getDgElement(), From.DOCUMENTATION);
+                        paragraph = new DBParagraph(getText(), getDgElement(), From.DOCUMENTATION);
                     }
                     else {
-                        dbParagraph = new DBParagraph(getText());
+                        paragraph = new DBParagraph(getText());
                     }
                 }
                 Object o;
                 if (getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(getDgElement(), DocGenProfile.editableChoosable, "editable")) instanceof Boolean) {
-                    dbParagraph.setEditable((Boolean) o);
+                    paragraph.setEditable((Boolean) o);
                 }
-                res.add(dbParagraph);
+                res.add(paragraph);
             } //else {
             //res.add(new DBParagraph(getText()));
             //}
