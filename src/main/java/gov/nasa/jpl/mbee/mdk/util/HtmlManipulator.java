@@ -87,7 +87,6 @@ public final class HtmlManipulator {
     /**
      * mapping: HTML entity ---> Unicode character
      */
-    private static final Map<String, Character> HTML_ENTITY_TO_UNICODE_MAP = new HashMap<String, Character>();
 
     private static final Map<String, String> HTML_ENTITY_TO_NUMERIC_MAP = new HashMap<String, String>();
 
@@ -111,8 +110,6 @@ public final class HtmlManipulator {
 
         for (int i = 0; i < elements.length; i += 3) {
             final char unicode = (char) Integer.parseInt(elements[i + 2], 16);
-            HTML_ENTITY_TO_UNICODE_MAP.put(elements[i], unicode);
-            HTML_ENTITY_TO_UNICODE_MAP.put(elements[i + 1], unicode);
             HTML_ENTITY_TO_NUMERIC_MAP.put(elements[i], elements[i + 1]);
             UNICODE_TO_HTML_ENTITY_MAP.put(unicode, elements[i]);
         }
