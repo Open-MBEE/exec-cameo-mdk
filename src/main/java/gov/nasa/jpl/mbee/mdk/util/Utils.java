@@ -2213,7 +2213,7 @@ public class Utils {
             }
         }
         Element propOwner = prop.getOwner();
-        if (useDefaultIfNoSlot && results.isEmpty() && prop != null) {
+        if (useDefaultIfNoSlot && results.isEmpty()) {
             if (propOwner instanceof Stereotype
                     && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype) propOwner)) {
                 ValueSpecification v = prop.getDefaultValue();
@@ -2677,14 +2677,16 @@ public class Utils {
                 sep = " = ";
             }
             // TODO -- avoid infinite recursion with Utils2.seen()
-            for (Object i : c) {
-                if (first) {
-                    first = false;
+            if (c != null) {
+                for (Object i : c) {
+                    if (first) {
+                        first = false;
+                    }
+                    else {
+                        sb.append(sep);
+                    }
+                    sb.append(toStringNameAndType(i, includeId, useToStringIfNull));
                 }
-                else {
-                    sb.append(sep);
-                }
-                sb.append(toStringNameAndType(i, includeId, useToStringIfNull));
             }
             sb.append(" )");
             return sb.toString();

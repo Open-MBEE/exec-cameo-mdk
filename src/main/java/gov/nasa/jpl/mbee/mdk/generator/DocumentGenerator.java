@@ -593,7 +593,7 @@ public class DocumentGenerator {
                     Container con = parent;
                     if (createSections) {
                         Section sec = new Section();
-                        if (titles != null && titles.size() > count) {
+                        if (titles.size() > count) {
                             sec.setTitle(titles.get(count));
                         }
                         else if (e instanceof NamedElement) {
