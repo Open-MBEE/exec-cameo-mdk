@@ -103,7 +103,6 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
     }
 
     public ActionsCategory handleMultipleNodes(ActionsCategory category, ActionsManager manager, List<Element> elements) {
-        final List<InstanceSpecification> instances = new ArrayList<InstanceSpecification>();
         final List<Element> validatableElements = new ArrayList<Element>();
         boolean hasUneditable = false;
 
@@ -113,7 +112,6 @@ public class SRConfigurator implements BrowserContextAMConfigurator, DiagramCont
                     validatableElements.add(element);
                 }
                 else if (element instanceof InstanceSpecification) {
-                    instances.add((InstanceSpecification) element);
                     validatableElements.add(element);
                 }
                 if (!hasUneditable && !element.isEditable()) {

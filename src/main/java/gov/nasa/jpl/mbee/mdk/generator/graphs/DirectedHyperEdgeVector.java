@@ -30,7 +30,7 @@ public class DirectedHyperEdgeVector<VertexType> extends UndirectedHyperEdgeVect
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         String string = "[";
         boolean isFirst = true;
         for (VertexType v : getSourceVertices()) {

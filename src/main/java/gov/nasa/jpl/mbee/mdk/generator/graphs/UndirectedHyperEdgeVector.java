@@ -40,7 +40,7 @@ public class UndirectedHyperEdgeVector<VertexType> extends Vector<VertexType> im
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         String string = "[";
         boolean isFirst = true;
         for (VertexType v : getVertices()) {

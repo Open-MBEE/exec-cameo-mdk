@@ -22,7 +22,7 @@ public class UndirectedEdgeVector<VertexType> extends UndirectedHyperEdgeVector<
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         return get(0).toString() + " -- " + get(1).toString();
     }
 

@@ -11,6 +11,7 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -116,14 +117,14 @@ public class DocGenUtils {
         if (s instanceof String) {
             if (((String) s).contains("<html>")) {
                 if (convertHtml) {
-                    return gov.nasa.jpl.mbee.mdk.util.HtmlManipulator.replaceHtmlEntities(html2docbook((String) s));
+                    return StringEscapeUtils.escapeHtml4((String) s);
                 }
                 else {
                     return gov.nasa.jpl.mbee.mdk.util.Utils.stripHtmlWrapper((String) s);
                 }
             }
             else {
-                return gov.nasa.jpl.mbee.mdk.util.HtmlManipulator.replaceHtmlEntities(((String) s)
+                return StringEscapeUtils.escapeHtml4(((String) s)
                         .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
                         .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
             }
