@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.mdk.actions;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -62,8 +61,14 @@ public class MMSViewLinkAction extends MDAction {
             uriBase.setHost(uriBase.getHost() + "/alfresco/mmsapp/mms.html#");
             uriBase.setPath("");
 
-            String uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/" + MDUtils.getBranchId(project);
-
+            String uriPath;
+            try {
+                uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/" + MDUtils.getBranchId(project);
+            } catch (RuntimeException re) {
+                re.printStackTrace();
+                Application.getInstance().getGUILog().log("[ERROR] Unable to get TWC branch. Cancelling view open. Reason: " + re.getMessage());
+                return;
+            }
             // collect document parents from hierarchy
             Set<Element> documents = new HashSet<>();
             ArrayList<Element> viewChain = new ArrayList<>();

@@ -38,7 +38,8 @@ public class TicketUtils {
      * @return username
      */
     public static String getUsername(Project project) {
-        return ticketMappings.get(project).getUsername();
+        TicketMapping ticketMapping = ticketMappings.get(project);
+        return ticketMapping != null ? ticketMapping.getUsername() : null;
     }
 
     /**

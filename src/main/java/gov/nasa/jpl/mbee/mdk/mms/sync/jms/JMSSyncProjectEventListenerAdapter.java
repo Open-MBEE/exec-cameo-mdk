@@ -48,6 +48,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
     @Override
     public void projectClosed(Project project) {
         closeJMS(project);
+        projectMappings.remove(project);
     }
 
     @Override
@@ -80,11 +81,9 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         if (jmsSyncProjectMapping == null || jmsSyncProjectMapping.getJmsMessageListener() == null || !jmsSyncProjectMapping.getJmsMessageListener().isDisabled()) {
             return;
         }
-        if (jmsSyncProjectMapping.getJmsMessageListener() == null) {
-            if (!shouldEnableJMS(project)) {
-                jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
-                return;
-            }
+        if (!shouldEnableJMS(project)) {
+            jmsSyncProjectMapping.getJmsMessageListener().setDisabled(true);
+            return;
         }
         boolean initialized = initDurable(project);
         jmsSyncProjectMapping.getJmsMessageListener().setDisabled(!initialized);
@@ -108,12 +107,18 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
         } catch (JMSException e) {
             e.printStackTrace();
         }
-        projectMappings.remove(project);
     }
 
     private static boolean initDurable(Project project) {
-        String projectID = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
-        String workspaceID = MDUtils.getBranchId(project);
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+        String workspaceId;
+        try {
+            workspaceId = MDUtils.getBranchId(project);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: " + e.getMessage());
+            return false;
+        }
 
         // verify logged in to appropriate places
         if (!TicketUtils.isTicketSet(project)) {
@@ -141,7 +146,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get server URL.");
             return false;
         }
-        if (workspaceID == null) {
+        if (workspaceId == null) {
             Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get the MMS branch that corresponds to this project's branch.");
             return false;
         }
@@ -160,7 +165,12 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
                 Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Failed to create JMS connection factory.");
                 return false;
             }
-            String subscriberId = projectID + "-" + workspaceID + "-" + TicketUtils.getUsername(project); // weblogic can't have '/' in id
+            String username = TicketUtils.getUsername(project);
+            if (username == null) {
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - " + ERROR_STRING + " Reason: Cannot get MMS username.");
+                return false;
+            }
+            String subscriberId = projectId + "-" + workspaceId + "-" + username; // weblogic can't have '/' in id
 
             JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
@@ -181,7 +191,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
             if (topic == null) {
                 topic = session.createTopic(JMSUtils.JMS_TOPIC);
             }
-            String messageSelector = JMSUtils.constructSelectorString(projectID, workspaceID);
+            String messageSelector = JMSUtils.constructSelectorString(projectId, workspaceId);
             MessageConsumer consumer = session.createDurableSubscriber(topic, subscriberId, messageSelector, true);
             consumer.setMessageListener(jmsMessageListener);
 
