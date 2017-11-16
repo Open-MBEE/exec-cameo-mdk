@@ -252,7 +252,7 @@ public class MMSUtils {
         // build specified request type
         // assume that any request can have a body, and just build the appropriate one
         URI requestDest = requestUri.build();
-        HttpRequestBase request = null;
+        final HttpRequestBase request;
         // bulk GETs are not supported in MMS, but bulk PUTs are. checking and and throwing error here in case
         if (type == HttpRequestType.GET && sendData != null) {
             throw new IOException("GETs with body are not supported");
@@ -262,7 +262,7 @@ public class MMSUtils {
                 request = new HttpDeleteWithBody(requestDest);
                 break;
             case GET:
-//                request = new HttpGetWithBody(requestDest);
+            default:
                 request = new HttpGet(requestDest);
                 break;
             case POST:

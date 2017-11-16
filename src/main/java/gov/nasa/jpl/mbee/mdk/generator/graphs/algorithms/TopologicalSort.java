@@ -25,7 +25,7 @@ public class TopologicalSort {
             if (value.get(o1) < value.get(o2)) {
                 return -1;
             }
-            else if (value.get(o1) == value.get(o2)) {
+            else if (Objects.equals(value.get(o1), value.get(o2))) {
                 return 0;
             }
             else {

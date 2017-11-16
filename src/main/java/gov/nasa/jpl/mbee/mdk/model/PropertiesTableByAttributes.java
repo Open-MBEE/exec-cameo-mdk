@@ -261,7 +261,7 @@ public class PropertiesTableByAttributes extends HierarchicalPropertiesTable {
             name = "<emphasis role=\"bold\">" + name + "</emphasis>";
         }
         row.add(new DBText(name));
-        Integer numunit = 1;
+        int numunit = 1;
         if (e instanceof Property) {
             numunit = Utils.getMultiplicity((Property) e);
         }

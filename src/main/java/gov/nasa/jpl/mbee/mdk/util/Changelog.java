@@ -39,7 +39,7 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
 
     @Override
     public Changelog<K, V> clone() {
-        Changelog<K, V> clonedChangelog = new Changelog<>();
+        Changelog<K, V> clonedChangelog = new Changelog<>(); // lgtm [java/empty-container]
         for (ChangeType changeType : ChangeType.values()) {
             Map<K, V> map = clonedChangelog.get(changeType);
             for (Map.Entry<K, V> entry : get(changeType).entrySet()) {

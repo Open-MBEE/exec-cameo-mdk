@@ -181,33 +181,40 @@ public class JMSMessageListener implements MessageListener, ExceptionListener {
             return;
         }
         exceptionHandlerRunning.set(true);
-        Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
-        JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().setDisabled(true);
-        while (shouldAttemptToReconnect()) {
-            int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
-            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reconnect to MMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
-            try {
-                Thread.sleep(delay * 1000);
-            } catch (InterruptedException ignored) {
+        try {
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Lost connection with MMS. Please check your network configuration.");
+            JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().setDisabled(true);
+            while (shouldAttemptToReconnect()) {
+                int delay = Math.min(600, (int) Math.pow(2, reconnectionAttempts++));
+                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Attempting to reconnect to MMS in " + delay + " second" + (delay != 1 ? "s" : "") + ".");
+                try {
+                    Thread.sleep(delay * 1000);
+                } catch (InterruptedException ignored) {
+                }
+                if (!exceptionHandlerRunning.get()) {
+                    break;
+                }
+                if (shouldAttemptToReconnect()) {
+                    JMSSyncProjectEventListenerAdapter.closeJMS(project);
+                    JMSSyncProjectEventListenerAdapter.initializeJMS(project);
+                }
             }
-            if (!exceptionHandlerRunning.get()) {
-                return;
+        } catch (RuntimeException e) {
+            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - An unexpected error occurred. Reason: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
+                reconnectionAttempts = 0;
+                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Successfully reconnected to MMS after dropped connection.");
             }
-            if (shouldAttemptToReconnect()) {
-                JMSSyncProjectEventListenerAdapter.closeJMS(project);
-                JMSSyncProjectEventListenerAdapter.initializeJMS(project);
+            else {
+                Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Failed to reconnect to MMS after dropped connection. Please manually login to MMS, or close and re-open the project, to re-initiate.");
+                MMSLogoutAction.logoutAction(project);
             }
-        }
-        if (!JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
+
             reconnectionAttempts = 0;
-            Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - Successfully reconnected to MMS after dropped connection.");
+            exceptionHandlerRunning.set(false);
         }
-        else {
-            Application.getInstance().getGUILog().log("[WARNING] " + project.getName() + " - Failed to reconnect to MMS after dropped connection. Please manually login to MMS, or close and re-open the project, to re-initiate.");
-            MMSLogoutAction.logoutAction(project);
-        }
-        reconnectionAttempts = 0;
-        exceptionHandlerRunning.set(false);
     }
 
     private boolean shouldAttemptToReconnect() {

@@ -39,7 +39,7 @@ public class DirectedEdgeVector<VertexType> extends UndirectedEdgeVector<VertexT
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         return getSourceVertex().toString() + " -> " + getTargetVertex().toString();
     }
 

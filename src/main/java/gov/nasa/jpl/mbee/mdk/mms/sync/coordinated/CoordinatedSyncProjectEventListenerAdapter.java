@@ -106,9 +106,9 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
                 jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
                 int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
                 Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
-            } catch (JMSException | JsonProcessingException e) {
+            } catch (JMSException | JsonProcessingException | RuntimeException e) {
                 e.printStackTrace();
-                Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
+                Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates. Reason: " + e.getMessage());
             }
         }
     }

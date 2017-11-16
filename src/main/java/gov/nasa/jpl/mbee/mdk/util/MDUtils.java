@@ -167,7 +167,7 @@ public class MDUtils {
         return type;
     }
 
-    public static String getBranchId(Project project) {
+    public static String getBranchId(Project project) throws RuntimeException {
         EsiUtils.EsiBranchInfo branchInfo;
         if (project.isRemote() && (branchInfo = EsiUtils.getCurrentBranch(project.getPrimaryProject())) != null && !branchInfo.getName().equals("trunk")) {
             return branchInfo.getID().toString();
