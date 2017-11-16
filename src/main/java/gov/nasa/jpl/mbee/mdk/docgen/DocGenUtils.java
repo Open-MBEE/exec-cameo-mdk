@@ -18,6 +18,8 @@ import org.jsoup.select.Elements;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DocGenUtils {
 
@@ -82,6 +84,7 @@ public class DocGenUtils {
                     "<superscript>3</superscript>");
         }
     };
+    private static final Pattern ENTITY_PATTERN = Pattern.compile("(&[^\\s]+?;)");
 
     /**
      * docbook ignores regular white space in table cells, this is to force
@@ -97,6 +100,37 @@ public class DocGenUtils {
             space += "&#xA0;&#xA0;&#xA0;&#xA0;";
         }
         return space + name;
+    }
+
+    /**
+     * Convert a String of HTML with named HTML entities to the
+     * same String with entities converted to numbered XML entities
+     *
+     * @param html
+     * @return xml
+     */
+    public static String htmlToXmlEntities(String html) {
+        StringBuffer stringBuffer = new StringBuffer();
+        Matcher matcher = ENTITY_PATTERN.matcher(html);
+
+        while (matcher.find()) {
+            String replacement = htmlEntityToXmlEntity(matcher.group(1));
+            matcher.appendReplacement(stringBuffer, "");
+            stringBuffer.append(replacement);
+        }
+
+        matcher.appendTail(stringBuffer);
+        return stringBuffer.toString();
+    }
+
+    /**
+     * Replace an HTML entity with an XML entity
+     *
+     * @param html
+     * @return xml
+     */
+    private static String htmlEntityToXmlEntity(String html) {
+        return StringEscapeUtils.escapeXml11(StringEscapeUtils.unescapeHtml4(html));
     }
 
     /**
@@ -117,14 +151,14 @@ public class DocGenUtils {
         if (s instanceof String) {
             if (((String) s).contains("<html>")) {
                 if (convertHtml) {
-                    return StringEscapeUtils.escapeHtml4((String) s);
+                    return htmlToXmlEntities((String) s);
                 }
                 else {
                     return gov.nasa.jpl.mbee.mdk.util.Utils.stripHtmlWrapper((String) s);
                 }
             }
             else {
-                return StringEscapeUtils.escapeHtml4(((String) s)
+                return htmlToXmlEntities(((String) s)
                         .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
                         .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
             }
