@@ -39,10 +39,6 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
 
     @Override
     public void projectClosed(Project project) {
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled()) {
-            return;
-        }
         projectMappings.remove(project);
     }
 
