@@ -49,39 +49,39 @@ public class DocGenDelegateExtension extends TSGenerateDiagramDelegate
         String edgeTableName = null;
         if(diagramType.contains("Internal Block Diagram")) {
             this.drawingViewName = "Internal Block Diagram";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
             controlsTreeName = "IBD Controls";
         } else if(diagramType.contains("State Machine")) {
             this.drawingViewName = "State Machine";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
         } else if(diagramType.contains("Activity Diagram")) {
             this.drawingViewName = "Activity Diagram";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
         } else if(diagramType.contains("Package Diagram")) {
             this.drawingViewName = "Package Diagram";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
             controlsTreeName = "Package Diagram Controls";
         } else if(diagramType.contains("Requirement Diagram")) {
             this.drawingViewName = "Requirement Diagram";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
             controlsTreeName = "REQ Controls";
         } else if(diagramType.contains("Parametric Diagram")) {
             this.drawingViewName = "Parametric Diagram";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
             controlsTreeName = "Parametric Diagram Controls";
         } else if(diagramType.contains("Use Case Diagram")) {
             this.drawingViewName = "Use Case Diagram";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
         } else {
             this.drawingViewName = "Block Definition Diagram";
-            nodeTableName = "Classifiers";
+            nodeTableName = "Elements";
             edgeTableName = "Associations";
             controlsTreeName = "BDD Controls";
         }
