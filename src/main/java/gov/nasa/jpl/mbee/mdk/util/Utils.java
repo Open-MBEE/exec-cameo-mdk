@@ -1294,26 +1294,20 @@ public class Utils {
         return project == null ? null : project.getPrimaryModel();
     }
 
-    public static boolean isSiteChar(Project project, Package e) {
-        Stereotype characterizes = Utils.getCharacterizesStereotype(project);
-        if (characterizes != null) {
-            List<Element> sites = Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1);
-            boolean found = false;
-            for (Element l : sites) {
-                /*if (l instanceof NamedElement && ((NamedElement)l).getName().equals("Site Characterization")) {
-                    found = true;
-                    break;
-                }*/
-                if (l instanceof Classifier) {
-                    for (Classifier g : ((Classifier) l).getGeneral()) {
-                        if (g.getName().equals("Site Characterization")) {
-                            found = true;
-                            break;
-                        }
+    public static boolean isSiteChar(Project project, Package pakkage) {
+        Stereotype characterizesStereotype = Utils.getCharacterizesStereotype(project);
+        if (characterizesStereotype != null) {
+            List<Element> siteCharacterizations = Utils.collectDirectedRelatedElementsByRelationshipStereotype(pakkage, characterizesStereotype, 2, false, 1);
+            for (Element siteCharacterization : siteCharacterizations) {
+                if (!(siteCharacterization instanceof Classifier)) {
+                    continue;
+                }
+                for (Classifier general : ((Classifier) siteCharacterization).getGeneral()) {
+                    if ("_17_0_5_1_8660276_1415063844134_132446_18688".equals(Converters.getElementToIdConverter().apply(general))) {
+                        return true;
                     }
                 }
             }
-            return found;
         }
         return false;
     }
