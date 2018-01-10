@@ -69,7 +69,7 @@ public class JMSSyncProjectEventListenerAdapter extends ProjectEventListenerAdap
 
     public static boolean shouldEnableJMS(Project project) {
         String url;
-        return ((project.getPrimaryModel() != null) && project.isRemote()
+        return (project.getPrimaryModel() != null && project.isRemote()
                 && MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled()
                 && StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem"))
                 && (url = ((String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS URL"))) != null

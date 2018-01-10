@@ -19,11 +19,13 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     }
 
     // Cannot rely on this being called when MagicDraw programmatically reloads a project, which makes the old Project stale.
-    // Mitigating by moving all logic to mapping constructor, but this leaves gaps where events may not be captured.
+    // Mitigating by duplicating logic in mapping constructor as an attempt to have better coverage.
     @Override
     public void projectOpened(Project project) {
         closeLocalCommitListener(project);
-        getProjectMapping(project);
+        if (project.isRemote()) {
+            ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(getProjectMapping(project).getLocalSyncTransactionCommitListener());
+        }
     }
 
     @Override

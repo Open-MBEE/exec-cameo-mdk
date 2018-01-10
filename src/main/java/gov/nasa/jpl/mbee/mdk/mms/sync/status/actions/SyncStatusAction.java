@@ -71,7 +71,7 @@ public class SyncStatusAction extends SRAction {
                 totalChangedCount = new int[]{0};
         final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
         Project project = Application.getInstance().getProject();
-        if (project != null) {
+        if (project != null && !project.isClosing() && !project.isProjectClosed()) {
             LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
             if (localSyncTransactionCommitListener != null) {
                 inMemoryLocalCreatedCount[0] = localSyncTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.CREATED).size();
