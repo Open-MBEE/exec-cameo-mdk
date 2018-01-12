@@ -1451,10 +1451,6 @@ public class Utils {
         return (Property) project.getElementByID("_18_0_2_407019f_1433361787467_278914_14410");
     }
 
-    public static Component getSiteCharacterizationComponent(Project project) {
-        return (Component) project.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
-    }
-
     /**********************************************
      * Constraint Utils
      **********************************************/
