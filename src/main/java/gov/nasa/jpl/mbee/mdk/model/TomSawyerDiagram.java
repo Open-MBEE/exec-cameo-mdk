@@ -4,7 +4,6 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.ui.ProjectWindow;
 import com.nomagic.magicdraw.ui.WindowComponentInfo;
 import com.nomagic.magicdraw.ui.WindowsManager;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.tomsawyer.canvas.TSViewportCanvas;
@@ -30,8 +29,6 @@ import java.util.List;
 import java.util.Set;
 
 import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.*;
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.Table;
-
 
 /**
  * Created by johannes on 11/21/16.
@@ -51,7 +48,7 @@ public class TomSawyerDiagram extends Query {
     protected static final String ACTIVITY_DIAGRAM_DRAWING_VIEW_NAME = "Activity Diagram";
 
     public enum diagramType {
-        Block_Definition_Diagram, Internal_Block_Diagram, State_Machine_Diagram, Activity_Diagram, Sequence_Diagram, Table
+        Block_Definition_Diagram, Internal_Block_Diagram, State_Machine_Diagram, Activity_Diagram, Sequence_Diagram
     }
 
 
@@ -91,9 +88,6 @@ public class TomSawyerDiagram extends Query {
                     setType(Sequence_Diagram);
                     typeName = "Sequence Diagram";
                     break;
-                case "Table":
-                    setType(Table);
-                    break;
                 default:
             }
         }
@@ -108,8 +102,8 @@ public class TomSawyerDiagram extends Query {
                 elements.add((Element) ob);
             }
         }
-
-         DocGenDelegateExtension delegate = new DocGenDelegateExtension(elements.get(0), typeName);
+        //TODO prevent out of bounds
+        DocGenDelegateExtension delegate = new DocGenDelegateExtension(elements.get(0), typeName); //first arg should be the context element if ibd, par, or want to generate bdd
         delegate.addObjectsToShow(elements); //Johannes' method.
         DBTomSawyerDiagram dbts = new DBTomSawyerDiagram();
 
@@ -131,9 +125,6 @@ public class TomSawyerDiagram extends Query {
                 case Sequence_Diagram:
                     delegate.init("sequence diagram not implemented", "sequence diagram not implemented", BDD_DRAWING_VIEW_NAME);
                     break;
-                case Table:
-                    delegate.init("table not implemented", "table not implemented", BDD_DRAWING_VIEW_NAME);
-                    break;
                 default:
             }
         } else {
@@ -148,15 +139,11 @@ public class TomSawyerDiagram extends Query {
         Set<String> viewElements = null;
 
         if (forViewEditor) {
+            viewElements = delegate.postLoadDataGetUUID();
             if (type.equals(Internal_Block_Diagram)) {
-             //   delegate.postLoadDataIBDAction();
-                viewElements = delegate.postLoadDataGetUUID();
-                dbts.setContext(delegate.getIbdContextElement());
-                dbts.setElements(viewElements);
-            } else {
-                viewElements = delegate.postLoadDataGetUUID();
-                dbts.setElements(viewElements);
+                dbts.setContext(delegate.getContextElement());
             }
+            dbts.setElements(viewElements);
             return Collections.singletonList(dbts);
         } else {
             boolean showInMD = true;

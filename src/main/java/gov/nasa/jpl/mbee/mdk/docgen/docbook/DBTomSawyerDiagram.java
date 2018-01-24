@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.mdk.docgen.docbook;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 
-import java.util.List;
 import java.util.Set;
 
 import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType;
@@ -21,7 +20,6 @@ public class DBTomSawyerDiagram extends DocumentElement {
 
     private Set<String> elements;
     private String caption;
-    private boolean showForEditing = false;
 
     public shortDiagramType getShortType() {
         switch (type) {
@@ -35,8 +33,6 @@ public class DBTomSawyerDiagram extends DocumentElement {
                 return shortDiagramType.AD;
             case Sequence_Diagram:
                 return shortDiagramType.SD;
-            case Table:
-                return shortDiagramType.Table;
         }
         return null;
     }
@@ -50,21 +46,14 @@ public class DBTomSawyerDiagram extends DocumentElement {
     }
 
     public enum shortDiagramType {
-        BDD, IBD, SMD, AD, SD, Table
+        BDD, IBD, SMD, AD, SD
     }
 
     private diagramType type;
 
-//    public DBTomSawyerDiagram(List<Element> classifiers) {
-//        elements = classifiers;
-//    }
-
     @Override
     public void accept(IDBVisitor v) {
-
         v.visit(this);
-
-
     }
 
     public void setCaption(String cap) {
@@ -74,21 +63,6 @@ public class DBTomSawyerDiagram extends DocumentElement {
     public String getCaption() {
         return caption;
     }
-
-//    public List<Element> getClassifiers() {
-//        return elements;
-//
-//    }
-
-
-    public boolean isShowForEditing() {
-        return showForEditing;
-    }
-
-    public void setShowForEditing(boolean showForEditing2) {
-        this.showForEditing = showForEditing2;
-    }
-
 
     public void setType(diagramType type) {
         this.type = type;
