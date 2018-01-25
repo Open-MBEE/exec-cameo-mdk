@@ -82,9 +82,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     }
 
     public ViewPresentationGenerator(Set<Element> rootViews, Project project, boolean recurse, PresentationElementUtils presentationElementUtils, Set<Element> processedElements) {
-        if (rootViews == null || rootViews.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
         this.rootViews = rootViews;
         this.project = project;
         this.processedElements = processedElements != null ? processedElements : new HashSet<>(rootViews.size());

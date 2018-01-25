@@ -532,14 +532,6 @@ public class MagicDrawHelper {
         return prop;
     }
 
-    public static Component createSiteCharComponent(String name, Element owner) {
-        Component comp = createComponent(name, owner);
-        Component genTarget = Utils.getSiteCharacterizationComponent(Project.getProject(owner));
-        createGeneralization("", comp, comp, genTarget);
-        createDependency("", comp, comp, owner);
-        return comp;
-    }
-
     @SuppressWarnings("unchecked")
     @Deprecated
     public static ValueSpecification createValueSpec(String type, String value) throws ReferenceException {

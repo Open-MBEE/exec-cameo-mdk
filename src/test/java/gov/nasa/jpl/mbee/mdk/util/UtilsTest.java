@@ -149,15 +149,6 @@ public class UtilsTest {
         Assert.assertTrue(((Property)test).getName().equals("elements"));
     }
 
-    /********************************************** Direct Component Utils **********************************************/
-
-    @Test
-    public void _utils_getSiteCharacterizationComponent() {
-        BaseElement test = Utils.getSiteCharacterizationComponent(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Component)test).getName().equals("Site Characterization"));
-    }
-
     @AfterClass
     public static void closeProject() throws IOException {
         MagicDrawHelper.closeProject();
