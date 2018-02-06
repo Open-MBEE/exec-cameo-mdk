@@ -25,7 +25,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -38,8 +37,8 @@ import gov.nasa.jpl.mbee.mdk.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
@@ -2788,7 +2787,7 @@ public class Utils {
         if (reply == null || !reply) {
             return false;
         }
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
         if (listener != null) {
             listener.setDisabled(true);
         }

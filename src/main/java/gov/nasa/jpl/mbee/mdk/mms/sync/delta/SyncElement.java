@@ -24,7 +24,8 @@ public class SyncElement {
 
     public enum Type {
         LOCAL,
-        MMS;
+        MMS,
+        MMS_COMMIT;
 
         private String prefix;
 

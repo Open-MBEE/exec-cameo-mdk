@@ -17,8 +17,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
 
 public class TaskRunner {
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(0);
+
     public static Future<?> runWithProgressStatus(Runnable runnable, String title, ThreadExecutionStrategy strategy) {
         return runWithProgressStatus(runnable, title, strategy, false);
     }
@@ -88,6 +91,10 @@ public class TaskRunner {
             }
         }
         return future;
+    }
+
+    public static ScheduledFuture<?> scheduleWithProgressStatus(RunnableWithProgress runnableWithProgress, String title, boolean allowCancel, ThreadExecutionStrategy strategy, boolean silent, BiFunction<Runnable, ScheduledExecutorService, ScheduledFuture> scheduleFunction) {
+        return scheduleFunction.apply(() -> runWithProgressStatus(runnableWithProgress, title, allowCancel, strategy, silent), scheduledExecutorService);
     }
 
     public enum ThreadExecutionStrategy {

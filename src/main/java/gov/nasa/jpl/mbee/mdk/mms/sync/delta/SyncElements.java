@@ -20,6 +20,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -52,7 +53,7 @@ public class SyncElements {
         if (syncPackage == null) {
             return Collections.emptyList();
         }
-        return syncPackage.getPackagedElement().stream().filter(element -> element.getName().startsWith(type.getPrefix())).map(element -> new SyncElement(element, type)).collect(Collectors.toList());
+        return syncPackage.getPackagedElement().stream().filter(element -> element.getName().matches(type.getPrefix() + "_\\d.*")).map(element -> new SyncElement(element, type)).collect(Collectors.toList());
     }
 
     public static SyncElement setByType(Project project, SyncElement.Type type, String comment) {
@@ -78,11 +79,11 @@ public class SyncElements {
         }
 
         LiteralString literalString = project.getElementsFactory().createLiteralStringInstance();
-        literalString.setID(literalString.getID() + MDKConstants.SYNC_SYSML_ID_SUFFIX);
+        literalString.setLocalID(literalString.getLocalID() + MDKConstants.SYNC_SYSML_ID_SUFFIX);
         literalString.setValue(comment);
 
         InstanceSpecification instanceSpecification = project.getElementsFactory().createInstanceSpecificationInstance();
-        instanceSpecification.setID(instanceSpecification.getID() + MDKConstants.SYNC_SYSML_ID_SUFFIX);
+        instanceSpecification.setLocalID(instanceSpecification.getLocalID() + MDKConstants.SYNC_SYSML_ID_SUFFIX);
         instanceSpecification.setOwningPackage(syncPackage);
         instanceSpecification.setName(type.toString().toLowerCase() + "_" + ZonedDateTime.now().format(DATE_TIME_FORMATTER));
         instanceSpecification.setSpecification(literalString);
@@ -106,11 +107,11 @@ public class SyncElements {
         return buildChangelog(changelog, syncElement);
     }
 
-    public static Changelog<String, Void> buildChangelog(Changelog changelog, SyncElement syncElement) {
+    public static String getValue(SyncElement syncElement) {
         InstanceSpecification syncInstance;
         String body;
         if (syncElement == null || syncElement.getElement() == null) {
-            return new Changelog<>();
+            return null;
         }
         else if (syncElement.getElement() instanceof InstanceSpecification && (syncInstance = (InstanceSpecification) syncElement.getElement()).getSpecification() instanceof LiteralString) {
             body = ((LiteralString) syncInstance.getSpecification()).getValue();
@@ -118,6 +119,14 @@ public class SyncElements {
         else {
             body = ModelHelper.getComment(syncElement.getElement());
         }
+        return body;
+    }
+
+    public static Changelog<String, Void> buildChangelog(Changelog changelog, SyncElement syncElement) {
+        if (syncElement == null || syncElement.getElement() == null) {
+            return new Changelog<>();
+        }
+        String body = getValue(syncElement);
         if (body != null) {
             try {
                 JsonNode jsonNode = JacksonUtils.getObjectMapper().readTree(body);

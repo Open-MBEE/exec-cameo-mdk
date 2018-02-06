@@ -27,8 +27,8 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
@@ -222,7 +222,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener localDeltaTransactionCommitListener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
         Set<Element> elementsToDelete = new HashSet<>();
 
         // Create the session you intend to cancel to revert all temporary elements.
@@ -235,8 +235,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             failure = true;
             return;
         }
-        if (localSyncTransactionCommitListener != null) {
-            localSyncTransactionCommitListener.setDisabled(true);
+        if (localDeltaTransactionCommitListener != null) {
+            localDeltaTransactionCommitListener.setDisabled(true);
         }
 
         // Query existing server-side JSONs for views
@@ -761,8 +761,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (SessionManager.getInstance().isSessionCreated(project)) {
                 SessionManager.getInstance().cancelSession(project);
             }
-            if (localSyncTransactionCommitListener != null) {
-                localSyncTransactionCommitListener.setDisabled(false);
+            if (localDeltaTransactionCommitListener != null) {
+                localDeltaTransactionCommitListener.setDisabled(false);
             }
         }
 

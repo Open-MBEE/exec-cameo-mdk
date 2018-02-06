@@ -114,8 +114,7 @@ public class JacksonUtils {
         if (current != JsonToken.START_OBJECT) {
             throw new IOException("Unable to build object from JSON parser.");
         }
-        ObjectNode objectNode = getObjectMapper().readTree(jsonParser);
-        return objectNode;
+        return getObjectMapper().readTree(jsonParser);
     }
 
     public static ArrayNode parseJsonArray(JsonParser jsonParser, ArrayNode arrayNode) throws IOException {
