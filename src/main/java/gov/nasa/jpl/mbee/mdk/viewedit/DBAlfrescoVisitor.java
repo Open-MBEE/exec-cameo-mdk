@@ -351,7 +351,8 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             viewElements.peek().add(id);
         }
         JSONObject entry = new JSONObject();
-        entry.put("type", "Tsp");
+        //TODO caption/title?
+        entry.put("type", "TSDiagram");
         entry.put("tstype", tomSawyerDiagram.getShortType().toString());
         JSONArray elements = new JSONArray();
         for (String elem : tomSawyerDiagram.getElementIDs()) {
@@ -368,6 +369,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentImageInstances.peek().remove(i);
         }
 
+        //TODO should add new presentation element OpaqueFigure type
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
         PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
         System.out.println(entry.toJSONString());

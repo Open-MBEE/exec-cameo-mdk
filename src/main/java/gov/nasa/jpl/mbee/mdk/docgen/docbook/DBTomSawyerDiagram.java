@@ -28,9 +28,9 @@ public class DBTomSawyerDiagram extends DocumentElement {
             case Internal_Block_Diagram:
                 return shortDiagramType.IBD;
             case State_Machine_Diagram:
-                return shortDiagramType.SMD;
+                return shortDiagramType.STM;
             case Activity_Diagram:
-                return shortDiagramType.AD;
+                return shortDiagramType.ACT;
             case Sequence_Diagram:
                 return shortDiagramType.SD;
         }
@@ -46,7 +46,8 @@ public class DBTomSawyerDiagram extends DocumentElement {
     }
 
     public enum shortDiagramType {
-        BDD, IBD, SMD, AD, SD
+        BDD, IBD, STM, ACT, SD
+        //TODO ts also has UC, REQ, PKG, PAR
     }
 
     private diagramType type;
