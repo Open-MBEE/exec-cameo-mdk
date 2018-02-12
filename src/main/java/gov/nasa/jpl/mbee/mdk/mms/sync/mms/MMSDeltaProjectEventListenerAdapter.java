@@ -141,7 +141,16 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
         public synchronized boolean update() throws URISyntaxException, IOException, ServerException, IllegalStateException {
             lastSyncedCommitId = getLastSyncedMmsCommit();
             if (!TicketUtils.isTicketSet(project)) {
+                inMemoryCommits.clear();
+                inMemoryChangelog.clear();
+                SyncStatusConfigurator.getSyncStatusAction().update();
                 return false;
+            }
+
+            if (inMemoryCommits.contains(lastSyncedCommitId)) {
+                inMemoryCommits.clear();
+                inMemoryChangelog.clear();
+                SyncStatusConfigurator.getSyncStatusAction().update();
             }
 
             Deque<String> commitIdDeque = new ArrayDeque<>();
