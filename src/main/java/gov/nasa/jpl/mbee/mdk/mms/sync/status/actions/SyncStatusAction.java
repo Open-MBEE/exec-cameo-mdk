@@ -2,7 +2,9 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.status.actions;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
@@ -15,6 +17,8 @@ import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import javax.annotation.CheckForNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 
 /**
@@ -171,7 +175,20 @@ public class SyncStatusAction extends SRAction {
         else {
             getSyncStatusFrame().toFront();
         }
-        update();
+        Project project = Application.getInstance().getProject();
+        if (project != null) {
+            ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
+                progressStatus.setIndeterminate(true);
+                try {
+                    progressStatus.setDescription("Fetching MMS changes");
+                    MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
+                    progressStatus.setDescription("Updating table");
+                    update();
+                } catch (URISyntaxException | IOException | ServerException e) {
+                    e.printStackTrace();
+                }
+            }, "Sync Status Update", false, 0);
+        }
     }
 
     @Override
