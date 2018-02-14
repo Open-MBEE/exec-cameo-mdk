@@ -96,6 +96,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
         // Need to clear out changes after TWC update so we don't repeat.
         // Example: MD1 and MD2 have a project open. MMS has unsynced changes. MD1 syncs and commits. MD2 still has these changes in memory and re-syncs the elements.
         // Unfortunately there is no projectUpdated hook, but projects are saved
+        // MDUMLCS-26866 Add projectUpdated event to ProjectEventListener
         projectClosed(project);
     }
 
