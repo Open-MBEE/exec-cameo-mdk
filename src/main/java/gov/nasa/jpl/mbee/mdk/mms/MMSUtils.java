@@ -350,7 +350,7 @@ public class MMSUtils {
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        String requestSummary = "MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
+        String requestSummary = "[INFO] MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
         System.out.println(requestSummary);
         if (MDUtils.isDeveloperMode()) {
             Application.getInstance().getGUILog().log(requestSummary);
@@ -363,7 +363,7 @@ public class MMSUtils {
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
-                String responseSummary = "MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
                 System.out.println(responseSummary);
                 if (MDUtils.isDeveloperMode()) {
                     Application.getInstance().getGUILog().log(responseSummary);

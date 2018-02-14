@@ -9,6 +9,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
@@ -16,6 +17,8 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
@@ -40,6 +43,10 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
     @Override
     public void projectOpened(Project project) {
+        if (!project.isRemote()) {
+            return;
+        }
+        projectClosed(project);
         getProjectMapping(project).setScheduledFuture(TaskRunner.scheduleWithProgressStatus(progressStatus -> {
             try {
                 getProjectMapping(project).update();
@@ -47,10 +54,17 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 e.printStackTrace();
             }
         }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 1, TimeUnit.MINUTES)));
+        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+            MMSLoginAction.loginAction(project);
+        }
     }
 
     @Override
     public void projectClosed(Project project) {
+        getProjectMapping(project).getInMemoryCommits().clear();
+        getProjectMapping(project).getInMemoryChangelog().clear();
+        SyncStatusConfigurator.getSyncStatusAction().update();
+
         ScheduledFuture<?> scheduledFuture = getProjectMapping(project).getScheduledFuture();
         if (scheduledFuture != null) {
             scheduledFuture.cancel(true);
@@ -75,6 +89,14 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             projectMappings.put(project, projectMapping = new MMSDeltaProjectMapping(project));
         }
         return projectMapping;
+    }
+
+    @Override
+    public void projectSaved(Project project, boolean b) {
+        // Need to clear out changes after TWC update so we don't repeat.
+        // Example: MD1 and MD2 have a project open. MMS has unsynced changes. MD1 syncs and commits. MD2 still has these changes in memory and re-syncs the elements.
+        // Unfortunately there is no projectUpdated hook, but projects are saved
+        projectClosed(project);
     }
 
     public static class MMSDeltaProjectMapping {
@@ -139,7 +161,9 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
         }
 
         public synchronized boolean update() throws URISyntaxException, IOException, ServerException, IllegalStateException {
-            lastSyncedCommitId = getLastSyncedMmsCommit();
+            if (!project.isRemote()) {
+                return false;
+            }
             if (!TicketUtils.isTicketSet(project)) {
                 inMemoryCommits.clear();
                 inMemoryChangelog.clear();
@@ -147,12 +171,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 return false;
             }
 
-            if (inMemoryCommits.contains(lastSyncedCommitId)) {
-                inMemoryCommits.clear();
-                inMemoryChangelog.clear();
-                SyncStatusConfigurator.getSyncStatusAction().update();
-            }
-
+            lastSyncedCommitId = getLastSyncedMmsCommit();
             Deque<String> commitIdDeque = new ArrayDeque<>();
             int exponent = 0;
 

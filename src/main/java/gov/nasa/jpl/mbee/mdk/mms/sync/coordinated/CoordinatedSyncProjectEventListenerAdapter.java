@@ -99,8 +99,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
             return true;
         }
-        if (!TicketUtils.isTicketSet(project)) {
-            new Thread(() -> MMSLoginAction.loginAction(project)).start();
+        if (!TicketUtils.isTicketSet(project) && !MMSLoginAction.loginAction(project)) {
             Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[WARNING] You must be logged in to MMS to synchronize the commit. Skipping commit. Please login to MMS and then commit again.</span>");
             if (s != null && !s.isEmpty()) {
                 Application.getInstance().getGUILog().log("[INFO] Recovered commit message: <pre>" + s + "</pre>");
