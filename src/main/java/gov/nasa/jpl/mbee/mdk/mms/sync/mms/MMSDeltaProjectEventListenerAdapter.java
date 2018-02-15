@@ -250,7 +250,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                     }
                     jsonNode = jsonNode.get(0);
                     JsonNode sourceJsonNode = jsonNode.get("source");
-                    boolean isSyncingCommit = sourceJsonNode != null && sourceJsonNode.isTextual() && ("magicdraw".equalsIgnoreCase(sourceJsonNode.asText()) || "pma".equalsIgnoreCase(sourceJsonNode.asText()));
+                    boolean isSyncingCommit = sourceJsonNode != null && sourceJsonNode.isTextual() && "magicdraw".equalsIgnoreCase(sourceJsonNode.asText());
                     int size = 0;
                     for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
                         JsonNode changesJsonArray = jsonNode.get(entry.getKey());
