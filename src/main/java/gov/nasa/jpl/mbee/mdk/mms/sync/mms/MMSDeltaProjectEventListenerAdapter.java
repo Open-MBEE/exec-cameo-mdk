@@ -18,7 +18,6 @@ import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
