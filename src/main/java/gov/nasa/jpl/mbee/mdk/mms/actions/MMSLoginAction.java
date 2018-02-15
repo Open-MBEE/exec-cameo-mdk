@@ -6,6 +6,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
@@ -41,11 +42,13 @@ public class MMSLoginAction extends MDAction {
             return false;
         }
         ActionsStateUpdater.updateActionsState();
-        try {
-            MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
-        } catch (URISyntaxException | IOException | ServerException e) {
-            e.printStackTrace();
-        }
+        TaskRunner.runWithProgressStatus(progressStatus -> {
+            try {
+                MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
+            } catch (URISyntaxException | IOException | ServerException e) {
+                e.printStackTrace();
+            }
+        }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false);
         Application.getInstance().getGUILog().log("[INFO] MMS login complete.");
         return true;
     }
