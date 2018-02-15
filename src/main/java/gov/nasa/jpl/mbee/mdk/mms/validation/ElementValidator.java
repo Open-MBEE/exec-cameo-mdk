@@ -108,7 +108,7 @@ public class ElementValidator implements RunnableWithProgress {
                         current = jsonParser.nextToken();
                         JsonNode value;
                         while (current != null && current != JsonToken.END_ARRAY) {
-                            current = jsonParser.nextToken();
+                            //current = jsonParser.nextToken();
                             if (current == JsonToken.START_OBJECT) {
                                 String id;
                                 ObjectNode currentServerElement = JacksonUtils.parseJsonObject(jsonParser);
