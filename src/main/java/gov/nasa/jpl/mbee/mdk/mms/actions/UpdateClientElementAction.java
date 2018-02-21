@@ -282,6 +282,9 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         + ((entryElement == null || Project.isElementDisposed(entryElement)) && entryException != null ? " -" : "") + (entryException != null ? " " + (entryException instanceof ReadOnlyElementException ? "Element is not editable." : entryException.getMessage()) : ""));
                 addUpdateElementActions(validationRuleViolation, entryElement, entryId, entryObjectNode);
                 (entryException instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(validationRuleViolation);
+                if (entryException != null && !(entryException instanceof ReadOnlyElementException)) {
+                    entryException.printStackTrace();
+                }
                 failedChangelog.addChange(entryId, entryObjectNode, entryElement != null && !Project.isElementDisposed(entryElement) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
