@@ -112,9 +112,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>();
 
         for (Element rootView : rootViews) {
-            if (MDUtils.isDeveloperMode()) {
-                //Application.getInstance().getGUILog().log("Generating " + rootView.getHumanName() + " (" + rootView.getLocalID() + ").");
-            }
             // STAGE 1: Calculating view structure
             progressStatus.setDescription("Calculating view structure");
             progressStatus.setCurrent(1);
@@ -136,11 +133,16 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 failure = true;
                 return;
             }
-
-            DocBookOutputVisitor docBookOutputVisitor = new DocBookOutputVisitor(true);
-            dge.accept(docBookOutputVisitor);
-
-            SessionManager.getInstance().closeSession(project);
+            DocBookOutputVisitor docBookOutputVisitor;
+            try {
+                docBookOutputVisitor = new DocBookOutputVisitor(true);
+                dge.accept(docBookOutputVisitor);
+            }
+            finally {
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
+                }
+            }
 
             DBBook book = docBookOutputVisitor.getBook();
             if (book == null) {
