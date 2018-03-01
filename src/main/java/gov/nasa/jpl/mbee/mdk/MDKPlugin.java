@@ -12,6 +12,7 @@ import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
+import com.nomagic.magicdraw.uml.DiagramDescriptor;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
@@ -102,6 +103,14 @@ public class MDKPlugin extends Plugin {
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srConfigurator);
 
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
+
+        DiagramDescriptor viewDiagramDescriptor = Application.getInstance().getDiagramDescriptor(ViewDiagramConfigurator.DIAGRAM_NAME);
+        if (viewDiagramDescriptor != null) {
+            ActionsConfiguratorsManager actionsConfiguratorsManager = ActionsConfiguratorsManager.getInstance();
+            ViewDiagramConfigurator viewDiagramConfigurator = new ViewDiagramConfigurator();
+            actionsConfiguratorsManager.addDiagramToolbarConfigurator(ViewDiagramConfigurator.DIAGRAM_NAME, viewDiagramConfigurator);
+            actionsConfiguratorsManager.addTargetElementAMConfigurator(ViewDiagramConfigurator.DIAGRAM_NAME, viewDiagramConfigurator);
+        }
 
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
 
