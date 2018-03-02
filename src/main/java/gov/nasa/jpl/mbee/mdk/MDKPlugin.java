@@ -15,7 +15,6 @@ import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramDescriptor;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
@@ -84,15 +83,10 @@ public class MDKPlugin extends Plugin {
         CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
 
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
+        acm.addMainMenuConfigurator(mdkConfigurator);
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, mdkConfigurator);
-
-        OclQueryConfigurator oclQueryConfigurator = new OclQueryConfigurator();
-        acm.addMainMenuConfigurator(oclQueryConfigurator);
-        acm.addSearchBrowserContextConfigurator(oclQueryConfigurator);
-        acm.addContainmentBrowserContextConfigurator(oclQueryConfigurator);
-        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, oclQueryConfigurator);
 
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());

@@ -36,7 +36,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
@@ -212,8 +212,8 @@ public class Utils {
         OclEvaluator evaluator;
         if (!iterate) {
             Object o;
-            DocumentValidator dv = CollectFilterParser.getValidator();
-            o = DocumentValidator.evaluate(query, elements, dv, true);
+            ViewViewpointValidator dv = CollectFilterParser.getValidator();
+            o = ViewViewpointValidator.evaluate(query, elements, true);
             evaluator = OclEvaluator.instance;
             if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
                 Boolean istrue = isTrue(o, false);
@@ -225,8 +225,8 @@ public class Utils {
         else {
             for (Element e : elements) {
                 Object o;
-                DocumentValidator dv = CollectFilterParser.getValidator();
-                o = DocumentValidator.evaluate(query, e, dv, true);
+                ViewViewpointValidator dv = CollectFilterParser.getValidator();
+                o = ViewViewpointValidator.evaluate(query, e, true);
                 evaluator = OclEvaluator.instance;
                 if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
                     Boolean istrue = isTrue(o, false);
@@ -489,8 +489,8 @@ public class Utils {
     public static List<Element> collectByExpression(Object element, Object query) {
         List<Element> res = new ArrayList<Element>();
         Object o = null;
-        DocumentValidator dv = CollectFilterParser.getValidator();
-        o = DocumentValidator.evaluate(query, element, dv, true);
+        ViewViewpointValidator dv = CollectFilterParser.getValidator();
+        o = ViewViewpointValidator.evaluate(query, element, true);
         OclEvaluator evaluator = OclEvaluator.instance;
         // try {
         // o = OclEvaluator.evaluateQuery(element, query);
@@ -1120,9 +1120,8 @@ public class Utils {
         Map<Element, Object> resultMap = new HashMap<Element, Object>();
         Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
         for (Element e : list) {
-            Object result = null;
-            DocumentValidator dv = CollectFilterParser.getValidator();
-            result = DocumentValidator.evaluate(o, e, dv, true);
+            Object result = ViewViewpointValidator.evaluate(o, e, true);
+            ViewViewpointValidator dv = CollectFilterParser.getValidator();
             // try {
             // result = OclEvaluator.evaluateQuery(e, o);
             // } catch ( ParserException e1 ) {

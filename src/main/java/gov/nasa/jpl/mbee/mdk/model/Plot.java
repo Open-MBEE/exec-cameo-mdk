@@ -12,7 +12,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBPlot;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public class Plot extends TableStructure {
     protected String type;
     protected String config;
 
-    public Plot(DocumentValidator validator) {
+    public Plot(ViewViewpointValidator validator) {
         super(validator);
     }
 

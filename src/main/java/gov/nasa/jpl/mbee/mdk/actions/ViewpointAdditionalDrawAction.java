@@ -22,12 +22,12 @@ public class ViewpointAdditionalDrawAction extends AdditionalDrawAction {
         return true;
     }
 
-    private Operation createOperation(Class clazz) {
-        ElementsFactory elementsFactory = Project.getProject(clazz).getElementsFactory();
+    public static Operation createOperation(Class viewpoint) {
+        ElementsFactory elementsFactory = Project.getProject(viewpoint).getElementsFactory();
         Operation operation = elementsFactory.createOperationInstance();
-        operation.setOwner(clazz);
+        operation.setOwner(viewpoint);
         operation.setName("View");
-        Stereotype createStereotype = StandardProfile.getInstance(clazz).getCreate();
+        Stereotype createStereotype = StandardProfile.getInstance(viewpoint).getCreate();
         if (createStereotype != null) {
             StereotypesHelper.addStereotype(operation, createStereotype);
         }
