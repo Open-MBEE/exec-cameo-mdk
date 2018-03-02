@@ -21,7 +21,7 @@ import gov.nasa.jpl.mbee.mdk.actions.*;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.ValidateAllViewsAction;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.ValidateViewAction;
-import gov.nasa.jpl.mbee.mdk.docgen.actions.PreviewViewAction;
+import gov.nasa.jpl.mbee.mdk.docgen.actions.PreviewDocumentAction;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.mms.actions.*;
 import gov.nasa.jpl.mbee.mdk.model.CollectActionsVisitor;
@@ -254,14 +254,14 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 if (act == null) {
                     category.addAction(new ValidateViewAction(view, true));
                 }
-                act = manager.getActionFor(PreviewViewAction.DEFAULT_ID);
+                act = manager.getActionFor(PreviewDocumentAction.DEFAULT_ID);
                 if (act == null) {
-                    category.addAction(new PreviewViewAction(e));
+                    category.addAction(new PreviewDocumentAction(e));
                 }
 
-                act = manager.getActionFor(GenerateViewAction.DEFAULT_ID);
+                act = manager.getActionFor(GenerateLocalDocument.DEFAULT_ID);
                 if (act == null) {
-                    category.addAction(new GenerateViewAction(e));
+                    category.addAction(new GenerateLocalDocument(e));
                 }
             }
         }

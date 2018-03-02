@@ -20,15 +20,15 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
 
-public class GenerateViewAction extends MDAction {
+public class GenerateLocalDocument extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element document;
-    public static final String DEFAULT_ID = GenerateViewAction.class.getSimpleName();
+    private Element view;
+    public static final String DEFAULT_ID = GenerateLocalDocument.class.getSimpleName();
 
-    public GenerateViewAction(Element e) {
-        super(DEFAULT_ID, "Generate View Locally", null, null);
-        document = e;
+    public GenerateLocalDocument(Element view) {
+        super(DEFAULT_ID, "Generate Document", null, null);
+        this.view = view;
     }
 
     @Override
@@ -59,14 +59,14 @@ public class GenerateViewAction extends MDAction {
 
     public void generate(File savefile) {
         Project project = Application.getInstance().getProject();
-        ViewViewpointValidator dv = new ViewViewpointValidator(Collections.singleton(document), project, true);
+        ViewViewpointValidator dv = new ViewViewpointValidator(Collections.singleton(view), project, true);
         dv.run();
         if (dv.isFailed()) {
-            Application.getInstance().getGUILog().log("[ERROR] View validation failed for " + Converters.getElementToHumanNameConverter().apply(document) + ". Aborting generation.");
+            Application.getInstance().getGUILog().log("[ERROR] View validation failed for " + Converters.getElementToHumanNameConverter().apply(view) + ". Aborting generation.");
             Utils.displayValidationWindow(project, dv.getValidationSuite(), dv.getValidationSuite().getName());
             return;
         }
-        DocumentGenerator dg = new DocumentGenerator(document, dv, null);
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument();
         boolean genNewImage = dge.getGenNewImage();
         (new PostProcessor()).process(dge);

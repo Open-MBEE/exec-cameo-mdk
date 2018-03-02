@@ -20,12 +20,12 @@ import java.util.Collections;
  *
  * @author dlam
  */
-public class PreviewViewAction extends MDAction {
+public class PreviewDocumentAction extends MDAction {
     private Element view;
-    public static final String DEFAULT_ID = PreviewViewAction.class.getSimpleName();
+    public static final String DEFAULT_ID = PreviewDocumentAction.class.getSimpleName();
 
-    public PreviewViewAction(Element e) {
-        super(DEFAULT_ID, "Preview View Locally", null, null);
+    public PreviewDocumentAction(Element e) {
+        super(DEFAULT_ID, "Preview Document", null, null);
         view = e;
     }
 
