@@ -74,8 +74,7 @@ public class MMSUtils {
         return LAST_EXCEPTION;
     }
 
-    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         File responseFile = getElementsRecursively(project, elementIds, 0, progressStatus);
@@ -90,8 +89,7 @@ public class MMSUtils {
         return null;
     }
 
-    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         return getElementsRecursively(project, elementIds, depth, progressStatus);
@@ -106,8 +104,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
 
@@ -121,8 +118,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
             return null;
@@ -148,18 +144,15 @@ public class MMSUtils {
         return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
 
-    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         return getCredentialsTicket(project, null, username, password, progressStatus);
     }
 
-    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
     }
 
-    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
         if (requestUri == null) {
             return null;
@@ -190,8 +183,7 @@ public class MMSUtils {
         return null;
     }
 
-    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return "";
@@ -225,8 +217,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildImageRequest(URIBuilder requestUri, File sendFile)
-            throws IOException, URISyntaxException {
+    public static HttpRequestBase buildImageRequest(URIBuilder requestUri, File sendFile) throws IOException, URISyntaxException {
         URI requestDest = requestUri.build();
         HttpPost requestUpload = new HttpPost(requestDest);
         EntityBuilder uploadBuilder = EntityBuilder.create();
@@ -247,8 +238,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType)
-            throws IOException, URISyntaxException {
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType) throws IOException, URISyntaxException {
         // build specified request type
         // assume that any request can have a body, and just build the appropriate one
         URI requestDest = requestUri.build();
@@ -294,13 +284,11 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri)
-            throws IOException, URISyntaxException {
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri) throws IOException, URISyntaxException {
         return buildRequest(type, requestUri, null, null);
     }
 
-    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
-            throws IOException {
+    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
             System.out.println("[INFO] Request Body: " + requestFile.getPath());
@@ -357,13 +345,12 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson)
-            throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson) throws IOException, ServerException, URISyntaxException {
         final File responseFile = (responseJson == null ? File.createTempFile("Response-", null) : null);
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        String requestSummary = "MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
+        String requestSummary = "[INFO] MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
         System.out.println(requestSummary);
         if (MDUtils.isDeveloperMode()) {
             Application.getInstance().getGUILog().log(requestSummary);
@@ -376,7 +363,7 @@ public class MMSUtils {
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
-                String responseSummary = "MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
                 System.out.println(responseSummary);
                 if (MDUtils.isDeveloperMode()) {
                     Application.getInstance().getGUILog().log(responseSummary);
@@ -449,13 +436,11 @@ public class MMSUtils {
         return responseFile;
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request)
-            throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException {
         return sendMMSRequest(project, request, null, null);
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         return sendMMSRequest(project, request, progressStatus, null);
     }
 
@@ -558,8 +543,7 @@ public class MMSUtils {
         return urlString.trim();
     }
 
-    public static String getMmsOrg(Project project)
-            throws IOException, URISyntaxException, ServerException {
+    public static String getMmsOrg(Project project) throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
         File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {

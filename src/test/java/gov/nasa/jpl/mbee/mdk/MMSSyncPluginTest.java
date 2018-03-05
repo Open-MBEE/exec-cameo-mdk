@@ -28,13 +28,13 @@ public class MMSSyncPluginTest {
     }
 
     @Test
-    public void getLocalSyncProjectEventListenerAdapter() {
-        assertTrue("MMSSyncPlugin shall return a LocalSyncProjectEventListenerAdapter.", plugin != null && MMSSyncPlugin.getInstance().getLocalSyncProjectEventListenerAdapter() != null);
+    public void getLocalDeltaProjectEventListenerAdapter() {
+        assertTrue("MMSSyncPlugin shall return a LocalDeltaProjectEventListenerAdapter.", plugin != null && MMSSyncPlugin.getInstance().getLocalDeltaProjectEventListenerAdapter() != null);
     }
 
     @Test
-    public void getJmsSyncProjectEventListenerAdapter() {
-        assertTrue("MMSSyncPlugin shall return a JmsSyncProjectEventListenerAdapter.", plugin != null && MMSSyncPlugin.getInstance().getJmsSyncProjectEventListenerAdapter() != null);
+    public void getMmsSyncProjectEventListenerAdapter() {
+        assertTrue("MMSSyncPlugin shall return a MmsDeltaProjectEventListenerAdapter.", plugin != null && MMSSyncPlugin.getInstance().getMmsDeltaProjectEventListenerAdapter() != null);
     }
 
     @Test

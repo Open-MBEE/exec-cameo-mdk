@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author igomes
  */
-public class LocalSyncTransactionCommitListener implements TransactionCommitListener {
+public class LocalDeltaTransactionCommitListener implements TransactionCommitListener {
     private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
     private static final List<String> IGNORED_PROPERTY_CHANGE_EVENT_NAMES = Arrays.asList(
             PropertyNames.PACKAGED_ELEMENT,
@@ -52,7 +52,7 @@ public class LocalSyncTransactionCommitListener implements TransactionCommitList
         }
     }
 
-    public LocalSyncTransactionCommitListener(Project project) {
+    public LocalDeltaTransactionCommitListener(Project project) {
         this.project = project;
     }
 

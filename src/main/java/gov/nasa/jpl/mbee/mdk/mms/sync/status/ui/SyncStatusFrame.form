@@ -60,7 +60,7 @@
               <text value="3"/>
             </properties>
           </component>
-          <component id="cec42" class="javax.swing.JLabel" binding="persistedJmsCreatedLabel">
+          <component id="cec42" class="javax.swing.JLabel" binding="persistedMmsCreatedLabel">
             <constraints>
               <grid row="4" column="8" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -69,7 +69,7 @@
               <text value="4"/>
             </properties>
           </component>
-          <component id="f3aa3" class="javax.swing.JLabel" binding="persistedJmsUpdatedLabel">
+          <component id="f3aa3" class="javax.swing.JLabel" binding="persistedMmsUpdatedLabel">
             <constraints>
               <grid row="4" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -78,7 +78,7 @@
               <text value="5"/>
             </properties>
           </component>
-          <component id="7727b" class="javax.swing.JLabel" binding="persistedJmsDeletedLabel">
+          <component id="7727b" class="javax.swing.JLabel" binding="persistedMmsDeletedLabel">
             <constraints>
               <grid row="4" column="10" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -114,7 +114,7 @@
               <text value="4"/>
             </properties>
           </component>
-          <component id="a31bc" class="javax.swing.JLabel" binding="inMemoryJmsCreatedLabel">
+          <component id="a31bc" class="javax.swing.JLabel" binding="inMemoryMmsCreatedLabel">
             <constraints>
               <grid row="3" column="8" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -123,7 +123,7 @@
               <text value="3"/>
             </properties>
           </component>
-          <component id="183a4" class="javax.swing.JLabel" binding="inMemoryJmsUpdatedLabel">
+          <component id="183a4" class="javax.swing.JLabel" binding="inMemoryMmsUpdatedLabel">
             <constraints>
               <grid row="3" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -132,7 +132,7 @@
               <text value="2"/>
             </properties>
           </component>
-          <component id="3952a" class="javax.swing.JLabel" binding="inMemoryJmsDeletedLabel">
+          <component id="3952a" class="javax.swing.JLabel" binding="inMemoryMmsDeletedLabel">
             <constraints>
               <grid row="3" column="10" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -255,7 +255,7 @@
               <text value="7"/>
             </properties>
           </component>
-          <component id="89d6c" class="javax.swing.JLabel" binding="totalJmsCreatedLabel">
+          <component id="89d6c" class="javax.swing.JLabel" binding="totalMmsCreatedLabel">
             <constraints>
               <grid row="6" column="8" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -265,7 +265,7 @@
               <text value="7"/>
             </properties>
           </component>
-          <component id="34247" class="javax.swing.JLabel" binding="totalJmsUpdatedLabel">
+          <component id="34247" class="javax.swing.JLabel" binding="totalMmsUpdatedLabel">
             <constraints>
               <grid row="6" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -275,7 +275,7 @@
               <text value="7"/>
             </properties>
           </component>
-          <component id="8e907" class="javax.swing.JLabel" binding="totalJmsDeletedLabel">
+          <component id="8e907" class="javax.swing.JLabel" binding="totalMmsDeletedLabel">
             <constraints>
               <grid row="6" column="10" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -381,7 +381,7 @@
               <text value="Total"/>
             </properties>
           </component>
-          <component id="cabc9" class="javax.swing.JLabel" binding="totalInMemoryJmsChangedLabel">
+          <component id="cabc9" class="javax.swing.JLabel" binding="totalInMemoryMmsChangedLabel">
             <constraints>
               <grid row="3" column="12" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -391,7 +391,7 @@
               <text value="6"/>
             </properties>
           </component>
-          <component id="2169c" class="javax.swing.JLabel" binding="totalPersistedJmsChangedLabel">
+          <component id="2169c" class="javax.swing.JLabel" binding="totalPersistedMmsChangedLabel">
             <constraints>
               <grid row="4" column="12" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>
@@ -401,7 +401,7 @@
               <text value="15"/>
             </properties>
           </component>
-          <component id="ff97d" class="javax.swing.JLabel" binding="totalJmsChangedLabel">
+          <component id="ff97d" class="javax.swing.JLabel" binding="totalMmsChangedLabel">
             <constraints>
               <grid row="6" column="12" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
               <gridbag top="3" left="3" bottom="3" right="3" weightx="1.0" weighty="1.0"/>

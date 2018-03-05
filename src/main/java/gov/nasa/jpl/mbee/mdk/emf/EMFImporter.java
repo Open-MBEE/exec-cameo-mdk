@@ -234,7 +234,6 @@ public class EMFImporter implements JsonToElementFunction {
             }
             String id = jsonNode.asText();
             Element referencedElement = getIdToElementConverter().apply(id, project);
-            System.out.println("[LOOKUP] " + id + " -> " + referencedElement);
             if (referencedElement == null) {
                 if (strict) {
                     throw new ReferenceException(element, objectNode, "Could not find referenced element " + id + " in model for key \"" + key + "\" in JSON.");

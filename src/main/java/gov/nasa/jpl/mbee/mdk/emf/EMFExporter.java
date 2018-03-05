@@ -110,7 +110,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
         }
 
-        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the jms sync counts in some cases (annoying, but ultimately harmless)
+        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the MMS delta counts in some cases (annoying, but ultimately harmless)
         // NOTE - this spoofing is replicated in LocalSyncTransactionListener in order to properly add / remove elements in the unsynched queue. any updates here should be replicated there as well.
         if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
             return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;

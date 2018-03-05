@@ -2,13 +2,14 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.status.actions;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
+import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.ui.SyncStatusFrame;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
@@ -16,6 +17,8 @@ import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import javax.annotation.CheckForNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 
 /**
@@ -52,31 +55,31 @@ public class SyncStatusAction extends SRAction {
                 totalPersistedLocalChangedCount = new int[]{0},
                 totalLocalChangedCount = new int[]{0},
 
-                inMemoryJmsCreatedCount = new int[]{0},
-                inMemoryJmsUpdatedCount = new int[]{0},
-                inMemoryJmsDeletedCount = new int[]{0},
+                inMemoryMmsCreatedCount = new int[]{0},
+                inMemoryMmsUpdatedCount = new int[]{0},
+                inMemoryMmsDeletedCount = new int[]{0},
 
-                persistedJmsCreatedCount = new int[]{0},
-                persistedJmsUpdatedCount = new int[]{0},
-                persistedJmsDeletedCount = new int[]{0},
+                persistedMmsCreatedCount = new int[]{0},
+                persistedMmsUpdatedCount = new int[]{0},
+                persistedMmsDeletedCount = new int[]{0},
 
-                totalJmsCreatedCount = new int[]{0},
-                totalJmsUpdatedCount = new int[]{0},
-                totalJmsDeletedCount = new int[]{0},
+                totalMmsCreatedCount = new int[]{0},
+                totalMmsUpdatedCount = new int[]{0},
+                totalMmsDeletedCount = new int[]{0},
 
-                totalInMemoryJmsChangedCount = new int[]{0},
-                totalPersistedJmsChangedCount = new int[]{0},
-                totalJmsChangedCount = new int[]{0},
+                totalInMemoryMmsChangedCount = new int[]{0},
+                totalPersistedMmsChangedCount = new int[]{0},
+                totalMmsChangedCount = new int[]{0},
 
                 totalChangedCount = new int[]{0};
         final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
         Project project = Application.getInstance().getProject();
         if (project != null && !project.isClosing() && !project.isProjectClosed()) {
-            LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-            if (localSyncTransactionCommitListener != null) {
-                inMemoryLocalCreatedCount[0] = localSyncTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.CREATED).size();
-                inMemoryLocalUpdatedCount[0] = localSyncTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.UPDATED).size();
-                inMemoryLocalDeletedCount[0] = localSyncTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.DELETED).size();
+            LocalDeltaTransactionCommitListener localDeltaTransactionCommitListener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
+            if (localDeltaTransactionCommitListener != null) {
+                inMemoryLocalCreatedCount[0] = localDeltaTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.CREATED).size();
+                inMemoryLocalUpdatedCount[0] = localDeltaTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.UPDATED).size();
+                inMemoryLocalDeletedCount[0] = localDeltaTransactionCommitListener.getInMemoryLocalChangelog().get(Changelog.ChangeType.DELETED).size();
             }
             totalInMemoryLocalChangedCount[0] = inMemoryLocalCreatedCount[0] + inMemoryLocalUpdatedCount[0] + inMemoryLocalDeletedCount[0];
 
@@ -90,26 +93,23 @@ public class SyncStatusAction extends SRAction {
             totalPersistedLocalChangedCount[0] = persistedLocalCreatedCount[0] + persistedLocalUpdatedCount[0] + persistedLocalDeletedCount[0];
             totalLocalChangedCount[0] = totalInMemoryLocalChangedCount[0] + totalPersistedLocalChangedCount[0];
 
-            JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
-            if (jmsMessageListener != null) {
-                inMemoryJmsCreatedCount[0] = jmsMessageListener.getInMemoryJMSChangelog().get(Changelog.ChangeType.CREATED).size();
-                inMemoryJmsUpdatedCount[0] = jmsMessageListener.getInMemoryJMSChangelog().get(Changelog.ChangeType.UPDATED).size();
-                inMemoryJmsDeletedCount[0] = jmsMessageListener.getInMemoryJMSChangelog().get(Changelog.ChangeType.DELETED).size();
-            }
-            totalInMemoryJmsChangedCount[0] = inMemoryJmsCreatedCount[0] + inMemoryJmsUpdatedCount[0] + inMemoryJmsDeletedCount[0];
+            inMemoryMmsCreatedCount[0] = MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).getInMemoryChangelog().get(Changelog.ChangeType.CREATED).size();
+            inMemoryMmsUpdatedCount[0] = MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).getInMemoryChangelog().get(Changelog.ChangeType.UPDATED).size();
+            inMemoryMmsDeletedCount[0] = MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).getInMemoryChangelog().get(Changelog.ChangeType.DELETED).size();
+            totalInMemoryMmsChangedCount[0] = inMemoryMmsCreatedCount[0] + inMemoryMmsUpdatedCount[0] + inMemoryMmsDeletedCount[0];
 
             for (SyncElement mmsSyncElement : SyncElements.getAllByType(project, SyncElement.Type.MMS)) {
                 SyncElements.buildChangelog(mmsPersistedChangelog, mmsSyncElement);
             }
-            persistedJmsCreatedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.CREATED).size();
-            persistedJmsUpdatedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.UPDATED).size();
-            persistedJmsDeletedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.DELETED).size();
+            persistedMmsCreatedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.CREATED).size();
+            persistedMmsUpdatedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.UPDATED).size();
+            persistedMmsDeletedCount[0] += mmsPersistedChangelog.get(Changelog.ChangeType.DELETED).size();
 
-            totalPersistedJmsChangedCount[0] = persistedJmsCreatedCount[0] + persistedJmsUpdatedCount[0] + persistedJmsDeletedCount[0];
-            totalJmsChangedCount[0] = totalInMemoryJmsChangedCount[0] + totalPersistedJmsChangedCount[0];
+            totalPersistedMmsChangedCount[0] = persistedMmsCreatedCount[0] + persistedMmsUpdatedCount[0] + persistedMmsDeletedCount[0];
+            totalMmsChangedCount[0] = totalInMemoryMmsChangedCount[0] + totalPersistedMmsChangedCount[0];
         }
 
-        totalChangedCount[0] = totalLocalChangedCount[0] + totalJmsChangedCount[0];
+        totalChangedCount[0] = totalLocalChangedCount[0] + totalMmsChangedCount[0];
         SwingUtilities.invokeLater(() -> {
             setName(NAME + ": " + numberFormat.format(totalChangedCount[0]));
             MDKPlugin.updateMainToolbarCategory();
@@ -120,9 +120,9 @@ public class SyncStatusAction extends SRAction {
             totalLocalUpdatedCount[0] = inMemoryLocalUpdatedCount[0] + persistedLocalUpdatedCount[0];
             totalLocalDeletedCount[0] = inMemoryLocalDeletedCount[0] + persistedLocalDeletedCount[0];
 
-            totalJmsCreatedCount[0] = inMemoryJmsCreatedCount[0] + persistedJmsCreatedCount[0];
-            totalJmsUpdatedCount[0] = inMemoryJmsUpdatedCount[0] + persistedJmsUpdatedCount[0];
-            totalJmsDeletedCount[0] = inMemoryJmsDeletedCount[0] + persistedJmsDeletedCount[0];
+            totalMmsCreatedCount[0] = inMemoryMmsCreatedCount[0] + persistedMmsCreatedCount[0];
+            totalMmsUpdatedCount[0] = inMemoryMmsUpdatedCount[0] + persistedMmsUpdatedCount[0];
+            totalMmsDeletedCount[0] = inMemoryMmsDeletedCount[0] + persistedMmsDeletedCount[0];
 
             SwingUtilities.invokeLater(() -> {
                 getSyncStatusFrame().getInMemoryLocalCreatedLabel().setText(numberFormat.format(inMemoryLocalCreatedCount[0]));
@@ -141,21 +141,21 @@ public class SyncStatusAction extends SRAction {
                 getSyncStatusFrame().getTotalPersistedLocalChangedLabel().setText(numberFormat.format(totalPersistedLocalChangedCount[0]));
                 getSyncStatusFrame().getTotalLocalChangedLabel().setText(numberFormat.format(totalLocalChangedCount[0]));
 
-                getSyncStatusFrame().getInMemoryJmsCreatedLabel().setText(numberFormat.format(inMemoryJmsCreatedCount[0]));
-                getSyncStatusFrame().getInMemoryJmsUpdatedLabel().setText(numberFormat.format(inMemoryJmsUpdatedCount[0]));
-                getSyncStatusFrame().getInMemoryJmsDeletedLabel().setText(numberFormat.format(inMemoryJmsDeletedCount[0]));
+                getSyncStatusFrame().getInMemoryMmsCreatedLabel().setText(numberFormat.format(inMemoryMmsCreatedCount[0]));
+                getSyncStatusFrame().getInMemoryMmsUpdatedLabel().setText(numberFormat.format(inMemoryMmsUpdatedCount[0]));
+                getSyncStatusFrame().getInMemoryMmsDeletedLabel().setText(numberFormat.format(inMemoryMmsDeletedCount[0]));
 
-                getSyncStatusFrame().getPersistedJmsCreatedLabel().setText(numberFormat.format(persistedJmsCreatedCount[0]));
-                getSyncStatusFrame().getPersistedJmsUpdatedLabel().setText(numberFormat.format(persistedJmsUpdatedCount[0]));
-                getSyncStatusFrame().getPersistedJmsDeletedLabel().setText(numberFormat.format(persistedJmsDeletedCount[0]));
+                getSyncStatusFrame().getPersistedMmsCreatedLabel().setText(numberFormat.format(persistedMmsCreatedCount[0]));
+                getSyncStatusFrame().getPersistedMmsUpdatedLabel().setText(numberFormat.format(persistedMmsUpdatedCount[0]));
+                getSyncStatusFrame().getPersistedMmsDeletedLabel().setText(numberFormat.format(persistedMmsDeletedCount[0]));
 
-                getSyncStatusFrame().getTotalJmsCreatedLabel().setText(numberFormat.format(totalJmsCreatedCount[0]));
-                getSyncStatusFrame().getTotalJmsUpdatedLabel().setText(numberFormat.format(totalJmsUpdatedCount[0]));
-                getSyncStatusFrame().getTotalJmsDeletedLabel().setText(numberFormat.format(totalJmsDeletedCount[0]));
+                getSyncStatusFrame().getTotalMmsCreatedLabel().setText(numberFormat.format(totalMmsCreatedCount[0]));
+                getSyncStatusFrame().getTotalMmsUpdatedLabel().setText(numberFormat.format(totalMmsUpdatedCount[0]));
+                getSyncStatusFrame().getTotalMmsDeletedLabel().setText(numberFormat.format(totalMmsDeletedCount[0]));
 
-                getSyncStatusFrame().getTotalInMemoryJmsChangedLabel().setText(numberFormat.format(totalInMemoryJmsChangedCount[0]));
-                getSyncStatusFrame().getTotalPersistedJmsChangedLabel().setText(numberFormat.format(totalPersistedJmsChangedCount[0]));
-                getSyncStatusFrame().getTotalJmsChangedLabel().setText(numberFormat.format(totalJmsChangedCount[0]));
+                getSyncStatusFrame().getTotalInMemoryMmsChangedLabel().setText(numberFormat.format(totalInMemoryMmsChangedCount[0]));
+                getSyncStatusFrame().getTotalPersistedMmsChangedLabel().setText(numberFormat.format(totalPersistedMmsChangedCount[0]));
+                getSyncStatusFrame().getTotalMmsChangedLabel().setText(numberFormat.format(totalMmsChangedCount[0]));
             });
         }
     }
@@ -175,7 +175,20 @@ public class SyncStatusAction extends SRAction {
         else {
             getSyncStatusFrame().toFront();
         }
-        update();
+        Project project = Application.getInstance().getProject();
+        if (project != null) {
+            ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
+                progressStatus.setIndeterminate(true);
+                try {
+                    progressStatus.setDescription("Fetching MMS changes");
+                    MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
+                    progressStatus.setDescription("Updating table");
+                    update();
+                } catch (URISyntaxException | IOException | ServerException e) {
+                    e.printStackTrace();
+                }
+            }, "Sync Status Update", false, 0);
+        }
     }
 
     @Override

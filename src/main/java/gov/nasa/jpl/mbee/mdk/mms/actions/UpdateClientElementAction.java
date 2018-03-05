@@ -27,8 +27,8 @@ import gov.nasa.jpl.mbee.mdk.emf.EMFBulkImporter;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
@@ -148,7 +148,7 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
     @Override
     public void run(ProgressStatus progressStatus) {
         validationSuite.getValidationRules().forEach(validationRule -> validationRule.getViolations().clear());
-        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener localDeltaTransactionCommitListener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
         elementsToUpdate = (elementsToUpdate == null ? Collections.emptyList() : elementsToUpdate);
         elementsToDelete = (elementsToDelete == null ? Collections.emptyList() : elementsToDelete);
         if (elementsToUpdate.isEmpty() && elementsToDelete.isEmpty()) {
@@ -183,8 +183,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
         elementsToUpdate.removeAll(elementsToNotUpdate);
         boolean initialAutoNumbering = Application.getInstance().getProject().getOptions().isAutoNumbering();
         Application.getInstance().getProject().getOptions().setAutoNumbering(false);
-        if (localSyncTransactionCommitListener != null) {
-            localSyncTransactionCommitListener.setDisabled(true);
+        if (localDeltaTransactionCommitListener != null) {
+            localDeltaTransactionCommitListener.setDisabled(true);
         }
         try {
             if (!elementsToUpdate.isEmpty()) {
@@ -282,6 +282,9 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         + ((entryElement == null || Project.isElementDisposed(entryElement)) && entryException != null ? " -" : "") + (entryException != null ? " " + (entryException instanceof ReadOnlyElementException ? "Element is not editable." : entryException.getMessage()) : ""));
                 addUpdateElementActions(validationRuleViolation, entryElement, entryId, entryObjectNode);
                 (entryException instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(validationRuleViolation);
+                if (entryException != null && !(entryException instanceof ReadOnlyElementException)) {
+                    entryException.printStackTrace();
+                }
                 failedChangelog.addChange(entryId, entryObjectNode, entryElement != null && !Project.isElementDisposed(entryElement) ? Changelog.ChangeType.UPDATED : Changelog.ChangeType.CREATED);
             }
             for (Map.Entry<Element, ObjectNode> entry : emfBulkImporter.getNonEquivalentElements().entrySet()) {
@@ -320,8 +323,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
             }
         } finally {
             Application.getInstance().getProject().getOptions().setAutoNumbering(initialAutoNumbering);
-            if (localSyncTransactionCommitListener != null) {
-                localSyncTransactionCommitListener.setDisabled(false);
+            if (localDeltaTransactionCommitListener != null) {
+                localDeltaTransactionCommitListener.setDisabled(false);
             }
         }
         if (validationSuite.hasErrors()) {

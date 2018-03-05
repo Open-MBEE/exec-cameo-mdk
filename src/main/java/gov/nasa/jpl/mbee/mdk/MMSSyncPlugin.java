@@ -6,8 +6,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.plugins.Plugin;
 import gov.nasa.jpl.mbee.mdk.mms.sync.coordinated.CoordinatedSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 
@@ -18,8 +18,8 @@ import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
  */
 public class MMSSyncPlugin extends Plugin {
     private static MMSSyncPlugin instance;
-    private LocalSyncProjectEventListenerAdapter localSyncProjectEventListenerAdapter;
-    private JMSSyncProjectEventListenerAdapter jmsSyncProjectEventListenerAdapter;
+    private LocalDeltaProjectEventListenerAdapter localDeltaProjectEventListenerAdapter;
+    private MMSDeltaProjectEventListenerAdapter mmsDeltaProjectEventListenerAdapter;
     private DeltaSyncProjectEventListenerAdapter deltaSyncProjectEventListenerAdapter;
     private CoordinatedSyncProjectEventListenerAdapter coordinatedSyncProjectEventListenerAdapter;
     private SyncStatusProjectEventListenerAdapter syncStatusProjectEventListenerAdapter;
@@ -31,12 +31,12 @@ public class MMSSyncPlugin extends Plugin {
         return instance;
     }
 
-    public LocalSyncProjectEventListenerAdapter getLocalSyncProjectEventListenerAdapter() {
-        return localSyncProjectEventListenerAdapter;
+    public LocalDeltaProjectEventListenerAdapter getLocalDeltaProjectEventListenerAdapter() {
+        return localDeltaProjectEventListenerAdapter;
     }
 
-    public JMSSyncProjectEventListenerAdapter getJmsSyncProjectEventListenerAdapter() {
-        return jmsSyncProjectEventListenerAdapter;
+    public MMSDeltaProjectEventListenerAdapter getMmsDeltaProjectEventListenerAdapter() {
+        return mmsDeltaProjectEventListenerAdapter;
     }
 
     public DeltaSyncProjectEventListenerAdapter getDeltaSyncProjectEventListenerAdapter() {
@@ -57,8 +57,8 @@ public class MMSSyncPlugin extends Plugin {
         Application.getInstance().getProjectsManager().addProjectListener(coordinatedSyncProjectEventListenerAdapter = new CoordinatedSyncProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(deltaSyncProjectEventListenerAdapter = new DeltaSyncProjectEventListenerAdapter());
         // Common and MMS clear their respective inMemoryChangelogs on save, so it needs to go after coordinated and delta which use it.
-        Application.getInstance().getProjectsManager().addProjectListener(localSyncProjectEventListenerAdapter = new LocalSyncProjectEventListenerAdapter());
-        Application.getInstance().getProjectsManager().addProjectListener(jmsSyncProjectEventListenerAdapter = new JMSSyncProjectEventListenerAdapter());
+        Application.getInstance().getProjectsManager().addProjectListener(localDeltaProjectEventListenerAdapter = new LocalDeltaProjectEventListenerAdapter());
+        Application.getInstance().getProjectsManager().addProjectListener(mmsDeltaProjectEventListenerAdapter = new MMSDeltaProjectEventListenerAdapter());
         Application.getInstance().getProjectsManager().addProjectListener(syncStatusProjectEventListenerAdapter = new SyncStatusProjectEventListenerAdapter());
 
         Application.getInstance().addSaveParticipant(coordinatedSyncProjectEventListenerAdapter);

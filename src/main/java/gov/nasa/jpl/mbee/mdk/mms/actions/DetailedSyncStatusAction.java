@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.actions;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -8,10 +7,9 @@ import gov.nasa.jpl.mbee.mdk.actions.LockAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
@@ -75,6 +73,9 @@ public class DetailedSyncStatusAction extends SRAction {
             validationRule.getViolations().clear();
         }
         Project project = Application.getInstance().getProject();
+        if (project == null) {
+            return;
+        }
         for (SyncElement.Type syncElementType : SyncElement.Type.values()) {
             Collection<SyncElement> syncElements = SyncElements.getAllByType(project, syncElementType);
             for (SyncElement syncElement : syncElements) {
@@ -89,21 +90,18 @@ public class DetailedSyncStatusAction extends SRAction {
             }
         }
         for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
-            LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-            if (localSyncTransactionCommitListener != null) {
+            LocalDeltaTransactionCommitListener localDeltaTransactionCommitListener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
+            if (localDeltaTransactionCommitListener != null) {
                 ValidationRule validationRule = validationRuleMap.get(SyncElement.Type.LOCAL).get(changeType);
-                for (Map.Entry<String, Element> entry : localSyncTransactionCommitListener.getInMemoryLocalChangelog().get(changeType).entrySet()) {
+                for (Map.Entry<String, Element> entry : localDeltaTransactionCommitListener.getInMemoryLocalChangelog().get(changeType).entrySet()) {
                     Element element = entry.getValue();
                     validationRule.addViolation(element, "Source: [" + SyncElement.Type.LOCAL.name() + "] | Type: [" + changeType.name() + "]" + (element != null && !project.isDisposed(element) ? "" : " | " + entry.getKey()));
                 }
             }
-            JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
-            if (jmsMessageListener != null) {
-                ValidationRule validationRule = validationRuleMap.get(SyncElement.Type.MMS).get(changeType);
-                for (Map.Entry<String, ObjectNode> entry : jmsMessageListener.getInMemoryJMSChangelog().get(changeType).entrySet()) {
-                    Element element = Converters.getIdToElementConverter().apply(entry.getKey(), project);
-                    validationRule.addViolation(new ValidationRuleViolation(element, "Source: [" + SyncElement.Type.MMS.name() + "] | Type: [" + changeType.name() + "]"));
-                }
+            ValidationRule validationRule = validationRuleMap.get(SyncElement.Type.MMS).get(changeType);
+            for (Map.Entry<String, Void> entry : MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).getInMemoryChangelog().get(changeType).entrySet()) {
+                Element element = Converters.getIdToElementConverter().apply(entry.getKey(), project);
+                validationRule.addViolation(new ValidationRuleViolation(element, "Source: [" + SyncElement.Type.MMS.name() + "] | Type: [" + changeType.name() + "]"));
             }
         }
 

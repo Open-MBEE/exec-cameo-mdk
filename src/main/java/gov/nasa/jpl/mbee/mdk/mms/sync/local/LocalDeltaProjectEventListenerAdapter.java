@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by igomes on 6/28/16.
  */
-public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
+public class LocalDeltaProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<Project, LocalSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
 
     @Override
@@ -24,7 +24,7 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     public void projectOpened(Project project) {
         closeLocalCommitListener(project);
         if (project.isRemote()) {
-            ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(getProjectMapping(project).getLocalSyncTransactionCommitListener());
+            ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(getProjectMapping(project).getLocalDeltaTransactionCommitListener());
         }
     }
 
@@ -43,18 +43,18 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
     @Override
     public void projectSaved(Project project, boolean savedInServer) {
         LocalSyncProjectMapping localSyncProjectMapping = getProjectMapping(project);
-        LocalSyncTransactionCommitListener listener = localSyncProjectMapping.getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener listener = localSyncProjectMapping.getLocalDeltaTransactionCommitListener();
         if (listener == null) {
             projectOpened(project);
-            listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+            listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
         }
         listener.getInMemoryLocalChangelog().clear();
     }
 
     private static void closeLocalCommitListener(Project project) {
         LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project);
-        if (localSyncProjectMapping != null && localSyncProjectMapping.getLocalSyncTransactionCommitListener() != null) {
-            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
+        if (localSyncProjectMapping != null && localSyncProjectMapping.getLocalDeltaTransactionCommitListener() != null) {
+            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalDeltaTransactionCommitListener());
         }
     }
 
@@ -63,21 +63,21 @@ public class LocalSyncProjectEventListenerAdapter extends ProjectEventListenerAd
         if (localSyncProjectMapping == null) {
             projectMappings.put(project, localSyncProjectMapping = new LocalSyncProjectMapping(project));
             if (project.isRemote()) {
-                ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(localSyncProjectMapping.getLocalSyncTransactionCommitListener());
+                ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(localSyncProjectMapping.getLocalDeltaTransactionCommitListener());
             }
         }
         return localSyncProjectMapping;
     }
 
     public static class LocalSyncProjectMapping {
-        private LocalSyncTransactionCommitListener localSyncTransactionCommitListener;
+        private LocalDeltaTransactionCommitListener localDeltaTransactionCommitListener;
 
         public LocalSyncProjectMapping(Project project) {
-            localSyncTransactionCommitListener = new LocalSyncTransactionCommitListener(project);
+            localDeltaTransactionCommitListener = new LocalDeltaTransactionCommitListener(project);
         }
 
-        public LocalSyncTransactionCommitListener getLocalSyncTransactionCommitListener() {
-            return localSyncTransactionCommitListener;
+        public LocalDeltaTransactionCommitListener getLocalDeltaTransactionCommitListener() {
+            return localDeltaTransactionCommitListener;
         }
 
     }

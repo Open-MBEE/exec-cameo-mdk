@@ -7,8 +7,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import javax.swing.*;
@@ -79,7 +79,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     }
 
     protected void executeMany(Collection<Annotation> annos, String sessionName) {
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalDeltaTransactionCommitListener();
         if (listener != null) {
             listener.setDisabled(true);
         }
@@ -115,7 +115,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     }
 
     protected void execute(String sessionName) {
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalDeltaTransactionCommitListener();
         if (listener != null) {
             listener.setDisabled(true);
         }

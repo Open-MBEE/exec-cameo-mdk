@@ -25,18 +25,18 @@ public class SyncStatusFrame extends JFrame {
     private JLabel totalInMemoryLocalChangedLabel;
     private JLabel totalPersistedLocalChangedLabel;
     private JLabel totalLocalChangedLabel;
-    private JLabel inMemoryJmsCreatedLabel;
-    private JLabel inMemoryJmsUpdatedLabel;
-    private JLabel inMemoryJmsDeletedLabel;
-    private JLabel persistedJmsCreatedLabel;
-    private JLabel persistedJmsUpdatedLabel;
-    private JLabel persistedJmsDeletedLabel;
-    private JLabel totalJmsCreatedLabel;
-    private JLabel totalJmsUpdatedLabel;
-    private JLabel totalJmsDeletedLabel;
-    private JLabel totalInMemoryJmsChangedLabel;
-    private JLabel totalPersistedJmsChangedLabel;
-    private JLabel totalJmsChangedLabel;
+    private JLabel inMemoryMmsCreatedLabel;
+    private JLabel inMemoryMmsUpdatedLabel;
+    private JLabel inMemoryMmsDeletedLabel;
+    private JLabel persistedMmsCreatedLabel;
+    private JLabel persistedMmsUpdatedLabel;
+    private JLabel persistedMmsDeletedLabel;
+    private JLabel totalMmsCreatedLabel;
+    private JLabel totalMmsUpdatedLabel;
+    private JLabel totalMmsDeletedLabel;
+    private JLabel totalInMemoryMmsChangedLabel;
+    private JLabel totalPersistedMmsChangedLabel;
+    private JLabel totalMmsChangedLabel;
     private JButton detailsButton;
 
     public JPanel getRootPanel() {
@@ -91,52 +91,52 @@ public class SyncStatusFrame extends JFrame {
         return totalLocalChangedLabel;
     }
 
-    public JLabel getInMemoryJmsCreatedLabel() {
-        return inMemoryJmsCreatedLabel;
+    public JLabel getInMemoryMmsCreatedLabel() {
+        return inMemoryMmsCreatedLabel;
     }
 
-    public JLabel getInMemoryJmsUpdatedLabel() {
-        return inMemoryJmsUpdatedLabel;
+    public JLabel getInMemoryMmsUpdatedLabel() {
+        return inMemoryMmsUpdatedLabel;
     }
 
-    public JLabel getInMemoryJmsDeletedLabel() {
-        return inMemoryJmsDeletedLabel;
+    public JLabel getInMemoryMmsDeletedLabel() {
+        return inMemoryMmsDeletedLabel;
     }
 
-    public JLabel getPersistedJmsCreatedLabel() {
-        return persistedJmsCreatedLabel;
+    public JLabel getPersistedMmsCreatedLabel() {
+        return persistedMmsCreatedLabel;
     }
 
-    public JLabel getPersistedJmsUpdatedLabel() {
-        return persistedJmsUpdatedLabel;
+    public JLabel getPersistedMmsUpdatedLabel() {
+        return persistedMmsUpdatedLabel;
     }
 
-    public JLabel getPersistedJmsDeletedLabel() {
-        return persistedJmsDeletedLabel;
+    public JLabel getPersistedMmsDeletedLabel() {
+        return persistedMmsDeletedLabel;
     }
 
-    public JLabel getTotalJmsCreatedLabel() {
-        return totalJmsCreatedLabel;
+    public JLabel getTotalMmsCreatedLabel() {
+        return totalMmsCreatedLabel;
     }
 
-    public JLabel getTotalJmsUpdatedLabel() {
-        return totalJmsUpdatedLabel;
+    public JLabel getTotalMmsUpdatedLabel() {
+        return totalMmsUpdatedLabel;
     }
 
-    public JLabel getTotalJmsDeletedLabel() {
-        return totalJmsDeletedLabel;
+    public JLabel getTotalMmsDeletedLabel() {
+        return totalMmsDeletedLabel;
     }
 
-    public JLabel getTotalInMemoryJmsChangedLabel() {
-        return totalInMemoryJmsChangedLabel;
+    public JLabel getTotalInMemoryMmsChangedLabel() {
+        return totalInMemoryMmsChangedLabel;
     }
 
-    public JLabel getTotalPersistedJmsChangedLabel() {
-        return totalPersistedJmsChangedLabel;
+    public JLabel getTotalPersistedMmsChangedLabel() {
+        return totalPersistedMmsChangedLabel;
     }
 
-    public JLabel getTotalJmsChangedLabel() {
-        return totalJmsChangedLabel;
+    public JLabel getTotalMmsChangedLabel() {
+        return totalMmsChangedLabel;
     }
 
     public JButton getDetailsButton() {
@@ -231,33 +231,33 @@ public class SyncStatusFrame extends JFrame {
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
         panel1.add(persistedLocalDeletedLabel, gbc);
-        persistedJmsCreatedLabel = new JLabel();
-        persistedJmsCreatedLabel.setText("4");
+        persistedMmsCreatedLabel = new JLabel();
+        persistedMmsCreatedLabel.setText("4");
         gbc = new GridBagConstraints();
         gbc.gridx = 8;
         gbc.gridy = 4;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(persistedJmsCreatedLabel, gbc);
-        persistedJmsUpdatedLabel = new JLabel();
-        persistedJmsUpdatedLabel.setText("5");
+        panel1.add(persistedMmsCreatedLabel, gbc);
+        persistedMmsUpdatedLabel = new JLabel();
+        persistedMmsUpdatedLabel.setText("5");
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
         gbc.gridy = 4;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(persistedJmsUpdatedLabel, gbc);
-        persistedJmsDeletedLabel = new JLabel();
-        persistedJmsDeletedLabel.setText("6");
+        panel1.add(persistedMmsUpdatedLabel, gbc);
+        persistedMmsDeletedLabel = new JLabel();
+        persistedMmsDeletedLabel.setText("6");
         gbc = new GridBagConstraints();
         gbc.gridx = 10;
         gbc.gridy = 4;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(persistedJmsDeletedLabel, gbc);
+        panel1.add(persistedMmsDeletedLabel, gbc);
         inMemoryLocalCreatedLabel = new JLabel();
         inMemoryLocalCreatedLabel.setText("6");
         gbc = new GridBagConstraints();
@@ -285,33 +285,33 @@ public class SyncStatusFrame extends JFrame {
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
         panel1.add(inMemoryLocalDeletedLabel, gbc);
-        inMemoryJmsCreatedLabel = new JLabel();
-        inMemoryJmsCreatedLabel.setText("3");
+        inMemoryMmsCreatedLabel = new JLabel();
+        inMemoryMmsCreatedLabel.setText("3");
         gbc = new GridBagConstraints();
         gbc.gridx = 8;
         gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(inMemoryJmsCreatedLabel, gbc);
-        inMemoryJmsUpdatedLabel = new JLabel();
-        inMemoryJmsUpdatedLabel.setText("2");
+        panel1.add(inMemoryMmsCreatedLabel, gbc);
+        inMemoryMmsUpdatedLabel = new JLabel();
+        inMemoryMmsUpdatedLabel.setText("2");
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
         gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(inMemoryJmsUpdatedLabel, gbc);
-        inMemoryJmsDeletedLabel = new JLabel();
-        inMemoryJmsDeletedLabel.setText("1");
+        panel1.add(inMemoryMmsUpdatedLabel, gbc);
+        inMemoryMmsDeletedLabel = new JLabel();
+        inMemoryMmsDeletedLabel.setText("1");
         gbc = new GridBagConstraints();
         gbc.gridx = 10;
         gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(inMemoryJmsDeletedLabel, gbc);
+        panel1.add(inMemoryMmsDeletedLabel, gbc);
         final JLabel label3 = new JLabel();
         label3.setFont(new Font(label3.getFont().getName(), Font.BOLD, 14));
         label3.setText("Unsynced Local Changes");
@@ -431,36 +431,36 @@ public class SyncStatusFrame extends JFrame {
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
         panel1.add(totalLocalDeletedLabel, gbc);
-        totalJmsCreatedLabel = new JLabel();
-        totalJmsCreatedLabel.setFont(new Font(totalJmsCreatedLabel.getFont().getName(), Font.BOLD, totalJmsCreatedLabel.getFont().getSize()));
-        totalJmsCreatedLabel.setText("7");
+        totalMmsCreatedLabel = new JLabel();
+        totalMmsCreatedLabel.setFont(new Font(totalMmsCreatedLabel.getFont().getName(), Font.BOLD, totalMmsCreatedLabel.getFont().getSize()));
+        totalMmsCreatedLabel.setText("7");
         gbc = new GridBagConstraints();
         gbc.gridx = 8;
         gbc.gridy = 6;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(totalJmsCreatedLabel, gbc);
-        totalJmsUpdatedLabel = new JLabel();
-        totalJmsUpdatedLabel.setFont(new Font(totalJmsUpdatedLabel.getFont().getName(), Font.BOLD, totalJmsUpdatedLabel.getFont().getSize()));
-        totalJmsUpdatedLabel.setText("7");
+        panel1.add(totalMmsCreatedLabel, gbc);
+        totalMmsUpdatedLabel = new JLabel();
+        totalMmsUpdatedLabel.setFont(new Font(totalMmsUpdatedLabel.getFont().getName(), Font.BOLD, totalMmsUpdatedLabel.getFont().getSize()));
+        totalMmsUpdatedLabel.setText("7");
         gbc = new GridBagConstraints();
         gbc.gridx = 9;
         gbc.gridy = 6;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(totalJmsUpdatedLabel, gbc);
-        totalJmsDeletedLabel = new JLabel();
-        totalJmsDeletedLabel.setFont(new Font(totalJmsDeletedLabel.getFont().getName(), Font.BOLD, totalJmsDeletedLabel.getFont().getSize()));
-        totalJmsDeletedLabel.setText("7");
+        panel1.add(totalMmsUpdatedLabel, gbc);
+        totalMmsDeletedLabel = new JLabel();
+        totalMmsDeletedLabel.setFont(new Font(totalMmsDeletedLabel.getFont().getName(), Font.BOLD, totalMmsDeletedLabel.getFont().getSize()));
+        totalMmsDeletedLabel.setText("7");
         gbc = new GridBagConstraints();
         gbc.gridx = 10;
         gbc.gridy = 6;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(totalJmsDeletedLabel, gbc);
+        panel1.add(totalMmsDeletedLabel, gbc);
         final JSeparator separator1 = new JSeparator();
         separator1.setOrientation(1);
         gbc = new GridBagConstraints();
@@ -563,36 +563,36 @@ public class SyncStatusFrame extends JFrame {
         gbc.anchor = GridBagConstraints.SOUTH;
         gbc.insets = new Insets(3, 3, 3, 3);
         panel1.add(label13, gbc);
-        totalInMemoryJmsChangedLabel = new JLabel();
-        totalInMemoryJmsChangedLabel.setFont(new Font(totalInMemoryJmsChangedLabel.getFont().getName(), Font.BOLD, totalInMemoryJmsChangedLabel.getFont().getSize()));
-        totalInMemoryJmsChangedLabel.setText("6");
+        totalInMemoryMmsChangedLabel = new JLabel();
+        totalInMemoryMmsChangedLabel.setFont(new Font(totalInMemoryMmsChangedLabel.getFont().getName(), Font.BOLD, totalInMemoryMmsChangedLabel.getFont().getSize()));
+        totalInMemoryMmsChangedLabel.setText("6");
         gbc = new GridBagConstraints();
         gbc.gridx = 12;
         gbc.gridy = 3;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(totalInMemoryJmsChangedLabel, gbc);
-        totalPersistedJmsChangedLabel = new JLabel();
-        totalPersistedJmsChangedLabel.setFont(new Font(totalPersistedJmsChangedLabel.getFont().getName(), Font.BOLD, totalPersistedJmsChangedLabel.getFont().getSize()));
-        totalPersistedJmsChangedLabel.setText("15");
+        panel1.add(totalInMemoryMmsChangedLabel, gbc);
+        totalPersistedMmsChangedLabel = new JLabel();
+        totalPersistedMmsChangedLabel.setFont(new Font(totalPersistedMmsChangedLabel.getFont().getName(), Font.BOLD, totalPersistedMmsChangedLabel.getFont().getSize()));
+        totalPersistedMmsChangedLabel.setText("15");
         gbc = new GridBagConstraints();
         gbc.gridx = 12;
         gbc.gridy = 4;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(totalPersistedJmsChangedLabel, gbc);
-        totalJmsChangedLabel = new JLabel();
-        totalJmsChangedLabel.setFont(new Font(totalJmsChangedLabel.getFont().getName(), Font.BOLD, totalJmsChangedLabel.getFont().getSize()));
-        totalJmsChangedLabel.setText("21");
+        panel1.add(totalPersistedMmsChangedLabel, gbc);
+        totalMmsChangedLabel = new JLabel();
+        totalMmsChangedLabel.setFont(new Font(totalMmsChangedLabel.getFont().getName(), Font.BOLD, totalMmsChangedLabel.getFont().getSize()));
+        totalMmsChangedLabel.setText("21");
         gbc = new GridBagConstraints();
         gbc.gridx = 12;
         gbc.gridy = 6;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(3, 3, 3, 3);
-        panel1.add(totalJmsChangedLabel, gbc);
+        panel1.add(totalMmsChangedLabel, gbc);
         final JSeparator separator7 = new JSeparator();
         separator7.setOrientation(1);
         gbc = new GridBagConstraints();

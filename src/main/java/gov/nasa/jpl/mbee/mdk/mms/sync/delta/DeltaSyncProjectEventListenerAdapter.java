@@ -6,10 +6,9 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
@@ -17,16 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-/*
- * This class is responsible for taking action when a project is opened.
- * This class does the following when instantiated:
- *   1. Create a transaction manager
- *   2. Create a TransactionCommitListener object
- *   3. Add the listener to the transaction manager object 
- *   4. Create a MMS topic and connection to that topic
- *   5. Store that connection so we keep track of the connections to MMS.
- *   
- */
 public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter {
     private static final Map<SyncElement.Type, Function<Project, Changelog<String, ?>>> CHANGELOG_FUNCTIONS = new HashMap<>(2);
 
@@ -36,23 +25,21 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             for (SyncElement syncElement : SyncElements.getAllByType(project, SyncElement.Type.LOCAL)) {
                 combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
             }
-            LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
-            if (localSyncTransactionCommitListener == null) {
+            LocalDeltaTransactionCommitListener localDeltaTransactionCommitListener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
+            if (localDeltaTransactionCommitListener == null) {
                 return combinedPersistedChangelog;
             }
-            return combinedPersistedChangelog.and(localSyncTransactionCommitListener.getInMemoryLocalChangelog(), (key, element) -> null);
+            return combinedPersistedChangelog.and(localDeltaTransactionCommitListener.getInMemoryLocalChangelog(), (key, element) -> null);
         });
+        /*
         CHANGELOG_FUNCTIONS.put(SyncElement.Type.MMS, project -> {
             Changelog<String, Void> combinedPersistedChangelog = new Changelog<>();
             for (SyncElement syncElement : SyncElements.getAllByType(project, SyncElement.Type.MMS)) {
                 combinedPersistedChangelog = combinedPersistedChangelog.and(SyncElements.buildChangelog(syncElement));
             }
-            JMSMessageListener jmsMessageListener = JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener();
-            if (jmsMessageListener == null) {
-                return combinedPersistedChangelog;
-            }
-            return combinedPersistedChangelog.and(jmsMessageListener.getInMemoryJMSChangelog(), (key, objectNode) -> null);
+            return combinedPersistedChangelog.and(MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).getInMemoryChangelog());
         });
+        */
     }
 
     @Override
@@ -69,7 +56,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     private static void persistChanges(Project project) {
 
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
         if (listener != null) {
             listener.setDisabled(true);
         }
