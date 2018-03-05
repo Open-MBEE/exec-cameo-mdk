@@ -529,6 +529,9 @@ task testrailPublish(type: JavaExec) {
         arguments.add('--skip-close-run')
     }
     args arguments
+
+    standardOutput = System.out
+    errorOutput = System.err
 }
 
 configure(testrailPublish) {
