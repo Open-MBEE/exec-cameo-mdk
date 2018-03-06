@@ -22,21 +22,10 @@ public class ValidateElementDepthAction extends MMSAction {
     private int depth = -2;
     private boolean cancel = false;
 
-    public ValidateElementDepthAction(Element e, String name, int depth) {
-        super(DEFAULT_ID, name, null, null);
-        this.start = new ArrayList<Element>();
-        this.start.add(e);
-        this.project = Project.getProject(e);
-    }
-
     public ValidateElementDepthAction(Collection<Element> e, String name, int depth) {
         super(DEFAULT_ID, name, null, null);
         this.start = e;
         this.project = Project.getProject(e.iterator().next());
-    }
-
-    public ValidateElementDepthAction(Element e, String name) {
-        this(e, name, 1);
     }
 
     public ValidateElementDepthAction(Collection<Element> e, String name) {
