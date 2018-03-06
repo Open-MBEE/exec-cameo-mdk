@@ -242,6 +242,9 @@ public class BranchValidator {
         if (validationSuite.hasErrors()) {
             Utils.displayValidationWindow(project, vss, "Branch Differences");
         }
+        else {
+            Application.getInstance().getGUILog().log("[INFO] All branches are in sync between TWC and MMS.");
+        }
     }
 
     public ValidationSuite getValidationSuite() {
