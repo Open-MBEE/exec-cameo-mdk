@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.ActivityNode;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 
 import java.util.List;
 import java.util.Stack;
@@ -19,10 +20,10 @@ public class GenerationContext {
 
     private Stack<List<Object>> targets;
     private ActivityNode current;
-    private DocumentValidator validator;
+    private ViewViewpointValidator validator;
     private GUILog log;
 
-    public GenerationContext(Stack<List<Object>> t, ActivityNode a, DocumentValidator dv, GUILog l) {
+    public GenerationContext(Stack<List<Object>> t, ActivityNode a, ViewViewpointValidator dv, GUILog l) {
         targets = t;
         current = a;
         validator = dv;
@@ -64,11 +65,11 @@ public class GenerationContext {
         return current;
     }
 
-    public DocumentValidator getValidator() {
+    public ViewViewpointValidator getValidator() {
         return validator;
     }
 
-    public void setValidator(DocumentValidator validator) {
+    public void setValidator(ViewViewpointValidator validator) {
         this.validator = validator;
     }
 

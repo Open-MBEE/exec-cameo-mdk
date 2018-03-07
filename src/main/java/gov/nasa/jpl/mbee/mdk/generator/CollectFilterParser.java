@@ -15,6 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.algorithms.TopologicalSort;
@@ -42,7 +43,7 @@ public class CollectFilterParser {
         return context;
     }
 
-    public static DocumentValidator getValidator() {
+    public static ViewViewpointValidator getValidator() {
         return context == null ? null : context.getValidator();
     }
 
@@ -122,7 +123,7 @@ public class CollectFilterParser {
                 node.setResult(res);
             }
             context.setCurrentNode(node.getNode());
-            DocumentValidator.evaluateConstraints(node.getNode(), res, context, true, true);
+            ViewViewpointValidator.evaluateConstraints(node.getNode(), res, context, true, true);
         }
         return res;
     }

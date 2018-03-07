@@ -2,40 +2,37 @@ package gov.nasa.jpl.mbee.mdk.mms.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentWriter;
 import gov.nasa.jpl.mbee.mdk.generator.PostProcessor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 
-/**
- * generates docgen 3 document
- *
- * @author dlam
- */
-public class GenerateDocumentAction extends MDAction {
+public class GenerateLocalDocument extends MDAction {
 
     private static final long serialVersionUID = 1L;
-    private Element doc;
-    public static final String DEFAULT_ID = "GenerateDocument";
+    private Element view;
+    public static final String DEFAULT_ID = GenerateLocalDocument.class.getSimpleName();
 
-    public GenerateDocumentAction(Element e) {
-        super(DEFAULT_ID, "Generate DocGen 3 Document", null, null);
-        doc = e;
+    public GenerateLocalDocument(Element view) {
+        super(DEFAULT_ID, "Generate Document", null, null);
+        this.view = view;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        GUILog gl = Application.getInstance().getGUILog();
         try {
             File savefile = fileSelect();
             if (savefile != null) {
@@ -45,7 +42,7 @@ public class GenerateDocumentAction extends MDAction {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             ex.printStackTrace(pw);
-            gl.log(sw.toString()); // stack trace as a string
+            Application.getInstance().getGUILog().log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
         }
     }
@@ -61,13 +58,15 @@ public class GenerateDocumentAction extends MDAction {
     }
 
     public void generate(File savefile) {
-        DocumentValidator dv = new DocumentValidator(doc);
-        dv.validateDocument();
-        if (dv.isFatal()) {
-            dv.printErrors();
+        Project project = Application.getInstance().getProject();
+        ViewViewpointValidator dv = new ViewViewpointValidator(Collections.singleton(view), project, true);
+        dv.run();
+        if (dv.isFailed()) {
+            Application.getInstance().getGUILog().log("[ERROR] View validation failed for " + Converters.getElementToHumanNameConverter().apply(view) + ". Aborting generation.");
+            Utils.displayValidationWindow(project, dv.getValidationSuite(), dv.getValidationSuite().getName());
             return;
         }
-        DocumentGenerator dg = new DocumentGenerator(doc, dv, null);
+        DocumentGenerator dg = new DocumentGenerator(view, dv, null);
         Document dge = dg.parseDocument();
         boolean genNewImage = dge.getGenNewImage();
         (new PostProcessor()).process(dge);
@@ -78,9 +77,7 @@ public class GenerateDocumentAction extends MDAction {
         }
         File dir = savefile.getParentFile();
         File realfile = new File(dir, filename);
-        ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage,
-                dir), "Generating DocGen 3 Document...", true, 0);
-        dv.printErrors();
+        ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage, dir), "Generating DocGen 3 Document...", true, 0);
     }
 
 }

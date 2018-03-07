@@ -14,7 +14,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.generator.GenerationContext;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.util.*;
@@ -91,9 +91,9 @@ public class TableStructure extends Table {
 
     private Map<TableColumn, Integer> columnIndex = new HashMap<TableStructure.TableColumn, Integer>(); //0 based
 
-    protected DocumentValidator validator = null;
+    protected ViewViewpointValidator validator = null;
 
-    public TableStructure(DocumentValidator validator) {
+    public TableStructure(ViewViewpointValidator validator) {
         super();
         this.validator = validator;
     }
@@ -219,8 +219,7 @@ public class TableStructure extends Table {
                 if (tc instanceof TableExpressionColumn && !((TableExpressionColumn) tc).iterate) {
                     String expr = ((TableExpressionColumn) tc).expression;
                     if (expr != null) {
-                        Object result = DocumentValidator
-                                .evaluate(expr, resultElements, getValidator(), true);
+                        Object result = ViewViewpointValidator.evaluate(expr, resultElements, true);
                         OclEvaluator evaluator = OclEvaluator.instance;
                         if (evaluator.isValid() && result != null) {
                             Debug.outln("valid result = " + result
@@ -280,7 +279,7 @@ public class TableStructure extends Table {
                                         + MoreToString.Helper.toLongString(re));
                                 continue;
                             }
-                            Object result = DocumentValidator.evaluate(expr, re, getValidator(), true);
+                            Object result = ViewViewpointValidator.evaluate(expr, re,true);
                             OclEvaluator evaluator = OclEvaluator.instance;
                             if (evaluator.isValid() || result != null) {
                                 Debug.outln("valid result = " + result
@@ -326,7 +325,7 @@ public class TableStructure extends Table {
                 row.add(cell);
 
                 // check constraints
-                DocumentValidator.evaluateConstraints(tc.activityNode, getCellData(row, tc), context, true,
+                ViewViewpointValidator.evaluateConstraints(tc.activityNode, getCellData(row, tc), context, true,
                         true);
             }
             Debug.outln("adding " + row.size() + " cells in row to table.");
@@ -417,11 +416,11 @@ public class TableStructure extends Table {
      * sumRow.add(bucket); foundSumable = false; } addRow(sumRow); }
      */
 
-    public DocumentValidator getValidator() {
+    public ViewViewpointValidator getValidator() {
         return validator;
     }
 
-    public void setValidator(DocumentValidator validator) {
+    public void setValidator(ViewViewpointValidator validator) {
         this.validator = validator;
     }
 

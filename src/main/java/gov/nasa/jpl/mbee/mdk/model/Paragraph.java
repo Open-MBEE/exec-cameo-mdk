@@ -11,7 +11,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.generator.GenerationContext;
 import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.util.Utils.AvailableAttribute;
@@ -24,7 +24,7 @@ public class Paragraph extends Query {
     private List<Property> stereotypeProperties;
     private From fromProperty;
 
-    private DocumentValidator validator = null;
+    private ViewViewpointValidator validator = null;
     private boolean tryOcl = false;
     private boolean iterate = true;
     private AvailableAttribute attribute = null; // this is redundant with fromProperty
@@ -58,7 +58,7 @@ public class Paragraph extends Query {
     public Paragraph() {
     }
 
-    public Paragraph(DocumentValidator dv) {
+    public Paragraph(ViewViewpointValidator dv) {
         this.validator = dv;
     }
 
@@ -86,7 +86,7 @@ public class Paragraph extends Query {
         return fromProperty;
     }
 
-    public DocumentValidator getValidator() {
+    public ViewViewpointValidator getValidator() {
         return validator;
     }
 
@@ -121,9 +121,7 @@ public class Paragraph extends Query {
         }
         Debug.outln("addOclParagraph(" + res + ", \"" + oclExpression
                 + "\", " + context + ")" + " class(" + context.getClass() + ")");
-        Object result =
-                DocumentValidator.evaluate(oclExpression, context,
-                        getValidator(), true);
+        Object result = ViewViewpointValidator.evaluate(oclExpression, context,true);
         Debug.outln("ocl result = " + result);
 
 //        if ( result instanceof Collection && ((Collection<?>)result).size() == 1 ) {

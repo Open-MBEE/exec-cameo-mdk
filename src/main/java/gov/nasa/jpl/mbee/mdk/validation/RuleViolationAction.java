@@ -19,10 +19,8 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
 
     private static final long serialVersionUID = 1L;
 
-    public RuleViolationAction(String paramString1, String paramString2,
-                               KeyStroke paramKeyStroke, String paramString3) {
-        super(paramString1, paramString2, paramKeyStroke, paramString3);
-        // TODO Auto-generated constructor stub
+    public RuleViolationAction(String id, String name, KeyStroke stroke, String group) {
+        super(id, name, stroke, group);
     }
 
     protected Annotation annotation;

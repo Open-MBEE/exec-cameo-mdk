@@ -19,6 +19,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -111,16 +112,24 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<String, Pair<ObjectNode, Slot>> slotMap = new LinkedHashMap<>();
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>();
 
+        ValidationSuite viewValidationSuite = null;
         for (Element rootView : rootViews) {
             // STAGE 1: Calculating view structure
             progressStatus.setDescription("Calculating view structure");
             progressStatus.setCurrent(1);
 
-            DocumentValidator dv = new DocumentValidator(rootView);
-            dv.validateDocument();
-            if (dv.isFatal()) {
-                dv.printErrors(false);
-                return;
+            ViewViewpointValidator dv = new ViewViewpointValidator(rootViews, project, recurse);
+            dv.run();
+            if (dv.isFailed()) {
+                Application.getInstance().getGUILog().log("[WARNING] View validation failed for " + Converters.getElementToHumanNameConverter().apply(rootView) + ". Skipping generation.");
+                if (viewValidationSuite == null) {
+                    viewValidationSuite = dv.getValidationSuite();
+                }
+                else {
+                    ValidationSuite vs = viewValidationSuite;
+                    dv.getValidationSuite().getValidationRules().forEach(rule -> vs.getValidationRules().stream().filter(r -> rule.getName().equals(r.getName())).findAny().ifPresent(r -> r.addViolations(rule.getViolations())));
+                }
+                continue;
             }
             // first run a local generation of the view model to get the current model view structure
             DocumentGenerator dg = new DocumentGenerator(rootView, dv, null, false);
@@ -154,7 +163,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
                 if (processedElements.contains(view)) {
-                    Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + Converters.getElementToIdConverter().apply(view) + ".");
+                    Application.getInstance().getGUILog().log("[WARNING] Detected duplicate view reference in " + Converters.getElementToHumanNameConverter().apply(view) + ". Skipping generation.");
                     continue;
                 }
                 ViewMapping viewMapping = viewMap.containsKey(Converters.getElementToIdConverter().apply(view)) ?
@@ -163,6 +172,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewMapping.setBook(book);
                 viewMap.put(Converters.getElementToIdConverter().apply(view), viewMapping);
             }
+        }
+        if (viewValidationSuite != null) {
+            Utils.displayValidationWindow(project, viewValidationSuite, viewValidationSuite.getName());
         }
 
         // Find and delete existing view constraints to prevent ID conflict when importing. Migration should handle this,
@@ -489,15 +501,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<Element, JSONArray> view2elements = new LinkedHashMap<>();
         Map<String, ObjectNode> images = new LinkedHashMap<>();
         Set<Element> skippedViews = new HashSet<>();
-        for (Element rootView : rootViews) {
+        for (ViewMapping viewMapping : viewMap.values()) {
             DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
             try {
-                viewMap.get(Converters.getElementToIdConverter().apply(rootView)).getBook().accept(dbAlfrescoVisitor);
+                viewMapping.getBook().accept(dbAlfrescoVisitor);
             } catch (Exception e) {
                 Utils.printException(e);
                 e.printStackTrace();
             }
-            views.addAll(presentationElementUtils.getViewProcessOrder(rootView, dbAlfrescoVisitor.getHierarchyElements()));
+            views.addAll(presentationElementUtils.getViewProcessOrder(viewMapping.getElement(), dbAlfrescoVisitor.getHierarchyElements()));
             view2pe.putAll(dbAlfrescoVisitor.getView2Pe());
             view2unused.putAll(dbAlfrescoVisitor.getView2Unused());
             view2elements.putAll(dbAlfrescoVisitor.getView2Elements());
