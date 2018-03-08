@@ -11,13 +11,13 @@ import com.tomsawyer.canvas.TSViewportCanvas;
 import com.tomsawyer.canvas.image.svg.TSSVGImageCanvas;
 import com.tomsawyer.canvas.image.svg.TSSVGImageCanvasPreferenceTailor;
 import com.tomsawyer.canvas.rendering.TSRenderingPreferenceTailor;
-import com.tomsawyer.magicdraw.action.DocGenTSGenerateDiagramDelegate;
 import com.tomsawyer.magicdraw.action.TSActionConstants;
 import com.tomsawyer.util.preference.TSPreferenceData;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
+import gov.nasa.jpl.mbee.mdk.tomsawyer.DocGenTSGenerateDiagramDelegate;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
@@ -27,11 +27,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.*;
 
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.DiagramType.INTERNAL_BLOCK_DIAGRAM;
-
-/**
- * Created by johannes on 11/21/16.
- */
 public class TomSawyerDiagram extends Query {
     private DiagramType type;
 
@@ -108,7 +103,7 @@ public class TomSawyerDiagram extends Query {
 
         if (forViewEditor) {
             viewElements = delegate.postLoadDataGetUUID();
-            if (type.equals(INTERNAL_BLOCK_DIAGRAM)) {
+            if (type.equals(TomSawyerDiagram.DiagramType.INTERNAL_BLOCK_DIAGRAM)) {
                 dbts.setContext(delegate.getContextElement());
             }
             dbts.setElements(viewElements);

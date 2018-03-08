@@ -2,10 +2,9 @@ package gov.nasa.jpl.mbee.mdk.docgen.docbook;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram;
 
 import java.util.Set;
-
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.DiagramType;
 
 public class DBTomSawyerDiagram extends DocumentElement {
     private Element context;
@@ -29,7 +28,7 @@ public class DBTomSawyerDiagram extends DocumentElement {
         this.context = context;
     }
 
-    private DiagramType type;
+    private TomSawyerDiagram.DiagramType type;
 
     @Override
     public void accept(IDBVisitor v) {
@@ -44,11 +43,11 @@ public class DBTomSawyerDiagram extends DocumentElement {
         return caption;
     }
 
-    public void setType(DiagramType type) {
+    public void setType(TomSawyerDiagram.DiagramType type) {
         this.type = type;
     }
 
-    public DiagramType getType() {
+    public TomSawyerDiagram.DiagramType getType() {
         return type;
     }
 }

@@ -1,4 +1,4 @@
-package com.tomsawyer.magicdraw.action;
+package gov.nasa.jpl.mbee.mdk.tomsawyer;
 
 
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
@@ -6,6 +6,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.tomsawyer.integrator.TSIntegratorException;
 import com.tomsawyer.magicdraw.TSMagicDrawUtilities;
+import com.tomsawyer.magicdraw.action.TSGenerateDiagramDelegate;
 import com.tomsawyer.magicdraw.integrator.TSMagicDrawElementReader;
 import com.tomsawyer.magicdraw.integrator.TSPropertyReader;
 import com.tomsawyer.magicdraw.integrator.TSStereotypeReader;
