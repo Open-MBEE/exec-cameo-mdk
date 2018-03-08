@@ -5,12 +5,12 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 
 import java.util.Set;
 
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType;
+import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.DiagramType;
 
 public class DBTomSawyerDiagram extends DocumentElement {
     private Element context;
 
-    public Set<String> getElementIDs() {
+    public Set<String> getElementIds() {
         return elements;
     }
 
@@ -21,22 +21,6 @@ public class DBTomSawyerDiagram extends DocumentElement {
     private Set<String> elements;
     private String caption;
 
-    public shortDiagramType getShortType() {
-        switch (type) {
-            case Block_Definition_Diagram:
-                return shortDiagramType.BDD;
-            case Internal_Block_Diagram:
-                return shortDiagramType.IBD;
-            case State_Machine_Diagram:
-                return shortDiagramType.STM;
-            case Activity_Diagram:
-                return shortDiagramType.ACT;
-            case Sequence_Diagram:
-                return shortDiagramType.SD;
-        }
-        return null;
-    }
-
     public String getContext() {
         return Converters.getElementToIdConverter().apply(context);
     }
@@ -45,12 +29,7 @@ public class DBTomSawyerDiagram extends DocumentElement {
         this.context = context;
     }
 
-    public enum shortDiagramType {
-        BDD, IBD, STM, ACT, SD
-        //TODO ts also has UC, REQ, PKG, PAR
-    }
-
-    private diagramType type;
+    private DiagramType type;
 
     @Override
     public void accept(IDBVisitor v) {
@@ -65,9 +44,11 @@ public class DBTomSawyerDiagram extends DocumentElement {
         return caption;
     }
 
-    public void setType(diagramType type) {
+    public void setType(DiagramType type) {
         this.type = type;
     }
 
-
+    public DiagramType getType() {
+        return type;
+    }
 }

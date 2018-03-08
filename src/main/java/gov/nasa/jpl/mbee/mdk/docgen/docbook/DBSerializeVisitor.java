@@ -253,13 +253,14 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         File imageDir = new File(dir, "images");
         imageDir.mkdirs();
         // todo , extend dbimage to have TS image reference.
-        if(!image.isTomSawyerImage()) {
+        if (!image.isTomSawyerImage()) {
             try {
                 s = DocGenUtils.exportDiagram(image.getImage(), imageDir, genImage);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }else{
+        }
+        else {
             s = image.getTSImageInfo();
         }
         if (image.isDoNotShow()) {
@@ -283,7 +284,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             out.append("<imagedata fileref=\"" + filename + "\" format=\"SVG\"/>\n");
         }
         String filename2 = filename;
-        if(!image.isTomSawyerImage()){
+        if (!image.isTomSawyerImage()) {
             filename2 = filename.replaceAll(".svg", ".png");
         }
         out.append("</imageobject><imageobject role=\"html\"><imagedata fileref=\""

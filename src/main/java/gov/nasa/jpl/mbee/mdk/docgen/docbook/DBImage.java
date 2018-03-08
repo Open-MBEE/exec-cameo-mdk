@@ -21,19 +21,14 @@ public class DBImage extends DocumentElement {
     private boolean doNotShow;
     private boolean isTomSawyerImage;
 
-
-
     private String outputDir;
     private String imageFileName;
 
-    public DBImage(Diagram d) {
-        image = d;
-        gennew = false;
-        isTomSawyerImage = false;
+    public DBImage(Diagram diagram) {
+        this.image = diagram;
     }
 
     public DBImage() {
-        gennew = false;
     }
 
     public void setDiagram(Diagram d) {
@@ -72,7 +67,9 @@ public class DBImage extends DocumentElement {
         doNotShow = b;
     }
 
-    public boolean isTomSawyerImage(){return isTomSawyerImage;}
+    public boolean isTomSawyerImage() {
+        return isTomSawyerImage;
+    }
 
     @Override
     public void accept(IDBVisitor v) {
@@ -93,20 +90,20 @@ public class DBImage extends DocumentElement {
     }
 
     public List<String> getTSImageInfo() {
-        List<String> tsimageInfo = new ArrayList<>();
-        File svgdiagramFile = new File(outputDir, imageFileName);
+        List<String> tsImageInfo = new ArrayList<>();
+        File file = new File(outputDir, imageFileName);
 
-        tsimageInfo.add(imageFileName);
+        tsImageInfo.add(imageFileName);
         String scale = "true";
         try {
-            BufferedReader svg = new BufferedReader(new FileReader(svgdiagramFile));
+            BufferedReader svg = new BufferedReader(new FileReader(file));
             String line = svg.readLine();
             while (line != null) {
                 if (line.startsWith("<svg")) {
-                    int widthindex = line.indexOf("width=\"");
-                    if (widthindex > -1) {
-                        int endindex = line.indexOf("\"", widthindex + 7);
-                        String w = line.substring(widthindex + 7, endindex);
+                    int widthIndex = line.indexOf("width=\"");
+                    if (widthIndex > -1) {
+                        int endIndex = line.indexOf("\"", widthIndex + 7);
+                        String w = line.substring(widthIndex + 7, endIndex);
                         double wd = Double.parseDouble(w);
                         if (wd < 5.5) {
                             scale = "false";
@@ -117,15 +114,11 @@ public class DBImage extends DocumentElement {
                 line = svg.readLine();
             }
             svg.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NumberFormatException e) {
+        } catch (IOException | NumberFormatException e) {
             e.printStackTrace();
         }
-        tsimageInfo.add(scale);
-        return tsimageInfo;
+        tsImageInfo.add(scale);
+        return tsImageInfo;
     }
 
     public void setOutputDir(String outputDir) {

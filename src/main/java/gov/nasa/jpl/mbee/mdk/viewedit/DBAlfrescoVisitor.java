@@ -19,6 +19,7 @@ import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.model.Section;
+import gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -344,6 +345,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         simplelist.accept(html);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(DBTomSawyerDiagram tomSawyerDiagram) {
         String id;
@@ -353,12 +355,10 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         JSONObject entry = new JSONObject();
         //TODO caption/title?
         entry.put("type", "TSDiagram");
-        entry.put("tstype", tomSawyerDiagram.getShortType().toString());
+        entry.put("tstype", tomSawyerDiagram.getType() != null ? tomSawyerDiagram.getType().getAbbreviation() : null);
         JSONArray elements = new JSONArray();
-        for (String elem : tomSawyerDiagram.getElementIDs()) {
-            elements.add(elem);
-        }
-        if(tomSawyerDiagram.getShortType().equals(DBTomSawyerDiagram.shortDiagramType.IBD)){
+        elements.addAll(tomSawyerDiagram.getElementIds());
+        if (tomSawyerDiagram.getType() != null && tomSawyerDiagram.getType() == TomSawyerDiagram.DiagramType.INTERNAL_BLOCK_DIAGRAM) {
             entry.put("context", tomSawyerDiagram.getContext());
         }
         entry.put("elements", elements);
@@ -371,8 +371,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         //TODO should add new presentation element OpaqueFigure type
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
-        System.out.println(entry.toJSONString());
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), "tsdiagram", parentSec, null);
         newpe.peek().add(ipe);
     }
 
