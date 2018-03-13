@@ -353,15 +353,17 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             viewElements.peek().add(id);
         }
         JSONObject entry = new JSONObject();
-        //TODO caption/title?
-        entry.put("type", "TSDiagram");
-        entry.put("tstype", tomSawyerDiagram.getType() != null ? tomSawyerDiagram.getType().getAbbreviation() : null);
+        entry.put("type", "TomSawyerDiagram");
+        entry.put("diagramType", tomSawyerDiagram.getType() != null ? tomSawyerDiagram.getType().getAbbreviation() : null);
         JSONArray elements = new JSONArray();
-        elements.addAll(tomSawyerDiagram.getElementIds());
-        if (tomSawyerDiagram.getType() != null && tomSawyerDiagram.getType() == TomSawyerDiagram.DiagramType.INTERNAL_BLOCK_DIAGRAM) {
-            entry.put("context", tomSawyerDiagram.getContext());
-        }
+        tomSawyerDiagram.getElements().stream().map(element -> Converters.getElementToIdConverter().apply(element)).filter(Objects::nonNull).forEach(elements::add);
         entry.put("elements", elements);
+        switch (tomSawyerDiagram.getType()) {
+            case INTERNAL_BLOCK:
+            case PARAMETRIC:
+                entry.put("context", Converters.getElementToIdConverter().apply(tomSawyerDiagram.getContext()));
+                break;
+        }
 
         InstanceSpecification i = null;
         if (!currentImageInstances.peek().isEmpty()) {
@@ -371,7 +373,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
         //TODO should add new presentation element OpaqueFigure type
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), "tsdiagram", parentSec, null);
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementEnum.IMAGE, currentView.peek(), "tomSawyerDiagram", parentSec, null);
         newpe.peek().add(ipe);
     }
 

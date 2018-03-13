@@ -8,20 +8,19 @@ import java.util.Set;
 
 public class DBTomSawyerDiagram extends DocumentElement {
     private Element context;
+    private Set<Element> elements;
+    private String caption;
 
-    public Set<String> getElementIds() {
+    public Set<Element> getElements() {
         return elements;
     }
 
-    public void setElements(Set<String> elements) {
+    public void setElements(Set<Element> elements) {
         this.elements = elements;
     }
 
-    private Set<String> elements;
-    private String caption;
-
-    public String getContext() {
-        return Converters.getElementToIdConverter().apply(context);
+    public Element getContext() {
+        return context;
     }
 
     public void setContext(Element context) {

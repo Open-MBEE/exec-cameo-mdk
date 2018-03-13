@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.ui.ProjectWindow;
 import com.nomagic.magicdraw.ui.WindowComponentInfo;
 import com.nomagic.magicdraw.ui.WindowsManager;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
@@ -28,53 +29,25 @@ import java.io.FileOutputStream;
 import java.util.*;
 
 public class TomSawyerDiagram extends Query {
-    private DiagramType type;
-
-    public void setType(DiagramType type) {
-        this.type = type;
-    }
-
-    public enum DiagramType {
-        BLOCK_DEFINITION_DIAGRAM("Block Definition Diagram", "BDD"),
-        INTERNAL_BLOCK_DIAGRAM("Internal Block Diagram", "IBD"),
-        STATE_MACHINE_DIAGRAM("State Machine", "STM"),
-        ACTIVITY_DIAGRAM("Activity Diagram", "ACT"),
-        SEQUENCE_DIAGRAM("Sequence Diagram", "SD");
-
-        private final String name;
-        private final String abbreviation;
-
-        DiagramType(String name, String abbreviation) {
-            this.name = name;
-            this.abbreviation = abbreviation;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getAbbreviation() {
-            return abbreviation;
-        }
-    }
+    private DiagramType diagramType;
 
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
         Object enumLiteral = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "diagram_type", DocGenProfile.PROFILE_NAME, false);
         if (enumLiteral instanceof String) {
-            setType(DiagramType.valueOf(enumLiteral.toString()));
+            setDiagramType(DiagramType.valueOf(enumLiteral.toString()));
         }
         Enumeration enumeration;
         if (enumLiteral instanceof EnumerationLiteral && (enumeration = ((EnumerationLiteral) enumLiteral).getEnumeration()) != null) {
-            Arrays.stream(DiagramType.values()).filter(dt -> dt.getName().equals(enumeration.getName())).findAny().ifPresent(this::setType);
+            Arrays.stream(DiagramType.values()).filter(dt -> dt.getName().equals(enumeration.getName())).findAny().ifPresent(this::setDiagramType);
         }
     }
 
 
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
-        if (type == null) {
+        if (diagramType == null) {
             return Collections.emptyList();
         }
         List<Element> elements = new ArrayList<>();
@@ -86,28 +59,33 @@ public class TomSawyerDiagram extends Query {
         if (elements.isEmpty()) {
             return Collections.emptyList();
         }
-        DocGenTSGenerateDiagramDelegate delegate = new DocGenTSGenerateDiagramDelegate(elements.get(0), type.getName()); //first arg should be the context element if ibd, par, or want to generate bdd
-        delegate.addObjectsToShow(elements);
-        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram();
+        Element context = null;
+        switch (diagramType) {
+            case INTERNAL_BLOCK:
+            case PARAMETRIC:
+                context = elements.stream().filter(element -> element instanceof Class).findFirst().orElse(null);
+                break;
+        }
+        DocGenTSGenerateDiagramDelegate delegate = new DocGenTSGenerateDiagramDelegate(context, diagramType);
+        delegate.getElements().addAll(elements);
+        DBTomSawyerDiagram diagram = new DBTomSawyerDiagram();
         String id = UUID.randomUUID().toString();
 
-        dbts.setType(type);
-        delegate.init(id, id, type.getName());
+        diagram.setType(diagramType);
+        delegate.init(id, id, diagramType.getName());
         try {
             delegate.loadData();
         } catch (Exception exception) {
             exception.printStackTrace();
             JOptionPane.showMessageDialog(null, exception.getMessage());
         }
-        Set<String> viewElements;
+        Set<Element> viewElements;
 
         if (forViewEditor) {
-            viewElements = delegate.postLoadDataGetUUID();
-            if (type.equals(TomSawyerDiagram.DiagramType.INTERNAL_BLOCK_DIAGRAM)) {
-                dbts.setContext(delegate.getContextElement());
-            }
-            dbts.setElements(viewElements);
-            return Collections.singletonList(dbts);
+            viewElements = delegate.getDataModelElementIds();
+            diagram.setContext(delegate.getContext());
+            diagram.setElements(viewElements);
+            return Collections.singletonList(diagram);
         }
         else {
             if (MDUtils.isDeveloperMode()) {
@@ -138,7 +116,7 @@ public class TomSawyerDiagram extends Query {
             renderingTailor.setDrawHighlightState(false);
             renderingTailor.setDrawHoverState(false);
 
-            FileOutputStream stream = null;
+            FileOutputStream stream;
             String fileName = id + ".svg";
             File file = new File(outputDir, fileName);
 
@@ -146,6 +124,7 @@ public class TomSawyerDiagram extends Query {
                 stream = new FileOutputStream(file);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
+                return Collections.emptyList();
             }
             TSSVGImageCanvas imageCanvas = new TSSVGImageCanvas(canvas.getGraphManager(), stream);
 
@@ -161,8 +140,38 @@ public class TomSawyerDiagram extends Query {
             myImage.setImageFileName(fileName);
 
             return Collections.singletonList(myImage);
+        }
+    }
 
+    public void setDiagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
+    }
 
+    public enum DiagramType {
+        BLOCK_DEFINITION("Block Definition Diagram", "BDD"),
+        INTERNAL_BLOCK("Internal Block Diagram", "IBD"),
+        STATE_MACHINE("State Machine", "STM"),
+        ACTIVITY("Activity Diagram", "ACT"),
+        SEQUENCE("Sequence Diagram", "SD"),
+        PACKAGE("Package Diagram", "PKG"),
+        PARAMETRIC("Parametric Diagram", "PAR"),
+        REQUIREMENT("Requirement Diagram", "REQ"),
+        USE_CASE("Use Case Diagram", "UC");
+
+        private final String name;
+        private final String abbreviation;
+
+        DiagramType(String name, String abbreviation) {
+            this.name = name;
+            this.abbreviation = abbreviation;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getAbbreviation() {
+            return abbreviation;
         }
     }
 }
