@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
@@ -21,8 +20,7 @@ import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class TicketUtils {
@@ -38,7 +36,8 @@ public class TicketUtils {
      * @return username
      */
     public static String getUsername(Project project) {
-        return ticketMappings.get(project).getUsername();
+        TicketMapping ticketMapping = ticketMappings.get(project);
+        return ticketMapping != null ? ticketMapping.getUsername() : null;
     }
 
     /**
@@ -196,9 +195,8 @@ public class TicketUtils {
     public static void clearTicket(Project project) {
         password = "";
         TicketMapping removed = ticketMappings.remove(project);
-        // kill auto-renewal in removed
-        if (removed != null) {
-            removed.getTicketRenewer().shutdown();
+        if (removed != null && removed.getScheduledFuture() != null) {
+            removed.getScheduledFuture().cancel(true);
         }
     }
 
@@ -264,45 +262,38 @@ public class TicketUtils {
     }
 
     private static class TicketMapping {
-        final private String ticket;
-        final private String username;
-        private ScheduledExecutorService ticketRenewer;
+        private final String ticket;
+        private final String username;
+        private final ScheduledFuture<?> scheduledFuture;
 
         TicketMapping(Project project, String username, String ticket) {
             this.ticket = ticket;
             this.username = username;
-            this.ticketRenewer = Executors.newScheduledThreadPool(1);
-            // intentionally catching exceptions here, to avoid scheduled thread suspension
-            final Runnable renewTicket = () -> {
-                // try/catching here to prevent service being disabled for future calls
+            this.scheduledFuture = TaskRunner.scheduleWithProgressStatus(progressStatus -> {
                 try {
-                    try {
-                        boolean isValid = isTicketValid(project, null);
-                        if (!isValid) {
-                            Application.getInstance().getGUILog().log("[INFO] MMS credentials are expired or invalid.");
-                            MMSLogoutAction.logoutAction(project);
-                        }
-                    } catch (IOException | URISyntaxException | ServerException e) {
-                        Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking ticket validity. Ticket will be retained for re-validation. Reason: " + e.getMessage());
-                        e.printStackTrace();
+                    boolean isValid = isTicketValid(project, progressStatus);
+                    if (!isValid) {
+                        Application.getInstance().getGUILog().log("[INFO] MMS credentials are expired or invalid.");
+                        MMSLogoutAction.logoutAction(project);
                     }
+                } catch (IOException | URISyntaxException | ServerException e) {
+                    Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking ticket validity. Ticket will be retained for re-validation. Reason: " + e.getMessage());
+                    e.printStackTrace();
                 } catch (Exception ignored) {
                 }
-            };
-            this.ticketRenewer.scheduleAtFixedRate(renewTicket, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS);
+            }, "Checking MMS ticket", false, TaskRunner.ThreadExecutionStrategy.NONE, false, (runnable, service) -> service.scheduleAtFixedRate(runnable, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS));
         }
 
         public String getTicket() {
-            return this.ticket;
+            return ticket;
         }
 
         public String getUsername() {
-            return this.username;
+            return username;
         }
 
-        public ScheduledExecutorService getTicketRenewer() {
-            return this.ticketRenewer;
+        public ScheduledFuture<?> getScheduledFuture() {
+            return scheduledFuture;
         }
-
     }
 }

@@ -4,6 +4,7 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.ActionsConfiguratorsManager;
+import com.nomagic.magicdraw.commandline.CommandLineActionManager;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
@@ -11,16 +12,16 @@ import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
+import com.nomagic.magicdraw.uml.DiagramDescriptor;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueueStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -79,16 +80,13 @@ public class MDKPlugin extends Plugin {
         // This somehow allows things to be loaded to evaluate opaque expressions or something.
         EvaluationConfigurator.getInstance().registerBinaryImplementers(this.getClass().getClassLoader());
 
+        CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
+
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
+        acm.addMainMenuConfigurator(mdkConfigurator);
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, mdkConfigurator);
-
-        OclQueryConfigurator oclQueryConfigurator = new OclQueryConfigurator();
-        acm.addMainMenuConfigurator(oclQueryConfigurator);
-        acm.addSearchBrowserContextConfigurator(oclQueryConfigurator);
-        acm.addContainmentBrowserContextConfigurator(oclQueryConfigurator);
-        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, oclQueryConfigurator);
 
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
@@ -98,16 +96,23 @@ public class MDKPlugin extends Plugin {
         acm.addContainmentBrowserContextConfigurator(srConfigurator);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srConfigurator);
 
-        acm.addMainToolbarConfigurator(new OutputQueueStatusConfigurator());
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
+
+        DiagramDescriptor viewDiagramDescriptor = Application.getInstance().getDiagramDescriptor(ViewDiagramConfigurator.DIAGRAM_NAME);
+        if (viewDiagramDescriptor != null) {
+            ActionsConfiguratorsManager actionsConfiguratorsManager = ActionsConfiguratorsManager.getInstance();
+            ViewDiagramConfigurator viewDiagramConfigurator = new ViewDiagramConfigurator();
+            actionsConfiguratorsManager.addDiagramToolbarConfigurator(ViewDiagramConfigurator.DIAGRAM_NAME, viewDiagramConfigurator);
+            actionsConfiguratorsManager.addTargetElementAMConfigurator(ViewDiagramConfigurator.DIAGRAM_NAME, viewDiagramConfigurator);
+        }
 
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
 
         MMSSyncPlugin.getInstance().init();
-        (new Thread(new OutputSyncRunner())).start();
 
         loadExtensionJars();
         configureEnvironmentOptions();
+        initJavaFX();
     }
 
     @Override
@@ -157,4 +162,22 @@ public class MDKPlugin extends Plugin {
         mdkOptions.addEnvironmentChangeListener(mdkEnvOptionsListener);
     }
 
+    private void initJavaFX() {
+        try {
+            Class.forName("javafx.application.Platform");
+        } catch (ClassNotFoundException e) {
+            System.err.println("[WARNING] JavaFX libraries are unavailable. Please add \"-Dorg.osgi.framework.bundle.parent=ext\" to the \"JAVA_ARGS\" line in your properties file(s) in your MagicDraw bin directory and restart.");
+            return;
+        }
+        new Thread(() -> {
+            try {
+                Class<?> clazz = Class.forName("gov.nasa.jpl.mbee.mdk.MDKApplication");
+                Method method = clazz.getMethod("main", String[].class);
+                method.invoke(null, new Object[]{new String[]{}});
+            } catch (Exception | Error e) {
+                System.err.println("[WARNING] Failed to initialize JavaFX application. JavaFX functionality is disabled.");
+                e.printStackTrace();
+            }
+        }, "JavaFX Init").start();
+    }
 }

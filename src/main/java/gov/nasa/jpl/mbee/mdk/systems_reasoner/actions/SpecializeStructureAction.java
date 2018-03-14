@@ -18,7 +18,7 @@ import gov.nasa.jpl.mbee.mdk.util.Utils;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.lang.Class;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class SpecializeStructureAction extends SRAction {
@@ -104,28 +104,42 @@ public class SpecializeStructureAction extends SRAction {
         visited.add(specific);
         visited.add(classifier);
         specific.getGeneralization().clear();
-        ArrayList<RedefinableElement> redefinedElements = new ArrayList<RedefinableElement>();
+        ArrayList<RedefinableElement> redefinedElements = new ArrayList<>();
         for (NamedElement namedElement : specific.getOwnedMember()) {
-            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf() && !(namedElement instanceof Classifier)) {
+            if (namedElement instanceof RedefinableElement && !((RedefinableElement) namedElement).isLeaf()) {
                 redefinedElements.add((RedefinableElement) namedElement);
                 ((RedefinableElement) namedElement).getRedefinedElement().clear();
             }
         }
         Utils.createGeneralization(classifier, specific);
 
-
-        for (final NamedElement ne : specific.getInheritedMember()) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
-            if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
-                final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
-                SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, traveled, visited, individualMode, isRecursive);
-                //redefinedElements.add(elementToBeRedefined);
+        Set<NamedElement> members = new HashSet<>(specific.getInheritedMember());//
+        //ClassifierHelper.collectInheritedAttributes(specific ,listOfAllMembers, false, true);
+        List<NamedElement> removeElements = new ArrayList<>();
+        for (NamedElement member : members) {
+            if (member instanceof RedefinableElement) {
+                Collection<RedefinableElement> redefinedBy = ((RedefinableElement) member).getRedefinedElement();
+                removeElements.addAll(redefinedBy);
+            }
+            else {
+                removeElements.add(member);
             }
         }
-//        for (RedefinableElement redefinedElement : redefinedElements) {
-//            redefinedElement.dispose();
-//        }
+        members.removeAll(removeElements);
+
+        for (final NamedElement ne : members) { // Exclude Classifiers for now -> Should Aspect Blocks be Redefined?
+            if (ne instanceof RedefinableElement && !((RedefinableElement) ne).isLeaf() && !(ne instanceof Classifier)) {
+                final RedefinableElement elementToBeRedefined = (RedefinableElement) ne;
+                RedefinableElement redefinedElement = SetOrCreateRedefinableElementAction.redefineRedefinableElement(specific, elementToBeRedefined, traveled, visited, individualMode, isRecursive);
+                redefinedElements.remove(redefinedElement);
+            }
+        }
+        for (RedefinableElement redefinedElement : redefinedElements) {
+            redefinedElement.dispose();
+        }
         return specific;
     }
+
 
     private void deleteDiagrams(Namespace specific, ArrayList<Diagram> diagrams) {
         for (NamedElement ne : specific.getOwnedMember()) {
@@ -142,6 +156,9 @@ public class SpecializeStructureAction extends SRAction {
 
 
     private void checkAssociationsForInheritance(Classifier classifier, Classifier general) {
+        if (classifier == null) {
+            return;
+        }
         assocRule:
         for (Element child : classifier.getOwnedElement()) {
             if (child instanceof Property) {

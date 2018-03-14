@@ -72,7 +72,7 @@ public class SpecificationNodeAspectsConfigurator implements ISpecificationNodeC
             if (specifiedElement instanceof Classifier) {
                 AspectSelectionAction asa = new AspectSelectionAction((Classifier) specifiedElement);
                 ArrayList<Classifier> aspects = new ArrayList<Classifier>();
-                asa.findAspectsOfClassifier(aspects);
+                //asa.findAspectsOfClassifier(aspects);
             }
             return new JLabel(sb.toString());
         }

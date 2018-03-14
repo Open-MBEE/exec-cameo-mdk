@@ -19,6 +19,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -27,23 +28,19 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.OutputQueue;
-import gov.nasa.jpl.mbee.mdk.mms.sync.queue.Request;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.json.simple.JSONArray;
@@ -51,6 +48,7 @@ import org.json.simple.JSONArray;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -85,9 +83,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
     }
 
     public ViewPresentationGenerator(Set<Element> rootViews, Project project, boolean recurse, PresentationElementUtils presentationElementUtils, Set<Element> processedElements) {
-        if (rootViews == null || rootViews.isEmpty()) {
-            throw new IllegalArgumentException();
-        }
         this.rootViews = rootViews;
         this.project = project;
         this.processedElements = processedElements != null ? processedElements : new HashSet<>(rootViews.size());
@@ -117,19 +112,24 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<String, Pair<ObjectNode, Slot>> slotMap = new LinkedHashMap<>();
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>();
 
+        ValidationSuite viewValidationSuite = null;
         for (Element rootView : rootViews) {
-            if (MDUtils.isDeveloperMode()) {
-                //Application.getInstance().getGUILog().log("Generating " + rootView.getHumanName() + " (" + rootView.getLocalID() + ").");
-            }
             // STAGE 1: Calculating view structure
             progressStatus.setDescription("Calculating view structure");
             progressStatus.setCurrent(1);
 
-            DocumentValidator dv = new DocumentValidator(rootView);
-            dv.validateDocument();
-            if (dv.isFatal()) {
-                dv.printErrors(false);
-                return;
+            ViewViewpointValidator dv = new ViewViewpointValidator(rootViews, project, recurse);
+            dv.run();
+            if (dv.isFailed()) {
+                Application.getInstance().getGUILog().log("[WARNING] View validation failed for " + Converters.getElementToHumanNameConverter().apply(rootView) + ". Skipping generation.");
+                if (viewValidationSuite == null) {
+                    viewValidationSuite = dv.getValidationSuite();
+                }
+                else {
+                    ValidationSuite vs = viewValidationSuite;
+                    dv.getValidationSuite().getValidationRules().forEach(rule -> vs.getValidationRules().stream().filter(r -> rule.getName().equals(r.getName())).findAny().ifPresent(r -> r.addViolations(rule.getViolations())));
+                }
+                continue;
             }
             // first run a local generation of the view model to get the current model view structure
             DocumentGenerator dg = new DocumentGenerator(rootView, dv, null, false);
@@ -142,11 +142,16 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 failure = true;
                 return;
             }
-
-            DocBookOutputVisitor docBookOutputVisitor = new DocBookOutputVisitor(true);
-            dge.accept(docBookOutputVisitor);
-
-            SessionManager.getInstance().closeSession(project);
+            DocBookOutputVisitor docBookOutputVisitor;
+            try {
+                docBookOutputVisitor = new DocBookOutputVisitor(true);
+                dge.accept(docBookOutputVisitor);
+            }
+            finally {
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
+                }
+            }
 
             DBBook book = docBookOutputVisitor.getBook();
             if (book == null) {
@@ -158,15 +163,18 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
                 if (processedElements.contains(view)) {
-                    Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + Converters.getElementToIdConverter().apply(view) + ".");
+                    Application.getInstance().getGUILog().log("[WARNING] Detected duplicate view reference in " + Converters.getElementToHumanNameConverter().apply(view) + ". Skipping generation.");
                     continue;
                 }
                 ViewMapping viewMapping = viewMap.containsKey(Converters.getElementToIdConverter().apply(view)) ?
                         viewMap.get(Converters.getElementToIdConverter().apply(view)) : new ViewMapping();
                 viewMapping.setElement(view);
-                viewMapping.setDbBook(book);
+                viewMapping.setBook(book);
                 viewMap.put(Converters.getElementToIdConverter().apply(view), viewMapping);
             }
+        }
+        if (viewValidationSuite != null) {
+            Utils.displayValidationWindow(project, viewValidationSuite, viewValidationSuite.getName());
         }
 
         // Find and delete existing view constraints to prevent ID conflict when importing. Migration should handle this,
@@ -228,7 +236,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        LocalSyncTransactionCommitListener localSyncTransactionCommitListener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener localDeltaTransactionCommitListener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
         Set<Element> elementsToDelete = new HashSet<>();
 
         // Create the session you intend to cancel to revert all temporary elements.
@@ -241,8 +249,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             failure = true;
             return;
         }
-        if (localSyncTransactionCommitListener != null) {
-            localSyncTransactionCommitListener.setDisabled(true);
+        if (localDeltaTransactionCommitListener != null) {
+            localDeltaTransactionCommitListener.setDisabled(true);
         }
 
         // Query existing server-side JSONs for views
@@ -493,15 +501,15 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<Element, JSONArray> view2elements = new LinkedHashMap<>();
         Map<String, ObjectNode> images = new LinkedHashMap<>();
         Set<Element> skippedViews = new HashSet<>();
-        for (Element rootView : rootViews) {
+        for (ViewMapping viewMapping : viewMap.values()) {
             DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
             try {
-                viewMap.get(Converters.getElementToIdConverter().apply(rootView)).getDbBook().accept(dbAlfrescoVisitor);
+                viewMapping.getBook().accept(dbAlfrescoVisitor);
             } catch (Exception e) {
                 Utils.printException(e);
                 e.printStackTrace();
             }
-            views.addAll(presentationElementUtils.getViewProcessOrder(rootView, dbAlfrescoVisitor.getHierarchyElements()));
+            views.addAll(presentationElementUtils.getViewProcessOrder(viewMapping.getElement(), dbAlfrescoVisitor.getHierarchyElements()));
             view2pe.putAll(dbAlfrescoVisitor.getView2Pe());
             view2unused.putAll(dbAlfrescoVisitor.getView2Unused());
             view2elements.putAll(dbAlfrescoVisitor.getView2Elements());
@@ -647,11 +655,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 // STAGE 5: Queueing upload of generated view instances
                 progressStatus.setDescription("Queueing upload of generated view instances");
                 progressStatus.setCurrent(5);
-                Application.getInstance().getGUILog().log("Updating/creating " + elementsToCommit.size() + " element" + (elementsToCommit.size() != 1 ? "s" : "") + " to generate views.");
+                Application.getInstance().getGUILog().log("Updating/creating " + NumberFormat.getInstance().format(elementsToCommit.size()) + " element" + (elementsToCommit.size() != 1 ? "s" : "") + " to generate views.");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON, elementsToCommit.size(), "Sync Changes"));
+                File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                TaskRunner.runWithProgressStatus(progressStatus1 -> {
+                    try {
+                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                    } catch (IOException | ServerException | URISyntaxException e) {
+                        // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                        e.printStackTrace();
+                    }
+                }, "View Generation Create/Update x" + NumberFormat.getInstance().format(elementsToCommit.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
                 changed = true;
             }
 
@@ -671,11 +687,19 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 }
             }
             if (mmsElementsToDelete.size() > 0) {
-                Application.getInstance().getGUILog().log("Deleting " + mmsElementsToDelete.size() + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
+                Application.getInstance().getGUILog().log("Deleting " + NumberFormat.getInstance().format(mmsElementsToDelete.size()) + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
 
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                OutputQueue.getInstance().offer(new Request(project, MMSUtils.HttpRequestType.DELETE, requestUri, sendData, ContentType.APPLICATION_JSON, mmsElementsToDelete.size(), "View Generation"));
+                File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
+                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                TaskRunner.runWithProgressStatus(progressStatus1 -> {
+                    try {
+                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                    } catch (IOException | ServerException | URISyntaxException e) {
+                        // TODO Implement error handling that was previously not possible due to OutputQueue implementation
+                        e.printStackTrace();
+                    }
+                }, "View Generate Delete x" + NumberFormat.getInstance().format(elementsToDelete.size()), true, TaskRunner.ThreadExecutionStrategy.SINGLE);
                 changed = true;
             }
 
@@ -751,8 +775,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (SessionManager.getInstance().isSessionCreated(project)) {
                 SessionManager.getInstance().cancelSession(project);
             }
-            if (localSyncTransactionCommitListener != null) {
-                localSyncTransactionCommitListener.setDisabled(false);
+            if (localDeltaTransactionCommitListener != null) {
+                localDeltaTransactionCommitListener.setDisabled(false);
             }
         }
 
@@ -794,7 +818,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         private Element element;
         private ObjectNode objectNode;
         private List<String> instanceIDs;
-        private DBBook dbBook;
+        private DBBook book;
 
         public Element getElement() {
             return element;
@@ -820,12 +844,12 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             this.instanceIDs = instanceIDs;
         }
 
-        public DBBook getDbBook() {
-            return dbBook;
+        public DBBook getBook() {
+            return book;
         }
 
-        public void setDbBook(DBBook dbBook) {
-            this.dbBook = dbBook;
+        public void setBook(DBBook book) {
+            this.book = book;
         }
     }
 

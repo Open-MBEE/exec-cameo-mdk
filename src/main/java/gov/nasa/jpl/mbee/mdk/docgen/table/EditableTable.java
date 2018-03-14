@@ -231,7 +231,7 @@ public class EditableTable extends JDialog {
                     PropertyEnum whatToChange = null;
                     BaseElement e = Converters.getIdToElementConverter()
                             .apply(props[c], project);
-                    String value = props[c + 1];
+                    String value = c + 1 < props.length ? props[c + 1] : "";
                     if (what != null && what.size() > row && what.get(row).size() > col) {
                         whatToChange = what.get(row).get(col);
                     }

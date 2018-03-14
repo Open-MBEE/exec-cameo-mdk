@@ -10,14 +10,12 @@ import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.GenericRuleViolationAction;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAction {
-
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
     private static final String DEFAULT_NAME = "Redefine Attribute";
 
     private Classifier subClassifier;
@@ -30,13 +28,6 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         this(targetForRedefEl, elementToBeRedefined, false, DEFAULT_NAME, isIndividual);
     }
 
-    /**
-     * @param targetForRedefEl
-     * @param elementToBeRedefined
-     * @param recursion
-     * @param name
-     * @param isIndividual
-     */
     public SetOrCreateRedefinableElementAction(final Classifier targetForRedefEl, final RedefinableElement elementToBeRedefined, final boolean recursion, final String name, boolean isIndividual) {
         super(name);
         this.subClassifier = targetForRedefEl;
@@ -57,19 +48,18 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
 
 
         RedefinableElement redefinedElement = findExistingRedefiningElement(subClassifier, elementToBeRedefined);
-
         if (redefinedElement == null) {
             redefinedElement = (RedefinableElement) CopyPasting.copyPasteElement(elementToBeRedefined, subClassifier, false);
             if (redefinedElement == null) {
                 return null;
             }
-            redefinedElement.getRedefinedElement().removeAll(elementToBeRedefined.getRedefinedElement());
-            redefinedElement.getRedefinedElement().add(elementToBeRedefined);
         }
+        redefinedElement.getRedefinedElement().removeAll(getRedefinedElementsRecursively(elementToBeRedefined, new HashSet<>()));
+        redefinedElement.getRedefinedElement().add(elementToBeRedefined);
 
         if (elementToBeRedefined instanceof Property) {
             if (((Property) elementToBeRedefined).getAssociation() != null) {
-                if(!existingAssociationInheritsFromGeneralAssociation(redefinedElement, (Property) elementToBeRedefined)) {
+                if (!existingAssociationInheritsFromGeneralAssociation(redefinedElement, (Property) elementToBeRedefined)) {
                     createInheritingAssociation((Property) elementToBeRedefined, subClassifier, (Property) redefinedElement);
                 }
             }
@@ -81,12 +71,13 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     }
 
     private static boolean existingAssociationInheritsFromGeneralAssociation(RedefinableElement redefinedElement, Property elementToBeRedefined) {
-        if(redefinedElement instanceof Property) {
+        if (redefinedElement instanceof Property) {
             Association association = ((Property) redefinedElement).getAssociation();
             Association general = elementToBeRedefined.getAssociation();
-            if(association != null) {
+            if (association != null) {
                 return eventuallyInherits(association, general);
-            }else{
+            }
+            else {
                 return false;
             }
 
@@ -95,11 +86,12 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     }
 
     private static boolean eventuallyInherits(Classifier association, Classifier general) {
-        if(association.getGeneral().contains(general)){
+        if (association.getGeneral().contains(general)) {
             return true;
-        }else{
+        }
+        else {
             for (Classifier specific : association.getGeneral()) {
-                if(eventuallyInherits(specific, general)){
+                if (eventuallyInherits(specific, general)) {
                     return true;
                 }
             }
@@ -108,39 +100,38 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
     }
 
     private static RedefinableElement findExistingRedefiningElement(Classifier subClassifier, RedefinableElement elementToBeRedefined) {
-        RedefinableElement redefinedElement = null;
+        RedefinableElement existingRedefiningElement = null;
         for (NamedElement p : subClassifier.getOwnedMember()) {
             if (p instanceof RedefinableElement && SRValidationSuite.doesEventuallyRedefine((RedefinableElement) p, elementToBeRedefined)) {
-                redefinedElement = (RedefinableElement) p;
+                existingRedefiningElement = (RedefinableElement) p;
                 break;
             }
-            else if (p instanceof RedefinableElement) {// && ((RedefinableElement) p).getRedefinedElement().isEmpty()) {
-                if (isMatchingTypedElement(p, elementToBeRedefined)) {
-                    redefinedElement = (RedefinableElement) p;
-                    redefinedElement.getRedefinedElement().add(elementToBeRedefined);
+            else if (p instanceof RedefinableElement) {
+                if (isMatchingTypedElement((RedefinableElement) p, elementToBeRedefined)) {
+                    existingRedefiningElement = (RedefinableElement) p;
                     break;
                 }
                 else if (p instanceof Connector && elementToBeRedefined instanceof Connector) {
-                    if (((Connector) p).getEnd() != null && ((Connector) elementToBeRedefined).getEnd() != null) {
-                        if (((Connector) p).getEnd().get(0).getRole() != null && ((Connector) elementToBeRedefined).getEnd().get(0).getRole() != null) {
-                            if (isMatchingTypedElement(((Connector) p).getEnd().get(0).getRole(), (((Connector) elementToBeRedefined).getEnd().get(0).getRole()))) {
-                                if (((Connector) p).getEnd().size() > 1) {
-                                    if (isMatchingTypedElement(((Connector) p).getEnd().get(1).getRole(), (((Connector) elementToBeRedefined).getEnd().get(1).getRole()))) {
-                                        redefinedElement = (RedefinableElement) p;
-                                        redefinedElement.getRedefinedElement().add(elementToBeRedefined);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                    Connector c1 = (Connector) p;
+                    Connector c2 = (Connector) elementToBeRedefined;
+                    if (c1.getEnd() == null || c2.getEnd() == null) {
+                        continue;
                     }
-                    else {
-                        Application.getInstance().getGUILog().log("[WARNING] Behavioral Features (Operations and Receptions) are not handled.");
+                    if (c1.getEnd().size() != 2 || c2.getEnd().size() != 2) {
+                        continue;
                     }
+                    if (c1.getEnd().stream().anyMatch(e -> !(e.getRole() instanceof RedefinableElement)) || c2.getEnd().stream().anyMatch(e -> !(e.getRole() instanceof RedefinableElement))) {
+                        continue;
+                    }
+                    if (IntStream.range(0, 2).anyMatch(i -> !isMatchingTypedElement((RedefinableElement) c1.getEnd().get(i).getRole(), (RedefinableElement) c2.getEnd().get(i).getRole()))) {
+                        continue;
+                    }
+                    existingRedefiningElement = (RedefinableElement) p;
+                    break;
                 }
             }
         }
-        return redefinedElement;
+        return existingRedefiningElement;
     }
 
     private static boolean isNotRedefinable(Classifier subClassifier, RedefinableElement elementToBeRedefined) {
@@ -155,7 +146,7 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         return false;
     }
 
-    public static void createInheritingAssociation(Property generalProperty, Classifier classifierOfnewProperty, Property newProperty) {
+    static void createInheritingAssociation(Property generalProperty, Classifier classifierOfnewProperty, Property newProperty) {
         Association generalAssociation = generalProperty.getAssociation();
         Association newAssociation = UMLFactory.eINSTANCE.createAssociation();
         newAssociation.setName(generalAssociation.getName());
@@ -173,7 +164,18 @@ public class SetOrCreateRedefinableElementAction extends GenericRuleViolationAct
         newAssociation.getOwnedEnd().add(ownedEnd);
     }
 
-    private static boolean isMatchingTypedElement(NamedElement p, NamedElement elementToBeRedefined) {
+    private static Set<RedefinableElement> getRedefinedElementsRecursively(RedefinableElement redefinableElement, Set<RedefinableElement> set) {
+        if (set.add(redefinableElement)) {
+            redefinableElement.getRedefinedElement().forEach(redefinedElement -> getRedefinedElementsRecursively(redefinedElement, set));
+        }
+        return set;
+    }
+
+    private static boolean isMatchingTypedElement(RedefinableElement p, RedefinableElement elementToBeRedefined) {
+        Set<RedefinableElement> flattenedRedefinedElements = getRedefinedElementsRecursively(elementToBeRedefined, new HashSet<>());
+        if (p.getRedefinedElement().stream().anyMatch(flattenedRedefinedElements::contains)) {
+            return true;
+        }
         if (p.getName().equals(elementToBeRedefined.getName())) {
             if (p instanceof TypedElement && elementToBeRedefined instanceof TypedElement) {
                 if (((TypedElement) p).getType() != null) {

@@ -39,7 +39,7 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
 
     @Override
     public Changelog<K, V> clone() {
-        Changelog<K, V> clonedChangelog = new Changelog<>();
+        Changelog<K, V> clonedChangelog = new Changelog<>(); // lgtm [java/empty-container]
         for (ChangeType changeType : ChangeType.values()) {
             Map<K, V> map = clonedChangelog.get(changeType);
             for (Map.Entry<K, V> entry : get(changeType).entrySet()) {
@@ -99,14 +99,18 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
                 if (deletedElements.containsKey(k)) {
                     deletedElements.remove(k);
                     if (shouldLogChanges) {
-                        Application.getInstance().getGUILog().log("Undeleted: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                       String message = "Undeleted: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>");
+                       System.out.println(message);
+                       Application.getInstance().getGUILog().log(message);
                     }
                 }
                 else {
                     get(Changelog.ChangeType.CREATED).put(k, v);
                     get(Changelog.ChangeType.UPDATED).remove(k);
                     if (shouldLogChanges) {
-                        Application.getInstance().getGUILog().log("Created: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                        String message = "Created: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>");
+                        System.out.println(message);
+                        Application.getInstance().getGUILog().log(message);
                     }
                 }
                 break;
@@ -116,14 +120,18 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
                 if (createdChanges.containsKey(k)) {
                     createdChanges.remove(k);
                     if (shouldLogChanges) {
-                        Application.getInstance().getGUILog().log("Unadded: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>"));
+                        String message = "Unadded: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>");
+                        System.out.println(message);
+                        Application.getInstance().getGUILog().log(message);
                     }
                 }
                 else {
                     get(Changelog.ChangeType.UPDATED).remove(k);
                     get(Changelog.ChangeType.DELETED).put(k, v);
                     if (shouldLogChanges) {
-                        Application.getInstance().getGUILog().log("Deleted: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>"));
+                        String message = "Deleted: " + k + " - " + (v instanceof NamedElement ? ((NamedElement) v).getName() : "<>");
+                        System.out.println(message);
+                        Application.getInstance().getGUILog().log(message);
                     }
                 }
                 break;
@@ -131,7 +139,9 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
                 if (!get(Changelog.ChangeType.CREATED).containsKey(k) && !get(Changelog.ChangeType.DELETED).containsKey(k)) {
                     get(Changelog.ChangeType.UPDATED).put(k, v);
                     if (shouldLogChanges) {
-                        Application.getInstance().getGUILog().log("Updated: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>"));
+                        String message = "Updated: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>");
+                        System.out.println(message);
+                        Application.getInstance().getGUILog().log(message);
                     }
                 }
                 break;

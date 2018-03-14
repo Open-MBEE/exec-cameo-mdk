@@ -16,9 +16,8 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.script.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
@@ -198,9 +197,10 @@ public class ScriptRunner {
             se.put("__name__", "__main__");
 
             se.put("scriptInput", inputs);
-            FileReader fr = new FileReader(scriptResolvedPath);
-            // se.put("scriptEngine", se);
-            se.eval(fr, sc);
+            try (FileReader fr = new FileReader(scriptResolvedPath)) {
+                // se.put("scriptEngine", se);
+                se.eval(fr, sc);
+            }
             output = se.get("scriptOutput");
 
             if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
@@ -208,7 +208,7 @@ public class ScriptRunner {
                 sessionCreated = false;
             }
             return output;
-        } catch (MalformedURLException | FileNotFoundException | ScriptException | RuntimeException e) {
+        } catch (IOException | ScriptException | RuntimeException e) {
             Application.getInstance().getGUILog().log("An error occurred while attempting to run script" + (scriptResolvedPath != null ? ": " + scriptResolvedPath : "") + ". Reason: " + e.getMessage());
             e.printStackTrace();
         } finally {

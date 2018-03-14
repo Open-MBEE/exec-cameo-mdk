@@ -6,6 +6,7 @@ import com.nomagic.ci.persistence.IAttachedProject;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.core.ProjectUtilitiesInternal;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -109,7 +110,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
         }
 
-        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the jms sync counts in some cases (annoying, but ultimately harmless)
+        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the MMS delta counts in some cases (annoying, but ultimately harmless)
         // NOTE - this spoofing is replicated in LocalSyncTransactionListener in order to properly add / remove elements in the unsynched queue. any updates here should be replicated there as well.
         if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getStereotypedElement() != null) {
             return getEID(((InstanceSpecification) element).getStereotypedElement()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
@@ -158,7 +159,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 Type.PRE
         ),
         ATTACHED_PROJECT(
-                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && (!(element instanceof Model) || project.getModels().stream().noneMatch(model -> model == element)) ? null : objectNode,
+                (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && ProjectUtilities.getAttachedProjects(project.getPrimaryProject()).stream().noneMatch(iAttachedProject -> ProjectUtilitiesInternal.distanceFromProject(iAttachedProject) == 1 && ProjectUtilities.isAttachedProjectRoot(element, iAttachedProject)) ? null : objectNode,
                 Type.PRE
         ),
         COMMENT(
@@ -195,7 +196,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         MOUNT_PRE(
                 (element, project, objectNode) -> {
-                    if (!(element instanceof Model) || element.equals(project.getPrimaryModel())) {
+                    if (!ProjectUtilities.isAttachedProjectRoot(element)) {
                         return objectNode;
                     }
                     IProject iProject = ProjectUtilities.getProjectFor(element);

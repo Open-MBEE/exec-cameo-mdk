@@ -51,17 +51,12 @@ public class CreateRestrictedValueAction extends MDAction {
 
         // get selections
         final ArrayList<BaseElement> baseElems = new ArrayList<BaseElement>();
-        if (dlg != null) {
-            dlg.setVisible(true);
-            if (dlg.isOkClicked() && dlg.getSelectedElements() != null) {
-                for (final BaseElement be : dlg.getSelectedElements()) {
-                    baseElems.add(be);
-                    //System.out.println("base element");
-                }
-            }
-            else {
-                return;
-            }
+        dlg.setVisible(true);
+        if (dlg.isOkClicked()) {
+            baseElems.addAll(dlg.getSelectedElements());
+        }
+        else {
+            return;
         }
 
         if (baseElems.isEmpty()) {
@@ -75,10 +70,10 @@ public class CreateRestrictedValueAction extends MDAction {
         final TypeFilter tf = new TypeFilterImpl(types2) {
             @Override
             public boolean accept(BaseElement baseElement, boolean checkType) {
-                return baseElement != null && super.accept(baseElement, checkType) && baseElems != null && baseElems.contains(baseElement);
+                return baseElement != null && super.accept(baseElement, checkType) && baseElems.contains(baseElement);
             }
         };
-        final SelectElementInfo sei2 = new SelectElementInfo(true, false, Application.getInstance().getProject().getModel().getOwner(), true);
+        final SelectElementInfo sei2 = new SelectElementInfo(true, false, Application.getInstance().getProject().getPrimaryModel(), true);
         ElementSelectionDlgFactory.initSingle(dlg2, sei2, new TypeFilterImpl(), tf, new ArrayList<Class<?>>(), null);
 
         // Used to disable the tree view in the single selection window as it does not work... at all

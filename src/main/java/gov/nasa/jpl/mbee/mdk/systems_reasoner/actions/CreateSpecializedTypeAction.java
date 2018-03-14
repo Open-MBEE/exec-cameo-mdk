@@ -67,11 +67,7 @@ public class CreateSpecializedTypeAction extends GenericRuleViolationAction {
             }
 
             traveled.add(redefinedAttribute);
-            for (final RedefinableElement re : redefinedAttribute.getRedefinedElement()) {
-                if (re instanceof RedefinableElement) {
-                    traveled.add(re);
-                }
-            }
+            traveled.addAll(redefinedAttribute.getRedefinedElement());
 
             final Classifier general = (Classifier) redefinedAttribute.getType();
             Type special = null;

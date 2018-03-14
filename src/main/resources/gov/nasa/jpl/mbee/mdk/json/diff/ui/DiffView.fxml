@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TreeTableColumn?>
+<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.layout.VBox?>
+
+
+<fx:root prefHeight="600.0" prefWidth="800.0" type="VBox" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <TreeTableView fx:id="treeTableView" showRoot="false" tableMenuButtonVisible="true" VBox.vgrow="ALWAYS">
+        <columns>
+          <TreeTableColumn fx:id="keyTreeTableColumn" editable="false" prefWidth="75.0" text="Key" />
+          <TreeTableColumn fx:id="sourceValueTreeTableColumn" editable="false" prefWidth="75.0" sortable="false" text="Source Value" />
+            <TreeTableColumn fx:id="targetValueTreeTableColumn" editable="false" prefWidth="75.0" sortable="false" text="Target Value" />
+        </columns>
+         <columnResizePolicy>
+            <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+      </TreeTableView>
+   </children>
+</fx:root>

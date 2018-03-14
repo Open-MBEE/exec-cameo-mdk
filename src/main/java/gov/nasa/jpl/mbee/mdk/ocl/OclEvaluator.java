@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.ocl;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -10,7 +11,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.generator.ViewParser;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.util.Debug;
@@ -566,9 +567,7 @@ public class OclEvaluator {
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
 
-    protected static void addRunOperation(DocGenEnvironmentFactory envFactory,
-                                          EClassifier argType) {
-
+    protected static void addRunOperation(DocGenEnvironmentFactory envFactory, EClassifier argType) {
         // create custom operation
         DocGenOperationInstance doi = new DocGenOperationInstance();
         doi.setName("run");
@@ -595,12 +594,9 @@ public class OclEvaluator {
                 Element sourceElement = (Element) source;
 
                 // If the source is a view, parse it.
-                if (sourceElement instanceof Class
-                        && StereotypesHelper.hasStereotypeOrDerived(sourceElement,
-                        DocGenProfile.viewStereotype)) {
-                    DocumentValidator dv = new DocumentValidator(sourceElement);
-                    DocumentGenerator dg =
-                            new DocumentGenerator(sourceElement, dv, null);
+                if (sourceElement instanceof Class && StereotypesHelper.hasStereotypeOrDerived(sourceElement, DocGenProfile.viewStereotype)) {
+                    ViewViewpointValidator dv = new ViewViewpointValidator(Collections.singleton(sourceElement), Project.getProject(sourceElement), true);
+                    DocumentGenerator dg = new DocumentGenerator(sourceElement, dv, null);
                     ViewParser vp = new ViewParser(dg, true, true, dg.getDocument(), sourceElement);
                     return vp.parse();
                 }
@@ -639,13 +635,10 @@ public class OclEvaluator {
                 else {
                     inputs.add(input);
                 }
-                DocumentValidator dv = new DocumentValidator(sourceElement);
-                DocumentGenerator dg =
-                        new DocumentGenerator(sourceElement, dv, null);
+                ViewViewpointValidator dv = new ViewViewpointValidator(Collections.singleton(sourceElement), Project.getProject(sourceElement), true);
+                DocumentGenerator dg = new DocumentGenerator(sourceElement, dv, null);
                 dg.getContext().pushTargets(inputs);
-                Object result =
-                        dg.parseActivityOrStructuredNode(sourceElement,
-                                dg.getDocument());
+                Object result = dg.parseActivityOrStructuredNode(sourceElement, dg.getDocument());
                 return result;
             }
         });

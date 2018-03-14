@@ -1,7 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.coordinated;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -11,22 +9,12 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
-import gov.nasa.jpl.mbee.mdk.mms.jms.JMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
-import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSMessageListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.jms.JMSSyncProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import javax.annotation.CheckForNull;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.TextMessage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,10 +27,6 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
 
     @Override
     public void projectClosed(Project project) {
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled()) {
-            return;
-        }
         projectMappings.remove(project);
     }
 
@@ -62,7 +46,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if ((project.isRemote() && !savedInServer)
                 || !StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")
                 || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
-                || JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
+                || !TicketUtils.isTicketSet(project)) {
             // skip csync
             return;
         }
@@ -71,46 +55,8 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void projectSaved(Project project, boolean savedInServer) {
-        CoordinatedSyncProjectMapping coordinatedSyncProjectMapping = getProjectMapping(project);
-        if (coordinatedSyncProjectMapping.isDisabled() || deltaSyncRunner == null || deltaSyncRunner.isFailure()) {
-            // CSync isn't running, so return
-            return;
-        }
-        JMSSyncProjectEventListenerAdapter.JMSSyncProjectMapping jmsSyncProjectMapping = JMSSyncProjectEventListenerAdapter.getProjectMapping(project);
-        JMSMessageListener jmsMessageListener = jmsSyncProjectMapping.getJmsMessageListener();
 
-        // ACKNOWLEDGE LAST MMS MESSAGE TO CLEAR OWN QUEUE
-
-        Message lastMessage;
-        if (jmsMessageListener != null && (lastMessage = jmsMessageListener.getLastMessage()) != null) {
-            try {
-                lastMessage.acknowledge();
-            } catch (JMSException | IllegalStateException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // NOTIFY OTHER USERS OF PROCESSED ELEMENTS
-
-        if (!deltaSyncRunner.getSuccessfulJmsChangelog().isEmpty()) {
-            ObjectNode teamworkCommittedMessage = JacksonUtils.getObjectMapper().createObjectNode();
-            teamworkCommittedMessage.put("source", "magicdraw");
-            teamworkCommittedMessage.put("sender", TicketUtils.getUsername(project));
-            teamworkCommittedMessage.set("synced", SyncElements.buildJson(deltaSyncRunner.getSuccessfulJmsChangelog()));
-            try {
-                TextMessage successfulTextMessage = jmsSyncProjectMapping.getSession().createTextMessage(JacksonUtils.getObjectMapper().writeValueAsString(teamworkCommittedMessage));
-                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_PROJECT_ID, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-                successfulTextMessage.setStringProperty(JMSUtils.MSG_SELECTOR_REF_ID, MDUtils.getBranchId(project) + "_mdk");
-                jmsSyncProjectMapping.getMessageProducer().send(successfulTextMessage);
-                int syncCount = deltaSyncRunner.getSuccessfulJmsChangelog().flattenedSize();
-                Application.getInstance().getGUILog().log("[INFO] Notified other clients of " + syncCount + " locally updated element" + (syncCount != 1 ? "s" : "") + ".");
-            } catch (JMSException | JsonProcessingException e) {
-                e.printStackTrace();
-                Application.getInstance().getGUILog().log("[ERROR] Failed to notify other clients of synced elements. This could result in redundant local updates.");
-            }
-        }
     }
 
     public static CoordinatedSyncProjectMapping getProjectMapping(Project project) {
@@ -153,8 +99,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
             return true;
         }
-        if (JMSSyncProjectEventListenerAdapter.getProjectMapping(project).getJmsMessageListener().isDisabled()) {
-            new Thread(() -> MMSLoginAction.loginAction(project)).start();
+        if (!TicketUtils.isTicketSet(project) && !MMSLoginAction.loginAction(project)) {
             Application.getInstance().getGUILog().log("<span style=\"color:#FF0000; font-weight:bold\">[WARNING] You must be logged in to MMS to synchronize the commit. Skipping commit. Please login to MMS and then commit again.</span>");
             if (s != null && !s.isEmpty()) {
                 Application.getInstance().getGUILog().log("[INFO] Recovered commit message: <pre>" + s + "</pre>");

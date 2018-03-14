@@ -25,7 +25,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -37,9 +36,9 @@ import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalSyncTransactionCommitListener;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
@@ -213,8 +212,8 @@ public class Utils {
         OclEvaluator evaluator;
         if (!iterate) {
             Object o;
-            DocumentValidator dv = CollectFilterParser.getValidator();
-            o = DocumentValidator.evaluate(query, elements, dv, true);
+            ViewViewpointValidator dv = CollectFilterParser.getValidator();
+            o = ViewViewpointValidator.evaluate(query, elements, true);
             evaluator = OclEvaluator.instance;
             if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
                 Boolean istrue = isTrue(o, false);
@@ -226,8 +225,8 @@ public class Utils {
         else {
             for (Element e : elements) {
                 Object o;
-                DocumentValidator dv = CollectFilterParser.getValidator();
-                o = DocumentValidator.evaluate(query, e, dv, true);
+                ViewViewpointValidator dv = CollectFilterParser.getValidator();
+                o = ViewViewpointValidator.evaluate(query, e, true);
                 evaluator = OclEvaluator.instance;
                 if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
                     Boolean istrue = isTrue(o, false);
@@ -490,8 +489,8 @@ public class Utils {
     public static List<Element> collectByExpression(Object element, Object query) {
         List<Element> res = new ArrayList<Element>();
         Object o = null;
-        DocumentValidator dv = CollectFilterParser.getValidator();
-        o = DocumentValidator.evaluate(query, element, dv, true);
+        ViewViewpointValidator dv = CollectFilterParser.getValidator();
+        o = ViewViewpointValidator.evaluate(query, element, true);
         OclEvaluator evaluator = OclEvaluator.instance;
         // try {
         // o = OclEvaluator.evaluateQuery(element, query);
@@ -1121,9 +1120,8 @@ public class Utils {
         Map<Element, Object> resultMap = new HashMap<Element, Object>();
         Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
         for (Element e : list) {
-            Object result = null;
-            DocumentValidator dv = CollectFilterParser.getValidator();
-            result = DocumentValidator.evaluate(o, e, dv, true);
+            Object result = ViewViewpointValidator.evaluate(o, e, true);
+            ViewViewpointValidator dv = CollectFilterParser.getValidator();
             // try {
             // result = OclEvaluator.evaluateQuery(e, o);
             // } catch ( ParserException e1 ) {
@@ -1294,26 +1292,20 @@ public class Utils {
         return project == null ? null : project.getPrimaryModel();
     }
 
-    public static boolean isSiteChar(Project project, Package e) {
-        Stereotype characterizes = Utils.getCharacterizesStereotype(project);
-        if (characterizes != null) {
-            List<Element> sites = Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, characterizes, 2, false, 1);
-            boolean found = false;
-            for (Element l : sites) {
-                /*if (l instanceof NamedElement && ((NamedElement)l).getName().equals("Site Characterization")) {
-                    found = true;
-                    break;
-                }*/
-                if (l instanceof Classifier) {
-                    for (Classifier g : ((Classifier) l).getGeneral()) {
-                        if (g.getName().equals("Site Characterization")) {
-                            found = true;
-                            break;
-                        }
+    public static boolean isSiteChar(Project project, Package pakkage) {
+        Stereotype characterizesStereotype = Utils.getCharacterizesStereotype(project);
+        if (characterizesStereotype != null) {
+            List<Element> siteCharacterizations = Utils.collectDirectedRelatedElementsByRelationshipStereotype(pakkage, characterizesStereotype, 2, false, 1);
+            for (Element siteCharacterization : siteCharacterizations) {
+                if (!(siteCharacterization instanceof Classifier)) {
+                    continue;
+                }
+                for (Classifier general : ((Classifier) siteCharacterization).getGeneral()) {
+                    if ("_17_0_5_1_8660276_1415063844134_132446_18688".equals(Converters.getElementToIdConverter().apply(general))) {
+                        return true;
                     }
                 }
             }
-            return found;
         }
         return false;
     }
@@ -1455,10 +1447,6 @@ public class Utils {
 
     public static Property getViewElementsProperty(Project project) {
         return (Property) project.getElementByID("_18_0_2_407019f_1433361787467_278914_14410");
-    }
-
-    public static Component getSiteCharacterizationComponent(Project project) {
-        return (Component) project.getElementByID("_17_0_5_1_8660276_1415063844134_132446_18688");
     }
 
     /**********************************************
@@ -2213,7 +2201,7 @@ public class Utils {
             }
         }
         Element propOwner = prop.getOwner();
-        if (useDefaultIfNoSlot && results.isEmpty() && prop != null) {
+        if (useDefaultIfNoSlot && results.isEmpty()) {
             if (propOwner instanceof Stereotype
                     && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype) propOwner)) {
                 ValueSpecification v = prop.getDefaultValue();
@@ -2677,14 +2665,16 @@ public class Utils {
                 sep = " = ";
             }
             // TODO -- avoid infinite recursion with Utils2.seen()
-            for (Object i : c) {
-                if (first) {
-                    first = false;
+            if (c != null) {
+                for (Object i : c) {
+                    if (first) {
+                        first = false;
+                    }
+                    else {
+                        sb.append(sep);
+                    }
+                    sb.append(toStringNameAndType(i, includeId, useToStringIfNull));
                 }
-                else {
-                    sb.append(sep);
-                }
-                sb.append(toStringNameAndType(i, includeId, useToStringIfNull));
             }
             sb.append(" )");
             return sb.toString();
@@ -2796,7 +2786,7 @@ public class Utils {
         if (reply == null || !reply) {
             return false;
         }
-        LocalSyncTransactionCommitListener listener = LocalSyncProjectEventListenerAdapter.getProjectMapping(project).getLocalSyncTransactionCommitListener();
+        LocalDeltaTransactionCommitListener listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
         if (listener != null) {
             listener.setDisabled(true);
         }

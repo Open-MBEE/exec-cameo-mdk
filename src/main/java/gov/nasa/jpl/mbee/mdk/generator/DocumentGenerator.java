@@ -14,12 +14,12 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.ForkNo
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.From;
 import gov.nasa.jpl.mbee.mdk.model.*;
 import gov.nasa.jpl.mbee.mdk.util.*;
@@ -53,17 +53,13 @@ public class DocumentGenerator {
 
     public DocumentGenerator(Element e, PrintWriter wlog) {
         this(e, null, wlog, true);
-//        start = e;
-//        product = Utils.getProductStereotype();
-//        doc = new Document();
-//        context = new GenerationContext(new Stack<>(), null, Application.getInstance().getGUILog());
     }
 
-    public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog) {
+    public DocumentGenerator(Element e, ViewViewpointValidator dv, PrintWriter wlog) {
         this(e, dv, wlog, true);
     }
 
-    public DocumentGenerator(Element e, DocumentValidator dv, PrintWriter wlog, boolean addViewDoc) {
+    public DocumentGenerator(Element e, ViewViewpointValidator dv, PrintWriter wlog, boolean addViewDoc) {
         this.start = e;
         this.project = Project.getProject(e);
         this.product = Utils.getProductStereotype(project);
@@ -151,7 +147,7 @@ public class DocumentGenerator {
         viewSection.setExposes(elementImports);
 
         if (!hierarchyOnly) {
-            if (viewpoint != null && viewpoint instanceof Class) { // view conform
+            if (viewpoint != null && viewpoint instanceof Classifier) { // view conform
                 // to a viewpoint
                 if (!(view instanceof Diagram)) { // if it's a diagram, people most
                     // likely put image query in
@@ -168,35 +164,10 @@ public class DocumentGenerator {
                         viewSection.addElement(para);
                     }
                 }
-                Collection<Behavior> viewpointBehavior = ((Class) viewpoint).getOwnedBehavior();
-                Behavior b = ((Class) viewpoint).getClassifierBehavior();
-                if (b == null && viewpointBehavior.size() > 0) {
-                    b = viewpointBehavior.iterator().next();
-                }
-                if (b == null) {
-                    // viewpoint can inherit other viewpoints, if this viewpoint has
-                    // no behavior, check inherited behaviors
-                    Class now = (Class) viewpoint;
-                    while (now != null) {
-                        if (!now.getSuperClass().isEmpty()) {
-                            now = now.getSuperClass().iterator().next();
-                            b = now.getClassifierBehavior();
-                            if (b != null) {
-                                break;
-                            }
-                            if (now.getOwnedBehavior().size() > 0) {
-                                b = now.getOwnedBehavior().iterator().next();
-                                break;
-                            }
-                        }
-                        else {
-                            now = null;
-                        }
-                    }
-                }
-                if (b != null) { // parse and execute viewpoint behavior, giving it
+                Behavior behavior = GeneratorUtils.getViewpointMethod((Classifier) viewpoint, project);
+                if (behavior != null) { // parse and execute viewpoint behavior, giving it
                     // the imported/queried elements
-                    Boolean addVPElements = (Boolean) GeneratorUtils.getStereotypePropertyFirst(b,
+                    Boolean addVPElements = (Boolean) GeneratorUtils.getStereotypePropertyFirst(behavior,
                             DocGenProfile.methodStereotype, "includeViewpointElements", DocGenProfile.PROFILE_NAME, false);
 
                     if (elementImports.isEmpty()) {
@@ -210,12 +181,12 @@ public class DocumentGenerator {
                                 viewpoint, "AddressedTo", 1, false, 1));
                         elementImports.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(
                                 viewpoint, "Covers", 1, false, 1));
-                        elementImports.add(b);
+                        elementImports.add(behavior);
                         elementImports.add(view);
                     }
                     context.pushTargets(Utils2.asList(Utils.removeDuplicates(elementImports), Object.class));
-                    if (b instanceof Activity) {
-                        parseActivityOrStructuredNode(b, viewSection);
+                    if (behavior instanceof Activity) {
+                        parseActivityOrStructuredNode(behavior, viewSection);
                     }
                     context.popTargets();
                 }
@@ -305,10 +276,7 @@ public class DocumentGenerator {
             Debug.outln("next = " + next.getHumanName() + ", " + Converters.getElementToIdConverter().apply(next));
             next2 = null;
             boolean evaluatedConstraintsForNext = false;
-            if (next instanceof CallBehaviorAction
-                    || next instanceof StructuredActivityNode
-                    && StereotypesHelper
-                    .hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)) {
+            if (next instanceof CallBehaviorAction || next instanceof StructuredActivityNode && (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype) || StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.plotStereotype))) {
                 Behavior b = (next instanceof CallBehaviorAction) ? ((CallBehaviorAction) next).getBehavior()
                         : null;
                 if (StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.sectionStereotype)
@@ -432,7 +400,7 @@ public class DocumentGenerator {
             }
             // evaluate constraints on results
             if (!evaluatedConstraintsForNext) {
-                DocumentValidator.evaluateConstraints(next, parseResults, context, true, true);
+                ViewViewpointValidator.evaluateConstraints(next, parseResults, context, true, true);
             }
             outs = next2.getOutgoing();
             Debug.outln("outs = " + MoreToString.Helper.toLongString(outs) + " for next2 = "
@@ -597,7 +565,7 @@ public class DocumentGenerator {
                     Container con = parent;
                     if (createSections) {
                         Section sec = new Section();
-                        if (titles != null && titles.size() > count) {
+                        if (titles.size() > count) {
                             sec.setTitle(titles.get(count));
                         }
                         else if (e instanceof NamedElement) {
@@ -699,9 +667,6 @@ public class DocumentGenerator {
                 DocGenProfile.propertiesTableByAttributesStereotype)) {
             dge = new PropertiesTableByAttributes();
         }
-        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.viewpointConstraintStereotype)) {
-            dge = new ViewpointConstraint(context.getValidator());
-        }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.temporalDiffStereotype)) {
             dge = new TemporalDiff();
         }
@@ -735,6 +700,9 @@ public class DocumentGenerator {
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.simulateStereotype, true)) {
             dge = new Simulate();
+        }
+        else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.plotStereotype, true)) {
+            dge = new Plot(context.getValidator());
         }
         else if (an instanceof CallBehaviorAction && ((CallBehaviorAction) an).getBehavior() != null) {
             dge = new BehaviorQuery((CallBehaviorAction) an);

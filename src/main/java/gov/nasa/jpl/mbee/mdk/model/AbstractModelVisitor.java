@@ -26,7 +26,7 @@ public abstract class AbstractModelVisitor implements IModelVisitor {
             try {
                 dge.accept(this);
             } catch (RuntimeException e) {
-                String errorMessage = "[ERROR] An unexpected error occurred when processing the DocGen element, " + (dge.getDgElement() != null ? dge.getDgElement().getHumanName() + " (" + Converters.getElementToIdConverter().apply(dge.getDgElement()) + ")" : "<>") + ". Skipping and continuing. Reason: " + e.getMessage();
+                String errorMessage = "[ERROR] An unexpected error occurred when generating view" + (dge.getDgElement() != null ? " with " + Converters.getElementToHumanNameConverter().apply(dge.getDgElement()) : "") + ". Skipping and continuing. Reason: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
                 Application.getInstance().getGUILog().log(errorMessage);
                 System.err.println(errorMessage);
                 e.printStackTrace();

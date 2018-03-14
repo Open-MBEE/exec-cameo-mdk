@@ -7,9 +7,12 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -22,6 +25,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.io.IOUtils;
@@ -46,28 +50,31 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MMSUtils {
 
     private static final int CHECK_CANCEL_DELAY = 100;
-
-    private static String developerUrl = "";
+    private static final AtomicReference<Exception> LAST_EXCEPTION = new AtomicReference<>();
+    private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
-    }
-
-    private enum ThreadRequestExceptionType {
-        IO_EXCEPTION, SERVER_EXCEPTION, URI_SYNTAX_EXCEPTION
     }
 
     public enum JsonBlobType {
         ELEMENT_JSON, ELEMENT_ID, PROJECT, REF, ORG
     }
 
-    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static AtomicReference<Exception> getLastException() {
+        return LAST_EXCEPTION;
+    }
+
+    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         File responseFile = getElementsRecursively(project, elementIds, 0, progressStatus);
@@ -82,8 +89,7 @@ public class MMSUtils {
         return null;
     }
 
-    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         return getElementsRecursively(project, elementIds, depth, progressStatus);
@@ -98,8 +104,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
 
@@ -113,8 +118,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
             return null;
@@ -140,18 +144,15 @@ public class MMSUtils {
         return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
     }
 
-    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         return getCredentialsTicket(project, null, username, password, progressStatus);
     }
 
-    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
     }
 
-    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
         if (requestUri == null) {
             return null;
@@ -182,8 +183,7 @@ public class MMSUtils {
         return null;
     }
 
-    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return "";
@@ -217,8 +217,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildImageRequest(URIBuilder requestUri, File sendFile)
-            throws IOException, URISyntaxException {
+    public static HttpRequestBase buildImageRequest(URIBuilder requestUri, File sendFile) throws IOException, URISyntaxException {
         URI requestDest = requestUri.build();
         HttpPost requestUpload = new HttpPost(requestDest);
         EntityBuilder uploadBuilder = EntityBuilder.create();
@@ -239,12 +238,11 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType)
-            throws IOException, URISyntaxException {
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType) throws IOException, URISyntaxException {
         // build specified request type
         // assume that any request can have a body, and just build the appropriate one
         URI requestDest = requestUri.build();
-        HttpRequestBase request = null;
+        final HttpRequestBase request;
         // bulk GETs are not supported in MMS, but bulk PUTs are. checking and and throwing error here in case
         if (type == HttpRequestType.GET && sendData != null) {
             throw new IOException("GETs with body are not supported");
@@ -254,7 +252,7 @@ public class MMSUtils {
                 request = new HttpDeleteWithBody(requestDest);
                 break;
             case GET:
-//                request = new HttpGetWithBody(requestDest);
+            default:
                 request = new HttpGet(requestDest);
                 break;
             case POST:
@@ -286,13 +284,11 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri)
-            throws IOException, URISyntaxException {
+    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri) throws IOException, URISyntaxException {
         return buildRequest(type, requestUri, null, null);
     }
 
-    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType)
-            throws IOException {
+    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
             System.out.println("[INFO] Request Body: " + requestFile.getPath());
@@ -349,13 +345,12 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson)
-            throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson) throws IOException, ServerException, URISyntaxException {
         final File responseFile = (responseJson == null ? File.createTempFile("Response-", null) : null);
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        String requestSummary = "MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
+        String requestSummary = "[INFO] MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
         System.out.println(requestSummary);
         if (MDUtils.isDeveloperMode()) {
             Application.getInstance().getGUILog().log(requestSummary);
@@ -368,7 +363,7 @@ public class MMSUtils {
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
-                String responseSummary = "MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
                 System.out.println(responseSummary);
                 if (MDUtils.isDeveloperMode()) {
                     Application.getInstance().getGUILog().log(responseSummary);
@@ -379,10 +374,8 @@ public class MMSUtils {
             }
         }
         else {
-            final AtomicReference<ThreadRequestExceptionType> threadedExceptionType = new AtomicReference<>();
-            final AtomicReference<String> threadedExceptionMessage = new AtomicReference<>();
-            Thread t = new Thread(() -> {
-                // create client, execute request, parse response, store in thread safe buffer to return to calling method for later closing
+            progressStatus.setIndeterminate(true);
+            Future<?> future = TaskRunner.runWithProgressStatus(() -> {
                 try (CloseableHttpClient httpclient = HttpClients.createDefault();
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()) {
@@ -393,30 +386,30 @@ public class MMSUtils {
                     if (inputStream != null) {
                         responseBody.set(generateMmsOutput(inputStream, responseFile));
                     }
-                    threadedExceptionType.set(null);
-                    threadedExceptionMessage.set("");
-                } catch (IOException e) {
-                    threadedExceptionType.set(ThreadRequestExceptionType.IO_EXCEPTION);
-                    threadedExceptionMessage.set(e.getMessage());
+                } catch (Exception e) {
+                    LAST_EXCEPTION.set(e);
                     e.printStackTrace();
                 }
-            });
-            t.start();
+            }, null, TaskRunner.ThreadExecutionStrategy.NONE, true);
             try {
-                t.join(CHECK_CANCEL_DELAY);
-                while (t.isAlive()) {
-                    if (progressStatus.isCancel()) {
+                while (!future.isDone() && !future.isCancelled()) {
+                    try {
+                        future.get(CHECK_CANCEL_DELAY, TimeUnit.MILLISECONDS);
+                    } catch (ExecutionException | TimeoutException ignored) {
+
+                    } catch (InterruptedException e2) {
+                        Thread.currentThread().interrupt();
+                    }
+                    if (progressStatus.isCancel() && future.cancel(true)) {
                         Application.getInstance().getGUILog().log("[INFO] MMS request was manually cancelled.");
-                        //clean up thread?
                         return null;
                     }
-                    t.join(CHECK_CANCEL_DELAY);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            if (threadedExceptionType.get() == ThreadRequestExceptionType.IO_EXCEPTION) {
-                throw new IOException(threadedExceptionMessage.get());
+            if (LAST_EXCEPTION.get() instanceof IOException) {
+                throw (IOException) LAST_EXCEPTION.get();
             }
         }
         if (responseFile == null) {
@@ -443,13 +436,11 @@ public class MMSUtils {
         return responseFile;
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request)
-            throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException {
         return sendMMSRequest(project, request, null, null);
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus)
-            throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         return sendMMSRequest(project, request, progressStatus, null);
     }
 
@@ -520,7 +511,7 @@ public class MMSUtils {
      * @throws IllegalStateException
      */
     public static String getServerUrl(Project project) throws IllegalStateException {
-        String urlString = null;
+        String urlString;
         if (project == null) {
             throw new IllegalStateException("Project is null.");
         }
@@ -532,16 +523,19 @@ public class MMSUtils {
         if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
             urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
         }
-        else {
-            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem Stereotype!");
-            return null;
-        }
-        if ((urlString == null || urlString.isEmpty())) {
-            Utils.showPopupMessage("Your project root element doesn't have ModelManagementSystem MMS URL stereotype property set!");
-            if (MDUtils.isDeveloperMode()) {
-                urlString = JOptionPane.showInputDialog("[DEVELOPER MODE] Enter the server URL:", developerUrl);
-                developerUrl = urlString;
+        else if (ProjectUtilities.isStandardSystemProfile(project.getPrimaryProject())) {
+            urlString = PROFILE_SERVER_CACHE.getIfPresent(project);
+            if (urlString == null) {
+                urlString = JOptionPane.showInputDialog("Specify server URL for standard profile.", null);
             }
+            if (urlString == null || urlString.trim().isEmpty()) {
+                return null;
+            }
+            PROFILE_SERVER_CACHE.put(project, urlString);
+        }
+        else {
+            Utils.showPopupMessage("The root element does not have the ModelManagementSystem stereotype.\nPlease apply it and specify the server information.");
+            return null;
         }
         if (urlString == null || urlString.isEmpty()) {
             return null;
@@ -549,8 +543,7 @@ public class MMSUtils {
         return urlString.trim();
     }
 
-    public static String getMmsOrg(Project project)
-            throws IOException, URISyntaxException, ServerException {
+    public static String getMmsOrg(Project project) throws IOException, URISyntaxException, ServerException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
         File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {

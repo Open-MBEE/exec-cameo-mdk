@@ -89,20 +89,8 @@ public class CreateOntoBehaviorBlocks extends SRAction {
                     if (oe instanceof Region) {
                         Class reg = createBlock((Region) oe, block, smc);
                         stateCounter = 0;
-                        HashMap<State, Class> statemap = new HashMap<State, Class>();
                         stateProps = new HashMap<State, Property>();
 
-                        for (Vertex v : ((Region) oe).getSubvertex()) {
-                            if (v instanceof State) {
-                                if (v instanceof FinalState) {
-                                    // skip the final state for now.
-                                }
-                                else {
-                                    Class state = createBlock(v, block, reg);
-                                    statemap.put((State) v, state);
-                                }
-                            }
-                        }
                         for (Transition t : ((Region) oe).getTransition()) {
                             // createStepFromTo(stateProps.get(t.getSource()), stateProps.get(t.getTarget()), statemap.get(t.getSource()));
                         }
