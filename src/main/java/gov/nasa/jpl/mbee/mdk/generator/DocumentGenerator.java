@@ -672,7 +672,6 @@ public class DocumentGenerator {
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.tomSawyerDiagramStereotype)) {
             dge = new TomSawyerDiagram();
-
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.javaExtensionStereotype, true)) {
             Element e = an;

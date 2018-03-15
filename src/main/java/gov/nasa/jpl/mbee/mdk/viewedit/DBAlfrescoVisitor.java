@@ -347,6 +347,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         simplelist.accept(html);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void visit(DBPlot plot) {
         JSONObject entry = new JSONObject();
@@ -378,14 +379,17 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             viewElements.peek().add(id);
         }
         JSONObject entry = new JSONObject();
-        entry.put("type", "Tsp");
-        entry.put("tstype", tomSawyerDiagram.getShortType().toString());
+        entry.put("type", "TomSawyerDiagram");
+        entry.put("diagramType", tomSawyerDiagram.getType() != null ? tomSawyerDiagram.getType().getAbbreviation() : null);
         JSONArray elements = new JSONArray();
-        for (Element elem : tomSawyerDiagram.getElements()) {
-            elements.add(Converters.getElementToIdConverter().apply(elem));
-        }
-
+        tomSawyerDiagram.getElements().stream().map(element -> Converters.getElementToIdConverter().apply(element)).filter(Objects::nonNull).forEach(elements::add);
         entry.put("elements", elements);
+        switch (tomSawyerDiagram.getType()) {
+            case INTERNAL_BLOCK:
+            case PARAMETRIC:
+                entry.put("context", Converters.getElementToIdConverter().apply(tomSawyerDiagram.getContext()));
+                break;
+        }
 
         InstanceSpecification i = null;
         if (!currentFigureInstances.peek().isEmpty()) {
@@ -393,9 +397,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
             currentInstanceList.peek().remove(i);
         }
 
+        //TODO should add new presentation element OpaqueFigure type
         PresentationElementInstance parentSec = currentSection.isEmpty() ? null : currentSection.peek();
-        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementClasses.FIGURE, currentView.peek(), "tomsawyer_diagram", parentSec, null);
-        System.out.println(entry.toJSONString());
+        PresentationElementInstance ipe = new PresentationElementInstance(i, entry, PresentationElementClasses.FIGURE, currentView.peek(), "tomSawyerDiagram", parentSec, null);
         newpe.peek().add(ipe);
     }
 

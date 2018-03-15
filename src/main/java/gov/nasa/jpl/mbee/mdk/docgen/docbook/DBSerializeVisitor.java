@@ -190,7 +190,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             List<String> s = null;
             boolean ok = true;
             try {
-                s = DocGenUtils.exportDiagram(meta.getCoverImage(), imageDir, false);
+                s = DocGenUtils.exportDiagram(meta.getCoverImage(), imageDir);
             } catch (IOException e) {
                 e.printStackTrace();
                 ok = false;
@@ -253,7 +253,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         File imageDir = new File(dir, "images");
         imageDir.mkdirs();
         try {
-            s = DocGenUtils.exportDiagram(image.getImage(), imageDir, genImage);
+            s = DocGenUtils.exportDiagram(image.getImage(), imageDir);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -371,7 +371,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             ids.add(section.getId());
         }
         if (section.isAppendix()) {
-            out.append("<appendix" + id +">\n");
+            out.append("<appendix" + id + ">\n");
         }
         else if (section.isChapter()) {
             out.append("<chapter" + id + ">\n");
