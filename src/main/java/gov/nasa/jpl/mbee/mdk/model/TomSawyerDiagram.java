@@ -1,49 +1,35 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.ui.ProjectWindow;
-import com.nomagic.magicdraw.ui.WindowComponentInfo;
-import com.nomagic.magicdraw.ui.WindowsManager;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Enumeration;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import com.tomsawyer.canvas.TSViewportCanvas;
-import com.tomsawyer.canvas.image.svg.TSSVGImageCanvas;
-import com.tomsawyer.canvas.image.svg.TSSVGImageCanvasPreferenceTailor;
-import com.tomsawyer.canvas.rendering.TSRenderingPreferenceTailor;
-import com.tomsawyer.magicdraw.action.TSActionConstants;
-import com.tomsawyer.util.preference.TSPreferenceData;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.tomsawyer.DocGenTSGenerateDiagramDelegate;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.*;
 
 public class TomSawyerDiagram extends Query {
     private DiagramType diagramType;
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        Object enumLiteral = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "diagram_type", DocGenProfile.PROFILE_NAME, false);
-        if (enumLiteral instanceof String) {
-            setDiagramType(DiagramType.valueOf(enumLiteral.toString()));
+        Object o = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "diagramType", DocGenProfile.PROFILE_NAME, false);
+        if (o instanceof String) {
+            setDiagramType(DiagramType.valueOf(o.toString()));
         }
-        Enumeration enumeration;
-        if (enumLiteral instanceof EnumerationLiteral && (enumeration = ((EnumerationLiteral) enumLiteral).getEnumeration()) != null) {
-            Arrays.stream(DiagramType.values()).filter(dt -> dt.getName().equals(enumeration.getName())).findAny().ifPresent(this::setDiagramType);
+        if (o instanceof EnumerationLiteral) {
+            Arrays.stream(DiagramType.values()).filter(dt -> dt.getName().equals(((EnumerationLiteral) o).getName())).findAny().ifPresent(this::setDiagramType);
+        }
+        if (diagramType == null) {
+            Application.getInstance().getGUILog().log("[WARNING] No diagram type specified for " + Converters.getElementToHumanNameConverter().apply(dgElement) + ". Skipping diagram generation.");
         }
     }
-
 
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
@@ -79,68 +65,10 @@ public class TomSawyerDiagram extends Query {
             exception.printStackTrace();
             JOptionPane.showMessageDialog(null, exception.getMessage());
         }
-        Set<Element> viewElements;
-
-        if (forViewEditor) {
-            viewElements = delegate.getDataModelElementIds();
-            diagram.setContext(delegate.getContext());
-            diagram.setElements(viewElements);
-            return Collections.singletonList(diagram);
-        }
-        else {
-            if (MDUtils.isDeveloperMode()) {
-                TSStandardWindowComponentContent windowComponentContent = new TSStandardWindowComponentContent(delegate);
-                ProjectWindow window = new ProjectWindow(new WindowComponentInfo(delegate.getId(), delegate.getName(), TSActionConstants.WINDOW_ICON, WindowsManager.SIDE_EAST, WindowsManager.STATE_DOCKED, false), windowComponentContent);
-                Application.getInstance().getMainFrame().getProjectWindowsManager().addWindow(window);
-                SwingUtilities.invokeLater(() -> windowComponentContent.setDividerLocation(0.7));
-            }
-
-            TSViewportCanvas canvas = delegate.getDiagramDrawing().getCanvas();
-            TSPreferenceData preferenceData = new TSPreferenceData();
-
-            TSSVGImageCanvasPreferenceTailor imageCanvasTailor = new TSSVGImageCanvasPreferenceTailor(preferenceData);
-
-            imageCanvasTailor.setExportAll();
-            imageCanvasTailor.setScaleByZoomLevel();
-            imageCanvasTailor.setScalingZoomLevel(1.0);
-            imageCanvasTailor.setWidth(-1);
-            imageCanvasTailor.setHeight(-1);
-
-            TSRenderingPreferenceTailor renderingTailor = new TSRenderingPreferenceTailor(preferenceData);
-
-            boolean isDrawNodesBeforeEdges = new TSRenderingPreferenceTailor(canvas.getPreferenceData()).isDrawNodesBeforeEdges();
-            renderingTailor.setDrawNodesBeforeEdges(isDrawNodesBeforeEdges);
-
-            renderingTailor.setDrawSelectedOnly(false);
-            renderingTailor.setDrawSelectionState(false);
-            renderingTailor.setDrawHighlightState(false);
-            renderingTailor.setDrawHoverState(false);
-
-            FileOutputStream stream;
-            String fileName = id + ".svg";
-            File file = new File(outputDir, fileName);
-
-            try {
-                stream = new FileOutputStream(file);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                return Collections.emptyList();
-            }
-            TSSVGImageCanvas imageCanvas = new TSSVGImageCanvas(canvas.getGraphManager(), stream);
-
-            imageCanvas.setDisplayCanvas(canvas);
-            imageCanvas.setPreferenceData(preferenceData);
-            imageCanvas.paint();
-
-            DBImage myImage = new DBImage();
-            myImage.setCaption(delegate.getName());
-            myImage.setTitle(delegate.getName());
-            myImage.setIsTomSawyerImage(true);
-            myImage.setOutputDir(outputDir);
-            myImage.setImageFileName(fileName);
-
-            return Collections.singletonList(myImage);
-        }
+        Set<Element> viewElements = delegate.getDataModelElementIds();
+        diagram.setContext(delegate.getContext());
+        diagram.setElements(viewElements);
+        return Collections.singletonList(diagram);
     }
 
     public void setDiagramType(DiagramType diagramType) {

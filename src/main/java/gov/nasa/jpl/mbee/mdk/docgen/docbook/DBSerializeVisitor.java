@@ -190,7 +190,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             List<String> s = null;
             boolean ok = true;
             try {
-                s = DocGenUtils.exportDiagram(meta.getCoverImage(), imageDir, false);
+                s = DocGenUtils.exportDiagram(meta.getCoverImage(), imageDir);
             } catch (IOException e) {
                 e.printStackTrace();
                 ok = false;
@@ -252,16 +252,10 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         List<String> s = null;
         File imageDir = new File(dir, "images");
         imageDir.mkdirs();
-        // todo , extend dbimage to have TS image reference.
-        if (!image.isTomSawyerImage()) {
-            try {
-                s = DocGenUtils.exportDiagram(image.getImage(), imageDir, genImage);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        else {
-            s = image.getTSImageInfo();
+        try {
+            s = DocGenUtils.exportDiagram(image.getImage(), imageDir);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         if (image.isDoNotShow()) {
             return;
@@ -283,12 +277,8 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
         else {
             out.append("<imagedata fileref=\"" + filename + "\" format=\"SVG\"/>\n");
         }
-        String filename2 = filename;
-        if (!image.isTomSawyerImage()) {
-            filename2 = filename.replaceAll(".svg", ".png");
-        }
         out.append("</imageobject><imageobject role=\"html\"><imagedata fileref=\""
-                + filename2 + "\"/></imageobject>\n");
+                + filename.replaceAll(".svg", ".png") + "\"/></imageobject>\n");
         if (image.getCaption() != null && !image.getCaption().isEmpty()) {
             out.append("<caption>" + DocGenUtils.addDocbook(DocGenUtils.fixString(image.getCaption()))
                     + "</caption>\n");
@@ -381,7 +371,7 @@ public class DBSerializeVisitor extends DBAbstractVisitor {
             ids.add(section.getId());
         }
         if (section.isAppendix()) {
-            out.append("<appendix" + id +">\n");
+            out.append("<appendix" + id + ">\n");
         }
         else if (section.isChapter()) {
             out.append("<chapter" + id + ">\n");

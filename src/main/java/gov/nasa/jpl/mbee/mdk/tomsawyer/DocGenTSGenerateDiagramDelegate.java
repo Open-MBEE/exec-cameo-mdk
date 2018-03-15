@@ -35,7 +35,7 @@ public class DocGenTSGenerateDiagramDelegate extends TSGenerateDiagramDelegate {
 
     @Override
     protected void initViews(String s) {
-        createViewInstances(null, "Elements", "Relationships", "Settings");
+        createViewInstances(null, "Elements", "Associations", "Controls");
     }
 
     @Override

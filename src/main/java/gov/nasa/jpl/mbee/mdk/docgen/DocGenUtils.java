@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.docgen;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.properties.BooleanProperty;
 import com.nomagic.magicdraw.properties.ElementProperty;
@@ -417,79 +418,59 @@ public class DocGenUtils {
      * will be the diagram id in magicdraw
      *
      * @param diagram        the magicdraw diagram element
-     * @param outputdir      directory for docbook xml output (without trailing slash)
-     * @param outputfilename name of the docbook xml output name (without extension, this
-     *                       will be used to generate a folder called outputfilename_files
-     *                       inside outputdir where the diagrams will be stored)
-     * @param genNew         true or false, if true, will always generate new image, if
-     *                       not, will check whether image is already there before
-     *                       generating
-     * @param debug
+     * @param directory      directory for docbook xml output (without trailing slash)
      * @throws IOException
      */
-    public static List<String> exportDiagram(Diagram d, File directory, boolean genNew) throws IOException {
-        GUILog gl = Application.getInstance().getGUILog();
-        List<String> res = new ArrayList<String>();
-        DiagramPresentationElement diagram = Application.getInstance().getProject().getDiagram(d);
-
-        String pngfilename = diagram.getID() + ".png";
-        String svgfilename = diagram.getID() + ".svg";
-        // String templateFolderName = outputdir + "/" + outputfilename +
-        // "_files";
-        // File directory = new File(templateFolderName);
-        File pngdiagramFile = new File(directory, pngfilename);
-        File svgdiagramFile = new File(directory, svgfilename);
-        // String svgfname = outputfilename + "_files" + "/" + svgfilename;
-        String svgfname = "images/" + svgfilename;// System.getProperty("file.separator")
-        // + svgfilename;
-        res.add(svgfname);
-
-        if (genNew || !pngdiagramFile.exists()) {
-            try {
-                gl.log("[DocGen] Exporting Diagram " + diagram.getName() + " " + svgfname);
-                ImageExporter.export(diagram, ImageExporter.SVG, svgdiagramFile);
-                ImageExporter.export(diagram, ImageExporter.PNG, pngdiagramFile);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return res;
-            }
+    public static List<String> exportDiagram(Diagram diagram, File directory) throws IOException {
+        Project project = Application.getInstance().getProject();
+        if (project == null) {
+            return Collections.emptyList();
         }
-        else {
-            gl.log("[DocGen] Exporting diagram: Image file for " + diagram.getName()
-                    + " exists. Using previously generated file.");
+        List<String> results = new ArrayList<>();
+        DiagramPresentationElement diagramPresentationElement = project.getDiagram(diagram);
+        if (diagramPresentationElement == null) {
+            return Collections.emptyList();
+        }
+
+        String pngFileName = diagramPresentationElement.getID() + ".png";
+        String svgFileName = diagramPresentationElement.getID() + ".svg";
+        File pngDiagramFile = new File(directory, pngFileName);
+        File svgDiagramFile = new File(directory, svgFileName);
+        results.add(directory.getName() + "/" + svgFileName);
+
+        try {
+            ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgDiagramFile);
+            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return results;
         }
 
         // whether to scale to width or not, in svg file width is specified in
         // inches, check it's less than width of pdf portrait paper
-        String scale = "true";
-        try {
-            BufferedReader svg = new BufferedReader(new FileReader(svgdiagramFile));
-            String line = svg.readLine();
+        boolean scale = true;
+        try (BufferedReader reader = new BufferedReader(new FileReader(svgDiagramFile))) {
+            String line = reader.readLine();
             while (line != null) {
                 if (line.startsWith("<svg")) {
                     int widthindex = line.indexOf("width");
                     if (widthindex > -1) {
-                        int endindex = line.indexOf("\"", widthindex + 7);
-                        String w = line.substring(widthindex + 7, endindex - 2);
+                        int end = line.indexOf("\"", widthindex + 7);
+                        String w = line.substring(widthindex + 7, end - 2);
                         double wd = Double.parseDouble(w);
                         if (wd < 5.5) {
-                            scale = "false";
+                            scale = false;
                         }
                     }
                     break;
                 }
-                line = svg.readLine();
+                line = reader.readLine();
             }
-            svg.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
-        res.add(scale);
-        return res;
+        results.add(Boolean.toString(scale));
+        return results;
     }
 
     /**
