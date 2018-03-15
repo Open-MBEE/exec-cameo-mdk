@@ -29,9 +29,9 @@ public class TomSawyerDiagram extends Query {
             Application.getInstance().getGUILog().log("[WARNING] No diagram type specified for " + Converters.getElementToHumanNameConverter().apply(dgElement) + ". Skipping diagram generation.");
             return;
         }
-        o = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "collectRelatedElements", DocGenProfile.PROFILE_NAME, false);
-        if (o instanceof Boolean) {
-            collectRelatedElements = (Boolean) o;
+        Object o2 = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "collectRelatedElements", DocGenProfile.PROFILE_NAME, false);
+        if (o2 instanceof Boolean) {
+            collectRelatedElements = (Boolean) o2;
         }
     }
 
