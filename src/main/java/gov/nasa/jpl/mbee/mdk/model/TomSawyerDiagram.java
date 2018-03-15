@@ -14,10 +14,11 @@ import java.util.*;
 
 public class TomSawyerDiagram extends Query {
     private DiagramType diagramType;
+    private boolean collectRelatedElements;
 
     @Override
     public void initialize() {
-        Object o = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "diagramType", DocGenProfile.PROFILE_NAME, false);
+        Object o = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "diagramType", DocGenProfile.PROFILE_NAME, null);
         if (o instanceof String) {
             setDiagramType(DiagramType.valueOf(o.toString()));
         }
@@ -26,6 +27,11 @@ public class TomSawyerDiagram extends Query {
         }
         if (diagramType == null) {
             Application.getInstance().getGUILog().log("[WARNING] No diagram type specified for " + Converters.getElementToHumanNameConverter().apply(dgElement) + ". Skipping diagram generation.");
+            return;
+        }
+        o = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "collectRelatedElements", DocGenProfile.PROFILE_NAME, false);
+        if (o instanceof Boolean) {
+            collectRelatedElements = (Boolean) o;
         }
     }
 
@@ -44,24 +50,29 @@ public class TomSawyerDiagram extends Query {
         if (elements.isEmpty()) {
             return Collections.emptyList();
         }
-        Element context = null;
-        switch (diagramType) {
-            case INTERNAL_BLOCK:
-            case PARAMETRIC:
-                context = elements.stream().filter(element -> element instanceof Class).findFirst().orElse(null);
-                break;
-        }
         try {
-            TriFunction<Element, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>> generator = (TriFunction<Element, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>>) java.lang.Class.forName("gov.nasa.jpl.mbee.mdk.tomsawyer.api.DocumentElementGenerator").getConstructor().newInstance();
-            return generator.apply(context, elements, diagramType);
+            TriFunction<TomSawyerDiagram, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>> generator = (TriFunction<TomSawyerDiagram, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>>) java.lang.Class.forName("gov.nasa.jpl.mbee.mdk.tomsawyer.api.DocumentElementGenerator").getConstructor().newInstance();
+            return generator.apply(this, elements, diagramType);
         } catch (ReflectiveOperationException | ClassCastException e) {
             Application.getInstance().getGUILog().log("[WARNING] MDK DocGen TomSawyer plugin is not installed. TomSawyerDiagram DocGen activity skipped.");
         }
         return Collections.emptyList();
     }
 
+    public DiagramType getDiagramType() {
+        return diagramType;
+    }
+
     public void setDiagramType(DiagramType diagramType) {
         this.diagramType = diagramType;
+    }
+
+    public boolean isCollectRelatedElements() {
+        return collectRelatedElements;
+    }
+
+    public void setCollectRelatedElements(boolean collectRelatedElements) {
+        this.collectRelatedElements = collectRelatedElements;
     }
 
     public enum DiagramType {
