@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.docgen.docbook;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram;
 
 import java.util.Set;

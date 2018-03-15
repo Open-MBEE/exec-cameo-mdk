@@ -19,7 +19,6 @@ import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.model.Section;
-import gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

@@ -4,14 +4,12 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
-import gov.nasa.jpl.mbee.mdk.tomsawyer.DocGenTSGenerateDiagramDelegate;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
-import javax.swing.*;
 import java.util.*;
 
 public class TomSawyerDiagram extends Query {
@@ -31,6 +29,7 @@ public class TomSawyerDiagram extends Query {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         if (diagramType == null) {
@@ -52,23 +51,13 @@ public class TomSawyerDiagram extends Query {
                 context = elements.stream().filter(element -> element instanceof Class).findFirst().orElse(null);
                 break;
         }
-        DocGenTSGenerateDiagramDelegate delegate = new DocGenTSGenerateDiagramDelegate(context, diagramType);
-        delegate.getElements().addAll(elements);
-        DBTomSawyerDiagram diagram = new DBTomSawyerDiagram();
-        String id = UUID.randomUUID().toString();
-
-        diagram.setType(diagramType);
-        delegate.init(id, id, diagramType.getName());
         try {
-            delegate.loadData();
-        } catch (Exception exception) {
-            exception.printStackTrace();
-            JOptionPane.showMessageDialog(null, exception.getMessage());
+            TriFunction<Element, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>> generator = (TriFunction<Element, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>>) java.lang.Class.forName("gov.nasa.jpl.mbee.mdk.tomsawyer.api.DocumentElementGenerator").getConstructor().newInstance();
+            return generator.apply(context, elements, diagramType);
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            Application.getInstance().getGUILog().log("[WARNING] MDK DocGen TomSawyer plugin is not installed. TomSawyerDiagram DocGen activity skipped.");
         }
-        Set<Element> viewElements = delegate.getDataModelElementIds();
-        diagram.setContext(delegate.getContext());
-        diagram.setElements(viewElements);
-        return Collections.singletonList(diagram);
+        return Collections.emptyList();
     }
 
     public void setDiagramType(DiagramType diagramType) {
