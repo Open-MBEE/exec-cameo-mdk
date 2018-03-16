@@ -54,7 +54,7 @@ public class TomSawyerDiagram extends Query {
             TriFunction<TomSawyerDiagram, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>> generator = (TriFunction<TomSawyerDiagram, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>>) java.lang.Class.forName("gov.nasa.jpl.mbee.mdk.tomsawyer.api.DocumentElementGenerator").getConstructor().newInstance();
             return generator.apply(this, elements, diagramType);
         } catch (ReflectiveOperationException | ClassCastException e) {
-            Application.getInstance().getGUILog().log("[WARNING] MDK DocGen TomSawyer plugin is not installed. TomSawyerDiagram DocGen activity skipped.");
+            Application.getInstance().getGUILog().log("[WARNING] MDK DocGen Tom Sawyer plugin is not installed. TomSawyerDiagram DocGen activity skipped.");
         }
         return Collections.emptyList();
     }
