@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
@@ -12,6 +11,7 @@ import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class TomSawyerDiagram extends Query {
     private DiagramType diagramType;
     private boolean collectRelatedElements;
