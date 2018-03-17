@@ -137,7 +137,6 @@ public class MMSUtils {
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
         //do cancellable request if progressStatus exists
-        Application.getInstance().getGUILog().log("[INFO] Searching for " + elementIds.size() + " elements from server...");
         if (progressStatus != null) {
             return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
         }
