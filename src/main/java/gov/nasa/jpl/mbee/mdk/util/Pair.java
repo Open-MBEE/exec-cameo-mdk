@@ -100,7 +100,8 @@ public class Pair<K, V> implements Serializable {
         // these two parameters:
         //  name: a  value: aa
         //  name: aa value: a
-        return key.hashCode() * 13 + (value == null ? 0 : value.hashCode());
+        // fixed https://bugs.openjdk.java.net/browse/JDK-8177859
+        return (key != null ? key.hashCode() : 0) * 13 + (value == null ? 0 : value.hashCode());
     }
 
     /**
