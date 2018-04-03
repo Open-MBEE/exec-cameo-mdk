@@ -43,5 +43,8 @@ public class MDKConstants {
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
             TWC_ID_KEY = "twc" + ID_KEY_SUFFIX,
-            TWC_VERSION_KEY = "twcVersion";
+            TWC_VERSION_KEY = "twcVersion",
+            ARTIFACT_IDS_KEY = "_artifactIds",
+            CHECKSUM_KEY = "checksum",
+            CONTENT_TYPE_KEY = "contentType";
 }

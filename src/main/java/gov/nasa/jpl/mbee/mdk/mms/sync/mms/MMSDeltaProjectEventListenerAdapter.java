@@ -260,6 +260,10 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                             if (!changeJsonObject.isObject()) {
                                 throw new IllegalStateException();
                             }
+                            JsonNode typeJsonNode = changeJsonObject.get(MDKConstants.TYPE_KEY);
+                            if (typeJsonNode != null && typeJsonNode.isTextual() && !"element".equalsIgnoreCase(typeJsonNode.asText())) {
+                                continue;
+                            }
                             JsonNode idJsonNode = changeJsonObject.get(MDKConstants.ID_KEY);
                             if (!idJsonNode.isTextual() || idJsonNode.asText().isEmpty()) {
                                 continue;

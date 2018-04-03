@@ -13,6 +13,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.task.EmptyProgressStatus;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
@@ -21,16 +22,18 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.CommitDiagramArtifactsAction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
+import gov.nasa.jpl.mbee.mdk.mms.validation.DiagramValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.util.*;
@@ -146,8 +149,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             try {
                 docBookOutputVisitor = new DocBookOutputVisitor(true);
                 dge.accept(docBookOutputVisitor);
-            }
-            finally {
+            } finally {
                 if (SessionManager.getInstance().isSessionCreated(project)) {
                     SessionManager.getInstance().closeSession(project);
                 }
@@ -499,7 +501,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<Element, List<PresentationElementInstance>> view2pe = new LinkedHashMap<>();
         Map<Element, List<PresentationElementInstance>> view2unused = new LinkedHashMap<>();
         Map<Element, JSONArray> view2elements = new LinkedHashMap<>();
-        Map<String, ObjectNode> images = new LinkedHashMap<>();
+        Set<Diagram> diagrams = new LinkedHashSet<>();
         Set<Element> skippedViews = new HashSet<>();
         for (ViewMapping viewMapping : viewMap.values()) {
             DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
@@ -513,7 +515,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             view2pe.putAll(dbAlfrescoVisitor.getView2Pe());
             view2unused.putAll(dbAlfrescoVisitor.getView2Unused());
             view2elements.putAll(dbAlfrescoVisitor.getView2Elements());
-            images.putAll(dbAlfrescoVisitor.getImages());
+            dbAlfrescoVisitor.getImages().stream().map(DBImage::getImage).filter(Objects::nonNull).filter(diagram -> !ProjectUtilities.isElementInAttachedProject(diagram)).forEach(diagrams::add);
             views.removeAll(processedElements);
         }
 
@@ -537,16 +539,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        ImageValidator iv = new ImageValidator(images, images);
-        // this checks images generated from the local generation against what's on the web based on checksum
-        iv.validate(project);
-        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
-        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
-            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
-                if (!validationRuleViolation.getActions().isEmpty()) {
-                    validationRuleViolation.getActions().get(0).actionPerformed(null);
-                }
-            }
+        if (!diagrams.isEmpty()) {
+            DiagramValidator diagramValidator = new DiagramValidator(diagrams, project);
+            // TODO Use proper progress status
+            diagramValidator.run(EmptyProgressStatus.getDefault());
+            diagramValidator.getSuite().getValidationRules().stream().flatMap(rule -> rule.getViolations().stream()).flatMap(violation -> violation.getActions().stream()).filter(action -> action instanceof CommitDiagramArtifactsAction).forEach(action -> action.actionPerformed(null));
         }
 
         try {

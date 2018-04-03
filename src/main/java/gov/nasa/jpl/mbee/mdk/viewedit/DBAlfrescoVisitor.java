@@ -1,10 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.viewedit;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
-import com.nomagic.magicdraw.export.image.ImageExporter;
-import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -17,23 +14,17 @@ import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInfo;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementInstance;
 import gov.nasa.jpl.mbee.mdk.generator.PresentationElementUtils;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.model.Section;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.*;
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
 
 public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     private Stack<List<Element>> sibviewsElements = new Stack<>();
     private Stack<Set<String>> viewElements = new Stack<>(); //ids of view elements
-    private Map<String, ObjectNode> images = new HashMap<>();
+    private Set<DBImage> images = new LinkedHashSet<>();
     protected boolean recurse;
     private GUILog gl = Application.getInstance().getGUILog();
 
@@ -77,10 +68,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         this.main = main;
     }
 
-    /**
-     * Simple getter for images
-     */
-    public Map<String, ObjectNode> getImages() {
+    public Set<DBImage> getImages() {
         return images;
     }
 
@@ -123,69 +111,9 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
 
     @SuppressWarnings("unchecked")
     protected JSONObject getJSONForDBImage(DBImage image) {
-        //need to populate view elements with elements in image
+        images.add(image);
+
         JSONObject entry = new JSONObject();
-        ObjectNode imageEntry = JacksonUtils.getObjectMapper().createObjectNode();
-        //for (Element e: Project.getProject(image.getImage()).getDiagram(image.getImage()).getUsedModelElements(false)) {
-        //    addToElements(e);
-        //}
-        // export image - also keep track of exported images
-        DiagramPresentationElement diagram = Application.getInstance().getProject().getDiagram(image.getImage());
-        String svgFilename = Converters.getElementToIdConverter().apply(image.getImage());
-
-        // create image file
-        String userhome = System.getProperty("user.home");
-        File directory;
-        if (userhome != null) {
-            directory = new File(userhome + File.separator + "mdkimages");
-        }
-        else {
-            directory = new File("mdkimages");
-        }
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
-
-        // export the image file
-        File svgDiagramFile = new File(directory, svgFilename);
-        boolean initialUseSVGTestTag = Application.getInstance().getEnvironmentOptions().getGeneralOptions().isUseSVGTextTag();
-        Application.getInstance().getEnvironmentOptions().getGeneralOptions().setUseSVGTextTag(true);
-        try {
-            ImageExporter.export(diagram, ImageExporter.SVG, svgDiagramFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            Application.getInstance().getEnvironmentOptions().getGeneralOptions().setUseSVGTextTag(initialUseSVGTestTag);
-        }
-
-        // calculate the checksum
-        long cs = 0;
-        try {
-            RandomAccessFile f = new RandomAccessFile(svgDiagramFile.getAbsolutePath(), "r");
-            byte[] data = new byte[(int) f.length()];
-            f.read(data);
-            f.close();
-            Checksum checksum = new CRC32();
-            checksum.update(data, 0, data.length);
-            cs = checksum.getValue();
-        } catch (IOException e) {
-            gl.log("Could not calculate checksum: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        // Lets rename the file to have the hash code
-        // make sure this matches what's in the View Editor ImageResource.java
-        String FILE_EXTENSION = "svg";
-        //gl.log("Exporting diagram to: " + svgDiagramFile.getAbsolutePath());
-
-        // keep record of all images found
-        imageEntry.put("cs", String.valueOf(cs));
-        imageEntry.put("abspath", svgDiagramFile.getAbsolutePath());
-        imageEntry.put("extension", FILE_EXTENSION);
-        images.put(svgFilename, imageEntry);
-
-        //MDEV #674 -- Update the type and id: was hard coded.
-        //
         entry.put("type", "Image");
         entry.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(image.getImage()));
         entry.put("title", image.getTitle());
@@ -223,7 +151,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         list.accept(l);
         viewElements.peek().addAll(l.getListElements());
         elementSet.addAll(l.getElementSet());
-        images.putAll(l.getImages());
+        images.addAll(l.getImages());
 
         InstanceSpecification i = null;
         if (!currentListInstances.peek().isEmpty()) {
@@ -413,7 +341,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         table.accept(v);
         viewElements.peek().addAll(v.getTableElements());
         elementSet.addAll(v.getElementSet());
-        images.putAll(v.getImages());
+        images.addAll(v.getImages());
 
         InstanceSpecification i = null;
         if (!currentTableInstances.peek().isEmpty()) {
