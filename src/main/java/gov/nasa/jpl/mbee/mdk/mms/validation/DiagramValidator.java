@@ -164,7 +164,9 @@ public class DiagramValidator implements RunnableWithProgress {
                     try {
                         path = Files.createTempFile(DiagramValidator.class.getSimpleName() + "-" + diagramId, "." + entry.getKey());
                         ImageExporter.export(diagramPresentationElement, entry.getValue().getKey(), path.toFile());
-                        checksum = DigestUtils.md5Hex(new FileInputStream(path.toFile()));
+                        try (InputStream inputStream = new FileInputStream(path.toFile())) {
+                            checksum = DigestUtils.md5Hex(inputStream);
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                         Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation for " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());
