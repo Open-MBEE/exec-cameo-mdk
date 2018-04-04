@@ -9,13 +9,16 @@ import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementTypes;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlg;
 import com.nomagic.magicdraw.ui.dialogs.selection.ElementSelectionDlgFactory;
+import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Classifier;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.DirectedRelationship;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.api.SRConstants;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -67,9 +70,24 @@ public class AspectSelectionAction extends SRAction {
         addedAspects.removeAll(initialAspects);
 
         addedAspects.forEach(aspect -> {
-            Utils.createDependencyWithStereotype(classifier, aspect, aspectStereotype);
+            createDependencyWithStereotype(classifier, aspect, aspectStereotype);
             new AspectRemedyAction(classifier, aspect).run();
         });
         SessionManager.getInstance().closeSession(project);
+    }
+
+    private static void setOwnerPackage(Element child, Element parent) {
+        while (!(parent instanceof Package)) {
+            parent = parent.getOwner();
+        }
+        child.setOwner(parent);
+    }
+
+    private static void createDependencyWithStereotype(Element from, Element to, Stereotype s) {
+        Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
+        ModelHelper.setClientElement(d, from);
+        ModelHelper.setSupplierElement(d, to);
+        StereotypesHelper.addStereotype(d, s);
+        setOwnerPackage(d, from);
     }
 }

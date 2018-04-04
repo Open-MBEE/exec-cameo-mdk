@@ -29,6 +29,7 @@ import javax.script.ScriptException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CollectFilterParser {
 
@@ -178,8 +179,8 @@ public class CollectFilterParser {
                 "considerDerived", DocGenProfile.PROFILE_NAME, true);
         List<String> names = (List<String>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.nameChoosable,
                 "names", DocGenProfile.PROFILE_NAME, new ArrayList<String>());
-        List<String> diagramTypes = Utils.getElementNames((List<NamedElement>) GeneratorUtils.getStereotypePropertyValue(
-                cba, DocGenProfile.diagramTypeChoosable, "diagramTypes", DocGenProfile.PROFILE_NAME, new ArrayList<NamedElement>()));
+        List<String> diagramTypes = ((List<NamedElement>) GeneratorUtils.getStereotypePropertyValue(
+                cba, DocGenProfile.diagramTypeChoosable, "diagramTypes", DocGenProfile.PROFILE_NAME, new ArrayList<NamedElement>())).stream().map(NamedElement::getName).collect(Collectors.toList());
         Boolean include = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.includeChoosable,
                 "include", DocGenProfile.PROFILE_NAME, true);
         List<Property> stereotypeProperties = (List<Property>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.stereotypePropertyChoosable, "stereotypeProperties",

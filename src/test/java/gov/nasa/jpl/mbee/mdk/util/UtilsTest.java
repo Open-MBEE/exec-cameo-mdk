@@ -92,13 +92,6 @@ public class UtilsTest {
     }
 
     @Test
-    public void _utils_getAspectStereotype() {
-        BaseElement test = Utils.getAspectStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("aspect"));
-    }
-
-    @Test
     public void _utils_getCharacterizesStereotype() {
         BaseElement test = Utils.getCharacterizesStereotype(project);
         Assert.assertNotNull(test);
@@ -140,13 +133,6 @@ public class UtilsTest {
         BaseElement test = Utils.getGeneratedFromElementProperty(project);
         Assert.assertNotNull(test);
         Assert.assertTrue(((Property)test).getName().equals("generatedFromElement"));
-    }
-
-    @Test
-    public void _utils_getViewElementsProperty() {
-        BaseElement test = Utils.getViewElementsProperty(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Property)test).getName().equals("elements"));
     }
 
     @AfterClass
