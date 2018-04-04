@@ -1387,11 +1387,6 @@ public class Utils {
         return results;
     }
 
-    @Deprecated
-    public static Stereotype getStereotype(Project project, String stereotypeName) {
-        return StereotypesHelper.getStereotype(project, stereotypeName);
-    }
-
     public static Stereotype getConformStereotype(Project project) {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
