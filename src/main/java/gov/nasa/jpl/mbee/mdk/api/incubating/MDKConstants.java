@@ -27,7 +27,7 @@ public class MDKConstants {
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             APPLIED_STEREOTYPE_IDS_KEY = "_appliedStereotypeIds",
             DOCUMENTATION_KEY = "documentation",
-            IS_SITE_KEY = "_isSite",
+            IS_GROUP_KEY = "_isGroup",
             PROPERTY_PATH_IDS_KEY = "_propertyPathIds",
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
             DISPLAYED_ELEMENT_IDS_KEY = DERIVED_KEY_PREFIX + "displayedElement" + IDS_KEY_SUFFIX,

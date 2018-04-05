@@ -56,4 +56,9 @@ public class ValidateAllViewsAction extends MDAction {
         }
         return StereotypesHelper.getExtendedElementsIncludingDerived(viewStereotype).stream().filter(view -> !ProjectUtilities.isElementInAttachedProject(view)).collect(Collectors.toSet());
     }
+
+    @Override
+    public void updateState() {
+        this.setEnabled(Application.getInstance().getProject() != null);
+    }
 }

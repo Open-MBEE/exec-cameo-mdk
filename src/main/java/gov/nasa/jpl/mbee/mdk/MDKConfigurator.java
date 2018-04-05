@@ -23,6 +23,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.actions.ValidateAllViewsAction;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.ValidateViewAction;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.PreviewDocumentAction;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
+import gov.nasa.jpl.mbee.mdk.migrate.actions.GroupsMigrationAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.*;
 import gov.nasa.jpl.mbee.mdk.model.CollectActionsVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
@@ -30,7 +31,6 @@ import gov.nasa.jpl.mbee.mdk.model.UserScript;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.mdk.ocl.actions.OclQueryAction;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
@@ -373,12 +373,14 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         manager.addCategory(category);
         category.addAction(new OclQueryAction());
 
-        if (MDKOptionsGroup.getMDKOptions() != null && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-            MDActionsCategory validateCategory = new MDActionsCategory("MDKMAINVALIDATE", "Validate");
-            validateCategory.setNested(true);
-            category.addAction(validateCategory);
-            ValidateAllViewsAction validateAllViewsAction = new ValidateAllViewsAction();
-            validateCategory.addAction(validateAllViewsAction);
-        }
+        MDActionsCategory validateCategory = new MDActionsCategory(MDKConfigurator.class.getSimpleName() + "-Validate", "Validate");
+        validateCategory.setNested(true);
+        category.addAction(validateCategory);
+        validateCategory.addAction(new ValidateAllViewsAction());
+
+        MDActionsCategory migrateCategory = new MDActionsCategory(MDKConfigurator.class.getSimpleName() + "-Migrate", "Migrate");
+        migrateCategory.setNested(true);
+        category.addAction(migrateCategory);
+        migrateCategory.addAction(new GroupsMigrationAction());
     }
 }
