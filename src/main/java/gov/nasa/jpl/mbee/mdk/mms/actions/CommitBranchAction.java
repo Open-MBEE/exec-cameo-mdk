@@ -217,7 +217,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             e.printStackTrace();
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Branch creation for \"" + branchInfo.getName() + "\" on MMS initiated.");
+        Application.getInstance().getGUILog().log("[INFO] Branch creation/update for \"" + branchInfo.getName() + "\" on MMS initiated.");
         if (validateModel) {
             //RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             RunnableWithProgress temp = new ManualSyncRunner(Collections.singletonList(project.getPrimaryModel()), project, -1);
