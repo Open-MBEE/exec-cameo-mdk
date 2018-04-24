@@ -67,7 +67,7 @@ public class MMSUtils {
     }
 
     public enum JsonBlobType {
-        ELEMENT_JSON, ELEMENT_ID, PROJECT, REF, ORG
+        ELEMENT_JSON, ELEMENT_ID, ARTIFACT_JSON, ARTIFACT_ID, PROJECT, REF, ORG
     }
 
     public static AtomicReference<Exception> getLastException() {
@@ -129,19 +129,25 @@ public class MMSUtils {
         if (requestUri == null) {
             return null;
         }
-        if (depth == -1 || depth > 0) {
-            requestUri.setParameter("depth", java.lang.Integer.toString(depth));
-        }
+        requestUri.setParameter("depth", java.lang.Integer.toString(depth));
 
         // create request file
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
         //do cancellable request if progressStatus exists
-        Application.getInstance().getGUILog().log("[INFO] Searching for " + elementIds.size() + " elements from server...");
-        if (progressStatus != null) {
-            return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+    }
+
+    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        if (artifactIds == null || artifactIds.isEmpty()) {
+            return null;
         }
-        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
+        URIBuilder requestUri = getServiceProjectsRefsArtifactsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
+        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
     }
 
     public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
@@ -288,7 +294,7 @@ public class MMSUtils {
         return buildRequest(type, requestUri, null, null);
     }
 
-    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType) throws IOException {
+    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection<?> nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
             System.out.println("[INFO] Request Body: " + requestFile.getPath());
@@ -298,16 +304,27 @@ public class MMSUtils {
             requestFile.deleteOnExit();
         }
 
-        String arrayName = "elements";
-        if (jsonBlobType == JsonBlobType.ORG) {
-            arrayName = "orgs";
+        String arrayName = null;
+        switch (jsonBlobType) {
+            case ELEMENT_ID:
+            case ELEMENT_JSON:
+                arrayName = "elements";
+                break;
+            case ARTIFACT_ID:
+            case ARTIFACT_JSON:
+                arrayName = "artifacts";
+                break;
+            case ORG:
+                arrayName = "orgs";
+                break;
+            case PROJECT:
+                arrayName = "projects";
+                break;
+            case REF:
+                arrayName = "refs";
+                break;
         }
-        else if (jsonBlobType == JsonBlobType.PROJECT) {
-            arrayName = "projects";
-        }
-        else if (jsonBlobType == JsonBlobType.REF) {
-            arrayName = "refs";
-        }
+
         try (FileOutputStream outputStream = new FileOutputStream(requestFile);
              JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
             jsonGenerator.writeStartObject();
@@ -316,7 +333,7 @@ public class MMSUtils {
                 if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
                     jsonGenerator.writeObject(node);
                 }
-                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
+                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID || jsonBlobType == JsonBlobType.ARTIFACT_ID) {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
                     jsonGenerator.writeEndObject();
@@ -680,12 +697,21 @@ public class MMSUtils {
      * @return URIBuilder
      */
     public static URIBuilder getServiceProjectsRefsElementsUri(Project project) {
-        URIBuilder elementUri = getServiceProjectsRefsUri(project);
-        if (elementUri == null) {
+        URIBuilder elementsUri = getServiceProjectsRefsUri(project);
+        if (elementsUri == null) {
             return null;
         }
-        elementUri.setPath(elementUri.getPath() + "/" + MDUtils.getBranchId(project) + "/elements");
-        return elementUri;
+        elementsUri.setPath(elementsUri.getPath() + "/" + MDUtils.getBranchId(project) + "/elements");
+        return elementsUri;
+    }
+
+    public static URIBuilder getServiceProjectsRefsArtifactsUri(Project project) {
+        URIBuilder artifactsUri = getServiceProjectsRefsUri(project);
+        if (artifactsUri == null) {
+            return null;
+        }
+        artifactsUri.setPath(artifactsUri.getPath() + "/" + MDUtils.getBranchId(project) + "/artifacts");
+        return artifactsUri;
     }
 
     public static String getDefaultSiteName(IProject iProject) {

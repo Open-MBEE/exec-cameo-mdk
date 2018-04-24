@@ -1,86 +1,105 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTomSawyerDiagram;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.*;
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType.Table;
-
-
-/**
- * Created by johannes on 11/21/16.
- */
+@SuppressWarnings("unused")
 public class TomSawyerDiagram extends Query {
-    private diagramType type;
+    private DiagramType diagramType;
+    private boolean collectRelatedElements;
 
-    public void setType(diagramType type) {
-        this.type = type;
-    }
-
-    public enum diagramType {
-        Block_Definition_Diagram, Internal_Block_Diagram, State_Machine_Diagram, Activity_Diagram, Sequence_Diagram, Table
-    }
-
-
-    public TomSawyerDiagram() {
-        super();
+    @Override
+    public void initialize() {
+        Object o = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "diagramType", DocGenProfile.PROFILE_NAME, null);
+        if (o instanceof String) {
+            setDiagramType(DiagramType.valueOf(o.toString()));
+        }
+        if (o instanceof EnumerationLiteral) {
+            Arrays.stream(DiagramType.values()).filter(dt -> dt.getName().equals(((EnumerationLiteral) o).getName())).findAny().ifPresent(this::setDiagramType);
+        }
+        if (diagramType == null) {
+            Application.getInstance().getGUILog().log("[WARNING] No diagram type specified for " + Converters.getElementToHumanNameConverter().apply(dgElement) + ". Skipping diagram generation.");
+            return;
+        }
+        Object o2 = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "collectRelatedElements", DocGenProfile.PROFILE_NAME, false);
+        if (o2 instanceof Boolean) {
+            collectRelatedElements = (Boolean) o2;
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void initialize() {
-        Object enumliteral = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype,
-                "diagram_type", DocGenProfile.PROFILE_NAME, false);
-        if (enumliteral instanceof String) {
-            setType(diagramType.valueOf(enumliteral.toString()));
-        }
-        if (enumliteral instanceof EnumerationLiteral) {
-            ((EnumerationLiteral) enumliteral).getEnumeration();
-
-            switch (((EnumerationLiteral) enumliteral).getName()) {
-                case "Block_Definition_Diagram":
-                    setType(Block_Definition_Diagram);
-                    break;
-                case "Internal_Block_Diagram":
-                    setType(Block_Definition_Diagram);
-                    break;
-                case "State_Machine_Diagram":
-                    setType(State_Machine_Diagram);
-                    break;
-                case "Activity_Diagram":
-                    setType(Activity_Diagram);
-                    break;
-                case "Sequence_Diagram":
-                    setType(Sequence_Diagram);
-                    break;
-                case "Table":
-                    setType(Table);
-                    break;
-                default:
-            }
-        }
-
-
-    }
-
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
+        if (diagramType == null) {
+            return Collections.emptyList();
+        }
         List<Element> elements = new ArrayList<>();
         for (Object ob : this.getTargets()) {
             if (ob instanceof Element) {
                 elements.add((Element) ob);
             }
         }
-        DBTomSawyerDiagram dbts = new DBTomSawyerDiagram(elements);
-        dbts.setType(type);
-        return Collections.singletonList(dbts);
+        if (elements.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            TriFunction<TomSawyerDiagram, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>> generator = (TriFunction<TomSawyerDiagram, Collection<Element>, TomSawyerDiagram.DiagramType, List<DocumentElement>>) java.lang.Class.forName("gov.nasa.jpl.mbee.mdk.tomsawyer.api.DocumentElementGenerator").getConstructor().newInstance();
+            return generator.apply(this, elements, diagramType);
+        } catch (ReflectiveOperationException | ClassCastException e) {
+            Application.getInstance().getGUILog().log("[WARNING] MDK DocGen Tom Sawyer plugin is not installed. TomSawyerDiagram DocGen activity skipped.");
+        }
+        return Collections.emptyList();
+    }
 
+    public DiagramType getDiagramType() {
+        return diagramType;
+    }
+
+    public void setDiagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
+    }
+
+    public boolean isCollectRelatedElements() {
+        return collectRelatedElements;
+    }
+
+    public void setCollectRelatedElements(boolean collectRelatedElements) {
+        this.collectRelatedElements = collectRelatedElements;
+    }
+
+    public enum DiagramType {
+        BLOCK_DEFINITION("Block Definition Diagram", "BDD"),
+        INTERNAL_BLOCK("Internal Block Diagram", "IBD"),
+        STATE_MACHINE("State Machine", "STM"),
+        ACTIVITY("Activity Diagram", "ACT"),
+        SEQUENCE("Sequence Diagram", "SD"),
+        PACKAGE("Package Diagram", "PKG"),
+        PARAMETRIC("Parametric Diagram", "PAR"),
+        REQUIREMENT("Requirement Diagram", "REQ"),
+        USE_CASE("Use Case Diagram", "UC");
+
+        private final String name;
+        private final String abbreviation;
+
+        DiagramType(String name, String abbreviation) {
+            this.name = name;
+            this.abbreviation = abbreviation;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getAbbreviation() {
+            return abbreviation;
+        }
     }
 }

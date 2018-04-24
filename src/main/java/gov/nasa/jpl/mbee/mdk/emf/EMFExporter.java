@@ -223,10 +223,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 },
                 Type.PRE
         ),
-        SITE_CHARACTERIZATION(
+        IS_GROUP(
                 (element, project, objectNode) -> {
                     if (element instanceof Package) {
-                        objectNode.put(MDKConstants.IS_SITE_KEY, Utils.isSiteChar(project, (Package) element));
+                        objectNode.put(MDKConstants.IS_GROUP_KEY, StereotypesHelper.getStereotypes(element).stream().anyMatch(stereotype -> "_18_5_3_8bf0285_1520469040211_2821_15754".equals(stereotype.getLocalID())));
                     }
                     return objectNode;
                 },

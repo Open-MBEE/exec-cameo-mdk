@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <diagram version="8" type="Viewpoint Method Diagram" baseType="Activity Diagram" abbreviation="VMD" category="MDK">
+    <requiredPlugin>gov.nasa.jpl.mbee.mdk#Model Development Kit;SysML Extensions.mdxml;UML_Standard_Profile.mdzip
+    </requiredPlugin>
     <toolbarConfiguration>
         <baseCategory id="COMMON_ELEMENTS_DYNAMIC" parentCategoryID="COMMON_ELEMENTS_DYNAMIC" expandedByDefault="true"/>
         <category name="Common" id="action_category_1326673754018_667011_1" expandedByDefault="true">
@@ -134,9 +136,6 @@
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="BulletedList" listAsElement="false" opposite="false" id="IDaction_1326673869813_242529_0">
                     <stereotype id="_17_0_1_244d03ea_1319496225382_275996_25443"/>
                 </custom>
-                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="ViewpointConstraint" listAsElement="false" opposite="false" id="IDaction_1383599191103_493373_0">
-                    <stereotype id="_17_0_2_3_407019f_1383246724224_41450_29079"/>
-                </custom>
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="GenericTable" listAsElement="false" opposite="false" id="IDaction_1326673915972_347362_0">
                     <stereotype id="_17_0_1_244d03ea_1319498258297_961829_27083"/>
                 </custom>
@@ -148,6 +147,9 @@
                 </custom>
                 <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="Simulate" listAsElement="false" opposite="false" id="IDaction_1486492071543_659574_0">
                     <stereotype id="_18_0_6_8bf0285_1480702282066_678566_13974"/>
+                </custom>
+                <custom type="com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction" description="TomSawyerDiagram" listAsElement="false" opposite="false" id="IDaction_1522364056137_909194_0">
+                    <stereotype id="_18_0_5_ef50357_1480453603002_831462_13966"/>
                 </custom>
                 <custom type="com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode" description="Plot" listAsElement="false" opposite="false" id="IDaction_1326673971333_365714_0">
                     <stereotype id="_18_5_2_8bf0285_1506039168690_925234_16001"/>

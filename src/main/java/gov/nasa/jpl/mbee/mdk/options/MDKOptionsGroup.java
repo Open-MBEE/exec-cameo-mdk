@@ -41,6 +41,9 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public boolean isLogJson() {
+        if (MDUtils.isDeveloperMode()) {
+            return true;
+        }
         Property p = getProperty(LOG_JSON_ID);
         return (Boolean) p.getValue();
     }
@@ -149,7 +152,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     @Override
     public void setDefaultValues() {
-        setLogJson(MDUtils.isDeveloperMode());
+        setLogJson(false);
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);

@@ -1,60 +1,36 @@
 package gov.nasa.jpl.mbee.mdk.docgen.docbook;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram;
 
-import java.util.List;
-
-import static gov.nasa.jpl.mbee.mdk.model.TomSawyerDiagram.diagramType;
+import java.util.Set;
 
 public class DBTomSawyerDiagram extends DocumentElement {
-    public List<Element> getElements() {
+    private Element context;
+    private Set<Element> elements;
+    private String caption;
+
+    public Set<Element> getElements() {
         return elements;
     }
 
-    public void setElements(List<Element> elements) {
+    public void setElements(Set<Element> elements) {
         this.elements = elements;
     }
 
-    private List<Element> elements;
-    private String caption;
-    private boolean showForEditing = false;
-
-    public shortDiagramType getShortType() {
-        switch (type) {
-            case Block_Definition_Diagram:
-                return shortDiagramType.BDD;
-            case Internal_Block_Diagram:
-                return shortDiagramType.IBD;
-            case State_Machine_Diagram:
-                return shortDiagramType.SMD;
-            case Activity_Diagram:
-                return shortDiagramType.AD;
-            case Sequence_Diagram:
-                return shortDiagramType.SD;
-            case Table:
-                return shortDiagramType.Table;
-        }
-
-
-        return null;
+    public Element getContext() {
+        return context;
     }
 
-    public enum shortDiagramType {
-        BDD, IBD, SMD, AD, SD, Table
+    public void setContext(Element context) {
+        this.context = context;
     }
 
-    private diagramType type;
-
-    public DBTomSawyerDiagram(List<Element> classifiers) {
-        elements = classifiers;
-    }
+    private TomSawyerDiagram.DiagramType type;
 
     @Override
     public void accept(IDBVisitor v) {
-
         v.visit(this);
-
-
     }
 
     public void setCaption(String cap) {
@@ -65,24 +41,11 @@ public class DBTomSawyerDiagram extends DocumentElement {
         return caption;
     }
 
-    public List<Element> getClassifiers() {
-        return elements;
-
-    }
-
-
-    public boolean isShowForEditing() {
-        return showForEditing;
-    }
-
-    public void setShowForEditing(boolean showForEditing2) {
-        this.showForEditing = showForEditing2;
-    }
-
-
-    public void setType(diagramType type) {
+    public void setType(TomSawyerDiagram.DiagramType type) {
         this.type = type;
     }
 
-
+    public TomSawyerDiagram.DiagramType getType() {
+        return type;
+    }
 }

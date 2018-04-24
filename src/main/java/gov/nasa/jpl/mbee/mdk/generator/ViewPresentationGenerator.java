@@ -13,23 +13,27 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.task.EmptyProgressStatus;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
+import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.actions.CommitDiagramArtifactsAction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.validation.ImageValidator;
+import gov.nasa.jpl.mbee.mdk.mms.validation.DiagramValidator;
 import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.util.*;
@@ -111,16 +115,24 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<String, Pair<ObjectNode, Slot>> slotMap = new LinkedHashMap<>();
         Map<String, ViewMapping> viewMap = new LinkedHashMap<>();
 
+        ValidationSuite viewValidationSuite = null;
         for (Element rootView : rootViews) {
             // STAGE 1: Calculating view structure
             progressStatus.setDescription("Calculating view structure");
             progressStatus.setCurrent(1);
 
-            DocumentValidator dv = new DocumentValidator(rootView);
-            dv.validateDocument();
-            if (dv.isFatal()) {
-                dv.printErrors(false);
-                return;
+            ViewViewpointValidator dv = new ViewViewpointValidator(rootViews, project, recurse);
+            dv.run();
+            if (dv.isFailed()) {
+                Application.getInstance().getGUILog().log("[WARNING] View validation failed for " + Converters.getElementToHumanNameConverter().apply(rootView) + ". Skipping generation.");
+                if (viewValidationSuite == null) {
+                    viewValidationSuite = dv.getValidationSuite();
+                }
+                else {
+                    ValidationSuite vs = viewValidationSuite;
+                    dv.getValidationSuite().getValidationRules().forEach(rule -> vs.getValidationRules().stream().filter(r -> rule.getName().equals(r.getName())).findAny().ifPresent(r -> r.addViolations(rule.getViolations())));
+                }
+                continue;
             }
             // first run a local generation of the view model to get the current model view structure
             DocumentGenerator dg = new DocumentGenerator(rootView, dv, null, false);
@@ -137,8 +149,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             try {
                 docBookOutputVisitor = new DocBookOutputVisitor(true);
                 dge.accept(docBookOutputVisitor);
-            }
-            finally {
+            } finally {
                 if (SessionManager.getInstance().isSessionCreated(project)) {
                     SessionManager.getInstance().closeSession(project);
                 }
@@ -154,7 +165,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             for (Element view : viewHierarchyVisitor.getView2ViewElements().keySet()) {
                 if (processedElements.contains(view)) {
-                    Application.getInstance().getGUILog().log("Detected duplicate view reference. Skipping generation for " + Converters.getElementToIdConverter().apply(view) + ".");
+                    Application.getInstance().getGUILog().log("[WARNING] Detected duplicate view reference in " + Converters.getElementToHumanNameConverter().apply(view) + ". Skipping generation.");
                     continue;
                 }
                 ViewMapping viewMapping = viewMap.containsKey(Converters.getElementToIdConverter().apply(view)) ?
@@ -163,6 +174,9 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 viewMapping.setBook(book);
                 viewMap.put(Converters.getElementToIdConverter().apply(view), viewMapping);
             }
+        }
+        if (viewValidationSuite != null) {
+            Utils.displayValidationWindow(project, viewValidationSuite, viewValidationSuite.getName());
         }
 
         // Find and delete existing view constraints to prevent ID conflict when importing. Migration should handle this,
@@ -487,21 +501,21 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
         Map<Element, List<PresentationElementInstance>> view2pe = new LinkedHashMap<>();
         Map<Element, List<PresentationElementInstance>> view2unused = new LinkedHashMap<>();
         Map<Element, JSONArray> view2elements = new LinkedHashMap<>();
-        Map<String, ObjectNode> images = new LinkedHashMap<>();
+        Set<Diagram> diagrams = new LinkedHashSet<>();
         Set<Element> skippedViews = new HashSet<>();
-        for (Element rootView : rootViews) {
+        for (ViewMapping viewMapping : viewMap.values()) {
             DBAlfrescoVisitor dbAlfrescoVisitor = new DBAlfrescoVisitor(recurse, true);
             try {
-                viewMap.get(Converters.getElementToIdConverter().apply(rootView)).getBook().accept(dbAlfrescoVisitor);
+                viewMapping.getBook().accept(dbAlfrescoVisitor);
             } catch (Exception e) {
                 Utils.printException(e);
                 e.printStackTrace();
             }
-            views.addAll(presentationElementUtils.getViewProcessOrder(rootView, dbAlfrescoVisitor.getHierarchyElements()));
+            views.addAll(presentationElementUtils.getViewProcessOrder(viewMapping.getElement(), dbAlfrescoVisitor.getHierarchyElements()));
             view2pe.putAll(dbAlfrescoVisitor.getView2Pe());
             view2unused.putAll(dbAlfrescoVisitor.getView2Unused());
             view2elements.putAll(dbAlfrescoVisitor.getView2Elements());
-            images.putAll(dbAlfrescoVisitor.getImages());
+            dbAlfrescoVisitor.getImages().stream().map(DBImage::getImage).filter(Objects::nonNull).filter(diagram -> !ProjectUtilities.isElementInAttachedProject(diagram)).forEach(diagrams::add);
             views.removeAll(processedElements);
         }
 
@@ -525,16 +539,11 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             return;
         }
 
-        ImageValidator iv = new ImageValidator(images, images);
-        // this checks images generated from the local generation against what's on the web based on checksum
-        iv.validate(project);
-        // Auto-validate - https://cae-jira.jpl.nasa.gov/browse/MAGICDRAW-45
-        for (ValidationRule validationRule : iv.getSuite().getValidationRules()) {
-            for (ValidationRuleViolation validationRuleViolation : validationRule.getViolations()) {
-                if (!validationRuleViolation.getActions().isEmpty()) {
-                    validationRuleViolation.getActions().get(0).actionPerformed(null);
-                }
-            }
+        if (!diagrams.isEmpty()) {
+            DiagramValidator diagramValidator = new DiagramValidator(diagrams, project);
+            // TODO Use proper progress status
+            diagramValidator.run(EmptyProgressStatus.getDefault());
+            diagramValidator.getSuite().getValidationRules().stream().flatMap(rule -> rule.getViolations().stream()).flatMap(violation -> violation.getActions().stream()).filter(action -> action instanceof CommitDiagramArtifactsAction).forEach(action -> action.actionPerformed(null));
         }
 
         try {

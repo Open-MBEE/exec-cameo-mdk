@@ -11,8 +11,7 @@ import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import java.awt.event.ActionEvent;
 
 public class ValidateBranchesAction extends MMSAction {
-    private static final long serialVersionUID = 1L;
-    public static final String DEFAULT_ID = "ValidateBranches";
+    public static final String DEFAULT_ID = ValidateBranchesAction.class.getSimpleName();
 
     public ValidateBranchesAction() {
         super(DEFAULT_ID, "Branches", null, null);
@@ -39,7 +38,7 @@ public class ValidateBranchesAction extends MMSAction {
 
     @Override
     public void updateState() {
-        setEnabled(TicketUtils.isTicketSet(Application.getInstance().getProject()) && !super.isDisabled() && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
+        setEnabled(TicketUtils.isTicketSet(Application.getInstance().getProject()) && !MMSAction.isDisabled() && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
     }
 
 }

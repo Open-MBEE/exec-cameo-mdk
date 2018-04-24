@@ -12,9 +12,9 @@ import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.properties.Property;
+import com.nomagic.magicdraw.uml.DiagramDescriptor;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.ocl.OclQueryConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
@@ -83,15 +83,10 @@ public class MDKPlugin extends Plugin {
         CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
 
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
+        acm.addMainMenuConfigurator(mdkConfigurator);
         acm.addContainmentBrowserContextConfigurator(mdkConfigurator);
         acm.addSearchBrowserContextConfigurator(mdkConfigurator);
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, mdkConfigurator);
-
-        OclQueryConfigurator oclQueryConfigurator = new OclQueryConfigurator();
-        acm.addMainMenuConfigurator(oclQueryConfigurator);
-        acm.addSearchBrowserContextConfigurator(oclQueryConfigurator);
-        acm.addContainmentBrowserContextConfigurator(oclQueryConfigurator);
-        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, oclQueryConfigurator);
 
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
@@ -102,6 +97,14 @@ public class MDKPlugin extends Plugin {
         acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srConfigurator);
 
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
+
+        DiagramDescriptor viewDiagramDescriptor = Application.getInstance().getDiagramDescriptor(ViewDiagramConfigurator.DIAGRAM_NAME);
+        if (viewDiagramDescriptor != null) {
+            ActionsConfiguratorsManager actionsConfiguratorsManager = ActionsConfiguratorsManager.getInstance();
+            ViewDiagramConfigurator viewDiagramConfigurator = new ViewDiagramConfigurator();
+            actionsConfiguratorsManager.addDiagramToolbarConfigurator(ViewDiagramConfigurator.DIAGRAM_NAME, viewDiagramConfigurator);
+            actionsConfiguratorsManager.addTargetElementAMConfigurator(ViewDiagramConfigurator.DIAGRAM_NAME, viewDiagramConfigurator);
+        }
 
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
 
