@@ -73,7 +73,14 @@ configurations {
 
 // In this section you declare the dependencies for your production and test code
 dependencies {
-    // SLF4J API
+    
+    // Apache FOP
+    compile  group: 'org.apache.xmlgraphics', name: 'fop', version: '1.0'
+    
+	// Docbook XSL
+    compile 'net.sf.docbook:docbook-xsl:1.79.1:resources@zip'
+    
+	// SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
     // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
     
@@ -248,8 +255,15 @@ class PreDist extends DefaultTask {
             from project.configurations.compile.resolvedConfiguration.resolvedArtifacts.file
             from 'lib'
             from project.jar
+            exclude '**/docbook-xsl-*'
             into "build/generated-dist/plugins/${groupName}"
         }
+        def docbookZip = project.configurations.compile.files.find { file -> file.name.contains('docbook-xsl-')};
+        project.copy {
+            from project.zipTree(docbookZip)
+            into "build/generated-dist/plugins/${groupName}"
+        }
+        
         project.copy {
             from project.getTasks().getByName('javadocZip')
             into "build/generated-dist/plugins/${groupName}/javadoc"

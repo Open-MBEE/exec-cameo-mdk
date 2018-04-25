@@ -79,6 +79,7 @@ public class DocGenUtils {
             put("</svg>",
                     "</svg></imagedata></imageobject></mediaobject>");
             put("&nbsp;", "&#160;");
+            put("&sect;", "&#167;");
             put("&sup2;",
                     "<superscript>2</superscript>");
             put("&sup3;",
@@ -161,7 +162,7 @@ public class DocGenUtils {
             else {
                 return htmlToXmlEntities(((String) s)
                         .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
-                        .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
+                        .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;").replaceAll("\u00A0", ""));
             }
         }
         else if (s instanceof Integer) {
