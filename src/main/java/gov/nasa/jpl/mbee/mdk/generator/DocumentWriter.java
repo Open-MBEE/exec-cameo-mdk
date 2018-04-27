@@ -19,8 +19,6 @@ import org.apache.fop.apps.FOUserAgent;
 import org.apache.fop.apps.Fop;
 
 import java.io.*;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,12 +41,16 @@ public class DocumentWriter implements RunnableWithProgress {
     private File realfile;
     private File dir;
     private boolean genNewImage;
-
+    private static FopFactory fopFactory;
+    
     public DocumentWriter(Document dge, File realfile, boolean genNewImage, File dir) {
         this.dge = dge;
         this.realfile = realfile;
         this.dir = dir;
         this.genNewImage = genNewImage;
+        if(fopFactory == null) {
+        	fopFactory = FopFactory.newInstance();
+        }
     }
 
     @Override
@@ -104,9 +106,6 @@ public class DocumentWriter implements RunnableWithProgress {
         // Grab the docbook xml as input to FOP
         StreamSource docbookSrc = new StreamSource(this.realfile);
  
-        // TODO: This should be reused instead of generating it each time
-        FopFactory fopFactory = FopFactory.newInstance();
-        
         // create a user agent (used to tweak rendering settings on a per-run basis. 
         // we are just using defaults for now though.
         FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
