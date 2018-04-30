@@ -491,8 +491,9 @@ test {
         if (magicDrawLicense != null && !magicDrawLicense.isEmpty()) {
             new File('build/install/mdlicense.tmp').write(new String(magicDrawLicense.decodeBase64()))
         }
-        else if (buildAccess == 'internal') {
-            arguments.addAll(['-DFL_FORCE_USAGE=true', '-DFL_SERVER_ADDRESS=cae-lic04.jpl.nasa.gov', '-DFL_SERVER_PORT=1101', '-DFL_EDITION=18.5'])
+        String additionalTestArguments = project.getProperties().get('additionalTestArguments')
+        if (internalTestArguments != null && !internalTestArguments.isEmpty()) {
+            arguments.addAll(internalTestArguments.split(','))
         }
         jvmArgs = arguments
     }
@@ -510,7 +511,7 @@ task testrailPublish(type: JavaExec) {
     if ((s = project.getProperties().get('testrailHost')) != null) {
         arguments.addAll('--host', s)
     }
-    if ((s = project.getProperties().get('testrailUser')) != null) {
+    if ((s = project.getProperties().get('testrailUser')) != null || (s = project.getProperties().get('testrailUsername')) != null) {
         arguments.addAll('--user', s)
     }
     if ((s = project.getProperties().get('testrailPassword')) != null) {
