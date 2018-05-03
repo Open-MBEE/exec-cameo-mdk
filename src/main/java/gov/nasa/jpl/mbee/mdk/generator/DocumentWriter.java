@@ -19,8 +19,8 @@ import org.apache.fop.apps.FOUserAgent;
 import org.apache.fop.apps.Fop;
 
 import java.io.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import javax.xml.transform.Result;
 import javax.xml.transform.Transformer;
@@ -41,60 +41,66 @@ public class DocumentWriter implements RunnableWithProgress {
     private File realfile;
     private File dir;
     private boolean genNewImage;
-    private static FopFactory fopFactory;
-    
-    public DocumentWriter(Document dge, File realfile, boolean genNewImage, File dir) {
+    private static FopFactory fopFactory = FopFactory.newInstance();
+
+    public DocumentWriter(Document dge, File realFile, boolean genNewImage, File dir) {
         this.dge = dge;
-        this.realfile = realfile;
+        this.realfile = realFile;
         this.dir = dir;
         this.genNewImage = genNewImage;
-        if(fopFactory == null) {
-        	fopFactory = FopFactory.newInstance();
-        }
     }
 
     @Override
     public void run(ProgressStatus arg0) {
         GUILog gl = Application.getInstance().getGUILog();
         arg0.setIndeterminate(true);
+
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(realfile));
+        	File tmpFile = new File(realfile.getPath() + ".tmp");
+        	BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFile));
             gl.log("Output directory: " + dir.getAbsolutePath());
+
             SessionManager.getInstance().createSession(Application.getInstance().getProject(), DocBookOutputVisitor.class.getSimpleName());
             DocBookOutputVisitor visitor = new DocBookOutputVisitor(false, dir.getAbsolutePath());
             dge.accept(visitor);
             SessionManager.getInstance().closeSession(Application.getInstance().getProject());
             DBBook book = visitor.getBook();
             if (book != null) {
-                // List<DocumentElement> books = dge.getDocumentElement();
                 DBSerializeVisitor v = new DBSerializeVisitor(genNewImage, dir, arg0);
                 book.accept(v);
                 writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-                // writer.write("<!DOCTYPE book [\n<!ENTITY % sgml.features \"IGNORE\">\n<!ENTITY % xml.features \"INCLUDE\">\n<!ENTITY % dbcent PUBLIC \"-//OASIS//ENTITIES DocBook Character Entities\nV4.4//EN\" \"dbcentx.mod\">\n%dbcent;\n]>");
                 writer.write(v.getOut());
             }
             writer.flush();
             writer.close();
-            
-            generatePDF();
-            
+
+
+            if(realfile.getName().endsWith(".xml")) {
+            	Files.move(tmpFile.toPath(), realfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            else if(realfile.getName().endsWith(".pdf")) {
+            	generatePDF(tmpFile);
+            	Files.delete(tmpFile.toPath());
+            }
+            else {
+            	throw new IOException("Unsupported Docgen extension, valid options are .xml and .pdf");
+            }
+
             gl.log("Generation Finished");
-            
-        } 
+
+        }
         catch (IOException | FOPException | TransformerException ex) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             ex.printStackTrace(pw);
             gl.log(sw.toString()); // stack trace as a string
             ex.printStackTrace();
-        } 
-
-        
+        }
     }
-    
-    private void generatePDF() throws FOPException, TransformerException, IOException {
-        
-        //Get our plugin directory the most Java 8 way possible
+
+    private void generatePDF(File docbook) throws FOPException, TransformerException, IOException {
+
+        //Get our plugin directory
         PluginDescriptor pd = PluginUtils.getPlugins().stream().map(Plugin::getDescriptor)
         		.filter(descriptor -> descriptor.getName().equals("Model Development Kit"))
         		.findAny()
@@ -104,16 +110,14 @@ public class DocumentWriter implements RunnableWithProgress {
         File docbookXslFo = new File(pd.getPluginDirectory() + "/docbook/fo/docbook.xsl");
 
         // Grab the docbook xml as input to FOP
-        StreamSource docbookSrc = new StreamSource(this.realfile);
- 
-        // create a user agent (used to tweak rendering settings on a per-run basis. 
+        StreamSource docbookSrc = new StreamSource(docbook);
+
+        // create a user agent (used to tweak rendering settings on a per-run basis.
         // we are just using defaults for now though.
         FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
-        
-        // Assuming the Docbook output filename ends in ".xml" (it should...) just swap the .xml for .pdf 
-		OutputStream pdfOut = new java.io.FileOutputStream(new File(
-				this.realfile.getPath().replaceFirst(Pattern.quote(".xml") + "$", Matcher.quoteReplacement(".pdf"))));
-    
+
+		OutputStream pdfOut = new java.io.FileOutputStream(new File(this.realfile.getPath()));
+
         try {
             // Construct a FOP that makes PDFs (other options are postscript, rtf, etc.)
             Fop fop = fopFactory.newFop(MimeConstants.MIME_PDF, foUserAgent, pdfOut);

@@ -16,18 +16,16 @@ import gov.nasa.jpl.mbee.mdk.util.Utils;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collections;
 
-public class GenerateLocalDocument extends MDAction {
+public class GenerateLocalDocBook extends MDAction {
 
     private static final long serialVersionUID = 1L;
     private Element view;
-    public static final String DEFAULT_ID = GenerateLocalDocument.class.getSimpleName();
+    public static final String DEFAULT_ID = GenerateLocalDocBook.class.getSimpleName();
 
-    public GenerateLocalDocument(Element view) {
-        super(DEFAULT_ID, "Generate Document", null, null);
+    public GenerateLocalDocBook(Element view) {
+        super(DEFAULT_ID, "DocBook", null, null);
         this.view = view;
     }
 
@@ -73,7 +71,7 @@ public class GenerateLocalDocument extends MDAction {
         }
         File dir = savefile.getParentFile();
         File realfile = new File(dir, filename);
-        ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage, dir), "Generating DocGen 3 Document...", true, 0);
+        ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(dge, realfile, genNewImage, dir), "Generating DocGen Docbook Document...", true, 0);
     }
 
 }

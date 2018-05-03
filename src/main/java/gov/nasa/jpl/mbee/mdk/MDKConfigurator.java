@@ -250,18 +250,29 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 if (act == null) {
                     category.addAction(new ValidateViewAction(view));
                 }
+
                 act = manager.getActionFor(ValidateViewAction.RECURSIVE_DEFAULT_ID);
                 if (act == null) {
                     category.addAction(new ValidateViewAction(view, true));
                 }
+
                 act = manager.getActionFor(PreviewDocumentAction.DEFAULT_ID);
                 if (act == null) {
                     category.addAction(new PreviewDocumentAction(e));
                 }
 
-                act = manager.getActionFor(GenerateLocalDocument.DEFAULT_ID);
+                MDActionsCategory docgenCategory = new MDActionsCategory(MDKConfigurator.class.getSimpleName() + "Generate Document", "Generate Document");
+                docgenCategory.setNested(true);
+                category.addAction(docgenCategory);
+
+                act = manager.getActionFor(GenerateLocalDocBook.DEFAULT_ID);
                 if (act == null) {
-                    category.addAction(new GenerateLocalDocument(e));
+                	docgenCategory.addAction(new GenerateLocalDocBook(e));
+                }
+
+                act = manager.getActionFor(GenerateLocalDocPdf.DEFAULT_ID);
+                if (act == null) {
+                	docgenCategory.addAction(new GenerateLocalDocPdf(e));
                 }
             }
         }
