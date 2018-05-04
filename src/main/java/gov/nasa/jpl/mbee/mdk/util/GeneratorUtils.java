@@ -105,10 +105,6 @@ public class GeneratorUtils {
                 DocGenProfile.documentMetaStereotype, "header");
         String footer = (String) StereotypesHelper.getStereotypePropertyFirst(start,
                 DocGenProfile.documentMetaStereotype, "footer");
-        String subheader = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "subheader");
-        String subfooter = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "subfooter");
         String legalNotice = (String) StereotypesHelper.getStereotypePropertyFirst(start,
                 DocGenProfile.documentMetaStereotype, "legalNotice");
         String acknowledgements = (String) StereotypesHelper.getStereotypePropertyFirst(start,
@@ -229,8 +225,6 @@ public class GeneratorUtils {
         doc.setChunkSectionDepth(chunkSectionDepth);
         doc.setFooter(footer);
         doc.setHeader(header);
-        doc.setSubfooter(subfooter);
-        doc.setSubheader(subheader);
         doc.setTitle(title);
         doc.setTocSectionDepth(tocSectionDepth);
 
@@ -253,8 +247,6 @@ public class GeneratorUtils {
         meta.setHeader(header);
         meta.setTitlePageLegalNotice(legalNotice);
         meta.setIndex(index);
-        meta.setSubfooter(subfooter);
-        meta.setSubheader(subheader);
         meta.setSubtitle(subtitle);
         meta.setTitle(title);
         meta.setTocSectionDepth(tocSectionDepth);
