@@ -48,22 +48,6 @@ public class Document extends Container {
         this.footer = footer;
     }
 
-    public String getSubheader() {
-        return subheader;
-    }
-
-    public void setSubheader(String subheader) {
-        this.subheader = subheader;
-    }
-
-    public String getSubfooter() {
-        return subfooter;
-    }
-
-    public void setSubfooter(String subfooter) {
-        this.subfooter = subfooter;
-    }
-
     public boolean getChunkFirstSections() {
         return chunkFirstSections;
     }

@@ -68,6 +68,7 @@ public class GroupsMigrationAction extends MDAction {
         try {
             groups.forEach(group -> StereotypesHelper.addStereotype(group, groupStereotype));
             for (Element elementToDelete : elementsToDelete) {
+                System.out.println("Deleting " + Converters.getElementToHumanNameConverter().apply(elementToDelete));
                 ModelElementsManager.getInstance().removeElement(elementToDelete);
             }
         } catch (ReadOnlyElementException e) {
