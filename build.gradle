@@ -492,8 +492,8 @@ test {
             new File('build/install/mdlicense.tmp').write(new String(magicDrawLicense.decodeBase64()))
         }
         String additionalTestArguments = project.getProperties().get('additionalTestArguments')
-        if (internalTestArguments != null && !internalTestArguments.isEmpty()) {
-            arguments.addAll(internalTestArguments.split(','))
+        if (additionalTestArguments != null && !additionalTestArguments.isEmpty()) {
+            arguments.addAll(additionalTestArguments.split(','))
         }
         jvmArgs = arguments
     }
