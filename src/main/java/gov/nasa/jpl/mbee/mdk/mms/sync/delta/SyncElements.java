@@ -8,9 +8,6 @@ import com.nomagic.magicdraw.commands.CommandHistory;
 import com.nomagic.magicdraw.commands.MacroCommand;
 import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
-import com.nomagic.magicdraw.esi.EsiUtils;
-import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -20,15 +17,12 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -159,31 +153,5 @@ public class SyncElements {
             }
         }
         return changelog;
-    }
-
-    public static List<Element> lockSyncFolder(Project project) {
-        if (!ProjectUtilities.isFromEsiServer(project.getPrimaryProject())) {
-            return Collections.emptyList();
-        }
-        String folderId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.SYNC_SYSML_ID_SUFFIX;
-        Element folder = Converters.getIdToElementConverter().apply(folderId, project);
-        if (folder == null) {
-            return Collections.emptyList();
-        }
-        ILockProjectService lockService = EsiUtils.getLockService(project);
-        if (lockService == null) {
-            return Collections.emptyList();
-        }
-        Collection<Element> ownedElements = folder.getOwnedElement();
-        List<Element> lockedElements = new ArrayList<>(ownedElements.size());
-        for (Element element : folder.getOwnedElement()) {
-            if (element instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class && !lockService.isLocked(element) && lockService.canBeLocked(element)) {
-                lockedElements.add(element);
-            }
-        }
-        if (!lockService.lockElements(lockedElements, false, null)) {
-            return Collections.emptyList();
-        }
-        return lockedElements;
     }
 }
