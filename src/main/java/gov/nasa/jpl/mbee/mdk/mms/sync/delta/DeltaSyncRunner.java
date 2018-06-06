@@ -10,7 +10,6 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -104,22 +103,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // UPDATE LOCKS
 
-        ILockProjectService lockService = EsiUtils.getLockService(project);
-        if (lockService == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Teamwork Cloud lock service is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
-
         listener.setDisabled(true);
-        try {
-            lockService.updateLocks(progressStatus);
-        } catch (RuntimeException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Failed to update locks from Teamwork Cloud. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
-            e.printStackTrace();
-            return;
-        } finally {
-            listener.setDisabled(false);
-        }
 
         // UPDATE MMS CHANGELOG
 
@@ -279,25 +263,11 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it does not exist. Skipping.");
                             continue;
                         }
-                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is locked by someone else. Skipping.");
-                            }
-                            failedMmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
-                            continue;
-                        }
                         mmsElementsToUpdateLocally.put(id, new Pair<>(objectNode, element));
                         break;
                     case DELETED:
                         if (element == null) {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it doesn't exist. Skipping.");
-                            continue;
-                        }
-                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is locked by someone else. Skipping.");
-                            }
-                            failedMmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                             continue;
                         }
                         mmsElementsToDeleteLocally.put(id, element);
