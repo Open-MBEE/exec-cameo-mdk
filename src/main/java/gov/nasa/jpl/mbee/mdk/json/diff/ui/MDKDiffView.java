@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.json.diff.ui;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.ui.dialogs.specifications.SpecificationDialogManager;
 import com.nomagic.magicdraw.uml.ElementIcon;
@@ -10,19 +11,22 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Scene;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.regex.Pattern;
 
-public class MDKDiffView extends DiffView {
+public class MDKDiffView extends DiffView implements Runnable {
     private static final Pattern ID_PATTERN = Pattern.compile("[\\w/]+Id(s)?$");
 
     public MDKDiffView(JsonNode source, JsonNode target, JsonNode patch, Project project) throws IOException {
@@ -112,6 +116,30 @@ public class MDKDiffView extends DiffView {
             this.getController().getKeyTreeTableColumn().setText("Attribute");
             this.getController().getSourceValueTreeTableColumn().setText("Local Value");
             this.getController().getTargetValueTreeTableColumn().setText("MMS Value");
+        });
+    }
+
+    @Override
+    public void run() {
+        Platform.runLater(() -> {
+            Scene scene = new Scene(this);
+            Stage stage = new Stage();
+            stage.setTitle("Element Differences");
+            stage.setScene(scene);
+            WindowAdapter windowAdapter = new WindowAdapter() {
+                @Override
+                public void windowDeactivated(java.awt.event.WindowEvent e) {
+                    Platform.runLater(() -> stage.setAlwaysOnTop(false));
+                }
+
+                @Override
+                public void windowActivated(java.awt.event.WindowEvent e) {
+                    Platform.runLater(() -> stage.setAlwaysOnTop(true));
+                }
+            };
+            Application.getInstance().getMainFrame().addWindowListener(windowAdapter);
+            stage.setOnCloseRequest(event -> Application.getInstance().getMainFrame().removeWindowListener(windowAdapter));
+            stage.show();
         });
     }
 }
