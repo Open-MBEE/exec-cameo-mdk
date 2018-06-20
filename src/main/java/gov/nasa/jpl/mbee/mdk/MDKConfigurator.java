@@ -119,19 +119,6 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         Stereotype classview = Utils.getViewClassStereotype(project);
         Stereotype elementGroupStereotype = Utils.getElementGroupStereotype(project);
 
-        // top-level context menu: Refactor With ID
-        ActionsCategory refactorWithIDActionCat = myCategory(manager, "Refactor With ID", "Refactor With ID");
-        if (e instanceof com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class & !(e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component)) {
-            if (manager.getActionFor(ClassToComponentRefactorWithIDAction.DEFAULT_ID) == null) {
-                refactorWithIDActionCat.addAction(new ClassToComponentRefactorWithIDAction(es));
-            }
-        }
-        if (e instanceof com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component) {
-            if (manager.getActionFor(ComponentToClassRefactorWithIDAction.DEFAULT_ID) == null) {
-                refactorWithIDActionCat.addAction(new ComponentToClassRefactorWithIDAction(es));
-            }
-        }
-
         ActionsCategory modelLoad = myCategory(manager, "MMSContext", "MMS");
         if (!TicketUtils.isTicketSet(project)) {
             ActionsCategory login = getCategory(manager, "LoginOption", "LoginOption", modelLoad);
