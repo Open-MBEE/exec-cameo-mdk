@@ -171,7 +171,13 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 return false;
             }
 
-            lastSyncedCommitId = getLastSyncedMmsCommit();
+            // https://support.nomagic.com/browse/MDUMLCS-28121
+            try {
+                lastSyncedCommitId = getLastSyncedMmsCommit();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                return false;
+            }
             Deque<String> commitIdDeque = new ArrayDeque<>();
             int exponent = 0;
 
