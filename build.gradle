@@ -131,7 +131,7 @@ dependencies {
     // Other dependencies we're unable to resolve via standard repositories
 
     if (buildAccess == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.4.0-rc6', ext: 'zip'
+        preCompile group: 'gov.nasa.jpl.cae.magicdraw', name: 'cae-magicdraw-core', version: '3.4.0-rc7', ext: 'zip'
     }
     else {
         preCompile group: 'com.nomagic', name: 'magicdraw', version: '185sp3', classifier: 'MagicDraw_185_sp3_no_install', ext: 'zip'
