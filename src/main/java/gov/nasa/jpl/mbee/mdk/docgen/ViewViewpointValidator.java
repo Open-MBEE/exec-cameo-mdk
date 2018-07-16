@@ -48,7 +48,7 @@ public class ViewViewpointValidator implements Runnable {
 
     private ValidationRule viewConformanceMultiplicity = new ValidationRule("View Conformance", "View shall conform to only one viewpoint.", ViolationSeverity.ERROR);
     private ValidationRule exposedElements = new ValidationRule("Exposed Elements", "View has no exposed elements.", ViolationSeverity.WARNING);
-    private ValidationRule missingViewpointMethod = new ValidationRule("Missing Viewpoint Method", "Viewpoint shall have a method.", ViolationSeverity.WARNING);
+    private ValidationRule missingViewpointMethod = new ValidationRule("Missing Viewpoint Method", "Viewpoint shall have a method.", ViolationSeverity.ERROR);
     private ValidationRule initialNodeMultiplicity = new ValidationRule("Initial Node Multiplicity", "Activity shall have only one initial node.", ViolationSeverity.ERROR);
     private ValidationRule outgoingFlowMultiplicity = new ValidationRule("Outgoing Flow Multiplicity", "Activity node shall have only one outgoing flow.", ViolationSeverity.WARNING);
     private ValidationRule incomingFlowMultiplicity = new ValidationRule("Incoming Flow Multiplicity", "Activity node shall have only one incoming flow.", ViolationSeverity.WARNING);
