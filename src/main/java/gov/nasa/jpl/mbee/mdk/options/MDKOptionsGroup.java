@@ -22,8 +22,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             PERSIST_CHANGELOG_ID = "PERSIST_CHANGELOG_ID",
             ENABLE_CHANGE_LISTENER_ID = "ENABLE_CHANGE_LISTENER_ID",
             ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
-            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
-            SHOW_ADVANCED_OPTIONS_ID = "SHOW_ADVANCED_OPTIONS_ID";
+            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID";
 
     public MDKOptionsGroup() {
         super(ID);
@@ -106,18 +105,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         }
     }
 
-    public boolean isMDKAdvancedOptions() {
-        Property p = getProperty(SHOW_ADVANCED_OPTIONS_ID);
-        return (Boolean) p.getValue();
-    }
-
-    public void setMDKAdvancedOptions(boolean value) {
-        BooleanProperty property = new BooleanProperty(SHOW_ADVANCED_OPTIONS_ID, value);
-        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
-        property.setGroup(GROUP);
-        addProperty(property, true);
-    }
-
     public File[] getCustomUserScriptDirectories() {
         Property p = getProperty(CUSTOM_USER_SCRIPT_DIRECTORIES_ID);
         String val = p.getValueStringRepresentation();
@@ -156,7 +143,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
-        setMDKAdvancedOptions(MDUtils.isDeveloperMode());
         setUserScriptDirectory("");
     }
 

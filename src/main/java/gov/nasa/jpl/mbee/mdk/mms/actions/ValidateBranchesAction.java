@@ -38,7 +38,7 @@ public class ValidateBranchesAction extends MMSAction {
 
     @Override
     public void updateState() {
-        setEnabled(TicketUtils.isTicketSet(Application.getInstance().getProject()) && !MMSAction.isDisabled() && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions());
+        setEnabled(TicketUtils.isTicketSet(Application.getInstance().getProject()) && !MMSAction.isDisabled());
     }
 
 }

@@ -153,15 +153,6 @@ public class MDKPlugin extends Plugin {
     private void configureEnvironmentOptions() {
         EnvironmentOptions mdkOptions = Application.getInstance().getEnvironmentOptions();
         mdkOptions.addGroup(new MDKOptionsGroup());
-        EnvironmentOptions.EnvironmentChangeListener mdkEnvOptionsListener = list -> {
-            Property advancedOptions = MDKOptionsGroup.getMDKOptions().getProperty(MDKOptionsGroup.SHOW_ADVANCED_OPTIONS_ID);
-            for (Property p : list) {
-                if (p.equals(advancedOptions) && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-                    Application.getInstance().getGUILog().log("[INFO] You must restart MagicDraw to show advanced MDK options.");
-                }
-            }
-        };
-        mdkOptions.addEnvironmentChangeListener(mdkEnvOptionsListener);
     }
 
     private void initJavaFX() {

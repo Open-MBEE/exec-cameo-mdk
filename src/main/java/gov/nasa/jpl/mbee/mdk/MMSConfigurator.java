@@ -36,13 +36,11 @@ public class MMSConfigurator implements AMConfigurator {
         GenerateAllViewsAction generateAllViewsAction = new GenerateAllViewsAction();
         category.addAction(generateAllViewsAction);
 
-        if (MDKOptionsGroup.getMDKOptions() != null && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-            MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
-            validateCategory.setNested(true);
-            category.addAction(validateCategory);
-            ValidateBranchesAction validateBranchesAction = new ValidateBranchesAction();
-            validateCategory.addAction(validateBranchesAction);
-        }
+        MDActionsCategory validateCategory = new MDActionsCategory("MMSMAINVALIDATE", "Validate");
+        validateCategory.setNested(true);
+        category.addAction(validateCategory);
+        ValidateBranchesAction validateBranchesAction = new ValidateBranchesAction();
+        validateCategory.addAction(validateBranchesAction);
     }
 
 }
