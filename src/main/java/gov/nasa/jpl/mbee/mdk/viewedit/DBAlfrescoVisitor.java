@@ -117,6 +117,7 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
         entry.put("type", "Image");
         entry.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(image.getImage()));
         entry.put("title", image.getTitle());
+        entry.put("excludeFromList", image.isExcludeFromList());
         return entry;
     }
 
