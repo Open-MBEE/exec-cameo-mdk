@@ -19,6 +19,7 @@ public class Image extends Query {
     protected List<String> captions;
     protected boolean showCaptions;
     protected boolean doNotShow;
+    protected boolean excludeFromList;
 
     public void setCaptions(List<String> c) {
         captions = c;
@@ -34,6 +35,14 @@ public class Image extends Query {
 
     public Boolean getDoNotShow() {
         return doNotShow;
+    }
+
+    public boolean isExcludeFromList() {
+        return excludeFromList;
+    }
+
+    public void setExcludeFromList(boolean excludeFromList) {
+        this.excludeFromList = excludeFromList;
     }
 
     public Boolean getShowCaptions() {
@@ -58,7 +67,8 @@ public class Image extends Query {
                     Diagram diagram = (Diagram) o;
                     DBImage im = new DBImage();
                     im.setDiagram(diagram);
-                    im.setDoNotShow(getDoNotShow());
+                    im.setDoNotShow(doNotShow);
+                    im.setExcludeFromList(excludeFromList);
                     String title = "";
                     if (getTitles() != null && getTitles().size() > i) {
                         title = getTitles().get(i);
@@ -99,13 +109,14 @@ public class Image extends Query {
     @Override
     public void initialize() {
         // TODO Auto-generated method stub
-        Boolean doNotShow = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
-                DocGenProfile.imageStereotype, "doNotShow", DocGenProfile.PROFILE_NAME, false);
+        setDoNotShow((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                DocGenProfile.imageStereotype, "doNotShow", DocGenProfile.PROFILE_NAME, false));
         setCaptions((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.hasCaptions,
                 "captions", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
         setShowCaptions((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.hasCaptions,
                 "showCaptions", DocGenProfile.PROFILE_NAME, true));
-        setDoNotShow(doNotShow);
+        setExcludeFromList((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.hasCaptions,
+                "excludeFromList", DocGenProfile.PROFILE_NAME, false));
     }
 
 }

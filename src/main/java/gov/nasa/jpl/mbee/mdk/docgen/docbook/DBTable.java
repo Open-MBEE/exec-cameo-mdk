@@ -38,6 +38,7 @@ public class DBTable extends DocumentElement {
     private boolean transpose;
     private boolean hideHeaders;
     private boolean showIfEmpty;
+    private boolean excludeFromList;
 
     public List<List<DocumentElement>> getBody() {
         return body;
@@ -69,6 +70,14 @@ public class DBTable extends DocumentElement {
 
     public void setShowIfEmpty(boolean showIfEmpty) {
         this.showIfEmpty = showIfEmpty;
+    }
+
+    public boolean isExcludeFromList() {
+        return excludeFromList;
+    }
+
+    public void setExcludeFromList(boolean excludeFromList) {
+        this.excludeFromList = excludeFromList;
     }
 
     /**
