@@ -32,13 +32,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<Project, MMSDeltaProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, MMSDeltaProjectMapping> projectMappings = Collections.synchronizedMap(new WeakHashMap<>());
 
     @Override
     public void projectOpened(Project project) {
