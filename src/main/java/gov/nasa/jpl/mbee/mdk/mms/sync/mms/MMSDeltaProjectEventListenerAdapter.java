@@ -163,6 +163,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             if (!project.isRemote()) {
                 return false;
             }
+            // TODO test if branch exists to avoid 404 on commits GET
             if (!TicketUtils.isTicketSet(project)) {
                 inMemoryCommits.clear();
                 inMemoryChangelog.clear();
