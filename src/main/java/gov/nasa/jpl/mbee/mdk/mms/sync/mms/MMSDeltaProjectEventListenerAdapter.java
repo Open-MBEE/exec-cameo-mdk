@@ -32,13 +32,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<Project, MMSDeltaProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, MMSDeltaProjectMapping> projectMappings = Collections.synchronizedMap(new WeakHashMap<>());
 
     @Override
     public void projectOpened(Project project) {
@@ -164,6 +163,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             if (!project.isRemote()) {
                 return false;
             }
+            // TODO test if branch exists to avoid 404 on commits GET
             if (!TicketUtils.isTicketSet(project)) {
                 inMemoryCommits.clear();
                 inMemoryChangelog.clear();
@@ -171,7 +171,13 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 return false;
             }
 
-            lastSyncedCommitId = getLastSyncedMmsCommit();
+            // https://support.nomagic.com/browse/MDUMLCS-28121
+            try {
+                lastSyncedCommitId = getLastSyncedMmsCommit();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                return false;
+            }
             Deque<String> commitIdDeque = new ArrayDeque<>();
             int exponent = 0;
 

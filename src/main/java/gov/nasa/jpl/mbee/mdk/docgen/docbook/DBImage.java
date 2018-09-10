@@ -14,6 +14,7 @@ public class DBImage extends DocumentElement {
     private Diagram image;
     private String caption;
     private boolean doNotShow;
+    private boolean excludeFromList;
 
     public DBImage(Diagram diagram) {
         this.image = diagram;
@@ -48,6 +49,14 @@ public class DBImage extends DocumentElement {
 
     public void setDoNotShow(boolean b) {
         doNotShow = b;
+    }
+
+    public boolean isExcludeFromList() {
+        return excludeFromList;
+    }
+
+    public void setExcludeFromList(boolean excludeFromList) {
+        this.excludeFromList = excludeFromList;
     }
 
     @Override

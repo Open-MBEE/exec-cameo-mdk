@@ -30,6 +30,6 @@ public class MDKApplication extends Application {
     }
 
     public static void main(String... args) {
-        javafx.application.Application.launch(MDKApplication.class);
+        Application.launch(MDKApplication.class);
     }
 }

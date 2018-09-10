@@ -32,6 +32,8 @@ public class MDKPlugin extends Plugin {
     public static final String MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
 
     private static String VERSION;
+    private static boolean JAVAFX_SUPPORTED;
+
     public static ClassLoader extensionsClassloader;
     public static ActionsManager MAIN_TOOLBAR_ACTIONS_MANAGER;
 
@@ -151,33 +153,31 @@ public class MDKPlugin extends Plugin {
     private void configureEnvironmentOptions() {
         EnvironmentOptions mdkOptions = Application.getInstance().getEnvironmentOptions();
         mdkOptions.addGroup(new MDKOptionsGroup());
-        EnvironmentOptions.EnvironmentChangeListener mdkEnvOptionsListener = list -> {
-            Property advancedOptions = MDKOptionsGroup.getMDKOptions().getProperty(MDKOptionsGroup.SHOW_ADVANCED_OPTIONS_ID);
-            for (Property p : list) {
-                if (p.equals(advancedOptions) && MDKOptionsGroup.getMDKOptions().isMDKAdvancedOptions()) {
-                    Application.getInstance().getGUILog().log("[INFO] You must restart MagicDraw to show advanced MDK options.");
-                }
-            }
-        };
-        mdkOptions.addEnvironmentChangeListener(mdkEnvOptionsListener);
     }
 
     private void initJavaFX() {
         try {
             Class.forName("javafx.application.Platform");
         } catch (ClassNotFoundException e) {
-            System.err.println("[WARNING] JavaFX libraries are unavailable. Please add \"-Dorg.osgi.framework.bundle.parent=ext\" to the \"JAVA_ARGS\" line in your properties file(s) in your MagicDraw bin directory and restart.");
+            System.err.println("[WARNING] JavaFX libraries are unavailable. Please add \"-Dorg.osgi.framework.bundle.parent=ext\" to the \"JAVA_ARGS\" line in the properties file(s) in your MagicDraw bin directory and restart.");
             return;
         }
         new Thread(() -> {
             try {
                 Class<?> clazz = Class.forName("gov.nasa.jpl.mbee.mdk.MDKApplication");
                 Method method = clazz.getMethod("main", String[].class);
+                // has to be before invocation since it hangs
+                MDKPlugin.JAVAFX_SUPPORTED = true;
                 method.invoke(null, new Object[]{new String[]{}});
             } catch (Exception | Error e) {
+                MDKPlugin.JAVAFX_SUPPORTED = false;
                 System.err.println("[WARNING] Failed to initialize JavaFX application. JavaFX functionality is disabled.");
                 e.printStackTrace();
             }
         }, "JavaFX Init").start();
+    }
+
+    public static boolean isJavaFXSupported() {
+        return JAVAFX_SUPPORTED;
     }
 }

@@ -16,6 +16,8 @@ import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SetViewpointMethodAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction, Runnable {
     private static String DEFAULT_ID = SetViewpointMethodAction.class.getSimpleName();
@@ -48,7 +50,7 @@ public class SetViewpointMethodAction extends RuleViolationAction implements Ann
         Project project = Project.getProject(viewpoint);
         SessionManager.getInstance().createSession(project, DEFAULT_ID);
         try {
-            annotations.stream().flatMap(annotation -> annotation.getActions().stream()).filter(action -> action instanceof SetViewpointMethodAction).map(action -> (SetViewpointMethodAction) action).forEach(SetViewpointMethodAction::run);
+            annotations.stream().flatMap(annotation -> annotation.getActions().stream()).filter(action -> action instanceof SetViewpointMethodAction).map(action -> (SetViewpointMethodAction) action).collect(Collectors.toMap(SetViewpointMethodAction::getViewpoint, Function.identity(), (oldValue, newValue) -> oldValue)).values().forEach(SetViewpointMethodAction::run);
         }
         finally {
             if (SessionManager.getInstance().isSessionCreated(project)) {
@@ -69,5 +71,13 @@ public class SetViewpointMethodAction extends RuleViolationAction implements Ann
         }
         Operation operation = ViewpointAdditionalDrawAction.createOperation(viewpoint);
         operation.getMethod().add(behavior);
+    }
+
+    public Class getViewpoint() {
+        return viewpoint;
+    }
+
+    public Behavior getBehavior() {
+        return behavior;
     }
 }

@@ -275,27 +275,29 @@ public class EMFBulkImporter implements BulkImportFunction {
                         }
                     }
                 }
-
-                if (failedElementMap.isEmpty()) {
-                    onSuccess();
-                }
-
-                if (SessionManager.getInstance().isSessionCreated(project)) {
-                    SessionManager.getInstance().closeSession(project);
-                }
                 break;
             }
         } finally {
-            if (SessionManager.getInstance().isSessionCreated(project)) {
-                SessionManager.getInstance().cancelSession(project);
-            }
-            if (!failedElementMap.isEmpty()) {
-                onFailure();
-            }
-            if (progressStatus != null) {
-                progressStatus.setDescription(initialProgressStatusDescription);
-                progressStatus.setCurrent(initialProgressStatusCurrent);
-                progressStatus.setIndeterminate(initialProgressStatusIndeterminate);
+            try {
+                if (failedElementMap.isEmpty()) {
+                    onSuccess();
+                }
+                else {
+                    onFailure();
+                }
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().closeSession(project);
+                }
+
+                if (progressStatus != null) {
+                    progressStatus.setDescription(initialProgressStatusDescription);
+                    progressStatus.setCurrent(initialProgressStatusCurrent);
+                    progressStatus.setIndeterminate(initialProgressStatusIndeterminate);
+                }
+            } finally {
+                if (SessionManager.getInstance().isSessionCreated(project)) {
+                    SessionManager.getInstance().cancelSession(project);
+                }
             }
         }
         return (changelog == null ? new Changelog<>() : changelog);
