@@ -112,9 +112,9 @@ public class TableStructure extends Table {
         }
         if (ts != null) {
             bnode = GeneratorUtils.findInitialNode(ts);
-            if (ts instanceof NamedElement) {
-                title = ((NamedElement) ts).getName();
-            }
+        }
+        if (dgElement instanceof NamedElement) {
+            title = ((NamedElement) dgElement).getName();
         }
     }
 
