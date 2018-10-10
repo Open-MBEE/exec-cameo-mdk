@@ -78,7 +78,7 @@ public class TomSawyerDiagram extends Query {
     public enum DiagramType {
         BLOCK_DEFINITION("Block Definition Diagram", "BDD"),
         INTERNAL_BLOCK("Internal Block Diagram", "IBD"),
-        STATE_MACHINE("State Machine", "STM"),
+        STATE_MACHINE("State Machine Diagram", "STM"),
         ACTIVITY("Activity Diagram", "ACT"),
         SEQUENCE("Sequence Diagram", "SD"),
         PACKAGE("Package Diagram", "PKG"),
