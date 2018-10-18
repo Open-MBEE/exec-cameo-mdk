@@ -1,9 +1,9 @@
 FROM alpine:3.8
 
 ENV JAVA_VERSION=8 \
-    JAVA_UPDATE=181 \
-    JAVA_BUILD=13 \
-    JAVA_PATH=96a7b8442fe848ef90c96a2fad6ed6d1 \
+    JAVA_UPDATE=191 \
+    JAVA_BUILD=12 \
+    JAVA_PATH=2787e4a523244c269598db4e85c51e0c \
     JAVA_HOME="/usr/lib/jvm/default-jvm"
 
 RUN apk add --no-cache --virtual=build-dependencies wget ca-certificates unzip && \
