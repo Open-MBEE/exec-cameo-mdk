@@ -47,7 +47,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts 'build/reports/**'
+            // archiveArtifacts 'build/reports/**'
             junit 'build/test-results/**/*.xml'
         }
     }
