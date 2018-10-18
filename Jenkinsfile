@@ -45,10 +45,12 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            // archiveArtifacts 'build/reports/**'
-            junit 'build/test-results/**/*.xml'
-        }
-    }
+
+    // post {
+    //     always {
+    //         archiveArtifacts 'build/reports/**'
+    //         junit 'build/test-results/**/*.xml'
+    //     }
+    // }
+
 }
