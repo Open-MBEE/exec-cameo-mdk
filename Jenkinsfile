@@ -1,10 +1,9 @@
 pipeline {
     agent {
-        docker {
+        dockerfile {
             label 'CAE-Jenkins2-DH-Agents-Linux'
             // image 'openjdk:8-jdk-alpine'
         }
-        dockerfile true
     }
     environment {
         BUILD_ACCESS = credentials('mdk-build-access')
