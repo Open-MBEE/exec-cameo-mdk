@@ -129,6 +129,7 @@ dependencies {
     testCompile group: 'org.gradle', name: 'gradle-messaging', version: '3.5.1'
     testCompile group: 'org.gradle', name: 'gradle-logging', version: '3.5.1'
     testCompile group: 'org.gradle', name: 'gradle-process-services', version: '3.5.1'
+    testCompile group: 'org.gradle', name: 'gradle-tooling-api', version: '3.5.1'
 
     testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.0.1'
     
