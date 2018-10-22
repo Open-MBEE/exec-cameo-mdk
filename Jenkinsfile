@@ -20,28 +20,29 @@ pipeline {
         DISPLAY = ':1'
     }
     stages {
-        stage('Init') {
-            steps {
-                sh 'printenv'
-            }
-        }
         stage('Dependencies') {
             steps {
-                sh 'GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true'
-                sh './gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW dependencies --gradle-user-home ./.gradle --info --stacktrace --refresh-dependencies'
+                sh '''
+                    GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
+                    ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW dependencies --gradle-user-home ./.gradle --info --stacktrace --refresh-dependencies
+                '''
             }
         }
         stage('Compile') {
             steps {
-                sh 'GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true'
-                sh './gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW --gradle-user-home ./.gradle --continue --info --stacktrace clean assemble'
+                sh '''
+                    GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
+                    ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW --gradle-user-home ./.gradle --continue --info --stacktrace clean assemble
+                '''
             }
         }
         stage('Test') {
             steps {
-                sh 'Xvfb $DISPLAY &'
-                sh 'GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true'
-                sh './gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PtestrailHost=$TESTRAIL_HOST -PtestrailUser=$TESTRAIL_CREDENTIALS_USR -PtestrailPassword=$TESTRAIL_CREDENTIALS_PSW -PtestrailSuiteId=$TESTRAIL_SUITE_ID -PadditionalTestArguments=$ADDITIONAL_TEST_ARGUMENTS --gradle-user-home ./.gradle --continue --info --stacktrace check'
+                sh '''
+                    Xvfb $DISPLAY &
+                    GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
+                    ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PtestrailHost=$TESTRAIL_HOST -PtestrailUser=$TESTRAIL_CREDENTIALS_USR -PtestrailPassword=$TESTRAIL_CREDENTIALS_PSW -PtestrailSuiteId=$TESTRAIL_SUITE_ID -PadditionalTestArguments=$ADDITIONAL_TEST_ARGUMENTS --gradle-user-home ./.gradle --continue --info --stacktrace check
+                '''
             }
             post {
                 always {
@@ -52,9 +53,11 @@ pipeline {
         }
         stage('Publish') {
             steps {
-                sh 'GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true'
-                sh 'if [ -z $BUILD_TAG ]; then ARTIFACTORY_REPOSITORY="maven-libs-snapshot-local"; else ARTIFACTORY_REPOSITORY="maven-libs-release-local"; fi'
-                sh './gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PartifactoryRepository=$ARTIFACTORY_REPOSITORY --gradle-user-home ./.gradle --continue --info --stacktrace artifactoryPublish'
+                sh '''
+                    GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
+                    if [ -z GIT_TAG ]; then ARTIFACTORY_REPOSITORY="maven-libs-snapshot-local"; else ARTIFACTORY_REPOSITORY="maven-libs-release-local"; fi
+                    ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PartifactoryRepository=$ARTIFACTORY_REPOSITORY --gradle-user-home ./.gradle --continue --info --stacktrace artifactoryPublish
+                '''
             }
         }
     }
