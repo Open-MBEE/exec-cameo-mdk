@@ -55,7 +55,7 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
         "http://download.oracle.com/otn-pub/java/jce/${JAVA_VERSION}/jce_policy-${JAVA_VERSION}.zip" && \
     unzip -jo -d "${JAVA_HOME}/jre/lib/security" "jce_policy-${JAVA_VERSION}.zip" && \
     \
-    apk add --no-cache xvfb libxrender && \
+    apk add --no-cache xvfb libxrender libxtst && \
     \
     apk del .build-dependencies && \
     rm "/root/.wget-hsts" && \
