@@ -55,7 +55,7 @@ pipeline {
             steps {
                 sh '''
                     GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
-                    if [ -z GIT_TAG ]; then ARTIFACTORY_REPOSITORY="maven-libs-snapshot-local"; else ARTIFACTORY_REPOSITORY="maven-libs-release-local"; fi
+                    if [ -z $GIT_TAG ]; then ARTIFACTORY_REPOSITORY="maven-libs-snapshot-local"; else ARTIFACTORY_REPOSITORY="maven-libs-release-local"; fi
                     ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PartifactoryRepository=$ARTIFACTORY_REPOSITORY --gradle-user-home ./.gradle --continue --info --stacktrace artifactoryPublish
                 '''
             }
