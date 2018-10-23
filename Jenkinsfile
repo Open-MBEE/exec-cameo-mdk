@@ -3,7 +3,7 @@ pipeline {
         dockerfile {
             label 'CAE-Jenkins2-DH-Agents-Linux'
             // image 'openjdk:8-jdk-alpine'
-            args '-u root'
+            // args '-u root'
         }
     }
     environment {
