@@ -189,6 +189,7 @@ public class SyncStatusAction extends SRAction {
                 }
             }, "Sync Status Update", false, 0);
         }
+        getSyncStatusFrame().toFront();
     }
 
     @Override
