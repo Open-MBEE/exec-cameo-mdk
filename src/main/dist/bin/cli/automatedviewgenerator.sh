@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# sage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-h] [-debug]
+# usage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-h] [-debug]
 #       [-mmsHost <arg>] [-mmsPort <arg>] [-mmsUsername <arg>] [-mmsPassword <arg>]
 #       [-twcHost <arg>] [-twcPort <arg>] [-twcUsername <arg>] [-twcPassword <arg>]
 #       [-pmaHost <arg>] [-pmaPort <arg>] [-pmaJobId <arg>]

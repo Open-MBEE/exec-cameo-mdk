@@ -39,15 +39,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AutomatedViewGenerator implements CommandLineAction {
 
     private org.apache.commons.cli.CommandLine parser;
-    private org.apache.commons.cli.Options parserOptions;
+    private org.apache.commons.cli.Options parserOptions = new Options();
 
-    private boolean twLogin = false,
+    private boolean
+            twLogin = false,
             twLoaded = false;
 
     // cancel handler stuff
     // cancel is set when the cancelHandler is triggered. it is used as a flag so the running program can discontinue normal flow, throw a cancel exception, and notify the waiting cancelHandler
     // running is used to indicate whether we are in docweb scope or not. this is needed because the cancel handler will trigger before we're fully loaded and then be stuck waiting for notification that never comes
-    private AtomicBoolean cancel = new AtomicBoolean(false),
+    private AtomicBoolean
+            cancel = new AtomicBoolean(false),
             running = new AtomicBoolean(true);
 
     private byte error = 0;
@@ -61,7 +63,8 @@ public class AutomatedViewGenerator implements CommandLineAction {
 
     private final Object lock = new Object();
 
-    private final String MMS_HOST = "mmsHost",
+    private final String
+            MMS_HOST = "mmsHost",
             MMS_PORT = "mmsPort",
             MMS_USERNAME = "mmsUsername",
             MMS_PASSWORD = "mmsPassword",
@@ -80,15 +83,59 @@ public class AutomatedViewGenerator implements CommandLineAction {
             DEBUG = "debug",
             VERBOSE = "verbose";
 
+    private Option helpOption = new Option("h", HELP, false, "print this message");
+
+    private Option mmsHostOption = new Option(MMS_HOST, true, "use value for the MMS host name");
+    private Option mmsPortOption = new Option(MMS_PORT, true, "use value for the MMS port number");
+    private Option mmsUsernameOption = new Option(MMS_USERNAME, true, "use value for the MMS username");
+    private Option mmsPasswordOption = new Option(MMS_PASSWORD, true, "use value for the MMS password");
+
+    private Option twcHostOption = new Option(TWC_HOST, true, "use value for the Teamwork Cloud host name");
+    private Option twcPortOption = new Option(TWC_PORT, true, "use value for the Teamwork Cloud port number");
+    private Option twcUsernameOption = new Option(TWC_USERNAME, true, "use value for the Teamwork Cloud username");
+    private Option twcPasswordOption = new Option(TWC_PASSWORD, true, "use value for the Teamwork Cloud password");
+
+    private Option projectIdOption = new Option(PROJECT_ID, true, "use value for the target project ID");
+    private Option refIdOption = new Option(REF_ID, true, "use value for  the target ref (branch) ID");
+    private Option targetViewIdOption = new Option(TARGET_VIEW_ID, true, "use value for the target view element ID");
+    private Option generateRecursivelyOption = new Option(GENERATE_RECURSIVELY, "generate child views of target recursively");
+
+    private Option pmaHostOption = new Option(PMA_HOST, true, "use value for the PMA server host name; a missing value will disable status reporting");
+    private Option pmaPortOption = new Option(PMA_PORT, true, "use value for the PMA server port number");
+    private Option pmaInstanceIdOption = new Option(PMA_JOB_ID, true, "use value for the PMA job instance element ID; a missing value will disable status reporting");
+
+    private Option debugOption = new Option(DEBUG, "print debug messages from cli program to console");
+
+    // verbose option is understood by magicdraw to output information to command line. included here since the arg is also passed in here, and it causes errors if not expected
+    private Option verboseOption = new Option(VERBOSE, "\"-verbose\" - print all MagicDraw log messages to console");
+
+    {
+        parserOptions.addOption(helpOption);
+
+        parserOptions.addOption(mmsHostOption);
+        parserOptions.addOption(mmsPortOption);
+        parserOptions.addOption(mmsUsernameOption);
+        parserOptions.addOption(mmsPasswordOption);
+
+        parserOptions.addOption(twcHostOption);
+        parserOptions.addOption(twcPortOption);
+        parserOptions.addOption(twcUsernameOption);
+        parserOptions.addOption(twcPasswordOption);
+
+        parserOptions.addOption(projectIdOption);
+        parserOptions.addOption(refIdOption);
+        parserOptions.addOption(targetViewIdOption);
+        parserOptions.addOption(generateRecursivelyOption);
+
+        parserOptions.addOption(pmaHostOption);
+        parserOptions.addOption(pmaPortOption);
+        parserOptions.addOption(pmaInstanceIdOption);
+
+        parserOptions.addOption(debugOption);
+        parserOptions.addOption(verboseOption);
+    }
+
     private String separator = "\n***************\n";
-
-    private final int CANCEL_DELAY = 15;
-
-    /*//////////////////////////////////////////////////////////////
-     *
-     * Execution methods
-     *
-    /*//////////////////////////////////////////////////////////////
 
     @Override
     public byte execute(String[] args) {
@@ -178,25 +225,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
         return error;
     }
 
-    /*////////////////////////////////////////////////////////////////
-     *
-     * "User Operation" methods
-     *
-    /*////////////////////////////////////////////////////////////////
-
-    /**
-     * Logs in to teamwork using the initially loaded teamwork account. If that account
-     * is already in use, will load/generate and attempt to log in with additional sets
-     * of credentials, up to the limit specified in applicationAccounts.
-     *
-     * @throws FileNotFoundException        missing credentialsLocation
-     * @throws UnsupportedEncodingException logMessage failures
-     * @throws InterruptedException         cancel triggered and caught by cancel handler
-     * @throws IllegalAccessException       access failure with loaded credentials
-     */
-
-    private void loginTeamwork()
-            throws FileNotFoundException, UnsupportedEncodingException, InterruptedException, IllegalAccessException, IllegalStateException {
+    private void loginTeamwork() throws IOException, InterruptedException {
         // disable all mdk popup warnings
         MDKHelper.setPopupsDisabled(true);
 
@@ -213,18 +242,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
         checkCancel();
     }
 
-
-    /**
-     * Loads the Teamwork project. Complains if it fails.
-     *
-     * @throws FileNotFoundException        can't find teamwork project or branch
-     * @throws UnsupportedEncodingException logMessage failures
-     * @throws InterruptedException         cancel triggered and caught by cancel handler
-     * @throws IllegalAccessException       access failure with loaded credentials
-     * @throws RemoteException              error getting the projectDescriptor back from the twUtil
-     */
-    private void loadTeamworkProject()
-            throws FileNotFoundException, UnsupportedEncodingException, RemoteException, IllegalAccessException, IllegalStateException, InterruptedException, URISyntaxException {
+    private void loadTeamworkProject() throws IOException, URISyntaxException, InterruptedException {
         String message;
 
         message = "[OPERATION] Specifying MMS credentials.";
@@ -324,13 +342,6 @@ public class AutomatedViewGenerator implements CommandLineAction {
         checkCancel();
     }
 
-    /**
-     * Generates views and commits images for target view, recursively if the option was specified.
-     *
-     * @throws FileNotFoundException        one or more documents not found in project, or logMessage failure
-     * @throws InterruptedException         cancel triggered and caught by cancel handler
-     * @throws UnsupportedEncodingException logMessage failure
-     */
     private void generateViews() throws Exception {
         String message;
         if (!TicketUtils.isTicketSet(project)) {
@@ -372,70 +383,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
         checkCancel();
     }
 
-    /*//////////////////////////////////////////////////////////////////
-     *
-     * Helper methods
-     *
-    /*//////////////////////////////////////////////////////////////////
-
-    /**
-     * parses arguments passed in from command line
-     *
-     * @param args Argument string array from the console
-     */
-    private boolean parseArgs(String[] args) throws ParseException {
-        Option helpOption = new Option("h", HELP, false, "print this message");
-
-        Option mmsHostOption = new Option(MMS_HOST, true, "use value for the MMS host name");
-        Option mmsPortOption = new Option(MMS_PORT, true, "use value for the MMS port number");
-        Option mmsUsernameOption = new Option(MMS_USERNAME, true, "use value for the MMS username");
-        Option mmsPasswordOption = new Option(MMS_PASSWORD, true, "use value for the MMS password");
-
-        Option twcHostOption = new Option(TWC_HOST, true, "use value for the Teamwork Cloud host name");
-        Option twcPortOption = new Option(TWC_PORT, true, "use value for the Teamwork Cloud port number");
-        Option twcUsernameOption = new Option(TWC_USERNAME, true, "use value for the Teamwork Cloud username");
-        Option twcPasswordOption = new Option(TWC_PASSWORD, true, "use value for the Teamwork Cloud password");
-
-        Option projectIdOption = new Option(PROJECT_ID, true, "use value for the target project ID");
-        Option refIdOption = new Option(REF_ID, true, "use value for  the target ref (branch) ID");
-        Option targetViewIdOption = new Option(TARGET_VIEW_ID, true, "use value for the target view element ID");
-        Option generateRecursivelyOption = new Option(GENERATE_RECURSIVELY, "generate child views of target recursively");
-
-        Option pmaHostOption = new Option(PMA_HOST, true, "use value for the PMA server host name; a missing value will disable status reporting");
-        Option pmaPortOption = new Option(PMA_PORT, true, "use value for the PMA server port number");
-        Option pmaInstanceIdOption = new Option(PMA_JOB_ID, true, "use value for the PMA job instance element ID; a missing value will disable status reporting");
-
-        Option debugOption = new Option(DEBUG, "print debug messages from cli program to console");
-
-        // verbose option is understood by magicdraw to output information to command line. included here since the arg is also passed in here, and it causes errors if not expected
-        Option verboseOption = new Option(VERBOSE, "\"-verbose\" - print all MagicDraw log messages to console");
-
-        parserOptions = new Options();
-
-        parserOptions.addOption(helpOption);
-
-        parserOptions.addOption(mmsHostOption);
-        parserOptions.addOption(mmsPortOption);
-        parserOptions.addOption(mmsUsernameOption);
-        parserOptions.addOption(mmsPasswordOption);
-
-        parserOptions.addOption(twcHostOption);
-        parserOptions.addOption(twcPortOption);
-        parserOptions.addOption(twcUsernameOption);
-        parserOptions.addOption(twcPasswordOption);
-
-        parserOptions.addOption(projectIdOption);
-        parserOptions.addOption(refIdOption);
-        parserOptions.addOption(targetViewIdOption);
-        parserOptions.addOption(generateRecursivelyOption);
-
-        parserOptions.addOption(pmaHostOption);
-        parserOptions.addOption(pmaPortOption);
-        parserOptions.addOption(pmaInstanceIdOption);
-
-        parserOptions.addOption(debugOption);
-        parserOptions.addOption(verboseOption);
-
+    private boolean parseArgs(String[] args) {
         CommandLineParser commandLineParser = new BasicParser();
         try {
             parser = commandLineParser.parse(parserOptions, args);
@@ -473,10 +421,11 @@ public class AutomatedViewGenerator implements CommandLineAction {
         }
 
         if (!missingOptions.isEmpty()) {
-            String message = "[ERROR] The following options were missing: ";
+            StringBuilder messageBuilder = new StringBuilder("[ERROR] The following options were missing: ");
             for (String missingOption : missingOptions) {
-                message += missingOption + ", ";
+                messageBuilder.append(missingOption).append(", ");
             }
+            String message = messageBuilder.toString();
             message = message.substring(0, message.length() - 2) + ".";
             logMessage(message);
             return false;
@@ -517,8 +466,9 @@ public class AutomatedViewGenerator implements CommandLineAction {
     }
 
     private String generateLog() {
-        StringBuilder sb = new StringBuilder("");
-        sb.append("<html>\n")
+        StringBuilder sb = new StringBuilder();
+        sb
+                .append("<html>\n")
                 .append("\t<head>\n")
                 .append("\t</head>\n")
                 .append("\n")
@@ -633,6 +583,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
                     e.printStackTrace();
                 }
                 synchronized (lock) {
+                    int CANCEL_DELAY = 15;
                     String msg = "Cancel received. Will complete current operation, logout, and terminate (max delay: " + CANCEL_DELAY + " min).";
                     try {
                         logMessage(msg);
