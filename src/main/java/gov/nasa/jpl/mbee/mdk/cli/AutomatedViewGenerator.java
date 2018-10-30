@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.pma.cli;
+package gov.nasa.jpl.mbee.mdk.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

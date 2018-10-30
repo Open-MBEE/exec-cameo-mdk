@@ -11,14 +11,13 @@ import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
 import com.nomagic.magicdraw.plugins.Plugin;
 import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
-import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.uml.DiagramDescriptor;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
+import gov.nasa.jpl.mbee.mdk.cli.AutomatedViewGenerator;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator;
 
 import java.io.File;
 import java.lang.reflect.Method;

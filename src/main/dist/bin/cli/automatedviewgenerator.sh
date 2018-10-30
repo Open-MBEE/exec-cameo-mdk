@@ -44,7 +44,7 @@ java -Xmx8192M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \
        -Dcom.sun.media.imageio.disableCodecLib=true \
        -Dsun.locale.formatasdefault=true \
        -Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher \
-       -Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator \
+       -Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.mdk.cli.AutomatedViewGenerator \
        com.nomagic.osgi.launcher.ProductionFrameworkLauncher -verbose "$@"
 
 exit $?
