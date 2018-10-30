@@ -124,7 +124,12 @@ dependencies {
 
     // Test Dependencies
     //testCompile 'junit:junit:4.11'
-    testCompile group: 'org.gradle', name: 'gradle-core', version: '3.1'
+    testCompile group: 'org.gradle', name: 'gradle-core', version: '3.5.1'
+    testCompile group: 'org.gradle', name: 'gradle-base-services', version: '3.5.1'
+    testCompile group: 'org.gradle', name: 'gradle-messaging', version: '3.5.1'
+    testCompile group: 'org.gradle', name: 'gradle-logging', version: '3.5.1'
+    testCompile group: 'org.gradle', name: 'gradle-process-services', version: '3.5.1'
+    testCompile group: 'org.gradle', name: 'gradle-tooling-api', version: '3.5.1'
 
     testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.0.1'
     
@@ -486,6 +491,7 @@ test {
                          fileTree(dir: 'build/generated-dist', include: '**/*.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */
                                  files(classpathLibraries.collect { 'build/install/' + it }).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+                                 configurations.testCompile.resolvedConfiguration.resolvedArtifacts.stream().map { i -> i.getFile().getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
         String magicDrawLicense = project.getProperties().get('magicDrawLicense')
         if (magicDrawLicense != null && !magicDrawLicense.isEmpty()) {
