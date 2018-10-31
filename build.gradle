@@ -122,6 +122,8 @@ dependencies {
     // Apache Commons CLI
     compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
 
+    compile group: 'com.beust', name: 'jcommander', version: '1.72'
+
     // Test Dependencies
     //testCompile 'junit:junit:4.11'
     testCompile group: 'org.gradle', name: 'gradle-core', version: '3.1'
@@ -142,7 +144,7 @@ dependencies {
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/' + it })
-    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar'] ]).flatten())
+    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/engines/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
 }
 
