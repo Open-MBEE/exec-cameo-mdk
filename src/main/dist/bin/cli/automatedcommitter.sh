@@ -37,13 +37,13 @@ fi
 
 CP_DELIM=":"
 
-MAGICDRAW_HOME=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /\\ /g' | sed -e 's/\\\\/\\/g')
-PROPERTIES_FILE=$MAGICDRAW_HOME/bin/magicdraw.properties
+PROPERTIES_FILE="$MAGICDRAW_HOME"/bin/magicdraw.properties
+MAGICDRAW_HOME=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /%20/g')
 MD_CP_URL=file:$PROPERTIES_FILE?base=$MAGICDRAW_HOME#CLASSPATH
 
-OSGI_LAUNCHER=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" $PROPERTIES_FILE | grep -o "[^:]*com\.nomagic\.osgi\.launcher-[^\\]*.jar")
-OSGI_FRAMEWORK=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" $PROPERTIES_FILE | grep -o "[^:]*org\.eclipse\.osgi_[^\\]*.jar")
-MD_OSGI_FRAGMENT=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" $PROPERTIES_FILE | grep -o "[^:]*com\.nomagic\.magicdraw\.osgi\.fragment_[^\\]*.jar")
+OSGI_LAUNCHER=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" "$PROPERTIES_FILE" | grep -o "[^:]*com\.nomagic\.osgi\.launcher-[^\\]*.jar")
+OSGI_FRAMEWORK=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" "$PROPERTIES_FILE" | grep -o "[^:]*org\.eclipse\.osgi_[^\\]*.jar")
+MD_OSGI_FRAGMENT=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" "$PROPERTIES_FILE" | grep -o "[^:]*com\.nomagic\.magicdraw\.osgi\.fragment_[^\\]*.jar")
 
 CP="${OSGI_LAUNCHER}${CP_DELIM}${OSGI_FRAMEWORK}${CP_DELIM}${MD_OSGI_FRAGMENT}${CP_DELIM}\
 `  `$MAGICDRAW_HOME/lib/md_api.jar${CP_DELIM}$MAGICDRAW_HOME/lib/md_common_api.jar${CP_DELIM}\
