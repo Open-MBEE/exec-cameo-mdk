@@ -19,7 +19,7 @@ fi
 
 CP_DELIM=":"
 
-MAGICDRAW_HOME=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /%20/g')
+MAGICDRAW_HOME=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /\\ /g' | sed -e 's/\\\\/\\/g')
 PROPERTIES_FILE=$MAGICDRAW_HOME/bin/magicdraw.properties
 MD_CP_URL=file:$PROPERTIES_FILE?base=$MAGICDRAW_HOME#CLASSPATH
 
