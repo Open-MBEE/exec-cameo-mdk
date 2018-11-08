@@ -260,22 +260,6 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 c.addAction(new InstanceViewpointAction(e));
             }
         }
-        //Removed restricted value option from DocGen menu to prevent future use while feature is
-        //phased out in favor of enumerations
-//        ArrayList<Property> selectedProperties = new ArrayList<Property>();
-//        for (Element el : es) {
-//            if (el instanceof Property) {
-//                selectedProperties.add((Property) el);
-//            }
-//        }
-//        if (!(selectedProperties.isEmpty())) {
-//            ActionsCategory c = myCategory(manager, "DocGen", "DocGen");
-//            NMAction act = manager.getActionFor(CreateRestrictedValueAction.DEFAULT_ID);
-//            if (act == null) {
-//                c.addAction(new CreateRestrictedValueAction(selectedProperties));
-//            }
-//        }
-
     }
 
     private void addDiagramActions(ActionsManager manager, DiagramPresentationElement diagram) {
