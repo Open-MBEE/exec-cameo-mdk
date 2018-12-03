@@ -23,7 +23,7 @@ public class Simulate extends Query {
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         super.visit(forViewEditor, outputDir);
-        /*
+
         for (Object o : getTargets()) {
             if (o instanceof Element) {
                 long startTime = System.currentTimeMillis();
@@ -57,7 +57,7 @@ public class Simulate extends Query {
                 }
             }
         }
-        */
+
         return Collections.emptyList();
     }
 
