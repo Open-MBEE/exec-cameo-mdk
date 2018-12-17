@@ -312,7 +312,10 @@ public class GeneratorUtils {
     }
 
     public static Stereotype getViewpointStereotype(Project project) {
-        Profile profile = StereotypesHelper.getProfile(project, SysMLConstants.SYSML_PROFILE);
+        Profile profile = StereotypesHelper.getAllProfiles(project).stream().filter
+                (x -> (MDKConstants.SYSML_PROFILE_LOCAL_ID).equals(x.getLocalID()))
+                .findFirst()
+                .orElse(null);
         if (profile == null) {
             return null;
         }
@@ -320,10 +323,7 @@ public class GeneratorUtils {
     }
 
     public static Behavior getViewpointMethod(Classifier viewpoint, Project project) {
-        Profile profile = StereotypesHelper.getProfile(project, SysMLConstants.SYSML_PROFILE);
-        if (profile == null) {
-            return null;
-        }
+
         Stereotype viewpointStereotype = GeneratorUtils.getViewpointStereotype(project);
         if (viewpointStereotype == null) {
             return null;

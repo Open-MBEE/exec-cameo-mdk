@@ -46,5 +46,6 @@ public class MDKConstants {
             TWC_VERSION_KEY = "twcVersion",
             ARTIFACT_IDS_KEY = "_artifactIds",
             CHECKSUM_KEY = "checksum",
-            CONTENT_TYPE_KEY = "contentType";
+            CONTENT_TYPE_KEY = "contentType",
+            SYSML_PROFILE_LOCAL_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900";
 }
