@@ -104,7 +104,7 @@ public class BranchValidator {
             branchJson.remove(MDKConstants.PARENT_REF_ID_KEY);
             JsonNode value;
             String entryKey;
-            if ((value = branchJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+            if ((value = branchJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
                 entryKey = value.asText();
                 if (allBranches || entryKey.equals(currentBranch)) {
                     clientBranches.put(entryKey, new Pair<>(branch, branchJson));
@@ -136,7 +136,7 @@ public class BranchValidator {
                         ObjectNode refObjectNode = (ObjectNode) refJson;
                         refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
                         String entryKey;
-                        if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+                        if ((value = refObjectNode.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
                             entryKey = value.asText();
                             if (allBranches || entryKey.equals(currentBranch)) {
                                 serverBranches.put(entryKey, refObjectNode);
