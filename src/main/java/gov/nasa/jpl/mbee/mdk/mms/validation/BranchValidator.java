@@ -20,6 +20,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitBranchAction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
@@ -68,7 +69,7 @@ public class BranchValidator {
             return;
         }
 
-        String currentBranch = EsiUtils.getCurrentBranch(primaryProject).getID().toString();
+        String currentBranch = MDUtils.getBranchId(project);
         Map<String, Pair<EsiUtils.EsiBranchInfo, ObjectNode>> clientBranches = new HashMap<>();
         Map<String, ObjectNode> serverBranches = new HashMap<>();
 
