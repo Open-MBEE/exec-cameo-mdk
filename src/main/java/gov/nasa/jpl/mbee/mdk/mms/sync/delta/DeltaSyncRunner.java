@@ -112,7 +112,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("[WARNING] MMS history is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
-        } catch (URISyntaxException | IOException | ServerException e) {
+        } catch (URISyntaxException | IOException | IllegalStateException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while updating MMS history. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             e.printStackTrace();
             return;
