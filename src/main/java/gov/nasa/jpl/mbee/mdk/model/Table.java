@@ -20,6 +20,7 @@ public abstract class Table extends Query {
     protected boolean transpose;
     protected boolean hideHeaders;
     protected boolean showIfEmpty;
+    protected boolean excludeFromList;
 
     public void setIncludeDoc(boolean d) {
         includeDoc = d;
@@ -85,6 +86,14 @@ public abstract class Table extends Query {
         this.showIfEmpty = showIfEmpty;
     }
 
+    public boolean isExcludeFromList() {
+        return excludeFromList;
+    }
+
+    public void setExcludeFromList(boolean excludeFromList) {
+        this.excludeFromList = excludeFromList;
+    }
+
     public boolean isHideHeaders() {
         return hideHeaders;
     }
@@ -121,6 +130,7 @@ public abstract class Table extends Query {
         dbTable.setTranspose(transpose);
         dbTable.setHideHeaders(hideHeaders);
         dbTable.setShowIfEmpty(showIfEmpty);
+        dbTable.setExcludeFromList(excludeFromList);
     }
 
     @SuppressWarnings("unchecked")
@@ -145,5 +155,7 @@ public abstract class Table extends Query {
                 "hideHeaders", DocGenProfile.PROFILE_NAME, false));
         setShowIfEmpty((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
                 "showIfEmpty", DocGenProfile.PROFILE_NAME, false));
+        setExcludeFromList((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
+                "excludeFromList", DocGenProfile.PROFILE_NAME, false));
     }
 }

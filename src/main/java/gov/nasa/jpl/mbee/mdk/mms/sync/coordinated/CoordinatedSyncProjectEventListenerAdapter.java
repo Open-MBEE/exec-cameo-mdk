@@ -15,14 +15,15 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import javax.annotation.CheckForNull;
+import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
 
 /**
  * Created by igomes on 6/22/16.
  */
 public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventListenerAdapter implements SaveParticipant {
-    private static final Map<Project, CoordinatedSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, CoordinatedSyncProjectMapping> projectMappings = Collections.synchronizedMap(new WeakHashMap<>());
     private DeltaSyncRunner deltaSyncRunner;
 
     @Override

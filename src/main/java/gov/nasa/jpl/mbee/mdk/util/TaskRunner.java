@@ -20,7 +20,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 
 public class TaskRunner {
-    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(0);
+    // Cannot set corePoolSize to 0 due to bug that causes high CPU usage https://bugs.openjdk.java.net/browse/JDK-8129861
+    private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
 
     public static Future<?> runWithProgressStatus(Runnable runnable, String title, ThreadExecutionStrategy strategy) {
         return runWithProgressStatus(runnable, title, strategy, false);

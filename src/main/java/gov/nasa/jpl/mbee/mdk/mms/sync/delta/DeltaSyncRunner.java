@@ -10,10 +10,10 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -104,22 +104,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // UPDATE LOCKS
 
-        ILockProjectService lockService = EsiUtils.getLockService(project);
-        if (lockService == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Teamwork Cloud lock service is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
-
         listener.setDisabled(true);
-        try {
-            lockService.updateLocks(progressStatus);
-        } catch (RuntimeException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Failed to update locks from Teamwork Cloud. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
-            e.printStackTrace();
-            return;
-        } finally {
-            listener.setDisabled(false);
-        }
 
         // UPDATE MMS CHANGELOG
 
@@ -128,9 +113,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("[WARNING] MMS history is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
-        } catch (URISyntaxException | IOException | ServerException e) {
+        } catch (URISyntaxException | IOException | IllegalStateException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while updating MMS history. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             e.printStackTrace();
+            return;
         }
 
         // BUILD COMPLETE LOCAL CHANGELOG
@@ -141,6 +127,23 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             persistedLocalChangelog = persistedLocalChangelog.and(SyncElements.buildChangelog(syncElement), (key, value) -> Converters.getIdToElementConverter().apply(key, project));
         }
         Changelog<String, Element> localChangelog = persistedLocalChangelog.and(listener.getInMemoryLocalChangelog());
+
+        // HANDLE CASE WHERE VALUE SPECIFICATION IS DIRTIED EXTERNALLY
+        // Workaround: Dirty all referencing elements as ValueSpecifications aren't given their own identity
+
+        localChangelog.values().stream().flatMap(map -> map.values().stream()).filter(element -> element instanceof ValueSpecification).forEach(element -> element.eClass().getEAllReferences().forEach(reference -> {
+            Object value = element.eGet(reference);
+            if (value == null) {
+                return;
+            }
+            if (reference.isMany() && value instanceof Collection) {
+                ((Collection<Object>) value).stream().filter(o -> o instanceof Element).map(o -> (Element) o).forEach(e -> localChangelog.addChange(Converters.getElementToIdConverter().apply(e), e, Changelog.ChangeType.UPDATED));
+            }
+            else if (value instanceof Element) {
+                Element e = (Element) value;
+                localChangelog.addChange(Converters.getElementToIdConverter().apply(e), e, Changelog.ChangeType.UPDATED);
+            }
+        }));
 
 
         Map<String, Element> localCreated = localChangelog.get(Changelog.ChangeType.CREATED),
@@ -279,25 +282,11 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it does not exist. Skipping.");
                             continue;
                         }
-                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is locked by someone else. Skipping.");
-                            }
-                            failedMmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
-                            continue;
-                        }
                         mmsElementsToUpdateLocally.put(id, new Pair<>(objectNode, element));
                         break;
                     case DELETED:
                         if (element == null) {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it doesn't exist. Skipping.");
-                            continue;
-                        }
-                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is locked by someone else. Skipping.");
-                            }
-                            failedMmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                             continue;
                         }
                         mmsElementsToDeleteLocally.put(id, element);

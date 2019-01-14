@@ -60,15 +60,15 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
     private ValidationRule editableValidationRule = new ValidationRule("Element Editability", "The element to be updated shall be editable.", ViolationSeverity.WARNING),
             failedChangeValidationRule = new ValidationRule("Failed Change", "The element shall not fail to change.", ViolationSeverity.ERROR),
             equivalentElementValidationRule = new ValidationRule("Element Equivalency", "The changed element shall be equivalent to the source element.", ViolationSeverity.WARNING),
-            successfulChangeValidationRule = new ValidationRule("Successful Change", "The element shall successfully change.", ViolationSeverity.INFO),
-            deletionOnSuccessValidationRule = new ValidationRule("Deletion on Success", "The element to be deleted shall only be deleted if all elements to be created/updated are successfully imported.", ViolationSeverity.WARNING);
+            successfulChangeValidationRule = new ValidationRule("Successful Change", "The element shall successfully change.", ViolationSeverity.INFO);
+            //deletionOnSuccessValidationRule = new ValidationRule("Deletion on Success", "The element to be deleted shall only be deleted if all elements to be created/updated are successfully imported.", ViolationSeverity.WARNING);
 
     {
         validationSuite.addValidationRule(editableValidationRule);
         validationSuite.addValidationRule(failedChangeValidationRule);
         validationSuite.addValidationRule(equivalentElementValidationRule);
         validationSuite.addValidationRule(successfulChangeValidationRule);
-        validationSuite.addValidationRule(deletionOnSuccessValidationRule);
+        //validationSuite.addValidationRule(deletionOnSuccessValidationRule);
     }
 
     private Collection<ObjectNode> elementsToUpdate;

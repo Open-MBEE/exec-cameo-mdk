@@ -2,7 +2,6 @@ package gov.nasa.jpl.mbee.mdk.util;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.sysml.util.SysMLConstants;
 import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
@@ -12,6 +11,7 @@ import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.DocumentMeta;
@@ -105,10 +105,6 @@ public class GeneratorUtils {
                 DocGenProfile.documentMetaStereotype, "header");
         String footer = (String) StereotypesHelper.getStereotypePropertyFirst(start,
                 DocGenProfile.documentMetaStereotype, "footer");
-        String subheader = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "subheader");
-        String subfooter = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "subfooter");
         String legalNotice = (String) StereotypesHelper.getStereotypePropertyFirst(start,
                 DocGenProfile.documentMetaStereotype, "legalNotice");
         String acknowledgements = (String) StereotypesHelper.getStereotypePropertyFirst(start,
@@ -229,8 +225,6 @@ public class GeneratorUtils {
         doc.setChunkSectionDepth(chunkSectionDepth);
         doc.setFooter(footer);
         doc.setHeader(header);
-        doc.setSubfooter(subfooter);
-        doc.setSubheader(subheader);
         doc.setTitle(title);
         doc.setTocSectionDepth(tocSectionDepth);
 
@@ -253,8 +247,6 @@ public class GeneratorUtils {
         meta.setHeader(header);
         meta.setTitlePageLegalNotice(legalNotice);
         meta.setIndex(index);
-        meta.setSubfooter(subfooter);
-        meta.setSubheader(subheader);
         meta.setSubtitle(subtitle);
         meta.setTitle(title);
         meta.setTocSectionDepth(tocSectionDepth);
@@ -320,7 +312,10 @@ public class GeneratorUtils {
     }
 
     public static Stereotype getViewpointStereotype(Project project) {
-        Profile profile = StereotypesHelper.getProfile(project, SysMLConstants.SYSML_PROFILE);
+        Profile profile = StereotypesHelper.getAllProfiles(project).stream().filter
+                ( x -> MDKConstants.SYSML_PROFILE_ID.equals(Converters.getElementToIdConverter().apply(x)))
+                .findAny()
+                .orElse(null);
         if (profile == null) {
             return null;
         }
@@ -328,10 +323,7 @@ public class GeneratorUtils {
     }
 
     public static Behavior getViewpointMethod(Classifier viewpoint, Project project) {
-        Profile profile = StereotypesHelper.getProfile(project, SysMLConstants.SYSML_PROFILE);
-        if (profile == null) {
-            return null;
-        }
+
         Stereotype viewpointStereotype = GeneratorUtils.getViewpointStereotype(project);
         if (viewpointStereotype == null) {
             return null;

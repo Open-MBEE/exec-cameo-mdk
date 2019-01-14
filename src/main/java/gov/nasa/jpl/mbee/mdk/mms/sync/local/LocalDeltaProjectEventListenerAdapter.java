@@ -4,14 +4,15 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
 
+import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
 
 /**
  * Created by igomes on 6/28/16.
  */
 public class LocalDeltaProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<Project, LocalSyncProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, LocalSyncProjectMapping> projectMappings = Collections.synchronizedMap(new WeakHashMap<>());
 
     @Override
     public void projectCreated(Project project) {
