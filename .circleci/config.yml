@@ -1,47 +1,44 @@
-      version: 2
-      jobs:
-        build:
-          working_directory: ~/Open-MBEE/mdk
-          parallelism: 1
-          shell: /bin/bash --login
-
-          environment:
-            CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
-            CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
-
-          docker:
-            - image: davidwillard/circleci-oracle-jdk8
-              auth:
-                username: $DOCKER_LOGIN
-                password: $DOCKER_PASSWORD
-
-
+version: 2
+jobs:
+  build:
+    working_directory: ~/Open-MBEE/mdk
+    parallelism: 1
+    shell: /bin/bash --login
+    docker:
+      - image: davidwillard/circleci-oracle-jdk8
+        auth:
+          username: $DOCKER_LOGIN
+          password: $DOCKER_PASSWORD
+    environment:
+      CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
+      CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
+  steps:
     - checkout
     # Prepare for artifact and test results  collection equivalent to how it was done on 1.0.
     # In many cases you can simplify this from what is generated here.
     # 'See docs on artifact collection here https://circleci.com/docs/2.0/artifacts/'
     - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
     - run: java -version
-    # Dependencies
-    #   This would typically go in either a build or a build-and-test job when using workflows
-    # Restore the dependency cache
-    #- restore_cache:
-    #    keys:
+        # Dependencies
+        #   This would typically go in either a build or a build-and-test job when using workflows
+        # Restore the dependency cache
+        #- restore_cache:
+        #    keys:
         # This branch if available
-      #  - v1-dep-{{ .Branch }}-
+        #  - v1-dep-{{ .Branch }}-
         # Default branch if not
-      #  - v1-dep-develop-
+        #  - v1-dep-develop-
         # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
-     #   - v1-dep-
-    # The following line was run implicitly in your 1.0 builds based on what CircleCI inferred about the structure of your project. In 2.0 you need to be explicit about which commands should be run. In some cases you can discard inferred commands if they are not relevant to your project.
-    # - run: if [ -a ./gradlew ]; then gradlew dependencies; else gradle dependencies; fi
-    # Save dependency cache
-    #- save_cache:
+        #   - v1-dep-
+        # The following line was run implicitly in your 1.0 builds based on what CircleCI inferred about the structure of your project. In 2.0 you need to be explicit about which commands should be run. In some cases you can discard inferred commands if they are not relevant to your project.
+        # - run: if [ -a ./gradlew ]; then gradlew dependencies; else gradle dependencies; fi
+        # Save dependency cache
+        #- save_cache:
         #key: v1-dep-{{ .Branch }}-{{ epoch }}
         #paths:
-        # This is a broad list of cache paths to include many possible development environments
-        # You can probably delete some of these entries
-       # - ~/.gradle
+      # This is a broad list of cache paths to include many possible development environments
+      # You can probably delete some of these entries
+      # - ~/.gradle
 
     # Compile
     #   This would typically go in either a build or a build-and-test job when using workflows
