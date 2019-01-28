@@ -19,6 +19,7 @@ jobs:
     # 'See docs on artifact collection here https://circleci.com/docs/2.0/artifacts/'
     - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
     - run: java -version
+    - run: export DISPLAY=:0
         # Dependencies
         #   This would typically go in either a build or a build-and-test job when using workflows
         # Restore the dependency cache
