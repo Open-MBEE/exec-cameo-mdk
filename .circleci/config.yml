@@ -4,15 +4,14 @@ jobs:
     working_directory: ~/Open-MBEE/mdk
     parallelism: 1
     shell: /bin/bash --login
+    environment:
+      CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
+      CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
     docker:
       - image: davidwillard/circleci-oracle-jdk8
         auth:
           username: $DOCKER_LOGIN
           password: $DOCKER_PASSWORD
-        command: /sbin/init
-    environment:
-      CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
-      CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
     steps:
     - checkout
     # Prepare for artifact and test results  collection equivalent to how it was done on 1.0.
@@ -20,7 +19,6 @@ jobs:
     # 'See docs on artifact collection here https://circleci.com/docs/2.0/artifacts/'
     - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
     - run: java -version
-    - run: export DISPLAY=:0
         # Dependencies
         #   This would typically go in either a build or a build-and-test job when using workflows
         # Restore the dependency cache
@@ -45,11 +43,11 @@ jobs:
     # Compile
     #   This would typically go in either a build or a build-and-test job when using workflows
     # This is based on your 1.0 configuration file or project settings
-    - run: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
+    - run: xvfb-run ./gradlew -Djava.awt.headless=true -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
     # Test
     #   This would typically be a build job when using workflows, possibly combined with build
     # This is based on your 1.0 configuration file or project settings
-    - run: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info --stacktrace test
+    - run: xvfb-run ./gradlew -Djava.awt.headless=true -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info --stacktrace test
     # This is based on your 1.0 configuration file or project settings
     - run: mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - run: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
