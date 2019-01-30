@@ -43,14 +43,15 @@ jobs:
 
     #Deployment
     - deploy:
+        name: Deploy
         command: |
           if [[ "${CIRCLE_TAG}" =~ [0-9.]+(-(a|b|rc)[0-9]+)? ]]; then
-            echo "Deploy to artifactory"
-            echo "Deploy to Bintray"
+            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
           elif [[ "${CIRCLE_BRANCH}" =~ ((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop) ]]; then
-            echo "Deploy to artifactory"
+            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
           else
-            echo "Don't deploy"
+            echo "Not a release or snapshot, so don't deploy anything"
           fi
 
       # Teardown
