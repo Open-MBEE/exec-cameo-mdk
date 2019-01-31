@@ -1,17 +1,10 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/Open-MBEE/mdk
-    parallelism: 1
-    shell: /bin/bash --login
     environment:
-      CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
     docker:
-      - image: davidwillard/circleci-oracle-jdk8
-        auth:
-          username: $DOCKER_LOGIN
-          password: $DOCKER_PASSWORD
+      - image: circleci/openjdk:8
     steps:
     - checkout
     - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
@@ -39,7 +32,6 @@ jobs:
 
     - run: mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - run: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
-    - run: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
 
     #Deployment
     - deploy:
@@ -60,6 +52,6 @@ jobs:
         path: /tmp/circleci-test-results
       # Save artifacts
     - store_artifacts:
-        path: /tmp/circleci-artifacts
+        path: build/reports
     - store_artifacts:
         path: /tmp/circleci-test-results
