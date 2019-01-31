@@ -2,6 +2,7 @@ version: 2
 jobs:
   build:
     environment:
+      CIRCLE_ARTIFACTS:    /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
     docker:
       - image: circleci/openjdk:8
@@ -32,6 +33,7 @@ jobs:
 
     - run: mkdir -p $CIRCLE_TEST_REPORTS/junit/
     - run: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+    - run: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
 
     #Deployment
     - deploy:
@@ -52,6 +54,6 @@ jobs:
         path: /tmp/circleci-test-results
       # Save artifacts
     - store_artifacts:
-        path: build/reports
+        path: /tmp/circleci-artifacts
     - store_artifacts:
         path: /tmp/circleci-test-results
