@@ -26,7 +26,6 @@ jobs:
     - run:
         name: Download uncached dependencies
         command: ./gradlew dependencies
-    - run:
 
     - save_cache:
         paths:
