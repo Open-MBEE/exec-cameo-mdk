@@ -8,8 +8,14 @@ jobs:
       - image: circleci/openjdk:8
     steps:
     - checkout
-    - run: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS
-    - run: java -version
+    - run:
+        name: Create output directories
+        command: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS $CIRCLE_TEST_REPORTS/junit/
+
+    - run:
+        name: Log Java version
+        command: java -version
+
     # Dependency caching
     - restore_cache:
         keys:
@@ -17,8 +23,10 @@ jobs:
           - gradle-repo-v4_0_0-{{ .Branch }}-{{ checksum "gradle.properties" }}
           - gradle-repo-v4_0_0-{{ .Branch }}-
           - gradle-repo-v4_0_0-
-
-    - run: ./gradlew dependencies
+    - run:
+        name: Download uncached dependencies
+        command: ./gradlew dependencies
+    - run:
 
     - save_cache:
         paths:
@@ -26,14 +34,21 @@ jobs:
         key: gradle-repo-v4_0_0--{{ .Branch }}-{{ checksum "gradle.properties" }}
 
     # Compile
-    - run: xvfb-run ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
+    - run:
+        name:  Build MDK
+        command: xvfb-run ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
 
     # Test
-    - run: xvfb-run ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info --stacktrace test
+    - run:
+        name: Run MDK tests
+        command: xvfb-run ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info --stacktrace test
 
-    - run: mkdir -p $CIRCLE_TEST_REPORTS/junit/
-    - run: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
-    - run: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
+    - run:
+        name: Collect test results
+        command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+    - run:
+        name: Collect aritfacts
+        command: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
 
     #Deployment
     - deploy:
