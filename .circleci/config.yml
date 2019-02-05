@@ -30,7 +30,7 @@ jobs:
     - save_cache:
         paths:
           - ~/.gradle
-        key: gradle-repo-v4--{{ .Branch }}-{{ checksum "gradle.properties" }}
+        key: gradle-repo-v4-{{ .Branch }}-{{ checksum "gradle.properties" }}
 
     # Compile
     - run:
