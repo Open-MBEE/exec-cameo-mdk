@@ -58,7 +58,7 @@ repositories {
         ivy {
             // http://download1.nomagic.com/magicdraw185sp2/MagicDraw_185_sp2_no_install.zip
             url 'http://download1.nomagic.com/'
-            patternLayout {
+            layout 'pattern', {
                 artifact '/[module][revision]/[classifier].[ext]'
             }
         }
@@ -124,7 +124,7 @@ dependencies {
 
     // Test Dependencies
     //testCompile 'junit:junit:4.11'
-    testCompile group: 'org.gradle', name: 'gradle-core', version: '5.2'
+    testCompile group: 'org.gradle', name: 'gradle-core', version: '3.1'
 
     testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.0.1'
     
