@@ -20,9 +20,9 @@ jobs:
     - restore_cache:
         keys:
           # when lock file changes, use increasingly general patterns to restore cache
-          - gradle-repo-v4_0_0-{{ .Branch }}-{{ checksum "gradle.properties" }}
-          - gradle-repo-v4_0_0-{{ .Branch }}-
-          - gradle-repo-v4_0_0-
+          - gradle-repo-v4-{{ .Branch }}-{{ checksum "gradle.properties" }}
+          - gradle-repo-v4-{{ .Branch }}-
+          - gradle-repo-v4-
     - run:
         name: Download uncached dependencies
         command: ./gradlew dependencies
@@ -30,7 +30,7 @@ jobs:
     - save_cache:
         paths:
           - ~/.gradle
-        key: gradle-repo-v4_0_0--{{ .Branch }}-{{ checksum "gradle.properties" }}
+        key: gradle-repo-v4--{{ .Branch }}-{{ checksum "gradle.properties" }}
 
     # Compile
     - run:
@@ -57,7 +57,7 @@ jobs:
             ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
             ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
           elif [[ "${CIRCLE_BRANCH}" =~ ((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop) ]]; then
-            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
           else
             echo "Not a release or snapshot, so don't deploy anything"
           fi
