@@ -20,9 +20,9 @@ jobs:
     - restore_cache:
         keys:
           # when lock file changes, use increasingly general patterns to restore cache
-          - gradle-repo-v4-{{ .Branch }}-{{ checksum "gradle.properties" }}
-          - gradle-repo-v4-{{ .Branch }}-
-          - gradle-repo-v4-
+          - gradle-repo-v5-{{ .Branch }}-{{ checksum "gradle.properties" }}
+          - gradle-repo-v5-{{ .Branch }}-
+          - gradle-repo-v5-
     - run:
         name: Download uncached dependencies
         command: ./gradlew dependencies
@@ -30,7 +30,7 @@ jobs:
     - save_cache:
         paths:
           - ~/.gradle
-        key: gradle-repo-v4-{{ .Branch }}-{{ checksum "gradle.properties" }}
+        key: gradle-repo-v5-{{ .Branch }}-{{ checksum "gradle.properties" }}
 
     # Compile
     - run:
