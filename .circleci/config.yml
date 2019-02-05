@@ -34,12 +34,12 @@ jobs:
 
     # Compile
     - run:
-        name:  Build MDK
+        name: Compile
         command: xvfb-run ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
 
     # Test
     - run:
-        name: Run MDK tests
+        name: Run tests
         command: xvfb-run ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info --stacktrace test
 
     - run:
