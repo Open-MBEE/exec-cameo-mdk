@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        dockerfile { true }
-    }
+    agent { dockerfile true  }
     environment {
         BUILD_ACCESS = credentials('mdk-build-access')
 
