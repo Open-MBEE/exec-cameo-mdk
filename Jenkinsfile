@@ -1,5 +1,5 @@
-node('CAE-Jenkins-Opencae-MDK-Int-Agentl01'){
-    pipeline {
+pipeline {
+    node('CAE-Jenkins-Opencae-MDK-Int-Agentl01'){
         agent { dockerfile true  }
         environment {
             BUILD_ACCESS = credentials('mdk-build-access')
