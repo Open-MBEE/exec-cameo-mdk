@@ -21,7 +21,7 @@ withCredentials([
     string(          credentialsId: 'mdk-testrail-host',             variable: 'TESTRAIL_HOST'),
     string(          credentialsId: 'mdk-testrail-suite-id',         variable: 'TESTRAIL_SUITE_ID'),
     string(          credentialsId: 'mdk-artifactory-url',           variable: 'ARTIFACTORY_URL'),
-    string(          credentialsId: 'mdk-additional-test-arguments', variable: 'ADDITIONAL_TEST_ARGUMENTS')]) {
+    string(          credentialsId: 'mdk-additional-test-args-19',   variable: 'ADDITIONAL_TEST_ARGUMENTS')]) {
 
         stage('Dependencies') {
             mdk_builder.inside{
