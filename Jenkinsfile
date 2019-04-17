@@ -12,7 +12,7 @@ node('CAE-Jenkins2-DH-Agents-Linux'){
                 ).trim()
     echo "GIT TAG = $GIT_TAG"
 
-    mdk_builder = docker.build("willard/mdk-builder", "-f Dockerfile .circleci")
+    mdk_builder = docker.build("willard/mdk-builder", "-f Dockerfile .")
 
 withCredentials([
     usernamePassword(credentialsId: 'mdk-testrail-credentials',      usernameVariable: 'TESTRAIL_CREDENTIALS_USR',    passwordVariable: 'TESTRAIL_CREDENTIALS_PSW' ),
