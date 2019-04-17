@@ -1,64 +1,62 @@
-pipeline {
-    node('CAE-Jenkins-Opencae-MDK-Int-Agentl01'){
-        agent { dockerfile true  }
-        environment {
-            BUILD_ACCESS = credentials('mdk-build-access')
+node('CAE-Jenkins2-DH-Agents-Linux'){
+    def mdk_builder
 
-            TESTRAIL_HOST = credentials('mdk-testrail-host')
-            TESTRAIL_CREDENTIALS = credentials('mdk-testrail-credentials')
-            TESTRAIL_SUITE_ID = credentials('mdk-testrail-suite-id')
+    stage('Preparation') {
+        checkout scm
+    }
 
-            ARTIFACTORY_URL = credentials('mdk-artifactory-url')
-            ARTIFACTORY_CREDENTIALS = credentials('mdk-artifactory-credentials')
+    sh 'git branch --list'
+    GIT_TAG = sh {
+                script: $(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true'
+                returnStdout: true
+                ).trim()
+    echo "GIT TAG = $GIT_TAG"
 
-            ADDITIONAL_TEST_ARGUMENTS = credentials('mdk-additional-test-arguments')
-            DISPLAY = ':1'
+    mdk_builder = docker.build("willard/mdk-builder", "-f Dockerfile .circleci")
+
+withCredentials([
+    usernamePassword(credentialsId: 'mdk-testrail-credentials',      usernameVariable: 'TESTRAIL_CREDENTIALS_USR',    passwordVariable: 'TESTRAIL_CREDENTIALS_PSW' ),
+    usernamePassword(credentialsId: 'mdk-artifactory-credentials',   usernameVariable: 'ARTIFACTORY_CREDENTIALS_USR', passwordVariable: 'ARTIFACTORY_CREDENTIALS_PSW' ),
+    string(          credentialsId: 'mdk-build-access',              variable: 'BUILD_ACCESS'),
+    string(          credentialsId: 'mdk-testrail-host',             variable: 'TESTRAIL_HOST'),
+    string(          credentialsId: 'mdk-testrail-suite-id',         variable: 'TESTRAIL_SUITE_ID'),
+    string(          credentialsId: 'mdk-artifactory-url',           variable: 'ARTIFACTORY_URL'),
+    string(          credentialsId: 'mdk-additional-test-arguments', variable: 'ADDITIONAL_TEST_ARGUMENTS')]) {
+
+        stage('Dependencies') {
+            mdk_builder.inside{
+                sh '''
+                export GRADLE_USER_HOME=$(pwd)/.gradle
+                ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW dependencies --gradle-user-home GRADLE_USER_HOME --info --stacktrace --refresh-dependencies
+                '''
+            }
         }
-        stages {
-            stage('Dependencies') {
-                steps {
-                    sh '''
-                        GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
-                        export GRADLE_USER_HOME=$(pwd)/.gradle
-                        xvfb-run ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW dependencies --gradle-user-home GRADLE_USER_HOME --info --stacktrace --refresh-dependencies
-                    '''
-                }
+        stage('Compile') {
+            mdk_builder.inside{
+                sh '''
+                export GRADLE_USER_HOME=$(pwd)/.gradle
+                ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW --gradle-user-home GRADLE_USER_HOME --continue --info --stacktrace clean assemble
+                '''
             }
-            stage('Compile') {
-                steps {
-                    sh '''
-                        GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
-                        export GRADLE_USER_HOME=$(pwd)/.gradle
-                        xvfb-run ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW --gradle-user-home GRADLE_USER_HOME --continue --info --stacktrace clean assemble
-                    '''
-                }
+        }
+        stage('Test') {
+            mdk_builder.inside{
+                sh '''
+                export GRADLE_USER_HOME=$(pwd)/.gradle
+                xvfb-run ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PtestrailHost=$TESTRAIL_HOST -PtestrailUser=$TESTRAIL_CREDENTIALS_USR -PtestrailPassword=$TESTRAIL_CREDENTIALS_PSW -PtestrailSuiteId=$TESTRAIL_SUITE_ID -PadditionalTestArguments=$ADDITIONAL_TEST_ARGUMENTS --gradle-user-home GRADLE_USER_HOME --continue --info --stacktrace check testrailPublish
+                '''
             }
-            stage('Test') {
-                steps {
-                    sh '''
-                        GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
-                        export GRADLE_USER_HOME=$(pwd)/.gradle
-                        Xvfb $DISPLAY &
-                        xvfb-run ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PtestrailHost=$TESTRAIL_HOST -PtestrailUser=$TESTRAIL_CREDENTIALS_USR -PtestrailPassword=$TESTRAIL_CREDENTIALS_PSW -PtestrailSuiteId=$TESTRAIL_SUITE_ID -PadditionalTestArguments=$ADDITIONAL_TEST_ARGUMENTS --gradle-user-home GRADLE_USER_HOME --continue --info --stacktrace check testrailPublish
-                    '''
-                }
-                post {
-                    always {
-                        junit 'build/test-results/**/*.xml'
-                        archiveArtifacts 'build/reports/**'
-                    }
-                }
-            }
-            stage('Publish') {
-                steps {
-                    sh '''
-                        GIT_TAG=$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true
-                        export GRADLE_USER_HOME=$(pwd)/.gradle
-                        if [ -z $GIT_TAG ]; then ARTIFACTORY_REPOSITORY="maven-libs-snapshot-local"; else ARTIFACTORY_REPOSITORY="maven-libs-release-local"; fi
-                        xvfb-run ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PartifactoryRepository=$ARTIFACTORY_REPOSITORY --gradle-user-home GRADLE_USER_HOME --continue --info --stacktrace artifactoryPublish
-                    '''
-                }
+        }
+        stage('Publish') {
+            mdk_builder.inside{
+                sh '''
+                export GRADLE_USER_HOME=$(pwd)/.gradle
+                if [ -z $GIT_TAG ]; then ARTIFACTORY_REPOSITORY="maven-libs-snapshot-local"; else ARTIFACTORY_REPOSITORY="maven-libs-release-local"; fi
+                ./gradlew -PbuildNumber=$BUILD_NUMBER -PbuildAccess=$BUILD_ACCESS -PbuildTag=$GIT_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW -PartifactoryRepository=$ARTIFACTORY_REPOSITORY --gradle-user-home GRADLE_USER_HOME --continue --info --stacktrace artifactoryPublish
+                '''
             }
         }
     }
 }
+
+
