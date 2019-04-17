@@ -7,7 +7,7 @@ node('CAE-Jenkins2-DH-Agents-Linux'){
 
     sh 'git branch --list'
     GIT_TAG = sh {
-                script: $(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true'
+                script: '$(git describe --tags --exact-match `git rev-parse HEAD 2> /dev/null` 2> /dev/null) || true'
                 returnStdout: true
                 ).trim()
     echo "GIT TAG = $GIT_TAG"
