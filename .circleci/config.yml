@@ -40,7 +40,7 @@ jobs:
     # Test
     - run:
         name: Run tests
-        command: xvfb-run ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PmagicDrawLicense=$MAGICDRAW_LICENSE --info --stacktrace test
+        command: xvfb-run ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace test
 
     - run:
         name: Collect test results
