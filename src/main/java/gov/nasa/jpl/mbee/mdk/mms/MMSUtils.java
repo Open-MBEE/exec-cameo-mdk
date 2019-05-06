@@ -391,6 +391,7 @@ public class MMSUtils {
             }
         }
         else {
+            LAST_EXCEPTION.set(null);
             progressStatus.setIndeterminate(true);
             Future<?> future = TaskRunner.runWithProgressStatus(() -> {
                 try (CloseableHttpClient httpclient = HttpClients.createDefault();
