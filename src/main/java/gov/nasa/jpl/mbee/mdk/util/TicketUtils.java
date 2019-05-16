@@ -30,7 +30,28 @@ public class TicketUtils {
     private static String username = "";
     private static String password = "";
     private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
-    private static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<String, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
+
+    private static TicketMapping getTicketMapping(Project project){
+        if (project != null){
+            return ticketMappings.get(project.getPrimaryProject().getProjectID());
+        }
+        return null;
+    }
+
+    private static void putTicketMapping(Project project, TicketMapping ticketMapping){
+        if (project != null){
+            ticketMappings.put(project.getPrimaryProject().getProjectID(), ticketMapping);
+        }
+    }
+
+    private static TicketMapping removeTicketMapping(Project project){
+        if (project != null){
+            return ticketMappings.remove(project.getPrimaryProject().getProjectID());
+        }
+        return null;
+    }
+
 
     /**
      * Accessor for stored username.
@@ -38,7 +59,7 @@ public class TicketUtils {
      * @return username
      */
     public static String getUsername(Project project) {
-        TicketMapping ticketMapping = ticketMappings.get(project);
+        TicketMapping ticketMapping = getTicketMapping(project);
         return ticketMapping != null ? ticketMapping.getUsername() : null;
     }
 
@@ -65,7 +86,7 @@ public class TicketUtils {
      * @return ticket string
      */
     public static String getTicket(Project project) {
-        TicketMapping ticketMapping = ticketMappings.get(project);
+        TicketMapping ticketMapping = getTicketMapping(project);
         if (ticketMapping == null) {
             return null;
         }
@@ -196,7 +217,7 @@ public class TicketUtils {
      */
     public static void clearTicket(Project project) {
         password = "";
-        TicketMapping removed = ticketMappings.remove(project);
+        TicketMapping removed = removeTicketMapping(project);
         if (removed != null && removed.getScheduledFuture() != null) {
             removed.getScheduledFuture().cancel(true);
         }
@@ -225,7 +246,7 @@ public class TicketUtils {
         }
 
         //ensure ticket is cleared in case of failure
-        ticketMappings.remove(project);
+        removeTicketMapping(project);
 
         // build request
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
@@ -250,7 +271,7 @@ public class TicketUtils {
             }
             // parse response
             if (ticket != null) {
-                ticketMappings.put(project, new TicketMapping(project, username, ticket));
+                putTicketMapping(project, new TicketMapping(project, username, ticket));
             }
         }, "Logging in to MMS", true, 0);
 
