@@ -116,7 +116,7 @@ public class Utils {
             return Collections.emptyList();
         }
         diagramPresentationElement.ensureLoaded();
-        return diagramPresentationElement.getUsedModelElements();
+        return diagramPresentationElement.getUsedModelElements(true);
     }
 
     /**
