@@ -26,7 +26,7 @@ pipeline {
                     -PartifactoryUrl=$ARTIFACTORY_URL \
                     -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR \
                     -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW \
-                    --gradle-user-home GRADLE_USER_HOME \
+                    --gradle-user-home $GRADLE_USER_HOME \
                     --info --stacktrace --refresh-dependencies \
                     dependencies'
             }
@@ -40,7 +40,7 @@ pipeline {
                     -PartifactoryUrl=$ARTIFACTORY_URL \
                     -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR \
                     -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW \
-                    --gradle-user-home GRADLE_USER_HOME \
+                    --gradle-user-home $GRADLE_USER_HOME \
                     --continue --info --stacktrace \
                     clean assemble'
             }
@@ -59,7 +59,7 @@ pipeline {
                     -PtestrailPassword=$TESTRAIL_CREDENTIALS_PSW \
                     -PtestrailSuiteId=$TESTRAIL_SUITE_ID \
                     -PadditionalTestArguments=$ADDITIONAL_TEST_ARGUMENTS \
-                    --gradle-user-home GRADLE_USER_HOME \
+                    --gradle-user-home $GRADLE_USER_HOME \
                     --continue --info --stacktrace \
                     check testrailPublish'
             }
@@ -68,14 +68,14 @@ pipeline {
             when { branch 'develop' }
             steps {
                 sh './gradlew \
-                -PbuildNumber=1000 \
+                -PbuildNumber=$BUILD_NUMBER \
                 -PbuildAccess=$BUILD_ACCESS \
                 -PbuildTag=$TAG_NAME \
                 -PartifactoryUrl=$ARTIFACTORY_URL \
                 -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR \
                 -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW \
                 -PartifactoryRepository=maven-libs-snapshot-local \
-                --gradle-user-home GRADLE_USER_HOME \
+                --gradle-user-home $GRADLE_USER_HOME \
                 --continue --info --stacktrace \
                 artifactoryPublish'
             }
@@ -92,7 +92,7 @@ pipeline {
                 -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR \
                 -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW \
                 -PartifactoryRepository=maven-libs-release-local \
-                --gradle-user-home GRADLE_USER_HOME \
+                --gradle-user-home $GRADLE_USER_HOME \
                 --continue --info --stacktrace \
                 artifactoryPublish'
             }
