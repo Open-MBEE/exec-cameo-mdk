@@ -1,5 +1,9 @@
 pipeline {
-    agent { dockerfile true }
+    agent {
+        docker{
+            image 'circleci/openjdk:8'
+        }
+    }
     environment {
         GRADLE_USER_HOME = "$WORKSPACE/.gradle"
         ARTIFACTORY_CREDENTIALS = credentials('mdk-artifactory-credentials')
@@ -61,16 +65,16 @@ pipeline {
             }
         }
         stage('Publish Snapshot') {
-            when { not { tag "" } }
+            when { branch 'develop' }
             steps {
                 sh './gradlew \
-                -PbuildNumber=$BUILD_NUMBER \
+                -PbuildNumber=1000 \
                 -PbuildAccess=$BUILD_ACCESS \
                 -PbuildTag=$TAG_NAME \
                 -PartifactoryUrl=$ARTIFACTORY_URL \
                 -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR \
                 -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW \
-                -PartifactoryRepository=$ARTIFACTORY_REPOSITORY \
+                -PartifactoryRepository=maven-libs-snapshot-local \
                 --gradle-user-home GRADLE_USER_HOME \
                 --continue --info --stacktrace \
                 artifactoryPublish'
@@ -78,7 +82,7 @@ pipeline {
         }
 
         stage('Publish Release') {
-            when { tag "" }
+            when { allOf { branch 'master';  tag "" } }
             steps {
                 sh './gradlew \
                 -PbuildNumber=$BUILD_NUMBER \
@@ -87,7 +91,7 @@ pipeline {
                 -PartifactoryUrl=$ARTIFACTORY_URL \
                 -PartifactoryUsername=$ARTIFACTORY_CREDENTIALS_USR \
                 -PartifactoryPassword=$ARTIFACTORY_CREDENTIALS_PSW \
-                -PartifactoryRepository=$ARTIFACTORY_REPOSITORY \
+                -PartifactoryRepository=maven-libs-release-local \
                 --gradle-user-home GRADLE_USER_HOME \
                 --continue --info --stacktrace \
                 artifactoryPublish'
