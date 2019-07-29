@@ -39,6 +39,7 @@ import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DeltaSyncRunner implements RunnableWithProgress {
     private final boolean shouldCommitDeletes, shouldCommit, shouldUpdate;
@@ -131,19 +132,20 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // HANDLE CASE WHERE VALUE SPECIFICATION IS DIRTIED EXTERNALLY
         // Workaround: Dirty all referencing elements as ValueSpecifications aren't given their own identity
 
-        localChangelog.values().stream().flatMap(map -> map.values().stream()).filter(element -> element instanceof ValueSpecification).forEach(element -> element.eClass().getEAllReferences().forEach(reference -> {
+        localChangelog.values().stream().flatMap(map -> map.values().stream()).filter(element -> element instanceof ValueSpecification).flatMap(element -> element.eClass().getEAllReferences().stream().flatMap(reference -> {
+            List<Element> elements = new ArrayList<>();
             Object value = element.eGet(reference);
             if (value == null) {
-                return;
+                return Stream.empty();
             }
             if (reference.isMany() && value instanceof Collection) {
-                ((Collection<Object>) value).stream().filter(o -> o instanceof Element).map(o -> (Element) o).forEach(e -> localChangelog.addChange(Converters.getElementToIdConverter().apply(e), e, Changelog.ChangeType.UPDATED));
+                ((Collection<Object>) value).stream().filter(o -> o instanceof Element).map(o -> (Element) o).forEach(elements::add);
             }
             else if (value instanceof Element) {
-                Element e = (Element) value;
-                localChangelog.addChange(Converters.getElementToIdConverter().apply(e), e, Changelog.ChangeType.UPDATED);
+                elements.add((Element) value);
             }
-        }));
+            return elements.stream();
+        })).collect(Collectors.toSet()).forEach(element -> localChangelog.addChange(Converters.getElementToIdConverter().apply(element), element, Changelog.ChangeType.UPDATED));
 
 
         Map<String, Element> localCreated = localChangelog.get(Changelog.ChangeType.CREATED),
