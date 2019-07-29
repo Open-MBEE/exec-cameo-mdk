@@ -82,7 +82,7 @@ pipeline {
         }
 
         stage('Publish Release') {
-            when { allOf { branch 'master';  tag "" } }
+            when { tag "*" }
             steps {
                 sh './gradlew \
                 -PbuildNumber=$BUILD_NUMBER \
