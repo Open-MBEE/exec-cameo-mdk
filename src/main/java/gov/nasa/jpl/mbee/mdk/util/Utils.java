@@ -111,7 +111,12 @@ public class Utils {
      * @return
      */
     public static Collection<Element> getElementsOnDiagram(Diagram diagram) {
-        return Project.getProject(diagram).getDiagram(diagram).getUsedModelElements(true);
+        DiagramPresentationElement diagramPresentationElement = Project.getProject(diagram).getDiagram(diagram);
+        if (diagramPresentationElement == null) {
+            return Collections.emptyList();
+        }
+        diagramPresentationElement.ensureLoaded();
+        return diagramPresentationElement.getUsedModelElements(true);
     }
 
     /**
