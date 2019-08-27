@@ -36,8 +36,11 @@ if [ -z "$MAGICDRAW_HOME" ]; then
 fi
 
 CP_DELIM=":"
-
-PROPERTIES_FILE="$MAGICDRAW_HOME"/bin/magicdraw.properties
+if [ -f "$MAGICDRAW_HOME"/bin/magicdraw.properties ]; then
+  PROPERTIES_FILE="$MAGICDRAW_HOME"/bin/magicdraw.properties
+elif [ -f "$MAGICDRAW_HOME"/bin/csm.properties ]; then
+  PROPERTIES_FILE="$MAGICDRAW_HOME"/bin/csm.properties
+fi
 MAGICDRAW_HOME=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /%20/g')
 MD_CP_URL=file:$PROPERTIES_FILE?base=$MAGICDRAW_HOME#CLASSPATH
 
