@@ -1,10 +1,28 @@
 #!/bin/sh
 
-# usage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-h] [-debug]
-#       [-mmsHost <arg>] [-mmsPort <arg>] [-mmsUsername <arg>] [-mmsPassword <arg>]
-#       [-twcHost <arg>] [-twcPort <arg>] [-twcUsername <arg>] [-twcPassword <arg>]
-#       [-pmaHost <arg>] [-pmaPort <arg>] [-pmaJobId <arg>]
-#       [-projectId <arg>] [-refId <arg>] [-targetViewId <arg>] [-generateRecursively]
+# Usage: gov.nasa.jpl.mbee.mdk.cli.AutomatedCommitter [options]
+#   Options:
+#     --help, -h
+#
+#   * --mmsPassword
+#
+#   * --mmsUsername
+#
+#     --timeout, -t
+#       Specifies the number of seconds after which the execution will be
+#       attempted to be stopped.
+#       Default: 0
+#     --twcBranchId
+#
+#   * --twcHost
+#
+#   * --twcPassword
+#
+#   * --twcPort
+#
+#   * --twcProjectId
+#
+#   * --twcUsername
 
 # This script manages the settings and configuration options
 # necessary to launch a MagicDraw CommandLine program in the OSGI framework.
@@ -18,7 +36,6 @@ if [ -z "$MAGICDRAW_HOME" ]; then
 fi
 
 CP_DELIM=":"
-
 if [ -f "$MAGICDRAW_HOME"/bin/magicdraw.properties ]; then
   PROPERTIES_FILE="$MAGICDRAW_HOME"/bin/magicdraw.properties
 elif [ -f "$MAGICDRAW_HOME"/bin/csm.properties ]; then
@@ -48,7 +65,7 @@ java -Xmx8192M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \
        -Dcom.sun.media.imageio.disableCodecLib=true \
        -Dsun.locale.formatasdefault=true \
        -Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher \
-       -Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.mdk.cli.AutomatedViewGenerator \
+       -Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.mdk.cli.AutomatedCommitter \
        com.nomagic.osgi.launcher.ProductionFrameworkLauncher -verbose "$@"
 
 exit $?
