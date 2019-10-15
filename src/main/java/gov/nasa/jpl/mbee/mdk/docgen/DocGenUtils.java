@@ -415,14 +415,17 @@ public class DocGenUtils {
 
     /**
      * Generates svg and png files of the diagram passed in, the diagram names
-     * will be the diagram id in magicdraw
+     * will be the diagram id in magicdraw. The images will be 72 dpi and 100%
+     * scaling.
      *
      * @param diagram        the magicdraw diagram element
      * @param directory      directory for docbook xml output (without trailing slash)
      * @throws IOException
      */
     public static List<String> exportDiagram(Diagram diagram, File directory) throws IOException {
-        Project project = Application.getInstance().getProject();
+        int dpi = 72;
+        int scalePercent = 100;
+    	Project project = Application.getInstance().getProject();
         if (project == null) {
             return Collections.emptyList();
         }
@@ -439,8 +442,8 @@ public class DocGenUtils {
         results.add(directory.getName() + "/" + svgFileName);
 
         try {
-            ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgDiagramFile);
-            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile);
+        	ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgDiagramFile, false, dpi, scalePercent);
+        	ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile, false, dpi, scalePercent);
         } catch (IOException e) {
             e.printStackTrace();
             return results;
