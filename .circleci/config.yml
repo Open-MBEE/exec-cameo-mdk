@@ -43,48 +43,32 @@ jobs:
         name: Run tests
         command: xvfb-run ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace test
 
-    - run:
-        name: Collect test results
-        command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
-    - run:
-        name: Collect aritfacts
-        command: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
-      # Teardown
-      # Save test results
-    - store_test_results:
-        path: /tmp/circleci-test-results
-      # Save artifacts
-    - store_artifacts:
-        path: /tmp/circleci-artifacts
-    - store_artifacts:
-        path: /tmp/circleci-test-results
-    #Deployment
-    - deploy_release:
-        name: Deploy
-        command: |
-            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
-            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
+      - run:
+          name: Collect test results
+          command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+      - run:
+          name: Collect aritfacts
+          command: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
 
-    - deploy_snapshot:
-        name: Deploy
-        command: './gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+      #Deployment
+      - deploy:
+          name: Deploy
+          command: |
+            if [[ "${CIRCLE_TAG}" =~ [0-9.]+(-(a|b|rc)[0-9]+)? ]]; then
+              ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+              ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
+            elif [[ "${CIRCLE_BRANCH}" =~ ((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop) ]]; then
+              ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+            else
+              echo "Not a release or snapshot, so don't deploy anything"
+            fi
 
-
-workflows:
-  version: 2
-  build-test-deploy:
-    jobs:
-      - build:
-      - test:
-      - deploy_release:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
-      - deploy_snapshot:
-          requires:
-            - test
-          filters:
-            branches:
-              only: /((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/
+        # Teardown
+        # Save test results
+      - store_test_results:
+          path: /tmp/circleci-test-results
+        # Save artifacts
+      - store_artifacts:
+          path: /tmp/circleci-artifacts
+      - store_artifacts:
+          path: /tmp/circleci-test-results
