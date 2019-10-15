@@ -5,7 +5,7 @@ jobs:
       CIRCLE_ARTIFACTS:    /tmp/circleci-artifacts
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
     docker:
-      - image: circleci/openjdk:8
+      - image: circleci/openjdk@sha256:012843a8f91da1ea5e22e142bb5cb8c999a7457e03b8c79ab45d5fcb68043383
     steps:
     - checkout
     - run:
@@ -49,20 +49,6 @@ jobs:
     - run:
         name: Collect aritfacts
         command: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
-
-    #Deployment
-    - deploy:
-        name: Deploy
-        command: |
-          if [[ "${CIRCLE_TAG}" =~ [0-9.]+(-(a|b|rc)[0-9]+)? ]]; then
-            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
-            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
-          elif [[ "${CIRCLE_BRANCH}" =~ ((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop) ]]; then
-            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
-          else
-            echo "Not a release or snapshot, so don't deploy anything"
-          fi
-
       # Teardown
       # Save test results
     - store_test_results:
@@ -72,3 +58,33 @@ jobs:
         path: /tmp/circleci-artifacts
     - store_artifacts:
         path: /tmp/circleci-test-results
+    #Deployment
+    - deploy_release:
+        name: Deploy
+        command: |
+            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+            ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
+
+    - deploy_snapshot:
+        name: Deploy
+        command: './gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+
+
+workflows:
+  version: 2
+  build-test-deploy:
+    jobs:
+      - build:
+      - test:
+      - deploy_release:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
+      - deploy_snapshot:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/
