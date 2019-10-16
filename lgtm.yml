@@ -1,0 +1,4 @@
+extraction:
+  java:
+    index:
+      properties_files: true
