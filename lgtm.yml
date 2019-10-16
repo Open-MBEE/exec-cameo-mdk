@@ -2,3 +2,5 @@ extraction:
   java:
     index:
       properties_files: true
+      build_command:
+        - ./gradlew -Dorg.gradle.jvmargs=-Xmx2g --no-daemon -S build
