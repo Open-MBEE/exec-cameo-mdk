@@ -425,7 +425,7 @@ public class DocGenUtils {
     public static List<String> exportDiagram(Diagram diagram, File directory) throws IOException {
         int dpi = 72;
         int scalePercent = 100;
-    	Project project = Application.getInstance().getProject();
+        Project project = Application.getInstance().getProject();
         if (project == null) {
             return Collections.emptyList();
         }
@@ -442,8 +442,8 @@ public class DocGenUtils {
         results.add(directory.getName() + "/" + svgFileName);
 
         try {
-        	ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgDiagramFile, false, dpi, scalePercent);
-        	ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile, false, dpi, scalePercent);
+            ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgDiagramFile, false, dpi, scalePercent);
+            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile, false, dpi, scalePercent);
         } catch (IOException e) {
             e.printStackTrace();
             return results;
