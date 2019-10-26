@@ -78,7 +78,8 @@ jobs:
         at: ~/
       - run:
         name: Deploy snapshot to Artifactory
-        command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+        command: echo "Deployed Snapshot"
+#./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
   deploy_release:
     executor: openjdk_executor
     steps:
@@ -96,20 +97,6 @@ workflows:
   build-test-deploy:
     jobs:
       - checkout_run_test:
-        filters:
-          tags:
-            only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
       - deploy_snapshot:
         requires:
           - checkout_run_test
-        filters:
-          branches:
-            only: /((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/
-      - deploy_release:
-        requires:
-          - checkout_run_test
-        filters:
-          tags:
-            only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
-          branches:
-            ignore: /.*/
