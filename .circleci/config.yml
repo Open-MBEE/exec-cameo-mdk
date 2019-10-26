@@ -92,7 +92,7 @@ jobs:
         command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
 
 workflows:
-  version: 2.1
+  version: 2
   build-test-deploy:
     jobs:
       - checkout_run_test:
