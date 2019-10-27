@@ -7,6 +7,8 @@ executors:
     environment:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+      CIRCLE_ARTIFACTS:    ~/circleci-artifacts
+      CIRCLE_TEST_REPORTS: ~/circleci-test-results
 
 jobs:
   checkout_run_test:
@@ -52,12 +54,12 @@ jobs:
           # Teardown
           # Save test results
         - store_test_results:
-            path: /tmp/circleci-test-results
+            path: $CIRCLE_TEST_REPORTS
           # Save artifacts
         - store_artifacts:
-            path: /tmp/circleci-artifacts
+            path: $CIRCLE_ARTIFACTS
         - store_artifacts:
-            path: /tmp/circleci-test-results
+            path: $CIRCLE_TEST_REPORTS
         
         - run: rm -rf .git
         # Persist the specified paths (workspace/echo-output) into the workspace for use in build/test jobs.
