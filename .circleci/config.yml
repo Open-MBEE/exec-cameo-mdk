@@ -18,7 +18,7 @@ jobs:
         - checkout
         - run:
             name: Create output directories
-            command: mkdir -p $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS $CIRCLE_TEST_REPORTS/junit/
+            command: mkdir -vp $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS $CIRCLE_TEST_REPORTS/junit/
         
         - restore_cache:
             keys:
