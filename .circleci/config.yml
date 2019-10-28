@@ -98,20 +98,21 @@ workflows:
   build-test-deploy:
     jobs:
       - checkout_run_test:
-          filters:  # required since `test` has tag filters AND requires `build`
-            tags:
-              only: /^config-test.*/
+          filters:
+              tags:
+                  only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
       - deploy_snapshot:
           requires:
-            - checkout_run_test
-          filters:  # required since `deploy` has tag filters AND requires `test`
-            tags:
-              only: /^config-test.*/
+              - checkout_run_test
+          filters:  
+              branches:
+                  only: /((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/
       - deploy_release:
           requires:
-            - checkout_run_test
+              - checkout_run_test
           filters:
-            tags:
-              only: /^config-test.*/
-            branches:
-              ignore: /.*/
+              tags:
+                  only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
+              branches:
+                  ignore: /.*/
+
