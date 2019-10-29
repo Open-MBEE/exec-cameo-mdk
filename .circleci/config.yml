@@ -7,8 +7,8 @@ executors:
     environment:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-      CIRCLE_ARTIFACTS:    $CIRCLE_WORKING_DIRECTORY/circleci-artifacts
-      CIRCLE_TEST_REPORTS: $CIRCLE_WORKING_DIRECTORY/circleci-test-results
+      CIRCLE_ARTIFACTS:    "$CIRCLE_WORKING_DIRECTORY/circleci-artifacts"
+      CIRCLE_TEST_REPORTS: "$CIRCLE_WORKING_DIRECTORY/circleci-test-results"
 
 jobs:
   checkout_run_test:
@@ -18,7 +18,7 @@ jobs:
         - checkout
         - run:
             name: Create output directories
-            command: mkdir -vp $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS $CIRCLE_TEST_REPORTS/junit/
+            command: "mkdir -vp $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS $CIRCLE_TEST_REPORTS/junit/"
         
         - restore_cache:
             keys:
@@ -54,12 +54,12 @@ jobs:
           # Teardown
           # Save test results
         - store_test_results:
-            path: $CIRCLE_TEST_REPORTS
+            path: "$CIRCLE_TEST_REPORTS"
           # Save artifacts
         - store_artifacts:
-            path: $CIRCLE_ARTIFACTS
+            path: "$CIRCLE_ARTIFACTS"
         - store_artifacts:
-            path: $CIRCLE_TEST_REPORTS
+            path: "$CIRCLE_TEST_REPORTS"
         
         - run: rm -rf .git
         # Persist the specified paths (workspace/echo-output) into the workspace for use in build/test jobs.
@@ -79,8 +79,7 @@ jobs:
             at: ~/
         - run:
             name: Deploy snapshot to Artifactory
-            command: echo "Deployed Snapshot to Artifactory"
-#./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+            command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
   deploy_release:
     executor: openjdk_executor
     steps:
@@ -88,12 +87,10 @@ jobs:
           at: ~/
       - run:
           name: Deploy release to Artifactory
-          command: echo "Deployed Release to Artifactory"
-          #command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+          command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
       - run:
           name: Deploy release to Bintray
-          command: echo "Deployed release to Bintray"
-          #command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
+          command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
 
 workflows:
   version: 2
