@@ -11,15 +11,12 @@ executors:
 jobs:
   checkout_run_test:
     executor: openjdk_executor
-    environment:
-        CIRCLE_ARTIFACTS:    /home/circleci/project/circleci-artifacts
-        CIRCLE_TEST_REPORTS: /home/circleci/project/circleci-test-results
     description: "Perform all setup steps"
     steps:
         - checkout
         - run:
             name: Create output directories
-            command: "mkdir -vp $CIRCLE_ARTIFACTS $CIRCLE_TEST_REPORTS $CIRCLE_TEST_REPORTS/junit/"
+            command: "mkdir -vp ~/circleci-artifacts ~/circleci-test-results ~/circleci-test-results/junit/"
         
         - restore_cache:
             keys:
@@ -47,20 +44,20 @@ jobs:
         
         - run:
             name: Collect test results
-            command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+            command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp -v {} ~/circleci-test-results/junit/ \;
         - run:
             name: Collect aritfacts
-            command: '[ ! -d build/reports ] || cp -R build/reports $CIRCLE_ARTIFACTS/'
+            command: '[ ! -d build/reports ] || cp -R build/reports ~/circleci-artifacts/'
         
           # Teardown
           # Save test results
         - store_test_results:
-            path: $CIRCLE_TEST_REPORTS
+            path: ~/circleci-test-results
           # Save artifacts
         - store_artifacts:
-            path: $CIRCLE_ARTIFACTS
+            path: ~/circleci-artifacts
         - store_artifacts:
-            path: $CIRCLE_TEST_REPORTS
+            path: ~/circleci-test-results
         
         - run: rm -rf .git
         # Persist the specified paths (workspace/echo-output) into the workspace for use in build/test jobs.
