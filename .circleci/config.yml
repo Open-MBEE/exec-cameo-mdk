@@ -7,12 +7,13 @@ executors:
     environment:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-      CIRCLE_ARTIFACTS:    /home/circleci/project/circleci-artifacts
-      CIRCLE_TEST_REPORTS: /home/circleci/project/circleci-test-results
 
 jobs:
   checkout_run_test:
     executor: openjdk_executor
+    environment:
+        CIRCLE_ARTIFACTS:    /home/circleci/project/circleci-artifacts
+        CIRCLE_TEST_REPORTS: /home/circleci/project/circleci-test-results
     description: "Perform all setup steps"
     steps:
         - checkout
@@ -54,12 +55,12 @@ jobs:
           # Teardown
           # Save test results
         - store_test_results:
-            path: "$CIRCLE_TEST_REPORTS"
+            path: $CIRCLE_TEST_REPORTS
           # Save artifacts
         - store_artifacts:
-            path: "$CIRCLE_ARTIFACTS"
+            path: $CIRCLE_ARTIFACTS
         - store_artifacts:
-            path: "$CIRCLE_TEST_REPORTS"
+            path: $CIRCLE_TEST_REPORTS
         
         - run: rm -rf .git
         # Persist the specified paths (workspace/echo-output) into the workspace for use in build/test jobs.
