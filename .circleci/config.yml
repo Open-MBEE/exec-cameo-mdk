@@ -7,8 +7,8 @@ executors:
     environment:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-      CIRCLE_ARTIFACTS:    "$CIRCLE_WORKING_DIRECTORY/circleci-artifacts"
-      CIRCLE_TEST_REPORTS: "$CIRCLE_WORKING_DIRECTORY/circleci-test-results"
+      CIRCLE_ARTIFACTS:    /home/circleci/project/circleci-artifacts
+      CIRCLE_TEST_REPORTS: /home/circleci/project/circleci-test-results
 
 jobs:
   checkout_run_test:
