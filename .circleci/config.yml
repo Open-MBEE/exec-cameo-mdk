@@ -35,7 +35,7 @@ jobs:
         
         - run:
             name: Compile
-            command: xvfb-run ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
+            command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
         
         # Test
         - run:
@@ -46,7 +46,7 @@ jobs:
             name: Collect test results
             command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp -v {} ~/circleci-test-results/junit/ \;
         - run:
-            name: Collect aritfacts
+            name: Collect artifacts
             command: '[ ! -d build/reports ] || cp -R build/reports ~/circleci-artifacts/'
         
           # Teardown
