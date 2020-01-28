@@ -80,7 +80,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
-            Set<String> clientElementIds = clientElements.stream().map(pair -> pair.getKey().getLocalID()).collect(Collectors.toCollection(LinkedHashSet::new));
+            Set<String> clientElementIds = clientElements.stream().map(pair -> Converters.getElementToIdConverter().apply(pair.getKey())).collect(Collectors.toCollection(LinkedHashSet::new));
             try {
                 File recursiveResponseFile, traversedResponseFile, responseFile;
 
