@@ -209,15 +209,16 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     objectNode.put(MDKConstants.TYPE_KEY, "Mount");
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX);
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject));
-                    String branchName;
-                    EsiUtils.EsiBranchInfo esiBranchInfo = null;
-                    if (isRemote && (esiBranchInfo = EsiUtils.getCurrentBranch(attachedProject)) == null) {
+                    EsiUtils.EsiBranchInfo branchInfo = EsiUtils.getCurrentBranch(attachedProject);
+                    if (isRemote && branchInfo == null) {
                         return null;
                     }
-                    if (!isRemote || (branchName = esiBranchInfo.getName()) == null || branchName.equals("trunk")) {
+                    String branchName;
+                    if (!isRemote || (branchName = branchInfo.getName()) == null || "trunk".equals(branchName)) {
                         branchName = "master";
                     }
-                    objectNode.put(MDKConstants.MOUNTED_REF_ID_KEY, branchName);
+                    String branchId = "master".equals(branchName) ? "master" : branchInfo.getID().toString();
+                    objectNode.put(MDKConstants.MOUNTED_REF_ID_KEY, branchId);
                     objectNode.put(MDKConstants.TWC_VERSION_KEY, isRemote ? ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()) : -1);
                     return objectNode;
                 },
