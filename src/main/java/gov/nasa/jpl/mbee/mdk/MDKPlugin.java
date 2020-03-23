@@ -17,7 +17,6 @@ import gov.nasa.jpl.mbee.mdk.cli.AutomatedCommitter;
 import gov.nasa.jpl.mbee.mdk.cli.AutomatedViewGenerator;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.SRConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import java.io.File;
@@ -93,11 +92,6 @@ public class MDKPlugin extends Plugin {
 
         acm.addMainMenuConfigurator(new MMSConfigurator());
         EvaluationConfigurator.getInstance().registerBinaryImplementers(MDKPlugin.class.getClassLoader());
-
-        SRConfigurator srConfigurator = new SRConfigurator();
-        acm.addSearchBrowserContextConfigurator(srConfigurator);
-        acm.addContainmentBrowserContextConfigurator(srConfigurator);
-        acm.addBaseDiagramContextConfigurator(DiagramTypeConstants.UML_ANY_DIAGRAM, srConfigurator);
 
         acm.addMainToolbarConfigurator(new SyncStatusConfigurator());
 

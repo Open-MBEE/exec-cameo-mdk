@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.actions;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -10,7 +11,6 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
@@ -27,9 +27,9 @@ import java.util.Map;
 /**
  * Created by igomes on 12/5/16.
  */
-public class DetailedSyncStatusAction extends SRAction {
+public class DetailedSyncStatusAction extends MDAction {
     public DetailedSyncStatusAction() {
-        super(DetailedSyncStatusAction.class.getSimpleName());
+        super(DetailedSyncStatusAction.class.getSimpleName(), DetailedSyncStatusAction.class.getSimpleName(), null, null);
     }
 
     private static final ValidationSuite validationSuite = new ValidationSuite("Sync Status");

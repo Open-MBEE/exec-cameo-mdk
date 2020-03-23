@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.status.actions;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -11,7 +12,6 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapte
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.ui.SyncStatusFrame;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import javax.annotation.CheckForNull;
@@ -24,14 +24,14 @@ import java.text.NumberFormat;
 /**
  * Created by igomes on 8/16/16.
  */
-public class SyncStatusAction extends SRAction {
+public class SyncStatusAction extends MDAction {
     public static final String NAME = "Unsynced";
 
     private SyncStatusFrame syncStatusFrame;
 
 
     public SyncStatusAction() {
-        super(NAME);
+        super(NAME, NAME, null, null);
         update();
     }
 
