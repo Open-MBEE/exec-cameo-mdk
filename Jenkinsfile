@@ -65,7 +65,7 @@ pipeline {
             }
         }
         stage('Publish Snapshot') {
-            when { branch 'develop' }
+            when { anyOf { branch 'develop' ; branch 'release/**' } }
             steps {
                 sh './gradlew \
                 -PbuildNumber=$BUILD_NUMBER \
