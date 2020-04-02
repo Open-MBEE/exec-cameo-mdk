@@ -23,6 +23,9 @@ import gov.nasa.jpl.mbee.mdk.http.HttpDeleteWithBody;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSLoginEndpoint;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
@@ -159,34 +162,41 @@ public class MMSUtils {
     }
 
     private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
-        if (requestUri == null) {
-            return null;
-        }
-        requestUri.setPath(requestUri.getPath() + "/api/login");
-        requestUri.clearParameters();
-
-        //build request
-        URI requestDest = requestUri.build();
-        HttpRequestBase request = new HttpPost(requestDest);
-
-        request.addHeader("Content-Type", "application/json");
-        request.addHeader("charset", (Consts.UTF_8).displayName());
-
-        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-        credentials.put("username", username);
-        credentials.put("password", password);
-        String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
-        ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
-
-        // do request
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-        sendMMSRequest(project, request, progressStatus, responseJson);
-        JsonNode value;
-        if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
-            return value.asText();
+        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), "login");
+        endpoint.prepareUriPath();
+        if(endpoint instanceof MMSLoginEndpoint) {
+            return ((MMSLoginEndpoint) endpoint).buildLoginRequest(project, username, password, progressStatus);
         }
         return null;
+
+//        URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
+//        if (requestUri == null) {
+//            return null;
+//        }
+//        requestUri.setPath(requestUri.getPath() + "/api/login");
+//        requestUri.clearParameters();
+//
+//        //build request
+//        URI requestDest = requestUri.build();
+//        HttpRequestBase request = new HttpPost(requestDest);
+//
+//        request.addHeader("Content-Type", "application/json");
+//        request.addHeader("charset", (Consts.UTF_8).displayName());
+//
+//        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
+//        credentials.put("username", username);
+//        credentials.put("password", password);
+//        String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
+//        ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
+//
+//        // do request
+//        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+//        sendMMSRequest(project, request, progressStatus, responseJson);
+//        JsonNode value;
+//        if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
+//            return value.asText();
+//        }
+//        return null;
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
