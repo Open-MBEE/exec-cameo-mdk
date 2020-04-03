@@ -2,7 +2,7 @@
 
 [ ![Download](https://api.bintray.com/packages/openmbee/maven/mdk/images/download.svg) ](https://bintray.com/openmbee/maven/mdk/_latestVersion)[![CircleCI](https://circleci.com/gh/Open-MBEE/mdk.svg?style=shield)](https://circleci.com/gh/Open-MBEE/mdk) [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/Open-MBEE/mdk.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Open-MBEE/mdk/context:java)
 
-The Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/products/cameo-systems-modeler) and other No Magic environment bundles that’s primary purposes are to sync models with the [MMS](https://github.com/Open-MBEE/mms) and implement the [DocGen](src/main/dist/manual) language, which allows modelers to dynamically generate documents in a model-based approach using the view and viewpoint concept.
+Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/products/cameo-systems-modeler) and other No Magic environment bundles that’s primary purposes are to sync models with the [MMS](https://github.com/Open-MBEE/mms-alfresco) and implement the [DocGen](src/main/dist/manual) language, which allows modelers to dynamically generate documents in a model-based approach using the view and viewpoint concept.
 
 # Quickstart
 
@@ -10,15 +10,21 @@ The Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/pr
 
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin)
     * The latest Cameo MDK is tested with and supports **19.0 SP3**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+* [Model Management System (MMS) 3](https://github.com/Open-MBEE/mms-alfresco)
 
 ## Installation
 
 1. [Download](https://bintray.com/openmbee/maven/mdk/_latestVersion) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
+
 2. Run CSM. From the main menu, select "Help" > "Resource/Plugin Manager".
    ![Resource/Plugin Manager](doc/images/resource-plugin-manager.png)
+   
 3. Click "Import", navigate to the downloaded Cameo MDK plugin, and click "Open".
+
 4. CSM should confirm installation with the following prompt.
+
    ![MDK Installation Confirmation](doc/images/mdk-installation-confirmation.png)
+   
 5. Restart CSM. To check installation, select from the main menu "Help" > "Resource/Plugin Manager" > "Plugins (no cost)" and ensure a row exists for "Model Development Kit" and its status is "Installed" with the correct version.
   ![MDK Installed](doc/images/mdk-installed.png)
   
