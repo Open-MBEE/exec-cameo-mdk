@@ -261,7 +261,7 @@ class PreDist extends DefaultTask {
 
         String pluginLibraries = ''
         project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
-            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
+            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build[\\\\/]generated-dist[\\\\/]plugins[\\\\/]${groupName}[\\\\/]/, '') + '\"/>' + System.lineSeparator()
         }
         project.copy {
             from 'src/main/dist/template/plugins/${group}/plugin.xml'
@@ -273,7 +273,7 @@ class PreDist extends DefaultTask {
 
         String descriptorFiles = ''
         project.fileTree(dir: 'build/generated-dist').each { file ->
-            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '')
+            String relativePath = file.absolutePath.replaceAll(/.*build[\\\\/]generated-dist[\\\\/]/, '')
             descriptorFiles += '\t\t<file from=\"' + relativePath + '\" to=\"' + relativePath + '\"/>' + System.lineSeparator()
         }
         project.copy {
@@ -284,6 +284,7 @@ class PreDist extends DefaultTask {
             filter { String line -> line.replace('${build.timestamp}', buildTimestamp) }
             into 'build/generated-dist/data/resourcemanager'
         }
+        project.delete 'build/generated-dist/plugins/${group}' // keep single quotes
     }
 }
 
