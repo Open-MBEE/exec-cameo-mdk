@@ -5,12 +5,24 @@ public class MMSEndpointFactory {
         MMSEndpoint mmsEndpoint = null;
 
         switch(endpointType) {
-            case "login": {
+            case MMSEndpointConstants.LOGIN_CASE: {
                 mmsEndpoint = new MMSLoginEndpoint(baseUri);
                 break;
             }
-            case "orgs": {
+            case MMSEndpointConstants.ORGS_CASE: {
                 mmsEndpoint = new MMSOrgsEndpoint(baseUri);
+                break;
+            }
+            case MMSEndpointConstants.PROJECTS_CASE: {
+                mmsEndpoint = new MMSProjectsEndpoint(baseUri);
+                break;
+            }
+            case MMSEndpointConstants.REFS_CASE: {
+                mmsEndpoint = new MMSRefsEndpoint(baseUri);
+                break;
+            }
+            case MMSEndpointConstants.ELEMENTS_CASE: {
+                mmsEndpoint = new MMSElementsEndpoint(baseUri);
             }
             default:break;
         }

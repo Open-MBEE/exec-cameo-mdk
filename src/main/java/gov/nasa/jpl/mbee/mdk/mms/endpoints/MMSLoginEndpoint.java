@@ -6,7 +6,6 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.methods.HttpPost;
@@ -14,7 +13,6 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,7 +26,7 @@ public class MMSLoginEndpoint extends MMSEndpoint {
 
     @Override
     public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + "/authentication");
+        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointConstants.LOGIN_ENDPOINT);
         uriBuilder.clearParameters();
     }
 

@@ -7,6 +7,7 @@ public class MMSOrgsEndpoint extends MMSEndpoint {
 
     @Override
     public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + "/orgs");
+        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointConstants.ORGS_ENDPOINT);
+        uriBuilder.clearParameters();
     }
 }

@@ -1,8 +1,10 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.http.HttpDeleteWithBody;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -21,10 +23,12 @@ import java.net.URISyntaxException;
 
 public abstract class MMSEndpoint {
     protected URIBuilder uriBuilder;
+    protected String baseUri;
 
     public MMSEndpoint(String baseUri) {
         try {
             uriBuilder = new URIBuilder(baseUri);
+            this.baseUri = baseUri;
         } catch (URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project. Reason: " + e.getMessage());
             e.printStackTrace();
@@ -32,6 +36,8 @@ public abstract class MMSEndpoint {
     }
 
     public abstract void prepareUriPath();
+
+    public URIBuilder getEndpoint() { return uriBuilder; }
 
     /**
      * General purpose method for making http requests for JSON objects. Type of request is specified in method call.
@@ -43,7 +49,7 @@ public abstract class MMSEndpoint {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public HttpRequestBase buildRequest(MMSUtils.HttpRequestType type, File sendData, ContentType contentType) throws IOException, URISyntaxException {
+    public HttpRequestBase buildRequest(MMSUtils.HttpRequestType type, File sendData, ContentType contentType, Project project) throws IOException, URISyntaxException {
         if(uriBuilder != null) {
             // build specified request type
             // assume that any request can have a body, and just build the appropriate one
@@ -68,6 +74,8 @@ public abstract class MMSEndpoint {
                     request = new HttpPut(requestDest);
                     break;
             }
+            request.addHeader("Authorization", "Bearer " + TicketUtils.getTicket(project));
+            request.addHeader("Content-Type", "application/json"); // is this good logic?
             request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
             if (sendData != null) {
                 if (contentType != null) {
