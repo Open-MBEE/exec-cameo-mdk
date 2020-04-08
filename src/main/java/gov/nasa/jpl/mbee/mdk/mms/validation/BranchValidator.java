@@ -19,6 +19,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitBranchAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
@@ -29,6 +30,7 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,14 +116,15 @@ public class BranchValidator {
             progressStatus.setDescription("Mapping MMS branches");
         }
 
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
+        MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsUri(project);
+        if (mmsEndpoint == null) {
             errors = true;
             Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation aborted.");
             return;
         }
         try {
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
+            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
+//            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
             ObjectNode response;
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {

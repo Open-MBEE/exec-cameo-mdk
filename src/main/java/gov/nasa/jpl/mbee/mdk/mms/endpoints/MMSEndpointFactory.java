@@ -17,12 +17,33 @@ public class MMSEndpointFactory {
                 mmsEndpoint = new MMSProjectsEndpoint(baseUri);
                 break;
             }
+            case MMSEndpointConstants.PROJECT_CASE: {
+                mmsEndpoint = new MMSProjectEndpoint(baseUri);
+                break;
+            }
             case MMSEndpointConstants.REFS_CASE: {
                 mmsEndpoint = new MMSRefsEndpoint(baseUri);
                 break;
             }
+            case MMSEndpointConstants.REF_CASE: {
+                mmsEndpoint = new MMSRefEndpoint(baseUri);
+                break;
+            }
+            case MMSEndpointConstants.COMMIT_CASE: {
+                mmsEndpoint = new MMSCommitEndpoint(baseUri);
+                break;
+            }
             case MMSEndpointConstants.ELEMENTS_CASE: {
                 mmsEndpoint = new MMSElementsEndpoint(baseUri);
+                break;
+            }
+            case MMSEndpointConstants.COMMITS_CASE: {
+                mmsEndpoint = new MMSCommitsEndpoint(baseUri);
+                break;
+            }
+            case MMSEndpointConstants.IMAGE_EXPORT_CASE: {
+                mmsEndpoint = new MMSImageExportEndpoint(baseUri);
+                break;
             }
             default:break;
         }

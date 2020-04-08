@@ -11,6 +11,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
@@ -119,8 +121,9 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                HttpRequestBase request = mmsEndpoint != null ? mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project) : null;
+//                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus);
@@ -139,8 +142,10 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
+
+                HttpRequestBase request = mmsEndpoint != null ? mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.DELETE, file, ContentType.APPLICATION_JSON, project) : null;
+//                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus);

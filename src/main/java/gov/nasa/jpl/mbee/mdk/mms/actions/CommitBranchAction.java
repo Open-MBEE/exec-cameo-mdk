@@ -21,9 +21,11 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
@@ -150,14 +152,25 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         JsonNode parentBranchJsonNode = null;
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs URL. Branch commit aborted.");
-            return;
-        }
-        requestUri.setPath(requestUri.getPath() + "/" + parentBranchId);
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.REF_CASE);
+        mmsEndpoint.prepareUriPath();
+//                MMSUtils.getServiceProjectsRefsUri(project);
+//        if (mmsEndpoint == null) {
+//            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs URL. Branch commit aborted.");
+//            return;
+//        }
+
         try {
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
+            ((MMSRefEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+            ((MMSRefEndpoint) mmsEndpoint).setRefId(parentBranchId);
+        } catch (URISyntaxException e) {
+            Application.getInstance().getGUILog().log(e.getReason());
+            e.printStackTrace();
+        }
+
+//        mmsEndpoint.setPath(mmsEndpoint.getPath() + "/" + parentBranchId);
+        try {
+            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
             ObjectNode response;
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
@@ -189,8 +202,8 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             return;
         }
 
-        requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
+        mmsEndpoint = MMSUtils.getServiceProjectsRefsUri(project);
+        if (mmsEndpoint == null) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs url. Branch commit aborted.");
             return;
         }
@@ -210,7 +223,8 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
 
         try {
             File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
+            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendFile, ContentType.APPLICATION_JSON, project);
+//            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, sendFile, ContentType.APPLICATION_JSON);
             MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | URISyntaxException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());

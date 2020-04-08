@@ -18,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
@@ -26,6 +27,7 @@ import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
@@ -186,10 +188,15 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 commitIdDeque.clear();
                 int limit = (int) Math.pow(10, exponent++);
 
-                URIBuilder commitsUriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
-                commitsUriBuilder.setPath(commitsUriBuilder.getPath() + "/" + MDUtils.getBranchId(project) + "/commits");
-                commitsUriBuilder.setParameter("limit", Integer.toString(limit));
-                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, commitsUriBuilder));
+                MMSEndpoint mmsCommitsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMITS_CASE);
+//                URIBuilder commitsUriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
+                mmsCommitsEndpoint.prepareUriPath();
+                ((MMSCommitsEndpoint) mmsCommitsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+                ((MMSCommitsEndpoint) mmsCommitsEndpoint).setRefId(MDUtils.getBranchId(project));
+//                mmsCommitsEndpoint.setPath(mmsCommitsEndpoint.getPath() + "/" + MDUtils.getBranchId(project) + "/commits");
+                mmsCommitsEndpoint.setParameter("limit", Integer.toString(limit));
+                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+//                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsCommitsEndpoint));
 
                 JsonToken current;
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
@@ -240,9 +247,14 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
             while (!commitIdDeque.isEmpty()) {
                 String commitId = commitIdDeque.removeFirst();
-                URIBuilder uriBuilder = MMSUtils.getServiceProjectsUri(project);
-                uriBuilder.setPath(uriBuilder.getPath() + "/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/commits/" + commitId);
-                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, uriBuilder));
+                MMSEndpoint mmsCommitEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMIT_CASE);
+//                URIBuilder uriBuilder = MMSUtils.getServiceProjectsUri(project);
+                mmsCommitEndpoint.prepareUriPath();
+                ((MMSCommitEndpoint) mmsCommitEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+                ((MMSCommitEndpoint) mmsCommitEndpoint).setCommitId(commitId);
+//                mmsCommitEndpoint.setPath(mmsCommitEndpoint.getPath() + "/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/commits/" + commitId);
+                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+//                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsCommitEndpoint));
 
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     ObjectNode objectNode = JacksonUtils.parseJsonObject(jsonParser);

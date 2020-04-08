@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
@@ -46,9 +45,8 @@ public class MMSLoginEndpoint extends MMSEndpoint {
         // do request
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
         sendMMSRequest(project, request, progressStatus, responseJson);
-        JsonNode value;
-        if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
-            return value.asText();
+        if(responseJson != null && responseJson.get(MMSEndpointConstants.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointConstants.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
+            return responseJson.get(MMSEndpointConstants.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
         }
         return null;
     }

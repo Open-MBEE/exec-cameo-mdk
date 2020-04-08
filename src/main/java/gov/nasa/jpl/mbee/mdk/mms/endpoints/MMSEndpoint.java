@@ -8,6 +8,7 @@ import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -38,6 +39,10 @@ public abstract class MMSEndpoint {
     public abstract void prepareUriPath();
 
     public URIBuilder getEndpoint() { return uriBuilder; }
+
+    public void setParameter(String key, String value) {
+        uriBuilder.setParameter(key, value);
+    }
 
     /**
      * General purpose method for making http requests for JSON objects. Type of request is specified in method call.
@@ -86,6 +91,20 @@ public abstract class MMSEndpoint {
                 ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
             }
             return request;
+        }
+        return null;
+    }
+
+    public HttpRequestBase buildImageRequest(File sendFile, Project project) throws URISyntaxException {
+        if(uriBuilder != null) {
+            URI requestDest = uriBuilder.build();
+            HttpPost requestUpload = new HttpPost(requestDest);
+            EntityBuilder uploadBuilder = EntityBuilder.create();
+            uploadBuilder.setFile(sendFile);
+            requestUpload.setEntity(uploadBuilder.build());
+            requestUpload.addHeader("Authorization", "Bearer " + TicketUtils.getTicket(project));
+            requestUpload.addHeader("Content-Type", "image/svg");
+            return requestUpload;
         }
         return null;
     }

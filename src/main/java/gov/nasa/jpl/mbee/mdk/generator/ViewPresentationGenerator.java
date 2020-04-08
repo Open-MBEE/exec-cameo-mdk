@@ -29,6 +29,8 @@ import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitDiagramArtifactsAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSElementsEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
@@ -654,9 +656,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setCurrent(5);
                 Application.getInstance().getGUILog().log("Updating/creating " + NumberFormat.getInstance().format(elementsToCommit.size()) + " element" + (elementsToCommit.size() != 1 ? "s" : "") + " to generate views.");
 
-                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
+//                        MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
@@ -686,9 +689,10 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (mmsElementsToDelete.size() > 0) {
                 Application.getInstance().getGUILog().log("Deleting " + NumberFormat.getInstance().format(mmsElementsToDelete.size()) + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
 
-                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.DELETE, file, ContentType.APPLICATION_JSON, project);
+//                        MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);

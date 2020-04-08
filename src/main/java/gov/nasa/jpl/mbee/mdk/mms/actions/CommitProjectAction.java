@@ -14,6 +14,8 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
@@ -68,11 +70,11 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         String orgId;
 
         // get orgs uri to check orgs / post project
-        URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
-        if (requestUri == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs url. Project commit cancelled.");
-            return null;
-        }
+        MMSEndpoint mmsOrgsEndpoint = MMSUtils.getServiceOrgsUri(project);
+//        if (mmsEndpoint == null) {
+//            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs url. Project commit cancelled.");
+//            return null;
+//        }
 
         // check for existing org, use that if it exists instead of prompting to select one
         try {
@@ -88,7 +90,8 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode response;
         if (orgId == null || orgId.isEmpty()) {
             try {
-                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+                File responseFile = MMSUtils.sendMMSRequest(project, mmsOrgsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+//                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint));
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
@@ -140,14 +143,16 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         }
 
         // update request with project post path
-        requestUri.setPath(requestUri.getPath() + "/" + orgId + "/projects");
+        MMSEndpoint mmsProjectsEndpoint = MMSUtils.getServiceProjectsUri(project);
+//        mmsProjectsEndpoint.setPath(mmsOrgsEndpoint.getPath() + "/" + orgId + "/projects");
         Collection<ObjectNode> projects = new LinkedList<>();
         projects.add(ProjectValidator.generateProjectObjectNode(project));
 
         // do project post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
-            File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+            File responseFile = MMSUtils.sendMMSRequest(project, mmsProjectsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, ContentType.APPLICATION_JSON, project));
+//            File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, sendData, ContentType.APPLICATION_JSON));
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }
