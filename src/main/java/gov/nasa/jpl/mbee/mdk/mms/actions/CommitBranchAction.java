@@ -154,11 +154,6 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         JsonNode parentBranchJsonNode = null;
         MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.REF_CASE);
         mmsEndpoint.prepareUriPath();
-//                MMSUtils.getServiceProjectsRefsUri(project);
-//        if (mmsEndpoint == null) {
-//            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs URL. Branch commit aborted.");
-//            return;
-//        }
 
         try {
             ((MMSRefEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
@@ -168,7 +163,6 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             e.printStackTrace();
         }
 
-//        mmsEndpoint.setPath(mmsEndpoint.getPath() + "/" + parentBranchId);
         try {
             HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
@@ -224,7 +218,6 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         try {
             File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
             HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendFile, ContentType.APPLICATION_JSON, project);
-//            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, sendFile, ContentType.APPLICATION_JSON);
             MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | URISyntaxException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());

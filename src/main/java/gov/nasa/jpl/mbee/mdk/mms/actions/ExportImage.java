@@ -61,14 +61,6 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             return false;
         }
 
-//        MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
-//        if (mmsEndpoint == null) {
-//            return false;
-//        }
-//
-//        String id = key.replace(".", "%2E");
-//        mmsEndpoint.setPath(mmsEndpoint.getPath() + "/" + id);
-
         JsonNode value;
 
         String cs = "";
@@ -91,7 +83,6 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
 
         try {
             HttpRequestBase request = mmsEndpoint.buildImageRequest(file, project);
-//            HttpRequestBase request = MMSUtils.buildImageRequest(mmsEndpoint, file);
             TaskRunner.runWithProgressStatus(progressStatus -> {
                 try {
                     MMSUtils.sendMMSRequest(project, request, progressStatus);

@@ -60,14 +60,6 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
         if (mmsArtifactsEndpoint == null) {
             return;
         }
-//        URI artifactsUri;
-//        try {
-//            artifactsUri = mmsArtifactsEndpoint.build();
-//        } catch (URISyntaxException e) {
-//            Application.getInstance().getGUILog().log("[ERROR] Unable to commit artifact " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());
-//            e.printStackTrace();
-//            return;
-//        }
         TaskRunner.runWithProgressStatus(progressStatus -> {
             try {
                 MMSEndpoint mmsElementsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
@@ -90,7 +82,6 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                 artifacts.stream().map(MMSArtifact::getId).forEachOrdered(updatedArtifactIdsNode::add);
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, Collections.singleton(objectNode), MMSUtils.JsonBlobType.ELEMENT_JSON);
                 HttpRequestBase request = mmsElementsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
-//                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsElementsEndpoint, file, ContentType.APPLICATION_JSON);
                 MMSUtils.sendMMSRequest(project, request, progressStatus);
             } catch (IOException | ServerException | URISyntaxException e) {
                 e.printStackTrace();

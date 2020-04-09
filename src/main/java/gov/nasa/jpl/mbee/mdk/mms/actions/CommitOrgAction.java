@@ -59,9 +59,6 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
 
         // check for existing org
         MMSEndpoint mmsEndpoint = MMSUtils.getServiceOrgsUri(project);
-//        if (mmsEndpoint == null) {
-//            return null;
-//        }
 
         JFrame selectionDialog = new JFrame();
         String org = JOptionPane.showInputDialog(selectionDialog, "Org name", "Create MMS Org", JOptionPane.QUESTION_MESSAGE);
@@ -77,7 +74,6 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         File responseFile;
         try {
             responseFile = MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
-//            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint));
             try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
                 JsonNode arrayNode;
@@ -115,7 +111,6 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
             MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, ContentType.APPLICATION_JSON, project));
-//            MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, sendData, ContentType.APPLICATION_JSON));
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();

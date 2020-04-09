@@ -15,13 +15,11 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
@@ -71,10 +69,6 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // get orgs uri to check orgs / post project
         MMSEndpoint mmsOrgsEndpoint = MMSUtils.getServiceOrgsUri(project);
-//        if (mmsEndpoint == null) {
-//            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS orgs url. Project commit cancelled.");
-//            return null;
-//        }
 
         // check for existing org, use that if it exists instead of prompting to select one
         try {
@@ -91,7 +85,6 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         if (orgId == null || orgId.isEmpty()) {
             try {
                 File responseFile = MMSUtils.sendMMSRequest(project, mmsOrgsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
-//                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint));
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
@@ -144,15 +137,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
 
         // update request with project post path
         MMSEndpoint mmsProjectsEndpoint = MMSUtils.getServiceProjectsUri(project);
-//        mmsProjectsEndpoint.setPath(mmsOrgsEndpoint.getPath() + "/" + orgId + "/projects");
         Collection<ObjectNode> projects = new LinkedList<>();
-        projects.add(ProjectValidator.generateProjectObjectNode(project));
+        projects.add(ProjectValidator.generateProjectObjectNode(project, orgId));
 
         // do project post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
             File responseFile = MMSUtils.sendMMSRequest(project, mmsProjectsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, ContentType.APPLICATION_JSON, project));
-//            File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, sendData, ContentType.APPLICATION_JSON));
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }

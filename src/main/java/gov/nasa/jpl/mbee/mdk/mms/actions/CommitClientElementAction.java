@@ -123,7 +123,6 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
                 MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 HttpRequestBase request = mmsEndpoint != null ? mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project) : null;
-//                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus);
@@ -145,7 +144,6 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
 
                 HttpRequestBase request = mmsEndpoint != null ? mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.DELETE, file, ContentType.APPLICATION_JSON, project) : null;
-//                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus);

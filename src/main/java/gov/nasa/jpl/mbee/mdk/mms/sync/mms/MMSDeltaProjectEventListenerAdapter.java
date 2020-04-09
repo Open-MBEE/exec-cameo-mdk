@@ -189,14 +189,11 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 int limit = (int) Math.pow(10, exponent++);
 
                 MMSEndpoint mmsCommitsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMITS_CASE);
-//                URIBuilder commitsUriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
                 mmsCommitsEndpoint.prepareUriPath();
                 ((MMSCommitsEndpoint) mmsCommitsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
                 ((MMSCommitsEndpoint) mmsCommitsEndpoint).setRefId(MDUtils.getBranchId(project));
-//                mmsCommitsEndpoint.setPath(mmsCommitsEndpoint.getPath() + "/" + MDUtils.getBranchId(project) + "/commits");
                 mmsCommitsEndpoint.setParameter("limit", Integer.toString(limit));
                 File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
-//                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsCommitsEndpoint));
 
                 JsonToken current;
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
@@ -248,13 +245,10 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             while (!commitIdDeque.isEmpty()) {
                 String commitId = commitIdDeque.removeFirst();
                 MMSEndpoint mmsCommitEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMIT_CASE);
-//                URIBuilder uriBuilder = MMSUtils.getServiceProjectsUri(project);
                 mmsCommitEndpoint.prepareUriPath();
                 ((MMSCommitEndpoint) mmsCommitEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
                 ((MMSCommitEndpoint) mmsCommitEndpoint).setCommitId(commitId);
-//                mmsCommitEndpoint.setPath(mmsCommitEndpoint.getPath() + "/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/commits/" + commitId);
                 File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
-//                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsCommitEndpoint));
 
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     ObjectNode objectNode = JacksonUtils.parseJsonObject(jsonParser);

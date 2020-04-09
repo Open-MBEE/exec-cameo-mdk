@@ -215,41 +215,6 @@ public class MMSUtils {
      */
     public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType) throws IOException, URISyntaxException {
         return null;
-//        // build specified request type
-//        // assume that any request can have a body, and just build the appropriate one
-//        URI requestDest = requestUri.build();
-//        final HttpRequestBase request;
-//        // bulk GETs are not supported in MMS, but bulk PUTs are. checking and and throwing error here in case
-//        if (type == HttpRequestType.GET && sendData != null) {
-//            throw new IOException("GETs with body are not supported");
-//        }
-//        switch (type) {
-//            case DELETE:
-//                request = new HttpDeleteWithBody(requestDest);
-//                break;
-//            case GET:
-//            default:
-//                request = new HttpGet(requestDest);
-//                break;
-//            case POST:
-//                request = new HttpPost(requestDest);
-//                break;
-//            case PUT:
-//                request = new HttpPut(requestDest);
-//                break;
-//        }
-//        request.addHeader("Authorization", "Bearer " + TicketUtils.getTicket(project));
-//        request.addHeader("Content-Type", "application/json"); // is this good logic?
-//        request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
-//        if (sendData != null) {
-//            if (contentType != null) {
-//                request.addHeader("Content-Type", contentType.getMimeType());
-//            }
-//            HttpEntity reqEntity = new FileEntity(sendData, contentType);
-//            //reqEntity.setChunked(true);
-//            ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
-//        }
-//        return request;
     }
 
     /**
@@ -264,7 +229,6 @@ public class MMSUtils {
      */
     public static HttpRequestBase buildRequest(HttpRequestType type, MMSEndpoint mmsEndpoint) throws IOException, URISyntaxException {
         return null;
-//        return buildRequest(type, mmsEndpoint, null, null);
     }
 
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection<?> nodes, JsonBlobType jsonBlobType) throws IOException {
@@ -305,13 +269,11 @@ public class MMSUtils {
             for (Object node : nodes) {
                 if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
                     jsonGenerator.writeObject(node);
-                }
-                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID || jsonBlobType == JsonBlobType.ARTIFACT_ID) {
+                } else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID || jsonBlobType == JsonBlobType.ARTIFACT_ID) {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
                     jsonGenerator.writeEndObject();
-                }
-                else {
+                } else {
                     throw new IOException("Unsupported collection type for entity file.");
                 }
             }

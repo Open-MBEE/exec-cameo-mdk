@@ -124,7 +124,6 @@ public class BranchValidator {
         }
         try {
             HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
-//            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
             ObjectNode response;
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {

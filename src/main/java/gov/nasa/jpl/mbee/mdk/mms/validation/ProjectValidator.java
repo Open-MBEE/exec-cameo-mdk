@@ -17,12 +17,10 @@ import gov.nasa.jpl.mbee.mdk.mms.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointConstants;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSProjectsEndpoint;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import java.io.File;
@@ -65,13 +63,6 @@ public class ProjectValidator {
     public void validate() {
         MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
         mmsEndpoint.prepareUriPath();
-//        URIBuilder uriRequest = MMSUtils.getServiceProjectsUri(project);
-//        if (mmsEndpoint == null) {
-//            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Project validation aborted.");
-//            errors = true;
-//            return;
-//        }
-//        requestUri.setPath(requestUri.getPath() + "/" + Converters.getProjectToIdConverter().apply(project));
         File responseFile;
         ObjectNode response;
         try {
@@ -107,15 +98,16 @@ public class ProjectValidator {
         projectExistenceValidationRule.addViolation(v);
     }
 
-    public static ObjectNode generateProjectObjectNode(Project project) {
-        return generateProjectObjectNode(project.getPrimaryProject());
+    public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
+        return generateProjectObjectNode(project.getPrimaryProject(), orgId);
     }
 
-    public static ObjectNode generateProjectObjectNode(IProject iProject) {
+    public static ObjectNode generateProjectObjectNode(IProject iProject, String orgId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
         projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
+        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
+        projectObjectNode.put(MDKConstants.ORG_ID_KEY, orgId);
+        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
         String resourceId = "";
         if (ProjectUtilities.getProject(iProject).isRemote()) {
             resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
