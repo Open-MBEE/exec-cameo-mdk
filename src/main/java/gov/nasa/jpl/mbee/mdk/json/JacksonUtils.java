@@ -111,8 +111,11 @@ public class JacksonUtils {
 
     public static ObjectNode parseJsonObject(JsonParser jsonParser) throws IOException {
         JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
-        if (current != JsonToken.START_OBJECT) {
-            throw new IOException("Unable to build object from JSON parser.");
+        while (current != JsonToken.START_OBJECT || jsonParser.getCurrentToken() == null) {
+            current = jsonParser.nextToken();
+            if(!jsonParser.hasCurrentToken()) {
+                throw new IOException("Unable to build object from JSON parser.");
+            }
         }
         return getObjectMapper().readTree(jsonParser);
     }

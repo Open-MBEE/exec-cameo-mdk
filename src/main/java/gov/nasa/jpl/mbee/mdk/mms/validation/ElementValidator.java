@@ -129,7 +129,7 @@ public class ElementValidator implements RunnableWithProgress {
                     }
                 }
             } catch (IOException e) {
-                // stuff
+                e.printStackTrace();
             }
         }
 
