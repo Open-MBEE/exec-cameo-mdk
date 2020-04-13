@@ -101,29 +101,23 @@ public class ElementValidator implements RunnableWithProgress {
                 if (current != JsonToken.START_OBJECT) {
                     throw new IOException("Unable to build object from JSON parser.");
                 }
-                while (current != null && current != JsonToken.END_OBJECT) {
+                while (!jsonParser.isClosed() && current != JsonToken.END_OBJECT) {
                     current = jsonParser.nextToken();
                     String keyName;
-                    if (current != null && (keyName = jsonParser.getCurrentName()) != null && keyName.equals("elements") && (current = jsonParser.nextToken()) == JsonToken.START_ARRAY) {
-                        current = jsonParser.nextToken();
-                        JsonNode value;
-                        while (current != null && current != JsonToken.END_ARRAY) {
-                            //current = jsonParser.nextToken();
-                            if (current == JsonToken.START_OBJECT) {
-                                String id;
-                                ObjectNode currentServerElement = JacksonUtils.parseJsonObject(jsonParser);
-                                if ((value = currentServerElement.get(MDKConstants.ID_KEY)) != null && value.isTextual()
-                                        && !processedElementIds.contains(id = value.asText())) {
-                                    //remove element from client and server maps if present, add appropriate validations already
-                                    processedElementIds.add(id);
-                                    Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);
-                                    if (currentClientElement == null) {
-                                        addMissingInClientViolation(currentServerElement);
-                                    }
-                                    else {
-                                        addElementEquivalenceViolation(currentClientElement, currentServerElement);
-                                    }
+                    if(current != null) {
+                        if(jsonParser.getCurrentName() != null) {
+                            keyName = jsonParser.getCurrentName();
+                            if(keyName.equals("elements")) {
+                                evaluateElementsJson(jsonParser, current, processedElementIds, clientElementMap);
+                            } else if(keyName.equals("messages") || keyName.equals("rejected")) {
+                                current = jsonParser.nextToken();
+                                if(current == JsonToken.START_ARRAY) {
+                                    JacksonUtils.getObjectMapper().readTree(jsonParser);
+                                } else {
+                                    throw new IOException("Possibly corrupt JSON data or JSON format changed, check REST responses.");
                                 }
+                            } else {
+                                throw new IOException("Unable to properly read this JSON format, check REST responses.");
                             }
                         }
                     }
@@ -171,6 +165,45 @@ public class ElementValidator implements RunnableWithProgress {
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingOnMmsCount) + " element" + (missingOnMmsCount != 1 ? "s are" : "is") + " missing on MMS.");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(notEquivalentCount) + " element" + (notEquivalentCount != 1 ? "s are" : " is") + " not equivalent between client and MMS.");
         Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
+    }
+
+    private void evaluateElementsJson(JsonParser jsonParser, JsonToken current, Set<String> processedElementIds, Map<String, Pair<Element, ObjectNode>> clientElementMap) throws IOException {
+        if (current != null) { // assumes the calling method knows this is an elements tree
+            current = jsonParser.nextToken();
+            if(current.equals(JsonToken.START_ARRAY)) {
+                JsonNode value;
+                while (!jsonParser.isClosed() && current != JsonToken.END_ARRAY) {
+                    if (current == JsonToken.START_OBJECT) {
+                        String id;
+                        ObjectNode currentServerElement = JacksonUtils.getObjectMapper().readTree(jsonParser);
+                        if ((value = currentServerElement.get(MDKConstants.ID_KEY)) != null && value.isTextual()
+                                && !processedElementIds.contains(id = value.asText())) {
+                            //remove element from client and server maps if present, add appropriate validations already
+                            processedElementIds.add(id);
+                            Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);
+                            if (currentClientElement == null) {
+                                addMissingInClientViolation(currentServerElement);
+                            }
+                            else {
+                                addElementEquivalenceViolation(currentClientElement, currentServerElement);
+                            }
+                        }
+
+                        if(!jsonParser.isClosed()) {
+                            if(jsonParser.getCurrentToken() == null) {
+                                current = jsonParser.nextToken();
+                            } else {
+                                current = jsonParser.getCurrentToken();
+                            }
+                        } else {
+                            break;
+                        }
+                    } else {
+                        current = jsonParser.nextToken();
+                    }
+                }
+            }
+        }
     }
 
     private void addMissingInClientViolation(ObjectNode serverElement) {
