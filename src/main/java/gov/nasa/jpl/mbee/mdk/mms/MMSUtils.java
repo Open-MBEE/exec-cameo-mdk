@@ -181,56 +181,6 @@ public class MMSUtils {
         return "";
     }
 
-
-    /**
-     * General purpose method for making http requests for file upload.
-     *
-     * @param mmsEndpoint URI to send the request to. Methods to generate this URI are available in the class.
-     * @param sendFile   File to send as an entity/body along with the request
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static HttpRequestBase buildImageRequest(MMSEndpoint mmsEndpoint, File sendFile) throws IOException, URISyntaxException {
-        return null;
-//        URI requestDest = mmsEndpoint.build();
-//        HttpPost requestUpload = new HttpPost(requestDest);
-//        EntityBuilder uploadBuilder = EntityBuilder.create();
-//        uploadBuilder.setFile(sendFile);
-//        requestUpload.setEntity(uploadBuilder.build());
-//        requestUpload.addHeader("Content-Type", "image/svg");
-//        return requestUpload;
-    }
-
-    /**
-     * General purpose method for making http requests for JSON objects. Type of request is specified in method call.
-     *
-     * @param type       Type of request, as selected from one of the options in the inner enum.
-     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
-     * @param sendData   Data to send as an entity/body along with the request, if desired. Support for GET and DELETE
-     *                   with body is included.
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType) throws IOException, URISyntaxException {
-        return null;
-    }
-
-    /**
-     * Convenience / clarity method for making http requests for JSON objects withoout body. Type of request is
-     * specified in method call.
-     *
-     * @param type       Type of request, as selected from one of the options in the inner enum.
-     * @param mmsEndpoint URI to send the request to. Methods to generate this URI are available in the class.
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static HttpRequestBase buildRequest(HttpRequestType type, MMSEndpoint mmsEndpoint) throws IOException, URISyntaxException {
-        return null;
-    }
-
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection<?> nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {

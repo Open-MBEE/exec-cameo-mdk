@@ -164,7 +164,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         try {
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsEndpoint);
+            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
             ObjectNode response;
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
