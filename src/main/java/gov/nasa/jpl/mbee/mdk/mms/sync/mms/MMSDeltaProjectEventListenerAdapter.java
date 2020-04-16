@@ -183,57 +183,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             Deque<String> commitIdDeque = new ArrayDeque<>();
             int exponent = 0;
 
-            doWhile:
-            do {
-                commitIdDeque.clear();
-                int limit = (int) Math.pow(10, exponent++);
-
-                MMSEndpoint mmsCommitsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMITS_CASE);
-                mmsCommitsEndpoint.prepareUriPath();
-                ((MMSCommitsEndpoint) mmsCommitsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-                ((MMSCommitsEndpoint) mmsCommitsEndpoint).setRefId(MDUtils.getBranchId(project));
-                mmsCommitsEndpoint.setParameter("limit", Integer.toString(limit));
-                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
-
-                JsonToken current;
-                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                    current = jsonParser.nextToken();
-                    if (current != JsonToken.START_OBJECT) {
-                        throw new IllegalStateException();
-                    }
-                    current = jsonParser.nextToken();
-                    if (current != JsonToken.FIELD_NAME || !jsonParser.getCurrentName().equals("commits")) {
-                        throw new IllegalStateException();
-                    }
-                    current = jsonParser.nextToken();
-                    if (current != JsonToken.START_ARRAY) {
-                        throw new IllegalStateException();
-                    }
-                    JsonNode value;
-                    int size = 0;
-                    while (jsonParser.nextToken() == JsonToken.START_OBJECT) {
-                        String id;
-                        ObjectNode objectNode = JacksonUtils.parseJsonObject(jsonParser);
-                        if ((value = objectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                            id = value.asText();
-                            if (lastSyncedCommitId == null) {
-                                lastSyncedCommitId = id;
-                            }
-                            if (lastSyncedCommitId.equals(id)) {
-                                break doWhile;
-                            }
-                            if (inMemoryCommits.contains(id)) {
-                                break doWhile;
-                            }
-                            commitIdDeque.addFirst(id);
-                        }
-                        size++;
-                    }
-                    if (size < limit) {
-                        break;
-                    }
-                }
-            } while (true);
+            obtainAndParseCommits(commitIdDeque, exponent, project);
 
             if (commitIdDeque.isEmpty()) {
                 return true;
@@ -312,6 +262,70 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
             return true;
+        }
+
+        private void obtainAndParseCommits(Deque<String> commitIdDeque, int exponent, Project project) throws URISyntaxException, IOException, ServerException {
+            int limit = 1;
+            int size = 0;
+
+            while(size < limit) { // setup so condition is true at least once, previously this was a do while loop
+                commitIdDeque.clear();
+                limit = (int) Math.pow(10, exponent++);
+
+                MMSEndpoint mmsCommitsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMITS_CASE);
+                mmsCommitsEndpoint.prepareUriPath();
+                ((MMSCommitsEndpoint) mmsCommitsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+                ((MMSCommitsEndpoint) mmsCommitsEndpoint).setRefId(MDUtils.getBranchId(project));
+                mmsCommitsEndpoint.setParameter("limit", Integer.toString(limit));
+                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+
+                JsonToken current;
+                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+                    current = jsonParser.nextToken();
+                    if (current != JsonToken.START_OBJECT) {
+                        throw new IOException("Unable to build object from JSON parser.");
+                    }
+
+                    while (!jsonParser.isClosed() && current != JsonToken.END_OBJECT) {
+                        current = jsonParser.nextToken();
+
+                        if(jsonParser.getCurrentName() != null) {
+                            String keyName = jsonParser.getCurrentName();
+                            if(keyName.equals("commits")) {
+                                current = jsonParser.nextToken();
+                                if (current != JsonToken.START_ARRAY) {
+                                    throw new IOException("Unable to build object from JSON parser.");
+                                }
+                                JsonNode value; // make a method that returns a multiset, one set for each key type (e.g. commits, messages, rejected, ...) the calling method should deal with the results
+                                while (jsonParser.nextToken() == JsonToken.START_OBJECT) {
+                                    String id;
+                                    ObjectNode objectNode = JacksonUtils.parseJsonObject(jsonParser);
+                                    if ((value = objectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
+                                        id = value.asText();
+                                        if (lastSyncedCommitId == null) {
+                                            lastSyncedCommitId = id;
+                                        }
+                                        if (lastSyncedCommitId.equals(id) || inMemoryCommits.contains(id)) {
+                                            return;
+                                        }
+                                        commitIdDeque.addFirst(id);
+                                    }
+                                    size++;
+                                }
+                            } else if(keyName.equals("messages") || keyName.equals("rejected")) {
+                                current = jsonParser.nextToken();
+                                if(current == JsonToken.START_ARRAY) {
+                                    JacksonUtils.getObjectMapper().readTree(jsonParser);
+                                } else {
+                                    throw new IOException("Possibly corrupt JSON data or JSON format changed, check REST responses.");
+                                }
+                            } else {
+                                throw new IOException("Unable to properly read this JSON format, check REST responses.");
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
