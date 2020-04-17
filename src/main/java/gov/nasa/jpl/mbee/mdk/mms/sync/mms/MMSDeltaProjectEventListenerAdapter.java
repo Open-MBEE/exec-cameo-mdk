@@ -10,22 +10,21 @@ import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -279,50 +278,22 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 mmsCommitsEndpoint.setParameter("limit", Integer.toString(limit));
                 File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
 
-                JsonToken current;
-                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                    current = jsonParser.nextToken();
-                    if (current != JsonToken.START_OBJECT) {
-                        throw new IOException("Unable to build object from JSON parser.");
-                    }
-
-                    while (!jsonParser.isClosed() && current != JsonToken.END_OBJECT) {
-                        current = jsonParser.nextToken();
-
-                        if(jsonParser.getCurrentName() != null) {
-                            String keyName = jsonParser.getCurrentName();
-                            if(keyName.equals("commits")) {
-                                current = jsonParser.nextToken();
-                                if (current != JsonToken.START_ARRAY) {
-                                    throw new IOException("Unable to build object from JSON parser.");
-                                }
-                                JsonNode value; // make a method that returns a multiset, one set for each key type (e.g. commits, messages, rejected, ...) the calling method should deal with the results
-                                while (jsonParser.nextToken() == JsonToken.START_OBJECT) {
-                                    String id;
-                                    ObjectNode objectNode = JacksonUtils.parseJsonObject(jsonParser);
-                                    if ((value = objectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                                        id = value.asText();
-                                        if (lastSyncedCommitId == null) {
-                                            lastSyncedCommitId = id;
-                                        }
-                                        if (lastSyncedCommitId.equals(id) || inMemoryCommits.contains(id)) {
-                                            return;
-                                        }
-                                        commitIdDeque.addFirst(id);
-                                    }
-                                    size++;
-                                }
-                            } else if(keyName.equals("messages") || keyName.equals("rejected")) {
-                                current = jsonParser.nextToken();
-                                if(current == JsonToken.START_ARRAY) {
-                                    JacksonUtils.getObjectMapper().readTree(jsonParser);
-                                } else {
-                                    throw new IOException("Possibly corrupt JSON data or JSON format changed, check REST responses.");
-                                }
-                            } else {
-                                throw new IOException("Unable to properly read this JSON format, check REST responses.");
+                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
+                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);
+                if(elementObjects != null && !elementObjects.isEmpty()) {
+                    for(ObjectNode jsonObject : elementObjects) {
+                        JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
+                        if(idValue != null && idValue.isTextual()) {
+                            String id = idValue.asText();
+                            if (lastSyncedCommitId == null) {
+                                lastSyncedCommitId = id;
                             }
+                            if (lastSyncedCommitId.equals(id) || inMemoryCommits.contains(id)) {
+                                return;
+                            }
+                            commitIdDeque.addFirst(id);
                         }
+                        size++;
                     }
                 }
             }

@@ -13,8 +13,9 @@ import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -196,4 +197,65 @@ public class JacksonUtils {
         return results;
     }
 
+    public static Map<String, Set<ObjectNode>> parseResponseIntoObjects(File responseFile, String expectedKey) {
+        JsonToken current;
+        Map<String, Set<ObjectNode>> parsedResponseObjects = new HashMap<>();
+        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+            current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
+            if (current != JsonToken.START_OBJECT) {
+                throw new IOException("Unable to build object from JSON parser.");
+            }
+            while (!jsonParser.isClosed() && current != JsonToken.END_OBJECT) {
+                current = jsonParser.nextToken();
+                String keyName;
+                if(current != null) {
+                    if(jsonParser.getCurrentName() != null) {
+                        keyName = jsonParser.getCurrentName();
+                        if(keyName.equals(expectedKey)) {
+                            parsedResponseObjects.put(expectedKey, parseExpectedArray(jsonParser, current));
+                        } else if(keyName.equals(MDKJsonConstants.MESSAGES_NODE) || keyName.equals(MDKJsonConstants.REJECTED_NODE)) {
+                            if(keyName.equals(MDKJsonConstants.MESSAGES_NODE)) {
+                                parsedResponseObjects.put(MDKJsonConstants.MESSAGES_NODE, parseExpectedArray(jsonParser, current));
+                            } else {
+                                parsedResponseObjects.put(MDKJsonConstants.REJECTED_NODE, parseExpectedArray(jsonParser, current));
+                            }
+                        } else {
+                            throw new IOException("Unable to properly read this JSON format, check REST responses.");
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return parsedResponseObjects;
+    }
+
+    private static Set<ObjectNode> parseExpectedArray(JsonParser jsonParser, JsonToken current) throws IOException {
+        Set<ObjectNode> parsedObjects = new HashSet<>();
+        if (current != null) { // assumes the calling method has begun initial parsing stages
+            current = jsonParser.nextToken();
+            if(current.equals(JsonToken.START_ARRAY)) {
+                while (!jsonParser.isClosed() && current != JsonToken.END_ARRAY) {
+                    if (current == JsonToken.START_OBJECT) {
+                        ObjectNode currentJsonObject = JacksonUtils.getObjectMapper().readTree(jsonParser);
+                        if(currentJsonObject != null) {
+                            parsedObjects.add(currentJsonObject);
+                        }
+
+                        if(!jsonParser.isClosed()) {
+                            if(jsonParser.getCurrentToken() == null) {
+                                current = jsonParser.nextToken();
+                            }
+                        } else {
+                            break;
+                        }
+                    } else {
+                        current = jsonParser.nextToken();
+                    }
+                }
+            }
+        }
+        return parsedObjects;
+    }
 }

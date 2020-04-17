@@ -17,6 +17,7 @@ import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.ElementDiffAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
@@ -91,41 +92,8 @@ public class ElementValidator implements RunnableWithProgress {
             clientElements = new LinkedList<>();
         }
         Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
-
-        // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         Set<String> processedElementIds = new HashSet<>();
-        JsonToken current;
-        for (File responseFile : serverElementFiles) {
-            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
-                if (current != JsonToken.START_OBJECT) {
-                    throw new IOException("Unable to build object from JSON parser.");
-                }
-                while (!jsonParser.isClosed() && current != JsonToken.END_OBJECT) {
-                    current = jsonParser.nextToken();
-                    String keyName;
-                    if(current != null) {
-                        if(jsonParser.getCurrentName() != null) {
-                            keyName = jsonParser.getCurrentName();
-                            if(keyName.equals("elements")) {
-                                evaluateElementsJson(jsonParser, current, processedElementIds, clientElementMap);
-                            } else if(keyName.equals("messages") || keyName.equals("rejected")) {
-                                current = jsonParser.nextToken();
-                                if(current == JsonToken.START_ARRAY) {
-                                    JacksonUtils.getObjectMapper().readTree(jsonParser);
-                                } else {
-                                    throw new IOException("Possibly corrupt JSON data or JSON format changed, check REST responses.");
-                                }
-                            } else {
-                                throw new IOException("Unable to properly read this JSON format, check REST responses.");
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        processServerElements(processedElementIds, clientElementMap);
 
         if (serverElements == null) {
             serverElements = new LinkedList<>();
@@ -167,39 +135,23 @@ public class ElementValidator implements RunnableWithProgress {
         Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
     }
 
-    private void evaluateElementsJson(JsonParser jsonParser, JsonToken current, Set<String> processedElementIds, Map<String, Pair<Element, ObjectNode>> clientElementMap) throws IOException {
-        if (current != null) { // assumes the calling method knows this is an elements tree
-            current = jsonParser.nextToken();
-            if(current.equals(JsonToken.START_ARRAY)) {
-                JsonNode value;
-                while (!jsonParser.isClosed() && current != JsonToken.END_ARRAY) {
-                    if (current == JsonToken.START_OBJECT) {
-                        String id;
-                        ObjectNode currentServerElement = JacksonUtils.getObjectMapper().readTree(jsonParser);
-                        if ((value = currentServerElement.get(MDKConstants.ID_KEY)) != null && value.isTextual()
-                                && !processedElementIds.contains(id = value.asText())) {
-                            //remove element from client and server maps if present, add appropriate validations already
-                            processedElementIds.add(id);
-                            Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);
-                            if (currentClientElement == null) {
-                                addMissingInClientViolation(currentServerElement);
-                            }
-                            else {
-                                addElementEquivalenceViolation(currentClientElement, currentServerElement);
-                            }
+    private void processServerElements(Set<String> processedElementIds, Map<String, Pair<Element, ObjectNode>> clientElementMap) {
+        // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
+        for (File responseFile : serverElementFiles) {
+            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.ELEMENTS_NODE);
+            Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.ELEMENTS_NODE);
+            if(elementObjects != null && !elementObjects.isEmpty()) {
+                for(ObjectNode jsonObject : elementObjects) {
+                    JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
+                    if(idValue != null && idValue.isTextual()) {
+                        processedElementIds.add(idValue.asText());
+                        Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(idValue.asText());
+                        if (currentClientElement == null) {
+                            addMissingInClientViolation(jsonObject);
                         }
-
-                        if(!jsonParser.isClosed()) {
-                            if(jsonParser.getCurrentToken() == null) {
-                                current = jsonParser.nextToken();
-                            } else {
-                                current = jsonParser.getCurrentToken();
-                            }
-                        } else {
-                            break;
+                        else {
+                            addElementEquivalenceViolation(currentClientElement, jsonObject);
                         }
-                    } else {
-                        current = jsonParser.nextToken();
                     }
                 }
             }
