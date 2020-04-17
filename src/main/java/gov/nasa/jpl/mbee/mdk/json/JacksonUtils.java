@@ -121,86 +121,10 @@ public class JacksonUtils {
         return getObjectMapper().readTree(jsonParser);
     }
 
-    public static ArrayNode parseJsonArray(JsonParser jsonParser, ArrayNode arrayNode) throws IOException {
-        JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
-        if (current != JsonToken.START_ARRAY) {
-            throw new IOException("Unable to build array from JSON parser.");
-        }
-        current = jsonParser.nextToken();
-        if (arrayNode == null) {
-            arrayNode = getObjectMapper().createArrayNode();
-        }
-        while (current != JsonToken.END_ARRAY) {
-            if (jsonParser.getCurrentToken() == JsonToken.START_OBJECT) {
-                arrayNode.add(parseJsonObject(jsonParser));
-            }
-            else if (jsonParser.getCurrentToken() == JsonToken.START_ARRAY) {
-                arrayNode.add(parseJsonArray(jsonParser, null));
-                if (jsonParser.getCurrentToken() != JsonToken.END_ARRAY) {
-                    throw new IOException("Missed Array End.");
-                }
-            }
-            else {
-                arrayNode.add(jsonParser.getText());
-            }
-            current = jsonParser.nextToken();
-        }
-        return arrayNode;
-    }
-
-    public static LinkedList<ObjectNode> parseJsonResponseToObjectList(JsonParser jsonParser, ObjectNode messages) throws IOException {
-        JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
-        if (current != JsonToken.START_OBJECT) {
-            throw new IOException("Unable to build object from JSON parser.");
-        }
-        LinkedList<ObjectNode> results = new LinkedList<>();
-        while (current != JsonToken.END_OBJECT) {
-            if (jsonParser.getCurrentName() == null) {
-                current = jsonParser.nextToken();
-                continue;
-            }
-            String keyName = jsonParser.getCurrentName();
-            switch (keyName) {
-                case "orgs":
-                case "projects":
-                case "refs":
-                case "elements": {
-                    jsonParser.nextToken();
-                    current = jsonParser.nextToken();
-                    while (current != JsonToken.END_ARRAY) {
-                        if (current == JsonToken.START_OBJECT) {
-                            results.add(parseJsonObject(jsonParser));
-                        }
-                        else {
-                            // consume and ignore
-                            current = jsonParser.nextToken();
-                        }
-                        current = jsonParser.getCurrentToken();
-                    }
-                    break;
-                }
-                default: {
-                    current = jsonParser.nextToken();
-                    if (messages != null) {
-                        if (current == JsonToken.START_ARRAY) {
-                            ArrayNode arraynode = messages.putArray(keyName);
-                            JacksonUtils.parseJsonArray(jsonParser, arraynode);
-                        }
-                        else {
-                            messages.put(keyName, jsonParser.getText());
-                        }
-                    }
-                }
-            }
-            current = jsonParser.nextToken();
-        }
-        return results;
-    }
-
-    public static Map<String, Set<ObjectNode>> parseResponseIntoObjects(File responseFile, String expectedKey) {
+    public static Map<String, Set<ObjectNode>> parseResponseIntoObjects(File responseFile, String expectedKey) throws IOException {
         JsonToken current;
         Map<String, Set<ObjectNode>> parsedResponseObjects = new HashMap<>();
-        try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
+        try(JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
             if (current != JsonToken.START_OBJECT) {
                 throw new IOException("Unable to build object from JSON parser.");
@@ -225,8 +149,6 @@ public class JacksonUtils {
                     }
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return parsedResponseObjects;
     }

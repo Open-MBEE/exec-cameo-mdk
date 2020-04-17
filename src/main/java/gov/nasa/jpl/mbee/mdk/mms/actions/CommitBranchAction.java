@@ -20,14 +20,17 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
+import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -166,25 +169,9 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         try {
             HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
-            ObjectNode response;
-            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                response = JacksonUtils.parseJsonObject(jsonParser);
-            }
-            JsonNode refsArray, value;
-            if ((refsArray = response.get("refs")) != null && refsArray.isArray()) {
-                for (JsonNode refJson : refsArray) {
-                    if (refJson.isObject()) {
-                        ObjectNode refObjectNode = (ObjectNode) refJson;
-                        refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
-                        String entryKey;
-                        if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                            entryKey = refObjectNode.get(MDKConstants.ID_KEY).asText();
-                            if (entryKey.equals(parentBranchId)) {
-                                parentBranchJsonNode = refObjectNode;
-                            }
-                        }
-                    }
-                }
+            ObjectNode refObjectNode = findParentBranch(responseFile, parentBranchId);
+            if(refObjectNode != null) {
+                parentBranchJsonNode = refObjectNode;
             }
         } catch (IOException | URISyntaxException | ServerException e) {
             e.printStackTrace();
@@ -230,6 +217,25 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             RunnableWithProgress temp = new ManualSyncRunner(Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }
+    }
+
+    private ObjectNode findParentBranch(File responseFile, String parentBranchId) throws IOException {
+        Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.REFS_NODE);
+        Set<ObjectNode> refObjects = parsedResponseObjects.get(MDKJsonConstants.REFS_NODE);
+
+        if(refObjects != null && !refObjects.isEmpty()) {
+            for(ObjectNode refObjectNode : refObjects) {
+                if (refObjectNode != null && refObjectNode.isObject()) {
+                    refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
+                    JsonNode idValue = refObjectNode.get(MDKConstants.ID_KEY);
+                    if(idValue != null && idValue.isTextual() && idValue.asText().equals(parentBranchId)) {
+                        return refObjectNode;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public BranchInfoImpl toBranchInfoImpl(EsiUtils.EsiBranchInfo esiBranchInfo) {

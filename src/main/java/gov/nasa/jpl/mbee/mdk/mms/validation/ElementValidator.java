@@ -93,7 +93,12 @@ public class ElementValidator implements RunnableWithProgress {
         }
         Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
         Set<String> processedElementIds = new HashSet<>();
-        processServerElements(processedElementIds, clientElementMap);
+        try {
+            processServerElements(processedElementIds, clientElementMap);
+        } catch(IOException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[Error] An error occurred when attempting to process elements from the server.");
+        }
 
         if (serverElements == null) {
             serverElements = new LinkedList<>();
@@ -135,7 +140,7 @@ public class ElementValidator implements RunnableWithProgress {
         Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
     }
 
-    private void processServerElements(Set<String> processedElementIds, Map<String, Pair<Element, ObjectNode>> clientElementMap) {
+    private void processServerElements(Set<String> processedElementIds, Map<String, Pair<Element, ObjectNode>> clientElementMap) throws IOException {
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         for (File responseFile : serverElementFiles) {
             Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.ELEMENTS_NODE);
