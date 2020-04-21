@@ -138,6 +138,7 @@ public class BranchValidator {
                         String entryKey;
                         if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
                             entryKey = value.asText();
+                            entryKey = entryKey.replace('_', '-'); // TODO hack changes branch id from _ to - here, is this the real fix?
                             if (allBranches || entryKey.equals(currentBranch)) {
                                 serverBranches.put(entryKey, refObjectNode);
                             }
@@ -187,6 +188,9 @@ public class BranchValidator {
                     continue;
                 }
                 serverBranch.remove(MDKConstants.STATUS_KEY);
+                serverBranch.remove("parentCommitId"); // TODO is this a hack to make the diff work?
+                // TODO ID thing below is totally a hack...
+                serverBranch.put(MDKConstants.ID_KEY, serverBranch.get(MDKConstants.ID_KEY).asText().replace('_', '-'));
                 clientBranch.getValue().remove("twcId");
                 clientBranch.getValue().put("deleted", false); // TODO we need to fix this
                 JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
