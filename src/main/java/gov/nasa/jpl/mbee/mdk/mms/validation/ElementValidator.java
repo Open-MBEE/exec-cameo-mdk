@@ -148,13 +148,12 @@ public class ElementValidator implements RunnableWithProgress {
             if(elementObjects != null && !elementObjects.isEmpty()) {
                 for(ObjectNode jsonObject : elementObjects) {
                     JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
-                    if(idValue != null && idValue.isTextual()) {
+                    if(idValue != null && idValue.isTextual() && !processedElementIds.contains(idValue.asText())) {
                         processedElementIds.add(idValue.asText());
                         Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(idValue.asText());
                         if (currentClientElement == null) {
                             addMissingInClientViolation(jsonObject);
-                        }
-                        else {
+                        } else {
                             addElementEquivalenceViolation(currentClientElement, jsonObject);
                         }
                     }
