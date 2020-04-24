@@ -48,5 +48,6 @@ public class MDKConstants {
             CHECKSUM_KEY = "checksum",
             CONTENT_TYPE_KEY = "contentType",
             PROJECT_TYPE = "projectType",
-            SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900";
+            SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900",
+            PARENT_COMMIT_ID = "parentCommitId";
 }

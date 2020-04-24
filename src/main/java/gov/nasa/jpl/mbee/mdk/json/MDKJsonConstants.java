@@ -8,6 +8,7 @@ public class MDKJsonConstants {
             MESSAGES_NODE = "messages",
             REJECTED_NODE = "rejected",
             SOURCE_FIELD = "source",
+            DELETED_FIELD = "deleted",
             MAGICDRAW_SOURCE_VALUE = "magicdraw",
             ELEMENT_TYPE_VALUE = "Element";
 }
