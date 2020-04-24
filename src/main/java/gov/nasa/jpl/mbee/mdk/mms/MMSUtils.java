@@ -133,6 +133,16 @@ public class MMSUtils {
         return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
     }
 
+    public static File getAllElements(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        // build uri
+        MMSEndpoint mmsEndpoint = getServiceProjectsRefsElementsUri(project);
+        if (mmsEndpoint == null) {
+            return null;
+        }
+        //do cancellable request if progressStatus exists
+        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project), progressStatus);
+    }
+
     public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         if (artifactIds == null || artifactIds.isEmpty()) {
             return null;

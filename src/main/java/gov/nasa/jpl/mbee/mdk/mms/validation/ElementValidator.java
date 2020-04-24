@@ -88,23 +88,28 @@ public class ElementValidator implements RunnableWithProgress {
         progressStatus.setDescription("Mapping element(s)");
         progressStatus.setIndeterminate(true);
 
-        if (clientElements == null) {
+        Map<String, Pair<Element, ObjectNode>> clientElementMap;
+        if(clientElements == null) {
             clientElements = new LinkedList<>();
+            clientElementMap = new HashMap<>();
+        } else {
+            clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
         }
-        Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
-        Set<String> processedElementIds = new HashSet<>();
+
+        Map<String, ObjectNode> serverElementMap;
+        if(serverElements == null) {
+            serverElements = new LinkedList<>();
+            serverElementMap = new HashMap<>();
+        } else {
+            serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual()).collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
+        }
+
         try {
-            processServerElements(processedElementIds, clientElementMap);
+            processServerElements(clientElementMap, serverElementMap);
         } catch(IOException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[Error] An error occurred when attempting to process elements from the server.");
         }
-
-        if (serverElements == null) {
-            serverElements = new LinkedList<>();
-        }
-        Map<String, ObjectNode> serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual()).filter(json -> !processedElementIds.contains(json.get(MDKConstants.ID_KEY).asText()))
-                .collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
 
         LinkedHashSet<String> elementKeySet = new LinkedHashSet<>();
         elementKeySet.addAll(clientElementMap.keySet());
@@ -121,14 +126,11 @@ public class ElementValidator implements RunnableWithProgress {
 
             if ((clientElement == null || clientElement.getKey() == null) && serverElement == null) {
                 continue;
-            }
-            else if (clientElement == null) {
+            } else if (clientElement == null) {
                 addMissingInClientViolation(serverElement);
-            }
-            else if (serverElement == null) {
+            } else if (serverElement == null) {
                 addMissingOnMmsViolation(clientElement);
-            }
-            else {
+            } else {
                 addElementEquivalenceViolation(clientElement, serverElement);
             }
             progressStatus.increase();
@@ -140,7 +142,7 @@ public class ElementValidator implements RunnableWithProgress {
         Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
     }
 
-    private void processServerElements(Set<String> processedElementIds, Map<String, Pair<Element, ObjectNode>> clientElementMap) throws IOException {
+    private void processServerElements(Map<String, Pair<Element, ObjectNode>> clientElementMap, Map<String, ObjectNode> serverElementMap) throws IOException {
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         for (File responseFile : serverElementFiles) {
             Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.ELEMENTS_NODE);
@@ -148,9 +150,11 @@ public class ElementValidator implements RunnableWithProgress {
             if(elementObjects != null && !elementObjects.isEmpty()) {
                 for(ObjectNode jsonObject : elementObjects) {
                     JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
-                    if(idValue != null && idValue.isTextual() && !processedElementIds.contains(idValue.asText())) {
-                        processedElementIds.add(idValue.asText());
-                        Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(idValue.asText());
+                    if(idValue != null && idValue.isTextual() && !serverElementMap.containsKey(idValue.asText())) {
+                        String id = idValue.asText();
+
+                        Pair<Element, ObjectNode> currentClientElement = clientElementMap.get(id);
+                        serverElementMap.put(id, jsonObject);
                         if (currentClientElement == null) {
                             addMissingInClientViolation(jsonObject);
                         } else {
