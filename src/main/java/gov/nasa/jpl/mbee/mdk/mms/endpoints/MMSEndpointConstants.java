@@ -31,6 +31,9 @@ public class MMSEndpointConstants {
     public static final String IMAGE_EXPORT_CASE = "mmsimageexport";
     public static final String IMAGE_EXPORT_ENDPOINT = "/projects/~project_id~/refs/~ref_id~/elements/~image_file~";
 
+    public static final String SEARCH_CASE = "mmssearch";
+    public static final String SEARCH_ENDPOINT = "/projects/~project_id~/refs/~ref_id~/search";
+
     public static final String PROJECT_ID_PLACEHOLDER = "~project_id~";
     public static final String REF_ID_PLACEHOLDER = "~ref_id~";
     public static final String COMMIT_ID_PLACEHOLDER = "~commit_id~";

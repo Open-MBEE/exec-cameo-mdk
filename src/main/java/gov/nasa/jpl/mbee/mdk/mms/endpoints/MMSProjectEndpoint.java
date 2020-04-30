@@ -1,7 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
-import java.net.URISyntaxException;
-
 public class MMSProjectEndpoint extends MMSProjectsEndpoint {
     public MMSProjectEndpoint(String baseUri) {
         super(baseUri);
@@ -13,7 +11,7 @@ public class MMSProjectEndpoint extends MMSProjectsEndpoint {
         uriBuilder.clearParameters();
     }
 
-    public void setProjectId(String id) throws URISyntaxException {
+    public void setProjectId(String id) {
         String path = uriBuilder.getPath();
         int i = path.indexOf(MMSEndpointConstants.PROJECT_ID_PLACEHOLDER);
         uriBuilder.setPath(path.substring(0, i) + id + path.substring(i + MMSEndpointConstants.PROJECT_ID_PLACEHOLDER.length()));

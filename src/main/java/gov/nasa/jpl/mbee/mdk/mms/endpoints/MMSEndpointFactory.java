@@ -41,6 +41,10 @@ public class MMSEndpointFactory {
                 mmsEndpoint = new MMSCommitsEndpoint(baseUri);
                 break;
             }
+            case MMSEndpointConstants.SEARCH_CASE: {
+                mmsEndpoint = new MMSSearchEndpoint(baseUri);
+                break;
+            }
             case MMSEndpointConstants.IMAGE_EXPORT_CASE: {
                 mmsEndpoint = new MMSImageExportEndpoint(baseUri);
                 break;

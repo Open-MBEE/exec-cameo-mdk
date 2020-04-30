@@ -107,7 +107,7 @@ public class ProjectValidator {
         projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
         projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
         projectObjectNode.put(MDKConstants.ORG_ID_KEY, orgId);
-        projectObjectNode.put(MDKConstants.PROJECT_TYPE, "cameo");
+        projectObjectNode.put(MDKConstants.PROJECT_TYPE_KEY, MDKConstants.PROJECT_TYPE_VALUE);
         String resourceId = "";
         if (ProjectUtilities.getProject(iProject).isRemote()) {
             resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());

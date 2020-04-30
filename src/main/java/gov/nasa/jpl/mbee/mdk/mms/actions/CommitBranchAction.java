@@ -157,14 +157,8 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         JsonNode parentBranchJsonNode = null;
         MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.REF_CASE);
         mmsEndpoint.prepareUriPath();
-
-        try {
-            ((MMSRefEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-            ((MMSRefEndpoint) mmsEndpoint).setRefId(parentBranchId);
-        } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log(e.getReason());
-            e.printStackTrace();
-        }
+        ((MMSRefEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        ((MMSRefEndpoint) mmsEndpoint).setRefId(parentBranchId);
 
         try {
             HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);

@@ -133,16 +133,6 @@ public class MMSUtils {
         return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
     }
 
-    public static File getAllElements(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        // build uri
-        MMSEndpoint mmsEndpoint = getServiceProjectsRefsElementsUri(project);
-        if (mmsEndpoint == null) {
-            return null;
-        }
-        //do cancellable request if progressStatus exists
-        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project), progressStatus);
-    }
-
     public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         if (artifactIds == null || artifactIds.isEmpty()) {
             return null;
@@ -592,14 +582,7 @@ public class MMSUtils {
             mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.REFS_CASE);
         }
         mmsEndpoint.prepareUriPath();
-
-        try {
-            ((MMSRefsEndpoint) mmsEndpoint).setProjectId(project == null ? projectId : Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-        } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log(e.getReason());
-            e.printStackTrace();
-            return null;
-        }
+        ((MMSRefsEndpoint) mmsEndpoint).setProjectId(project == null ? projectId : Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
 
         return mmsEndpoint;
     }
@@ -613,15 +596,8 @@ public class MMSUtils {
     public static MMSEndpoint getServiceProjectsRefsElementsUri(Project project) {
         MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.ELEMENTS_CASE);
         mmsEndpoint.prepareUriPath();
-
-        try {
-            ((MMSElementsEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-            ((MMSElementsEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
-        } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log(e.getReason());
-            e.printStackTrace();
-            return null;
-        }
+        ((MMSElementsEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        ((MMSElementsEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
 
         return mmsEndpoint;
     }
