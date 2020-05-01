@@ -50,5 +50,7 @@ public class MDKConstants {
             PROJECT_TYPE_KEY = "schema",
             PROJECT_TYPE_VALUE = "cameo",
             SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900",
-            PARENT_COMMIT_ID = "parentCommitId";
+            PARENT_COMMIT_ID = "parentCommitId",
+            PARAMS_FIELD = "params",
+            RECURSE_FIELD = "recurse";
 }

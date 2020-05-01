@@ -62,7 +62,7 @@ public class MMSUtils {
     }
 
     public enum JsonBlobType {
-        ELEMENT_JSON, ELEMENT_ID, ARTIFACT_JSON, ARTIFACT_ID, PROJECT, REF, ORG
+        ELEMENT_JSON, ELEMENT_ID, ARTIFACT_JSON, ARTIFACT_ID, PROJECT, REF, ORG, SEARCH
     }
 
     public static AtomicReference<Exception> getLastException() {
@@ -214,8 +214,12 @@ public class MMSUtils {
 
         try (FileOutputStream outputStream = new FileOutputStream(requestFile);
              JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
+
             jsonGenerator.writeStartObject();
-            jsonGenerator.writeArrayFieldStart(arrayName);
+            if(jsonBlobType != JsonBlobType.SEARCH) {
+                jsonGenerator.writeArrayFieldStart(arrayName);
+            }
+
             for (Object node : nodes) {
                 if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
                     jsonGenerator.writeObject(node);
@@ -223,11 +227,23 @@ public class MMSUtils {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
                     jsonGenerator.writeEndObject();
-                } else {
+                } else if (node instanceof String && jsonBlobType == JsonBlobType.SEARCH) {
+                    jsonGenerator.writeObjectFieldStart(MDKConstants.PARAMS_FIELD);
+                    jsonGenerator.writeStringField(MDKConstants.OWNER_ID_KEY, (String) node);
+                    jsonGenerator.writeEndObject();
+                    jsonGenerator.writeObjectFieldStart(MDKConstants.RECURSE_FIELD);
+                    jsonGenerator.writeStringField(MDKConstants.ID_KEY, MDKConstants.OWNER_ID_KEY);
+                    jsonGenerator.writeEndObject();
+                }
+                else {
                     throw new IOException("Unsupported collection type for entity file.");
                 }
             }
-            jsonGenerator.writeEndArray();
+
+            if(jsonBlobType != JsonBlobType.SEARCH) {
+                jsonGenerator.writeEndArray();
+            }
+
             jsonGenerator.writeStringField("source", "magicdraw");
             jsonGenerator.writeStringField("mdkVersion", MDKPlugin.getVersion());
             jsonGenerator.writeEndObject();

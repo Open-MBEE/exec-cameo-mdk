@@ -11,10 +11,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSElementsEndpoint;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointConstants;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
@@ -147,14 +144,17 @@ public class ManualSyncRunner implements RunnableWithProgress {
         elementValidator.run(progressStatus);
     }
 
-    private static File searchForServerElements(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    private File searchForServerElements(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         // prepare endpoint
         MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.SEARCH_CASE);
         mmsEndpoint.prepareUriPath();
-        ((MMSElementsEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-        ((MMSElementsEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
+        ((MMSSearchEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        ((MMSSearchEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
+        Collection<String> nodeIds = new HashSet<>();
+        nodeIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())); // adding the root node because we'll recurse to get the entire tree from it
+        File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
         // use endpoint to make request
-        return MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project), progressStatus);
+        return MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
     }
 
     private static void collectClientElementsRecursively(Project project, Element element, int depth, List<Pair<Element, ObjectNode>> elements) {
