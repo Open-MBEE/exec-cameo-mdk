@@ -7,11 +7,13 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
-import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointConstants;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSSearchEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
@@ -24,8 +26,10 @@ import org.apache.http.entity.ContentType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Created by igomes on 9/26/16.
@@ -83,45 +87,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
         Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
-            Set<String> clientElementIds = clientElements.stream().map(pair -> Converters.getElementToIdConverter().apply(pair.getKey())).collect(Collectors.toCollection(LinkedHashSet::new));
             try {
                 File searchFile = searchForServerElements(project, progressStatus);
                 if(searchFile != null) {
                     responseFiles.add(searchFile);
                 }
-
-//                File recursiveResponseFile, traversedResponseFile, responseFile;
-//
-//                recursiveResponseFile = collectServerElementsRecursively(project, element, depth, progressStatus);
-//                if (recursiveResponseFile != null) {
-//                    responseFiles.add(recursiveResponseFile);
-//                }
-//
-//                if (clientElementIds.size() > 1) {
-//                    traversedResponseFile = MMSUtils.getElements(project, clientElementIds, progressStatus);
-//                    if (traversedResponseFile != null) {
-//                        responseFiles.add(traversedResponseFile);
-//                    }
-//                }
-//
-//                if (element == project.getPrimaryModel() && depth != 0) {
-//                    // scan of initial return for holding bin is expensive. assume it's not there and request anyway
-//                    if (progressStatus.isCancel()) {
-//                        return;
-//                    }
-//                    responseFile = collectServerHoldingBinElementsRecursively(project, depth - 1, progressStatus);
-//                    if (responseFile != null) {
-//                        responseFiles.add(responseFile);
-//                    }
-//
-//                    if (progressStatus.isCancel()) {
-//                        return;
-//                    }
-//                    responseFile = collectServerModuleElementsRecursively(project, depth - 2, progressStatus);
-//                    if (responseFile != null) {
-//                        responseFiles.add(responseFile);
-//                    }
-//                }
             } catch (ServerException | URISyntaxException | IOException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting elements from the server. Manual sync aborted. Reason: " + e.getMessage());
                 e.printStackTrace();
@@ -173,28 +143,6 @@ public class ManualSyncRunner implements RunnableWithProgress {
             attachedModels.remove(project.getPrimaryModel());
             attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements));
         }
-    }
-
-    private static File collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        String id = Converters.getElementToIdConverter().apply(element);
-        Collection<String> elementIds = new ArrayList<>(1);
-        elementIds.add(id);
-        return MMSUtils.getElementsRecursively(project, elementIds, depth, progressStatus);
-    }
-
-    private static File collectServerModuleElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        Collection<Element> attachedModels = new ArrayList<>(project.getModels());
-        attachedModels.remove(project.getPrimaryModel());
-        Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter()).filter(amId -> amId != null).collect(Collectors.toList());
-        return MMSUtils.getElements(project, attachedModelIds, null);
-    }
-
-    private static File collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
-        String holdingBinId = MDKConstants.HOLDING_BIN_ID_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
-        return MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
     }
 
     public ValidationSuite getValidationSuite() {

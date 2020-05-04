@@ -619,13 +619,7 @@ public class MMSUtils {
     }
 
     public static MMSEndpoint getServiceProjectsRefsArtifactsUri(Project project) {
-        return null;
-//        URIBuilder artifactsUri = getServiceProjectsRefsUri(project);
-//        if (artifactsUri == null) {
-//            return null;
-//        }
-//        artifactsUri.setPath(artifactsUri.getPath() + "/" + MDUtils.getBranchId(project) + "/artifacts");
-//        return artifactsUri;
+        return null; // TODO should this be unimplemented for MMS4?
     }
 
     public static String getDefaultSiteName(IProject iProject) {

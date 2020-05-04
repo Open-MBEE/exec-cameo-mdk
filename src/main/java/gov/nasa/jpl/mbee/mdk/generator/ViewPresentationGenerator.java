@@ -659,7 +659,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
                 HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
-//                        MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
@@ -692,7 +691,6 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
                 HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.DELETE, file, ContentType.APPLICATION_JSON, project);
-//                        MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, mmsEndpoint, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
