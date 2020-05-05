@@ -148,6 +148,12 @@ public class ElementValidator implements RunnableWithProgress {
             Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.ELEMENTS_NODE);
             Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.ELEMENTS_NODE);
             if(elementObjects != null && !elementObjects.isEmpty()) {
+                if(serverObjectsOnlyHasBins(elementObjects)) {
+                    // solves edge case where first model validation incorrectly removes bins from project
+                    removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.HOLDING_BIN_ID_PREFIX);
+                    removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.VIEW_INSTANCES_BIN_PREFIX);
+                }
+
                 for(ObjectNode jsonObject : elementObjects) {
                     JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
                     if(idValue != null && idValue.isTextual() && !serverElementMap.containsKey(idValue.asText())) {
@@ -161,6 +167,36 @@ public class ElementValidator implements RunnableWithProgress {
                             addElementEquivalenceViolation(currentClientElement, jsonObject);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private boolean serverObjectsOnlyHasBins(Set<ObjectNode> serverObjectNodes) {
+        if(serverObjectNodes.size() != 2) { // only intended to fix an edge case, use carefully
+            return false;
+        }
+
+        for(ObjectNode o : serverObjectNodes) {
+            if(o.get(MDKConstants.ID_KEY).asText() != null) {
+                String idValue = o.get(MDKConstants.ID_KEY).asText();
+                if(!idValue.startsWith(MDKConstants.HOLDING_BIN_ID_PREFIX) &&
+                        !idValue.startsWith(MDKConstants.VIEW_INSTANCES_BIN_PREFIX)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void removeServerObjectNodeUsingIdPrefix(Set<ObjectNode> serverObjectNodes, String idPrefix) {
+        for(ObjectNode o : serverObjectNodes) { // only intended to fix an edge case, use carefully
+            if(o.get(MDKConstants.ID_KEY).asText() != null) {
+                String idValue = o.get(MDKConstants.ID_KEY).asText();
+                if(idValue.startsWith(idPrefix)) {
+                    serverObjectNodes.remove(o);
+                    break;
                 }
             }
         }
