@@ -10,6 +10,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
@@ -46,13 +48,18 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             return false;
         }
 
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-        if (requestUri == null) {
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.IMAGE_EXPORT_CASE);
+        mmsEndpoint.prepareUriPath();
+
+        try {
+            ((MMSImageExportEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+            ((MMSImageExportEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
+            ((MMSImageExportEndpoint) mmsEndpoint).setImageFile(key);
+        } catch (URISyntaxException e) {
+            Application.getInstance().getGUILog().log(e.getReason());
+            e.printStackTrace();
             return false;
         }
-
-        String id = key.replace(".", "%2E");
-        requestUri.setPath(requestUri.getPath() + "/" + id);
 
         JsonNode value;
 
@@ -60,13 +67,13 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         if ((value = is.get(key).get("cs")) != null && value.isTextual()) {
             cs = value.asText();
         }
-        requestUri.setParameter("cs", cs);
+        mmsEndpoint.setParameter("cs", cs);
 
         String extension = "";
         if ((value = is.get(key).get("extension")) != null && value.isTextual()) {
             extension = value.asText();
         }
-        requestUri.setParameter("extension", extension);
+        mmsEndpoint.setParameter("extension", extension);
 
         String filename = "";
         if ((value = is.get(key).get("abspath")) != null && value.isTextual()) {
@@ -75,7 +82,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
         File file = new File(filename);
 
         try {
-            HttpRequestBase request = MMSUtils.buildImageRequest(requestUri, file);
+            HttpRequestBase request = mmsEndpoint.buildImageRequest(file, project);
             TaskRunner.runWithProgressStatus(progressStatus -> {
                 try {
                     MMSUtils.sendMMSRequest(project, request, progressStatus);
@@ -84,7 +91,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
                     e.printStackTrace();
                 }
             }, "Image Create/Update", true, TaskRunner.ThreadExecutionStrategy.SINGLE);
-        } catch (IOException | URISyntaxException e) {
+        } catch (URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unable to commit image " + filename + ". Reason: " + e.getMessage());
             e.printStackTrace();
             return false;

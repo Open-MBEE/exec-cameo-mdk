@@ -17,6 +17,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
@@ -258,13 +259,17 @@ public class AutomatedViewGenerator implements CommandLineAction {
                 refsNode = JacksonUtils.getObjectMapper().createObjectNode();
 
         try {
-            URIBuilder mmsProjectUri = MMSUtils.getServiceProjectsUri("https://" + parser.getOptionValue(MMS_HOST));
-            mmsProjectUri.setParameter("alf_ticket", ticketStore).setPath(mmsProjectUri.getPath() + "/" + parser.getOptionValue(PROJECT_ID));
-            MMSUtils.sendMMSRequest(null, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsProjectUri), null, projectsNode);
+            MMSEndpoint mmsProjectEndpoint = MMSEndpointFactory.getMMSEndpoint("https://" + parser.getOptionValue(MMS_HOST), MMSEndpointConstants.PROJECT_CASE);
+            mmsProjectEndpoint.prepareUriPath();
+            ((MMSProjectEndpoint) mmsProjectEndpoint).setProjectId(parser.getOptionValue(PROJECT_ID));
+            mmsProjectEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, null, project);
+            MMSUtils.sendMMSRequest(null, mmsProjectEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, null, project), null, projectsNode);
             if (!parser.getOptionValue(REF_ID).equals("master")) {
-                URIBuilder mmsRefUri = MMSUtils.getServiceProjectsRefsUri("https://" + parser.getOptionValue(MMS_HOST), parser.getOptionValue(PROJECT_ID));
-                mmsRefUri.setParameter("alf_ticket", ticketStore).setPath(mmsRefUri.getPath() + "/" + parser.getOptionValue(REF_ID));
-                MMSUtils.sendMMSRequest(null, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsRefUri), null, refsNode);
+                MMSEndpoint mmsRefEndpoint = MMSEndpointFactory.getMMSEndpoint("https://" + parser.getOptionValue(MMS_HOST), MMSEndpointConstants.REF_CASE);
+                mmsRefEndpoint.prepareUriPath();
+                ((MMSRefEndpoint) mmsRefEndpoint).setProjectId(parser.getOptionValue(PROJECT_ID));
+                ((MMSRefEndpoint) mmsRefEndpoint).setRefId(parser.getOptionValue(REF_ID));
+                MMSUtils.sendMMSRequest(null, mmsRefEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, null, project), null, refsNode);
             }
         } catch (IOException | ServerException e) {
             illegalStateFailure("[FAILURE] Unable to load project, exception occurred while resolving one of the required project URI parameters.");

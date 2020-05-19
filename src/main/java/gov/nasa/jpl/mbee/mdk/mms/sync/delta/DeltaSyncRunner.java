@@ -21,6 +21,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
@@ -317,11 +318,11 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             if (!postElements.isEmpty()) {
-                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 try {
                     File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
 
-                    HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                    HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
                     TaskRunner.runWithProgressStatus(progressStatus1 -> {
                         try {
                             MMSUtils.sendMMSRequest(project, request, progressStatus1);
@@ -344,10 +345,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         if (shouldCommit && shouldCommitDeletes && !deleteElements.isEmpty()) {
             progressStatus.setDescription("Committing deletions to MMS");
-            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+            MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
-                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.DELETE, file, ContentType.APPLICATION_JSON, project);
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);

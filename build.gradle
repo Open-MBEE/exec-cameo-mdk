@@ -3,6 +3,15 @@ import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 import java.util.zip.ZipFile
 
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'java'
+apply plugin: 'distribution'
+apply plugin: 'rebel'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'com.jfrog.bintray'
+
 String buildAccess = project.getProperties().getOrDefault('buildAccess', 'opensource')
 String buildTag = project.getProperties().get('buildTag')
 if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
@@ -22,7 +31,22 @@ String[] classpathLibraries = ['lib/patch.jar', 'lib/brand.jar', 'lib/brand_api.
 
 buildscript {
     repositories {
-        jcenter()
+        flatDir { dirs "libz" } //intended only for artifactory failure workarounds
+        mavenLocal()
+        maven {
+            url "${artifactory_JCentralURL}"
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+        }
+        maven {
+            url "${artifactory_gradleURL}"
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+        }
     }
     dependencies {
         classpath group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '4.9.0'
@@ -31,41 +55,17 @@ buildscript {
     }
 }
 
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'java'
-apply plugin: 'distribution'
-apply plugin: 'rebel'
-
 // In this section you declare where to find the dependencies of your project
 repositories {
-    // mavenCentral()
-    if (buildAccess == 'internal') {
-        maven {
-            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
-            credentials {
-                username project.getProperties().get('artifactoryUsername')
-                password project.getProperties().get('artifactoryPassword')
-            }
-        }
-        maven {
-            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-release-virtual'
-            credentials {
-                username project.getProperties().get('artifactoryUsername')
-                password project.getProperties().get('artifactoryPassword')
-            }
+    flatDir { dirs "libz" } //intended only for artifactory failure workarounds
+    mavenLocal()
+    maven {
+        url "${artifactory_JCentralURL}"
+        credentials {
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
         }
     }
-    else {
-        ivy {
-            // http://download1.nomagic.com/magicdraw185sp2/MagicDraw_185_sp2_no_install.zip
-            url 'http://download1.nomagic.com/'
-            layout 'pattern', {
-                artifact '/[module][revision]/[classifier].[ext]'
-            }
-        }
-    }
-    jcenter()
 }
 
 configurations {
@@ -75,58 +75,28 @@ configurations {
 
 // In this section you declare the dependencies for your production and test code
 dependencies {
-    // SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
-    // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
-    
-    // SLF4J-Log4j12
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
-    // compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21+'
 
-    // JSoup
     compile group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
-    // compile group: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
-    
-    // JGraphT 
+
     compile group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
-    // compile group: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
-    
-    // JSON Simple
+
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
-    // compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1+'
-    
-    // SwingX-All
+
     compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.4'
-    // compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.5+'
-    
-    // OpenCSV
     compile group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
-    // compile group: 'com.opencsv', name: 'opencsv', version: '3.8+'
-    
-    // ActiveMQ 
     compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
-    // compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
 
-    // Jackson
     compile group: 'com.fasterxml.jackson.core', name:'jackson-databind', version: '2.8.3'
-
-    // JSON Patch
     compile group: "com.box", name: "json-patch", version: "1.13"
 
-    // Apache Commons-IO
     compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
-//    compile group: 'commons-io', name: 'commons-io', version: '2.4'
-
-    // Apache HTTP
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
     compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.2'
-
-    // Apache Commons CLI
     compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
 
-    //OpenMBEE MMS Java Client
     compile group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
-
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 
     // Test Dependencies
@@ -146,7 +116,7 @@ dependencies {
         preCompile group: 'gov.nasa.jpl.cae.nomagic', name: 'cae-cameo-systems-modeler-core', version: '4.2.1', classifier: 'linux', ext: 'zip'
     }
     else {
-        preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'cameo', version: '190sp3', classifier: 'Cameo_Enterprise_Architecture_190_sp3_no_install', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
     }
@@ -156,6 +126,25 @@ dependencies {
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/' + it })
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+        resources {
+            srcDir 'src/test/resources'
+        }
+    }
 }
 
 task extractDependencies {
@@ -272,7 +261,7 @@ class PreDist extends DefaultTask {
 
         String pluginLibraries = ''
         project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
-            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
+            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build[\\\\/]generated-dist[\\\\/]plugins[\\\\/]${groupName}[\\\\/]/, '') + '\"/>' + System.lineSeparator()
         }
         project.copy {
             from 'src/main/dist/template/plugins/${group}/plugin.xml'
@@ -284,7 +273,7 @@ class PreDist extends DefaultTask {
 
         String descriptorFiles = ''
         project.fileTree(dir: 'build/generated-dist').each { file ->
-            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '')
+            String relativePath = file.absolutePath.replaceAll(/.*build[\\\\/]generated-dist[\\\\/]/, '')
             descriptorFiles += '\t\t<file from=\"' + relativePath + '\" to=\"' + relativePath + '\"/>' + System.lineSeparator()
         }
         project.copy {
@@ -295,6 +284,7 @@ class PreDist extends DefaultTask {
             filter { String line -> line.replace('${build.timestamp}', buildTimestamp) }
             into 'build/generated-dist/data/resourcemanager'
         }
+        project.delete 'build/generated-dist/plugins/${group}' // keep single quotes
     }
 }
 
@@ -330,10 +320,6 @@ distZip {
 }
 
 distZip.dependsOn preDist
-
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.artifactory'
-apply plugin: 'com.jfrog.bintray'
 
 publishing {
     // Reference to Gradle publications defined in the build script.
