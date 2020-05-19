@@ -69,11 +69,13 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                 for (MMSArtifact artifact : artifacts) {
                     HttpEntity entity = MultipartEntityBuilder.create().addTextBody(MDKConstants.ID_KEY, artifact.getId()).addTextBody(MDKConstants.CHECKSUM_KEY, artifact.getChecksum()).addTextBody("source", "magicdraw").addBinaryBody("file", artifact.getInputStream(), artifact.getContentType(), artifact.getId() + ".tmp").build();
                     File file = File.createTempFile(this.getClass().getSimpleName() + "-" + ContentType.APPLICATION_JSON.getMimeType().replace('/', '-') + "-", null);
-                    file.deleteOnExit();
                     FileUtils.copyInputStreamToFile(entity.getContent(), file);
                     HttpPost artifactRequest = (HttpPost) mmsArtifactsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
                     artifactRequest.setEntity(entity);
                     MMSUtils.sendMMSRequest(project, artifactRequest, progressStatus);
+                    if(!file.delete()) { // if we cannot immediately delete we'll get it later
+                        file.deleteOnExit();
+                    }
                 }
                 ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
                 objectNode.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(diagram));

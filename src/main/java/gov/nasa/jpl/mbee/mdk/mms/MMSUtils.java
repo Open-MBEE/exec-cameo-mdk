@@ -124,7 +124,6 @@ public class MMSUtils {
         if (mmsEndpoint == null) {
             return null;
         }
-        mmsEndpoint.setParameter("depth", java.lang.Integer.toString(depth));
 
         // create request file
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
@@ -188,7 +187,9 @@ public class MMSUtils {
             Application.getInstance().getGUILog().log("[INFO] Request Body: " + requestFile.getPath());
         }
         else {
-            requestFile.deleteOnExit();
+            if(!requestFile.delete()) { // if we cannot immediately delete we'll get it later
+                requestFile.deleteOnExit();
+            }
         }
 
         String arrayName = null;
@@ -376,7 +377,9 @@ public class MMSUtils {
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
                 }
                 else {
-                    responseFile.deleteOnExit();
+                    if(!responseFile.delete()) { // if we cannot immediately delete we'll get it later
+                        responseFile.deleteOnExit();
+                    }
                 }
             }
             return "";
