@@ -24,12 +24,8 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
+import gov.nasa.jpl.mbee.mdk.util.*;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -39,7 +35,6 @@ import org.apache.http.impl.client.HttpClients;
 import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -152,6 +147,15 @@ public class MMSUtils {
         return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
     }
 
+    public static String getJwtToken(Project project, String twcServer, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
+        endpoint.prepareUriPath();
+        if(endpoint instanceof MMSTWCLoginEndpoint) {
+            return ((MMSTWCLoginEndpoint) endpoint).buildTWCLoginRequest(project, twcServer, authToken, progressStatus);
+        }
+        return null;
+    }
+
     private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
         endpoint.prepareUriPath();
@@ -159,6 +163,25 @@ public class MMSUtils {
             return ((MMSLoginEndpoint) endpoint).buildLoginRequest(project, username, password, progressStatus);
         }
         return null;
+    }
+
+    public static boolean validateJwtToken(Project project, String jwtToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.TWC_VALIDATE_TOKEN_ENDPOINT);
+        mmsEndpoint.prepareUriPath();
+
+        //build request
+        HttpRequestBase request = mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
+
+        // do request
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        sendMMSRequest(project, request, progressStatus, responseJson);
+
+        // parse response
+        JsonNode value;
+        if (responseJson != null && (value = responseJson.get("isTokenValid")) != null && value.isBoolean()) {
+            return value.asBoolean();
+        }
+        return false;
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
