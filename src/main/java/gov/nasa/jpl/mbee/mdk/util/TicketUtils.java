@@ -88,7 +88,7 @@ public class TicketUtils {
             return false;
         }
         else if(MDKOptionsGroup.getMDKOptions().isTWCAuthEnabled()) {
-            return acquireJwtToken(project);
+            return acquireTicketUsingTWC(project);
         }
         else if (!username.isEmpty() && !password.isEmpty()) {
             return acquireTicket(project, password);
@@ -206,7 +206,7 @@ public class TicketUtils {
         }
     }
 
-    private static boolean acquireJwtToken(Project project) {
+    private static boolean acquireTicketUsingTWC(Project project) {
         if(TWCUtils.getSecondaryAuthToken() == null || TWCUtils.getConnectedUser() == null || TWCUtils.getTeamworkCloudServer() == null) {
             return false;
         }
@@ -215,7 +215,7 @@ public class TicketUtils {
         ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
             String ticket;
             try {
-                ticket = MMSUtils.getJwtToken(project, TWCUtils.getTeamworkCloudServer(), TWCUtils.getSecondaryAuthToken(), progressStatus);
+                ticket = MMSUtils.getTicketUsingTWC(project, TWCUtils.getTeamworkCloudServer(), TWCUtils.getSecondaryAuthToken(), progressStatus);
             } catch (IOException | URISyntaxException | ServerException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
                 e.printStackTrace();
