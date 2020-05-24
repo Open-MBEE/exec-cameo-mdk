@@ -49,6 +49,10 @@ public class MMSEndpointFactory {
                 mmsEndpoint = new MMSImageExportEndpoint(baseUri);
                 break;
             }
+            case MMSEndpointConstants.TWC_LOGIN_CASE: {
+                mmsEndpoint = new MMSTWCLoginEndpoint(baseUri);
+                break;
+            }
             default:break;
         }
 
