@@ -147,20 +147,20 @@ public class MMSUtils {
         return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
     }
 
-    public static String getJwtToken(Project project, String twcServer, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
-        endpoint.prepareUriPath();
-        if(endpoint instanceof MMSTWCLoginEndpoint) {
-            return ((MMSTWCLoginEndpoint) endpoint).buildTWCLoginRequest(project, twcServer, authToken, progressStatus);
-        }
-        return null;
-    }
-
     private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
         endpoint.prepareUriPath();
         if(endpoint instanceof MMSLoginEndpoint) {
             return ((MMSLoginEndpoint) endpoint).buildLoginRequest(project, username, password, progressStatus);
+        }
+        return null;
+    }
+
+    public static String getTicketUsingTWC(Project project, String twcServer, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
+        endpoint.prepareUriPath();
+        if(endpoint instanceof MMSTWCLoginEndpoint) {
+            return ((MMSTWCLoginEndpoint) endpoint).buildTWCLoginRequest(project, twcServer, authToken, progressStatus);
         }
         return null;
     }
