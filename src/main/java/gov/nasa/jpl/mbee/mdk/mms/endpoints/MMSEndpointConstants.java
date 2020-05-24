@@ -44,4 +44,8 @@ public class MMSEndpointConstants {
     public static final String IMPROPER_URI_ERROR_REF_SUFFIX = "branch. Reason: Improper base URI.";
 
     public static final String AUTHENTICATION_RESPONSE_JSON_KEY = "token";
+
+    public static final String TWC_LOGIN_CASE = "twclogin";
+    public static final String TWC_LOGIN_ENDPOINT = "/twclogin";
+    public static final String TWC_VALIDATE_TOKEN_ENDPOINT = "/validateJwtToken";
 }
