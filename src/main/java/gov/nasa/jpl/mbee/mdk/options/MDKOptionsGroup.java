@@ -22,7 +22,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             PERSIST_CHANGELOG_ID = "PERSIST_CHANGELOG_ID",
             ENABLE_CHANGE_LISTENER_ID = "ENABLE_CHANGE_LISTENER_ID",
             ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
-            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID";
+            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
+            ENABLE_TWC_AUTH = "ENABLE_TWC_AUTH";
 
     public MDKOptionsGroup() {
         super(ID);
@@ -133,6 +134,11 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property, true);
+    }
+
+    public boolean isTWCAuthEnabled() {
+        Property p = getProperty(ENABLE_TWC_AUTH);
+        return (Boolean) p.getValue();
     }
 
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> EnvironmentOptionsResources.getString(key);
