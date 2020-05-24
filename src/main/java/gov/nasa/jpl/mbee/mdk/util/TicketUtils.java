@@ -1,15 +1,13 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import org.apache.http.client.utils.URIBuilder;
+import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,6 +54,9 @@ public class TicketUtils {
         if (!isTicketSet(project)) {
             return false;
         }
+        if(MDKOptionsGroup.getMDKOptions().isTWCAuthEnabled()) {
+            return MMSUtils.validateJwtToken(project, getTicket(project), progressStatus);
+        }
         return MMSUtils.validateCredentialsTicket(project, getTicket(project), progressStatus).equals(username);
     }
 
@@ -85,6 +86,9 @@ public class TicketUtils {
         if (MMSUtils.getServerUrl(project) == null) {
             Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
             return false;
+        }
+        else if(MDKOptionsGroup.getMDKOptions().isTWCAuthEnabled()) {
+            return acquireJwtToken(project);
         }
         else if (!username.isEmpty() && !password.isEmpty()) {
             return acquireTicket(project, password);
@@ -200,6 +204,33 @@ public class TicketUtils {
         if (removed != null && removed.getScheduledFuture() != null) {
             removed.getScheduledFuture().cancel(true);
         }
+    }
+
+    private static boolean acquireJwtToken(Project project) {
+        if(TWCUtils.getSecondaryAuthToken() == null || TWCUtils.getConnectedUser() == null || TWCUtils.getTeamworkCloudServer() == null) {
+            return false;
+        }
+
+        // do request
+        ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
+            String ticket;
+            try {
+                ticket = MMSUtils.getJwtToken(project, TWCUtils.getTeamworkCloudServer(), TWCUtils.getSecondaryAuthToken(), progressStatus);
+            } catch (IOException | URISyntaxException | ServerException e) {
+                Application.getInstance().getGUILog().log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
+                e.printStackTrace();
+                return;
+            }
+            // parse response
+            if (ticket != null && username != null) {
+                 ticketMappings.put(project, new TicketMapping(project, TWCUtils.getConnectedUser(), ticket));
+            }
+        }, "Logging in to MMS", true, 0);
+        if (isTicketSet(project)) {
+            return true;
+        }
+        Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with TWC.");
+        return false;
     }
 
     /**
