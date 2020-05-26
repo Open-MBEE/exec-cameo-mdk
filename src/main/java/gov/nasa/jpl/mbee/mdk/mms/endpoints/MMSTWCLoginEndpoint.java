@@ -28,14 +28,14 @@ public class MMSTWCLoginEndpoint extends MMSEndpoint {
         uriBuilder.clearParameters();
     }
 
-    public String buildTWCLoginRequest(Project project, String twcServer, String authToken,
+    public String buildTWCLoginRequest(Project project, String twcServerUrl, String authToken,
             ProgressStatus progressStatus) throws IOException, URISyntaxException, ServerException {
         // build request
         URI requestDest = uriBuilder.build();
         HttpRequestBase request = new HttpGet(requestDest);
         request.addHeader(MDKConstants.CONTENT_TYPE, MDKConstants.APPLICATION_JSON);
         request.addHeader(MDKConstants.CHARSET, (Consts.UTF_8).displayName());
-        request.addHeader(MDKConstants.TWC_HEADER, twcServer);
+        request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
         request.addHeader(MDKConstants.AUTHORIZATION, "Token :" + authToken);
 
         // do request
