@@ -47,5 +47,5 @@ public class MMSEndpointConstants {
 
     public static final String TWC_LOGIN_CASE = "twclogin";
     public static final String TWC_LOGIN_ENDPOINT = "/authenticatetwc";
-    public static final String TWC_VALIDATE_TOKEN_ENDPOINT = "/validatejwttoken";
+    public static final String VALIDATE_TOKEN_ENDPOINT = "/validatejwttoken";
 }
