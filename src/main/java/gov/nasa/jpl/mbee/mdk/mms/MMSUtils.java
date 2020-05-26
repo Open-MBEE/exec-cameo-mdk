@@ -156,16 +156,16 @@ public class MMSUtils {
         return null;
     }
 
-    public static String getTicketUsingTWC(Project project, String twcServer, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
+    public static String getTicketUsingTWCToken(Project project, String twcServerUrl, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
         endpoint.prepareUriPath();
         if(endpoint instanceof MMSTWCLoginEndpoint) {
-            return ((MMSTWCLoginEndpoint) endpoint).buildTWCLoginRequest(project, twcServer, authToken, progressStatus);
+            return ((MMSTWCLoginEndpoint) endpoint).buildTWCLoginRequest(project, twcServerUrl, authToken, progressStatus);
         }
         return null;
     }
 
-    public static boolean validateJwtToken(Project project, String jwtToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.TWC_VALIDATE_TOKEN_ENDPOINT);
         mmsEndpoint.prepareUriPath();
 
