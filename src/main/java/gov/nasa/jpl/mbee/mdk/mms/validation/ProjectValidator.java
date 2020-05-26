@@ -14,11 +14,14 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitProjectAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointConstants;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,17 +61,12 @@ public class ProjectValidator {
     }
 
     public void validate() {
-        URIBuilder requestUri = MMSUtils.getServiceProjectsUri(project);
-        if (requestUri == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Project validation aborted.");
-            errors = true;
-            return;
-        }
-        requestUri.setPath(requestUri.getPath() + "/" + Converters.getProjectToIdConverter().apply(project));
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
+        mmsEndpoint.prepareUriPath();
         File responseFile;
         ObjectNode response;
         try {
-            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            responseFile = MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }
@@ -100,15 +98,16 @@ public class ProjectValidator {
         projectExistenceValidationRule.addViolation(v);
     }
 
-    public static ObjectNode generateProjectObjectNode(Project project) {
-        return generateProjectObjectNode(project.getPrimaryProject());
+    public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
+        return generateProjectObjectNode(project.getPrimaryProject(), orgId);
     }
 
-    public static ObjectNode generateProjectObjectNode(IProject iProject) {
+    public static ObjectNode generateProjectObjectNode(IProject iProject, String orgId) {
         ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.TYPE_KEY, "Project");
-        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
         projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
+        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
+        projectObjectNode.put(MDKConstants.ORG_ID_KEY, orgId);
+        projectObjectNode.put(MDKConstants.PROJECT_TYPE_KEY, MDKConstants.PROJECT_TYPE_VALUE);
         String resourceId = "";
         if (ProjectUtilities.getProject(iProject).isRemote()) {
             resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());

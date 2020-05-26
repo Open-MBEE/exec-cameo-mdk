@@ -227,17 +227,6 @@ public class TicketUtils {
         //ensure ticket is cleared in case of failure
         ticketMappings.remove(project);
 
-        // build request
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null) {
-            return false;
-        }
-        requestUri.setPath(requestUri.getPath() + "/api/login");
-        requestUri.clearParameters();
-        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-        credentials.put("username", username);
-        credentials.put("password", pass);
-
         // do request
         ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
             String ticket;

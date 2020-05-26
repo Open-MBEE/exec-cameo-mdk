@@ -19,25 +19,20 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.http.HttpDeleteWithBody;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Consts;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.FileEntity;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
@@ -67,7 +62,7 @@ public class MMSUtils {
     }
 
     public enum JsonBlobType {
-        ELEMENT_JSON, ELEMENT_ID, ARTIFACT_JSON, ARTIFACT_ID, PROJECT, REF, ORG
+        ELEMENT_JSON, ELEMENT_ID, ARTIFACT_JSON, ARTIFACT_ID, PROJECT, REF, ORG, SEARCH
     }
 
     public static AtomicReference<Exception> getLastException() {
@@ -125,29 +120,28 @@ public class MMSUtils {
         }
 
         // build uri
-        URIBuilder requestUri = getServiceProjectsRefsElementsUri(project);
-        if (requestUri == null) {
+        MMSEndpoint mmsEndpoint = getServiceProjectsRefsElementsUri(project);
+        if (mmsEndpoint == null) {
             return null;
         }
-        requestUri.setParameter("depth", java.lang.Integer.toString(depth));
 
         // create request file
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
         //do cancellable request if progressStatus exists
-        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
     }
 
     public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         if (artifactIds == null || artifactIds.isEmpty()) {
             return null;
         }
-        URIBuilder requestUri = getServiceProjectsRefsArtifactsUri(project);
-        if (requestUri == null) {
+        MMSEndpoint mmsEndpoint = getServiceProjectsRefsArtifactsUri(project);
+        if (mmsEndpoint == null) {
             return null;
         }
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
-        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
     }
 
     public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
@@ -159,47 +153,20 @@ public class MMSUtils {
     }
 
     private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
-        if (requestUri == null) {
-            return null;
-        }
-        requestUri.setPath(requestUri.getPath() + "/api/login");
-        requestUri.clearParameters();
-
-        //build request
-        URI requestDest = requestUri.build();
-        HttpRequestBase request = new HttpPost(requestDest);
-
-        request.addHeader("Content-Type", "application/json");
-        request.addHeader("charset", (Consts.UTF_8).displayName());
-
-        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-        credentials.put("username", username);
-        credentials.put("password", password);
-        String data = JacksonUtils.getObjectMapper().writeValueAsString(credentials);
-        ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity(data, ContentType.APPLICATION_JSON));
-
-        // do request
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-        sendMMSRequest(project, request, progressStatus, responseJson);
-        JsonNode value;
-        if (responseJson != null && (value = responseJson.get("data")) != null && (value = value.get("ticket")) != null && value.isTextual()) {
-            return value.asText();
+        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
+        endpoint.prepareUriPath();
+        if(endpoint instanceof MMSLoginEndpoint) {
+            return ((MMSLoginEndpoint) endpoint).buildLoginRequest(project, username, password, progressStatus);
         }
         return null;
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        URIBuilder requestUri = MMSUtils.getServiceUri(project);
-        if (requestUri == null) {
-            return "";
-        }
-        requestUri.setPath(requestUri.getPath() + "/mms/login/ticket/" + ticket);
-        requestUri.clearParameters();
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
+        mmsEndpoint.prepareUriPath();
 
         //build request
-        URI requestDest = requestUri.build();
-        HttpRequestBase request = new HttpGet(requestDest);
+        HttpRequestBase request = mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
 
         // do request
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
@@ -213,87 +180,6 @@ public class MMSUtils {
         return "";
     }
 
-
-    /**
-     * General purpose method for making http requests for file upload.
-     *
-     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
-     * @param sendFile   File to send as an entity/body along with the request
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static HttpRequestBase buildImageRequest(URIBuilder requestUri, File sendFile) throws IOException, URISyntaxException {
-        URI requestDest = requestUri.build();
-        HttpPost requestUpload = new HttpPost(requestDest);
-        EntityBuilder uploadBuilder = EntityBuilder.create();
-        uploadBuilder.setFile(sendFile);
-        requestUpload.setEntity(uploadBuilder.build());
-        requestUpload.addHeader("Content-Type", "image/svg");
-        return requestUpload;
-    }
-
-    /**
-     * General purpose method for making http requests for JSON objects. Type of request is specified in method call.
-     *
-     * @param type       Type of request, as selected from one of the options in the inner enum.
-     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
-     * @param sendData   Data to send as an entity/body along with the request, if desired. Support for GET and DELETE
-     *                   with body is included.
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri, File sendData, ContentType contentType) throws IOException, URISyntaxException {
-        // build specified request type
-        // assume that any request can have a body, and just build the appropriate one
-        URI requestDest = requestUri.build();
-        final HttpRequestBase request;
-        // bulk GETs are not supported in MMS, but bulk PUTs are. checking and and throwing error here in case
-        if (type == HttpRequestType.GET && sendData != null) {
-            throw new IOException("GETs with body are not supported");
-        }
-        switch (type) {
-            case DELETE:
-                request = new HttpDeleteWithBody(requestDest);
-                break;
-            case GET:
-            default:
-                request = new HttpGet(requestDest);
-                break;
-            case POST:
-                request = new HttpPost(requestDest);
-                break;
-            case PUT:
-                request = new HttpPut(requestDest);
-                break;
-        }
-        request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
-        if (sendData != null) {
-            if (contentType != null) {
-                request.addHeader("Content-Type", contentType.getMimeType());
-            }
-            HttpEntity reqEntity = new FileEntity(sendData, contentType);
-            //reqEntity.setChunked(true);
-            ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
-        }
-        return request;
-    }
-
-    /**
-     * Convenience / clarity method for making http requests for JSON objects withoout body. Type of request is
-     * specified in method call.
-     *
-     * @param type       Type of request, as selected from one of the options in the inner enum.
-     * @param requestUri URI to send the request to. Methods to generate this URI are available in the class.
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static HttpRequestBase buildRequest(HttpRequestType type, URIBuilder requestUri) throws IOException, URISyntaxException {
-        return buildRequest(type, requestUri, null, null);
-    }
-
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection<?> nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
@@ -301,7 +187,9 @@ public class MMSUtils {
             Application.getInstance().getGUILog().log("[INFO] Request Body: " + requestFile.getPath());
         }
         else {
-            requestFile.deleteOnExit();
+            if(!requestFile.delete()) { // if we cannot immediately delete we'll get it later
+                requestFile.deleteOnExit();
+            }
         }
 
         String arrayName = null;
@@ -327,22 +215,36 @@ public class MMSUtils {
 
         try (FileOutputStream outputStream = new FileOutputStream(requestFile);
              JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
+
             jsonGenerator.writeStartObject();
-            jsonGenerator.writeArrayFieldStart(arrayName);
+            if(jsonBlobType != JsonBlobType.SEARCH) {
+                jsonGenerator.writeArrayFieldStart(arrayName);
+            }
+
             for (Object node : nodes) {
                 if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
                     jsonGenerator.writeObject(node);
-                }
-                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID || jsonBlobType == JsonBlobType.ARTIFACT_ID) {
+                } else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID || jsonBlobType == JsonBlobType.ARTIFACT_ID) {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
+                    jsonGenerator.writeEndObject();
+                } else if (node instanceof String && jsonBlobType == JsonBlobType.SEARCH) {
+                    jsonGenerator.writeObjectFieldStart(MDKConstants.PARAMS_FIELD);
+                    jsonGenerator.writeStringField(MDKConstants.OWNER_ID_KEY, (String) node);
+                    jsonGenerator.writeEndObject();
+                    jsonGenerator.writeObjectFieldStart(MDKConstants.RECURSE_FIELD);
+                    jsonGenerator.writeStringField(MDKConstants.ID_KEY, MDKConstants.OWNER_ID_KEY);
                     jsonGenerator.writeEndObject();
                 }
                 else {
                     throw new IOException("Unsupported collection type for entity file.");
                 }
             }
-            jsonGenerator.writeEndArray();
+
+            if(jsonBlobType != JsonBlobType.SEARCH) {
+                jsonGenerator.writeEndArray();
+            }
+
             jsonGenerator.writeStringField("source", "magicdraw");
             jsonGenerator.writeStringField("mdkVersion", MDKPlugin.getVersion());
             jsonGenerator.writeEndObject();
@@ -475,7 +377,9 @@ public class MMSUtils {
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
                 }
                 else {
-                    responseFile.deleteOnExit();
+                    if(!responseFile.delete()) { // if we cannot immediately delete we'll get it later
+                        responseFile.deleteOnExit();
+                    }
                 }
             }
             return "";
@@ -562,8 +466,10 @@ public class MMSUtils {
     }
 
     public static String getMmsOrg(Project project) throws IOException, URISyntaxException, ServerException {
-        URIBuilder uriBuilder = getServiceProjectsUri(project);
-        File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
+        mmsEndpoint.prepareUriPath();
+
+        File responseFile = sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.GET, null, null, project));
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
             JsonNode arrayNode;
@@ -622,97 +528,101 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/orgs"
+     *
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceOrgsUri(Project project) {
+    public static MMSEndpoint getServiceOrgsUri(Project project) {
         return getServiceOrgsUri(project, null);
     }
 
-    public static URIBuilder getServiceOrgsUri(String baseUrl) {
+    public static MMSEndpoint getServiceOrgsUri(String baseUrl) {
         return getServiceOrgsUri(null, baseUrl);
     }
 
-    private static URIBuilder getServiceOrgsUri(Project project, String baseUrl) {
-        URIBuilder siteUri = getServiceUri(project, baseUrl);
-        if (siteUri == null) {
-            return null;
+    private static MMSEndpoint getServiceOrgsUri(Project project, String baseUrl) {
+        MMSEndpoint mmsEndpoint;
+        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.ORGS_CASE);
+        } else {
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.ORGS_CASE);
         }
-        siteUri.setPath(siteUri.getPath() + "/orgs");
-        return siteUri;
+
+        mmsEndpoint.prepareUriPath();
+        return mmsEndpoint;
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects"
+     *
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceProjectsUri(Project project) {
+    public static MMSEndpoint getServiceProjectsUri(Project project) {
         return getServiceProjectsUri(project, null);
     }
 
-    public static URIBuilder getServiceProjectsUri(String baseUrl) {
+    public static MMSEndpoint getServiceProjectsUri(String baseUrl) {
         return getServiceProjectsUri(null, baseUrl);
     }
 
-    private static URIBuilder getServiceProjectsUri(Project project, String baseUrl) {
-        URIBuilder projectUri = getServiceUri(project, baseUrl);
-        if (projectUri == null) {
-            return null;
+    private static MMSEndpoint getServiceProjectsUri(Project project, String baseUrl) {
+        MMSEndpoint mmsEndpoint;
+        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
+        } else {
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.PROJECTS_CASE);
         }
-        projectUri.setPath(projectUri.getPath() + "/projects");
-        return projectUri;
+
+        mmsEndpoint.prepareUriPath();
+        return mmsEndpoint;
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs"
+     *
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceProjectsRefsUri(Project project) {
+    public static MMSEndpoint getServiceProjectsRefsUri(Project project) {
         return getServiceProjectsRefsUri(project, null, null);
     }
 
-    public static URIBuilder getServiceProjectsRefsUri(String baseUrl, String projectId) {
+    public static MMSEndpoint getServiceProjectsRefsUri(String baseUrl, String projectId) {
         return getServiceProjectsRefsUri(null, baseUrl, projectId);
     }
 
-    private static URIBuilder getServiceProjectsRefsUri(Project project, String baseUrl, String projectId) {
-        URIBuilder refsUri = getServiceProjectsUri(project, baseUrl);
-        if (refsUri == null) {
-            return null;
+    private static MMSEndpoint getServiceProjectsRefsUri(Project project, String baseUrl, String projectId) {
+        MMSEndpoint mmsEndpoint;
+        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.REFS_CASE);
+        } else {
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.REFS_CASE);
         }
-        refsUri.setPath(refsUri.getPath() + "/" + (project == null ? projectId : Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())) + "/refs");
-        return refsUri;
+        mmsEndpoint.prepareUriPath();
+        ((MMSRefsEndpoint) mmsEndpoint).setProjectId(project == null ? projectId : Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+
+        return mmsEndpoint;
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service/projects/{$PROJECT_ID}/refs/{REF_ID}/elements"
-     * if element is not null
+     *
      *
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static URIBuilder getServiceProjectsRefsElementsUri(Project project) {
-        URIBuilder elementsUri = getServiceProjectsRefsUri(project);
-        if (elementsUri == null) {
-            return null;
-        }
-        elementsUri.setPath(elementsUri.getPath() + "/" + MDUtils.getBranchId(project) + "/elements");
-        return elementsUri;
+    public static MMSEndpoint getServiceProjectsRefsElementsUri(Project project) {
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.ELEMENTS_CASE);
+        mmsEndpoint.prepareUriPath();
+        ((MMSElementsEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        ((MMSElementsEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
+
+        return mmsEndpoint;
     }
 
-    public static URIBuilder getServiceProjectsRefsArtifactsUri(Project project) {
-        URIBuilder artifactsUri = getServiceProjectsRefsUri(project);
-        if (artifactsUri == null) {
-            return null;
-        }
-        artifactsUri.setPath(artifactsUri.getPath() + "/" + MDUtils.getBranchId(project) + "/artifacts");
-        return artifactsUri;
+    public static MMSEndpoint getServiceProjectsRefsArtifactsUri(Project project) {
+        return null; // TODO should this be unimplemented for MMS4?
     }
 
     public static String getDefaultSiteName(IProject iProject) {
