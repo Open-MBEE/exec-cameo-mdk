@@ -39,12 +39,7 @@ public class MMSLoginAction extends MDAction {
             Utils.showPopupMessage("Please login in to Teamwork Cloud before logging in to MMS.");
             return false;
         }
-        */
-        if (MDKOptionsGroup.getMDKOptions().isTWCAuthEnabled() && project.isRemote()
-                && TWCUtils.getConnectedUser() == null) {
-            Utils.showPopupMessage("Please login in to Teamwork Cloud before logging in to MMS.");
-            return false;
-        }
+        */ 
         if (!TicketUtils.acquireMmsTicket(project)) {
             return false;
         }
