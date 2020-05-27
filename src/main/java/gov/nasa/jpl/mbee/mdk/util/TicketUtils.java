@@ -54,8 +54,8 @@ public class TicketUtils {
         if (!isTicketSet(project)) {
             return false;
         }
-        if(MDKOptionsGroup.getMDKOptions().isTWCAuthEnabled()) {
-            return MMSUtils.validateJwtToken(project, progressStatus);
+        if(MMSUtils.validateJwtToken(project, progressStatus)) {
+            return true;
         }
         return MMSUtils.validateCredentialsTicket(project, getTicket(project), progressStatus).equals(username);
     }
@@ -87,8 +87,8 @@ public class TicketUtils {
             Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
             return false;
         }
-        else if(MDKOptionsGroup.getMDKOptions().isTWCAuthEnabled()) {
-            return acquireTicketUsingTWCToken(project);
+        else if(acquireTicketUsingTWCToken(project)) {
+            return true;
         }
         else if (!username.isEmpty() && !password.isEmpty()) {
             return acquireTicket(project, password);
@@ -207,7 +207,7 @@ public class TicketUtils {
     }
 
     private static boolean acquireTicketUsingTWCToken(Project project) {
-        if(TWCUtils.getSecondaryAuthToken() == null || TWCUtils.getConnectedUser() == null || TWCUtils.getTeamworkCloudServer() == null) {
+        if(TWCUtils.getConnectedUser() == null || TWCUtils.getTeamworkCloudServer() == null || TWCUtils.getSecondaryAuthToken() == null) {
             return false;
         }
 
