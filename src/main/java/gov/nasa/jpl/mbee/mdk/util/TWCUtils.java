@@ -9,7 +9,19 @@ import org.slf4j.LoggerFactory;
 import java.net.ConnectException;
 
 public class TWCUtils {
-    private static final Logger logger = LoggerFactory.getLogger(ProjectCloseMetricsCollector.class);
+    private static final Logger logger = LoggerFactory.getLogger(TWCUtils.class);
+
+    public static String getConnectedUser() {
+        return (EsiUtils.getTeamworkService() == null || EsiUtils.getTeamworkService().getConnectedUser() == null)
+                ? null
+                : EsiUtils.getTeamworkService().getConnectedUser();
+    }
+
+    public static String getTeamworkCloudServer() {
+        return (EsiUtils.getTeamworkService() == null || EsiUtils.getTeamworkService().getLastUsedLoginInfo() == null)
+                ? null
+                : EsiUtils.getTeamworkService().getLastUsedLoginInfo().server;
+    }
 
     public static String getSecondaryAuthToken() {
         String secondaryAuthToken = null;
@@ -19,21 +31,5 @@ public class TWCUtils {
             logger.error("Error while generating secondary auth token", e.getMessage());
         }
         return secondaryAuthToken != null ? "Token :" + secondaryAuthToken : null;
-    }
-
-    public static String getTeamworkCloudServer() {
-        if (EsiUtils.getTeamworkService() == null || EsiUtils.getTeamworkService().getLastUsedLoginInfo() == null) {
-            Utils.showPopupMessage("Please login in to Teamwork Cloud.");
-            return null;
-        }
-        return EsiUtils.getTeamworkService().getLastUsedLoginInfo().server;
-    }
-
-    public static String getConnectedUser() {
-        if (EsiUtils.getTeamworkService() == null || EsiUtils.getTeamworkService().getConnectedUser() == null) {
-            Utils.showPopupMessage("Please login in to Teamwork Cloud.");
-            return null;
-        }
-        return EsiUtils.getTeamworkService().getConnectedUser();
     }
 }
