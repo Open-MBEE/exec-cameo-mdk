@@ -4,7 +4,6 @@ package gov.nasa.jpl.mbee.mdk.mms.actions;
  * Created by ablack on 3/16/17.
  */
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
@@ -20,7 +19,6 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -30,11 +28,9 @@ import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
-import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import java.awt.event.ActionEvent;
@@ -155,13 +151,13 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         JsonNode parentBranchJsonNode = null;
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.REF_CASE);
-        mmsEndpoint.prepareUriPath();
-        ((MMSRefEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-        ((MMSRefEndpoint) mmsEndpoint).setRefId(parentBranchId);
-
+        MMSEndpoint mmsEndpoint;
         try {
-            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointType.REF);
+            mmsEndpoint.prepareUriPath();
+            ((MMSRefEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+            ((MMSRefEndpoint) mmsEndpoint).setRefId(parentBranchId);
+            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
             ObjectNode refObjectNode = findParentBranch(responseFile, parentBranchId);
             if(refObjectNode != null) {
@@ -174,12 +170,6 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
         if (parentBranchJsonNode == null) {
             Application.getInstance().getGUILog().log("[ERROR] Parent branch (" + parentBranchName + ") does not exist on MMS. Please commit that one first. Branch commit aborted.");
-            return;
-        }
-
-        mmsEndpoint = MMSUtils.getServiceProjectsRefsUri(project);
-        if (mmsEndpoint == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs url. Branch commit aborted.");
             return;
         }
 
@@ -197,8 +187,9 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         try {
+            mmsEndpoint = MMSUtils.getServiceProjectsRefsUri(project);
             File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
-            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendFile, ContentType.APPLICATION_JSON, project);
+            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendFile, project);
             MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | URISyntaxException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());

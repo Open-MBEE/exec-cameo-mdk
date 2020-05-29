@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.mms;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
@@ -23,7 +22,6 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.util.*;
-import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
@@ -190,11 +188,11 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
             while (!commitIdDeque.isEmpty()) {
                 String commitId = commitIdDeque.removeFirst();
-                MMSEndpoint mmsCommitEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMIT_CASE);
+                MMSEndpoint mmsCommitEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointType.COMMIT);
                 mmsCommitEndpoint.prepareUriPath();
                 ((MMSCommitEndpoint) mmsCommitEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
                 ((MMSCommitEndpoint) mmsCommitEndpoint).setCommitId(commitId);
-                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project));
 
                 determineChangesUsingCommitResponse(responseFile, lockedElementIds, commitId);
                 inMemoryCommits.add(commitId);
@@ -211,12 +209,12 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 commitIdDeque.clear();
                 limit = (int) Math.pow(10, exponent++);
 
-                MMSEndpoint mmsCommitsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.COMMITS_CASE);
+                MMSEndpoint mmsCommitsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointType.COMMITS);
                 mmsCommitsEndpoint.prepareUriPath();
                 ((MMSCommitsEndpoint) mmsCommitsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
                 ((MMSCommitsEndpoint) mmsCommitsEndpoint).setRefId(MDUtils.getBranchId(project));
                 mmsCommitsEndpoint.setParameter("limit", Integer.toString(limit));
-                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+                File responseFile = MMSUtils.sendMMSRequest(project, mmsCommitsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project));
 
                 Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
                 Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);

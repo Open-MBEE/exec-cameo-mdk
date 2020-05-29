@@ -29,7 +29,6 @@ import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -39,7 +38,6 @@ import org.apache.http.impl.client.HttpClients;
 import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -129,7 +127,7 @@ public class MMSUtils {
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
         //do cancellable request if progressStatus exists
-        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
+        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, project), progressStatus);
     }
 
     public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
@@ -141,7 +139,7 @@ public class MMSUtils {
             return null;
         }
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
-        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
+        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, project), progressStatus);
     }
 
     public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
@@ -153,7 +151,7 @@ public class MMSUtils {
     }
 
     private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
+        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointType.LOGIN);
         endpoint.prepareUriPath();
         if(endpoint instanceof MMSLoginEndpoint) {
             return ((MMSLoginEndpoint) endpoint).buildLoginRequest(project, username, password, progressStatus);
@@ -162,11 +160,11 @@ public class MMSUtils {
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointType.LOGIN);
         mmsEndpoint.prepareUriPath();
 
         //build request
-        HttpRequestBase request = mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
+        HttpRequestBase request = mmsEndpoint.buildRequest(HttpRequestType.GET, project);
 
         // do request
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
@@ -466,10 +464,10 @@ public class MMSUtils {
     }
 
     public static String getMmsOrg(Project project) throws IOException, URISyntaxException, ServerException {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointType.PROJECTS);
         mmsEndpoint.prepareUriPath();
 
-        File responseFile = sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.GET, null, null, project));
+        File responseFile = sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.GET, project));
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
             JsonNode arrayNode;
@@ -533,20 +531,20 @@ public class MMSUtils {
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static MMSEndpoint getServiceOrgsUri(Project project) {
+    public static MMSEndpoint getServiceOrgsUri(Project project) throws URISyntaxException {
         return getServiceOrgsUri(project, null);
     }
 
-    public static MMSEndpoint getServiceOrgsUri(String baseUrl) {
+    public static MMSEndpoint getServiceOrgsUri(String baseUrl) throws URISyntaxException {
         return getServiceOrgsUri(null, baseUrl);
     }
 
-    private static MMSEndpoint getServiceOrgsUri(Project project, String baseUrl) {
+    private static MMSEndpoint getServiceOrgsUri(Project project, String baseUrl) throws URISyntaxException {
         MMSEndpoint mmsEndpoint;
         if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.ORGS_CASE);
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointType.ORGS);
         } else {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.ORGS_CASE);
+            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointType.ORGS);
         }
 
         mmsEndpoint.prepareUriPath();
@@ -559,21 +557,9 @@ public class MMSUtils {
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static MMSEndpoint getServiceProjectsUri(Project project) {
-        return getServiceProjectsUri(project, null);
-    }
-
-    public static MMSEndpoint getServiceProjectsUri(String baseUrl) {
-        return getServiceProjectsUri(null, baseUrl);
-    }
-
-    private static MMSEndpoint getServiceProjectsUri(Project project, String baseUrl) {
+    public static MMSEndpoint getServiceProjectsUri(Project project) throws URISyntaxException {
         MMSEndpoint mmsEndpoint;
-        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
-        } else {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.PROJECTS_CASE);
-        }
+        mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointType.PROJECTS);
 
         mmsEndpoint.prepareUriPath();
         return mmsEndpoint;
@@ -585,23 +571,11 @@ public class MMSUtils {
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static MMSEndpoint getServiceProjectsRefsUri(Project project) {
-        return getServiceProjectsRefsUri(project, null, null);
-    }
-
-    public static MMSEndpoint getServiceProjectsRefsUri(String baseUrl, String projectId) {
-        return getServiceProjectsRefsUri(null, baseUrl, projectId);
-    }
-
-    private static MMSEndpoint getServiceProjectsRefsUri(Project project, String baseUrl, String projectId) {
+    public static MMSEndpoint getServiceProjectsRefsUri(Project project) throws URISyntaxException {
         MMSEndpoint mmsEndpoint;
-        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.REFS_CASE);
-        } else {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.REFS_CASE);
-        }
+        mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointType.REFS);
         mmsEndpoint.prepareUriPath();
-        ((MMSRefsEndpoint) mmsEndpoint).setProjectId(project == null ? projectId : Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+        ((MMSRefsEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
 
         return mmsEndpoint;
     }
@@ -612,8 +586,8 @@ public class MMSUtils {
      * @param project The project to gather the mms url and site name information from
      * @return URIBuilder
      */
-    public static MMSEndpoint getServiceProjectsRefsElementsUri(Project project) {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.ELEMENTS_CASE);
+    public static MMSEndpoint getServiceProjectsRefsElementsUri(Project project) throws URISyntaxException {
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointType.ELEMENTS);
         mmsEndpoint.prepareUriPath();
         ((MMSElementsEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
         ((MMSElementsEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));

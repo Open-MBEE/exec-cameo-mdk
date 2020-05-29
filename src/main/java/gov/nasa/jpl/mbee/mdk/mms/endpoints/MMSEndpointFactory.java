@@ -1,52 +1,50 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
+import java.net.URISyntaxException;
+
 public class MMSEndpointFactory {
-    public static MMSEndpoint getMMSEndpoint(String baseUri, String endpointType) {
+    public static MMSEndpoint getMMSEndpoint(String baseUri, MMSEndpointType endpointType) throws URISyntaxException {
         MMSEndpoint mmsEndpoint = null;
 
         switch(endpointType) {
-            case MMSEndpointConstants.LOGIN_CASE: {
+            case LOGIN: {
                 mmsEndpoint = new MMSLoginEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.ORGS_CASE: {
+            case ORGS: {
                 mmsEndpoint = new MMSOrgsEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.PROJECTS_CASE: {
+            case PROJECTS: {
                 mmsEndpoint = new MMSProjectsEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.PROJECT_CASE: {
+            case PROJECT: {
                 mmsEndpoint = new MMSProjectEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.REFS_CASE: {
+            case REFS: {
                 mmsEndpoint = new MMSRefsEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.REF_CASE: {
+            case REF: {
                 mmsEndpoint = new MMSRefEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.COMMIT_CASE: {
+            case COMMIT: {
                 mmsEndpoint = new MMSCommitEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.ELEMENTS_CASE: {
+            case ELEMENTS: {
                 mmsEndpoint = new MMSElementsEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.COMMITS_CASE: {
+            case COMMITS: {
                 mmsEndpoint = new MMSCommitsEndpoint(baseUri);
                 break;
             }
-            case MMSEndpointConstants.SEARCH_CASE: {
+            case SEARCH: {
                 mmsEndpoint = new MMSSearchEndpoint(baseUri);
-                break;
-            }
-            case MMSEndpointConstants.IMAGE_EXPORT_CASE: {
-                mmsEndpoint = new MMSImageExportEndpoint(baseUri);
                 break;
             }
             default:break;

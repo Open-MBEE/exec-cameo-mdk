@@ -117,14 +117,9 @@ public class BranchValidator {
             progressStatus.setDescription("Mapping MMS branches");
         }
 
-        MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsUri(project);
-        if (mmsEndpoint == null) {
-            errors = true;
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation aborted.");
-            return;
-        }
         try {
-            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
+            MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsUri(project);
+            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project);
             File responseFile = MMSUtils.sendMMSRequest(project, request);
             ObjectNode response;
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {

@@ -67,11 +67,11 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // '{"elements": [{"sysmlId": "123456", "name": "vetest", "type": "Project"}]}' -X POST "http://localhost:8080/alfresco/service/orgs/vetest/projects"
         String orgId;
 
-        // get orgs uri to check orgs / post project
-        MMSEndpoint mmsOrgsEndpoint = MMSUtils.getServiceOrgsUri(project);
-
-        // check for existing org, use that if it exists instead of prompting to select one
+        MMSEndpoint mmsOrgsEndpoint; // this endpoint gets used a little bit later
         try {
+            // get orgs uri to check orgs / post project
+             mmsOrgsEndpoint = MMSUtils.getServiceOrgsUri(project);
+            // check for existing org, use that if it exists instead of prompting to select one
             orgId = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
         } catch (IOException | URISyntaxException | ServerException e1) {
@@ -84,7 +84,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode response;
         if (orgId == null || orgId.isEmpty()) {
             try {
-                File responseFile = MMSUtils.sendMMSRequest(project, mmsOrgsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+                File responseFile = MMSUtils.sendMMSRequest(project, mmsOrgsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project));
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
@@ -135,15 +135,14 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             return null;
         }
 
-        // update request with project post path
-        MMSEndpoint mmsProjectsEndpoint = MMSUtils.getServiceProjectsUri(project);
-        Collection<ObjectNode> projects = new LinkedList<>();
-        projects.add(ProjectValidator.generateProjectObjectNode(project, orgId));
-
-        // do project post request
         try {
+            // update request with project post path
+            MMSEndpoint mmsProjectsEndpoint = MMSUtils.getServiceProjectsUri(project);
+            Collection<ObjectNode> projects = new LinkedList<>();
+            projects.add(ProjectValidator.generateProjectObjectNode(project, orgId));
+            // do project post request
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
-            File responseFile = MMSUtils.sendMMSRequest(project, mmsProjectsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, ContentType.APPLICATION_JSON, project));
+            File responseFile = MMSUtils.sendMMSRequest(project, mmsProjectsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, project));
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }

@@ -33,7 +33,6 @@ import org.apache.http.impl.client.HttpClients;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -259,17 +258,17 @@ public class AutomatedViewGenerator implements CommandLineAction {
                 refsNode = JacksonUtils.getObjectMapper().createObjectNode();
 
         try {
-            MMSEndpoint mmsProjectEndpoint = MMSEndpointFactory.getMMSEndpoint("https://" + parser.getOptionValue(MMS_HOST), MMSEndpointConstants.PROJECT_CASE);
+            MMSEndpoint mmsProjectEndpoint = MMSEndpointFactory.getMMSEndpoint("https://" + parser.getOptionValue(MMS_HOST), MMSEndpointType.PROJECT);
             mmsProjectEndpoint.prepareUriPath();
             ((MMSProjectEndpoint) mmsProjectEndpoint).setProjectId(parser.getOptionValue(PROJECT_ID));
-            mmsProjectEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, null, project);
-            MMSUtils.sendMMSRequest(null, mmsProjectEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, null, project), null, projectsNode);
+            mmsProjectEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project);
+            MMSUtils.sendMMSRequest(null, mmsProjectEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project), null, projectsNode);
             if (!parser.getOptionValue(REF_ID).equals("master")) {
-                MMSEndpoint mmsRefEndpoint = MMSEndpointFactory.getMMSEndpoint("https://" + parser.getOptionValue(MMS_HOST), MMSEndpointConstants.REF_CASE);
+                MMSEndpoint mmsRefEndpoint = MMSEndpointFactory.getMMSEndpoint("https://" + parser.getOptionValue(MMS_HOST), MMSEndpointType.REF);
                 mmsRefEndpoint.prepareUriPath();
                 ((MMSRefEndpoint) mmsRefEndpoint).setProjectId(parser.getOptionValue(PROJECT_ID));
                 ((MMSRefEndpoint) mmsRefEndpoint).setRefId(parser.getOptionValue(REF_ID));
-                MMSUtils.sendMMSRequest(null, mmsRefEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, null, project), null, refsNode);
+                MMSUtils.sendMMSRequest(null, mmsRefEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project), null, refsNode);
             }
         } catch (IOException | ServerException e) {
             illegalStateFailure("[FAILURE] Unable to load project, exception occurred while resolving one of the required project URI parameters.");

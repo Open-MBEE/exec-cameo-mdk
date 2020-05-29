@@ -57,8 +57,6 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
     public String commitAction() {
         // '{"elements": [{"sysmlId": "vetest", "name": "vetest"}]}' -X POST "http://localhost:8080/alfresco/service/orgs"
 
-        // check for existing org
-        MMSEndpoint mmsEndpoint = MMSUtils.getServiceOrgsUri(project);
 
         JFrame selectionDialog = new JFrame();
         String org = JOptionPane.showInputDialog(selectionDialog, "Org name", "Create MMS Org", JOptionPane.QUESTION_MESSAGE);
@@ -72,8 +70,11 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         }
         String orgId = UUID.randomUUID().toString();
         File responseFile;
+        MMSEndpoint mmsEndpoint;
         try {
-            responseFile = MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+            // check for existing org
+            mmsEndpoint = MMSUtils.getServiceOrgsUri(project);
+            responseFile = MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project));
             try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
                 JsonNode arrayNode;
@@ -110,7 +111,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         // do post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
-            MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, ContentType.APPLICATION_JSON, project));
+            MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, project));
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();

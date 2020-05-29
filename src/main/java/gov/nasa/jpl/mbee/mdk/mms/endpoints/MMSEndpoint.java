@@ -16,6 +16,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.protocol.HTTP;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,14 +27,9 @@ public abstract class MMSEndpoint {
     protected URIBuilder uriBuilder;
     protected String baseUri;
 
-    public MMSEndpoint(String baseUri) {
-        try {
-            uriBuilder = new URIBuilder(baseUri);
-            this.baseUri = baseUri;
-        } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project. Reason: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public MMSEndpoint(String baseUri) throws URISyntaxException {
+        uriBuilder = new URIBuilder(baseUri);
+        this.baseUri = baseUri;
     }
 
     public abstract void prepareUriPath();
@@ -45,12 +41,26 @@ public abstract class MMSEndpoint {
     }
 
     /**
-     * General purpose method for making http requests for JSON objects. Type of request is specified in method call.
+     * Simplified call that does not send data.
+     */
+    public HttpRequestBase buildRequest(MMSUtils.HttpRequestType type, Project project) throws IOException, URISyntaxException {
+        return buildRequest(type, null, null, project);
+    }
+
+    /**
+     * Simplified call that only does JSON as the content type.
+     */
+    public HttpRequestBase buildRequest(MMSUtils.HttpRequestType type, File sendData, Project project) throws IOException, URISyntaxException {
+        return buildRequest(type, sendData, ContentType.APPLICATION_JSON, project);
+    }
+
+    /**
+     * General purpose method for making http requests. Type of request is specified in method call.
      *
      * @param type       Type of request, as selected from one of the options in the inner enum.
      * @param sendData   Data to send as an entity/body along with the request, if desired. Support for GET and DELETE
      *                   with body is included.
-     * @return
+     * @return a generic http request
      * @throws IOException
      * @throws URISyntaxException
      */
@@ -80,14 +90,13 @@ public abstract class MMSEndpoint {
                     break;
             }
             request.addHeader("Authorization", "Bearer " + TicketUtils.getTicket(project));
-            request.addHeader("Content-Type", "application/json"); // is this good logic?
             request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
             if (sendData != null) {
                 if (contentType != null) {
-                    request.addHeader("Content-Type", contentType.getMimeType());
+                    request.addHeader(HTTP.CONTENT_TYPE, contentType.getMimeType());
                 }
-                HttpEntity reqEntity = new FileEntity(sendData, contentType);
-                //reqEntity.setChunked(true);
+                FileEntity reqEntity = new FileEntity(sendData, contentType);
+                reqEntity.setChunked(true);
                 ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
             }
             return request;
@@ -95,17 +104,22 @@ public abstract class MMSEndpoint {
         return null;
     }
 
-    public HttpRequestBase buildImageRequest(File sendFile, Project project) throws URISyntaxException {
-        if(uriBuilder != null) {
-            URI requestDest = uriBuilder.build();
-            HttpPost requestUpload = new HttpPost(requestDest);
-            EntityBuilder uploadBuilder = EntityBuilder.create();
-            uploadBuilder.setFile(sendFile);
-            requestUpload.setEntity(uploadBuilder.build());
-            requestUpload.addHeader("Authorization", "Bearer " + TicketUtils.getTicket(project));
-            requestUpload.addHeader("Content-Type", "image/svg");
-            return requestUpload;
+    /**
+     * Convenience method useful for replacing some placeholder string in the URI path. This assumes the passed placeholder
+     * is actually in the URI.
+     *
+     * @param placeholder some placeholder that presumably exists within the URI's path.
+     * @param replacement some string that replaces the placeholder.
+     * @throws URISyntaxException could not adjust the URI path, this implies the path will be wrong later.
+     */
+    protected void replaceUriPlaceholder(String placeholder, String replacement) throws URISyntaxException {
+        String path = uriBuilder.getPath();
+        int i = path.indexOf(placeholder);
+        if(i >= 0) {
+            uriBuilder.setPath(path.substring(0, i) + replacement + path.substring(i + placeholder.length()));
+        } else {
+            String message = "Cannot replace the placeholder \"" + placeholder + "\" in the given URI.";
+            throw new URISyntaxException(path, message);
         }
-        return null;
     }
 }
