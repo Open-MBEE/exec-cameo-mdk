@@ -7,7 +7,6 @@ import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,12 +22,14 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class TicketUtils {
-
+public class TicketUtils extends AcquireTicketProcessor{
+    public TicketUtils(AcquireTicketProcessor processor) {
+        super(processor);
+    }
     private static String username = "";
     private static String password = "";
     private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
-    private static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
+    public static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
 
     /**
      * Accessor for stored username.
@@ -82,27 +83,27 @@ public class TicketUtils {
      * @return TRUE if successfully logged in to MMS, FALSE otherwise.
      * Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
-    public static boolean acquireMmsTicket(Project project) {
-        if (MMSUtils.getServerUrl(project) == null) {
-            Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
-            return false;
-        }
-        else if(acquireTicketUsingTWCToken(project)) {
-            return true;
-        }
-        else if (!username.isEmpty() && !password.isEmpty()) {
-            return acquireTicket(project, password);
+    @Override
+    public boolean acquireMmsTicket(Project project) {
+        if (!username.isEmpty() && !password.isEmpty()) {
+            if(acquireTicket(project, password)) {
+                return true;
+            }
+            return super.acquireMmsTicket(project);
         }
         else if (!Utils.isPopupsDisabled()) {
             String password = getUserCredentialsDialog();
             if (password == null) {
-                return false;
+                return super.acquireMmsTicket(project);
             }
-            return acquireTicket(project, password);
+            if(acquireTicket(project, password)) {
+                return true;
+            }
+            return super.acquireMmsTicket(project);
         }
         else {
             Application.getInstance().getGUILog().log("[ERROR] No credentials have been specified and dialog popups are disabled. Skipping login.");
-            return false;
+            return super.acquireMmsTicket(project);
         }
     }
 
@@ -206,33 +207,6 @@ public class TicketUtils {
         }
     }
 
-    private static boolean acquireTicketUsingTWCToken(Project project) {
-        if(TWCUtils.getConnectedUser() == null || TWCUtils.getTeamworkCloudServer() == null || TWCUtils.getSecondaryAuthToken() == null) {
-            return false;
-        }
-
-        // do request
-        ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
-            String ticket;
-            try {
-                ticket = MMSUtils.getTicketUsingTWCToken(project, TWCUtils.getTeamworkCloudServer(), TWCUtils.getSecondaryAuthToken(), progressStatus);
-            } catch (IOException | URISyntaxException | ServerException e) {
-                Application.getInstance().getGUILog().log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
-                e.printStackTrace();
-                return;
-            }
-            // parse response
-            if (ticket != null && username != null) {
-                 ticketMappings.put(project, new TicketMapping(project, TWCUtils.getConnectedUser(), ticket));
-            }
-        }, "Logging in to MMS", true, 0);
-        if (isTicketSet(project)) {
-            return true;
-        }
-        Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with TWC.");
-        return false;
-    }
-
     /**
      * Uses the stored username and passed password to query MMS for a ticket. Will clear any stored password on attempt.
      * <p>
@@ -283,7 +257,7 @@ public class TicketUtils {
         return false;
     }
 
-    private static class TicketMapping {
+    public static class TicketMapping {
         private final String ticket;
         private final String username;
         private final ScheduledFuture<?> scheduledFuture;
