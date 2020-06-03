@@ -7,13 +7,21 @@ public class MMSRefEndpoint extends MMSRefsEndpoint {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.REF.getPath());
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new RefBuilder();
     }
 
-    public void setRefId(String id) throws URISyntaxException {
-        replaceUriPlaceholder(MMSEndpointType.REF_ID_PLACEHOLDER, id);
+    public static class RefBuilder extends RefsBuilder {
+        @Override
+        public void prepareUriPath() {
+            String suffix = getStringParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX);
+
+            if(suffix.isEmpty()) {
+                throw new NullPointerException();
+            }
+
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + "/" + suffix);
+        }
     }
 }

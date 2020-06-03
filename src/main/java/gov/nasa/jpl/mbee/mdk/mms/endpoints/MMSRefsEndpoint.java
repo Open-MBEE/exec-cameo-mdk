@@ -7,9 +7,15 @@ public class MMSRefsEndpoint extends MMSProjectEndpoint {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.REFS.getPath());
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new RefsBuilder();
+    }
+
+    public static class RefsBuilder extends ProjectBuilder {
+        @Override
+        public void prepareUriPath() {
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.REFS.getPath());
+        }
     }
 }

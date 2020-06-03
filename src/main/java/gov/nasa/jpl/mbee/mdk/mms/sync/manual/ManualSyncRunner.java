@@ -10,10 +10,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointType;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSSearchEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ElementValidator;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
@@ -21,6 +18,7 @@ import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.File;
@@ -115,16 +113,14 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     private File searchForServerElements(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        // prepare endpoint
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointType.SEARCH);
-        mmsEndpoint.prepareUriPath();
-        ((MMSSearchEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-        ((MMSSearchEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
         Collection<String> nodeIds = new HashSet<>();
         nodeIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())); // adding the root node because we'll recurse to get the entire tree from it
         File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
+        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
+                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
         // use endpoint to make request
-        return MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, project), progressStatus);
+        return MMSUtils.sendMMSRequest(project, searchRequest, progressStatus);
     }
 
     private static void collectClientElementsRecursively(Project project, Element element, int depth, List<Pair<Element, ObjectNode>> elements) {

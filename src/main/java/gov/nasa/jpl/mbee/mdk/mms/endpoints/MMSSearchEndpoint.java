@@ -7,9 +7,15 @@ public class MMSSearchEndpoint extends MMSRefEndpoint {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.SEARCH.getPath());
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new SearchBuilder();
+    }
+
+    public static class SearchBuilder extends RefBuilder {
+        @Override
+        public void prepareUriPath() {
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.SEARCH.getPath());
+        }
     }
 }

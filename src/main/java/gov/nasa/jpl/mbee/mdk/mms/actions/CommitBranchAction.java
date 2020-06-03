@@ -151,14 +151,12 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         JsonNode parentBranchJsonNode = null;
-        MMSEndpoint mmsEndpoint;
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         try {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointType.REF);
-            mmsEndpoint.prepareUriPath();
-            ((MMSRefEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-            ((MMSRefEndpoint) mmsEndpoint).setRefId(parentBranchId);
-            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project);
-            File responseFile = MMSUtils.sendMMSRequest(project, request);
+            HttpRequestBase refRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSRefEndpoint.builder(), project)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                    .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, parentBranchId).build();
+            File responseFile = MMSUtils.sendMMSRequest(project, refRequest);
             ObjectNode refObjectNode = findParentBranch(responseFile, parentBranchId);
             if(refObjectNode != null) {
                 parentBranchJsonNode = refObjectNode;
@@ -187,10 +185,10 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         try {
-            mmsEndpoint = MMSUtils.getServiceProjectsRefsUri(project);
             File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
-            HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendFile, project);
-            MMSUtils.sendMMSRequest(project, request);
+            HttpRequestBase refsRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSRefsEndpoint.builder(), project, sendFile)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId).build();
+            MMSUtils.sendMMSRequest(project, refsRequest);
         } catch (IOException | URISyntaxException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
             e.printStackTrace();

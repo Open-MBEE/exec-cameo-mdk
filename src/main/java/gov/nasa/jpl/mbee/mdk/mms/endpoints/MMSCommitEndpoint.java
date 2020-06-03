@@ -7,13 +7,21 @@ public class MMSCommitEndpoint extends MMSProjectEndpoint {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.COMMIT.getPath());
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new CommitBuilder();
     }
 
-    public void setCommitId(String id) throws URISyntaxException {
-        replaceUriPlaceholder(MMSEndpointType.COMMIT_ID_PLACEHOLDER, id);
+    public static class CommitBuilder extends ProjectBuilder {
+        @Override
+        public void prepareUriPath() {
+            String suffix = getStringParam(MMSEndpointBuilderConstants.URI_COMMIT_SUFFIX);
+
+            if(suffix.isEmpty()) {
+                throw new NullPointerException();
+            }
+
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.COMMIT.getPath() + "/" + suffix);
+        }
     }
 }

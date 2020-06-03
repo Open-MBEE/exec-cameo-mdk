@@ -9,6 +9,7 @@ import org.apache.http.Consts;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
@@ -24,31 +25,43 @@ public class MMSLoginEndpoint extends MMSEndpoint {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.LOGIN.getPath());
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new LoginBuilder();
     }
 
-    public String buildLoginRequest(Project project, String username, String password, ProgressStatus progressStatus) throws IOException, URISyntaxException, ServerException {
-        //build request
-        URI requestDest = uriBuilder.build();
-        HttpRequestBase request = new HttpPost(requestDest);
-        request.addHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-        request.addHeader("charset", (Consts.UTF_8).displayName());
-
-        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-        credentials.put("username", username);
-        credentials.put("password", password);
-        StringEntity jsonData = new StringEntity(JacksonUtils.getObjectMapper().writeValueAsString(credentials), ContentType.APPLICATION_JSON);
-        ((HttpEntityEnclosingRequest) request).setEntity(jsonData);
-
-        // do request
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-        sendMMSRequest(project, request, progressStatus, responseJson);
-        if(responseJson != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
-            return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
+    public static class LoginBuilder extends Builder {
+        @Override
+        public void prepareUriPath() {
+            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.LOGIN.getPath());
+            uriBuilder.clearParameters();
         }
-        return null;
+
+        @Override
+        public HttpRequestBase build() throws IOException, URISyntaxException {
+            if(uriBuilder == null) {
+                String baseUri = getStringParam(MMSEndpointBuilderConstants.URI_BASE_PATH);
+                if(!baseUri.isEmpty()) {
+                    uriBuilder = new URIBuilder(baseUri);
+                }
+            }
+
+            if(uriBuilder != null) {
+                prepareUriPath();
+                //build request
+                URI requestDest = uriBuilder.build();
+                HttpRequestBase request = new HttpPost(requestDest);
+                request.addHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+                request.addHeader("charset", (Consts.UTF_8).displayName());
+
+                ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
+                credentials.put("username", getStringParam("username"));
+                credentials.put("password", getStringParam("password"));
+                StringEntity jsonData = new StringEntity(JacksonUtils.getObjectMapper().writeValueAsString(credentials), ContentType.APPLICATION_JSON);
+                ((HttpEntityEnclosingRequest) request).setEntity(jsonData);
+                uriBuilder = null;
+                return request;
+            }
+            return null;
+        }
     }
 }

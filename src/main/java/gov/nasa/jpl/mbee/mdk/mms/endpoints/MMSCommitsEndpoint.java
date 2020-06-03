@@ -7,9 +7,15 @@ public class MMSCommitsEndpoint extends MMSRefEndpoint {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.COMMITS.getPath());
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new CommitsBuilder();
+    }
+
+    public static class CommitsBuilder extends RefBuilder {
+        @Override
+        public void prepareUriPath() {
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.COMMITS.getPath());
+        }
     }
 }

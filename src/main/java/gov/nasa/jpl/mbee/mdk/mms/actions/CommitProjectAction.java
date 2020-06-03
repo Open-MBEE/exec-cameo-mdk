@@ -15,11 +15,14 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSOrgsEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSProjectsEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncActionRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import javax.swing.*;
@@ -67,10 +70,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         // '{"elements": [{"sysmlId": "123456", "name": "vetest", "type": "Project"}]}' -X POST "http://localhost:8080/alfresco/service/orgs/vetest/projects"
         String orgId;
 
-        MMSEndpoint mmsOrgsEndpoint; // this endpoint gets used a little bit later
         try {
-            // get orgs uri to check orgs / post project
-             mmsOrgsEndpoint = MMSUtils.getServiceOrgsUri(project);
             // check for existing org, use that if it exists instead of prompting to select one
             orgId = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
@@ -84,7 +84,9 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         ObjectNode response;
         if (orgId == null || orgId.isEmpty()) {
             try {
-                File responseFile = MMSUtils.sendMMSRequest(project, mmsOrgsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project));
+                // get existing orgs
+                HttpRequestBase request = MMSUtils.prepareEndpointBuilderBasicGet(MMSOrgsEndpoint.builder(), project).build();
+                File responseFile = MMSUtils.sendMMSRequest(project, request);
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
@@ -136,13 +138,13 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
         }
 
         try {
-            // update request with project post path
-            MMSEndpoint mmsProjectsEndpoint = MMSUtils.getServiceProjectsUri(project);
             Collection<ObjectNode> projects = new LinkedList<>();
             projects.add(ProjectValidator.generateProjectObjectNode(project, orgId));
-            // do project post request
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
-            File responseFile = MMSUtils.sendMMSRequest(project, mmsProjectsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, project));
+            // generate project post request
+            HttpRequestBase request = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSProjectsEndpoint.builder(), project, sendData).build();
+            // do project post request
+            File responseFile = MMSUtils.sendMMSRequest(project, request);
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }

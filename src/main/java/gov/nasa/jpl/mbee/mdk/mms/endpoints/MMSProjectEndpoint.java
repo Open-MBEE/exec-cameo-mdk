@@ -7,13 +7,21 @@ public class MMSProjectEndpoint extends MMSProjectsEndpoint {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.PROJECT.getPath());
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new ProjectBuilder();
     }
 
-    public void setProjectId(String id) throws URISyntaxException {
-        replaceUriPlaceholder(MMSEndpointType.PROJECT_ID_PLACEHOLDER, id);
+    public static class ProjectBuilder extends ProjectsBuilder {
+        @Override
+        public void prepareUriPath() throws NullPointerException {
+            String suffix = getStringParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX);
+
+            if(suffix.isEmpty()) {
+                throw new NullPointerException();
+            }
+
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + "/" + suffix);
+        }
     }
 }

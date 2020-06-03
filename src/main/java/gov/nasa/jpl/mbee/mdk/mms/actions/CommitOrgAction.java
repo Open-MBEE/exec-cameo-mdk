@@ -12,8 +12,10 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSOrgsEndpoint;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -69,12 +71,10 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             return null;
         }
         String orgId = UUID.randomUUID().toString();
-        File responseFile;
-        MMSEndpoint mmsEndpoint;
         try {
             // check for existing org
-            mmsEndpoint = MMSUtils.getServiceOrgsUri(project);
-            responseFile = MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, project));
+            HttpRequestBase orgsGetRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSOrgsEndpoint.builder(), project).build();
+            File responseFile = MMSUtils.sendMMSRequest(project, orgsGetRequest);
             try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
                 JsonNode arrayNode;
@@ -111,7 +111,8 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         // do post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
-            MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, sendData, project));
+            HttpRequestBase orgsPostRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSOrgsEndpoint.builder(), project, sendData).build();
+            MMSUtils.sendMMSRequest(project, orgsPostRequest);
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();
