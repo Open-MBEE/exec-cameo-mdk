@@ -22,8 +22,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class TicketUtils extends AcquireTicketProcessor{
-    public TicketUtils(AcquireTicketProcessor processor) {
+public class TicketUtils extends AbstractAcquireTicketProcessor{
+    public TicketUtils(AbstractAcquireTicketProcessor processor) {
         super(processor);
     }
     private static String username = "";
