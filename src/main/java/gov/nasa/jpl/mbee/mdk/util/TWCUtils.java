@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 
-public class TWCUtils extends AcquireTicketProcessor {
-    public TWCUtils(AcquireTicketProcessor processor) {
+public class TWCUtils extends AbstractAcquireTicketProcessor {
+    public TWCUtils(AbstractAcquireTicketProcessor processor) {
         super(processor);
     }
 
@@ -31,9 +31,15 @@ public class TWCUtils extends AcquireTicketProcessor {
     }
 
     public static String getTeamworkCloudServer() {
-        return (EsiUtils.getTeamworkService() == null || EsiUtils.getTeamworkService().getLastUsedLoginInfo() == null)
-                ? null
-                : EsiUtils.getTeamworkService().getLastUsedLoginInfo().server;
+        String twcServer = null;
+        if (EsiUtils.getTeamworkService() != null || EsiUtils.getTeamworkService().getLastUsedLoginInfo() != null
+                || EsiUtils.getTeamworkService().getLastUsedLoginInfo().server != null) {
+            twcServer = EsiUtils.getTeamworkService().getLastUsedLoginInfo().server;
+            if (twcServer.indexOf(':') > -1) {
+                twcServer = twcServer.substring(0, twcServer.indexOf(':'));
+            }
+        }
+        return twcServer;
     }
 
     public static String getSecondaryAuthToken() {
