@@ -3,7 +3,7 @@ package gov.nasa.jpl.mbee.mdk.util;
 import com.nomagic.magicdraw.core.Project;
 
 public class AcquireTicketChain {
-    AcquireTicketProcessor chain;
+    AbstractAcquireTicketProcessor chain;
 
     public AcquireTicketChain() {
         buildChain();
