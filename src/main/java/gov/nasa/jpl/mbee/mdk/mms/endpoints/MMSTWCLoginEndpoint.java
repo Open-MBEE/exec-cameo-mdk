@@ -36,7 +36,7 @@ public class MMSTWCLoginEndpoint extends MMSEndpoint {
         request.addHeader(MDKConstants.CONTENT_TYPE, MDKConstants.APPLICATION_JSON);
         request.addHeader(MDKConstants.CHARSET, (Consts.UTF_8).displayName());
         request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
-        request.addHeader(MDKConstants.AUTHORIZATION, "Token :" + authToken);
+        request.addHeader(MDKConstants.AUTHORIZATION, authToken);
 
         // do request
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
