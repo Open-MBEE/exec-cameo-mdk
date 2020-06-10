@@ -29,7 +29,7 @@ public class TicketUtils extends AbstractAcquireTicketProcessor{
     private static String username = "";
     private static String password = "";
     private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
-    public static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
+    protected static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
 
     /**
      * Accessor for stored username.
