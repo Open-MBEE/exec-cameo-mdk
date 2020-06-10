@@ -190,7 +190,6 @@ public class BranchValidator {
                 serverBranch.remove(MDKConstants.PARENT_COMMIT_ID);
 
                 clientBranch.getValue().put(MDKJsonConstants.DELETED_FIELD, false); // TODO we need to fix this
-//                clientBranch.getValue().remove("twcId");
                 JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
                 if (diff != null && diff.isArray() && diff.size() > 0) {
                     ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + clientBranch.getKey().getName() + "\" is not equivalent to the corresponding MMS branch.");
