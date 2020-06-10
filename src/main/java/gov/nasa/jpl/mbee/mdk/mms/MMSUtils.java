@@ -166,8 +166,9 @@ public class MMSUtils {
     }
 
     public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.VALIDATE_TOKEN_ENDPOINT);
-        mmsEndpoint.prepareUriPath();
+        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
+        mmsEndpoint.getEndpoint().setPath(mmsEndpoint.getEndpoint().getPath() + MMSEndpointConstants.VALIDATE_TOKEN_ENDPOINT);
+        mmsEndpoint.getEndpoint().clearParameters();
 
         //build request
         HttpRequestBase request = mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
