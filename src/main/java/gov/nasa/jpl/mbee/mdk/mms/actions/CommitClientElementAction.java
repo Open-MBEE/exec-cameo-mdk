@@ -9,15 +9,16 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSElementsEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointBuilderConstants;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import javax.annotation.CheckForNull;
@@ -117,15 +118,18 @@ public class CommitClientElementAction extends RuleViolationAction implements An
     }
 
     private static void request(List<ObjectNode> elementsToUpdate, List<String> elementsToDelete, Project project) throws JsonProcessingException {
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+        String refId = MDUtils.getBranchId(project);
         if (elementsToUpdate != null && !elementsToUpdate.isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                HttpRequestBase request = mmsEndpoint != null ? mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project) : null;
+                HttpRequestBase elementsUpdateCreateRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
-                        MMSUtils.sendMMSRequest(project, request, progressStatus);
+                        MMSUtils.sendMMSRequest(project, elementsUpdateCreateRequest, progressStatus);
                     } catch (IOException | ServerException | URISyntaxException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
@@ -141,12 +145,12 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             Application.getInstance().getGUILog().log("[INFO] Queuing request to delete " + NumberFormat.getInstance().format(elementsToDelete.size()) + " element" + (elementsToDelete.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
-
-                HttpRequestBase request = mmsEndpoint != null ? mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.DELETE, file, ContentType.APPLICATION_JSON, project) : null;
+                HttpRequestBase elementsDeleteRequest = MMSUtils.prepareEndpointBuilderBasicJsonDeleteRequest(MMSElementsEndpoint.builder(), project, file)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
-                        MMSUtils.sendMMSRequest(project, request, progressStatus);
+                        MMSUtils.sendMMSRequest(project, elementsDeleteRequest, progressStatus);
                     } catch (IOException | ServerException | URISyntaxException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
