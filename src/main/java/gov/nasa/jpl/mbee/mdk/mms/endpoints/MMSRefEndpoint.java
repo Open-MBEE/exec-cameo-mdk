@@ -1,19 +1,27 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
+import java.net.URISyntaxException;
+
 public class MMSRefEndpoint extends MMSRefsEndpoint {
-    public MMSRefEndpoint(String baseUri) {
+    public MMSRefEndpoint(String baseUri) throws URISyntaxException {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointConstants.REF_ENDPOINT);
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new RefBuilder();
     }
 
-    public void setRefId(String id) {
-        String path = uriBuilder.getPath();
-        int i = path.indexOf(MMSEndpointConstants.REF_ID_PLACEHOLDER);
-        uriBuilder.setPath(path.substring(0, i) + id + path.substring(i + MMSEndpointConstants.REF_ID_PLACEHOLDER.length()));
+    public static class RefBuilder extends RefsBuilder {
+        @Override
+        public void prepareUriPath() {
+            String suffix = getStringParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX);
+
+            if(suffix.isEmpty()) {
+                throw new NullPointerException();
+            }
+
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + "/" + suffix);
+        }
     }
 }
