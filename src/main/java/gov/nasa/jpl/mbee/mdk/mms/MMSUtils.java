@@ -149,22 +149,27 @@ public class MMSUtils {
     }
 
     public static String getTicketUsingTWCToken(Project project, String twcServerUrl, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
-        endpoint.prepareUriPath();
-        if(endpoint instanceof MMSTWCLoginEndpoint) {
-            return ((MMSTWCLoginEndpoint) endpoint).buildTWCLoginRequest(project, twcServerUrl, authToken, progressStatus);
+        HttpRequestBase request = null;
+        request = MMSLoginEndpoint.builder()
+                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
+                    .addParam("username", null).addParam("password", null).build();
+        request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
+        request.addHeader(MDKConstants.AUTHORIZATION, authToken);
+        if(request != null) {
+            // do request
+            ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+            sendMMSRequest(project, request, progressStatus, responseJson);
+            if(responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
+                return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
+            }
         }
         return null;
     }
 
     public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.TWC_LOGIN_CASE);
-        mmsEndpoint.getEndpoint().setPath(mmsEndpoint.getEndpoint().getPath() + MMSEndpointConstants.VALIDATE_TOKEN_ENDPOINT);
-        mmsEndpoint.getEndpoint().clearParameters();
-
-        //build request
-        HttpRequestBase request = mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
-
+        // build request
+        HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSValidateJwtToken.builder(), project).build();
+        
         // do request
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
         sendMMSRequest(project, request, progressStatus, responseJson);
