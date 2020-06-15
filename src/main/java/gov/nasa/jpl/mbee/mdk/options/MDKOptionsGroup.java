@@ -133,7 +133,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
         addProperty(property, true);
-    }    
+    }
 
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> EnvironmentOptionsResources.getString(key);
 
