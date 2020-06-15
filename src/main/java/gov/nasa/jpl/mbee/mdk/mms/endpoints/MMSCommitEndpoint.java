@@ -1,19 +1,27 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
+import java.net.URISyntaxException;
+
 public class MMSCommitEndpoint extends MMSProjectEndpoint {
-    public MMSCommitEndpoint(String baseUri) {
+    public MMSCommitEndpoint(String baseUri) throws URISyntaxException {
         super(baseUri);
     }
 
-    @Override
-    public void prepareUriPath() {
-        uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointConstants.COMMIT_ENDPOINT);
-        uriBuilder.clearParameters();
+    public static Builder builder() {
+        return new CommitBuilder();
     }
 
-    public void setCommitId(String id) {
-        String path = uriBuilder.getPath();
-        int i = path.indexOf(MMSEndpointConstants.COMMIT_ID_PLACEHOLDER);
-        uriBuilder.setPath(path.substring(0, i) + id + path.substring(i + MMSEndpointConstants.COMMIT_ID_PLACEHOLDER.length()));
+    public static class CommitBuilder extends ProjectBuilder {
+        @Override
+        public void prepareUriPath() {
+            String suffix = getStringParam(MMSEndpointBuilderConstants.URI_COMMIT_SUFFIX);
+
+            if(suffix.isEmpty()) {
+                throw new NullPointerException();
+            }
+
+            super.prepareUriPath();
+            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.COMMIT.getPath() + "/" + suffix);
+        }
     }
 }

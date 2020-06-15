@@ -67,7 +67,7 @@ public class MMSUtils {
     public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
-        File responseFile = getElementsRecursively(project, elementIds, 0, progressStatus);
+        File responseFile = getElementsRecursively(project, elementIds, progressStatus);
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
             JsonNode value;
@@ -79,64 +79,41 @@ public class MMSUtils {
         return null;
     }
 
-    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
-        Collection<String> elementIds = new ArrayList<>(1);
-        elementIds.add(elementId);
-        return getElementsRecursively(project, elementIds, depth, progressStatus);
-    }
-
     /**
-     * @param elementIds     collection of elements to get mms data for
      * @param project        project to check
+     * @param elementIds     collection of elements to get mms data for
      * @param progressStatus progress status object, can be null
      * @return object node response
      * @throws ServerException
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
-        return getElementsRecursively(project, elementIds, 0, progressStatus);
-    }
-
-    /**
-     * @param elementIds     collection of elements to get mms data for
-     * @param depth          depth to recurse through child elements. takes priority over recurse field
-     * @param project        project to check
-     * @param progressStatus progress status object, can be null
-     * @return object node response
-     * @throws ServerException
-     * @throws IOException
-     * @throws URISyntaxException
-     */
-    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
-            return null;
-        }
-
-        // build uri
-        MMSEndpoint mmsEndpoint = getServiceProjectsRefsElementsUri(project);
-        if (mmsEndpoint == null) {
             return null;
         }
 
         // create request file
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
+        HttpRequestBase elementPutRequest = MMSUtils.prepareEndpointBuilderBasicJsonPutRequest(MMSElementsEndpoint.builder(), project, sendData)
+                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+
         //do cancellable request if progressStatus exists
-        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
+        return sendMMSRequest(project, elementPutRequest, progressStatus);
     }
 
     public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         if (artifactIds == null || artifactIds.isEmpty()) {
             return null;
         }
-        MMSEndpoint mmsEndpoint = getServiceProjectsRefsArtifactsUri(project);
-        if (mmsEndpoint == null) {
-            return null;
-        }
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
-        return sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.PUT, sendData, ContentType.APPLICATION_JSON, project), progressStatus);
+        HttpRequestBase artifactGetRequest = prepareEndpointBuilderBasicJsonPutRequest(MMSElementsEndpoint.builder(), project, sendData)
+                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+        return sendMMSRequest(project, artifactGetRequest, progressStatus);
     }
 
     public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
@@ -148,11 +125,26 @@ public class MMSUtils {
     }
 
     private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint endpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
-        endpoint.prepareUriPath();
-        if(endpoint instanceof MMSLoginEndpoint) {
-            return ((MMSLoginEndpoint) endpoint).buildLoginRequest(project, username, password, progressStatus);
+        HttpRequestBase request = null;
+        if(project != null) {
+            request = MMSLoginEndpoint.builder()
+                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
+                    .addParam("username", username).addParam("password", password).build();
+        } else if(baseUrl != null) {
+            request = MMSLoginEndpoint.builder()
+                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, baseUrl)
+                    .addParam("username", username).addParam("password", password).build();
         }
+
+        if(request != null) {
+            // do request
+            ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+            sendMMSRequest(project, request, progressStatus, responseJson);
+            if(responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
+                return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
+            }
+        }
+
         return null;
     }
 
@@ -186,11 +178,8 @@ public class MMSUtils {
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.LOGIN_CASE);
-        mmsEndpoint.prepareUriPath();
-
         //build request
-        HttpRequestBase request = mmsEndpoint.buildRequest(HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project);
+        HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSLoginEndpoint.builder(), project).build();
 
         // do request
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
@@ -490,10 +479,8 @@ public class MMSUtils {
     }
 
     public static String getMmsOrg(Project project) throws IOException, URISyntaxException, ServerException {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
-        mmsEndpoint.prepareUriPath();
-
-        File responseFile = sendMMSRequest(project, mmsEndpoint.buildRequest(HttpRequestType.GET, null, null, project));
+        HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSProjectsEndpoint.builder(), project).build();
+        File responseFile = sendMMSRequest(project, request);
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
             JsonNode arrayNode;
@@ -551,104 +538,6 @@ public class MMSUtils {
 
     }
 
-    /**
-     *
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     */
-    public static MMSEndpoint getServiceOrgsUri(Project project) {
-        return getServiceOrgsUri(project, null);
-    }
-
-    public static MMSEndpoint getServiceOrgsUri(String baseUrl) {
-        return getServiceOrgsUri(null, baseUrl);
-    }
-
-    private static MMSEndpoint getServiceOrgsUri(Project project, String baseUrl) {
-        MMSEndpoint mmsEndpoint;
-        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.ORGS_CASE);
-        } else {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.ORGS_CASE);
-        }
-
-        mmsEndpoint.prepareUriPath();
-        return mmsEndpoint;
-    }
-
-    /**
-     *
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     */
-    public static MMSEndpoint getServiceProjectsUri(Project project) {
-        return getServiceProjectsUri(project, null);
-    }
-
-    public static MMSEndpoint getServiceProjectsUri(String baseUrl) {
-        return getServiceProjectsUri(null, baseUrl);
-    }
-
-    private static MMSEndpoint getServiceProjectsUri(Project project, String baseUrl) {
-        MMSEndpoint mmsEndpoint;
-        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
-        } else {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.PROJECTS_CASE);
-        }
-
-        mmsEndpoint.prepareUriPath();
-        return mmsEndpoint;
-    }
-
-    /**
-     *
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     */
-    public static MMSEndpoint getServiceProjectsRefsUri(Project project) {
-        return getServiceProjectsRefsUri(project, null, null);
-    }
-
-    public static MMSEndpoint getServiceProjectsRefsUri(String baseUrl, String projectId) {
-        return getServiceProjectsRefsUri(null, baseUrl, projectId);
-    }
-
-    private static MMSEndpoint getServiceProjectsRefsUri(Project project, String baseUrl, String projectId) {
-        MMSEndpoint mmsEndpoint;
-        if((baseUrl == null || baseUrl.isEmpty()) && project != null) {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.REFS_CASE);
-        } else {
-            mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(baseUrl, MMSEndpointConstants.REFS_CASE);
-        }
-        mmsEndpoint.prepareUriPath();
-        ((MMSRefsEndpoint) mmsEndpoint).setProjectId(project == null ? projectId : Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-
-        return mmsEndpoint;
-    }
-
-    /**
-     *
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     */
-    public static MMSEndpoint getServiceProjectsRefsElementsUri(Project project) {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(getServerUrl(project), MMSEndpointConstants.ELEMENTS_CASE);
-        mmsEndpoint.prepareUriPath();
-        ((MMSElementsEndpoint) mmsEndpoint).setProjectId(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
-        ((MMSElementsEndpoint) mmsEndpoint).setRefId(MDUtils.getBranchId(project));
-
-        return mmsEndpoint;
-    }
-
-    public static MMSEndpoint getServiceProjectsRefsArtifactsUri(Project project) {
-        return null; // TODO should this be unimplemented for MMS4?
-    }
-
     public static String getDefaultSiteName(IProject iProject) {
         String name = iProject.getName().trim().replaceAll("\\W+", "-");
         if (name.endsWith("-")) {
@@ -657,4 +546,31 @@ public class MMSUtils {
         return name;
     }
 
+    public static MMSEndpoint.Builder prepareEndpointBuilderBasicGet(MMSEndpoint.Builder builder, Project project) {
+        return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.GET, null, null);
+    }
+
+    public static MMSEndpoint.Builder prepareEndpointBuilderBasicJsonPostRequest(MMSEndpoint.Builder builder, Project project, File file) {
+        return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.POST, ContentType.APPLICATION_JSON, file);
+    }
+
+    public static MMSEndpoint.Builder prepareEndpointBuilderBasicJsonPutRequest(MMSEndpoint.Builder builder, Project project, File file) {
+        return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.PUT, ContentType.APPLICATION_JSON, file);
+    }
+
+    public static MMSEndpoint.Builder prepareEndpointBuilderBasicJsonDeleteRequest(MMSEndpoint.Builder builder, Project project, File file) {
+        return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.DELETE, ContentType.APPLICATION_JSON, file);
+    }
+
+    public static MMSEndpoint.Builder prepareEndpointBuilderBasicRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, ContentType contentType, File file) {
+        return prepareEndpointBuilderGenericRequest(builder, MMSUtils.getServerUrl(project), project, requestType, contentType, file);
+    }
+
+    public static MMSEndpoint.Builder prepareEndpointBuilderGenericRequest(MMSEndpoint.Builder builder, String uri, Project project, HttpRequestType requestType, ContentType contentType, File file) {
+        return builder.addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, uri)
+                .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
+                .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project)
+                .addParam(MMSEndpointBuilderConstants.REST_CONTENT_TYPE, contentType)
+                .addParam(MMSEndpointBuilderConstants.REST_DATA_FILE, file);
+    }
 }

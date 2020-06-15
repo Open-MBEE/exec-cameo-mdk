@@ -14,14 +14,12 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitProjectAction;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointConstants;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointFactory;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
-import org.apache.http.entity.ContentType;
+import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,12 +59,10 @@ public class ProjectValidator {
     }
 
     public void validate() {
-        MMSEndpoint mmsEndpoint = MMSEndpointFactory.getMMSEndpoint(MMSUtils.getServerUrl(project), MMSEndpointConstants.PROJECTS_CASE);
-        mmsEndpoint.prepareUriPath();
-        File responseFile;
         ObjectNode response;
         try {
-            responseFile = MMSUtils.sendMMSRequest(project, mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.GET, null, ContentType.APPLICATION_JSON, project));
+            HttpRequestBase projectsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSProjectsEndpoint.builder(), project).build();
+            File responseFile = MMSUtils.sendMMSRequest(project, projectsRequest);
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }

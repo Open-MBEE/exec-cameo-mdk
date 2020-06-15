@@ -30,7 +30,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitDiagramArtifactsAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSElementsEndpoint;
-import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointBuilderConstants;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonEquivalencePredicate;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
@@ -46,7 +46,6 @@ import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import gov.nasa.jpl.mbee.mdk.viewedit.DBAlfrescoVisitor;
 import gov.nasa.jpl.mbee.mdk.viewedit.ViewHierarchyVisitor;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.json.simple.JSONArray;
 
@@ -266,7 +265,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
             ObjectNode viewResponse;
             try {
-                File responseFile = MMSUtils.getElements(project, viewMap.keySet(), progressStatus);
+                File responseFile = MMSUtils.getElementsRecursively(project, viewMap.keySet(), progressStatus);
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     viewResponse = JacksonUtils.parseJsonObject(jsonParser);
                 }
@@ -334,7 +333,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
 
                     ObjectNode instanceAndSlotResponse;
                     try {
-                        File responseFile = MMSUtils.getElements(project, elementIDs, progressStatus);
+                        File responseFile = MMSUtils.getElementsRecursively(project, elementIDs, progressStatus);
                         try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                             instanceAndSlotResponse = JacksonUtils.parseJsonObject(jsonParser);
                         }
@@ -649,6 +648,8 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             }*/
 
             boolean changed = false;
+            String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+            String branchId = MDUtils.getBranchId(project);
 
             if (elementsToCommit.size() > 0) {
                 // STAGE 5: Queueing upload of generated view instances
@@ -656,12 +657,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 progressStatus.setCurrent(5);
                 Application.getInstance().getGUILog().log("Updating/creating " + NumberFormat.getInstance().format(elementsToCommit.size()) + " element" + (elementsToCommit.size() != 1 ? "s" : "") + " to generate views.");
 
-                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, elementsToCommit, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
+                HttpRequestBase elementUpdateCreateRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, branchId).build();
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
-                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                        MMSUtils.sendMMSRequest(project, elementUpdateCreateRequest, progressStatus1);
                     } catch (IOException | ServerException | URISyntaxException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
@@ -688,12 +690,13 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
             if (mmsElementsToDelete.size() > 0) {
                 Application.getInstance().getGUILog().log("Deleting " + NumberFormat.getInstance().format(mmsElementsToDelete.size()) + " unused presentation element" + (mmsElementsToDelete.size() != 1 ? "s" : "") + ".");
 
-                MMSEndpoint mmsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, mmsElementsToDelete, MMSUtils.JsonBlobType.ELEMENT_ID);
-                HttpRequestBase request = mmsEndpoint.buildRequest(MMSUtils.HttpRequestType.DELETE, file, ContentType.APPLICATION_JSON, project);
+                HttpRequestBase elementDeleteRequest = MMSUtils.prepareEndpointBuilderBasicJsonDeleteRequest(MMSElementsEndpoint.builder(), project, file)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, branchId).build();
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
-                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                        MMSUtils.sendMMSRequest(project, elementDeleteRequest, progressStatus1);
                     } catch (IOException | ServerException | URISyntaxException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();

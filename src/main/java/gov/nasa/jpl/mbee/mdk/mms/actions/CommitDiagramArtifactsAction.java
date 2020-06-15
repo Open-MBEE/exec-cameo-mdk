@@ -13,7 +13,11 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSArtifact;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSElementEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSElementsEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointBuilderConstants;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
@@ -56,22 +60,18 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
 
     @Override
     public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
-        MMSEndpoint mmsArtifactsEndpoint = MMSUtils.getServiceProjectsRefsArtifactsUri(project);
-        if (mmsArtifactsEndpoint == null) {
-            return;
-        }
         TaskRunner.runWithProgressStatus(progressStatus -> {
             try {
-                MMSEndpoint mmsElementsEndpoint = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                if (mmsElementsEndpoint == null) {
-                    return;
-                }
+                String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+                String refId = MDUtils.getBranchId(project);
                 for (MMSArtifact artifact : artifacts) {
                     HttpEntity entity = MultipartEntityBuilder.create().addTextBody(MDKConstants.ID_KEY, artifact.getId()).addTextBody(MDKConstants.CHECKSUM_KEY, artifact.getChecksum()).addTextBody("source", "magicdraw").addBinaryBody("file", artifact.getInputStream(), artifact.getContentType(), artifact.getId() + ".tmp").build();
-                    File file = File.createTempFile(this.getClass().getSimpleName() + "-" + ContentType.APPLICATION_JSON.getMimeType().replace('/', '-') + "-", null);
-                    FileUtils.copyInputStreamToFile(entity.getContent(), file);
-                    HttpPost artifactRequest = (HttpPost) mmsArtifactsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
-                    artifactRequest.setEntity(entity);
+                    File file = File.createTempFile(this.getClass().getSimpleName() + "-" + artifact.getContentType().getMimeType().replace('/', '-') + "-", null);
+                    FileUtils.copyInputStreamToFile(entity.getContent(), file); // if we use the entity's content in the file do we need to pass the entity
+                    HttpRequestBase artifactRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementEndpoint.builder(), project, file)
+                            .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                            .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
+                            .addParam(MMSEndpointBuilderConstants.URI_ELEMENT_SUFFIX, artifact.getId()).build();
                     MMSUtils.sendMMSRequest(project, artifactRequest, progressStatus);
                     if(!file.delete()) { // if we cannot immediately delete we'll get it later
                         file.deleteOnExit();
@@ -83,8 +83,10 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                 initialArtifactIds.forEach(updatedArtifactIdsNode::add);
                 artifacts.stream().map(MMSArtifact::getId).forEachOrdered(updatedArtifactIdsNode::add);
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, Collections.singleton(objectNode), MMSUtils.JsonBlobType.ELEMENT_JSON);
-                HttpRequestBase request = mmsElementsEndpoint.buildRequest(MMSUtils.HttpRequestType.POST, file, ContentType.APPLICATION_JSON, project);
-                MMSUtils.sendMMSRequest(project, request, progressStatus);
+                HttpRequestBase elementPostRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
+                MMSUtils.sendMMSRequest(project, elementPostRequest, progressStatus);
             } catch (IOException | ServerException | URISyntaxException e) {
                 e.printStackTrace();
                 Application.getInstance().getGUILog().log("[ERROR] Failed to commit diagram artifacts for " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());
