@@ -1,12 +1,17 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
+import static gov.nasa.jpl.mbee.mdk.mms.MMSUtils.HttpRequestType.GET;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.task.ProgressStatus;
-import gov.nasa.jpl.mbee.mdk.http.ServerException;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+
 import org.apache.http.Consts;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
@@ -14,11 +19,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static gov.nasa.jpl.mbee.mdk.mms.MMSUtils.sendMMSRequest;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 
 public class MMSLoginEndpoint extends MMSEndpoint {
     public MMSLoginEndpoint(String baseUri) throws URISyntaxException {
@@ -38,26 +40,43 @@ public class MMSLoginEndpoint extends MMSEndpoint {
 
         @Override
         public HttpRequestBase build() throws IOException, URISyntaxException {
-            if(uriBuilder == null) {
+            if (uriBuilder == null) {
                 String baseUri = getStringParam(MMSEndpointBuilderConstants.URI_BASE_PATH);
-                if(!baseUri.isEmpty()) {
+                if (!baseUri.isEmpty()) {
                     uriBuilder = new URIBuilder(baseUri);
                 }
             }
 
-            if(uriBuilder != null) {
+            if (uriBuilder != null) {
                 prepareUriPath();
-                //build request
+                // build request
                 URI requestDest = uriBuilder.build();
-                HttpRequestBase request = new HttpPost(requestDest);
-                request.addHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+                HttpRequestBase request;
+                MMSUtils.HttpRequestType type = getHttpTypeParam();
+                // bulk GETs are not supported in MMS, but bulk PUTs are. checking and and
+                // throwing error here in case
+                File sendData = getFileParam();
+                if (type == GET && sendData != null) {
+                    throw new IOException("GETs with body are not supported");
+                }
+                switch (type) {
+                    case POST:
+                        request = new HttpPost(requestDest);
+                        request.addHeader(HTTP.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+                        ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
+                        credentials.put("username", getStringParam("username"));
+                        credentials.put("password", getStringParam("password"));
+                        StringEntity jsonData = new StringEntity(
+                                JacksonUtils.getObjectMapper().writeValueAsString(credentials),
+                                ContentType.APPLICATION_JSON);
+                        ((HttpEntityEnclosingRequest) request).setEntity(jsonData);
+                        break;
+                    case GET:
+                    default:
+                        request = new HttpGet(requestDest);
+                        break;
+                }
                 request.addHeader("charset", (Consts.UTF_8).displayName());
-
-                ObjectNode credentials = JacksonUtils.getObjectMapper().createObjectNode();
-                credentials.put("username", getStringParam("username"));
-                credentials.put("password", getStringParam("password"));
-                StringEntity jsonData = new StringEntity(JacksonUtils.getObjectMapper().writeValueAsString(credentials), ContentType.APPLICATION_JSON);
-                ((HttpEntityEnclosingRequest) request).setEntity(jsonData);
                 uriBuilder = null;
                 return request;
             }
