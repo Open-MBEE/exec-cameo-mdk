@@ -149,19 +149,14 @@ public class MMSUtils {
     }
 
     public static String getTicketUsingTWCToken(Project project, String twcServerUrl, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        HttpRequestBase request = null;
-        request = MMSLoginEndpoint.builder()
-                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
-                    .addParam("username", null).addParam("password", null).build();
+        HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSLoginEndpoint.builder(), project).build();
         request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
         request.addHeader(MDKConstants.AUTHORIZATION, authToken);
-        if(request != null) {
-            // do request
-            ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-            sendMMSRequest(project, request, progressStatus, responseJson);
-            if(responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
-                return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
-            }
+        // do request
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        sendMMSRequest(project, request, progressStatus, responseJson);
+        if(responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
+            return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
         }
         return null;
     }
