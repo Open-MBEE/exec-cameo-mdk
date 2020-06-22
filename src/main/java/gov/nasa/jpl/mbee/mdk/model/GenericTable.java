@@ -2,22 +2,17 @@ package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.generictable.GenericTableManager;
 import com.nomagic.magicdraw.core.Application;
-
 import com.nomagic.magicdraw.dependencymatrix.configuration.MatrixDataHelper;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.MatrixData;
 import com.nomagic.magicdraw.dependencymatrix.datamodel.cell.AbstractMatrixCell;
 import com.nomagic.magicdraw.properties.*;
+import com.nomagic.magicdraw.properties.ui.ObjectListProperty;
 import com.nomagic.magicdraw.uml.DiagramType;
-
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
@@ -26,9 +21,12 @@ import gov.nasa.jpl.mbee.mdk.util.DependencyMatrixTool;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.util.MatrixUtil;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GenericTable extends Table {
 
@@ -206,78 +204,22 @@ public class GenericTable extends Table {
 
     public List<List<DocumentElement>> getBody(Diagram d, Collection<Element> rowElements, List<String> columnIds, boolean forViewEditor) {
         List<List<DocumentElement>> res = new ArrayList<>();
-        for (Element e : rowElements) {
-            if (skipIfNoDoc && ModelHelper.getComment(e).trim().isEmpty()) {
+        for (Element rowElement : rowElements) {
+            if (skipIfNoDoc && ModelHelper.getComment(rowElement).trim().isEmpty()) {
                 continue;
             }
             List<DocumentElement> row = new ArrayList<>();
             int count = 0;
-            for (String cid : columnIds) {
+            for (String columnId : columnIds) {
                 if (count == 0) {
                     count++;
                     continue;
                 }
-                if (skipColumnIds.contains(cid)) {
+                if (skipColumnIds.contains(columnId)) {
                     continue;
                 }
-                DBTableEntry entry = new DBTableEntry();
-
-                Property cellValue = GenericTableManager.getCellValue(d, e, cid);
-                if (cellValue instanceof ElementProperty) {
-                    Element cellelement = ((ElementProperty) cellValue).getElement();
-                    if (cellelement instanceof NamedElement) {
-                        entry.addElement(new DBParagraph(((NamedElement) cellelement).getName(), cellelement, From.NAME));
-                    }
-                }
-                else if (cellValue instanceof StringProperty) {
-                    if (cid.contains("documentation")) {
-                        entry.addElement(new DBParagraph(cellValue.getValue(), e, From.DOCUMENTATION));
-
-                    }
-                    else {
-                        entry.addElement(new DBParagraph(cellValue.getValue()));
-                    }
-                }
-                else if (cellValue instanceof NumberProperty) {
-                    entry.addElement(new DBParagraph(cellValue.getValue()));
-                }
-                else if (cellValue instanceof ElementListProperty) {
-                    for (Element listEl : ((ElementListProperty) cellValue).getValue()) {
-                        if (listEl instanceof NamedElement) {
-                            entry.addElement(new DBParagraph(((NamedElement) listEl).getName(), listEl, From.NAME));
-                        }
-                    }
-                }
-                else if (cellValue instanceof ElementInstanceProperty) {
-                    Object value = cellValue.getValue();
-
-                    if (value instanceof List) {
-                        for (Object o : (List) value) {
-                            if (o instanceof InstanceSpecification) {
-                                entry.addElement(new DBParagraph(((InstanceSpecification) o).getName(), (Element) o, From.NAME));
-                            }
-                        }
-                    }
-                }
-                else if (cellValue instanceof AbstractChoiceProperty) {
-                    if (cellValue instanceof ChoiceProperty) {
-                        int index = ((ChoiceProperty) cellValue).getIndex();
-                        if (index > -1) {
-                            Object choice = ((ChoiceProperty) cellValue).getChoice().get(index);
-                            entry.addElement(new DBParagraph(choice.toString()));
-                        }
-                    }
-                    else {
-                        for (Object choice : ((AbstractChoiceProperty) cellValue).getChoice()) {
-                            if (choice instanceof String) {
-                                entry.addElement(new DBParagraph(choice.toString()));
-                            }
-                        }
-                    }
-                }
-                else {
-                    Application.getInstance().getGUILog().log("[WARNING] Cell value omitted: " + cellValue.toString() + ".");
-                }
+                Property property = GenericTableManager.getCellValue(d, rowElement, columnId);
+                DBTableEntry entry = buildTableEntry(property, columnId, rowElement);
                 row.add(entry);
             }
             res.add(row);
@@ -285,23 +227,66 @@ public class GenericTable extends Table {
         return res;
     }
 
-    public List<Object> getTableValues(Object o) {
-        List<Object> res = new ArrayList<>();
-        if (o instanceof Object[]) {
-            Object[] a = (Object[]) o;
-            for (int i = 0; i < a.length; i++) {
-                res.addAll(getTableValues(a[i]));
+    private DBTableEntry buildTableEntry(Property property, String columnId, Element rowElement) {
+        DBTableEntry entry = new DBTableEntry();
+        if (property instanceof ElementProperty) {
+            Element element = ((ElementProperty) property).getElement();
+            if (element instanceof NamedElement) {
+                entry.addElement(new DBParagraph(((NamedElement) element).getName(), element, From.NAME));
             }
         }
-        else if (o instanceof Collection) {
-            for (Object oo : (Collection) o) {
-                res.addAll(getTableValues(oo));
+        else if (property instanceof StringProperty) {
+            if (columnId.contains("documentation")) {
+                entry.addElement(new DBParagraph(property.getValue(), rowElement, From.DOCUMENTATION));
+            }
+            else {
+                entry.addElement(new DBParagraph(property.getValue()));
             }
         }
-        else if (o != null) {
-            res.add(o);
+        else if (property instanceof NumberProperty) {
+            entry.addElement(new DBParagraph(property.getValue()));
         }
-        return res;
+        else if (property instanceof ElementListProperty) {
+            for (Element listEl : ((ElementListProperty) property).getValue()) {
+                if (listEl instanceof NamedElement) {
+                    entry.addElement(new DBParagraph(((NamedElement) listEl).getName(), listEl, From.NAME));
+                }
+            }
+        }
+        else if (property instanceof ElementInstanceProperty) {
+            Object value = property.getValue();
+
+            if (value instanceof List) {
+                for (Object o : (List<?>) value) {
+                    if (o instanceof InstanceSpecification) {
+                        entry.addElement(new DBParagraph(((InstanceSpecification) o).getName(), (Element) o, From.NAME));
+                    }
+                }
+            }
+        }
+        else if (property instanceof AbstractChoiceProperty) {
+            if (property instanceof ChoiceProperty) {
+                int index = ((ChoiceProperty) property).getIndex();
+                if (index > -1) {
+                    Object choice = ((ChoiceProperty) property).getChoice().get(index);
+                    entry.addElement(new DBParagraph(choice.toString()));
+                }
+            }
+            else {
+                for (Object choice : ((AbstractChoiceProperty) property).getChoice()) {
+                    if (choice instanceof String) {
+                        entry.addElement(new DBParagraph(choice.toString()));
+                    }
+                }
+            }
+        }
+        else if (property instanceof ObjectListProperty) {
+            entry.addElements(Arrays.stream(((ObjectListProperty) property).getValue()).map(DBParagraph::new).collect(Collectors.toList()));
+        }
+        else {
+            Application.getInstance().getGUILog().log("[WARNING] Unknown cell value omitted: " + property.toString() + ".");
+        }
+        return entry;
     }
 
     public void setSkipIfNoDoc(boolean b) {
