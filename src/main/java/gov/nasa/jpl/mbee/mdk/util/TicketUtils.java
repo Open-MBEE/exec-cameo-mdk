@@ -29,7 +29,12 @@ public class TicketUtils extends AbstractAcquireTicketProcessor{
     private static String username = "";
     private static String password = "";
     private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
-    protected static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
+
+
+    public static void putTicketMapping(Project project, String username, String ticket) {
+        ticketMappings.put(project, new TicketMapping(project, username, ticket));
+    }
 
     /**
      * Accessor for stored username.
@@ -50,7 +55,7 @@ public class TicketUtils extends AbstractAcquireTicketProcessor{
         String ticket = getTicket(project);
         return ticket != null && !ticket.isEmpty();
     }
-
+    
     public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         if (!isTicketSet(project)) {
             return false;
