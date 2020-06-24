@@ -148,19 +148,6 @@ public class MMSUtils {
         return null;
     }
 
-    public static String getTicketUsingTWCToken(Project project, String twcServerUrl, String authToken, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSLoginEndpoint.builder(), project).build();
-        request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
-        request.addHeader(MDKConstants.AUTHORIZATION, authToken);
-        // do request
-        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-        sendMMSRequest(project, request, progressStatus, responseJson);
-        if(responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
-            return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
-        }
-        return null;
-    }
-
     public static String validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         // build request
         HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSValidateJwtToken.builder(), project).build();
