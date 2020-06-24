@@ -1,21 +1,27 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.URISyntaxException;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.esi.EsiUtils;
-import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.magicdraw.teamwork2.esi.EsiServerActionsExecuter;
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.ui.ProgressStatusRunner;
 
+import org.apache.http.client.methods.HttpRequestBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils.TicketMapping;
-
-import java.net.ConnectException;
-import java.io.IOException;
-import java.net.URISyntaxException;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointType;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSTWCLoginEndpoint;
 
 public class TWCUtils extends AbstractAcquireTicketProcessor {
     public TWCUtils(AbstractAcquireTicketProcessor processor) {
@@ -32,8 +38,8 @@ public class TWCUtils extends AbstractAcquireTicketProcessor {
 
     public static String getTeamworkCloudServer() {
         String twcServer = null;
-        if (EsiUtils.getTeamworkService() != null || EsiUtils.getTeamworkService().getLastUsedLoginInfo() != null
-                || EsiUtils.getTeamworkService().getLastUsedLoginInfo().server != null) {
+        if (EsiUtils.getTeamworkService() != null && EsiUtils.getTeamworkService().getLastUsedLoginInfo() != null
+                && EsiUtils.getTeamworkService().getLastUsedLoginInfo().server != null) {
             twcServer = EsiUtils.getTeamworkService().getLastUsedLoginInfo().server;
             if (twcServer.indexOf(':') > -1) {
                 twcServer = twcServer.substring(0, twcServer.indexOf(':'));
@@ -52,9 +58,28 @@ public class TWCUtils extends AbstractAcquireTicketProcessor {
         return secondaryAuthToken != null ? "Token :" + secondaryAuthToken : null;
     }
 
+    public static String getTicketUsingTWCToken(Project project, String twcServerUrl, String authToken,
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        HttpRequestBase request = MMSUtils.prepareEndpointBuilderBasicGet(MMSTWCLoginEndpoint.builder(), project)
+                .build();
+        request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
+        request.addHeader(MDKConstants.AUTHORIZATION, authToken);
+        // do request
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        MMSUtils.sendMMSRequest(project, request, progressStatus, responseJson);
+        if (responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null
+                && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
+            return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
+        }
+        return null;
+    }
+
     @Override
     public boolean acquireMmsTicket(Project project) {
-        if (getConnectedUser() == null || getTeamworkCloudServer() == null || getSecondaryAuthToken() == null) {
+        String username = getConnectedUser();
+        String twcServerUrl = getTeamworkCloudServer();
+        String authToken = getSecondaryAuthToken();
+        if (username == null || twcServerUrl == null || authToken == null) {
             return super.acquireMmsTicket(project);
         }
 
@@ -62,8 +87,7 @@ public class TWCUtils extends AbstractAcquireTicketProcessor {
         ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
             String ticket;
             try {
-                ticket = MMSUtils.getTicketUsingTWCToken(project, getTeamworkCloudServer(), getSecondaryAuthToken(),
-                        progressStatus);
+                ticket = getTicketUsingTWCToken(project, twcServerUrl, authToken, progressStatus);
             } catch (IOException | URISyntaxException | ServerException e) {
                 Application.getInstance().getGUILog()
                         .log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
@@ -71,7 +95,7 @@ public class TWCUtils extends AbstractAcquireTicketProcessor {
                 return;
             }
             if (ticket != null) {
-                TicketUtils.ticketMappings.put(project, new TicketMapping(project, getConnectedUser(), ticket));
+                TicketUtils.putTicketMapping(project, username, ticket);
             }
         }, "Logging in to MMS", true, 0);
         if (TicketUtils.isTicketSet(project)) {
