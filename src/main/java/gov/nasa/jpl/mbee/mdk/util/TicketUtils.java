@@ -60,7 +60,7 @@ public class TicketUtils extends AbstractAcquireTicketProcessor{
         if (!isTicketSet(project)) {
             return false;
         }
-        if(TWCUtils.getConnectedUser() != null && MMSUtils.validateJwtToken(project, progressStatus).equalsIgnoreCase(TWCUtils.getConnectedUser())) {
+        if(MMSUtils.validateJwtToken(project, progressStatus)) {
             return true;
         }
         return MMSUtils.validateCredentialsTicket(project, getTicket(project), progressStatus).equals(username);
