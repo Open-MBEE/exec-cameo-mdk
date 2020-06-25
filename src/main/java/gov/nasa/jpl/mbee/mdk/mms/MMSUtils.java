@@ -148,7 +148,7 @@ public class MMSUtils {
         return null;
     }
 
-    public static String validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
         // build request
         HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSValidateJwtToken.builder(), project).build();
         
@@ -158,10 +158,10 @@ public class MMSUtils {
 
         // parse response
         JsonNode value;
-        if (responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty()) {
-            return value.asText();
+        if (responseJson != null && (value = responseJson.get("isTokenValid")) != null && value.isBoolean()) {
+            return value.asBoolean();
         }
-        return null;
+        return false;
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
