@@ -19,6 +19,10 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.text.NumberFormat;
 
 /**
@@ -184,7 +188,7 @@ public class SyncStatusAction extends MDAction {
                     MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
                     progressStatus.setDescription("Updating table");
                     update();
-                } catch (URISyntaxException | IOException | ServerException e) {
+                } catch (URISyntaxException | IOException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                     e.printStackTrace();
                 }
             }, "Sync Status Update", false, 0);

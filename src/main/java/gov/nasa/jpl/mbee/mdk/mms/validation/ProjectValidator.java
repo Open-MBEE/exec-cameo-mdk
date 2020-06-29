@@ -23,6 +23,10 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 
 /**
  * SysML 2 Pilot Implementation
@@ -72,7 +76,7 @@ public class ProjectValidator {
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }
-        } catch (IOException | ServerException | URISyntaxException e) {
+        } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             errors = true;
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS projects. Project validation aborted. Reason: " + e.getMessage());

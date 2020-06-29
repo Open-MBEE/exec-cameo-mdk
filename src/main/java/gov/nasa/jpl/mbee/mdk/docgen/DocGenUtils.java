@@ -12,11 +12,13 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
+import javax.xml.transform.TransformerException;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -423,7 +425,7 @@ public class DocGenUtils {
      * @throws IOException
      */
     public static List<String> exportDiagram(Diagram diagram, File directory) throws IOException {
-        int dpi = 72;
+        int dpi = Application.getInstance().getEnvironmentOptions().getGeneralOptions().getImageResolutionDpi();
         int scalePercent = 100;
         Project project = Application.getInstance().getProject();
         if (project == null) {
@@ -435,6 +437,12 @@ public class DocGenUtils {
             return Collections.emptyList();
         }
 
+        System.setProperty("svg.enriched.export", Boolean.toString(!diagramPresentationElement.getDiagramType().getRootType().equals(com.nomagic.magicdraw.uml.DiagramTypeConstants.DEPENDENCY_MATRIX)));
+
+        Application.getInstance().getGUILog().log("[INFO] Generating Diagram of type" + diagramPresentationElement.getDiagramType().getRootType() + ".");
+
+
+
         String pngFileName = diagramPresentationElement.getID() + ".png";
         String svgFileName = diagramPresentationElement.getID() + ".svg";
         File pngDiagramFile = new File(directory, pngFileName);
@@ -442,9 +450,9 @@ public class DocGenUtils {
         results.add(directory.getName() + "/" + svgFileName);
 
         try {
-            ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgDiagramFile, false, dpi, scalePercent);
+            MDUtils.exportSVG(svgDiagramFile,diagramPresentationElement);
             ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile, false, dpi, scalePercent);
-        } catch (IOException e) {
+        } catch (IOException | TransformerException e) {
             e.printStackTrace();
             return results;
         }

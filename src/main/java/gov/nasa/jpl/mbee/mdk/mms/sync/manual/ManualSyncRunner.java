@@ -21,6 +21,10 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -114,7 +118,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                         responseFiles.add(responseFile);
                     }
                 }
-            } catch (ServerException | URISyntaxException | IOException e) {
+            } catch (ServerException | URISyntaxException | IOException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting elements from the server. Manual sync aborted. Reason: " + e.getMessage());
                 e.printStackTrace();
                 validationSuite = null;
@@ -155,7 +159,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     private static File collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         String id = Converters.getElementToIdConverter().apply(element);
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(id);
@@ -163,7 +167,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     private static File collectServerModuleElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Collection<Element> attachedModels = new ArrayList<>(project.getModels());
         attachedModels.remove(project.getPrimaryModel());
         Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter()).filter(amId -> amId != null).collect(Collectors.toList());
@@ -171,7 +175,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
     }
 
     private static File collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         String holdingBinId = MDKConstants.HOLDING_BIN_ID_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         return MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
     }
