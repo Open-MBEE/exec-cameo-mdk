@@ -19,6 +19,10 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -52,7 +56,7 @@ public class TicketUtils {
         return ticket != null && !ticket.isEmpty();
     }
 
-    public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         if (!isTicketSet(project)) {
             return false;
         }
@@ -243,7 +247,7 @@ public class TicketUtils {
             String ticket;
             try {
                 ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
-            } catch (IOException | URISyntaxException | ServerException e) {
+            } catch (IOException | URISyntaxException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;

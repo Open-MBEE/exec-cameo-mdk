@@ -21,6 +21,10 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.UUID;
@@ -95,7 +99,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                     }
                 }
             }
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS orgs. Aborting org creation. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
@@ -113,7 +117,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
             MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
-        } catch (IOException | ServerException | URISyntaxException e) {
+        } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
