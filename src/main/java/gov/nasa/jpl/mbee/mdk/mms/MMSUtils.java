@@ -35,17 +35,24 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
 
+import javax.net.ssl.SSLContext;
 import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -74,7 +81,8 @@ public class MMSUtils {
         return LAST_EXCEPTION;
     }
 
-    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         File responseFile = getElementsRecursively(project, elementIds, 0, progressStatus);
@@ -89,7 +97,8 @@ public class MMSUtils {
         return null;
     }
 
-    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         return getElementsRecursively(project, elementIds, depth, progressStatus);
@@ -104,7 +113,8 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
 
@@ -118,7 +128,8 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
             return null;
@@ -138,7 +149,7 @@ public class MMSUtils {
         return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
     }
 
-    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         if (artifactIds == null || artifactIds.isEmpty()) {
             return null;
         }
@@ -150,15 +161,18 @@ public class MMSUtils {
         return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
     }
 
-    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return getCredentialsTicket(project, null, username, password, progressStatus);
     }
 
-    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
     }
 
-    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
         if (requestUri == null) {
             return null;
@@ -189,7 +203,8 @@ public class MMSUtils {
         return null;
     }
 
-    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return "";
@@ -362,7 +377,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson) throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson) throws IOException, ServerException, URISyntaxException, KeyStoreException, CertificateException, NoSuchAlgorithmException, KeyManagementException {
         final File responseFile = (responseJson == null ? File.createTempFile("Response-", null) : null);
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
@@ -372,11 +387,28 @@ public class MMSUtils {
         if (MDUtils.isDeveloperMode()) {
             Application.getInstance().getGUILog().log(requestSummary);
         }
+        KeyStore trustStore = KeyStore.getInstance("JKS");
+
+        FileInputStream fis  = new FileInputStream("./certs/cacerts.jks");
+
+        trustStore.load(fis,"changeit".toCharArray());
+
+        fis.close();
+
+        SSLContext sslContext = SSLContexts.custom()
+                .loadTrustMaterial(trustStore, new TrustSelfSignedStrategy()) // use null as second param if you don't have a separate key password
+                .build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                sslContext,new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"}, null,
+                new DefaultHostnameVerifier());
+
 
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         if (progressStatus == null) {
-            try (CloseableHttpClient httpclient = HttpClients.createDefault();
+            try (CloseableHttpClient httpclient = HttpClients.custom()
+                    .setSSLSocketFactory(sslsf)
+                    .build();
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
@@ -394,7 +426,9 @@ public class MMSUtils {
             LAST_EXCEPTION.set(null);
             progressStatus.setIndeterminate(true);
             Future<?> future = TaskRunner.runWithProgressStatus(() -> {
-                try (CloseableHttpClient httpclient = HttpClients.createDefault();
+                try (CloseableHttpClient httpclient = HttpClients.custom()
+                        .setSSLSocketFactory(sslsf)
+                        .build();
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()) {
                     responseCode.set(response.getStatusLine().getStatusCode());
@@ -454,11 +488,11 @@ public class MMSUtils {
         return responseFile;
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return sendMMSRequest(project, request, null, null);
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         return sendMMSRequest(project, request, progressStatus, null);
     }
 
@@ -561,7 +595,8 @@ public class MMSUtils {
         return urlString.trim();
     }
 
-    public static String getMmsOrg(Project project) throws IOException, URISyntaxException, ServerException {
+    public static String getMmsOrg(Project project)
+            throws IOException, URISyntaxException, ServerException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
         File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
@@ -613,7 +648,18 @@ public class MMSUtils {
             return null;
         }
 
-        uri.setPath("/alfresco/service");
+        String currentPath = uri.getPath();
+        
+        // If current path ends in '/', append alfresco/service
+        if (currentPath.endsWith("/")) {
+        	uri.setPath(uri.getPath() + "alfresco/service");
+        }
+        // Otherwise, append /alfresco/service
+        else {
+        	uri.setPath(uri.getPath() + "/alfresco/service");
+        }
+        
+        
         if (project != null && TicketUtils.isTicketSet(project)) {
             uri.setParameter("alf_ticket", TicketUtils.getTicket(project));
         }

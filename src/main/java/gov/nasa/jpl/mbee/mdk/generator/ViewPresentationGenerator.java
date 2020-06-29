@@ -51,6 +51,10 @@ import org.json.simple.JSONArray;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -268,7 +272,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     viewResponse = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (IOException | URISyntaxException | ServerException e) {
+            } catch (IOException | URISyntaxException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred. View generation aborted. Please check your network connection or view logs for more information. Reason: " + e.getMessage());
                 e.printStackTrace();
@@ -336,7 +340,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                             instanceAndSlotResponse = JacksonUtils.parseJsonObject(jsonParser);
                         }
-                    } catch (IOException | URISyntaxException | ServerException e) {
+                    } catch (IOException | URISyntaxException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("[ERROR] An error occurred. View generation aborted. Please check your network connection or view logs for more information. Reason: " + e.getMessage());
                         e.printStackTrace();
@@ -660,7 +664,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }
@@ -692,7 +696,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }

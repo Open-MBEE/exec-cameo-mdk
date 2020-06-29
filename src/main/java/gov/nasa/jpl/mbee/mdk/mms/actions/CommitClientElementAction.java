@@ -23,6 +23,10 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -124,7 +128,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }
@@ -144,7 +148,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }
