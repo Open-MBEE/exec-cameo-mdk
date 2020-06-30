@@ -146,7 +146,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             return new ArrayList<>();
         }
         List<String> authChain = new ArrayList<String>();
-        for (String chainClass : Arrays.asList(val.split(" "))) {
+        for (String chainClass : Arrays.asList(val.split(","))) {
             authChain.add(chainClass);
         }
         return authChain;
@@ -169,7 +169,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
         setAuthenticationChain(
-                "gov.nasa.jpl.mbee.mdk.util.TWCUtils gov.nasa.jpl.mbee.mdk.util.BasicAuthTicketUtils gov.nasa.jpl.mbee.mdk.util.AuthenticationChainError");
+                "gov.nasa.jpl.mbee.mdk.util.TWCUtils,gov.nasa.jpl.mbee.mdk.util.BasicAuthTicketUtils,gov.nasa.jpl.mbee.mdk.util.AuthenticationChainError");
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";
