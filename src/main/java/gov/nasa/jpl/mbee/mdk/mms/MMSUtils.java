@@ -158,10 +158,7 @@ public class MMSUtils {
 
         // parse response
         JsonNode value;
-        if (responseJson != null && (value = responseJson.get("isTokenValid")) != null && value.isBoolean()) {
-            return value.asBoolean();
-        }
-        return false;
+        return responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty();
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
