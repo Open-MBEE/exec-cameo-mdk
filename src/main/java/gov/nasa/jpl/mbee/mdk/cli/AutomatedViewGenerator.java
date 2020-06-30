@@ -19,6 +19,7 @@ import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.util.BasicAuthTicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import org.apache.commons.cli.*;
@@ -352,7 +353,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
     private void generateViews() throws Exception {
         String message;
         if (!TicketUtils.isTicketSet(project)) {
-            TicketUtils.setUsernameAndPassword(parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD));
+            BasicAuthTicketUtils.setUsernameAndPassword(parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD));
             if (!MMSLoginAction.loginAction(project)) {
                 illegalStateFailure("[FAILURE] User " + parser.getOptionValue(MMS_USERNAME) + " was unable to login to MMS.");
             }

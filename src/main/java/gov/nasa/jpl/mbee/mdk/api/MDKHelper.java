@@ -41,6 +41,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateViewPresentationAction;
+import gov.nasa.jpl.mbee.mdk.util.BasicAuthTicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.http.client.utils.URIBuilder;
@@ -82,7 +83,7 @@ public class MDKHelper {
      * @param password Password for MMS login
      */
     public static void setMMSLoginCredentials(String username, String password) {
-        TicketUtils.setUsernameAndPassword(username, password);
+        BasicAuthTicketUtils.setUsernameAndPassword(username, password);
     }
 
     /**********************************************************************************
