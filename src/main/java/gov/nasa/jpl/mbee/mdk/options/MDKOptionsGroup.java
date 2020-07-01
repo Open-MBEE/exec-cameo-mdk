@@ -169,7 +169,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
         setAuthenticationChain(
-                "gov.nasa.jpl.mbee.mdk.util.TWCUtils,gov.nasa.jpl.mbee.mdk.util.BasicAuthTicketUtils,gov.nasa.jpl.mbee.mdk.util.AuthenticationChainError");
+                "gov.nasa.jpl.mbee.mdk.tickets.TWCAcquireTicketProcessor,gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor,gov.nasa.jpl.mbee.mdk.tickets.AuthenticationChainError");
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";
