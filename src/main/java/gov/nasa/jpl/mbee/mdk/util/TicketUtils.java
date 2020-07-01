@@ -15,6 +15,7 @@ import com.nomagic.task.ProgressStatus;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor;
 
 public class TicketUtils {
     private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
@@ -27,6 +28,10 @@ public class TicketUtils {
 
     public static void putTicketMapping(Project project, String username, String ticket) {
         ticketMappings.put(project, new TicketMapping(project, username, ticket));
+    }
+
+    public static void removeTicketMapping(Project project) {
+        ticketMappings.remove(project);
     }
 
     /**
@@ -77,7 +82,7 @@ public class TicketUtils {
      * Clears username, password, and ticket
      */
     public static void clearTicket(Project project) {
-        BasicAuthTicketUtils.clearPassword();
+        BasicAuthAcquireTicketProcessor.clearPassword();
         TicketMapping removed = ticketMappings.remove(project);
         if (removed != null && removed.getScheduledFuture() != null) {
             removed.getScheduledFuture().cancel(true);
