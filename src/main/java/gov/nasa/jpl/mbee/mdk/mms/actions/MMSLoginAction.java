@@ -6,7 +6,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.util.AcquireTicketChain;
+import gov.nasa.jpl.mbee.mdk.tickets.AcquireTicketChain;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
