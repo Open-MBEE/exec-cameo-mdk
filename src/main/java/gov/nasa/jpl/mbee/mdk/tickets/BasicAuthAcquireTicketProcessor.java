@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.util;
+package gov.nasa.jpl.mbee.mdk.tickets;
 
 import java.awt.GridLayout;
 import java.awt.event.FocusAdapter;
@@ -17,16 +17,26 @@ import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.ProgressStatusRunner;
 
+import org.apache.http.client.methods.HttpRequestBase;
+
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointBuilderConstants;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointType;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSLoginEndpoint;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 
-public class BasicAuthTicketUtils extends AbstractAcquireTicketProcessor {
-    public BasicAuthTicketUtils(AbstractAcquireTicketProcessor processor) {
+public class BasicAuthAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
+    public BasicAuthAcquireTicketProcessor(AbstractAcquireTicketProcessor processor) {
         super(processor);
     }
 
@@ -55,6 +65,41 @@ public class BasicAuthTicketUtils extends AbstractAcquireTicketProcessor {
         password = pass;
     }
 
+    public static String getCredentialsTicket(Project project, String username, String password,
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        return getCredentialsTicket(project, null, username, password, progressStatus);
+    }
+
+    public static String getCredentialsTicket(String baseUrl, String username, String password,
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
+    }
+
+    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password,
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        HttpRequestBase request = null;
+        if (project != null) {
+            request = MMSLoginEndpoint.builder()
+                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
+                    .addParam("username", username).addParam("password", password).build();
+        } else if (baseUrl != null) {
+            request = MMSLoginEndpoint.builder().addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, baseUrl)
+                    .addParam("username", username).addParam("password", password).build();
+        }
+
+        if (request != null) {
+            // do request
+            ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+            MMSUtils.sendMMSRequest(project, request, progressStatus, responseJson);
+            if (responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null
+                    && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
+                return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Uses the stored username and passed password to query MMS for a ticket. Will
      * clear any stored password on attempt.
@@ -81,13 +126,13 @@ public class BasicAuthTicketUtils extends AbstractAcquireTicketProcessor {
         }
 
         // ensure ticket is cleared in case of failure
-        TicketUtils.getTicketMapping().remove(project);
+        TicketUtils.removeTicketMapping(project);
 
         // do request
         ProgressStatusRunner.runWithProgressStatus(progressStatus -> {
             String ticket;
             try {
-                ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
+                ticket = getCredentialsTicket(project, username, pass, progressStatus);
             } catch (IOException | URISyntaxException | ServerException e) {
                 Application.getInstance().getGUILog()
                         .log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());

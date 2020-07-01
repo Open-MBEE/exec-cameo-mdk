@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.util;
+package gov.nasa.jpl.mbee.mdk.tickets;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -22,13 +22,14 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointType;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSTWCLoginEndpoint;
+import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
-public class TWCUtils extends AbstractAcquireTicketProcessor {
-    public TWCUtils(AbstractAcquireTicketProcessor processor) {
+public class TWCAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
+    public TWCAcquireTicketProcessor(AbstractAcquireTicketProcessor processor) {
         super(processor);
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(TWCUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(TWCAcquireTicketProcessor.class);
 
     public static String getConnectedUser() {
         return (EsiUtils.getTeamworkService() == null || EsiUtils.getTeamworkService().getConnectedUser() == null)

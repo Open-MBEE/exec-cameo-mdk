@@ -1,4 +1,4 @@
-package gov.nasa.jpl.mbee.mdk.util;
+package gov.nasa.jpl.mbee.mdk.tickets;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
