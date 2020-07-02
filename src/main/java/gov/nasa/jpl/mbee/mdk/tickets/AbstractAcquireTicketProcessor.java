@@ -23,9 +23,9 @@ public abstract class AbstractAcquireTicketProcessor {
         return false;
     }
 
-    public void resetPassword() {
+    public void reset() {
         if (processor != null) {
-            processor.resetPassword();
+            processor.reset();
         }
     }
 }

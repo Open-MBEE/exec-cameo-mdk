@@ -107,7 +107,7 @@ public class TWCAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
     }
 
     @Override
-    public void resetPassword() {        
-        super.resetPassword();
+    public void reset() {
+        super.reset();
     }
 }

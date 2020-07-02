@@ -44,7 +44,7 @@ public class AcquireTicketChain {
         return chain.acquireMmsTicket(project);
     }
 
-    public void resetPassword() {
-        chain.resetPassword();
+    public void reset() {
+        chain.reset();
     }
 }

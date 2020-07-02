@@ -80,7 +80,7 @@ public class TicketUtils {
      */
     public static void clearTicket(Project project) {
         AcquireTicketChain chain = new AcquireTicketChain();
-        chain.resetPassword();
+        chain.reset();
         TicketMapping removed = ticketMappings.remove(project);
         if (removed != null && removed.getScheduledFuture() != null) {
             removed.getScheduledFuture().cancel(true);
