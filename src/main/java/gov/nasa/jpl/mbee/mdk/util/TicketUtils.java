@@ -15,16 +15,11 @@ import com.nomagic.task.ProgressStatus;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
-import gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor;
+import gov.nasa.jpl.mbee.mdk.tickets.AcquireTicketChain;
 
 public class TicketUtils {
-    private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
+    private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; // seconds
     private static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
-
-
-    public static Map<Project, TicketMapping> getTicketMapping() {
-        return ticketMappings;
-    }
 
     public static void putTicketMapping(Project project, String username, String ticket) {
         ticketMappings.put(project, new TicketMapping(project, username, ticket));
@@ -45,7 +40,8 @@ public class TicketUtils {
     }
 
     /**
-     * Convenience method for checking if ticket is non-empty. Used as a shorthand to verify that a user is logged in to MMS
+     * Convenience method for checking if ticket is non-empty. Used as a shorthand
+     * to verify that a user is logged in to MMS
      *
      * @return ticket exists and is non-empty.
      */
@@ -53,12 +49,13 @@ public class TicketUtils {
         String ticket = getTicket(project);
         return ticket != null && !ticket.isEmpty();
     }
-    
-    public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+
+    public static boolean isTicketValid(Project project, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException {
         if (!isTicketSet(project)) {
             return false;
         }
-        if(MMSUtils.validateJwtToken(project, progressStatus)) {
+        if (MMSUtils.validateJwtToken(project, progressStatus)) {
             return true;
         }
         String username = getUsername(project);
@@ -82,7 +79,8 @@ public class TicketUtils {
      * Clears username, password, and ticket
      */
     public static void clearTicket(Project project) {
-        BasicAuthAcquireTicketProcessor.clearPassword();
+        AcquireTicketChain chain = new AcquireTicketChain();
+        chain.resetPassword();
         TicketMapping removed = ticketMappings.remove(project);
         if (removed != null && removed.getScheduledFuture() != null) {
             removed.getScheduledFuture().cancel(true);
@@ -105,11 +103,15 @@ public class TicketUtils {
                         MMSLogoutAction.logoutAction(project);
                     }
                 } catch (IOException | URISyntaxException | ServerException e) {
-                    Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking ticket validity. Ticket will be retained for re-validation. Reason: " + e.getMessage());
+                    Application.getInstance().getGUILog().log(
+                            "[ERROR] An error occurred while checking ticket validity. Ticket will be retained for re-validation. Reason: "
+                                    + e.getMessage());
                     e.printStackTrace();
                 } catch (Exception ignored) {
                 }
-            }, "Checking MMS ticket", false, TaskRunner.ThreadExecutionStrategy.NONE, false, (runnable, service) -> service.scheduleAtFixedRate(runnable, TICKET_RENEWAL_INTERVAL, TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS));
+            }, "Checking MMS ticket", false, TaskRunner.ThreadExecutionStrategy.NONE, false,
+                    (runnable, service) -> service.scheduleAtFixedRate(runnable, TICKET_RENEWAL_INTERVAL,
+                            TICKET_RENEWAL_INTERVAL, TimeUnit.SECONDS));
         }
 
         public String getTicket() {
