@@ -11,6 +11,9 @@ import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
@@ -22,7 +25,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             PERSIST_CHANGELOG_ID = "PERSIST_CHANGELOG_ID",
             ENABLE_CHANGE_LISTENER_ID = "ENABLE_CHANGE_LISTENER_ID",
             ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
-            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID";
+            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
+            MMS_AUTHENTICATION_CHAIN = "MMS_AUTHENTICATION_CHAIN";
 
     public MDKOptionsGroup() {
         super(ID);
@@ -135,6 +139,26 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         addProperty(property, true);
     }
 
+    public List<String> getAuthenticationChain() {
+        Property p = getProperty(MMS_AUTHENTICATION_CHAIN);
+        String val = p.getValueStringRepresentation();
+        if (val == null || val.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<String> authChain = new ArrayList<String>();
+        for (String chainClass : Arrays.asList(val.split(","))) {
+            authChain.add(chainClass);
+        }
+        return authChain;
+    }
+
+    public void setAuthenticationChain(String value) {
+        StringProperty property = new StringProperty(MMS_AUTHENTICATION_CHAIN, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property, true);
+    }
+
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> EnvironmentOptionsResources.getString(key);
 
     @Override
@@ -144,6 +168,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
+        setAuthenticationChain(
+                "gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor,gov.nasa.jpl.mbee.mdk.tickets.AuthenticationChainError");
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";

@@ -11,7 +11,9 @@ public enum MMSEndpointType {
     COMMIT("mmscommit", "/commits"), // has same path as COMMITS due to current rest pattern
     ELEMENTS("mmselements", "/elements"),
     ELEMENT("mmselement", ""),
-    SEARCH("mmssearch", "/search");
+    SEARCH("mmssearch", "/search"),
+    VALIDATETOKEN("checkauth", "/checkAuth");
+
 
     private String name;
     private String path;

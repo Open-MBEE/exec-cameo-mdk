@@ -6,8 +6,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
+import gov.nasa.jpl.mbee.mdk.tickets.AcquireTicketChain;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.event.ActionEvent;
@@ -37,8 +37,9 @@ public class MMSLoginAction extends MDAction {
             Utils.showPopupMessage("Please login in to Teamwork Cloud before logging in to MMS.");
             return false;
         }
-        */
-        if (!TicketUtils.acquireMmsTicket(project)) {
+        */ 
+        AcquireTicketChain ticketChain = new AcquireTicketChain();
+        if (!ticketChain.acquireMmsTicket(project)) {
             return false;
         }
         ActionsStateUpdater.updateActionsState();
