@@ -258,4 +258,9 @@ public class BasicAuthAcquireTicketProcessor extends AbstractAcquireTicketProces
             return super.acquireMmsTicket(project);
         }
     }
+
+    @Override
+    public void resetPassword() {
+        clearPassword();
+    }
 }

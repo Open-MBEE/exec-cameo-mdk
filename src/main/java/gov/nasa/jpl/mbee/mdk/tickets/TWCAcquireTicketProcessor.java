@@ -105,4 +105,9 @@ public class TWCAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with TWC.");
         return super.acquireMmsTicket(project);
     }
+
+    @Override
+    public void resetPassword() {        
+        super.resetPassword();
+    }
 }
