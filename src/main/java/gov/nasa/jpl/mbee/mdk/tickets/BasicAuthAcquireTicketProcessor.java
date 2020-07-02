@@ -262,5 +262,6 @@ public class BasicAuthAcquireTicketProcessor extends AbstractAcquireTicketProces
     @Override
     public void reset() {
         clearPassword();
+        super.reset();
     }
 }
