@@ -43,4 +43,8 @@ public class AcquireTicketChain {
     public boolean acquireMmsTicket(Project project) {
         return chain.acquireMmsTicket(project);
     }
+
+    public void resetPassword() {
+        chain.resetPassword();
+    }
 }
