@@ -22,10 +22,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -198,19 +195,18 @@ public class MDUtils {
         String originalSvgEnrichedExportPropertyValue = System.getProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME);
         System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, Boolean.toString(!diagramPresentationElement.getDiagramType().getRootType().equals(com.nomagic.magicdraw.uml.DiagramTypeConstants.DEPENDENCY_MATRIX)));
 
-        try {
+        try (InputStream svgInputStream = new FileInputStream(svgFile); Writer svgWriter = new FileWriter(svgFile)) {
             ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgFile, false, DocGenUtils.DOCGEN_DIAGRAM_DPI, DocGenUtils.DOCGEN_DIAGRAM_SCALE_PERCENT);
             String parser = XMLResourceDescriptor.getXMLParserClassName();
             SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-            Document svg = f.createDocument(null, new FileInputStream(svgFile));
+            Document svg = f.createDocument(null, svgInputStream);
             XMLUtil.asList(svg.getElementsByTagName("g")).stream()
                     .filter(g -> g instanceof org.w3c.dom.Element)
                     .map(g -> (org.w3c.dom.Element) g)
                     .filter(g -> Objects.equals(g.getAttribute("class"), "element"))
                     .forEach(g -> g.setAttribute("stroke-width", "0px"));
             DOMSource source = new DOMSource(svg);
-            FileWriter writer = new FileWriter(svgFile);
-            StreamResult result = new StreamResult(writer);
+            StreamResult result = new StreamResult(svgWriter);
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
