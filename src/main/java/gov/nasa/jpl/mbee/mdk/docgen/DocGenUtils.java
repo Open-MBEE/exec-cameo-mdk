@@ -449,7 +449,7 @@ public class DocGenUtils {
         try {
             MDUtils.exportSVG(svgDiagramFile, diagramPresentationElement);
             ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile, false, DOCGEN_DIAGRAM_DPI, DOCGEN_DIAGRAM_SCALE_PERCENT);
-        } catch (IOException e) {
+        } catch (IOException | TransformerException e) {
             e.printStackTrace();
             return results;
         }
