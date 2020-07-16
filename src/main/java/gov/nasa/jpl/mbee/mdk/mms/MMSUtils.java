@@ -53,10 +53,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -644,7 +641,8 @@ public class MMSUtils {
             e.printStackTrace();
             return null;
         }
-        uri.setPath((uri.getPath().endsWith("/") ? "" : "/") + "alfresco/service");
+        String currentPath = Optional.ofNullable(uri.getPath()).orElse("");
+        uri.setPath(currentPath + (currentPath.endsWith("/") ? "" : "/") + "alfresco/service");
         if (project != null && TicketUtils.isTicketSet(project)) {
             uri.setParameter("alf_ticket", TicketUtils.getTicket(project));
         }
