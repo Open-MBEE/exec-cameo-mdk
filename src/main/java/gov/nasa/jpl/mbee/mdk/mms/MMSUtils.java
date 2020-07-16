@@ -385,24 +385,10 @@ public class MMSUtils {
             Application.getInstance().getGUILog().log(requestSummary);
         }
 
-        KeyStore trustStore = KeyStore.getInstance("JKS");
-        FileInputStream fis = new FileInputStream("./certs/cacerts.jks");
-        trustStore.load(fis, "changeit".toCharArray());
-        fis.close();
-        SSLContext sslContext = SSLContexts.custom()
-                .loadTrustMaterial(trustStore, new TrustSelfSignedStrategy()) // use null as second param if you don't have a separate key password
-                .build();
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-                sslContext, new String[]{"TLSv1", "TLSv1.1", "TLSv1.2"}, null,
-                new DefaultHostnameVerifier()
-        );
-
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         if (progressStatus == null) {
-            try (CloseableHttpClient httpclient = HttpClients.custom()
-                    .setSSLSocketFactory(sslsf)
-                    .build();
+            try (CloseableHttpClient httpclient = HttpClients.createDefault();
                  CloseableHttpResponse response = httpclient.execute(request);
                  InputStream inputStream = response.getEntity().getContent()) {
                 responseCode.set(response.getStatusLine().getStatusCode());
@@ -420,9 +406,7 @@ public class MMSUtils {
             LAST_EXCEPTION.set(null);
             progressStatus.setIndeterminate(true);
             Future<?> future = TaskRunner.runWithProgressStatus(() -> {
-                try (CloseableHttpClient httpclient = HttpClients.custom()
-                        .setSSLSocketFactory(sslsf)
-                        .build();
+                try (CloseableHttpClient httpclient = HttpClients.createDefault();
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()) {
                     responseCode.set(response.getStatusLine().getStatusCode());
