@@ -12,6 +12,7 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSArtifact;
@@ -32,10 +33,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -85,7 +83,7 @@ public class DiagramValidator implements RunnableWithProgress {
                     try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                         diagramElementsResponse = JacksonUtils.parseJsonObject(jsonParser);
                     }
-                } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+                } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation. Reason: " + e.getMessage());
                     return;
@@ -124,7 +122,7 @@ public class DiagramValidator implements RunnableWithProgress {
                     try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                         artifactsResponse = JacksonUtils.parseJsonObject(jsonParser);
                     }
-                } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+                } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation. Reason: " + e.getMessage());
                     return;
@@ -168,15 +166,13 @@ public class DiagramValidator implements RunnableWithProgress {
                     Path path;
                     String checksum;
 
-                    Application.getInstance().getGUILog().log("[INFO] Generating Diagram of type" + diagramPresentationElement.getDiagramType().getRootType() + ".");
-
                     try {
-
                         path = Files.createTempFile(DiagramValidator.class.getSimpleName() + "-" + diagramId, "." + entry.getKey());
                         if (entry.getValue().getKey() == ImageExporter.SVG) {
-                            MDUtils.exportSVG(path.toFile(),diagramPresentationElement);
-                        }else {
-                            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, path.toFile());
+                            MDUtils.exportSVG(path.toFile(), diagramPresentationElement);
+                        }
+                        else {
+                            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, path.toFile(), false, DocGenUtils.DOCGEN_DIAGRAM_DPI, DocGenUtils.DOCGEN_DIAGRAM_SCALE_PERCENT);
                         }
                         try (InputStream inputStream = new FileInputStream(path.toFile())) {
                             checksum = DigestUtils.md5Hex(inputStream);

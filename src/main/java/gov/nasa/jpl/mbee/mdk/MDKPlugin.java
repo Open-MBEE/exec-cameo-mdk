@@ -13,10 +13,11 @@ import com.nomagic.magicdraw.plugins.PluginDescriptor;
 import com.nomagic.magicdraw.plugins.PluginUtils;
 import com.nomagic.magicdraw.uml.DiagramDescriptor;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
+import gov.nasa.jpl.mbee.mdk.cli.AutomatedCommitter;
+import gov.nasa.jpl.mbee.mdk.cli.AutomatedViewGenerator;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.cli.AutomatedViewGenerator;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -81,6 +82,7 @@ public class MDKPlugin extends Plugin {
         EvaluationConfigurator.getInstance().registerBinaryImplementers(this.getClass().getClassLoader());
 
         CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());
+        CommandLineActionManager.getInstance().addAction(new AutomatedCommitter());
 
         MDKConfigurator mdkConfigurator = new MDKConfigurator();
         acm.addMainMenuConfigurator(mdkConfigurator);

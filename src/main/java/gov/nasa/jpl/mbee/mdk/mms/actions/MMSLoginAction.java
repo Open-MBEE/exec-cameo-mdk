@@ -13,10 +13,7 @@ import gov.nasa.jpl.mbee.mdk.util.Utils;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
+import java.security.GeneralSecurityException;
 
 public class MMSLoginAction extends MDAction {
     private static final long serialVersionUID = 1L;
@@ -49,7 +46,7 @@ public class MMSLoginAction extends MDAction {
         TaskRunner.runWithProgressStatus(progressStatus -> {
             try {
                 MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
-            } catch (URISyntaxException | IOException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            } catch (URISyntaxException | IOException | ServerException | GeneralSecurityException e) {
                 e.printStackTrace();
             }
         }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false);

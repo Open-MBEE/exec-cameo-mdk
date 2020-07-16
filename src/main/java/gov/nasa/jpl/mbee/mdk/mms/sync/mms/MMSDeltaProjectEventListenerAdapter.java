@@ -30,10 +30,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
@@ -52,7 +49,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
         getProjectMapping(project).setScheduledFuture(TaskRunner.scheduleWithProgressStatus(progressStatus -> {
             try {
                 getProjectMapping(project).update();
-            } catch (URISyntaxException | IOException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            } catch (URISyntaxException | IOException | ServerException | GeneralSecurityException e) {
                 e.printStackTrace();
             }
         }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 1, TimeUnit.MINUTES)));
@@ -163,7 +160,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             }).map(json -> json.get("commitId")).filter(commitIdNode -> commitIdNode != null && commitIdNode.isTextual()).map(JsonNode::asText).findAny().orElse(null);
         }
 
-        public synchronized boolean update() throws URISyntaxException, IOException, ServerException, IllegalStateException, CertificateException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        public synchronized boolean update() throws URISyntaxException, IOException, ServerException, IllegalStateException, GeneralSecurityException {
             if (!project.isRemote()) {
                 return false;
             }

@@ -29,10 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -90,7 +87,7 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, Collections.singleton(objectNode), MMSUtils.JsonBlobType.ELEMENT_JSON);
                 HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, elementsRequestUri, file, ContentType.APPLICATION_JSON);
                 MMSUtils.sendMMSRequest(project, request, progressStatus);
-            } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                 e.printStackTrace();
                 Application.getInstance().getGUILog().log("[ERROR] Failed to commit diagram artifacts for " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());
             }

@@ -32,10 +32,7 @@ import org.apache.http.impl.client.HttpClients;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -269,7 +266,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
                 mmsRefUri.setParameter("alf_ticket", ticketStore).setPath(mmsRefUri.getPath() + "/" + parser.getOptionValue(REF_ID));
                 MMSUtils.sendMMSRequest(null, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsRefUri), null, refsNode);
             }
-        } catch (IOException | ServerException | KeyStoreException | CertificateException | NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (IOException | ServerException | GeneralSecurityException e) {
             illegalStateFailure("[FAILURE] Unable to load project, exception occurred while resolving one of the required project URI parameters.");
             e.printStackTrace();
         }

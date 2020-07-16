@@ -36,10 +36,7 @@ import org.apache.http.entity.ContentType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -76,7 +73,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Utils.guilog("[WARNING] You are not logged in to MMS. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
                 return;
             }
-        } catch (IOException | URISyntaxException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             Utils.guilog("[ERROR] An error occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             return;
         }
@@ -118,7 +115,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("[WARNING] MMS history is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
-        } catch (URISyntaxException | IOException | IllegalStateException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException | ServerException e) {
+        } catch (URISyntaxException | IOException | IllegalStateException | GeneralSecurityException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while updating MMS history. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             e.printStackTrace();
             return;
@@ -189,7 +186,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (IOException | URISyntaxException | ServerException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
                 if (progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
                     return;
@@ -329,7 +326,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     TaskRunner.runWithProgressStatus(progressStatus1 -> {
                         try {
                             MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                        } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+                        } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                             // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                             e.printStackTrace();
                         }
@@ -355,7 +352,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                    } catch (IOException | ServerException | URISyntaxException | CertificateException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+                    } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }
