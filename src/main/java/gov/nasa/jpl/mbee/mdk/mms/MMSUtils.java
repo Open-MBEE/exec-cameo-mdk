@@ -619,8 +619,14 @@ public class MMSUtils {
             e.printStackTrace();
             return null;
         }
-        String currentPath = Optional.ofNullable(uri.getPath()).orElse("");
-        uri.setPath(currentPath + (currentPath.endsWith("/") ? "" : "/") + "alfresco/service");
+        String path = Optional.ofNullable(uri.getPath()).orElse("");
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        if (!path.endsWith("alfresco/service")) {
+            path += "/alfresco/service";
+        }
+        uri.setPath(path);
         if (project != null && TicketUtils.isTicketSet(project)) {
             uri.setParameter("alf_ticket", TicketUtils.getTicket(project));
         }
