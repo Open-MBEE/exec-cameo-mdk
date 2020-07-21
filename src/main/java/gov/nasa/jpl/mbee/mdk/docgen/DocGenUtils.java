@@ -1,7 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.docgen;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.properties.BooleanProperty;
@@ -12,12 +11,17 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
-import java.io.*;
+import javax.xml.transform.TransformerException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,6 +90,9 @@ public class DocGenUtils {
         }
     };
     private static final Pattern ENTITY_PATTERN = Pattern.compile("(&[^\\s]+?;)");
+
+    public static int DOCGEN_DIAGRAM_DPI = 72;
+    public static int DOCGEN_DIAGRAM_SCALE_PERCENT = 100;
 
     /**
      * docbook ignores regular white space in table cells, this is to force
@@ -418,13 +425,11 @@ public class DocGenUtils {
      * will be the diagram id in magicdraw. The images will be 72 dpi and 100%
      * scaling.
      *
-     * @param diagram        the magicdraw diagram element
-     * @param directory      directory for docbook xml output (without trailing slash)
+     * @param diagram   the magicdraw diagram element
+     * @param directory directory for docbook xml output (without trailing slash)
      * @throws IOException
      */
     public static List<String> exportDiagram(Diagram diagram, File directory) throws IOException {
-        int dpi = 72;
-        int scalePercent = 100;
         Project project = Application.getInstance().getProject();
         if (project == null) {
             return Collections.emptyList();
@@ -442,9 +447,9 @@ public class DocGenUtils {
         results.add(directory.getName() + "/" + svgFileName);
 
         try {
-            ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgDiagramFile, false, dpi, scalePercent);
-            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile, false, dpi, scalePercent);
-        } catch (IOException e) {
+            MDUtils.exportSVG(svgDiagramFile, diagramPresentationElement);
+            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, pngDiagramFile, false, DOCGEN_DIAGRAM_DPI, DOCGEN_DIAGRAM_SCALE_PERCENT);
+        } catch (IOException | TransformerException e) {
             e.printStackTrace();
             return results;
         }
