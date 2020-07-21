@@ -31,6 +31,8 @@ import java.util.*;
  */
 public class MDUtils {
 
+    public static String SVG_ENRICHED_EXPORT_PROPERTY_NAME = "svg.enriched.export";
+
     /**
      * @return true iff MD was started with the DEVELOPER option at the command
      * line.
@@ -191,7 +193,6 @@ public class MDUtils {
     }
 
     public static void exportSVG(File svgFile, DiagramPresentationElement diagramPresentationElement) throws IOException, TransformerException {
-        String SVG_ENRICHED_EXPORT_PROPERTY_NAME = "svg.enriched.export";
         String originalSvgEnrichedExportPropertyValue = System.getProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME);
         System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, Boolean.toString(!diagramPresentationElement.getDiagramType().getRootType().equals(com.nomagic.magicdraw.uml.DiagramTypeConstants.DEPENDENCY_MATRIX)));
 
