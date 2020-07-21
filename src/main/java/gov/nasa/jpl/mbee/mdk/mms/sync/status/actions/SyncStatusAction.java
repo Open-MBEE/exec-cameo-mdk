@@ -19,6 +19,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 
 /**
@@ -184,7 +185,7 @@ public class SyncStatusAction extends MDAction {
                     MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
                     progressStatus.setDescription("Updating table");
                     update();
-                } catch (URISyntaxException | IOException | ServerException e) {
+                } catch (URISyntaxException | IOException | ServerException | GeneralSecurityException e) {
                     e.printStackTrace();
                 }
             }, "Sync Status Update", false, 0);

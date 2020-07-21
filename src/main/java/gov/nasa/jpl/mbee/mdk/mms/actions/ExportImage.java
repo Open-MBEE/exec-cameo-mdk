@@ -21,6 +21,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public class ExportImage extends RuleViolationAction implements AnnotationAction
             TaskRunner.runWithProgressStatus(progressStatus -> {
                 try {
                     MMSUtils.sendMMSRequest(project, request, progressStatus);
-                } catch (IOException | ServerException | URISyntaxException e) {
+                } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                     // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                     e.printStackTrace();
                 }

@@ -12,12 +12,14 @@ import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSArtifact;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitDiagramArtifactsAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.ValidateElementAction;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
@@ -26,10 +28,12 @@ import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.entity.ContentType;
 
+import javax.xml.transform.TransformerException;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -79,7 +83,7 @@ public class DiagramValidator implements RunnableWithProgress {
                     try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                         diagramElementsResponse = JacksonUtils.parseJsonObject(jsonParser);
                     }
-                } catch (IOException | ServerException | URISyntaxException e) {
+                } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation. Reason: " + e.getMessage());
                     return;
@@ -118,7 +122,7 @@ public class DiagramValidator implements RunnableWithProgress {
                     try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                         artifactsResponse = JacksonUtils.parseJsonObject(jsonParser);
                     }
-                } catch (IOException | ServerException | URISyntaxException e) {
+                } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation. Reason: " + e.getMessage());
                     return;
@@ -161,13 +165,19 @@ public class DiagramValidator implements RunnableWithProgress {
                 for (Map.Entry<String, Pair<Integer, ContentType>> entry : EXPORT_FORMATS.entrySet()) {
                     Path path;
                     String checksum;
+
                     try {
                         path = Files.createTempFile(DiagramValidator.class.getSimpleName() + "-" + diagramId, "." + entry.getKey());
-                        ImageExporter.export(diagramPresentationElement, entry.getValue().getKey(), path.toFile());
+                        if (entry.getValue().getKey() == ImageExporter.SVG) {
+                            MDUtils.exportSVG(path.toFile(), diagramPresentationElement);
+                        }
+                        else {
+                            ImageExporter.export(diagramPresentationElement, ImageExporter.PNG, path.toFile(), false, DocGenUtils.DOCGEN_DIAGRAM_DPI, DocGenUtils.DOCGEN_DIAGRAM_SCALE_PERCENT);
+                        }
                         try (InputStream inputStream = new FileInputStream(path.toFile())) {
                             checksum = DigestUtils.md5Hex(inputStream);
                         }
-                    } catch (IOException e) {
+                    } catch (IOException | TransformerException e) {
                         e.printStackTrace();
                         Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation for " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());
                         break;

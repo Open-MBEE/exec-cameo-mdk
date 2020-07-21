@@ -16,8 +16,8 @@ import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.EmptyProgressStatus;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
@@ -51,6 +51,7 @@ import org.json.simple.JSONArray;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -268,7 +269,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     viewResponse = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (IOException | URISyntaxException | ServerException e) {
+            } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
                 failure = true;
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred. View generation aborted. Please check your network connection or view logs for more information. Reason: " + e.getMessage());
                 e.printStackTrace();
@@ -336,7 +337,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                         try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                             instanceAndSlotResponse = JacksonUtils.parseJsonObject(jsonParser);
                         }
-                    } catch (IOException | URISyntaxException | ServerException e) {
+                    } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
                         failure = true;
                         Application.getInstance().getGUILog().log("[ERROR] An error occurred. View generation aborted. Please check your network connection or view logs for more information. Reason: " + e.getMessage());
                         e.printStackTrace();
@@ -660,7 +661,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }
@@ -692,7 +693,7 @@ public class ViewPresentationGenerator implements RunnableWithProgress {
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }

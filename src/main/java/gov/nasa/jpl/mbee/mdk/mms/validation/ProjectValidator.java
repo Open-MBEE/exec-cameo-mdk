@@ -23,21 +23,22 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
 /**
  * SysML 2 Pilot Implementation
  * Copyright (C) 2018  California Institute of Technology ("Caltech")
- *
+ * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
@@ -72,7 +73,7 @@ public class ProjectValidator {
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }
-        } catch (IOException | ServerException | URISyntaxException e) {
+        } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
             errors = true;
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS projects. Project validation aborted. Reason: " + e.getMessage());
