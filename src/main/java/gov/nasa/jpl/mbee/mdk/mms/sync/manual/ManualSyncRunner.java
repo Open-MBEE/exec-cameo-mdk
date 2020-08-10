@@ -86,7 +86,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         for (Element element : rootElements) {
             collectClientElementsRecursively(project, element, depth, clientElements);
             try {
-                File searchFile = searchForServerElements(project, progressStatus);
+                File searchFile = searchForServerElements(project, element, progressStatus);
                 if(searchFile != null) {
                     responseFiles.add(searchFile);
                 }
@@ -112,9 +112,13 @@ public class ManualSyncRunner implements RunnableWithProgress {
         elementValidator.run(progressStatus);
     }
 
-    private File searchForServerElements(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        Collection<String> nodeIds = new HashSet<>();
-        nodeIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())); // adding the root node because we'll recurse to get the entire tree from it
+    private File searchForServerElements(Project project, Element element, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        Collection<String> nodeIds = new HashSet<>(); // this is a collection because the createEntityFile method expects it
+        if(element.equals(project.getPrimaryModel())) {
+            nodeIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())); // adding the root node because we'll recurse to get the entire tree from it
+        } else {
+            nodeIds.add(element.getID());
+        }
         File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
         HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
                 .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
