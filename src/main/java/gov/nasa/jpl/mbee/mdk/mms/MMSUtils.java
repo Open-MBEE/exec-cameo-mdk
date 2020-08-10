@@ -196,6 +196,7 @@ public class MMSUtils {
                 } else if (node instanceof String && jsonBlobType == JsonBlobType.SEARCH) {
                     jsonGenerator.writeObjectFieldStart(MDKConstants.PARAMS_FIELD);
                     jsonGenerator.writeStringField(MDKConstants.OWNER_ID_KEY, (String) node);
+                    jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
                     jsonGenerator.writeEndObject();
                     jsonGenerator.writeObjectFieldStart(MDKConstants.RECURSE_FIELD);
                     jsonGenerator.writeStringField(MDKConstants.ID_KEY, MDKConstants.OWNER_ID_KEY);
