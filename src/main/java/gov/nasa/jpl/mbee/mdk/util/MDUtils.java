@@ -25,6 +25,8 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.*;
 
+import static com.nomagic.magicdraw.uml.DiagramTypeConstants.*;
+
 /**
  * A collection of utility functions for accessing the MagicDraw (MD)
  * application.
@@ -194,24 +196,33 @@ public class MDUtils {
 
     public static void exportSVG(File svgFile, DiagramPresentationElement diagramPresentationElement) throws IOException, TransformerException {
         String originalSvgEnrichedExportPropertyValue = System.getProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME);
-        System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, Boolean.toString(!diagramPresentationElement.getDiagramType().getRootType().equals(com.nomagic.magicdraw.uml.DiagramTypeConstants.DEPENDENCY_MATRIX)));
 
-        try (InputStream svgInputStream = new FileInputStream(svgFile); Writer svgWriter = new FileWriter(svgFile)) {
+        try {
+            boolean svgEnrichedExportPropertyValue = originalSvgEnrichedExportPropertyValue != null
+                    && Boolean.getBoolean(originalSvgEnrichedExportPropertyValue)
+                    && !diagramPresentationElement.getDiagramType().getRootType().equals(DEPENDENCY_MATRIX);
+            System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, Boolean.toString(svgEnrichedExportPropertyValue));
+
             ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgFile, false, DocGenUtils.DOCGEN_DIAGRAM_DPI, DocGenUtils.DOCGEN_DIAGRAM_SCALE_PERCENT);
-            String parser = XMLResourceDescriptor.getXMLParserClassName();
-            SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-            Document svg = f.createDocument(null, svgInputStream);
-            XMLUtil.asList(svg.getElementsByTagName("g")).stream()
-                    .filter(g -> g instanceof org.w3c.dom.Element)
-                    .map(g -> (org.w3c.dom.Element) g)
-                    .filter(g -> Objects.equals(g.getAttribute("class"), "element"))
-                    .forEach(g -> g.setAttribute("stroke-width", "0px"));
-            DOMSource source = new DOMSource(svg);
-            StreamResult result = new StreamResult(svgWriter);
 
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.transform(source, result);
+            if (svgEnrichedExportPropertyValue) {
+                try (InputStream svgInputStream = new FileInputStream(svgFile); Writer svgWriter = new FileWriter(svgFile)) {
+                    String parser = XMLResourceDescriptor.getXMLParserClassName();
+                    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
+                    Document svg = f.createDocument(null, svgInputStream);
+                    XMLUtil.asList(svg.getElementsByTagName("g")).stream()
+                            .filter(g -> g instanceof org.w3c.dom.Element)
+                            .map(g -> (org.w3c.dom.Element) g)
+                            .filter(g -> Objects.equals(g.getAttribute("class"), "element"))
+                            .forEach(g -> g.setAttribute("stroke-width", "0px"));
+                    DOMSource source = new DOMSource(svg);
+                    StreamResult result = new StreamResult(svgWriter);
+
+                    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                    Transformer transformer = transformerFactory.newTransformer();
+                    transformer.transform(source, result);
+                }
+            }
         } finally {
             if (originalSvgEnrichedExportPropertyValue != null) {
                 System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, originalSvgEnrichedExportPropertyValue);
