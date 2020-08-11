@@ -213,7 +213,12 @@ public class MDUtils {
             Transformer transformer = transformerFactory.newTransformer();
             transformer.transform(source, result);
         } finally {
-            System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, originalSvgEnrichedExportPropertyValue);
+            if (originalSvgEnrichedExportPropertyValue != null) {
+                System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, originalSvgEnrichedExportPropertyValue);
+            }
+            else {
+                System.clearProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME);
+            }
         }
     }
 
