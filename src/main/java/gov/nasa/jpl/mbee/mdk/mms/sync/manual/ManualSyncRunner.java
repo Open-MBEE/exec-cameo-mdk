@@ -117,7 +117,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         if(element.equals(project.getPrimaryModel())) {
             nodeIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())); // adding the root node because we'll recurse to get the entire tree from it
         } else {
-            nodeIds.add(element.getID());
+            nodeIds.add(element.getLocalID());
         }
         File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
         HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
