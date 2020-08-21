@@ -319,6 +319,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             }
             if (!postElements.isEmpty()) {
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
+                // Prevent potential "Not Equivalent" errors due to default merging of element data.
+                requestUri.addParameter("overwrite", "true");
                 try {
                     File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
 
