@@ -151,8 +151,8 @@ public class ElementValidator implements RunnableWithProgress {
                 if(serverObjectsOnlyHasBins(elementObjects)) {
                     // solves edge case where first model validation incorrectly removes bins from project
                     removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.HOLDING_BIN_ID_PREFIX);
-                    removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.VIEW_INSTANCES_BIN_PREFIX);
                 }
+                removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.VIEW_INSTANCES_BIN_PREFIX);
 
                 for(ObjectNode jsonObject : elementObjects) {
                     JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
