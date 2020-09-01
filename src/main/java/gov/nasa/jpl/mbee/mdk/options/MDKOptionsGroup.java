@@ -140,8 +140,11 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
 
     public List<String> getAuthenticationChain() {
-        Property p = getProperty(MMS_AUTHENTICATION_CHAIN);
-        String val = p.getValueStringRepresentation();
+        String val = PROPERTY_RESOURCE_PROVIDER.getString(MMS_AUTHENTICATION_CHAIN, null);
+        if(val == null || val.isEmpty()) {
+            Property p = getProperty(MMS_AUTHENTICATION_CHAIN);
+            val = p.getValueStringRepresentation();
+        }
         if (val == null || val.isEmpty()) {
             return new ArrayList<>();
         }
@@ -170,6 +173,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setUserScriptDirectory("");
         setAuthenticationChain(
                 "gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor,gov.nasa.jpl.mbee.mdk.tickets.AuthenticationChainError");
+
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";
