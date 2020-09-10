@@ -24,10 +24,9 @@ import org.apache.http.entity.ContentType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.security.GeneralSecurityException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by igomes on 9/26/16.
@@ -90,7 +89,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 if(searchFile != null) {
                     responseFiles.add(searchFile);
                 }
-            } catch (ServerException | URISyntaxException | IOException e) {
+            } catch (ServerException | URISyntaxException | IOException | GeneralSecurityException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting elements from the server. Manual sync aborted. Reason: " + e.getMessage());
                 e.printStackTrace();
                 validationSuite = null;
@@ -143,6 +142,28 @@ public class ManualSyncRunner implements RunnableWithProgress {
             attachedModels.remove(project.getPrimaryModel());
             attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements));
         }
+    }
+
+    private static File collectServerElementsRecursively(Project project, Element element, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
+        String id = Converters.getElementToIdConverter().apply(element);
+        Collection<String> elementIds = new ArrayList<>(1);
+        elementIds.add(id);
+        return MMSUtils.getElementsRecursively(project, elementIds, depth, progressStatus);
+    }
+
+    private static File collectServerModuleElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
+        Collection<Element> attachedModels = new ArrayList<>(project.getModels());
+        attachedModels.remove(project.getPrimaryModel());
+        Collection<String> attachedModelIds = attachedModels.stream().map(Converters.getElementToIdConverter()).filter(amId -> amId != null).collect(Collectors.toList());
+        return MMSUtils.getElements(project, attachedModelIds, null);
+    }
+
+    private static File collectServerHoldingBinElementsRecursively(Project project, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
+        String holdingBinId = MDKConstants.HOLDING_BIN_ID_PREFIX + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+        return MMSUtils.getElementRecursively(project, holdingBinId, depth, progressStatus);
     }
 
     public ValidationSuite getValidationSuite() {

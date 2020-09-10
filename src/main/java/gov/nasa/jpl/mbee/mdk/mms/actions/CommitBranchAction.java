@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -161,7 +162,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             if(refObjectNode != null) {
                 parentBranchJsonNode = refObjectNode;
             }
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS branches. Branch commit aborted. Reason: " + e.getMessage());
             return;
@@ -189,7 +190,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             HttpRequestBase refsRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSRefsEndpoint.builder(), project, sendFile)
                     .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId).build();
             MMSUtils.sendMMSRequest(project, refsRequest);
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
             e.printStackTrace();
             return;

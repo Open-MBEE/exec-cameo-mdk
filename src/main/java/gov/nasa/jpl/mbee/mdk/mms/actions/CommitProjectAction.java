@@ -30,6 +30,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.*;
 
 public class CommitProjectAction extends RuleViolationAction implements AnnotationAction, IRuleViolationAction {
@@ -74,7 +75,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
             // check for existing org, use that if it exists instead of prompting to select one
             orgId = MMSUtils.getMmsOrg(project);
             // a null result here just means the project isn't on mms
-        } catch (IOException | URISyntaxException | ServerException e1) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e1) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking for project org on MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;
@@ -90,7 +91,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (IOException | URISyntaxException | ServerException e1) {
+            } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e1) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS orgs. Project commit cancelled. Reason: " + e1.getMessage());
                 e1.printStackTrace();
                 return null;
@@ -153,7 +154,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 // crude method of waiting for project post to propagate
                 Thread.sleep(5000);
             }
-        } catch (IOException | URISyntaxException | ServerException | InterruptedException e1) {
+        } catch (IOException | URISyntaxException | ServerException | InterruptedException | GeneralSecurityException e1) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting project to MMS. Project commit cancelled. Reason: " + e1.getMessage());
             e1.printStackTrace();
             return null;

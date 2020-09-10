@@ -35,6 +35,7 @@ import org.apache.http.impl.client.HttpClients;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -274,7 +275,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
                         .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
                 MMSUtils.sendMMSRequest(null, refRequest, null, refsNode);
             }
-        } catch (IOException | ServerException e) {
+        } catch (IOException | ServerException | GeneralSecurityException e) {
             illegalStateFailure("[FAILURE] Unable to load project, exception occurred while resolving one of the required project URI parameters.");
             e.printStackTrace();
         }

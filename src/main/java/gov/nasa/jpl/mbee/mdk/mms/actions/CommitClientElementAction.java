@@ -26,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,11 +127,12 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
                 HttpRequestBase elementsUpdateCreateRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
                         .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
-                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build()
+                        .addParam("overwrite", "true");
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, elementsUpdateCreateRequest, progressStatus);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }
@@ -151,7 +153,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
                         MMSUtils.sendMMSRequest(project, elementsDeleteRequest, progressStatus);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }
