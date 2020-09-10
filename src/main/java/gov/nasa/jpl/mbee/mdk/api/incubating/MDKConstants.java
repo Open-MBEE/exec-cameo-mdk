@@ -52,5 +52,10 @@ public class MDKConstants {
             SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900",
             PARENT_COMMIT_ID = "parentCommitId",
             PARAMS_FIELD = "params",
-            RECURSE_FIELD = "recurse";
+            RECURSE_FIELD = "recurse",
+            CONTENT_TYPE = "Content-Type",
+            TWC_HEADER = "TWC",
+            AUTHORIZATION = "Authorization",
+            CHARSET = "charset",
+            APPLICATION_JSON = "application/json";
 }

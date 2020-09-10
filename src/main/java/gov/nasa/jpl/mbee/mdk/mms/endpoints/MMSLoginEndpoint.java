@@ -1,10 +1,11 @@
 package gov.nasa.jpl.mbee.mdk.mms.endpoints;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.task.ProgressStatus;
-import gov.nasa.jpl.mbee.mdk.http.ServerException;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+
 import org.apache.http.Consts;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.methods.HttpPost;
@@ -14,11 +15,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static gov.nasa.jpl.mbee.mdk.mms.MMSUtils.sendMMSRequest;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 
 public class MMSLoginEndpoint extends MMSEndpoint {
     public MMSLoginEndpoint(String baseUri) throws URISyntaxException {

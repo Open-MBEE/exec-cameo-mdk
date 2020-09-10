@@ -137,13 +137,14 @@ public class JacksonUtils {
                         keyName = jsonParser.getCurrentName();
                         if(keyName.equals(expectedKey)) {
                             parsedResponseObjects.put(expectedKey, parseExpectedArray(jsonParser, current));
-                        } else if(keyName.equals(MDKJsonConstants.MESSAGES_NODE) || keyName.equals(MDKJsonConstants.REJECTED_NODE)) {
-                            if(keyName.equals(MDKJsonConstants.MESSAGES_NODE)) {
-                                parsedResponseObjects.put(MDKJsonConstants.MESSAGES_NODE, parseExpectedArray(jsonParser, current));
-                            } else {
-                                parsedResponseObjects.put(MDKJsonConstants.REJECTED_NODE, parseExpectedArray(jsonParser, current));
-                            }
-                        } else {
+                        } else if(keyName.equals(MDKJsonConstants.MESSAGES_NODE) ) {
+                            parsedResponseObjects.put(MDKJsonConstants.MESSAGES_NODE, parseExpectedArray(jsonParser, current));
+                        } else if(keyName.equals(MDKJsonConstants.REJECTED_NODE)) {
+                            parsedResponseObjects.put(MDKJsonConstants.REJECTED_NODE, parseExpectedArray(jsonParser, current));
+                        } else if(keyName.equals("total") || keyName.equals("rejectedTotal")){
+                            //TODO: fill in what to do with the totals
+                        }
+                        else {
                             throw new IOException("Unable to properly read this JSON format, check REST responses.");
                         }
                     }

@@ -119,36 +119,17 @@ public class MMSUtils {
         return sendMMSRequest(project, artifactGetRequest, progressStatus);
     }
 
-    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        return getCredentialsTicket(project, null, username, password, progressStatus);
-    }
+    public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+        // build request
+        HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSValidateJwtToken.builder(), project).build();
+        
+        // do request
+        ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
+        sendMMSRequest(project, request, progressStatus, responseJson);
 
-    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
-    }
-
-    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
-        HttpRequestBase request = null;
-        if(project != null) {
-            request = MMSLoginEndpoint.builder()
-                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
-                    .addParam("username", username).addParam("password", password).build();
-        } else if(baseUrl != null) {
-            request = MMSLoginEndpoint.builder()
-                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, baseUrl)
-                    .addParam("username", username).addParam("password", password).build();
-        }
-
-        if(request != null) {
-            // do request
-            ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
-            sendMMSRequest(project, request, progressStatus, responseJson);
-            if(responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY) != null && responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).isTextual()) {
-                return responseJson.get(MMSEndpointType.AUTHENTICATION_RESPONSE_JSON_KEY).asText();
-            }
-        }
-
-        return null;
+        // parse response
+        JsonNode value;
+        return responseJson != null && (value = responseJson.get("username")) != null && value.isTextual() && !value.asText().isEmpty();
     }
 
     public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
@@ -217,7 +198,12 @@ public class MMSUtils {
                     jsonGenerator.writeEndObject();
                 } else if (node instanceof String && jsonBlobType == JsonBlobType.SEARCH) {
                     jsonGenerator.writeObjectFieldStart(MDKConstants.PARAMS_FIELD);
-                    jsonGenerator.writeStringField(MDKConstants.OWNER_ID_KEY, (String) node);
+                    Project project = Application.getInstance().getProject();
+                    if(project != null && node.equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
+                        jsonGenerator.writeStringField(MDKConstants.OWNER_ID_KEY, (String) node);
+                    } else {
+                        jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
+                    }
                     jsonGenerator.writeEndObject();
                     jsonGenerator.writeObjectFieldStart(MDKConstants.RECURSE_FIELD);
                     jsonGenerator.writeStringField(MDKConstants.ID_KEY, MDKConstants.OWNER_ID_KEY);
