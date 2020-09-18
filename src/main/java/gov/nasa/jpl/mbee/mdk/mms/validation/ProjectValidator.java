@@ -8,6 +8,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
+import com.nomagic.magicdraw.esi.EsiUtils.EsiBranchInfo;
+
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -20,11 +22,14 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
 
 import javax.swing.JOptionPane;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * SysML 2 Pilot Implementation
@@ -53,11 +58,39 @@ public class ProjectValidator {
     private boolean errors;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
     private ValidationRule projectExistenceValidationRule = new ValidationRule("Project Existence", "The project shall exist in the specified site.", ViolationSeverity.ERROR);
-    private static boolean isTWCServiceChanged = false;
 
     public ProjectValidator(Project project) {
         this.project = project;
         validationSuite.addValidationRule(projectExistenceValidationRule);
+    }
+
+    public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
+        return generateProjectObjectNode(project.getPrimaryProject(), orgId);
+    }
+
+    public static ObjectNode generateProjectObjectNode(IProject iProject, String orgId) {
+        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
+        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
+        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
+        projectObjectNode.put(MDKConstants.ORG_ID_KEY, orgId);
+        projectObjectNode.put(MDKConstants.PROJECT_TYPE_KEY, MDKConstants.PROJECT_TYPE_VALUE);
+        String resourceId = "";
+        String twcServerUrl = "";
+        Project project = ProjectUtilities.getProject(iProject);
+        if (project != null && project.isRemote()) {
+            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
+            twcServerUrl = getTeamworkCloudServer();
+        }
+        if(twcServerUrl != null && !twcServerUrl.isEmpty()) {
+                projectObjectNode.put(MDKConstants.TWC_SERVICE_ID, twcServerUrl);
+        }
+        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
+        String categoryId = "";
+        if (project != null && project.getPrimaryProject() == iProject && !resourceId.isEmpty()) {
+            categoryId = EsiUtils.getCategoryID(resourceId);
+        }
+        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
+        return projectObjectNode;
     }
 
     public static String getTeamworkCloudServer() {
@@ -72,11 +105,48 @@ public class ProjectValidator {
         return twcServer;
     }
 
-    public static void setTWCServiceChanged(JsonNode projectJson) {
+    public void updateTWCServiceToProject(JsonNode projectJson) {
+        JsonNode value = projectJson.get(MDKConstants.ORG_ID_KEY);
+        String orgId = (value != null && value.isTextual()) ? value.asText() : null;
+        if (orgId == null) {
+            Application.getInstance().getGUILog()
+                    .log("[ERROR] Could not find MMS Org associated with the project. TWC Service update cancelled.");
+            return;
+        }
+        ObjectNode projectObjectNode = generateProjectObjectNode(project, orgId);
+        Collection<ObjectNode> projects = new LinkedList<>();
+        projects.add(projectObjectNode);
+        File sendData;
+        try {
+            sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects,
+                    MMSUtils.JsonBlobType.PROJECT);
+            // generate project post request
+            HttpRequestBase request = MMSUtils
+                    .prepareEndpointBuilderBasicJsonPostRequest(MMSProjectsEndpoint.builder(), project, sendData)
+                    .build();
+            // do project post request
+            MMSUtils.sendMMSRequest(project, request);
+        } catch (IOException | ServerException | URISyntaxException e) {
+            Application.getInstance().getGUILog()
+                    .log("[ERROR] An error occurred while posting project to MMS. Project commit cancelled. Reason: "
+                            + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void checkIfTWCServiceChanged(JsonNode projectJson) {
         JsonNode value;
-        if((value = projectJson.get(MDKConstants.TWC_HEADER)) != null && value.isTextual() && !value.asText().isEmpty()) {                        
+        if ((value = projectJson.get(MDKConstants.TWC_SERVICE_ID)) != null && value.isTextual()
+                && !value.asText().isEmpty()) {
             String twcServerUrl = getTeamworkCloudServer();
-            isTWCServiceChanged = (twcServerUrl != null) ? twcServerUrl.equalsIgnoreCase(value.asText()) : isTWCServiceChanged;
+            if (twcServerUrl != null && !twcServerUrl.equalsIgnoreCase(value.asText())) {
+                int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(),
+                        "Would you like to associate this project with current TWC Service?",
+                        "Associated TWC Service Changed", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.OK_OPTION) {
+                    updateTWCServiceToProject(projectJson);
+                }
+            }
         }
     }
 
@@ -100,14 +170,15 @@ public class ProjectValidator {
             for (JsonNode projectJson : projectsJson) {
                 if ((value = projectJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()
                         && value.asText().equals(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))) {
-                    setTWCServiceChanged(projectJson);
+                    checkIfTWCServiceChanged(projectJson);
                     return;
                 }
             }
         }
 
         ValidationRuleViolation v;
-        if (!project.isRemote() || EsiUtils.getCurrentBranch(project.getPrimaryProject()).getName().equals("trunk")) {
+        EsiBranchInfo currentBranch = EsiUtils.getCurrentBranch(project.getPrimaryProject());
+        if (!project.isRemote() || (currentBranch != null && currentBranch.getName().equals("trunk"))) {
             v = new ValidationRuleViolation(project.getPrimaryModel(), "[PROJECT MISSING ON MMS] The project does not exist in the MMS.");
             v.addAction(new CommitProjectAction(project, true));
         }
@@ -115,42 +186,6 @@ public class ProjectValidator {
             v = new ValidationRuleViolation(project.getPrimaryModel(), "[PROJECT MISSING ON MMS] The project does not exist in the MMS. You must initialize the project from the master branch first.");
         }
         projectExistenceValidationRule.addViolation(v);
-    }
-
-    public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
-        return generateProjectObjectNode(project.getPrimaryProject(), orgId);
-    }
-
-    public static ObjectNode generateProjectObjectNode(IProject iProject, String orgId) {
-        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
-        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
-        projectObjectNode.put(MDKConstants.ORG_ID_KEY, orgId);
-        projectObjectNode.put(MDKConstants.PROJECT_TYPE_KEY, MDKConstants.PROJECT_TYPE_VALUE);
-        String resourceId = "";
-        String twcServerUrl = "";
-        if (ProjectUtilities.getProject(iProject).isRemote()) {
-            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
-            twcServerUrl = getTeamworkCloudServer();
-        }
-        if(twcServerUrl != null && !twcServerUrl.isEmpty()) {
-            if(isTWCServiceChanged) {
-                int response = JOptionPane.showConfirmDialog(Application.getInstance().getMainFrame(), "Would you like to associate this project with current TWC Service?",
-                        "Associated TWC Service Changed", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-                if (response == JOptionPane.OK_OPTION) {
-                    projectObjectNode.put(MDKConstants.TWC_HEADER, twcServerUrl);
-                }
-            } else {
-                projectObjectNode.put(MDKConstants.TWC_HEADER, twcServerUrl);
-            }
-        }
-        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
-        String categoryId = "";
-        if (ProjectUtilities.getProject(iProject).getPrimaryProject() == iProject && !resourceId.isEmpty()) {
-            categoryId = EsiUtils.getCategoryID(resourceId);
-        }
-        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        return projectObjectNode;
     }
 
     public boolean hasErrors() {
