@@ -128,7 +128,7 @@ public class ProjectValidator {
             MMSUtils.sendMMSRequest(project, request);
         } catch (IOException | ServerException | URISyntaxException e) {
             Application.getInstance().getGUILog()
-                    .log("[ERROR] An error occurred while posting project to MMS. Project commit cancelled. Reason: "
+                    .log("[ERROR] An error occurred while posting project to MMS. TWC Service update cancelled. Reason: "
                             + e.getMessage());
             e.printStackTrace();
         }
