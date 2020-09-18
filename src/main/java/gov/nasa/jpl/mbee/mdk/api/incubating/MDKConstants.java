@@ -57,5 +57,6 @@ public class MDKConstants {
             TWC_HEADER = "TWC",
             AUTHORIZATION = "Authorization",
             CHARSET = "charset",
-            APPLICATION_JSON = "application/json";
+            APPLICATION_JSON = "application/json",
+            TWC_SERVICE_ID = "twcServiceId";
 }
