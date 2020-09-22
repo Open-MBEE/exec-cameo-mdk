@@ -64,35 +64,6 @@ public class ProjectValidator {
         validationSuite.addValidationRule(projectExistenceValidationRule);
     }
 
-    public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
-        return generateProjectObjectNode(project.getPrimaryProject(), orgId);
-    }
-
-    public static ObjectNode generateProjectObjectNode(IProject iProject, String orgId) {
-        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
-        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
-        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
-        projectObjectNode.put(MDKConstants.ORG_ID_KEY, orgId);
-        projectObjectNode.put(MDKConstants.PROJECT_TYPE_KEY, MDKConstants.PROJECT_TYPE_VALUE);
-        String resourceId = "";
-        String twcServerUrl = "";
-        Project project = ProjectUtilities.getProject(iProject);
-        if (project != null && project.isRemote()) {
-            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
-            twcServerUrl = getTeamworkCloudServer();
-        }
-        if(twcServerUrl != null && !twcServerUrl.isEmpty()) {
-                projectObjectNode.put(MDKConstants.TWC_SERVICE_ID, twcServerUrl);
-        }
-        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
-        String categoryId = "";
-        if (project != null && project.getPrimaryProject() == iProject && !resourceId.isEmpty()) {
-            categoryId = EsiUtils.getCategoryID(resourceId);
-        }
-        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
-        return projectObjectNode;
-    }
-
     public static String getTeamworkCloudServer() {
         String twcServer = null;
         if (EsiUtils.getTeamworkService() != null && EsiUtils.getTeamworkService().getLastUsedLoginInfo() != null
@@ -186,6 +157,35 @@ public class ProjectValidator {
             v = new ValidationRuleViolation(project.getPrimaryModel(), "[PROJECT MISSING ON MMS] The project does not exist in the MMS. You must initialize the project from the master branch first.");
         }
         projectExistenceValidationRule.addViolation(v);
+    }
+
+    public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
+        return generateProjectObjectNode(project.getPrimaryProject(), orgId);
+    }
+
+    public static ObjectNode generateProjectObjectNode(IProject iProject, String orgId) {
+        ObjectNode projectObjectNode = JacksonUtils.getObjectMapper().createObjectNode();
+        projectObjectNode.put(MDKConstants.ID_KEY, Converters.getIProjectToIdConverter().apply(iProject));
+        projectObjectNode.put(MDKConstants.NAME_KEY, iProject.getName());
+        projectObjectNode.put(MDKConstants.ORG_ID_KEY, orgId);
+        projectObjectNode.put(MDKConstants.PROJECT_TYPE_KEY, MDKConstants.PROJECT_TYPE_VALUE);
+        String resourceId = "";
+        String twcServerUrl = "";
+        Project project = ProjectUtilities.getProject(iProject);
+        if (project != null && project.isRemote()) {
+            resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
+            twcServerUrl = getTeamworkCloudServer();
+        }
+        if(twcServerUrl != null && !twcServerUrl.isEmpty()) {
+            projectObjectNode.put(MDKConstants.TWC_SERVICE_ID, twcServerUrl);
+        }
+        projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
+        String categoryId = "";
+        if (project != null && project.getPrimaryProject() == iProject && !resourceId.isEmpty()) {
+            categoryId = EsiUtils.getCategoryID(resourceId);
+        }
+        projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
+        return projectObjectNode;
     }
 
     public boolean hasErrors() {
