@@ -12,8 +12,9 @@ public enum MMSEndpointType {
     ELEMENTS("mmselements", "/elements"),
     ELEMENT("mmselement", ""),
     SEARCH("mmssearch", "/search"),
-    VALIDATETOKEN("checkauth", "/checkAuth");
-
+    VALIDATETOKEN("checkauth", "/checkAuth"),
+    SYNCENABLE("syncenable", "/syncCheck"),
+    BACKGROUNDSYNC("backgroundsync", "/sync");
 
     private String name;
     private String path;
