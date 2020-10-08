@@ -87,7 +87,8 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElementsRecursively(Project project, Collection<String> elementIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
             return null;
@@ -115,7 +116,8 @@ public class MMSUtils {
         return sendMMSRequest(project, artifactGetRequest, progressStatus);
     }
 
-    public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException,
+            IOException, URISyntaxException, GeneralSecurityException {
         // build request
         HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSValidateJwtToken.builder(), project).build();
         

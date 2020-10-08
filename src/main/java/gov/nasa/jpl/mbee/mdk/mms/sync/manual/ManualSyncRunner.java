@@ -111,7 +111,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
         elementValidator.run(progressStatus);
     }
 
-    private File searchForServerElements(Project project, Element element, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    private File searchForServerElements(Project project, Element element, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         Collection<String> nodeIds = new HashSet<>(); // this is a collection because the createEntityFile method expects it
         if(element.equals(project.getPrimaryModel())) {
             nodeIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject())); // adding the root node because we'll recurse to get the entire tree from it

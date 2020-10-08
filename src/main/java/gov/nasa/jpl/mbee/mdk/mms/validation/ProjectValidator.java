@@ -98,7 +98,7 @@ public class ProjectValidator {
                     .build();
             // do project post request
             MMSUtils.sendMMSRequest(project, request);
-        } catch (IOException | ServerException | URISyntaxException e) {
+        } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
             Application.getInstance().getGUILog()
                     .log("[ERROR] An error occurred while posting project to MMS. TWC Service update cancelled. Reason: "
                             + e.getMessage());
@@ -129,7 +129,7 @@ public class ProjectValidator {
             if(mmsSyncEnabled()) {
                 return; // do different behavior than normal execution
             }
-        } catch (IOException | ServerException | URISyntaxException e) {
+        } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
             errors = true;
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking MMS sync. Project validation aborted. Reason: " + e.getMessage());
@@ -172,7 +172,7 @@ public class ProjectValidator {
         projectExistenceValidationRule.addViolation(v);
     }
 
-    private boolean mmsSyncEnabled() throws IOException, ServerException, URISyntaxException {
+    private boolean mmsSyncEnabled() throws IOException, ServerException, URISyntaxException, GeneralSecurityException {
         ObjectNode response = null;
 
         String orgId = MMSUtils.getMmsOrg(project);

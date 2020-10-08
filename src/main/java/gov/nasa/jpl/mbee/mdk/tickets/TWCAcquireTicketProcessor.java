@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.tickets;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
@@ -60,7 +61,7 @@ public class TWCAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
     }
 
     public static String getTicketUsingTWCToken(Project project, String twcServerUrl, String authToken,
-            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         HttpRequestBase request = MMSUtils.prepareEndpointBuilderBasicGet(MMSTWCLoginEndpoint.builder(), project)
                 .build();
         request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
@@ -89,7 +90,7 @@ public class TWCAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
             String ticket;
             try {
                 ticket = getTicketUsingTWCToken(project, twcServerUrl, authToken, progressStatus);
-            } catch (IOException | URISyntaxException | ServerException e) {
+            } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
                 Application.getInstance().getGUILog()
                         .log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
                 e.printStackTrace();

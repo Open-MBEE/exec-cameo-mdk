@@ -202,7 +202,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             return true;
         }
 
-        private void obtainAndParseCommits(Deque<String> commitIdDeque, int exponent, Project project) throws URISyntaxException, IOException, ServerException {
+        private void obtainAndParseCommits(Deque<String> commitIdDeque, int exponent, Project project)
+                throws URISyntaxException, IOException, ServerException, GeneralSecurityException {
             int limit = 1;
             int size = 0;
 

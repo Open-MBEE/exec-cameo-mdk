@@ -320,13 +320,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             if (!postElements.isEmpty()) {
-                // Prevent potential "Not Equivalent" errors due to default merging of element data.
-                requestUri.addParameter("overwrite", "true");
                 try {
                     File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
                     HttpRequestBase elementsUpdateCreateRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
                             .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
-                            .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
+                            .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
+                            .addParam("overwrite", "true") // Prevent potential "Not Equivalent" errors due to default merging of element data.
+                            .build();
                     TaskRunner.runWithProgressStatus(progressStatus1 -> {
                         try {
                             MMSUtils.sendMMSRequest(project, elementsUpdateCreateRequest, progressStatus1);

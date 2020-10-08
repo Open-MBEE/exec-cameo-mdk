@@ -7,6 +7,7 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -66,17 +67,17 @@ public class BasicAuthAcquireTicketProcessor extends AbstractAcquireTicketProces
     }
 
     public static String getCredentialsTicket(Project project, String username, String password,
-            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         return getCredentialsTicket(project, null, username, password, progressStatus);
     }
 
     public static String getCredentialsTicket(String baseUrl, String username, String password,
-            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
     }
 
     private static String getCredentialsTicket(Project project, String baseUrl, String username, String password,
-            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+            ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         HttpRequestBase request = null;
         if (project != null) {
             request = MMSLoginEndpoint.builder()
@@ -133,7 +134,7 @@ public class BasicAuthAcquireTicketProcessor extends AbstractAcquireTicketProces
             String ticket;
             try {
                 ticket = getCredentialsTicket(project, username, pass, progressStatus);
-            } catch (IOException | URISyntaxException | ServerException e) {
+            } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
                 Application.getInstance().getGUILog()
                         .log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
                 e.printStackTrace();
