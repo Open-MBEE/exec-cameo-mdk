@@ -47,5 +47,16 @@ public class MDKConstants {
             ARTIFACT_IDS_KEY = "_artifactIds",
             CHECKSUM_KEY = "checksum",
             CONTENT_TYPE_KEY = "contentType",
-            SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900";
+            PROJECT_TYPE_KEY = "schema",
+            PROJECT_TYPE_VALUE = "cameo",
+            SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900",
+            PARENT_COMMIT_ID = "parentCommitId",
+            PARAMS_FIELD = "params",
+            RECURSE_FIELD = "recurse",
+            CONTENT_TYPE = "Content-Type",
+            TWC_HEADER = "TWC",
+            AUTHORIZATION = "Authorization",
+            CHARSET = "charset",
+            APPLICATION_JSON = "application/json",
+            TWC_SERVICE_ID = "twcServiceId";
 }

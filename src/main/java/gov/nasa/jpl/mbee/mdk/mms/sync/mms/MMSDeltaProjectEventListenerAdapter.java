@@ -1,7 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.mms;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
@@ -16,16 +14,15 @@ import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.util.Changelog;
-import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
-import org.apache.http.client.utils.URIBuilder;
+import gov.nasa.jpl.mbee.mdk.util.*;
+import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.File;
 import java.io.IOException;
@@ -182,55 +179,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             Deque<String> commitIdDeque = new ArrayDeque<>();
             int exponent = 0;
 
-            doWhile:
-            do {
-                commitIdDeque.clear();
-                int limit = (int) Math.pow(10, exponent++);
-
-                URIBuilder commitsUriBuilder = MMSUtils.getServiceProjectsRefsUri(project);
-                commitsUriBuilder.setPath(commitsUriBuilder.getPath() + "/" + MDUtils.getBranchId(project) + "/commits");
-                commitsUriBuilder.setParameter("limit", Integer.toString(limit));
-                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, commitsUriBuilder));
-
-                JsonToken current;
-                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                    current = jsonParser.nextToken();
-                    if (current != JsonToken.START_OBJECT) {
-                        throw new IllegalStateException();
-                    }
-                    current = jsonParser.nextToken();
-                    if (current != JsonToken.FIELD_NAME || !jsonParser.getCurrentName().equals("commits")) {
-                        throw new IllegalStateException();
-                    }
-                    current = jsonParser.nextToken();
-                    if (current != JsonToken.START_ARRAY) {
-                        throw new IllegalStateException();
-                    }
-                    JsonNode value;
-                    int size = 0;
-                    while (jsonParser.nextToken() == JsonToken.START_OBJECT) {
-                        String id;
-                        ObjectNode objectNode = JacksonUtils.parseJsonObject(jsonParser);
-                        if ((value = objectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                            id = value.asText();
-                            if (lastSyncedCommitId == null) {
-                                lastSyncedCommitId = id;
-                            }
-                            if (lastSyncedCommitId.equals(id)) {
-                                break doWhile;
-                            }
-                            if (inMemoryCommits.contains(id)) {
-                                break doWhile;
-                            }
-                            commitIdDeque.addFirst(id);
-                        }
-                        size++;
-                    }
-                    if (size < limit) {
-                        break;
-                    }
-                }
-            } while (true);
+            obtainAndParseCommits(commitIdDeque, exponent, project);
 
             if (commitIdDeque.isEmpty()) {
                 return true;
@@ -241,72 +190,134 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
             while (!commitIdDeque.isEmpty()) {
                 String commitId = commitIdDeque.removeFirst();
-                URIBuilder uriBuilder = MMSUtils.getServiceProjectsUri(project);
-                uriBuilder.setPath(uriBuilder.getPath() + "/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/commits/" + commitId);
-                File responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, uriBuilder));
+                HttpRequestBase commitRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSCommitEndpoint.builder(), project)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                        .addParam(MMSEndpointBuilderConstants.URI_COMMIT_SUFFIX, commitId).build();
+                File responseFile = MMSUtils.sendMMSRequest(project, commitRequest);
 
-                try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                    ObjectNode objectNode = JacksonUtils.parseJsonObject(jsonParser);
-                    if (objectNode == null) {
-                        throw new IllegalStateException();
-                    }
-                    JsonNode jsonNode;
-                    if ((jsonNode = objectNode.get("commits")) == null || !jsonNode.isArray() || jsonNode.size() == 0) {
-                        throw new IllegalStateException();
-                    }
-                    jsonNode = jsonNode.get(0);
-                    JsonNode sourceJsonNode = jsonNode.get("source");
-                    boolean isSyncingCommit = sourceJsonNode != null && sourceJsonNode.isTextual() && "magicdraw".equalsIgnoreCase(sourceJsonNode.asText());
-                    int size = 0;
-                    for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
-                        JsonNode changesJsonArray = jsonNode.get(entry.getKey());
-                        if (changesJsonArray == null || !changesJsonArray.isArray()) {
-                            throw new IllegalStateException();
-                        }
-                        for (JsonNode changeJsonObject : changesJsonArray) {
-                            if (!changeJsonObject.isObject()) {
-                                throw new IllegalStateException();
-                            }
-                            JsonNode typeJsonNode = changeJsonObject.get(MDKConstants.TYPE_KEY);
-                            if (typeJsonNode != null && typeJsonNode.isTextual() && !"element".equalsIgnoreCase(typeJsonNode.asText())) {
-                                continue;
-                            }
-                            JsonNode idJsonNode = changeJsonObject.get(MDKConstants.ID_KEY);
-                            if (!idJsonNode.isTextual() || idJsonNode.asText().isEmpty()) {
-                                continue;
-                            }
-                            String elementId = idJsonNode.asText();
-                            try {
-                                ObjectNode elementJsonNode = JacksonUtils.getObjectMapper().createObjectNode();
-                                elementJsonNode.put(MDKConstants.ID_KEY, elementId);
-                                if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply(elementJsonNode, project, false, project.getPrimaryModel()) == null) {
-                                    continue;
-                                }
-                            } catch (ImportException ignored) {
-                                continue;
-                            }
-                            if (isSyncingCommit) {
-                                if (lockedElementIds.contains(elementId)) {
-                                    continue;
-                                }
-                                for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
-                                    inMemoryChangelog.get(changeType).remove(elementId);
-                                }
-                            }
-                            else {
-                                inMemoryChangelog.addChange(elementId, null, entry.getValue());
-                            }
-                            size++;
-                        }
-                    }
-                    if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - " + (isSyncingCommit ? "Removed" : "Added") + " " + NumberFormat.getInstance().format(size) + " MMS element change" + (size != 1 ? "s" : "") + " for commit " + commitId + ".");
-                    }
-                }
+                determineChangesUsingCommitResponse(responseFile, lockedElementIds, commitId);
                 inMemoryCommits.add(commitId);
             }
             SyncStatusConfigurator.getSyncStatusAction().update();
             return true;
+        }
+
+        private void obtainAndParseCommits(Deque<String> commitIdDeque, int exponent, Project project)
+                throws URISyntaxException, IOException, ServerException, GeneralSecurityException {
+            int limit = 1;
+            int size = 0;
+
+            while(size < limit) { // setup so condition is true at least once, previously this was a do while loop
+                commitIdDeque.clear();
+                limit = (int) Math.pow(10, exponent++);
+
+                HashMap<String, String> uriBuilderParams = new HashMap<>();
+                uriBuilderParams.put("limit", Integer.toString(limit));
+                HttpRequestBase commitsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSCommitsEndpoint.builder(), project)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project))
+                        .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams).build();
+                File responseFile = MMSUtils.sendMMSRequest(project, commitsRequest);
+
+                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
+                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);
+                if(elementObjects != null && !elementObjects.isEmpty()) {
+                    for(ObjectNode jsonObject : elementObjects) {
+                        JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
+                        if(idValue != null && idValue.isTextual()) {
+                            String id = idValue.asText();
+                            if (lastSyncedCommitId == null) {
+                                lastSyncedCommitId = id;
+                            }
+                            if (lastSyncedCommitId.equals(id) || inMemoryCommits.contains(id)) {
+                                return;
+                            }
+                            commitIdDeque.addFirst(id);
+                        }
+                        size++;
+                    }
+                }
+            }
+        }
+
+        private void determineChangesUsingCommitResponse(File responseFile, Set<String> lockedElementIds, String commitId) throws IOException {
+            // turns out the response still uses commits as the field of interest in terms of parsing
+            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
+            Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);
+
+            if(commitObjects != null && !commitObjects.isEmpty()) {
+                int size = 0;
+                String commitSyncDirection = "";
+                for(ObjectNode jsonObject : commitObjects) {
+                    if(jsonObject.isArray() && jsonObject.size() > 0) {
+                        for(int i = 0; i < jsonObject.size(); i++) {
+                            JsonNode currentNode = jsonObject.get(i);
+                            JsonNode sourceField = currentNode.get(MDKJsonConstants.SOURCE_FIELD);
+                            boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKJsonConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
+                            if(isSyncingCommit) {
+                                commitSyncDirection = "Removed";
+                            } else {
+                                commitSyncDirection = "Added";
+                            }
+
+                            size = validateJsonElementArray(currentNode, isSyncingCommit, lockedElementIds, size);
+                        }
+                    } else { // what do we throw here? and should we?
+                        throw new IllegalStateException();
+                    }
+
+                    if (MDUtils.isDeveloperMode()) {
+                        Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - " + commitSyncDirection + " " + NumberFormat.getInstance().format(size) + " MMS element change" + (size != 1 ? "s" : "") + " for commit " + commitId + ".");
+                    }
+                }
+            }
+        }
+
+        private int validateJsonElementArray(JsonNode arrayNode, boolean isSyncingCommit, Set<String> lockedElementIds, int size) {
+            for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
+                JsonNode changesJsonArray = arrayNode.get(entry.getKey());
+                if (changesJsonArray == null || !changesJsonArray.isArray()) {
+                    throw new IllegalStateException();
+                }
+
+                for (JsonNode changeJsonObject : changesJsonArray) {
+                    if (!changeJsonObject.isObject()) {
+                        throw new IllegalStateException();
+                    }
+                    JsonNode typeJsonNode = changeJsonObject.get(MDKConstants.TYPE_KEY);
+                    if (typeJsonNode != null && typeJsonNode.isTextual() && !MDKJsonConstants.ELEMENT_TYPE_VALUE.equalsIgnoreCase(typeJsonNode.asText())) {
+                        continue;
+                    }
+                    JsonNode idJsonNode = changeJsonObject.get(MDKConstants.ID_KEY);
+                    if (!idJsonNode.isTextual() || idJsonNode.asText().isEmpty()) {
+                        continue;
+                    }
+                    String elementId = idJsonNode.asText();
+                    try {
+                        ObjectNode elementJsonNode = JacksonUtils.getObjectMapper().createObjectNode();
+                        elementJsonNode.put(MDKConstants.ID_KEY, elementId);
+                        if (EMFImporter.PreProcessor.SYSML_ID_VALIDATION.getFunction().apply(elementJsonNode, project, false, project.getPrimaryModel()) == null) {
+                            continue;
+                        }
+                    } catch (ImportException ignored) {
+                        continue;
+                    }
+                    if (isSyncingCommit) {
+                        if (lockedElementIds.contains(elementId)) {
+                            continue;
+                        }
+                        for (Changelog.ChangeType changeType : Changelog.ChangeType.values()) {
+                            inMemoryChangelog.get(changeType).remove(elementId);
+                        }
+                    }
+                    else {
+                        inMemoryChangelog.addChange(elementId, null, entry.getValue());
+                    }
+                    size++;
+                }
+            }
+
+            return size;
         }
     }
 }

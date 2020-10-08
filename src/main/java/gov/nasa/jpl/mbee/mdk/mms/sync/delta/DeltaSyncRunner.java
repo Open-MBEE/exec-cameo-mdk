@@ -21,6 +21,8 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSElementsEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointBuilderConstants;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
@@ -30,7 +32,6 @@ import gov.nasa.jpl.mbee.mdk.mms.validation.ProjectValidator;
 import gov.nasa.jpl.mbee.mdk.util.*;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import java.io.File;
@@ -182,7 +183,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             File responseFile;
             ObjectNode response;
             try {
-                responseFile = MMSUtils.getElements(project, elementIdsToGet, progressStatus);
+                responseFile = MMSUtils.getElementsRecursively(project, elementIdsToGet, progressStatus);
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
@@ -306,7 +307,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // POINT OF NO RETURN
 
         // COMMIT UNCONFLICTED CREATIONS AND UPDATES TO MMS
-
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+        String refId = MDUtils.getBranchId(project);
         boolean shouldLogNoLocalChanges = shouldCommit;
         if (shouldCommit && !localElementsToPost.isEmpty()) {
             progressStatus.setDescription("Committing creations and updates to MMS");
@@ -318,16 +320,16 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 }
             }
             if (!postElements.isEmpty()) {
-                URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                // Prevent potential "Not Equivalent" errors due to default merging of element data.
-                requestUri.addParameter("overwrite", "true");
                 try {
                     File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
-
-                    HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
+                    HttpRequestBase elementsUpdateCreateRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
+                            .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                            .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
+                            .addParam("overwrite", "true") // Prevent potential "Not Equivalent" errors due to default merging of element data.
+                            .build();
                     TaskRunner.runWithProgressStatus(progressStatus1 -> {
                         try {
-                            MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                            MMSUtils.sendMMSRequest(project, elementsUpdateCreateRequest, progressStatus1);
                         } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                             // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                             e.printStackTrace();
@@ -347,13 +349,14 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         if (shouldCommit && shouldCommitDeletes && !deleteElements.isEmpty()) {
             progressStatus.setDescription("Committing deletions to MMS");
-            URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
             try {
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
-                HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.DELETE, requestUri, file, ContentType.APPLICATION_JSON);
+                HttpRequestBase elementsDeleteRequest = MMSUtils.prepareEndpointBuilderBasicJsonDeleteRequest(MMSElementsEndpoint.builder(), project, file)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
-                        MMSUtils.sendMMSRequest(project, request, progressStatus1);
+                        MMSUtils.sendMMSRequest(project, elementsDeleteRequest, progressStatus1);
                     } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();

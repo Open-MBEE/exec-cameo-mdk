@@ -15,10 +15,15 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
 import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitBranchAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpointBuilderConstants;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSRefsEndpoint;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
@@ -29,6 +34,7 @@ import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
 import gov.nasa.jpl.mbee.mdk.validation.ViolationSeverity;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,15 +121,11 @@ public class BranchValidator {
             progressStatus.setDescription("Mapping MMS branches");
         }
 
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
-            errors = true;
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS URL. Branch validation aborted.");
-            return;
-        }
         try {
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
-            File responseFile = MMSUtils.sendMMSRequest(project, request);
+            String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
+            HttpRequestBase refsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSRefsEndpoint.builder(), project)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId).build();
+            File responseFile = MMSUtils.sendMMSRequest(project, refsRequest);
             ObjectNode response;
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
@@ -186,6 +188,9 @@ public class BranchValidator {
                     continue;
                 }
                 serverBranch.remove(MDKConstants.STATUS_KEY);
+                serverBranch.remove(MDKConstants.PARENT_COMMIT_ID);
+
+                clientBranch.getValue().put(MDKJsonConstants.DELETED_FIELD, false); // TODO we need to fix this
                 JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
                 if (diff != null && diff.isArray() && diff.size() > 0) {
                     ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + clientBranch.getKey().getName() + "\" is not equivalent to the corresponding MMS branch.");

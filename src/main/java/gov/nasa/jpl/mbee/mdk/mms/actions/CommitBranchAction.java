@@ -4,7 +4,6 @@ package gov.nasa.jpl.mbee.mdk.mms.actions;
  * Created by ablack on 3/16/17.
  */
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.versioning.IVersionDescriptor;
@@ -21,15 +20,17 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
+import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
 import java.awt.event.ActionEvent;
@@ -151,34 +152,15 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
 
         JsonNode parentBranchJsonNode = null;
-        URIBuilder requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs URL. Branch commit aborted.");
-            return;
-        }
-        requestUri.setPath(requestUri.getPath() + "/" + parentBranchId);
+        String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         try {
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri);
-            File responseFile = MMSUtils.sendMMSRequest(project, request);
-            ObjectNode response;
-            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                response = JacksonUtils.parseJsonObject(jsonParser);
-            }
-            JsonNode refsArray, value;
-            if ((refsArray = response.get("refs")) != null && refsArray.isArray()) {
-                for (JsonNode refJson : refsArray) {
-                    if (refJson.isObject()) {
-                        ObjectNode refObjectNode = (ObjectNode) refJson;
-                        refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
-                        String entryKey;
-                        if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
-                            entryKey = refObjectNode.get(MDKConstants.ID_KEY).asText();
-                            if (entryKey.equals(parentBranchId)) {
-                                parentBranchJsonNode = refObjectNode;
-                            }
-                        }
-                    }
-                }
+            HttpRequestBase refRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSRefEndpoint.builder(), project)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                    .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, parentBranchId).build();
+            File responseFile = MMSUtils.sendMMSRequest(project, refRequest);
+            ObjectNode refObjectNode = findParentBranch(responseFile, parentBranchId);
+            if(refObjectNode != null) {
+                parentBranchJsonNode = refObjectNode;
             }
         } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             e.printStackTrace();
@@ -187,12 +169,6 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
         }
         if (parentBranchJsonNode == null) {
             Application.getInstance().getGUILog().log("[ERROR] Parent branch (" + parentBranchName + ") does not exist on MMS. Please commit that one first. Branch commit aborted.");
-            return;
-        }
-
-        requestUri = MMSUtils.getServiceProjectsRefsUri(project);
-        if (requestUri == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to get MMS refs url. Branch commit aborted.");
             return;
         }
 
@@ -211,8 +187,9 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
 
         try {
             File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
-            HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
-            MMSUtils.sendMMSRequest(project, request);
+            HttpRequestBase refsRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSRefsEndpoint.builder(), project, sendFile)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId).build();
+            MMSUtils.sendMMSRequest(project, refsRequest);
         } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
             e.printStackTrace();
@@ -224,6 +201,25 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             RunnableWithProgress temp = new ManualSyncRunner(Collections.singletonList(project.getPrimaryModel()), project, -1);
             ProgressStatusRunner.runWithProgressStatus(temp, "Model Initialization", true, 0);
         }
+    }
+
+    private ObjectNode findParentBranch(File responseFile, String parentBranchId) throws IOException {
+        Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.REFS_NODE);
+        Set<ObjectNode> refObjects = parsedResponseObjects.get(MDKJsonConstants.REFS_NODE);
+
+        if(refObjects != null && !refObjects.isEmpty()) {
+            for(ObjectNode refObjectNode : refObjects) {
+                if (refObjectNode != null && refObjectNode.isObject()) {
+                    refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
+                    JsonNode idValue = refObjectNode.get(MDKConstants.ID_KEY);
+                    if(idValue != null && idValue.isTextual() && idValue.asText().equals(parentBranchId)) {
+                        return refObjectNode;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public BranchInfoImpl toBranchInfoImpl(EsiUtils.EsiBranchInfo esiBranchInfo) {
