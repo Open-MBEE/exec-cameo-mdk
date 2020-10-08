@@ -24,6 +24,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.UUID;
@@ -94,7 +95,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
                     }
                 }
             }
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS orgs. Aborting org creation. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
@@ -113,7 +114,7 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
             HttpRequestBase orgsPostRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSOrgsEndpoint.builder(), project, sendData).build();
             MMSUtils.sendMMSRequest(project, orgsPostRequest);
-        } catch (IOException | ServerException | URISyntaxException e) {
+        } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;

@@ -24,10 +24,9 @@ import org.apache.http.entity.ContentType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.security.GeneralSecurityException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by igomes on 9/26/16.
@@ -90,7 +89,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
                 if(searchFile != null) {
                     responseFiles.add(searchFile);
                 }
-            } catch (ServerException | URISyntaxException | IOException e) {
+            } catch (ServerException | URISyntaxException | IOException | GeneralSecurityException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting elements from the server. Manual sync aborted. Reason: " + e.getMessage());
                 e.printStackTrace();
                 validationSuite = null;

@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.util;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -50,8 +51,7 @@ public class TicketUtils {
         return ticket != null && !ticket.isEmpty();
     }
 
-    public static boolean isTicketValid(Project project, ProgressStatus progressStatus)
-            throws ServerException, IOException, URISyntaxException {
+    public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         if (!isTicketSet(project)) {
             return false;
         }

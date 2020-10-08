@@ -4,24 +4,36 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
+import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
+import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
+import org.apache.batik.util.XMLResourceDescriptor;
+import org.w3c.dom.Document;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+import java.util.*;
+
+import static com.nomagic.magicdraw.uml.DiagramTypeConstants.*;
 
 /**
  * A collection of utility functions for accessing the MagicDraw (MD)
  * application.
  */
 public class MDUtils {
+
+    public static String SVG_ENRICHED_EXPORT_PROPERTY_NAME = "svg.enriched.export";
 
     /**
      * @return true iff MD was started with the DEVELOPER option at the command
@@ -181,4 +193,44 @@ public class MDUtils {
         }
         return Long.valueOf(ProjectUtilities.getVersion(project.getPrimaryProject()).getName());
     }
+
+    public static void exportSVG(File svgFile, DiagramPresentationElement diagramPresentationElement) throws IOException, TransformerException {
+        String originalSvgEnrichedExportPropertyValue = System.getProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME);
+
+        try {
+            boolean svgEnrichedExportPropertyValue = originalSvgEnrichedExportPropertyValue != null
+                    && Boolean.getBoolean(originalSvgEnrichedExportPropertyValue)
+                    && !diagramPresentationElement.getDiagramType().getRootType().equals(DEPENDENCY_MATRIX);
+            System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, Boolean.toString(svgEnrichedExportPropertyValue));
+
+            ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgFile, false, DocGenUtils.DOCGEN_DIAGRAM_DPI, DocGenUtils.DOCGEN_DIAGRAM_SCALE_PERCENT);
+
+            if (svgEnrichedExportPropertyValue) {
+                try (InputStream svgInputStream = new FileInputStream(svgFile); Writer svgWriter = new FileWriter(svgFile)) {
+                    String parser = XMLResourceDescriptor.getXMLParserClassName();
+                    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
+                    Document svg = f.createDocument(null, svgInputStream);
+                    XMLUtil.asList(svg.getElementsByTagName("g")).stream()
+                            .filter(g -> g instanceof org.w3c.dom.Element)
+                            .map(g -> (org.w3c.dom.Element) g)
+                            .filter(g -> Objects.equals(g.getAttribute("class"), "element"))
+                            .forEach(g -> g.setAttribute("stroke-width", "0px"));
+                    DOMSource source = new DOMSource(svg);
+                    StreamResult result = new StreamResult(svgWriter);
+
+                    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                    Transformer transformer = transformerFactory.newTransformer();
+                    transformer.transform(source, result);
+                }
+            }
+        } finally {
+            if (originalSvgEnrichedExportPropertyValue != null) {
+                System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, originalSvgEnrichedExportPropertyValue);
+            }
+            else {
+                System.clearProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME);
+            }
+        }
+    }
+
 }

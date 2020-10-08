@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -87,7 +88,7 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                         .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
                         .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
                 MMSUtils.sendMMSRequest(project, elementPostRequest, progressStatus);
-            } catch (IOException | ServerException | URISyntaxException e) {
+            } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                 e.printStackTrace();
                 Application.getInstance().getGUILog().log("[ERROR] Failed to commit diagram artifacts for " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());
             }
