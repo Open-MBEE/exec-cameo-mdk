@@ -55,7 +55,7 @@ public class TWCAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
         try {
             secondaryAuthToken = EsiServerActionsExecuter.getSecondaryAuthToken("MAGICDRAW");
         } catch (ConnectException e) {
-            logger.error("Error while generating secondary auth token", e.getMessage());
+            logger.error("Error while generating secondary auth token: " + e.getMessage());
         }
         return secondaryAuthToken != null ? "Token :" + secondaryAuthToken : null;
     }
