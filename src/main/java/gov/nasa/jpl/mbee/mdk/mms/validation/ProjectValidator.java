@@ -125,16 +125,6 @@ public class ProjectValidator {
     public void validate() {
         ObjectNode response;
 
-        try {
-            if(mmsSyncEnabled()) {
-                return; // do different behavior than normal execution
-            }
-        } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
-            errors = true;
-            e.printStackTrace();
-            Application.getInstance().getGUILog().log("[ERROR] An error occurred while checking MMS sync. Project validation aborted. Reason: " + e.getMessage());
-            return;
-        }
 
         try {
             HttpRequestBase projectsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSProjectsEndpoint.builder(), project).build();
@@ -172,23 +162,6 @@ public class ProjectValidator {
         projectExistenceValidationRule.addViolation(v);
     }
 
-    private boolean mmsSyncEnabled() throws IOException, ServerException, URISyntaxException, GeneralSecurityException {
-        ObjectNode response = null;
-
-        String orgId = MMSUtils.getMmsOrg(project);
-        if(orgId != null) {
-            Collection<ObjectNode> projects = new LinkedList<>();
-            projects.add(ProjectValidator.generateProjectObjectNode(project, orgId));
-            File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, projects, MMSUtils.JsonBlobType.PROJECT);
-            HttpRequestBase projectsRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSyncEnableEndpoint.builder(), project, sendData).build();
-            File responseFile = MMSUtils.sendMMSRequest(project, projectsRequest);
-            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                response = JacksonUtils.parseJsonObject(jsonParser);
-            }
-        }
-
-        return response != null && response.get("isEnabled") != null && response.get("isEnabled").isBoolean() && response.get("isEnabled").asBoolean();
-    }
 
     public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
         return generateProjectObjectNode(project.getPrimaryProject(), orgId);

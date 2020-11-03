@@ -493,13 +493,7 @@ public class MMSUtils {
         if (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
         }
-        if (!path.endsWith("alfresco/service")) {
-            path += "/alfresco/service";
-        }
         uri.setPath(path);
-        if (project != null && TicketUtils.isTicketSet(project)) {
-            uri.setParameter("alf_ticket", TicketUtils.getTicket(project));
-        }
         return uri;
 
     }

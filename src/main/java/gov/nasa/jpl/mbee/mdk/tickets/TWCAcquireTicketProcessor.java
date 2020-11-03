@@ -62,8 +62,11 @@ public class TWCAcquireTicketProcessor extends AbstractAcquireTicketProcessor {
 
     public static String getTicketUsingTWCToken(Project project, String twcServerUrl, String authToken,
             ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
-        HttpRequestBase request = MMSUtils.prepareEndpointBuilderBasicGet(MMSTWCLoginEndpoint.builder(), project)
-                .build();
+
+        HttpRequestBase request = MMSUtils.prepareEndpointBuilderBasicGet(MMSTWCLoginEndpoint.builder(), project).build();
+        if(request == null) {
+            return null;
+        }
         request.addHeader(MDKConstants.TWC_HEADER, twcServerUrl);
         request.addHeader(MDKConstants.AUTHORIZATION, authToken);
         // do request
