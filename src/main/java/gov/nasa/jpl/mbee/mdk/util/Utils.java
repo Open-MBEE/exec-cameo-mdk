@@ -36,7 +36,7 @@ import gov.nasa.jpl.mbee.mdk.docgen.table.EditableTableModel;
 import gov.nasa.jpl.mbee.mdk.docgen.table.PropertyEnum;
 import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
 import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
@@ -76,15 +76,10 @@ import java.util.regex.Pattern;
  */
 @Deprecated
 public class Utils {
-    public static Logger log = Logger.getLogger(Utils.class);
-
     private static boolean forceDialogFalse = false;
     private static boolean forceDialogTrue = false;
     private static boolean forceDialogCancel = false;
     private static boolean popupsDisabled = false;
-
-    private Utils() {
-    }
 
     /******************************************** Collect/Filter/Sort *******************************************************/
 
@@ -116,7 +111,12 @@ public class Utils {
      * @return
      */
     public static Collection<Element> getElementsOnDiagram(Diagram diagram) {
-        return Project.getProject(diagram).getDiagram(diagram).getUsedModelElements(true);
+        DiagramPresentationElement diagramPresentationElement = Project.getProject(diagram).getDiagram(diagram);
+        if (diagramPresentationElement == null) {
+            return Collections.emptyList();
+        }
+        diagramPresentationElement.ensureLoaded();
+        return diagramPresentationElement.getUsedModelElements(true);
     }
 
     /**
@@ -145,28 +145,6 @@ public class Utils {
             }
             else if (!include) {
                 res.add((Diagram) d);
-            }
-        }
-        return res;
-    }
-
-    public static List<Element> filterElementsByStereotype(Collection<Element> elements,
-                                                           Stereotype stereotype, boolean include, boolean derived) {
-        List<Element> res = new ArrayList<>();
-        if (include) {
-            for (Element e : elements) {
-                if (derived && StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
-                        && StereotypesHelper.hasStereotype(e, stereotype)) {
-                    res.add(e);
-                }
-            }
-        }
-        else {
-            for (Element e : elements) {
-                if (derived && !StereotypesHelper.hasStereotypeOrDerived(e, stereotype) || !derived
-                        && !StereotypesHelper.hasStereotype(e, stereotype)) {
-                    res.add(e);
-                }
             }
         }
         return res;
@@ -212,8 +190,8 @@ public class Utils {
         OclEvaluator evaluator;
         if (!iterate) {
             Object o;
-            DocumentValidator dv = CollectFilterParser.getValidator();
-            o = DocumentValidator.evaluate(query, elements, dv, true);
+            ViewViewpointValidator dv = CollectFilterParser.getValidator();
+            o = ViewViewpointValidator.evaluate(query, elements, true);
             evaluator = OclEvaluator.instance;
             if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
                 Boolean istrue = isTrue(o, false);
@@ -225,8 +203,8 @@ public class Utils {
         else {
             for (Element e : elements) {
                 Object o;
-                DocumentValidator dv = CollectFilterParser.getValidator();
-                o = DocumentValidator.evaluate(query, e, dv, true);
+                ViewViewpointValidator dv = CollectFilterParser.getValidator();
+                o = ViewViewpointValidator.evaluate(query, e, true);
                 evaluator = OclEvaluator.instance;
                 if (evaluator != null && (evaluator.isValid() || !Utils2.isNullOrEmpty(o))) {
                     Boolean istrue = isTrue(o, false);
@@ -489,8 +467,8 @@ public class Utils {
     public static List<Element> collectByExpression(Object element, Object query) {
         List<Element> res = new ArrayList<Element>();
         Object o = null;
-        DocumentValidator dv = CollectFilterParser.getValidator();
-        o = DocumentValidator.evaluate(query, element, dv, true);
+        ViewViewpointValidator dv = CollectFilterParser.getValidator();
+        o = ViewViewpointValidator.evaluate(query, element, true);
         OclEvaluator evaluator = OclEvaluator.instance;
         // try {
         // o = OclEvaluator.evaluateQuery(element, query);
@@ -944,6 +922,17 @@ public class Utils {
     }
 
     /**
+     * Sorts elements by attribute, provided it is one of those supported by
+     *
+     * @param elem the element whose attribute is sought
+     * @param attr the type of attribute (name, value, ...)
+     * @return
+     */
+    public static List<Element> sortByAttribute(Collection<? extends Element> elem, Object attr) {
+        return sortByAttribute(elem, getAvailableAttribute(attr));
+    }
+
+    /**
      * Sorts elements by a specific attribute limited to the enumeration below,
      * which is suspiciously similar to the possible attributes in
      * tableAttributeColumn...
@@ -1102,17 +1091,6 @@ public class Utils {
         };
     }
 
-    /**
-     * Sorts elements by attribute, provided it is one of those supported by
-     *
-     * @param elem the element whose attribute is sought
-     * @param attr the type of attribute (name, value, ...)
-     * @return
-     */
-    public static List<Element> sortByAttribute(Collection<? extends Element> elem, Object attr) {
-        return sortByAttribute(elem, getAvailableAttribute(attr));
-    }
-
     public static List<Element> sortByExpression(Collection<? extends Element> elem, Object o) {
         List<Element> list = new ArrayList<Element>(elem);
         // Check if all numbers
@@ -1120,9 +1098,8 @@ public class Utils {
         Map<Element, Object> resultMap = new HashMap<Element, Object>();
         Map<Element, Object> resultNumberMap = new HashMap<Element, Object>();
         for (Element e : list) {
-            Object result = null;
-            DocumentValidator dv = CollectFilterParser.getValidator();
-            result = DocumentValidator.evaluate(o, e, dv, true);
+            Object result = ViewViewpointValidator.evaluate(o, e, true);
+            ViewViewpointValidator dv = CollectFilterParser.getValidator();
             // try {
             // result = OclEvaluator.evaluateQuery(e, o);
             // } catch ( ParserException e1 ) {
@@ -1181,10 +1158,6 @@ public class Utils {
         final boolean allNums;
         Map<Element, Object> resultMap = null;
 
-        public DocGenComparator(boolean isAllNumbers) {
-            allNums = isAllNumbers;
-        }
-
         public DocGenComparator(Map<Element, Object> resultMap, boolean isAllNumbers) {
             this.resultMap = resultMap;
             allNums = isAllNumbers;
@@ -1194,96 +1167,36 @@ public class Utils {
         public int compare(Object A, Object B) {
             Object resultA = resultMap == null ? A : resultMap.get(A);
             Object resultB = resultMap == null ? B : resultMap.get(B);
-            return docgenCompare(resultA, resultB, allNums);
-        }
-    }
+            if (resultA == resultB) {
+                return 0;
+            }
+            if (resultA == null) {
+                return -1;
+            }
+            if (resultB == null) {
+                return 1;
+            }
 
-    private static int docgenCompare(Object a0, Object b0, boolean asNumbers) {
-        if (a0 == b0) {
-            return 0;
-        }
-        if (a0 == null) {
-            return -1;
-        }
-        if (b0 == null) {
-            return 1;
-        }
-
-        String as = DocGenUtils.fixString(a0);
-        String bs = DocGenUtils.fixString(b0);
-        if (as == bs) {
-            return 0;
-        }
-        if (as == null) {
-            return -1;
-        }
-        if (bs == null) {
-            return 1;
-        }
-        if (asNumbers) {
-            Double da0 = Utils2.toDouble(as);
-            Double db0 = Utils2.toDouble(bs);
-            return CompareUtils.compare(da0, db0, true);
-        }
-        else {
-            return CompareUtils.compare(as, bs, true);
-        }
-    }
-
-    /**
-     * returns all directed relationships where client element is source and
-     * supplier element is target
-     *
-     * @param source
-     * @param target
-     * @return
-     */
-    public static List<DirectedRelationship> findDirectedRelationshipsBetween(Element source, Element target) {
-        List<DirectedRelationship> res = new ArrayList<DirectedRelationship>();
-        for (DirectedRelationship dr : source.get_directedRelationshipOfSource()) {
-            if (ModelHelper.getSupplierElement(dr) == target) {
-                res.add(dr);
+            String as = DocGenUtils.fixString(resultA);
+            String bs = DocGenUtils.fixString(resultB);
+            if (as == bs) {
+                return 0;
+            }
+            if (as == null) {
+                return -1;
+            }
+            if (bs == null) {
+                return 1;
+            }
+            if (allNums) {
+                Double da0 = Utils2.toDouble(as);
+                Double db0 = Utils2.toDouble(bs);
+                return CompareUtils.compare(da0, db0, true);
+            }
+            else {
+                return CompareUtils.compare(as, bs, true);
             }
         }
-        return res;
-    }
-
-    /**
-     * @param object   the object to test for a match
-     * @param typeName regular expression String according to Pattern
-     * @return whether the name of the object's Stereotype, EClass, or Java
-     * class matches the typeName regular expression pattern
-     */
-    public static boolean isTypeOf(Object object, String typeName) {
-        GetCallOperation op = new GetCallOperation(CallReturnType.TYPE, true, true);
-        Object result = op.callOperation(object, new Object[]{typeName});
-        if (result instanceof Collection && ((Collection<?>) result).size() == 1) {
-            if (matches(((Collection<?>) result).iterator().next(), typeName)) {
-                return true;
-            }
-        }
-        return matches(result, typeName);
-    }
-
-    /**
-     * See if the object matches the regular expression pattern by its name,
-     * type, or string value.
-     *
-     * @param object  the object to test
-     * @param pattern a Pattern regular expression string to match to the object
-     * @return whether the name, type, or String value of the object matches the
-     * regular expression pattern
-     */
-    private static boolean matches(Object object, String pattern) {
-        // TODO -- types are limited to Stereotypes, EClasses, and Java Classes,
-        // but metaclasses/base classes are left out here and in other methods
-        // here that use regex patterns.
-        String name = getName(object);
-        if (EmfUtils.matches(name, pattern)) {
-            return true;
-        }
-        boolean matched = EmfUtils.matches(object, pattern);
-        return matched;
     }
 
     /**
@@ -1291,24 +1204,6 @@ public class Utils {
      */
     public static Package getRootElement(Project project) {
         return project == null ? null : project.getPrimaryModel();
-    }
-
-    public static boolean isSiteChar(Project project, Package pakkage) {
-        Stereotype characterizesStereotype = Utils.getCharacterizesStereotype(project);
-        if (characterizesStereotype != null) {
-            List<Element> siteCharacterizations = Utils.collectDirectedRelatedElementsByRelationshipStereotype(pakkage, characterizesStereotype, 2, false, 1);
-            for (Element siteCharacterization : siteCharacterizations) {
-                if (!(siteCharacterization instanceof Classifier)) {
-                    continue;
-                }
-                for (Classifier general : ((Classifier) siteCharacterization).getGeneral()) {
-                    if ("_17_0_5_1_8660276_1415063844134_132446_18688".equals(Converters.getElementToIdConverter().apply(general))) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     public static Map<Element, Map<String, Collection<Element>>> nameOrIdSearchOwnerCache =
@@ -1388,11 +1283,6 @@ public class Utils {
         return results;
     }
 
-    @Deprecated
-    public static Stereotype getStereotype(Project project, String stereotypeName) {
-        return StereotypesHelper.getStereotype(project, stereotypeName);
-    }
-
     public static Stereotype getConformStereotype(Project project) {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
     }
@@ -1411,10 +1301,6 @@ public class Utils {
 
     public static Stereotype getViewpointStereotype(Project project) {
         return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
-    }
-
-    public static Stereotype getAspectStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_18_0_2_407019f_1449688347122_736579_14412");
     }
 
     public static Stereotype getCharacterizesStereotype(Project project) {
@@ -1444,10 +1330,6 @@ public class Utils {
 
     public static Property getGeneratedFromElementProperty(Project project) {
         return (Property) project.getElementByID("_17_0_5_1_407019f_1430628376067_525763_12104");
-    }
-
-    public static Property getViewElementsProperty(Project project) {
-        return (Property) project.getElementByID("_18_0_2_407019f_1433361787467_278914_14410");
     }
 
     /**********************************************
@@ -1702,21 +1584,6 @@ public class Utils {
     /************************************************ Model Modification **************************************/
 
     /**
-     * Copies all stereotypes of element a to element b if b doesn't already
-     * have it (including derived)
-     *
-     * @param a
-     * @param b
-     */
-    public static void copyStereotypes(Element a, Element b) {
-        for (Stereotype s : StereotypesHelper.getStereotypes(a)) {
-            if (!StereotypesHelper.hasStereotypeOrDerived(b, s)) {
-                StereotypesHelper.addStereotype(b, s);
-            }
-        }
-    }
-
-    /**
      * Creates a generalization relationship between parent and child
      *
      * @param parent
@@ -1727,21 +1594,6 @@ public class Utils {
         ModelHelper.setClientElement(g, child);
         ModelHelper.setSupplierElement(g, parent);
         g.setOwner(child);
-    }
-
-    private static void setOwnerPackage(Element child, Element parent) {
-        while (!(parent instanceof Package)) {
-            parent = parent.getOwner();
-        }
-        child.setOwner(parent);
-    }
-
-    public static void createDependencyWithStereotype(Element from, Element to, Stereotype s) {
-        Dependency d = Project.getProject(from).getElementsFactory().createDependencyInstance();
-        ModelHelper.setClientElement(d, from);
-        ModelHelper.setSupplierElement(d, to);
-        StereotypesHelper.addStereotype(d, s);
-        setOwnerPackage(d, from);
     }
 
     /**
@@ -2220,7 +2072,7 @@ public class Utils {
         if (o == null) {
             o = "null";
         }
-        log(o, (Color) null);
+        log(o, null);
     }
 
     /**
@@ -2293,11 +2145,6 @@ public class Utils {
         return (toColor(o.toString()) != null);
     }
 
-    public static void log(Object o, String colorName) {
-        Color c = toColor(colorName);
-        log(o, c);
-    }
-
     public static void log(Object o, Color color) {
         if (o == null) {
             o = "null";
@@ -2319,7 +2166,8 @@ public class Utils {
             log(o, (Color) color);
         }
         else {
-            log(o, color.toString());
+            Color c = toColor(color.toString());
+            log(o, c);
         }
     }
 
@@ -2638,8 +2486,7 @@ public class Utils {
         return EmfUtils.getTypeName(obj);
     }
 
-    public static String toStringNameAndType(final Object o, final boolean includeId,
-                                             final boolean useToStringIfNull) {
+    public static String toStringNameAndType(final Object o, final boolean includeId, final boolean useToStringIfNull) {
         if (o == null) {
             return "null";
         }
@@ -2707,20 +2554,6 @@ public class Utils {
             s = MoreToString.Helper.toString(o);
         }
         return s;
-    }
-
-    /**
-     * return names of a collection of named elements
-     *
-     * @param elements
-     * @return
-     */
-    public static List<String> getElementNames(Collection<NamedElement> elements) {
-        List<String> names = new ArrayList<String>();
-        for (NamedElement e : elements) {
-            names.add(e.getName());
-        }
-        return names;
     }
 
     /**

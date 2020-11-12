@@ -30,15 +30,15 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAdapter {
-    private static final Map<Project, MMSDeltaProjectMapping> projectMappings = new ConcurrentHashMap<>();
+    private static final Map<Project, MMSDeltaProjectMapping> projectMappings = Collections.synchronizedMap(new WeakHashMap<>());
 
     @Override
     public void projectOpened(Project project) {
@@ -49,7 +49,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
         getProjectMapping(project).setScheduledFuture(TaskRunner.scheduleWithProgressStatus(progressStatus -> {
             try {
                 getProjectMapping(project).update();
-            } catch (URISyntaxException | IOException | ServerException e) {
+            } catch (URISyntaxException | IOException | ServerException | GeneralSecurityException e) {
                 e.printStackTrace();
             }
         }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 1, TimeUnit.MINUTES)));
@@ -160,10 +160,11 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             }).map(json -> json.get("commitId")).filter(commitIdNode -> commitIdNode != null && commitIdNode.isTextual()).map(JsonNode::asText).findAny().orElse(null);
         }
 
-        public synchronized boolean update() throws URISyntaxException, IOException, ServerException, IllegalStateException {
+        public synchronized boolean update() throws URISyntaxException, IOException, ServerException, IllegalStateException, GeneralSecurityException {
             if (!project.isRemote()) {
                 return false;
             }
+            // TODO test if branch exists to avoid 404 on commits GET
             if (!TicketUtils.isTicketSet(project)) {
                 inMemoryCommits.clear();
                 inMemoryChangelog.clear();
@@ -171,7 +172,13 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 return false;
             }
 
-            lastSyncedCommitId = getLastSyncedMmsCommit();
+            // https://support.nomagic.com/browse/MDUMLCS-28121
+            try {
+                lastSyncedCommitId = getLastSyncedMmsCommit();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                return false;
+            }
             Deque<String> commitIdDeque = new ArrayDeque<>();
             int exponent = 0;
 
@@ -259,6 +266,10 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                         for (JsonNode changeJsonObject : changesJsonArray) {
                             if (!changeJsonObject.isObject()) {
                                 throw new IllegalStateException();
+                            }
+                            JsonNode typeJsonNode = changeJsonObject.get(MDKConstants.TYPE_KEY);
+                            if (typeJsonNode != null && typeJsonNode.isTextual() && !"element".equalsIgnoreCase(typeJsonNode.asText())) {
+                                continue;
                             }
                             JsonNode idJsonNode = changeJsonObject.get(MDKConstants.ID_KEY);
                             if (!idJsonNode.isTextual() || idJsonNode.asText().isEmpty()) {

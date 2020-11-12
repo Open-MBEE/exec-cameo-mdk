@@ -12,6 +12,7 @@ import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,12 +53,14 @@ public class GradleMagicDrawLauncher {
                 StringTokenizer tokenizer = new StringTokenizer(newClassPath, File.pathSeparator);
                 while(tokenizer.hasMoreTokens()) {
                     String cpElement = tokenizer.nextToken();
-                    try {
-                        cpElements.add((new File(".")).toURI().resolve((new File(cpElement)).toURI()).toURL());
-                    } catch (MalformedURLException ignored) {
+                    if(isAcceptablePath(cpElement)) {
+                        try {
+                            cpElements.add(Paths.get(cpElement).toUri().toURL());
+                        } catch (MalformedURLException ignored) {
+                        }
+                        String currentClassPath = System.getProperty("java.class.path");
+                        System.setProperty("java.class.path", (currentClassPath != null ? currentClassPath + File.pathSeparatorChar + cpElement : cpElement));
                     }
-                    String currentClassPath = System.getProperty("java.class.path");
-                    System.setProperty("java.class.path", (currentClassPath != null ? currentClassPath + File.pathSeparatorChar + cpElement : cpElement));
                 }
                 continue;
             }
@@ -105,7 +108,11 @@ public class GradleMagicDrawLauncher {
         List<URL> moreCpElements = new ArrayList<>(1 + cpElements.size() + classPathLength);
         for (int i = 0; i < classPathLength; i++) {
             String cpElement = instr.readUTF();
-            files.add(cpElement);
+            try{
+                files.add(Paths.get(new URI(cpElement)).toString());
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
             moreCpElements.add(new URL(cpElement));
         }
         moreCpElements.addAll(cpElements);
@@ -127,16 +134,18 @@ public class GradleMagicDrawLauncher {
             cpElements.add(0, runtimeJar);
             String currentClassPath = System.getProperty("java.class.path");
             try {
-                String runtimeJarPath = runtimeJar.toURI().getPath();
+                String runtimeJarPath = Paths.get(runtimeJar.toURI()).toString();
                 System.setProperty("java.class.path", (currentClassPath != null ? runtimeJarPath + File.pathSeparatorChar + currentClassPath : runtimeJarPath));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
         }
 
-
         if (!cpElements.isEmpty()) {
             urlClassLoader = new URLClassLoader(cpElements.toArray(new URL[cpElements.size()]));
         }
+    }
+    private static boolean isAcceptablePath(String path) {
+        return !path.contains("com.typesafe.akka") && !path.contains("org.scala") && !path.contains("com.nomagic.esi");
     }
 }

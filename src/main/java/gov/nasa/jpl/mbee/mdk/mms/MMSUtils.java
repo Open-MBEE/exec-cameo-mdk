@@ -46,10 +46,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.security.GeneralSecurityException;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -67,14 +65,15 @@ public class MMSUtils {
     }
 
     public enum JsonBlobType {
-        ELEMENT_JSON, ELEMENT_ID, PROJECT, REF, ORG
+        ELEMENT_JSON, ELEMENT_ID, ARTIFACT_JSON, ARTIFACT_ID, PROJECT, REF, ORG
     }
 
     public static AtomicReference<Exception> getLastException() {
         return LAST_EXCEPTION;
     }
 
-    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static ObjectNode getElement(Project project, String elementId, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException, GeneralSecurityException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         File responseFile = getElementsRecursively(project, elementIds, 0, progressStatus);
@@ -89,7 +88,8 @@ public class MMSUtils {
         return null;
     }
 
-    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static File getElementRecursively(Project project, String elementId, int depth, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException, GeneralSecurityException {
         Collection<String> elementIds = new ArrayList<>(1);
         elementIds.add(elementId);
         return getElementsRecursively(project, elementIds, depth, progressStatus);
@@ -104,7 +104,8 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static File getElements(Project project, Collection<String> elementIds, ProgressStatus progressStatus)
+            throws IOException, ServerException, URISyntaxException, GeneralSecurityException {
         return getElementsRecursively(project, elementIds, 0, progressStatus);
     }
 
@@ -118,7 +119,8 @@ public class MMSUtils {
      * @throws IOException
      * @throws URISyntaxException
      */
-    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static File getElementsRecursively(Project project, Collection<String> elementIds, int depth, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         // verify elements
         if (elementIds == null || elementIds.isEmpty()) {
             return null;
@@ -129,30 +131,39 @@ public class MMSUtils {
         if (requestUri == null) {
             return null;
         }
-        if (depth == -1 || depth > 0) {
-            requestUri.setParameter("depth", java.lang.Integer.toString(depth));
-        }
+        requestUri.setParameter("depth", java.lang.Integer.toString(depth));
 
         // create request file
         File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, elementIds, JsonBlobType.ELEMENT_ID);
 
         //do cancellable request if progressStatus exists
-        Application.getInstance().getGUILog().log("[INFO] Searching for " + elementIds.size() + " elements from server...");
-        if (progressStatus != null) {
-            return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
-        }
-        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON));
+        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
     }
 
-    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
+        if (artifactIds == null || artifactIds.isEmpty()) {
+            return null;
+        }
+        URIBuilder requestUri = getServiceProjectsRefsArtifactsUri(project);
+        if (requestUri == null) {
+            return null;
+        }
+        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
+        return sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.PUT, requestUri, sendData, ContentType.APPLICATION_JSON), progressStatus);
+    }
+
+    public static String getCredentialsTicket(Project project, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         return getCredentialsTicket(project, null, username, password, progressStatus);
     }
 
-    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static String getCredentialsTicket(String baseUrl, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         return getCredentialsTicket(null, baseUrl, username, password, progressStatus);
     }
 
-    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    private static String getCredentialsTicket(Project project, String baseUrl, String username, String password, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project, baseUrl);
         if (requestUri == null) {
             return null;
@@ -183,7 +194,8 @@ public class MMSUtils {
         return null;
     }
 
-    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static String validateCredentialsTicket(Project project, String ticket, ProgressStatus progressStatus)
+            throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         URIBuilder requestUri = MMSUtils.getServiceUri(project);
         if (requestUri == null) {
             return "";
@@ -288,7 +300,7 @@ public class MMSUtils {
         return buildRequest(type, requestUri, null, null);
     }
 
-    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection nodes, JsonBlobType jsonBlobType) throws IOException {
+    public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection<?> nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
         if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
             System.out.println("[INFO] Request Body: " + requestFile.getPath());
@@ -298,16 +310,27 @@ public class MMSUtils {
             requestFile.deleteOnExit();
         }
 
-        String arrayName = "elements";
-        if (jsonBlobType == JsonBlobType.ORG) {
-            arrayName = "orgs";
+        String arrayName = null;
+        switch (jsonBlobType) {
+            case ELEMENT_ID:
+            case ELEMENT_JSON:
+                arrayName = "elements";
+                break;
+            case ARTIFACT_ID:
+            case ARTIFACT_JSON:
+                arrayName = "artifacts";
+                break;
+            case ORG:
+                arrayName = "orgs";
+                break;
+            case PROJECT:
+                arrayName = "projects";
+                break;
+            case REF:
+                arrayName = "refs";
+                break;
         }
-        else if (jsonBlobType == JsonBlobType.PROJECT) {
-            arrayName = "projects";
-        }
-        else if (jsonBlobType == JsonBlobType.REF) {
-            arrayName = "refs";
-        }
+
         try (FileOutputStream outputStream = new FileOutputStream(requestFile);
              JsonGenerator jsonGenerator = JacksonUtils.getJsonFactory().createGenerator(outputStream)) {
             jsonGenerator.writeStartObject();
@@ -316,7 +339,7 @@ public class MMSUtils {
                 if (node instanceof ObjectNode && jsonBlobType == JsonBlobType.ELEMENT_JSON || jsonBlobType == JsonBlobType.ORG || jsonBlobType == JsonBlobType.PROJECT || jsonBlobType == JsonBlobType.REF) {
                     jsonGenerator.writeObject(node);
                 }
-                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID) {
+                else if (node instanceof String && jsonBlobType == JsonBlobType.ELEMENT_ID || jsonBlobType == JsonBlobType.ARTIFACT_ID) {
                     jsonGenerator.writeStartObject();
                     jsonGenerator.writeStringField(MDKConstants.ID_KEY, (String) node);
                     jsonGenerator.writeEndObject();
@@ -345,7 +368,7 @@ public class MMSUtils {
      * @throws IOException
      * @throws ServerException
      */
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson) throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus, final ObjectNode responseJson) throws IOException, ServerException, GeneralSecurityException {
         final File responseFile = (responseJson == null ? File.createTempFile("Response-", null) : null);
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
@@ -374,6 +397,7 @@ public class MMSUtils {
             }
         }
         else {
+            LAST_EXCEPTION.set(null);
             progressStatus.setIndeterminate(true);
             Future<?> future = TaskRunner.runWithProgressStatus(() -> {
                 try (CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -436,11 +460,11 @@ public class MMSUtils {
         return responseFile;
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException, GeneralSecurityException {
         return sendMMSRequest(project, request, null, null);
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException {
+    public static File sendMMSRequest(Project project, HttpRequestBase request, ProgressStatus progressStatus) throws IOException, ServerException, URISyntaxException, GeneralSecurityException {
         return sendMMSRequest(project, request, progressStatus, null);
     }
 
@@ -543,7 +567,8 @@ public class MMSUtils {
         return urlString.trim();
     }
 
-    public static String getMmsOrg(Project project) throws IOException, URISyntaxException, ServerException {
+    public static String getMmsOrg(Project project)
+            throws IOException, URISyntaxException, ServerException, GeneralSecurityException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
         File responseFile = sendMMSRequest(project, buildRequest(HttpRequestType.GET, uriBuilder));
         try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
@@ -594,8 +619,14 @@ public class MMSUtils {
             e.printStackTrace();
             return null;
         }
-
-        uri.setPath("/alfresco/service");
+        String path = Optional.ofNullable(uri.getPath()).orElse("");
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        if (!path.endsWith("alfresco/service")) {
+            path += "/alfresco/service";
+        }
+        uri.setPath(path);
         if (project != null && TicketUtils.isTicketSet(project)) {
             uri.setParameter("alf_ticket", TicketUtils.getTicket(project));
         }
@@ -680,12 +711,21 @@ public class MMSUtils {
      * @return URIBuilder
      */
     public static URIBuilder getServiceProjectsRefsElementsUri(Project project) {
-        URIBuilder elementUri = getServiceProjectsRefsUri(project);
-        if (elementUri == null) {
+        URIBuilder elementsUri = getServiceProjectsRefsUri(project);
+        if (elementsUri == null) {
             return null;
         }
-        elementUri.setPath(elementUri.getPath() + "/" + MDUtils.getBranchId(project) + "/elements");
-        return elementUri;
+        elementsUri.setPath(elementsUri.getPath() + "/" + MDUtils.getBranchId(project) + "/elements");
+        return elementsUri;
+    }
+
+    public static URIBuilder getServiceProjectsRefsArtifactsUri(Project project) {
+        URIBuilder artifactsUri = getServiceProjectsRefsUri(project);
+        if (artifactsUri == null) {
+            return null;
+        }
+        artifactsUri.setPath(artifactsUri.getPath() + "/" + MDUtils.getBranchId(project) + "/artifacts");
+        return artifactsUri;
     }
 
     public static String getDefaultSiteName(IProject iProject) {

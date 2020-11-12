@@ -4,13 +4,14 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 /**
  * Created by igomes on 6/30/16.
  */
-public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> implements Cloneable {
+public class Changelog<K, V> extends ConcurrentHashMap<Changelog.ChangeType, Map<K, V>> implements Cloneable {
 
     private boolean shouldLogChanges;
 
@@ -99,9 +100,9 @@ public class Changelog<K, V> extends HashMap<Changelog.ChangeType, Map<K, V>> im
                 if (deletedElements.containsKey(k)) {
                     deletedElements.remove(k);
                     if (shouldLogChanges) {
-                       String message = "Undeleted: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>");
-                       System.out.println(message);
-                       Application.getInstance().getGUILog().log(message);
+                        String message = "Undeleted: " + k + " - " + (v instanceof NamedElement ? " " + ((NamedElement) v).getName() : "<>");
+                        System.out.println(message);
+                        Application.getInstance().getGUILog().log(message);
                     }
                 }
                 else {

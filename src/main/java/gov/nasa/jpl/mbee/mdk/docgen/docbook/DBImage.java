@@ -13,16 +13,14 @@ public class DBImage extends DocumentElement {
 
     private Diagram image;
     private String caption;
-    private boolean gennew;
     private boolean doNotShow;
+    private boolean excludeFromList;
 
-    public DBImage(Diagram d) {
-        image = d;
-        gennew = false;
+    public DBImage(Diagram diagram) {
+        this.image = diagram;
     }
 
     public DBImage() {
-        gennew = false;
     }
 
     public void setDiagram(Diagram d) {
@@ -31,10 +29,6 @@ public class DBImage extends DocumentElement {
 
     public void setCaption(String cap) {
         caption = cap;
-    }
-
-    public void setGennew(boolean b) {
-        gennew = b;
     }
 
     public Diagram getImage() {
@@ -49,16 +43,20 @@ public class DBImage extends DocumentElement {
         return caption;
     }
 
-    public boolean isGennew() {
-        return gennew;
-    }
-
     public boolean isDoNotShow() {
         return doNotShow;
     }
 
     public void setDoNotShow(boolean b) {
         doNotShow = b;
+    }
+
+    public boolean isExcludeFromList() {
+        return excludeFromList;
+    }
+
+    public void setExcludeFromList(boolean excludeFromList) {
+        this.excludeFromList = excludeFromList;
     }
 
     @Override
@@ -75,4 +73,12 @@ public class DBImage extends DocumentElement {
         return sb.toString();
     }
 
+    @Deprecated
+    public boolean isGennew() {
+        return true;
+    }
+
+    @Deprecated
+    public void setGennew(boolean b) {
+    }
 }

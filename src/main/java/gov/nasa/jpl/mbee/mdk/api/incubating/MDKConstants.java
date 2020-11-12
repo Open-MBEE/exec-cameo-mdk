@@ -27,7 +27,7 @@ public class MDKConstants {
             INSTANCE_ID_KEY = UMLPackage.Literals.INSTANCE_VALUE__INSTANCE.getName() + ID_KEY_SUFFIX,
             APPLIED_STEREOTYPE_IDS_KEY = "_appliedStereotypeIds",
             DOCUMENTATION_KEY = "documentation",
-            IS_SITE_KEY = "_isSite",
+            IS_GROUP_KEY = "_isGroup",
             PROPERTY_PATH_IDS_KEY = "_propertyPathIds",
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
             DISPLAYED_ELEMENT_IDS_KEY = DERIVED_KEY_PREFIX + "displayedElement" + IDS_KEY_SUFFIX,
@@ -43,5 +43,9 @@ public class MDKConstants {
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
             TWC_ID_KEY = "twc" + ID_KEY_SUFFIX,
-            TWC_VERSION_KEY = "twcVersion";
+            TWC_VERSION_KEY = "twcVersion",
+            ARTIFACT_IDS_KEY = "_artifactIds",
+            CHECKSUM_KEY = "checksum",
+            CONTENT_TYPE_KEY = "contentType",
+            SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900";
 }

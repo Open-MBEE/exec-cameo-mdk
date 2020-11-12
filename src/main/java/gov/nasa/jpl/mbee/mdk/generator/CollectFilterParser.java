@@ -15,6 +15,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedGraphHashSet;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.algorithms.TopologicalSort;
@@ -28,6 +29,7 @@ import javax.script.ScriptException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CollectFilterParser {
 
@@ -42,7 +44,7 @@ public class CollectFilterParser {
         return context;
     }
 
-    public static DocumentValidator getValidator() {
+    public static ViewViewpointValidator getValidator() {
         return context == null ? null : context.getValidator();
     }
 
@@ -122,7 +124,7 @@ public class CollectFilterParser {
                 node.setResult(res);
             }
             context.setCurrentNode(node.getNode());
-            DocumentValidator.evaluateConstraints(node.getNode(), res, context, true, true);
+            ViewViewpointValidator.evaluateConstraints(node.getNode(), res, context, true, true);
         }
         return res;
     }
@@ -177,8 +179,8 @@ public class CollectFilterParser {
                 "considerDerived", DocGenProfile.PROFILE_NAME, true);
         List<String> names = (List<String>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.nameChoosable,
                 "names", DocGenProfile.PROFILE_NAME, new ArrayList<String>());
-        List<String> diagramTypes = Utils.getElementNames((List<NamedElement>) GeneratorUtils.getStereotypePropertyValue(
-                cba, DocGenProfile.diagramTypeChoosable, "diagramTypes", DocGenProfile.PROFILE_NAME, new ArrayList<NamedElement>()));
+        List<String> diagramTypes = ((List<NamedElement>) GeneratorUtils.getStereotypePropertyValue(
+                cba, DocGenProfile.diagramTypeChoosable, "diagramTypes", DocGenProfile.PROFILE_NAME, new ArrayList<NamedElement>())).stream().map(NamedElement::getName).collect(Collectors.toList());
         Boolean include = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.includeChoosable,
                 "include", DocGenProfile.PROFILE_NAME, true);
         List<Property> stereotypeProperties = (List<Property>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.stereotypePropertyChoosable, "stereotypeProperties",

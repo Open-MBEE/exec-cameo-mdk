@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-# sage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-h] [-debug]
+# usage: $MAGICDRAW_HOME/bin/cli/automatedviewgenerator.sh [-h] [-debug]
 #       [-mmsHost <arg>] [-mmsPort <arg>] [-mmsUsername <arg>] [-mmsPassword <arg>]
 #       [-twcHost <arg>] [-twcPort <arg>] [-twcUsername <arg>] [-twcPassword <arg>]
 #       [-pmaHost <arg>] [-pmaPort <arg>] [-pmaJobId <arg>]
@@ -18,14 +18,18 @@ if [ -z "$MAGICDRAW_HOME" ]; then
 fi
 
 CP_DELIM=":"
-MD_HOME_URL_LEAD=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /%20/g')
-MD_HOME_URL_BASE=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /%20/g')
 
-MD_CP_URL=file:$MD_HOME_URL_LEAD/bin/magicdraw.properties?base=$MD_HOME_URL_BASE#CLASSPATH
+if [ -f "$MAGICDRAW_HOME"/bin/magicdraw.properties ]; then
+  PROPERTIES_FILE="$MAGICDRAW_HOME"/bin/magicdraw.properties
+elif [ -f "$MAGICDRAW_HOME"/bin/csm.properties ]; then
+  PROPERTIES_FILE="$MAGICDRAW_HOME"/bin/csm.properties
+fi
+MAGICDRAW_HOME=$(echo "$MAGICDRAW_HOME" | sed -e 's/ /%20/g')
+MD_CP_URL=file:$PROPERTIES_FILE?base=$MAGICDRAW_HOME#CLASSPATH
 
-OSGI_LAUNCHER=$(echo "$MAGICDRAW_HOME"/lib/com.nomagic.osgi.launcher-*.jar)
-OSGI_FRAMEWORK=$(echo "$MAGICDRAW_HOME"/lib/bundles/org.eclipse.osgi_*.jar)
-MD_OSGI_FRAGMENT=$(echo "$MAGICDRAW_HOME"/lib/bundles/com.nomagic.magicdraw.osgi.fragment_*.jar)
+OSGI_LAUNCHER=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" "$PROPERTIES_FILE" | grep -o "[^:]*com\.nomagic\.osgi\.launcher-[^\\]*.jar")
+OSGI_FRAMEWORK=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" "$PROPERTIES_FILE" | grep -o "[^:]*org\.eclipse\.osgi_[^\\]*.jar")
+MD_OSGI_FRAGMENT=$MAGICDRAW_HOME/$(grep -o "^CLASSPATH=.*" "$PROPERTIES_FILE" | grep -o "[^:]*com\.nomagic\.magicdraw\.osgi\.fragment_[^\\]*.jar")
 
 CP="${OSGI_LAUNCHER}${CP_DELIM}${OSGI_FRAMEWORK}${CP_DELIM}${MD_OSGI_FRAGMENT}${CP_DELIM}\
 `  `$MAGICDRAW_HOME/lib/md_api.jar${CP_DELIM}$MAGICDRAW_HOME/lib/md_common_api.jar${CP_DELIM}\
@@ -44,7 +48,7 @@ java -Xmx8192M -Xss1024M -DLOCALCONFIG=true -DWINCONFIG=true \
        -Dcom.sun.media.imageio.disableCodecLib=true \
        -Dsun.locale.formatasdefault=true \
        -Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher \
-       -Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator \
+       -Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.mdk.cli.AutomatedViewGenerator \
        com.nomagic.osgi.launcher.ProductionFrameworkLauncher -verbose "$@"
 
 exit $?

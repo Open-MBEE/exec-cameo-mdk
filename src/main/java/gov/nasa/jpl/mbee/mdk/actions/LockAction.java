@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.actions;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Project;
@@ -8,7 +9,6 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
@@ -20,12 +20,12 @@ import java.util.Set;
 /**
  * Created by igomes on 12/5/16.
  */
-public class LockAction extends SRAction implements AnnotationAction {
+public class LockAction extends MDAction implements AnnotationAction {
     private final Element element;
     private final boolean recursive;
 
     public LockAction(Element element, boolean recursive) {
-        super("Lock" + (recursive ? " Recursively" : ""));
+        super("Lock" + (recursive ? " Recursively" : ""), "Lock" + (recursive ? " Recursively" : ""), null, null);
         this.element = element;
         this.recursive = recursive;
     }

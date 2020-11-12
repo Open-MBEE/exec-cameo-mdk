@@ -1,5 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.sync.status.actions;
 
+import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.ui.ProgressStatusRunner;
@@ -11,7 +12,6 @@ import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapte
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.ui.SyncStatusFrame;
-import gov.nasa.jpl.mbee.mdk.systems_reasoner.actions.SRAction;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import javax.annotation.CheckForNull;
@@ -19,19 +19,20 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 
 /**
  * Created by igomes on 8/16/16.
  */
-public class SyncStatusAction extends SRAction {
+public class SyncStatusAction extends MDAction {
     public static final String NAME = "Unsynced";
 
     private SyncStatusFrame syncStatusFrame;
 
 
     public SyncStatusAction() {
-        super(NAME);
+        super(NAME, NAME, null, null);
         update();
     }
 
@@ -184,11 +185,12 @@ public class SyncStatusAction extends SRAction {
                     MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update();
                     progressStatus.setDescription("Updating table");
                     update();
-                } catch (URISyntaxException | IOException | ServerException e) {
+                } catch (URISyntaxException | IOException | ServerException | GeneralSecurityException e) {
                     e.printStackTrace();
                 }
             }, "Sync Status Update", false, 0);
         }
+        getSyncStatusFrame().toFront();
     }
 
     @Override

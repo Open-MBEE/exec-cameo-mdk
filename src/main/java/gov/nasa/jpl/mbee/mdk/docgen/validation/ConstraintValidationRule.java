@@ -13,7 +13,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint.Type;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
-import gov.nasa.jpl.mbee.mdk.generator.DocumentValidator;
+import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.util.CompareUtils;
 import gov.nasa.jpl.mbee.mdk.util.Debug;
@@ -227,51 +227,23 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.nomagic.magicdraw.validation.ElementValidationRuleImpl#run(com.nomagic
-     * .magicdraw.core.Project,
-     * com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint,
-     * java.util.Collection)
-     */
     @Override
     public Set<Annotation> run(Project paramProject, Constraint paramConstraint, Collection<? extends Element> paramCollection) {
-        Set<Annotation> result = new HashSet<Annotation>();
+        Set<Annotation> result;
 
         System.out.println("*** Starting MDK Validate Constraints: " + constraintType + " ***");
-        // boolean wasOn = Debug.isOn();
-        // Debug.turnOn();
-
-        // Debug.outln( "run(Project, " + paramConstraint + " , "
-        // + paramCollection + ")" );
 
         initConstraintMaps(paramProject, paramCollection);
-        // Set< BaseElement > elements = elementToConstraintMap.keySet();
 
         @SuppressWarnings("unchecked")
-        Collection<gov.nasa.jpl.mbee.mdk.constraint.Constraint> constraints = (Collection<gov.nasa.jpl.mbee.mdk.constraint.Constraint>) (Utils2
-                .isNullOrEmpty(elementsWithConstraints) ? (constraintToElementMap == null ? Utils2.newList()
-                : constraintToElementMap.keySet()) : getAffectedConstraints(elementsWithConstraints));
+        Collection<gov.nasa.jpl.mbee.mdk.constraint.Constraint> constraints = (Collection<gov.nasa.jpl.mbee.mdk.constraint.Constraint>) (Utils2.isNullOrEmpty(elementsWithConstraints) ? (constraintToElementMap == null ? Utils2.newList() : constraintToElementMap.keySet()) : getAffectedConstraints(elementsWithConstraints));
 
         for (gov.nasa.jpl.mbee.mdk.constraint.Constraint constraint : constraints) {
             try {
-                Boolean satisfied = DocumentValidator.evaluateConstraint(constraint, this,
-                        isLanguageOcl(constraint));
+                Boolean satisfied = ViewViewpointValidator.evaluateConstraint(constraint);
                 if (loggingResults) {
                     logResults(satisfied, constraint);
                 }
-                // Boolean satisfied = constraint.evaluate();
-                // if ( satisfied != null && satisfied.equals( Boolean.FALSE ) )
-                // {
-                // //List<NMAction> actionList = new ArrayList<NMAction>();
-                // //actionList.add(styleAdd);
-                // Annotation annotation =
-                // new Annotation( constraint.getViolatedConstraintElement(),
-                // paramConstraint );
-                // result.add(annotation);
-                // }
             } catch (Throwable e) {
                 Debug.error(true, false, "ConstraintValidationRule: " + e.getLocalizedMessage());
                 e.printStackTrace();
@@ -282,8 +254,6 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         annotations = result;
 
         System.out.println("*** Finished MDK Validate Constraints: " + constraintType + " ***");
-
-        // if ( !wasOn ) Debug.turnOff();
         return result;
     }
 

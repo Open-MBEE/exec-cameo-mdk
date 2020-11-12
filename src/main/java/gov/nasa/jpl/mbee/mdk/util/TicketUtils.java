@@ -19,7 +19,10 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -28,7 +31,7 @@ public class TicketUtils {
     private static String username = "";
     private static String password = "";
     private static final int TICKET_RENEWAL_INTERVAL = 15 * 60; //seconds
-    private static final HashMap<Project, TicketMapping> ticketMappings = new HashMap<>();
+    private static final Map<Project, TicketMapping> ticketMappings = Collections.synchronizedMap(new WeakHashMap<>());
 
     /**
      * Accessor for stored username.
@@ -46,16 +49,15 @@ public class TicketUtils {
      * @return ticket exists and is non-empty.
      */
     public static boolean isTicketSet(Project project) {
-        TicketMapping ticketMap = ticketMappings.get(project);
-        return ticketMap != null && ticketMap.getTicket() != null && !ticketMap.getTicket().isEmpty();
+        String ticket = getTicket(project);
+        return ticket != null && !ticket.isEmpty();
     }
 
-    public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException {
+    public static boolean isTicketValid(Project project, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         if (!isTicketSet(project)) {
             return false;
         }
-        String ticket = ticketMappings.get(project).getTicket();
-        return MMSUtils.validateCredentialsTicket(project, ticket, progressStatus).equals(username);
+        return MMSUtils.validateCredentialsTicket(project, getTicket(project), progressStatus).equals(username);
     }
 
     /**
@@ -64,10 +66,11 @@ public class TicketUtils {
      * @return ticket string
      */
     public static String getTicket(Project project) {
-        if (isTicketSet(project)) {
-            return ticketMappings.get(project).getTicket();
+        TicketMapping ticketMapping = ticketMappings.get(project);
+        if (ticketMapping == null) {
+            return null;
         }
-        return null;
+        return ticketMapping.getTicket();
     }
 
     /**
@@ -241,7 +244,7 @@ public class TicketUtils {
             String ticket;
             try {
                 ticket = MMSUtils.getCredentialsTicket(project, username, pass, progressStatus);
-            } catch (IOException | URISyntaxException | ServerException e) {
+            } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
                 Application.getInstance().getGUILog().log("[ERROR] An error occurred while acquiring credentials. Reason: " + e.getMessage());
                 e.printStackTrace();
                 return;
@@ -254,7 +257,7 @@ public class TicketUtils {
 
         // parse response
         password = "";
-        if (ticketMappings.get(project) != null && !ticketMappings.get(project).getTicket().isEmpty()) {
+        if (isTicketSet(project)) {
             return true;
         }
         Application.getInstance().getGUILog().log("[ERROR] Unable to log in to MMS with the supplied credentials.");

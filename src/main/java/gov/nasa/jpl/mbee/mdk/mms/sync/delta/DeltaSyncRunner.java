@@ -10,10 +10,10 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
-import com.nomagic.magicdraw.teamwork2.locks.ILockProjectService;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -36,9 +36,11 @@ import org.apache.http.entity.ContentType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DeltaSyncRunner implements RunnableWithProgress {
     private final boolean shouldCommitDeletes, shouldCommit, shouldUpdate;
@@ -71,7 +73,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Utils.guilog("[WARNING] You are not logged in to MMS. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
                 return;
             }
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             Utils.guilog("[ERROR] An error occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             return;
         }
@@ -104,22 +106,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         // UPDATE LOCKS
 
-        ILockProjectService lockService = EsiUtils.getLockService(project);
-        if (lockService == null) {
-            Application.getInstance().getGUILog().log("[ERROR] Teamwork Cloud lock service is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
-            return;
-        }
-
         listener.setDisabled(true);
-        try {
-            lockService.updateLocks(progressStatus);
-        } catch (RuntimeException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Failed to update locks from Teamwork Cloud. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
-            e.printStackTrace();
-            return;
-        } finally {
-            listener.setDisabled(false);
-        }
 
         // UPDATE MMS CHANGELOG
 
@@ -128,9 +115,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 Application.getInstance().getGUILog().log("[WARNING] MMS history is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
                 return;
             }
-        } catch (URISyntaxException | IOException | ServerException e) {
+        } catch (URISyntaxException | IOException | IllegalStateException | GeneralSecurityException | ServerException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while updating MMS history. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             e.printStackTrace();
+            return;
         }
 
         // BUILD COMPLETE LOCAL CHANGELOG
@@ -141,6 +129,24 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             persistedLocalChangelog = persistedLocalChangelog.and(SyncElements.buildChangelog(syncElement), (key, value) -> Converters.getIdToElementConverter().apply(key, project));
         }
         Changelog<String, Element> localChangelog = persistedLocalChangelog.and(listener.getInMemoryLocalChangelog());
+
+        // HANDLE CASE WHERE VALUE SPECIFICATION IS DIRTIED EXTERNALLY
+        // Workaround: Dirty all referencing elements as ValueSpecifications aren't given their own identity
+
+        localChangelog.values().stream().flatMap(map -> map.values().stream()).filter(element -> element instanceof ValueSpecification).flatMap(element -> element.eClass().getEAllReferences().stream().flatMap(reference -> {
+            List<Element> elements = new ArrayList<>();
+            Object value = element.eGet(reference);
+            if (value == null) {
+                return Stream.empty();
+            }
+            if (reference.isMany() && value instanceof Collection) {
+                ((Collection<Object>) value).stream().filter(o -> o instanceof Element).map(o -> (Element) o).forEach(elements::add);
+            }
+            else if (value instanceof Element) {
+                elements.add((Element) value);
+            }
+            return elements.stream();
+        })).collect(Collectors.toSet()).forEach(element -> localChangelog.addChange(Converters.getElementToIdConverter().apply(element), element, Changelog.ChangeType.UPDATED));
 
 
         Map<String, Element> localCreated = localChangelog.get(Changelog.ChangeType.CREATED),
@@ -180,7 +186,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                     response = JacksonUtils.parseJsonObject(jsonParser);
                 }
-            } catch (IOException | URISyntaxException | ServerException e) {
+            } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
                 if (progressStatus.isCancel()) {
                     Application.getInstance().getGUILog().log("[INFO] Sync manually cancelled. All changes will be re-attempted in the next sync.");
                     return;
@@ -279,25 +285,11 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it does not exist. Skipping.");
                             continue;
                         }
-                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to update element " + id + " locally, but it is locked by someone else. Skipping.");
-                            }
-                            failedMmsChangelog.addChange(id, null, Changelog.ChangeType.UPDATED);
-                            continue;
-                        }
                         mmsElementsToUpdateLocally.put(id, new Pair<>(objectNode, element));
                         break;
                     case DELETED:
                         if (element == null) {
                             Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it doesn't exist. Skipping.");
-                            continue;
-                        }
-                        if (!element.isEditable() && lockService.isLocked(element) && !lockService.isLockedByMe(element)) {
-                            if (MDUtils.isDeveloperMode()) {
-                                Application.getInstance().getGUILog().log("[INFO] Attempted to delete element " + id + " locally, but it is locked by someone else. Skipping.");
-                            }
-                            failedMmsChangelog.addChange(id, null, Changelog.ChangeType.DELETED);
                             continue;
                         }
                         mmsElementsToDeleteLocally.put(id, element);
@@ -334,7 +326,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                     TaskRunner.runWithProgressStatus(progressStatus1 -> {
                         try {
                             MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                        } catch (IOException | ServerException | URISyntaxException e) {
+                        } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                             // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                             e.printStackTrace();
                         }
@@ -360,7 +352,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 TaskRunner.runWithProgressStatus(progressStatus1 -> {
                     try {
                         MMSUtils.sendMMSRequest(project, request, progressStatus1);
-                    } catch (IOException | ServerException | URISyntaxException e) {
+                    } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                         // TODO Implement error handling that was previously not possible due to OutputQueue implementation
                         e.printStackTrace();
                     }

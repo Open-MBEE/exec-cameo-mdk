@@ -10,6 +10,8 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
+import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.DocumentMeta;
@@ -22,18 +24,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class GeneratorUtils {
-
-    public static Element findStereotypedRelationship(Element e, String s) {
-        Stereotype stereotype = StereotypesHelper.getStereotype(Application.getInstance().getProject(), s);
-        List<Stereotype> ss = new ArrayList<Stereotype>();
-        ss.add(stereotype);
-        List<Element> es = Utils.collectDirectedRelatedElementsByRelationshipStereotypes(e, ss, 1, true, 1);
-        if (es.size() > 0) {
-            return es.get(0);
-        }
-        return null;
-    }
-
     public static Element findStereotypedRelationship(Element e, Stereotype s) {
         List<Stereotype> ss = new ArrayList<Stereotype>();
         ss.add(s);
@@ -115,10 +105,6 @@ public class GeneratorUtils {
                 DocGenProfile.documentMetaStereotype, "header");
         String footer = (String) StereotypesHelper.getStereotypePropertyFirst(start,
                 DocGenProfile.documentMetaStereotype, "footer");
-        String subheader = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "subheader");
-        String subfooter = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "subfooter");
         String legalNotice = (String) StereotypesHelper.getStereotypePropertyFirst(start,
                 DocGenProfile.documentMetaStereotype, "legalNotice");
         String acknowledgements = (String) StereotypesHelper.getStereotypePropertyFirst(start,
@@ -239,8 +225,6 @@ public class GeneratorUtils {
         doc.setChunkSectionDepth(chunkSectionDepth);
         doc.setFooter(footer);
         doc.setHeader(header);
-        doc.setSubfooter(subfooter);
-        doc.setSubheader(subheader);
         doc.setTitle(title);
         doc.setTocSectionDepth(tocSectionDepth);
 
@@ -263,8 +247,6 @@ public class GeneratorUtils {
         meta.setHeader(header);
         meta.setTitlePageLegalNotice(legalNotice);
         meta.setIndex(index);
-        meta.setSubfooter(subfooter);
-        meta.setSubheader(subheader);
         meta.setSubtitle(subtitle);
         meta.setTitle(title);
         meta.setTocSectionDepth(tocSectionDepth);
@@ -328,5 +310,33 @@ public class GeneratorUtils {
         }
         return rs;
     }
+
+    public static Stereotype getViewpointStereotype(Project project) {
+        Profile profile = StereotypesHelper.getAllProfiles(project).stream().filter
+                ( x -> MDKConstants.SYSML_PROFILE_ID.equals(Converters.getElementToIdConverter().apply(x)))
+                .findAny()
+                .orElse(null);
+        if (profile == null) {
+            return null;
+        }
+        return StereotypesHelper.getStereotype(project, "Viewpoint", profile);
+    }
+
+    public static Behavior getViewpointMethod(Classifier viewpoint, Project project) {
+
+        Stereotype viewpointStereotype = GeneratorUtils.getViewpointStereotype(project);
+        if (viewpointStereotype == null) {
+            return null;
+        }
+        List<?> methods = StereotypesHelper.getStereotypePropertyValue(viewpoint, GeneratorUtils.getViewpointStereotype(project), "method");
+        if (methods.isEmpty()) {
+            return null;
+        }
+        if (!(methods.get(0) instanceof Behavior)) {
+            return null;
+        }
+        return (Behavior) methods.get(0);
+    }
+
 
 }

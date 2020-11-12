@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -179,7 +180,7 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
                     }
                 }
             }
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS branches. Branch commit aborted. Reason: " + e.getMessage());
             return;
@@ -212,12 +213,12 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
             File sendFile = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, refsNodes, MMSUtils.JsonBlobType.REF);
             HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendFile, ContentType.APPLICATION_JSON);
             MMSUtils.sendMMSRequest(project, request);
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while posting branch. Branch commit aborted. Reason: " + e.getMessage());
             e.printStackTrace();
             return;
         }
-        Application.getInstance().getGUILog().log("[INFO] Branch creation for \"" + branchInfo.getName() + "\" on MMS initiated.");
+        Application.getInstance().getGUILog().log("[INFO] Branch creation/update for \"" + branchInfo.getName() + "\" on MMS initiated.");
         if (validateModel) {
             //RunnableWithProgress temp = new ManualSyncActionRunner<>(CommitClientElementAction.class, Collections.singletonList(project.getPrimaryModel()), project, -1);
             RunnableWithProgress temp = new ManualSyncRunner(Collections.singletonList(project.getPrimaryModel()), project, -1);

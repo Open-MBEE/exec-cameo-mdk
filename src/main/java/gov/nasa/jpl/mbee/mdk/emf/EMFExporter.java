@@ -12,8 +12,8 @@ import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
@@ -209,24 +209,25 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     objectNode.put(MDKConstants.TYPE_KEY, "Mount");
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX);
                     objectNode.put(MDKConstants.MOUNTED_ELEMENT_PROJECT_ID_KEY, Converters.getIProjectToIdConverter().apply(attachedProject));
-                    String branchName;
-                    EsiUtils.EsiBranchInfo esiBranchInfo = null;
-                    if (isRemote && (esiBranchInfo = EsiUtils.getCurrentBranch(attachedProject)) == null) {
+                    EsiUtils.EsiBranchInfo branchInfo = EsiUtils.getCurrentBranch(attachedProject);
+                    if (isRemote && branchInfo == null) {
                         return null;
                     }
-                    if (!isRemote || (branchName = esiBranchInfo.getName()) == null || branchName.equals("trunk")) {
+                    String branchName;
+                    if (!isRemote || (branchName = branchInfo.getName()) == null || "trunk".equals(branchName)) {
                         branchName = "master";
                     }
-                    objectNode.put(MDKConstants.MOUNTED_REF_ID_KEY, branchName);
+                    String branchId = "master".equals(branchName) ? "master" : branchInfo.getID().toString();
+                    objectNode.put(MDKConstants.MOUNTED_REF_ID_KEY, branchId);
                     objectNode.put(MDKConstants.TWC_VERSION_KEY, isRemote ? ProjectUtilities.versionToInt(ProjectUtilities.getVersion(attachedProject).getName()) : -1);
                     return objectNode;
                 },
                 Type.PRE
         ),
-        SITE_CHARACTERIZATION(
+        IS_GROUP(
                 (element, project, objectNode) -> {
                     if (element instanceof Package) {
-                        objectNode.put(MDKConstants.IS_SITE_KEY, Utils.isSiteChar(project, (Package) element));
+                        objectNode.put(MDKConstants.IS_GROUP_KEY, StereotypesHelper.getStereotypes(element).stream().anyMatch(stereotype -> "_18_5_3_8bf0285_1520469040211_2821_15754".equals(stereotype.getLocalID())));
                     }
                     return objectNode;
                 },

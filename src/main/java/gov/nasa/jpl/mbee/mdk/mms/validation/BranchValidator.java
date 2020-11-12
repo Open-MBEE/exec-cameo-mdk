@@ -20,6 +20,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitBranchAction;
 import gov.nasa.jpl.mbee.mdk.mms.json.JsonPatchFunction;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Pair;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
@@ -32,6 +33,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 
@@ -68,10 +70,7 @@ public class BranchValidator {
             return;
         }
 
-        String currentBranch = EsiUtils.getCurrentBranch(primaryProject).getName();
-        if (currentBranch.equals("trunk")) {
-            currentBranch = "master";
-        }
+        String currentBranch = MDUtils.getBranchId(project);
         Map<String, Pair<EsiUtils.EsiBranchInfo, ObjectNode>> clientBranches = new HashMap<>();
         Map<String, ObjectNode> serverBranches = new HashMap<>();
 
@@ -104,7 +103,7 @@ public class BranchValidator {
             branchJson.remove(MDKConstants.PARENT_REF_ID_KEY);
             JsonNode value;
             String entryKey;
-            if ((value = branchJson.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
+            if ((value = branchJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
                 entryKey = value.asText();
                 if (allBranches || entryKey.equals(currentBranch)) {
                     clientBranches.put(entryKey, new Pair<>(branch, branchJson));
@@ -136,7 +135,7 @@ public class BranchValidator {
                         ObjectNode refObjectNode = (ObjectNode) refJson;
                         refObjectNode.remove(MDKConstants.PARENT_REF_ID_KEY);
                         String entryKey;
-                        if ((value = refObjectNode.get(MDKConstants.NAME_KEY)) != null && value.isTextual()) {
+                        if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
                             entryKey = value.asText();
                             if (allBranches || entryKey.equals(currentBranch)) {
                                 serverBranches.put(entryKey, refObjectNode);
@@ -145,7 +144,7 @@ public class BranchValidator {
                     }
                 }
             }
-        } catch (IOException | URISyntaxException | ServerException e) {
+        } catch (IOException | URISyntaxException | ServerException | GeneralSecurityException e) {
             errors = true;
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while getting MMS branches. Branch validation aborted. Reason: " + e.getMessage());
@@ -164,11 +163,6 @@ public class BranchValidator {
         }
 
         for (String key : keySet) {
-            // TODO @DONBOT 3.0.1 remove this check/skip for master branch after master is updatable
-            if (key.equals("master")) {
-                continue;
-            }
-
             Pair<EsiUtils.EsiBranchInfo, ObjectNode> clientBranch = clientBranches.get(key);
             ObjectNode serverBranch = serverBranches.get(key);
 
@@ -241,6 +235,9 @@ public class BranchValidator {
         vss.add(validationSuite);
         if (validationSuite.hasErrors()) {
             Utils.displayValidationWindow(project, vss, "Branch Differences");
+        }
+        else {
+            Application.getInstance().getGUILog().log("[INFO] All branches are in sync between TWC and MMS.");
         }
     }
 
