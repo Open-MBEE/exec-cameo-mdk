@@ -7,11 +7,15 @@ import com.nomagic.magicdraw.properties.BooleanProperty;
 import com.nomagic.magicdraw.properties.ElementProperty;
 import com.nomagic.magicdraw.properties.NumberProperty;
 import com.nomagic.magicdraw.properties.StringProperty;
+import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
+
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -83,6 +87,7 @@ public class DocGenUtils {
             put("</svg>",
                     "</svg></imagedata></imageobject></mediaobject>");
             put("&nbsp;", "&#160;");
+            put("&sect;", "&#167;");
             put("&sup2;",
                     "<superscript>2</superscript>");
             put("&sup3;",
@@ -120,13 +125,28 @@ public class DocGenUtils {
     public static String htmlToXmlEntities(String html) {
         StringBuffer stringBuffer = new StringBuffer();
         Matcher matcher = ENTITY_PATTERN.matcher(html);
-
+        
+        while (matcher.find()) {
+            String replacement = null;
+        	if ( matcher.group(1).equals("&nbsp;")) {
+        		replacement = "&#160;"; //line 1766 and others of DocGen.mdzip works with this except the line 402
+        		
+        		
+        		
+        	}
+        	else
+        		replacement = htmlEntityToXmlEntity(matcher.group(1));
+            matcher.appendReplacement(stringBuffer, "");
+            stringBuffer.append(replacement);
+        }
+    	
+        /*
         while (matcher.find()) {
             String replacement = htmlEntityToXmlEntity(matcher.group(1));
             matcher.appendReplacement(stringBuffer, "");
             stringBuffer.append(replacement);
         }
-
+		*/
         matcher.appendTail(stringBuffer);
         return stringBuffer.toString();
     }
@@ -153,11 +173,13 @@ public class DocGenUtils {
     }
 
     public static String fixString(Object s, boolean convertHtml) {
+    	
         String rv;
         // may want to look at
         // com.nomagic.magicdraw.uml.RepresentationTextCreator.getRepresentedText
         if (s instanceof String) {
-            if (((String) s).contains("<html>")) {
+        	Utils.log((String)s);
+            if (((String) s).contains("<html>")){//|| ((String)s).contains("<p>")) {
                 if (convertHtml) {
                     return htmlToXmlEntities((String) s);
                 }
@@ -166,61 +188,87 @@ public class DocGenUtils {
                 }
             }
             else {
-                return htmlToXmlEntities(((String) s)
+                  	return htmlToXmlEntities(((String) s)
                         .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
-                        .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
+                        .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"))
+                		.replaceAll( "[^\\x00-\\x7F]", "" );  //for line 402 of DocGen.mdzip
             }
         }
         else if (s instanceof Integer) {
             return Integer.toString((Integer) s);
         }
         else if (s instanceof InstanceValue) {
-            InstanceSpecification is = ((InstanceValue) s).getInstance();
+        	String text =RepresentationTextCreator.getRepresentedText((InstanceValue)s);
+        	
+        	String text2 = RepresentationTextCreator.getRepresentedText(((InstanceValue)s).getInstance());
+        	Utils.log("IV: " + text);
+        	Utils.log("IV2: " + text2);
+        	InstanceSpecification is = ((InstanceValue) s).getInstance();
             if (is != null) {
-                return fixString(is.getName());
+            	return fixString(is.getName());
             }
         }
         else if (s instanceof ElementValue) {
             Element e = ((ElementValue) s).getElement();
+            String text =RepresentationTextCreator.getRepresentedText(e);
+            Utils.log("ElementValue: " + text);
             return fixString(e);
         }
         else if (s instanceof LiteralBoolean) {
-            return Boolean.toString(((LiteralBoolean) s).isValue());
+        	Utils.log("!LiteralBoolean");
+        	return Boolean.toString(((LiteralBoolean) s).isValue());
         }
         else if (s instanceof LiteralString) {
-            return fixString(((LiteralString) s).getValue());
+            String text =RepresentationTextCreator.getRepresentedText((LiteralString) s);
+            Utils.log("LiteralString: " + text);
+        	return fixString(((LiteralString) s).getValue());
         }
         else if (s instanceof LiteralInteger) {
+        	Utils.log("!LiteralInteger");
             return Integer.toString(((LiteralInteger) s).getValue());
         }
         else if (s instanceof LiteralUnlimitedNatural) {
+        	Utils.log("!LiteralUnlimitedNatural");
             return Integer.toString(((LiteralUnlimitedNatural) s).getValue());
         }
         else if (s instanceof LiteralReal) {
+        	Utils.log("!LiteralReal");
             return Double.toString(((LiteralReal) s).getValue());
         }
         else if ((rv = getRestrictedValue(s)) != null) {
+        	Utils.log("!RestrictedValue");
             return rv;
         }
         else if (s instanceof NamedElement) {
+            String text =RepresentationTextCreator.getRepresentedText((NamedElement) s);
+            Utils.log("NamedElement: " + text);
+
             return fixString(((NamedElement) s).getName());
         }
         else if (s instanceof Comment) {
+        	  String text =RepresentationTextCreator.getRepresentedText((Comment) s);
+              Utils.log("Comment: " + text);
             return fixString(((Comment) s).getBody());
         }
         else if (s instanceof StringProperty) {
+        	Utils.log("!StringProperty");
             return fixString(((StringProperty) s).getString());
         }
         else if (s instanceof NumberProperty) {
+        	Utils.log("!NumberProperty");
             return ((NumberProperty) s).getValue().toString();
         }
         else if (s instanceof BooleanProperty) {
+        	Utils.log("!BooleanProperty");
             return ((BooleanProperty) s).getBooleanObject().toString();
         }
         else if (s instanceof ElementProperty) {
+        	Utils.log("!ElementProperty");
             return fixString(((ElementProperty) s).getElement());
         }
         else if (s instanceof Slot) {
+        	 String text =RepresentationTextCreator.getRepresentedText((Slot) s);
+             Utils.log("Slot: " + text);
             return slot2String((Slot) s);
         }
         else if (s != null) {
