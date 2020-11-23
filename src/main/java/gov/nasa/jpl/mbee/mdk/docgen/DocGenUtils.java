@@ -130,10 +130,7 @@ public class DocGenUtils {
             String replacement = null;
         	if ( matcher.group(1).equals("&nbsp;")) {
         		replacement = "&#160;"; //line 1766 and others of DocGen.mdzip works with this except the line 402
-        		
-        		
-        		
-        	}
+      	}
         	else
         		replacement = htmlEntityToXmlEntity(matcher.group(1));
             matcher.appendReplacement(stringBuffer, "");
@@ -178,8 +175,7 @@ public class DocGenUtils {
         // may want to look at
         // com.nomagic.magicdraw.uml.RepresentationTextCreator.getRepresentedText
         if (s instanceof String) {
-        	Utils.log((String)s);
-            if (((String) s).contains("<html>")){//|| ((String)s).contains("<p>")) {
+            if (((String) s).contains("<html>")){
                 if (convertHtml) {
                     return htmlToXmlEntities((String) s);
                 }
@@ -198,77 +194,52 @@ public class DocGenUtils {
             return Integer.toString((Integer) s);
         }
         else if (s instanceof InstanceValue) {
-        	String text =RepresentationTextCreator.getRepresentedText((InstanceValue)s);
-        	
-        	String text2 = RepresentationTextCreator.getRepresentedText(((InstanceValue)s).getInstance());
-        	Utils.log("IV: " + text);
-        	Utils.log("IV2: " + text2);
-        	InstanceSpecification is = ((InstanceValue) s).getInstance();
+            InstanceSpecification is = ((InstanceValue) s).getInstance();
             if (is != null) {
-            	return fixString(is.getName());
+                return fixString(is.getName());
             }
         }
         else if (s instanceof ElementValue) {
             Element e = ((ElementValue) s).getElement();
-            String text =RepresentationTextCreator.getRepresentedText(e);
-            Utils.log("ElementValue: " + text);
             return fixString(e);
         }
         else if (s instanceof LiteralBoolean) {
-        	Utils.log("!LiteralBoolean");
-        	return Boolean.toString(((LiteralBoolean) s).isValue());
+            return Boolean.toString(((LiteralBoolean) s).isValue());
         }
         else if (s instanceof LiteralString) {
-            String text =RepresentationTextCreator.getRepresentedText((LiteralString) s);
-            Utils.log("LiteralString: " + text);
-        	return fixString(((LiteralString) s).getValue());
+            return fixString(((LiteralString) s).getValue());
         }
         else if (s instanceof LiteralInteger) {
-        	Utils.log("!LiteralInteger");
             return Integer.toString(((LiteralInteger) s).getValue());
         }
         else if (s instanceof LiteralUnlimitedNatural) {
-        	Utils.log("!LiteralUnlimitedNatural");
             return Integer.toString(((LiteralUnlimitedNatural) s).getValue());
         }
         else if (s instanceof LiteralReal) {
-        	Utils.log("!LiteralReal");
             return Double.toString(((LiteralReal) s).getValue());
         }
         else if ((rv = getRestrictedValue(s)) != null) {
-        	Utils.log("!RestrictedValue");
             return rv;
         }
         else if (s instanceof NamedElement) {
-            String text =RepresentationTextCreator.getRepresentedText((NamedElement) s);
-            Utils.log("NamedElement: " + text);
-
             return fixString(((NamedElement) s).getName());
         }
         else if (s instanceof Comment) {
-        	  String text =RepresentationTextCreator.getRepresentedText((Comment) s);
-              Utils.log("Comment: " + text);
             return fixString(((Comment) s).getBody());
         }
         else if (s instanceof StringProperty) {
-        	Utils.log("!StringProperty");
             return fixString(((StringProperty) s).getString());
         }
         else if (s instanceof NumberProperty) {
-        	Utils.log("!NumberProperty");
             return ((NumberProperty) s).getValue().toString();
         }
         else if (s instanceof BooleanProperty) {
-        	Utils.log("!BooleanProperty");
             return ((BooleanProperty) s).getBooleanObject().toString();
         }
         else if (s instanceof ElementProperty) {
-        	Utils.log("!ElementProperty");
             return fixString(((ElementProperty) s).getElement());
         }
         else if (s instanceof Slot) {
-        	 String text =RepresentationTextCreator.getRepresentedText((Slot) s);
-             Utils.log("Slot: " + text);
             return slot2String((Slot) s);
         }
         else if (s != null) {
