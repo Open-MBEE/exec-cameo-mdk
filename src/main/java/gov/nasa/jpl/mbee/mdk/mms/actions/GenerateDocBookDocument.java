@@ -28,8 +28,7 @@ public class GenerateDocBookDocument extends GeneratePDFDocument {
     public void actionPerformed(ActionEvent e) {
         try {
             File savefile = fileSelect("Select a docbook(xml) to be saved ...", docBookDefaultDir, "Save", new FileNameExtensionFilter("XML", "xml"));
-            if (savefile == null)
-            	return; //cancelled
+            if (savefile == null)	return; //cancelled
             docBookDefaultDir = savefile.getParentFile();
             //rename to .xml if not
         	if ( !savefile.getName().endsWith(".xml")) 
