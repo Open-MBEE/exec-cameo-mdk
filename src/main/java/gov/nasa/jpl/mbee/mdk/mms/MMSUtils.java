@@ -498,14 +498,6 @@ public class MMSUtils {
 
     }
 
-    public static String getDefaultSiteName(IProject iProject) {
-        String name = iProject.getName().trim().replaceAll("\\W+", "-");
-        if (name.endsWith("-")) {
-            name = name.substring(0, name.length() - 1);
-        }
-        return name;
-    }
-
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicGet(MMSEndpoint.Builder builder, Project project) {
         return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.GET, null, null);
     }

@@ -58,5 +58,14 @@ public class MDKConstants {
             AUTHORIZATION = "Authorization",
             CHARSET = "charset",
             APPLICATION_JSON = "application/json",
-            TWC_SERVICE_ID = "twcServiceId";
+            TWC_SERVICE_ID = "twcServiceId",
+            COMMITS_NODE = "commits",
+            ELEMENTS_NODE = "elements",
+            REFS_NODE = "refs",
+            MESSAGES_NODE = "messages",
+            REJECTED_NODE = "rejected",
+            SOURCE_FIELD = "source",
+            DELETED_FIELD = "deleted",
+            MAGICDRAW_SOURCE_VALUE = "magicdraw",
+            ELEMENT_TYPE_VALUE = "Element";
 }

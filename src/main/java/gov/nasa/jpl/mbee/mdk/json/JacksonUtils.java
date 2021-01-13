@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,11 +113,8 @@ public class JacksonUtils {
 
     public static ObjectNode parseJsonObject(JsonParser jsonParser) throws IOException {
         JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
-        while (current != JsonToken.START_OBJECT || jsonParser.getCurrentToken() == null) {
-            current = jsonParser.nextToken();
-            if(!jsonParser.hasCurrentToken()) {
-                throw new IOException("Unable to build object from JSON parser.");
-            }
+        if (current != JsonToken.START_OBJECT) {
+            throw new IOException("Unable to build object from JSON parser.");
         }
         return getObjectMapper().readTree(jsonParser);
     }
@@ -129,18 +127,18 @@ public class JacksonUtils {
             if (current != JsonToken.START_OBJECT) {
                 throw new IOException("Unable to build object from JSON parser.");
             }
-            while (!jsonParser.isClosed() && current != JsonToken.END_OBJECT) {
+            while (current != JsonToken.END_OBJECT) {
                 current = jsonParser.nextToken();
                 String keyName;
                 if(current != null) {
                     if(jsonParser.getCurrentName() != null) {
                         keyName = jsonParser.getCurrentName();
                         if(keyName.equals(expectedKey)) {
-                            parsedResponseObjects.put(expectedKey, parseExpectedArray(jsonParser, current));
-                        } else if(keyName.equals(MDKJsonConstants.MESSAGES_NODE) ) {
-                            parsedResponseObjects.put(MDKJsonConstants.MESSAGES_NODE, parseExpectedArray(jsonParser, current));
-                        } else if(keyName.equals(MDKJsonConstants.REJECTED_NODE)) {
-                            parsedResponseObjects.put(MDKJsonConstants.REJECTED_NODE, parseExpectedArray(jsonParser, current));
+                            parsedResponseObjects.put(expectedKey, parseExpectedArray(jsonParser));
+                        } else if(keyName.equals(MDKConstants.MESSAGES_NODE) ) {
+                            parsedResponseObjects.put(MDKConstants.MESSAGES_NODE, parseExpectedArray(jsonParser));
+                        } else if(keyName.equals(MDKConstants.REJECTED_NODE)) {
+                            parsedResponseObjects.put(MDKConstants.REJECTED_NODE, parseExpectedArray(jsonParser));
                         } else if(keyName.equals("total") || keyName.equals("rejectedTotal")){
                             //TODO: fill in what to do with the totals
                         }
@@ -148,37 +146,32 @@ public class JacksonUtils {
                             throw new IOException("Unable to properly read this JSON format, check REST responses.");
                         }
                     }
+                } else if(jsonParser.isClosed()) {
+                    throw new IOException("Unexpected end of data while parsing JSON.");
                 }
             }
         }
         return parsedResponseObjects;
     }
 
-    private static Set<ObjectNode> parseExpectedArray(JsonParser jsonParser, JsonToken current) throws IOException {
+    private static Set<ObjectNode> parseExpectedArray(JsonParser jsonParser) throws IOException {
         Set<ObjectNode> parsedObjects = new HashSet<>();
-        if (current != null) { // assumes the calling method has begun initial parsing stages
-            current = jsonParser.nextToken();
-            if(current.equals(JsonToken.START_ARRAY)) {
-                while (!jsonParser.isClosed() && current != JsonToken.END_ARRAY) {
-                    if (current == JsonToken.START_OBJECT) {
-                        ObjectNode currentJsonObject = JacksonUtils.getObjectMapper().readTree(jsonParser);
-                        if(currentJsonObject != null) {
-                            parsedObjects.add(currentJsonObject);
-                        }
-
-                        if(!jsonParser.isClosed()) {
-                            if(jsonParser.getCurrentToken() == null) {
-                                current = jsonParser.nextToken();
-                            }
-                        } else {
-                            break;
-                        }
-                    } else {
-                        current = jsonParser.nextToken();
+        JsonToken current = jsonParser.nextToken();
+        if(current.equals(JsonToken.START_ARRAY)) {
+            while (current != JsonToken.END_ARRAY) {
+                if (current == JsonToken.START_OBJECT) {
+                    ObjectNode currentJsonObject = JacksonUtils.parseJsonObject(jsonParser);
+                    if(currentJsonObject != null) {
+                        parsedObjects.add(currentJsonObject);
                     }
+                } else if (jsonParser.isClosed()){
+                    throw new IOException("Unexpected end of data while parsing JSON.");
+                } else {
+                    current = jsonParser.nextToken();
                 }
             }
         }
+
         return parsedObjects;
     }
 }

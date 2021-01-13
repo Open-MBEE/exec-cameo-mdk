@@ -18,7 +18,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitBranchAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
@@ -190,7 +189,7 @@ public class BranchValidator {
                 serverBranch.remove(MDKConstants.STATUS_KEY);
                 serverBranch.remove(MDKConstants.PARENT_COMMIT_ID);
 
-                clientBranch.getValue().put(MDKJsonConstants.DELETED_FIELD, false); // TODO we need to fix this
+                clientBranch.getValue().put(MDKConstants.DELETED_FIELD, false);
                 JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
                 if (diff != null && diff.isArray() && diff.size() > 0) {
                     ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + clientBranch.getKey().getName() + "\" is not equivalent to the corresponding MMS branch.");
