@@ -42,7 +42,8 @@ public class GeneratePDFDocument extends MDAction {
 	protected Element view;
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = GeneratePDFDocument.class.getSimpleName();
-    protected static String xslDefaultPathInMDKPlugin = "docbook-xsl-1.78.1" + File.separator + "fo" + File.separator + "docbook.xsl";
+    //if "Document Modeling" plugin (no cost) is installed
+    protected static String xslDefaultPathInMDKPlugin = "com.nomagic.magicdraw.modelbasedreport" + File.separator + "xsl" + File.separator + "docbook-xsl-1.78.1" + File.separator + "fo" + File.separator + "docbook.xsl";
     protected static File xslDefaultFile = null;
     protected static File pdfDefaultDir = null;
     Document doc;
@@ -64,7 +65,7 @@ public class GeneratePDFDocument extends MDAction {
 	        		.findFirst();
 	        if ( pd.isPresent() ) {	
 	           // the XSL FO file
-	        	xslDefaultFile = new File(pd.get().getPluginDirectory() , xslDefaultPathInMDKPlugin);
+	        	xslDefaultFile = new File(pd.get().getPluginDirectory().getParent() , xslDefaultPathInMDKPlugin);
 	        }
         }
     }
@@ -89,6 +90,11 @@ public class GeneratePDFDocument extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
+        	
+        	 if( xslDefaultFile.exists() == false) {
+        		Utils.showPopupMessage("\"Document Modeling Plugin\" is required.  Please install it and try again.");
+ 	        	return;
+        	 }
         	//1. pick stylesheet (xsl)
         	xslDefaultFile = fileSelect("Select a style sheet(xsl) ...", xslDefaultFile, "Select", new FileNameExtensionFilter("Style sheet", "xsl"));
         	if ( xslDefaultFile == null) return;
