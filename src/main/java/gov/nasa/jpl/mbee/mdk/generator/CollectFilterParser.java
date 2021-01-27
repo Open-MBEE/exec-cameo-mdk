@@ -445,9 +445,11 @@ public class CollectFilterParser {
                     e = ((CallBehaviorAction) e).getBehavior();
                 }
             }
-            Object o = ScriptRunner.runScriptFromStereotype(e,
-                    StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptCFStereotype),
-                    inputs);
+            //TODO fix for 2021x, checkForDerivedStereotype changed
+//            Object o = ScriptRunner.runScriptFromStereotype(e,
+//                    StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptCFStereotype),
+//                    inputs);
+            Object o = null;
             if (o != null && o instanceof Map && ((Map) o).containsKey("DocGenOutput")) {
                 Object l = ((Map) o).get("DocGenOutput");
                 if (l instanceof List) {
@@ -458,7 +460,7 @@ public class CollectFilterParser {
                     }
                 }
             }
-        } catch (ScriptException ex) {
+        } catch (Exception /*//TODO continued from above, was ScriptException*/ ex) {
             ex.printStackTrace();
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

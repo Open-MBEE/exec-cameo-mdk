@@ -41,8 +41,10 @@ public class UserScript extends Query {
                 e = ((CallBehaviorAction) this.dgElement).getBehavior();
             }
         }
-        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype);
-        return s.getName();
+        //TODO fix for 2021x, checkForDerivedStereotype changed
+//        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype);
+//        return s.getName();
+        return null;
     }
 
     public Map<?, ?> getScriptOutput(Map<String, Object> inputs) {
@@ -75,14 +77,15 @@ public class UserScript extends Query {
                     e = ((CallBehaviorAction) e).getBehavior();
                 }
             }
-            Object o = ScriptRunner.runScriptFromStereotype(e,
-                    StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype),
-                    inputs2);
-            if (o != null && o instanceof Map) {
-                return (Map<?, ?>) o;
-            }
+            //TODO fix for 2021x, checkForDerivedStereotype changed
+//            Object o = ScriptRunner.runScriptFromStereotype(e,
+//                    StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype),
+//                    inputs2);
+//            if (o != null && o instanceof Map) {
+//                return (Map<?, ?>) o;
+//            }
 
-        } catch (ScriptException e) {
+        } catch (Exception /*TODO continued from above, was ScriptException*/ e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);

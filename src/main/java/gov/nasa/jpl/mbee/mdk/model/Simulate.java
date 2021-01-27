@@ -3,6 +3,7 @@ package gov.nasa.jpl.mbee.mdk.model;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.simulation.SimulationManager;
+import com.nomagic.magicdraw.simulation.execution.SimulationResult;
 import com.nomagic.magicdraw.simulation.execution.session.SimulationSession;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -28,9 +29,9 @@ public class Simulate extends Query {
             if (o instanceof Element) {
                 long startTime = System.currentTimeMillis();
                 Application.getInstance().getGUILog().log("[INFO] Simulation of " + ((Element) o).getHumanName() + " started.");
-                SimulationSession simulationSession;
+                SimulationResult simulationResult;
                 try {
-                    simulationSession = SimulationManager.execute((Element) o, true, true);
+                    simulationResult = SimulationManager.execute((Element) o, true);
                 } catch (Exception e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] Simulation of " + ((Element) o).getHumanName() + " encountered an unexpected exception: \"" + e.getMessage() + ".\" Terminating.");
@@ -39,15 +40,15 @@ public class Simulate extends Query {
                     }
                     continue;
                 }
-                while (!simulationSession.isClosed() && (timeout < 0 || System.currentTimeMillis() - startTime < timeout * 1000)) {
+                while (!simulationResult.getMainSession().isClosed() && (timeout < 0 || System.currentTimeMillis() - startTime < timeout * 1000)) {
                     try {
                         Thread.sleep(1);
                     } catch (InterruptedException ignored) {
                     }
                 }
-                if (!simulationSession.isClosed()) {
+                if (!simulationResult.getMainSession().isClosed()) {
                     Application.getInstance().getGUILog().log("[WARNING] Simulation of " + ((Element) o).getHumanName() + " timed out after " + NumberFormat.getInstance().format(timeout) + " seconds. Terminating.");
-                    SimulationManager.terminateSession(simulationSession);
+                    SimulationManager.terminateSession(simulationResult.getMainSession());
                     if (SessionManager.getInstance().isSessionCreated()) {
                         SessionManager.getInstance().cancelSession();
                     }

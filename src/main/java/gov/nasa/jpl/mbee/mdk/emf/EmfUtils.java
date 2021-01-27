@@ -1117,7 +1117,7 @@ public final class EmfUtils {
                 }
             }
             if (obj instanceof Element) {
-                Set<Stereotype> set = StereotypesHelper.getAllAssignedStereotypes(Utils2
+                Collection<Stereotype> set = StereotypesHelper.getAllAssignedStereotypes(Utils2
                         .newList((Element) obj));
                 for (Stereotype sType : set) {
                     String sName = sType.getName();

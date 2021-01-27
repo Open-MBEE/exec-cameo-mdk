@@ -218,8 +218,8 @@ public class Paragraph extends Query {
                 //GeneratorUtils.getObjectProperty( getDgElement(), DocGenProfile.paragraphStereotype, "body", null );
                 // TODO @donbot find a way to remove this getProject() call
                 Stereotype paragraphStereotype = StereotypesHelper.getStereotype(Application.getInstance().getProject(), DocGenProfile.paragraphStereotype);
-                Slot s = Utils.getSlot(getDgElement(), Utils.getStereotypePropertyByName(paragraphStereotype, "body"));
-                //StereotypesHelper.getSlot( getDgElement(), , arg2, arg3 )
+                TaggedValue s = Utils.getTaggedValue(getDgElement(), Utils.getStereotypePropertyByName(paragraphStereotype, "body"));
+
                 DBParagraph paragraph;
                 if (s != null) {
                     paragraph = new DBParagraph(getText(), s, From.DVALUE);

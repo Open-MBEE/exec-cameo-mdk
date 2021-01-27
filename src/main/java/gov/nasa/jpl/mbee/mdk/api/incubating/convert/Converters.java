@@ -67,7 +67,10 @@ public class Converters {
                     String stereotypedElementId = id.substring(0, id.length() - MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX.length());
                     Element stereotypedElement = ID_TO_ELEMENT_CONVERTER.apply(stereotypedElementId, project);
                     if (stereotypedElement != null) {
-                        return stereotypedElement.getAppliedStereotypeInstance();
+                        //TODO fix for 2021x
+                        //return stereotypedElement.getAppliedStereotypeInstance();
+                        System.out.println("Skipping " + id);
+                        return null;
                     }
                 }
                 if (id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
