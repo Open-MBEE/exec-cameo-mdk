@@ -14,7 +14,6 @@ import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
@@ -219,8 +218,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                         .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams).build();
                 File responseFile = MMSUtils.sendMMSRequest(project, commitsRequest);
 
-                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
-                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);
+                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
                 if(elementObjects != null && !elementObjects.isEmpty()) {
                     for(ObjectNode jsonObject : elementObjects) {
                         JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
@@ -242,8 +241,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
         private void determineChangesUsingCommitResponse(File responseFile, Set<String> lockedElementIds, String commitId) throws IOException {
             // turns out the response still uses commits as the field of interest in terms of parsing
-            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
-            Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);
+            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+            Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
 
             if(commitObjects != null && !commitObjects.isEmpty()) {
                 int size = 0;
@@ -252,8 +251,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                     if(jsonObject.isArray() && jsonObject.size() > 0) {
                         for(int i = 0; i < jsonObject.size(); i++) {
                             JsonNode currentNode = jsonObject.get(i);
-                            JsonNode sourceField = currentNode.get(MDKJsonConstants.SOURCE_FIELD);
-                            boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKJsonConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
+                            JsonNode sourceField = currentNode.get(MDKConstants.SOURCE_FIELD);
+                            boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
                             if(isSyncingCommit) {
                                 commitSyncDirection = "Removed";
                             } else {
@@ -285,7 +284,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                         throw new IllegalStateException();
                     }
                     JsonNode typeJsonNode = changeJsonObject.get(MDKConstants.TYPE_KEY);
-                    if (typeJsonNode != null && typeJsonNode.isTextual() && !MDKJsonConstants.ELEMENT_TYPE_VALUE.equalsIgnoreCase(typeJsonNode.asText())) {
+                    if (typeJsonNode != null && typeJsonNode.isTextual() && !MDKConstants.ELEMENT_TYPE_VALUE.equalsIgnoreCase(typeJsonNode.asText())) {
                         continue;
                     }
                     JsonNode idJsonNode = changeJsonObject.get(MDKConstants.ID_KEY);

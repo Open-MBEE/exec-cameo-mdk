@@ -10,6 +10,8 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.esi.EsiUtils.EsiBranchInfo;
 
+import com.nomagic.magicdraw.teamwork2.ITeamworkService;
+import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -67,11 +69,16 @@ public class ProjectValidator {
 
     public static String getTeamworkCloudServer() {
         String twcServer = null;
-        if (EsiUtils.getTeamworkService() != null && EsiUtils.getTeamworkService().getLastUsedLoginInfo() != null
-                && EsiUtils.getTeamworkService().getLastUsedLoginInfo().server != null) {
-            twcServer = EsiUtils.getTeamworkService().getLastUsedLoginInfo().server;
-            if (twcServer.indexOf(':') > -1) {
-                twcServer = twcServer.substring(0, twcServer.indexOf(':'));
+
+        Project project = Application.getInstance().getProject();
+        if(project != null && project.isRemote()) {
+            ITeamworkService teamworkService = TeamworkService.getInstance(project);
+            if (teamworkService != null && teamworkService.getLastUsedLoginInfo() != null
+                    && teamworkService.getLastUsedLoginInfo().server != null) {
+                twcServer = teamworkService.getLastUsedLoginInfo().server;
+                if (twcServer.indexOf(':') > -1) {
+                    twcServer = twcServer.substring(0, twcServer.indexOf(':'));
+                }
             }
         }
         return twcServer;

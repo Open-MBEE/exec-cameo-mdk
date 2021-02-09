@@ -363,19 +363,7 @@ public class MMSUtils {
 
     private static boolean processResponse(int responseCode, InputStream responseStream, Project project) {
         boolean throwServerException = false;
-        JsonFactory jsonFactory = JacksonUtils.getJsonFactory();
-        try (JsonParser jsonParser = jsonFactory.createParser(responseStream)) {
-            while (jsonParser.nextFieldName() != null && !jsonParser.nextFieldName().equals("message")) {
-                // spin until we find message
-            }
-            if (jsonParser.getCurrentToken() == JsonToken.FIELD_NAME) {
-                jsonParser.nextToken();
-                Application.getInstance().getGUILog().log("[SERVER MESSAGE] " + jsonParser.getText());
-            }
-        } catch (IOException e) {
-            Application.getInstance().getGUILog().log("[WARNING] Unable to retrieve messages from server response.");
-            throwServerException = true;
-        }
+        //TODO print out server messages from responseStream
 
         if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
             Application.getInstance().getGUILog().log("[ERROR] MMS authentication is missing or invalid. Closing connections. Please log in again and your request will be retried.");
@@ -496,14 +484,6 @@ public class MMSUtils {
         uri.setPath(path);
         return uri;
 
-    }
-
-    public static String getDefaultSiteName(IProject iProject) {
-        String name = iProject.getName().trim().replaceAll("\\W+", "-");
-        if (name.endsWith("-")) {
-            name = name.substring(0, name.length() - 1);
-        }
-        return name;
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicGet(MMSEndpoint.Builder builder, Project project) {

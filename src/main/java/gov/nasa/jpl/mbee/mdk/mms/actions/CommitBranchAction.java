@@ -23,7 +23,6 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.manual.ManualSyncRunner;
@@ -204,8 +203,8 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
     }
 
     private ObjectNode findParentBranch(File responseFile, String parentBranchId) throws IOException {
-        Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.REFS_NODE);
-        Set<ObjectNode> refObjects = parsedResponseObjects.get(MDKJsonConstants.REFS_NODE);
+        Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.REFS_NODE);
+        Set<ObjectNode> refObjects = parsedResponseObjects.get(MDKConstants.REFS_NODE);
 
         if(refObjects != null && !refObjects.isEmpty()) {
             for(ObjectNode refObjectNode : refObjects) {
