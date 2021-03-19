@@ -64,12 +64,18 @@ repositories {
     else {
         ivy {
             // http://download1.nomagic.com/magicdraw185sp2/MagicDraw_185_sp2_no_install.zip
-            //url 'http://download1.nomagic.com/'
-            url 'file:///C:/MagicDraw/SSTBundlev5forMacMagicDraw19sp4.zip'
+            url 'http://download1.nomagic.com/'
             layout 'pattern', {
                 artifact '/[module][revision]/[classifier].[ext]'
             }
         }
+		ivy {
+		    url 'https://archive.apache.org/dist/xmlgraphics/fop/binaries/'
+            layout 'pattern', {
+                artifact '[classifier].[ext]'
+            }
+		}
+		
     }
 }
 
@@ -133,6 +139,9 @@ dependencies {
     compile group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
 
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
+	
+	//apache Fop
+	//compile group: 'org.apache.fop', name: 'fop', version: '1.1'
 
     // Test Dependencies
     //testCompile 'junit:junit:4.11'
@@ -151,9 +160,10 @@ dependencies {
         preCompile group: 'gov.nasa.jpl.cae.nomagic', name: 'cae-cameo-systems-modeler-core', version: '4.4.3', classifier: 'linux', ext: 'zip'
     }
     else {
-        //preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
-        //preCompile group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
-        //preCompile group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
+		preCompile group: 'org.apache.fop',name: 'fop', version: '1.1', classifier: 'fop-1.1-bin', ext: 'zip'
     }
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
@@ -166,26 +176,45 @@ dependencies {
 task extractDependencies {
     configurations.preCompile.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         inputs.file artifact.file
-        def zipFile = new ZipFile(artifact.file)
-        zipFile.entries().each { entry ->
-            if (!entry.isDirectory()) {
-                outputs.file 'build/dependency-cache/extracted/' + entry.getName()
-            }
-        }
+		/*def zipFile = new ZipFile(artifact.file)
+		zipFile.entries().each { entry ->
+			if (!entry.isDirectory()) {
+				outputs.file 'build/dependency-cache/extracted/' + entry.getName()
+			}
+		}*/
     }
     doLast {
         inputs.files.each { archive ->
-            copy {
-                from zipTree(archive)
-                into 'build/dependency-cache/extracted'
-            }
+			println "archive ${archive.getParentFile().getAbsolutePath()}"
+			if ( archive.getName().endsWith('fop-1.1-fop-1.1-bin.zip')){
+				//extract fop zip
+				copy {
+					from zipTree(archive)
+					into archive.getParentFile().getAbsolutePath()
+				}
+				copy {
+					from archive.getParentFile().getAbsolutePath() + '/fop-1.1/build/fop.jar'
+					into 'lib'//archive.getParentFile().getAbsolutePath()
+					rename { String fileName -> 'fop-1.1.jar'}
+				}
+				copy {
+					from archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/avalon-framework-4.2.0.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/batik-all-1.7.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/serializer-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xalan-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xercesImpl-2.7.1.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-ext-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xmlgraphics-commons-1.5.jar'
+					into 'lib'//archive.getParentFile().getAbsolutePath()
+				}
+			}
+			else {	
+				copy {
+						from zipTree(archive)
+						into 'build/dependency-cache/extracted'
+				}
+			}
         }
         fileTree(dir: 'build/dependency-cache/extracted', include: '*.zip').each { archive ->
-            copy {
-                from zipTree(archive)
-                into 'build/dependency-cache/extracted'
-            }
-        }
+			copy {
+				from zipTree(archive)
+				into 'build/dependency-cache/extracted'
+			}
+    }
         /*fileTree(dir: 'build/dependency-cache/extracted').each { file ->
             outputs.file file
         }*/
