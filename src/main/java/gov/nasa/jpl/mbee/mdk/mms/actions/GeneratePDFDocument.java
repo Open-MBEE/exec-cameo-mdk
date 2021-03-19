@@ -91,10 +91,10 @@ public class GeneratePDFDocument extends MDAction {
     public void actionPerformed(ActionEvent e) {
         try {
         	
-        	 if( xslDefaultFile.exists() == false) {
+        	 /*if( xslDefaultFile.exists() == false) {
         		Utils.showPopupMessage("\"Document Modeling Plugin\" is required.  Please install it and try again.");
  	        	return;
-        	 }
+        	 }*/
         	//1. pick stylesheet (xsl)
         	xslDefaultFile = fileSelect("Select a style sheet(xsl) ...", xslDefaultFile, "Select", new FileNameExtensionFilter("Style sheet", "xsl"));
         	if ( xslDefaultFile == null) return;
