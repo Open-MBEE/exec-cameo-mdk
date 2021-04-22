@@ -142,7 +142,7 @@ dependencies {
     testCompile group: 'org.gradle', name: 'gradle-process-services', version: '3.5.1'
     testCompile group: 'org.gradle', name: 'gradle-tooling-api', version: '3.5.1'
 
-    testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.0.1'
+    testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.1.1'
     
     // Other dependencies we're unable to resolve via standard repositories
 
