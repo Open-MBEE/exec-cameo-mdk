@@ -1,24 +1,23 @@
 package gov.nasa.jpl.mbee.mdk.mms.actions;
 
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
+
+import gov.nasa.jpl.mbee.mdk.generator.DocumentWriter;
+import gov.nasa.jpl.mbee.mdk.model.Document;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-
 /**
- * Action to Generate DocBook from MD Model
+ * Action to generate a DocBook xml file from MDK Document Model.
+ * @author dlam, mwilson
  * 
  */
-
-public class GenerateDocBookDocument extends GeneratePDFDocument {
+public class GenerateDocBookDocument extends GeneratePDFFromDocBookDocument {
 
     private static final long serialVersionUID = 1L;
     public static final String DEFAULT_ID = GenerateDocBookDocument.class.getSimpleName();
-    private File docBookDefaultDir = null;
     
     public GenerateDocBookDocument(Element view) {
         super(DEFAULT_ID, "DocBook", view);
@@ -26,18 +25,15 @@ public class GenerateDocBookDocument extends GeneratePDFDocument {
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        try {
-            File savefile = fileSelect("Select a docbook(xml) to be saved ...", docBookDefaultDir, "Save", new FileNameExtensionFilter("XML", "xml"));
-            if (savefile == null)	return; //cancelled
-            docBookDefaultDir = savefile.getParentFile();
-            //rename to .xml if not
-        	if ( !savefile.getName().endsWith(".xml")) 
-            	savefile = new File( savefile + ".xml");
-            generateDocBook(savefile);
-        
-        } catch (Exception ex) {
-            Utils.printException(ex);
-        }
+    	File docbookFile = askForDocBookFile("Specifiy a DocBook xml file to save..." , "Save");
+    	if ( docbookFile != null) //cancelled
+    		generate(docbookFile);
+    }
+    //MDK Document model -> Docbook XML File
+    protected void generate(File outputDocbookFile) {
+     	Document doc = prepToDocBook();
+     	if ( doc != null)
+     		ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(doc, outputDocbookFile, doc.getGenNewImage()), "Generating a DocBook XML file...", true, 0);
     }
  
 }
