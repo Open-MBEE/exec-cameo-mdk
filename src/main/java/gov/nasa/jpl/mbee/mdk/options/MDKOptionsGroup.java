@@ -1,8 +1,10 @@
 package gov.nasa.jpl.mbee.mdk.options;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.magicdraw.core.options.AbstractPropertyOptionsGroup;
 import com.nomagic.magicdraw.properties.BooleanProperty;
+import com.nomagic.magicdraw.properties.FileProperty;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.PropertyResourceProvider;
 import com.nomagic.magicdraw.properties.StringProperty;
@@ -22,7 +24,8 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             PERSIST_CHANGELOG_ID = "PERSIST_CHANGELOG_ID",
             ENABLE_CHANGE_LISTENER_ID = "ENABLE_CHANGE_LISTENER_ID",
             ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
-            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID";
+            CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
+    		DEFAULT_DOCBOOK_TO_PDF_STYLESHEET = "DEFAULT_DOCBOOK_TO_PDF_STYLESHEET";	
 
     public MDKOptionsGroup() {
         super(ID);
@@ -134,6 +137,21 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         property.setGroup(GROUP);
         addProperty(property, true);
     }
+    
+    
+    public String getDefaultDocBookToPDFStyleSheet() {
+    	Property p = getProperty(DEFAULT_DOCBOOK_TO_PDF_STYLESHEET);
+		return (String) p.getValue();
+    }
+    
+    public void setDefaultDocBookToPDFStyleSheet(String value) {
+    	FileProperty property = new FileProperty(DEFAULT_DOCBOOK_TO_PDF_STYLESHEET, value, FileProperty.FILES_ONLY);
+    	property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+    	property.setGroup(GROUP);
+    	
+    	addProperty(property, true);
+    }
+    
 
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> EnvironmentOptionsResources.getString(key);
 
@@ -144,6 +162,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
+        setDefaultDocBookToPDFStyleSheet("");
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";

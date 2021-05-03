@@ -63,8 +63,16 @@ repositories {
                 artifact '/[module][revision]/[classifier].[ext]'
             }
         }
-		ivy {
+		/*ivy {
+			//https://sourceforge.net/projects/docbook/files/docbook-xsl/1.78.1/docbook-xsl-1.78.1.zip/download
+			url 'file:///C:/Program Files/MagicDraw/'
+			layout 'pattern', {
+                artifact '[classifier].[ext]' 
+            }
+        }*/
+        ivy {    //downloading apache fop
 		    url 'https://archive.apache.org/dist/xmlgraphics/fop/binaries/'
+		    //url 'https://mirror.nodesdirect.com/apache/xmlgraphics/fop/binaries/'
             layout 'pattern', {
                 artifact '[classifier].[ext]'
             }
@@ -158,6 +166,9 @@ dependencies {
         preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
+        //preCompile group: 'com.nomagic', name: 'dm', version: '190sp3', classifier: 'Document_Modeling_Plugin_190_sp3_manually_created', ext: 'zip'
+        //preCompile group: 'com.nomagic', name: 'dm', version: '190', classifier: 'Document_Modeling_Plugin_190', ext: 'zip'
+		//preCompile group: 'org.apache.fop',name: 'fop', version: '2.6', classifier: 'fop-2.6-bin', ext: 'zip'
 		preCompile group: 'org.apache.fop',name: 'fop', version: '1.1', classifier: 'fop-1.1-bin', ext: 'zip'
     }
 
@@ -181,20 +192,26 @@ task extractDependencies {
     doLast {
         inputs.files.each { archive ->
 			println "archive ${archive.getParentFile().getAbsolutePath()}"
-			if ( archive.getName().endsWith('fop-1.1-fop-1.1-bin.zip')){
+			println "${archive.getName()}"
+			//if ( archive.getName().endsWith('fop-2.6-fop-2.6-bin.zip')){
+				if ( archive.getName().endsWith('fop-1.1-fop-1.1-bin.zip')){
 				//extract fop zip
 				copy {
 					from zipTree(archive)
 					into archive.getParentFile().getAbsolutePath()
 				}
 				copy {
+					//from archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/build/fop.jar'
+					//into 'lib'
+					//rename { String fileName -> 'fop-2.6.jar'}
 					from archive.getParentFile().getAbsolutePath() + '/fop-1.1/build/fop.jar'
-					into 'lib'//archive.getParentFile().getAbsolutePath()
+					into 'lib'
 					rename { String fileName -> 'fop-1.1.jar'}
 				}
-				copy {
-					from archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/avalon-framework-4.2.0.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/batik-all-1.7.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/serializer-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xalan-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xercesImpl-2.7.1.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-ext-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xmlgraphics-commons-1.5.jar'
-					into 'lib'//archive.getParentFile().getAbsolutePath()
+				copy {//not include commons-io-1.3.1.jar and commons-logging-1.0.4.jar because mdk already has commons-logging-1.2.jar and commons-io-1.3.2.jar
+					from archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/avalon-framework-4.2.0.jar',	/*archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/batik-all-1.7.jar',*/ archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/serializer-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xalan-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xercesImpl-2.7.1.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-ext-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xmlgraphics-commons-1.5.jar'
+					//from archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/batik-all-1.14.jar',	archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/fontbox-2.0.19.jar', archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/serializer-2.7.2.jar',	archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/xalan-2.7.2.jar',				archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/xercesImpl-2.12.0.jar',				archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/xml-apis-1.4.01.jar',				archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/xml-apis-ext-1.3.04.jar',				archive.getParentFile().getAbsolutePath() + '/fop-2.6/fop/lib/xmlgraphics-commons-2.6.jar'
+					into 'lib'
 				}
 			}
 			else {	
@@ -209,7 +226,7 @@ task extractDependencies {
 				from zipTree(archive)
 				into 'build/dependency-cache/extracted'
 			}
-    }
+    	}
         /*fileTree(dir: 'build/dependency-cache/extracted').each { file ->
             outputs.file file
         }*/
@@ -300,7 +317,9 @@ class PreDist extends DefaultTask {
         }
 
         String pluginLibraries = ''
-        project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
+        //docbook-xsl-1.78.1/extensions contains jar files that cause problem with apache fop while parsing DocBook Model xml file.
+        //docbook-xsl-1.79.1/extensions and tools/lib contain jar files that 
+        project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar', exclude: 'docbook-xsl-1.79.1/**/*.jar').each { file ->
             pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replace(File.separator, '/').replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
         }
         project.copy {
@@ -487,6 +506,7 @@ task runScript(type: Exec) {
 
 runScript.dependsOn installDist
 
+
 test {
     ignoreFailures = true
     testLogging.showStandardStreams = true
@@ -522,12 +542,69 @@ test {
      */
     classpath = files()
     doFirst {
+    	//docbook-xsl-1.78.1/extendsions contains jar file that cause problem for using apache fop (parsing Document Modeling xml file).
+    	//docbook-xsl-1.79.1/
         def arguments = ['-jar', testsHackJar.outputs.files.singleFile, '-cp',
-                         fileTree(dir: 'build/generated-dist', include: '**/*.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
-                                 /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */
+                         fileTree(dir: 'build/generated-dist', include: '**/*.jar', exclude: 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/docbook-xsl-1.79.1/**/*.jar' ).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ 
+ 
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.simulation', include: 'simulation.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.simulation', include: 'simulation_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.simulation/lib', include: 'jfreechart-1.5.0.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.simulation/lib', include: 'fmi-1.0.2.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.simulation/lib', include: 'fmu-wrapper-2.20.2.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.simulation/lib', include: 'jna-4.1.0.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.simulation/lib', include: 'simple-xml-2.7.1.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ 
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.diagramtable', include: 'diagramtable.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator + 
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.diagramtable', include: 'diagramtable_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator + 
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.diagramtable/lib', include: 'commons-lang3-3.4.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.dependencymatrix', include: 'dependencymatrix.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator + 
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.dependencymatrix', include: 'dependencymatrix_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ 
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.migration', include: 'migration.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.migration', include: 'migration_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.legend', include: 'legend.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.legend', include: 'legend_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.suspect', include: 'suspect.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.suspect', include: 'suspect_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.requirements', include: 'requirements.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.requirements', include: 'requirements_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.informationflows', include: 'informationflows.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.informationflows', include: 'informationflows_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.fileattachments', include: 'fileattachments.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.fileattachments', include: 'fileattachments_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.fileattachmentsmerge', include: 'fileattachmentsmerge.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.fileattachmentsmerge', include: 'fileattachmentsmerge_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.glossary', include: 'glossary.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.glossary', include: 'glossary_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.merge', include: 'merge.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.merge', include: 'merge_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.relationshipmap', include: 'relationshipmap_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.relationshipmap', include: 'relationshipmap.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.prefuse', include: 'prefuse_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.prefuse/lib', include: 'prefuse.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.webreport', include: 'webreport_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.imagelibrary', include: 'imagelibrary.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.imagelibrary', include: 'imagelibrary_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.reportwizard', include: 'reportwizard_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.reportwizard', include: 'reportwizard.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.reportwizard/requiredlibs', include: 'path.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+ fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.reportwizard/lib', include: '**/*.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+  
+ 
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.sysml/lib', include: '**/*.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.sysml', include: 'sysml.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+fileTree(dir: 'build/install/plugins/com.nomagic.magicdraw.sysml', include: 'sysml_api.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+  
+                                 
+                                 //fileTree(dir: 'build/install/plugins', include: ['**/*.jar']).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  files(classpathLibraries.collect { 'build/install/' + it }).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  configurations.testCompile.resolvedConfiguration.resolvedArtifacts.stream().map { i -> i.getFile().getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
+                                 
         String magicDrawLicense = project.getProperties().get('magicDrawLicense')
         if (magicDrawLicense != null && !magicDrawLicense.isEmpty()) {
             new File('build/install/mdlicense.tmp').write(new String(magicDrawLicense.decodeBase64()))
@@ -539,6 +616,9 @@ test {
         jvmArgs = arguments
     }
 }
+
+
+
 
 test.dependsOn testsJar
 test.dependsOn testsHackJar
