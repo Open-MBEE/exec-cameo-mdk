@@ -4,13 +4,34 @@
         internalVersion="${internal.version}"
         version="${human.version}"
         provider-name="NASA / Jet Propulsion Laboratory / Caltech"
-        class-lookup="LocalFirst"
+		ownClassloader="true"
+		class-lookup = "LocalFirst"
         class="gov.nasa.jpl.mbee.mdk.MDKPlugin">
     <requires>
         <api version="1.0"/>
-    </requires>
+		<required-plugin id="SimulationToolkit" name="Cameo Simulation Toolkit" version="19.0 SP3" internalVersion="1900010" />
+		<required-plugin id="Magic Model Analyst" name="Magic Model Analyst" version="19.0 SP4" internalVersion="1900010" optional="true" />
+		<required-plugin id="com.nomagic.magicdraw.plugins.impl.sysml" name="SysML" version="19.0 SP3" internalVersion="1900010" />
+		<required-plugin id="com.nomagic.requirements" name="Cameo Requirements Modeler" version="19.0 SP3" internalVersion="1900010"/>
+		<required-plugin id="com.nomagic.magicdraw.informationflows" name="Information Flows Management" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.fileattachments" name="File Attachments" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.migrationframework" name="Model migration framework" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.ganttchartdiagram" name="Gantt Chart Diagram" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.imagelibrary" name="Image Library" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.diagramtable" name="Diagram Table" version="1.0"/>
+		<required-plugin id="DependencyMatrixPlugin" name="Dependency Matrix" version="2.0"/>
+		<required-plugin id="com.nomagic.magicdraw.dialogtable" name="Dialog Table" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.legend.LegendPlugin" name="Legend"/>
+		<required-plugin id="com.nomagic.magicdraw.usagesdependencies" name="Usages and Dependencies plugin"/>
+        <required-plugin id="com.nomagic.magicdraw.glossary" name="Glossary" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.suspect" name="Suspect Links" version="1.0"/>
+		<required-plugin id="com.nomagic.magicdraw.visualization.relationshipmap" name="Relation Map"/>
+		<required-plugin id="com.nomagic.magicdraw.magicreport" name="Report Wizard"/>
+	</requires>
     <runtime>
         <!-- START AUTO-GENERATED -->
         <!-- END AUTO-GENERATED -->
     </runtime>
 </plugin>
+
+
