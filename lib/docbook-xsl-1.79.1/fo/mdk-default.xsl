@@ -11,7 +11,6 @@
 
 <xsl:stylesheet 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-    xmlns:db="http://docbook.org/ns/docbook"
     xmlns:fo="http://www.w3.org/1999/XSL/Format" 
     version="1.0">
     <xsl:import href="docbook.xsl"/>
@@ -44,7 +43,7 @@
         <xsl:variable name="keep.together">
             <xsl:call-template name="pi.dbfo_keep-together"/>
         </xsl:variable>
-        <xsl:for-each select="db:tgroup">
+        <xsl:for-each select="tgroup">
             <fo:table xsl:use-attribute-sets="table.table.properties">
                 <xsl:if test="$keep.together != ''">
                     <xsl:attribute name="keep-together.within-column">
@@ -52,7 +51,7 @@
                     </xsl:attribute>
                 </xsl:if>
                 <xsl:call-template name="table.frame"/>
-                <xsl:if test="following-sibling::db:tgroup">
+                <xsl:if test="following-sibling::tgroup">
                     <xsl:attribute name="border-bottom-width">0pt</xsl:attribute>
                     <xsl:attribute name="border-bottom-style">none</xsl:attribute>
                     <xsl:attribute name="padding-bottom">0pt</xsl:attribute>
@@ -62,7 +61,7 @@
                     <xsl:attribute name="space-after.optimum">0pt</xsl:attribute>
                     <xsl:attribute name="space-after.maximum">0pt</xsl:attribute>
                 </xsl:if>
-                <xsl:if test="preceding-sibling::db:tgroup">
+                <xsl:if test="preceding-sibling::tgroup">
                     <xsl:attribute name="border-top-width">0pt</xsl:attribute>
                     <xsl:attribute name="border-top-style">none</xsl:attribute>
                     <xsl:attribute name="padding-top">0pt</xsl:attribute>
