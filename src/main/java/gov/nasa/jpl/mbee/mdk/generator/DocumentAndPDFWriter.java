@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
+
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
@@ -23,7 +25,19 @@ import org.apache.fop.apps.FOUserAgent;
 import org.apache.fop.apps.Fop;
 import org.apache.fop.apps.FopFactory;
 import org.apache.fop.apps.MimeConstants;
-import org.xml.sax.SAXException;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
+
+import javax.xml.transform.Source;
+import org.apache.fop.apps.FormattingResults;
+import org.apache.fop.apps.PageSequenceResults;
+
 
 /**
  * runs the generation as a runnable to not stall magicdraw main thread, also
@@ -86,18 +100,18 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
     }
     //Document -> PDF
     protected void document2Pdf()  {
-        
-    	//try {
+    	
+    	ClassLoader localClassLoader = Thread.currentThread().getContextClassLoader();
+    	try {
     		FopFactory fopFactory = FopFactory.newInstance();//fopConfigFile);
-		
-    	 /*Thread current = Thread.currentThread();
-		 ClassLoader oldLoader = current.getContextClassLoader();
-		 Application.getInstance().getGUILog().log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@OldLoader: " + oldLoader);
-		 try {
-			   current.setContextClassLoader(getClass().getClassLoader());
-			   Application.getInstance().getGUILog().log("NewLoader: " + getClass().getClassLoader());
-    		*/
-	    	StreamSource docbookSrc = new StreamSource(docbook);
+    	
+    		//make currentloader to be mainloader (batik, fop, xmlgraphics jar need to be loaded at the same level so images to be embedded in PDF).
+    		URL[] urls = new URL[1];
+    		urls[0] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins" + File.separator + "gov.nasa.jpl.mbee.mdk")).toURI().toURL();
+    		URLClassLoader mainClassLoader = new URLClassLoader(urls, Application.class.getClassLoader());
+            Thread.currentThread().setContextClassLoader(mainClassLoader);
+    		
+        	StreamSource docbookSrc = new StreamSource(docbook);
 	
 	        // create a user agent (used to tweak rendering settings on a per-run basis.
 	        // we are just using defaults for now though.
@@ -112,10 +126,24 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
 					// Setup XSLT
 					Transformer transformer = TransformerFactory.newInstance().newTransformer(new StreamSource(docbookXslFo));
 		            // Pipe the FO events to FOP
-		            Result foResults = new SAXResult(fop.getDefaultHandler());
+		            Result res = new SAXResult(fop.getDefaultHandler());
 		            //transform Docbook -> XSL-FO -> PDF
-		            transformer.transform(docbookSrc, foResults);
+		            transformer.transform(docbookSrc, res);
+		            
+		            
+		            FormattingResults foResults = fop.getResults();
+		         // Result processing
+		            java.util.List pageSequences = foResults.getPageSequences();
+		            for (Object pageSequence : pageSequences) {
+		                PageSequenceResults pageSequenceResults = (PageSequenceResults) pageSequence;
+		                Application.getInstance().getGUILog().log("PageSequence "
+		                        + (String.valueOf(pageSequenceResults.getID()).length() > 0
+		                        ? pageSequenceResults.getID() : "<no id>")
+		                        + " generated " + pageSequenceResults.getPageCount() + " pages.");
+		            }
+		            Application.getInstance().getGUILog().log("Generated " + foResults.getPageCount() + " pages in total.");
 		            Application.getInstance().getGUILog().log("A PDF file is created as " + outputFile.getAbsolutePath());
+		            
 	
 		        }
 		        catch (FOPException e) {
@@ -132,6 +160,7 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
 		        	Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " + ex.getMessage());
 		        	//+  ExceptionUtils.getStackTrace(ex));
 		        	System.out.println("[Error] Failed to generate a PDF file. " +  ExceptionUtils.getStackTrace(ex));
+		        	
 		        } finally {
 		            pdfOut.close();
 		        } 
@@ -140,17 +169,15 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
 				Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " +  e.getMessage());
 				//ExceptionUtils.getStackTrace(e));
 			}
-    	/*} catch (SAXException e) {
-			e.printStackTrace();
-			Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. Please check the fop configuration file(" + fopConfigFile.getAbsolutePath() + ")." +  ExceptionUtils.getStackTrace(e));
+    	
 		} catch (IOException e) {
 			e.printStackTrace();
 			Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. Please check the fop configuration file(" + fopConfigFile.getAbsolutePath() + ")." +  ExceptionUtils.getStackTrace(e));
-		}*/
-    	
-		/* } finally {
-		      current.setContextClassLoader(oldLoader);
-	   }*/
+		}
+
+		finally {
+            Thread.currentThread().setContextClassLoader(localClassLoader);
+        }
     }
     @Override
     public void run(ProgressStatus arg0) {
