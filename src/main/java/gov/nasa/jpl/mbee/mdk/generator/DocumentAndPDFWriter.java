@@ -1,8 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
-
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.ApplicationEnvironment;
+//import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
@@ -26,15 +25,13 @@ import org.apache.fop.apps.Fop;
 import org.apache.fop.apps.FopFactory;
 import org.apache.fop.apps.MimeConstants;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import javax.xml.transform.Source;
 import org.apache.fop.apps.FormattingResults;
 import org.apache.fop.apps.PageSequenceResults;
 
@@ -44,7 +41,7 @@ import org.apache.fop.apps.PageSequenceResults;
  * allow user to cancel
  *
  * MD Model -> Document(xml) -> PDF
- * @author DavidWillard, mwilson
+ * @author DavidWillard, Miyako Wilson
  */
 public class DocumentAndPDFWriter implements RunnableWithProgress {
 
@@ -53,7 +50,7 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
     private File docbook;
     private File docbookXslFo;
     private File outputFile;
-    private File fopConfigFile;
+    private File pluginDirectory;
 
     public DocumentAndPDFWriter(File docbook, File docbookXslFo, File outputFile, File pluginDirectory) { 
     	this(null, false, docbook, docbookXslFo, outputFile, pluginDirectory);
@@ -68,7 +65,7 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
     	this.docbook = docbook;
     	this.docbookXslFo = docbookXslFo;
     	this.outputFile = outputFile;
-    	fopConfigFile = new File(pluginDirectory, "fop-conf" + File.separator + "fop.xconf");
+    	this.pluginDirectory = pluginDirectory;
 		
     }
     protected boolean mdModel2Document(ProgressStatus arg0) {
@@ -107,7 +104,8 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
     	
     		//make currentloader to be mainloader (batik, fop, xmlgraphics jar need to be loaded at the same level so images to be embedded in PDF).
     		URL[] urls = new URL[1];
-    		urls[0] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins" + File.separator + "gov.nasa.jpl.mbee.mdk")).toURI().toURL();
+    		//urls[0] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins" + File.separator + "gov.nasa.jpl.mbee.mdk")).toURI().toURL();
+    		urls[0] = pluginDirectory.toURI().toURL();
     		URLClassLoader mainClassLoader = new URLClassLoader(urls, Application.class.getClassLoader());
             Thread.currentThread().setContextClassLoader(mainClassLoader);
     		
@@ -132,7 +130,7 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
 		            
 		            
 		            FormattingResults foResults = fop.getResults();
-		         // Result processing
+		            // Result processing
 		            java.util.List pageSequences = foResults.getPageSequences();
 		            for (Object pageSequence : pageSequences) {
 		                PageSequenceResults pageSequenceResults = (PageSequenceResults) pageSequence;
@@ -143,8 +141,6 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
 		            }
 		            Application.getInstance().getGUILog().log("Generated " + foResults.getPageCount() + " pages in total.");
 		            Application.getInstance().getGUILog().log("A PDF file is created as " + outputFile.getAbsolutePath());
-		            
-	
 		        }
 		        catch (FOPException e) {
 		        	e.printStackTrace();
@@ -152,27 +148,23 @@ public class DocumentAndPDFWriter implements RunnableWithProgress {
 		        }
 		        catch (javax.xml.transform.TransformerException ex) {
 		        	ex.printStackTrace();
-		        	Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " + ex.getMessage());
-		        	//+  ExceptionUtils.getStackTrace(ex));
+		        	Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " + ExceptionUtils.getStackTrace(ex));
 		        }
 		        catch (Exception ex) {
 		        	ex.printStackTrace();
-		        	Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " + ex.getMessage());
-		        	//+  ExceptionUtils.getStackTrace(ex));
-		        	System.out.println("[Error] Failed to generate a PDF file. " +  ExceptionUtils.getStackTrace(ex));
+		        	Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " + ExceptionUtils.getStackTrace(ex));
 		        	
 		        } finally {
 		            pdfOut.close();
 		        } 
 			} catch (Exception e) { //FileNotFoundException and IOException for pdfOut.close()
 				e.printStackTrace();
-				Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " +  e.getMessage());
-				//ExceptionUtils.getStackTrace(e));
+				Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. " + ExceptionUtils.getStackTrace(e));
 			}
     	
-		} catch (IOException e) {
+		} catch (MalformedURLException e) {
 			e.printStackTrace();
-			Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file. Please check the fop configuration file(" + fopConfigFile.getAbsolutePath() + ")." +  ExceptionUtils.getStackTrace(e));
+			Application.getInstance().getGUILog().log("[Error] Failed to generate a PDF file." +  ExceptionUtils.getStackTrace(e));
 		}
 
 		finally {
