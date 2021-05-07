@@ -170,7 +170,7 @@ dependencies {
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/' + it })
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
-    compile fileTree(dir: 'build/generated-dist/plugins/${group}', include:['**/*.jar'])
+    compile fileTree(dir: 'build/generated-dist/plugins/gov.nasa.jpl.cae.magicdraw.mdk', include:['**/*.jar'])
 }
 
 task extractDependencies {
@@ -179,8 +179,7 @@ task extractDependencies {
     }
     doLast {
         inputs.files.each { archive ->
-			println "archive ${archive.getParentFile().getAbsolutePath()}"
-			println "${archive.getName()}"
+			//unzip fop and pur jars in plugin directory and its license in tmp/license3rdparty 
 			if ( archive.getName().endsWith('fop-1.1-fop-1.1-bin.zip')){
 				//extract fop zip
 				copy {
@@ -188,10 +187,8 @@ task extractDependencies {
 					into archive.getParentFile().getAbsolutePath()
 				}
 				copy {
-					//into 'lib'
 					from archive.getParentFile().getAbsolutePath() + '/fop-1.1/build/fop.jar'
-					//into 'lib'
-					into 'build/generated-dist/plugins/${group}'
+					into 'build/generated-dist/plugins/gov.nasa.jpl.cae.magicdraw.mdk'
 					rename { String fileName -> 'fop-1.1.jar'}
 				}
 				copy { //license3rdparty
@@ -201,10 +198,9 @@ task extractDependencies {
 				}
 				copy {//not include commons-io-1.3.1.jar and commons-logging-1.0.4.jar because mdk already has commons-logging-1.2.jar and commons-io-1.3.2.jar
 					//batik and xalan are removed because they are in md/lib, but may necessary if they updated the version and requires to change classloader to be local in DocumentAndPDFWriter.java
-					//from archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/avalon-framework-4.2.0.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/batik-all-1.7.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/serializer-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xalan-2.7.0.jar', archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xercesImpl-2.7.1.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-ext-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xmlgraphics-commons-1.5.jar'
+					//from archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/avalon-framework-4.2.0.jar',	/*archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/batik-all-1.7.jar',*/ archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/serializer-2.7.0.jar', /*archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xalan-2.7.0.jar',*/ archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xercesImpl-2.7.1.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-ext-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xmlgraphics-commons-1.5.jar'
 					from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib', include: '*.jar', exclude: 'commons*.jar')
-					//into 'lib'
-					into 'build/generated-dist/plugins/${group}'
+					into 'build/generated-dist/plugins/gov.nasa.jpl.cae.magicdraw.mdk'
 				}
 				copy { //license3rdparty
 					from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
@@ -318,14 +314,17 @@ class PreDist extends DefaultTask {
         project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
             file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${groupName}")))
         }
+        //including docbook files in the plugin directory
 		project.copy {
 			from project.zipTree("build/tmp/docbook-xsl-1.79.1-docbook-xsl-1.79.1.zip")
 			into "build/generated-dist/plugins/${groupName}"
 		}
+		//including docbook license files in the plugin directory
 		project.copy {
 			from "build/tmp/license3rdparty"
 			into "build/generated-dist/plugins/${groupName}/license3rdparty"
 		}
+		//including fop jar files in the plugin directory
 		project.copy {
 			from "build/tmp/jars"
 			into "build/generated-dist/plugins/${groupName}"
@@ -556,7 +555,6 @@ test {
     doFirst {
         def arguments = ['-jar', testsHackJar.outputs.files.singleFile, '-cp',
                 fileTree(dir: 'build/generated-dist', include: '**/*.jar', exclude: 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/docbook-xsl-1.79.1/**/*.jar' ).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
-				
 
 				// ---------------file needed to run for mdk plugin (including docbook to pdf function). Indivisually listed due to windows path limitation
 				// may replace with the following line for other os
