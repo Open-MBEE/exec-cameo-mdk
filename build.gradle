@@ -21,7 +21,10 @@ String[] classpathLibraries = ['lib/patch.jar','lib/brand.jar','lib/brand_api.ja
 
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
     }
     dependencies {
         classpath group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '4.9.0'
@@ -38,7 +41,10 @@ apply plugin: 'rebel'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
-    // mavenCentral()
+    mavenCentral()
+    maven {
+        url 'https://repo.gradle.org/gradle/libs-releases-local/'
+    }
     if (buildAccess == 'internal') {
         maven {
             url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
@@ -77,7 +83,6 @@ repositories {
 		}
 		
     }
-    jcenter()
 }
 
 configurations {
@@ -150,12 +155,12 @@ dependencies {
     testCompile group: 'org.gradle', name: 'gradle-process-services', version: '3.5.1'
     testCompile group: 'org.gradle', name: 'gradle-tooling-api', version: '3.5.1'
 
-    testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.0.1'
+    testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.1.1'
     
     // Other dependencies we're unable to resolve via standard repositories
 
     if (buildAccess == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.nomagic', name: 'cae-cameo-systems-modeler-core', version: '4.3.1', classifier: 'linux', ext: 'zip'
+        preCompile group: 'gov.nasa.jpl.cae.nomagic', name: 'cae-cameo-systems-modeler-core', version: '4.4.3', classifier: 'linux', ext: 'zip'
     }
     else {
         preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
@@ -168,7 +173,7 @@ dependencies {
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/' + it })
-    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar'] ]).flatten())
+    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
     compile fileTree(dir: 'build/generated-dist/plugins/gov.nasa.jpl.cae.magicdraw.mdk', include:['**/*.jar'])
 }

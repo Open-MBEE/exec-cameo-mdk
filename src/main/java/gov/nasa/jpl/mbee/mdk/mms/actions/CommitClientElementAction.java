@@ -121,8 +121,6 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
                 URIBuilder requestUri = MMSUtils.getServiceProjectsRefsElementsUri(project);
-                // Prevent potential "Not Equivalent" errors due to default merging of element data.
-                requestUri.addParameter("overwrite", "true");
                 HttpRequestBase request = MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, file, ContentType.APPLICATION_JSON);
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {
