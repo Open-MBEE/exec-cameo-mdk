@@ -33,7 +33,8 @@ public class GenerateDocBookDocument extends GeneratePDFFromDocBookDocument {
     protected void generate(File outputDocbookFile) {
      	Document doc = prepToDocBook();
      	if ( doc != null)
-     		ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(doc, outputDocbookFile, doc.getGenNewImage()), "Generating a DocBook XML file...", true, 0);
+     		ProgressStatusRunner.runWithProgressStatus(new DocumentWriter(doc, outputDocbookFile, doc.getGenNewImage()), "DocGen", true, 0);
     }
  
 }
+

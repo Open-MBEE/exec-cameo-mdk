@@ -256,10 +256,11 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 if (act == null) {
                     generateCategory.addAction(new GeneratePDF(e));
                 }
+                /*
                 act = manager.getActionFor(GeneratePDFFromDocBookDocument.DEFAULT_ID);
                 if (act == null) {
                     generateCategory.addAction(new GeneratePDFFromDocBookDocument(e));
-                }
+                }*/
                 category.addAction(generateCategory);
             }
         }
