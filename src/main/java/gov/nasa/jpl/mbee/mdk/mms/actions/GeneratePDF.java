@@ -76,7 +76,17 @@ public class GeneratePDF extends MDAction {
         }
         int retval = choose.showDialog(null, approveButtonText);
         if (retval == JFileChooser.APPROVE_OPTION) {
-            return choose.getSelectedFile();
+            File selectedFile = choose.getSelectedFile();
+            int overwriteoption = JOptionPane.CANCEL_OPTION; //default
+            if (selectedFile.exists() && approveButtonText.toLowerCase().compareTo("save") == 0) {
+            	overwriteoption = JOptionPane.showConfirmDialog(choose,"The file exists, overwrite?", "Existing file", JOptionPane.OK_CANCEL_OPTION);
+            	if ( overwriteoption == JOptionPane.OK_OPTION)
+            		return selectedFile;
+            	else
+            		return null;
+            }
+            else
+            	return selectedFile;
         }
         return null;
     }
