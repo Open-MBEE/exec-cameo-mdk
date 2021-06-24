@@ -3,9 +3,6 @@ package gov.nasa.jpl.mbee.mdk.generator;
 import com.nomagic.task.ProgressStatus;
 import java.io.*;
 
-import org.xml.sax.SAXException;
-
-
 /**
  * runs the generation as a runnable to not stall magicdraw main thread, also
  * allow user to cancel
