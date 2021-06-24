@@ -87,57 +87,28 @@ public class ElementValidator implements RunnableWithProgress {
         progressStatus.setDescription("Mapping element(s)");
         progressStatus.setIndeterminate(true);
 
-        if (clientElements == null) {
+        Map<String, Pair<Element, ObjectNode>> clientElementMap;
+        if(clientElements == null) {
             clientElements = new LinkedList<>();
-        }
-        Map<String, Pair<Element, ObjectNode>> clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
-
-        // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
-        Set<String> processedElementIds = new HashSet<>();
-        JsonToken current;
-        for (File responseFile : serverElementFiles) {
-            try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
-                if (current != JsonToken.START_OBJECT) {
-                    throw new IOException("Unable to build object from JSON parser.");
-                }
-                while (current != null && current != JsonToken.END_OBJECT) {
-                    current = jsonParser.nextToken();
-                    String keyName;
-                    if (current != null && (keyName = jsonParser.getCurrentName()) != null && keyName.equals("elements") && (current = jsonParser.nextToken()) == JsonToken.START_ARRAY) {
-                        current = jsonParser.nextToken();
-                        JsonNode value;
-                        while (current != null && current != JsonToken.END_ARRAY) {
-                            //current = jsonParser.nextToken();
-                            if (current == JsonToken.START_OBJECT) {
-                                String id;
-                                ObjectNode currentServerElement = JacksonUtils.parseJsonObject(jsonParser);
-                                if ((value = currentServerElement.get(MDKConstants.ID_KEY)) != null && value.isTextual()
-                                        && !processedElementIds.contains(id = value.asText())) {
-                                    //remove element from client and server maps if present, add appropriate validations already
-                                    processedElementIds.add(id);
-                                    Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);
-                                    if (currentClientElement == null) {
-                                        addMissingInClientViolation(currentServerElement);
-                                    }
-                                    else {
-                                        addElementEquivalenceViolation(currentClientElement, currentServerElement);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                // stuff
-            }
+            clientElementMap = new HashMap<>();
+        } else {
+            clientElementMap = clientElements.stream().collect(Collectors.toMap(pair -> Converters.getElementToIdConverter().apply(pair.getKey()), Function.identity(), (s, a) -> a));
         }
 
-        if (serverElements == null) {
+        Map<String, ObjectNode> serverElementMap;
+        if(serverElements == null) {
             serverElements = new LinkedList<>();
+            serverElementMap = new HashMap<>();
+        } else {
+            serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual()).collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
         }
-        Map<String, ObjectNode> serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual()).filter(json -> !processedElementIds.contains(json.get(MDKConstants.ID_KEY).asText()))
-                .collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
+
+        try {
+            processServerElements(clientElementMap, serverElementMap);
+        } catch(IOException e) {
+            e.printStackTrace();
+            Application.getInstance().getGUILog().log("[Error] An error occurred when attempting to process elements from the server.");
+        }
 
         LinkedHashSet<String> elementKeySet = new LinkedHashSet<>();
         elementKeySet.addAll(clientElementMap.keySet());
@@ -154,14 +125,11 @@ public class ElementValidator implements RunnableWithProgress {
 
             if ((clientElement == null || clientElement.getKey() == null) && serverElement == null) {
                 continue;
-            }
-            else if (clientElement == null) {
+            } else if (clientElement == null) {
                 addMissingInClientViolation(serverElement);
-            }
-            else if (serverElement == null) {
+            } else if (serverElement == null) {
                 addMissingOnMmsViolation(clientElement);
-            }
-            else {
+            } else {
                 addElementEquivalenceViolation(clientElement, serverElement);
             }
             progressStatus.increase();
@@ -171,6 +139,66 @@ public class ElementValidator implements RunnableWithProgress {
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(missingOnMmsCount) + " element" + (missingOnMmsCount != 1 ? "s are" : "is") + " missing on MMS.");
         Application.getInstance().getGUILog().log("[INFO] " + NumberFormat.getInstance().format(notEquivalentCount) + " element" + (notEquivalentCount != 1 ? "s are" : " is") + " not equivalent between client and MMS.");
         Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
+    }
+
+    private void processServerElements(Map<String, Pair<Element, ObjectNode>> clientElementMap, Map<String, ObjectNode> serverElementMap) throws IOException {
+        // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
+        for (File responseFile : serverElementFiles) {
+            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.ELEMENTS_NODE);
+            Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.ELEMENTS_NODE);
+            if(elementObjects != null && !elementObjects.isEmpty()) {
+                if(serverObjectsOnlyHasBins(elementObjects)) {
+                    // solves edge case where first model validation incorrectly removes bins from project
+                    removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.HOLDING_BIN_ID_PREFIX);
+                }
+                removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.VIEW_INSTANCES_BIN_PREFIX);
+
+                for(ObjectNode jsonObject : elementObjects) {
+                    JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
+                    if(idValue != null && idValue.isTextual() && !serverElementMap.containsKey(idValue.asText())) {
+                        String id = idValue.asText();
+
+                        Pair<Element, ObjectNode> currentClientElement = clientElementMap.get(id);
+                        serverElementMap.put(id, jsonObject);
+                        if (currentClientElement == null) {
+                            addMissingInClientViolation(jsonObject);
+                        } else {
+                            addElementEquivalenceViolation(currentClientElement, jsonObject);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean serverObjectsOnlyHasBins(Set<ObjectNode> serverObjectNodes) {
+        if(serverObjectNodes.size() != 2) {
+            return false;
+        }
+
+        for(ObjectNode o : serverObjectNodes) {
+            if(o.get(MDKConstants.ID_KEY).asText() != null) {
+                String idValue = o.get(MDKConstants.ID_KEY).asText();
+                if(!idValue.startsWith(MDKConstants.HOLDING_BIN_ID_PREFIX) &&
+                        !idValue.startsWith(MDKConstants.VIEW_INSTANCES_BIN_PREFIX)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void removeServerObjectNodeUsingIdPrefix(Set<ObjectNode> serverObjectNodes, String idPrefix) {
+        for(ObjectNode o : serverObjectNodes) {
+            if(o.get(MDKConstants.ID_KEY).asText() != null) {
+                String idValue = o.get(MDKConstants.ID_KEY).asText();
+                if(idValue.startsWith(idPrefix)) {
+                    serverObjectNodes.remove(o);
+                    break;
+                }
+            }
+        }
     }
 
     private void addMissingInClientViolation(ObjectNode serverElement) {
