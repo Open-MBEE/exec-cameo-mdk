@@ -17,13 +17,16 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -161,7 +164,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
                     logMessage(message);
                 }
             }
-            ticketStore = MMSUtils.getCredentialsTicket(mmsUrl, parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD), null);
+            ticketStore = BasicAuthAcquireTicketProcessor.getCredentialsTicket(mmsUrl, parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD), null);
             reportStatus("Started");
 
             MDKOptionsGroup.getMDKOptions().setLogJson(parser.hasOption(DEBUG));
@@ -258,13 +261,19 @@ public class AutomatedViewGenerator implements CommandLineAction {
                 refsNode = JacksonUtils.getObjectMapper().createObjectNode();
 
         try {
-            URIBuilder mmsProjectUri = MMSUtils.getServiceProjectsUri("https://" + parser.getOptionValue(MMS_HOST));
-            mmsProjectUri.setParameter("alf_ticket", ticketStore).setPath(mmsProjectUri.getPath() + "/" + parser.getOptionValue(PROJECT_ID));
-            MMSUtils.sendMMSRequest(null, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsProjectUri), null, projectsNode);
-            if (!parser.getOptionValue(REF_ID).equals("master")) {
-                URIBuilder mmsRefUri = MMSUtils.getServiceProjectsRefsUri("https://" + parser.getOptionValue(MMS_HOST), parser.getOptionValue(PROJECT_ID));
-                mmsRefUri.setParameter("alf_ticket", ticketStore).setPath(mmsRefUri.getPath() + "/" + parser.getOptionValue(REF_ID));
-                MMSUtils.sendMMSRequest(null, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, mmsRefUri), null, refsNode);
+            String uri = "https://" + parser.getOptionValue(MMS_HOST);
+            String projectId = parser.getOptionValue(PROJECT_ID);
+            String refId = parser.getOptionValue(REF_ID);
+            // we're using a generic request because the uri may differ from typical calls
+            HttpRequestBase projectRequest = MMSUtils.prepareEndpointBuilderGenericRequest(MMSProjectEndpoint.builder(), uri, project, MMSUtils.HttpRequestType.GET, null, null)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId).build();
+            MMSUtils.sendMMSRequest(null, projectRequest, null, projectsNode);
+            if (!refId.equals("master")) {
+                // we're using a generic request because the uri may differ from typical calls
+                HttpRequestBase refRequest = MMSUtils.prepareEndpointBuilderGenericRequest(MMSRefEndpoint.builder(), uri, project, MMSUtils.HttpRequestType.GET, null, null)
+                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
+                MMSUtils.sendMMSRequest(null, refRequest, null, refsNode);
             }
         } catch (IOException | ServerException | GeneralSecurityException e) {
             illegalStateFailure("[FAILURE] Unable to load project, exception occurred while resolving one of the required project URI parameters.");
@@ -345,7 +354,7 @@ public class AutomatedViewGenerator implements CommandLineAction {
     private void generateViews() throws Exception {
         String message;
         if (!TicketUtils.isTicketSet(project)) {
-            TicketUtils.setUsernameAndPassword(parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD));
+            BasicAuthAcquireTicketProcessor.setUsernameAndPassword(parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD));
             if (!MMSLoginAction.loginAction(project)) {
                 illegalStateFailure("[FAILURE] User " + parser.getOptionValue(MMS_USERNAME) + " was unable to login to MMS.");
             }

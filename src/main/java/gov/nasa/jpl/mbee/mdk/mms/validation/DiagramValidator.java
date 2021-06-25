@@ -79,7 +79,7 @@ public class DiagramValidator implements RunnableWithProgress {
             if (!diagramIds.isEmpty()) {
                 ObjectNode diagramElementsResponse;
                 try {
-                    File responseFile = MMSUtils.getElements(project, diagramIds, progressStatus);
+                    File responseFile = MMSUtils.getElementsRecursively(project, diagramIds, progressStatus);
                     try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                         diagramElementsResponse = JacksonUtils.parseJsonObject(jsonParser);
                     }

@@ -11,8 +11,11 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSEndpoint;
+import gov.nasa.jpl.mbee.mdk.mms.endpoints.MMSOrgsEndpoint;
 import gov.nasa.jpl.mbee.mdk.validation.IRuleViolationAction;
 import gov.nasa.jpl.mbee.mdk.validation.RuleViolationAction;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
@@ -57,11 +60,6 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
     public String commitAction() {
         // '{"elements": [{"sysmlId": "vetest", "name": "vetest"}]}' -X POST "http://localhost:8080/alfresco/service/orgs"
 
-        // check for existing org
-        URIBuilder requestUri = MMSUtils.getServiceOrgsUri(project);
-        if (requestUri == null) {
-            return null;
-        }
 
         JFrame selectionDialog = new JFrame();
         String org = JOptionPane.showInputDialog(selectionDialog, "Org name", "Create MMS Org", JOptionPane.QUESTION_MESSAGE);
@@ -74,9 +72,10 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
             return null;
         }
         String orgId = UUID.randomUUID().toString();
-        File responseFile;
         try {
-            responseFile = MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.GET, requestUri));
+            // check for existing org
+            HttpRequestBase orgsGetRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSOrgsEndpoint.builder(), project).build();
+            File responseFile = MMSUtils.sendMMSRequest(project, orgsGetRequest);
             try (JsonParser responseParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 ObjectNode response = JacksonUtils.parseJsonObject(responseParser);
                 JsonNode arrayNode;
@@ -113,7 +112,8 @@ public class CommitOrgAction extends RuleViolationAction implements AnnotationAc
         // do post request
         try {
             File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, orgs, MMSUtils.JsonBlobType.ORG);
-            MMSUtils.sendMMSRequest(project, MMSUtils.buildRequest(MMSUtils.HttpRequestType.POST, requestUri, sendData, ContentType.APPLICATION_JSON));
+            HttpRequestBase orgsPostRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSOrgsEndpoint.builder(), project, sendData).build();
+            MMSUtils.sendMMSRequest(project, orgsPostRequest);
         } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
             Application.getInstance().getGUILog().log("[ERROR] An error occurred while committing org. Org commit cancelled. Reason: " + e.getMessage());
             e.printStackTrace();
