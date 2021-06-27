@@ -108,18 +108,32 @@ public class TicketUtils {
      */
     private static String getUserCredentialsDialog() {
         JPanel userPanel = new JPanel();
-        userPanel.setLayout(new GridLayout(2, 2));
+        userPanel.setLayout(new GridLayout(4, 2));
 
         JLabel usernameLbl = new JLabel("Username:");
         JLabel passwordLbl = new JLabel("Password:");
 
         JTextField usernameFld = new JTextField();
         JPasswordField passwordFld = new JPasswordField();
+        
+        JRadioButton useDefault = new JRadioButton("Use Default Apache HttpClient Configuration");
+        JRadioButton useWindowsCredentials = new JRadioButton("Use Windows Credentials");
+        JRadioButton useTrustAll = new JRadioButton("Use TRUSTALL (Development Purposes only)");
+        //TODO might want to add an option for the JRadio group to create a folder for the certificates 
+        
+        ButtonGroup credGroup = new ButtonGroup();
+        credGroup.add(useDefault);
+        credGroup.add(useWindowsCredentials);
+        credGroup.add(useTrustAll);
 
         userPanel.add(usernameLbl);
         userPanel.add(usernameFld);
         userPanel.add(passwordLbl);
         userPanel.add(passwordFld);
+
+        userPanel.add(useDefault);
+        userPanel.add(useWindowsCredentials);
+        userPanel.add(useTrustAll);
 
         if (username != null) {
             usernameFld.setText(username);
@@ -132,6 +146,15 @@ public class TicketUtils {
                 "MMS Credentials", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 //        isDisplayed = false;
         if (response == JOptionPane.OK_OPTION) {
+        	if(useWindowsCredentials.isSelected()) {
+                MMSUtils.serverTrustMethod = "WINDOWS";
+        	}
+        	else if(useTrustAll.isSelected()) {
+                MMSUtils.serverTrustMethod = "TRUSTALL";
+        	}
+        	else {
+                MMSUtils.serverTrustMethod = "DEFAULT";
+        	}
             username = usernameFld.getText();
             String pass = new String(passwordFld.getPassword());
             return pass;

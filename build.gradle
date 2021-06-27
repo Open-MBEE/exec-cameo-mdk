@@ -272,8 +272,8 @@ class PreDist extends DefaultTask {
 
         String pluginLibraries = ''
         project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
-            pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
-        }
+		pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replace(File.separator, '/').replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
+	}
         project.copy {
             from 'src/main/dist/template/plugins/${group}/plugin.xml'
             filter { String line -> line.replace('<!-- START AUTO-GENERATED -->', '<!-- START AUTO-GENERATED -->' + System.lineSeparator() + System.lineSeparator() + pluginLibraries) }
@@ -284,7 +284,7 @@ class PreDist extends DefaultTask {
 
         String descriptorFiles = ''
         project.fileTree(dir: 'build/generated-dist').each { file ->
-            String relativePath = file.absolutePath.replaceAll(/.*build\/generated-dist\//, '')
+            String relativePath = file.absolutePath.replaceAll('\\\\', '/').replaceAll(/.*build\/generated-dist\//, '')
             descriptorFiles += '\t\t<file from=\"' + relativePath + '\" to=\"' + relativePath + '\"/>' + System.lineSeparator()
         }
         project.copy {

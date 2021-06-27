@@ -1,0 +1,170 @@
+diff --git a/src/main/java/gov/nasa/jpl/mbee/mdk/mms/MMSUtils.java b/src/main/java/gov/nasa/jpl/mbee/mdk/mms/MMSUtils.java
+index d5be33fb..ed390d6d 100644
+--- a/src/main/java/gov/nasa/jpl/mbee/mdk/mms/MMSUtils.java
++++ b/src/main/java/gov/nasa/jpl/mbee/mdk/mms/MMSUtils.java
+@@ -35,17 +35,26 @@ import org.apache.http.HttpEntityEnclosingRequest;
+ import org.apache.http.client.entity.EntityBuilder;
+ import org.apache.http.client.methods.*;
+ import org.apache.http.client.utils.URIBuilder;
++import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+ import org.apache.http.entity.ContentType;
+ import org.apache.http.entity.FileEntity;
+ import org.apache.http.entity.StringEntity;
+ import org.apache.http.impl.client.CloseableHttpClient;
+ import org.apache.http.impl.client.HttpClients;
++import org.apache.http.ssl.SSLContexts;
+ 
++import javax.net.ssl.SSLContext;
+ import javax.swing.*;
+ import java.io.*;
+ import java.net.HttpURLConnection;
+ import java.net.URI;
+ import java.net.URISyntaxException;
++import java.security.KeyManagementException;
++import java.security.KeyStore;
++import java.security.KeyStoreException;
++import java.security.NoSuchAlgorithmException;
++import java.security.UnrecoverableKeyException;
++import java.security.cert.CertificateException;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.Iterator;
+@@ -58,10 +67,11 @@ import java.util.concurrent.atomic.AtomicReference;
+ 
+ public class MMSUtils {
+ 
++	public static String serverTrustMethod = "DEFAULT"; //DEFAULT or WINDOWS
+     private static final int CHECK_CANCEL_DELAY = 100;
+     private static final AtomicReference<Exception> LAST_EXCEPTION = new AtomicReference<>();
+     private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
+-
++    
+     public enum HttpRequestType {
+         GET, POST, PUT, DELETE
+     }
+@@ -350,6 +360,23 @@ public class MMSUtils {
+ 
+         return requestFile;
+     }
++    
++    public static CloseableHttpClient createWindowsHttpClient() throws NoSuchAlgorithmException, CertificateException, IOException, KeyManagementException, UnrecoverableKeyException, KeyStoreException {
++    	KeyStore keystoreWinRoot = KeyStore.getInstance("Windows-ROOT");
++    	KeyStore keystoreWinMy = KeyStore.getInstance("Windows-MY");
++    	keystoreWinRoot.load(null,null);
++    	keystoreWinMy.load(null,null);
++    	SSLContext sslcontext = SSLContexts.custom()
++    			.loadKeyMaterial(keystoreWinMy,null)
++    			.loadTrustMaterial(keystoreWinRoot,null)
++    			.build();
++    	SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext);
++    	CloseableHttpClient httpclient = HttpClients.custom()
++    			.setSSLSocketFactory(sslsf)
++    			.build();
++    	return httpclient;
++    }
++    
+ 
+     /**
+      * General purpose method for sending a constructed http request via http client. For streaming reasons, defaults to writing to a file.
+@@ -376,19 +403,39 @@ public class MMSUtils {
+         // create client, execute request, parse response, store in thread safe buffer to return as string later
+         // client, response, and reader are all auto closed after block
+         if (progressStatus == null) {
+-            try (CloseableHttpClient httpclient = HttpClients.createDefault();
+-                 CloseableHttpResponse response = httpclient.execute(request);
+-                 InputStream inputStream = response.getEntity().getContent()) {
+-                responseCode.set(response.getStatusLine().getStatusCode());
+-                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+-                System.out.println(responseSummary);
+-                if (MDUtils.isDeveloperMode()) {
+-                    Application.getInstance().getGUILog().log(responseSummary);
+-                }
+-                if (inputStream != null) {
+-                    responseBody.set(generateMmsOutput(inputStream, responseFile));
+-                }
+-            }
++        	if(serverTrustMethod.equals("WINDOWS")) {
++	            try (CloseableHttpClient httpclient = createWindowsHttpClient();
++	                 CloseableHttpResponse response = httpclient.execute(request);
++	                 InputStream inputStream = response.getEntity().getContent()) {
++	                responseCode.set(response.getStatusLine().getStatusCode());
++	                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
++	                System.out.println(responseSummary);
++	                if (MDUtils.isDeveloperMode()) {
++	                    Application.getInstance().getGUILog().log(responseSummary);
++	                }
++	                if (inputStream != null) {
++	                    responseBody.set(generateMmsOutput(inputStream, responseFile));
++	                }
++	            } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException
++						| CertificateException | KeyStoreException e) {
++					e.printStackTrace();
++				}
++        	}
++        	else {
++        		try (CloseableHttpClient httpclient = HttpClients.createDefault();
++   	                 CloseableHttpResponse response = httpclient.execute(request);
++   	                 InputStream inputStream = response.getEntity().getContent()) {
++   	                responseCode.set(response.getStatusLine().getStatusCode());
++   	                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
++   	                System.out.println(responseSummary);
++   	                if (MDUtils.isDeveloperMode()) {
++   	                    Application.getInstance().getGUILog().log(responseSummary);
++   	                }
++   	                if (inputStream != null) {
++   	                    responseBody.set(generateMmsOutput(inputStream, responseFile));
++   	                }
++   	            }
++        	}
+         }
+         else {
+             LAST_EXCEPTION.set(null);
+diff --git a/src/main/java/gov/nasa/jpl/mbee/mdk/util/TicketUtils.java b/src/main/java/gov/nasa/jpl/mbee/mdk/util/TicketUtils.java
+index da58dadb..70a0925d 100644
+--- a/src/main/java/gov/nasa/jpl/mbee/mdk/util/TicketUtils.java
++++ b/src/main/java/gov/nasa/jpl/mbee/mdk/util/TicketUtils.java
+@@ -108,19 +108,30 @@ public class TicketUtils {
+      */
+     private static String getUserCredentialsDialog() {
+         JPanel userPanel = new JPanel();
+-        userPanel.setLayout(new GridLayout(2, 2));
++        userPanel.setLayout(new GridLayout(3, 2));
+ 
+         JLabel usernameLbl = new JLabel("Username:");
+         JLabel passwordLbl = new JLabel("Password:");
+ 
+         JTextField usernameFld = new JTextField();
+         JPasswordField passwordFld = new JPasswordField();
++        
++        JRadioButton useDefault = new JRadioButton("Use Default Apache HttpClient Configuration");
++        JRadioButton useWindowsCredentials = new JRadioButton("Use Windows Credentials");
++        //TODO might want to add an option for the JRadio group to create a folder for the certificates 
++        
++        ButtonGroup credGroup = new ButtonGroup();
++        credGroup.add(useDefault);
++        credGroup.add(useWindowsCredentials);
+ 
+         userPanel.add(usernameLbl);
+         userPanel.add(usernameFld);
+         userPanel.add(passwordLbl);
+         userPanel.add(passwordFld);
+ 
++        userPanel.add(useDefault);
++        userPanel.add(useWindowsCredentials);
++
+         if (username != null) {
+             usernameFld.setText(username);
+             usernameFld.requestFocus();
+@@ -132,6 +143,12 @@ public class TicketUtils {
+                 "MMS Credentials", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+ //        isDisplayed = false;
+         if (response == JOptionPane.OK_OPTION) {
++        	if(useWindowsCredentials.isSelected()) {
++                MMSUtils.serverTrustMethod = "WINDOWS";
++        	}
++        	else {
++                MMSUtils.serverTrustMethod = "DEFAULT";
++        	}
+             username = usernameFld.getText();
+             String pass = new String(passwordFld.getPassword());
+             return pass;

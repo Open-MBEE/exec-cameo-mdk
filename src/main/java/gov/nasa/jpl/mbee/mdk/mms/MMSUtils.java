@@ -32,20 +32,33 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.client.config.CookieSpecs;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.TrustStrategy;
 
+import javax.net.ssl.SSLContext;
 import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -58,10 +71,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class MMSUtils {
 
+	public static String serverTrustMethod = "DEFAULT"; //DEFAULT or WINDOWS
     private static final int CHECK_CANCEL_DELAY = 100;
     private static final AtomicReference<Exception> LAST_EXCEPTION = new AtomicReference<>();
     private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
-
+    
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
     }
@@ -350,6 +364,43 @@ public class MMSUtils {
 
         return requestFile;
     }
+    
+
+
+    public static CloseableHttpClient createTrustAllHttpClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+    	SSLContext sslcontext = SSLContexts.custom()
+    			.loadTrustMaterial(null,new TrustStrategy() {
+					@Override
+					public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+						return true;
+					}
+    			})
+    			.build();
+    	SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext);
+    	CloseableHttpClient httpclient = HttpClients.custom()
+    			.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+    			.setSSLSocketFactory(sslsf)
+    			.build();
+    	return httpclient;
+	}
+    
+    public static CloseableHttpClient createWindowsHttpClient() throws NoSuchAlgorithmException, CertificateException, IOException, KeyManagementException, UnrecoverableKeyException, KeyStoreException {
+    	KeyStore keystoreWinRoot = KeyStore.getInstance("Windows-ROOT");
+    	KeyStore keystoreWinMy = KeyStore.getInstance("Windows-MY");
+    	keystoreWinRoot.load(null,null);
+    	keystoreWinMy.load(null,null);
+    	SSLContext sslcontext = SSLContexts.custom()
+    			.loadKeyMaterial(keystoreWinMy,null)
+    			.loadTrustMaterial(keystoreWinRoot,null)
+    			.build();
+    	SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext);
+    	CloseableHttpClient httpclient = HttpClients.custom()
+    			.setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+    			.setSSLSocketFactory(sslsf)
+    			.build();
+    	return httpclient;
+    }
+    
 
     /**
      * General purpose method for sending a constructed http request via http client. For streaming reasons, defaults to writing to a file.
@@ -367,7 +418,7 @@ public class MMSUtils {
         final AtomicReference<String> responseBody = new AtomicReference<>();
         final AtomicReference<Integer> responseCode = new AtomicReference<>();
 
-        String requestSummary = "[INFO] MMS Request [" + request.getMethod() + "] " + request.getURI().toString();
+        String requestSummary = "[INFO] MMS Request [" + request.getMethod() + ":" +serverTrustMethod + "] " + request.getURI().toString();
         System.out.println(requestSummary);
         if (MDUtils.isDeveloperMode()) {
             Application.getInstance().getGUILog().log(requestSummary);
@@ -376,38 +427,109 @@ public class MMSUtils {
         // create client, execute request, parse response, store in thread safe buffer to return as string later
         // client, response, and reader are all auto closed after block
         if (progressStatus == null) {
-            try (CloseableHttpClient httpclient = HttpClients.createDefault();
-                 CloseableHttpResponse response = httpclient.execute(request);
-                 InputStream inputStream = response.getEntity().getContent()) {
-                responseCode.set(response.getStatusLine().getStatusCode());
-                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
-                System.out.println(responseSummary);
-                if (MDUtils.isDeveloperMode()) {
-                    Application.getInstance().getGUILog().log(responseSummary);
-                }
-                if (inputStream != null) {
-                    responseBody.set(generateMmsOutput(inputStream, responseFile));
-                }
-            }
+        	if(serverTrustMethod.equals("WINDOWS")) {
+	            try (CloseableHttpClient httpclient = createWindowsHttpClient();
+	                 CloseableHttpResponse response = httpclient.execute(request);
+	                 InputStream inputStream = response.getEntity().getContent()) {
+	                responseCode.set(response.getStatusLine().getStatusCode());
+	                String responseSummary = "[INFO] MMS Windows Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+	                System.out.println(responseSummary);
+	                if (MDUtils.isDeveloperMode()) {
+	                    Application.getInstance().getGUILog().log(responseSummary);
+	                }
+	                if (inputStream != null) {
+	                    responseBody.set(generateMmsOutput(inputStream, responseFile));
+	                }
+	            } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException
+						| CertificateException | KeyStoreException e) {
+					e.printStackTrace();
+				}
+        	}
+        	else if(serverTrustMethod.equals("TRUSTALL")) {
+        		try (CloseableHttpClient httpclient = createTrustAllHttpClient();
+   	                 CloseableHttpResponse response = httpclient.execute(request);
+   	                 InputStream inputStream = response.getEntity().getContent()) {
+   	                responseCode.set(response.getStatusLine().getStatusCode());
+   	                String responseSummary = "[INFO] MMS Windows Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+   	                System.out.println(responseSummary);
+   	                if (MDUtils.isDeveloperMode()) {
+   	                    Application.getInstance().getGUILog().log(responseSummary);
+   	                }
+   	                if (inputStream != null) {
+   	                    responseBody.set(generateMmsOutput(inputStream, responseFile));
+   	                }
+   	            } catch (Exception e) {
+   					e.printStackTrace();
+   				}
+        	}
+        	else {
+        		try (CloseableHttpClient httpclient = HttpClients.createDefault();
+   	                 CloseableHttpResponse response = httpclient.execute(request);
+   	                 InputStream inputStream = response.getEntity().getContent()) {
+   	                responseCode.set(response.getStatusLine().getStatusCode());
+   	                String responseSummary = "[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString();
+   	                System.out.println(responseSummary);
+   	                if (MDUtils.isDeveloperMode()) {
+   	                    Application.getInstance().getGUILog().log(responseSummary);
+   	                }
+   	                if (inputStream != null) {
+   	                    responseBody.set(generateMmsOutput(inputStream, responseFile));
+   	                }
+   	            }
+        	}
         }
         else {
             LAST_EXCEPTION.set(null);
             progressStatus.setIndeterminate(true);
             Future<?> future = TaskRunner.runWithProgressStatus(() -> {
-                try (CloseableHttpClient httpclient = HttpClients.createDefault();
-                     CloseableHttpResponse response = httpclient.execute(request);
-                     InputStream inputStream = response.getEntity().getContent()) {
-                    responseCode.set(response.getStatusLine().getStatusCode());
-                    if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                        System.out.println("[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
-                    }
-                    if (inputStream != null) {
-                        responseBody.set(generateMmsOutput(inputStream, responseFile));
-                    }
-                } catch (Exception e) {
-                    LAST_EXCEPTION.set(e);
-                    e.printStackTrace();
-                }
+            	if(serverTrustMethod.equals("WINDOWS")) {
+	                try (CloseableHttpClient httpclient = createWindowsHttpClient();
+	                     CloseableHttpResponse response = httpclient.execute(request);
+	                     InputStream inputStream = response.getEntity().getContent()) {
+	                    responseCode.set(response.getStatusLine().getStatusCode());
+	                    if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+	                        System.out.println("[INFO] MMS Response [" + request.getMethod() + ":" +serverTrustMethod+"]: " + responseCode.get() + " " + request.getURI().toString());
+	                    }
+	                    if (inputStream != null) {
+	                        responseBody.set(generateMmsOutput(inputStream, responseFile));
+	                    }
+	                } catch (Exception e) {
+	                    LAST_EXCEPTION.set(e);
+	                    e.printStackTrace();
+	                }
+            	}
+            	else if(serverTrustMethod.equals("TRUSTALL")) {
+            		try (CloseableHttpClient httpclient = createTrustAllHttpClient();
+   	                     CloseableHttpResponse response = httpclient.execute(request);
+   	                     InputStream inputStream = response.getEntity().getContent()) {
+   	                    responseCode.set(response.getStatusLine().getStatusCode());
+   	                    if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+   	                        System.out.println("[INFO] MMS Response [" + request.getMethod() + ":" +serverTrustMethod+"]: " + responseCode.get() + " " + request.getURI().toString());
+   	                    }
+   	                    if (inputStream != null) {
+   	                        responseBody.set(generateMmsOutput(inputStream, responseFile));
+   	                    }
+   	                } catch (Exception e) {
+   	                    LAST_EXCEPTION.set(e);
+   	                    e.printStackTrace();
+   	                }
+            	}
+            	else {
+            		try (CloseableHttpClient httpclient = HttpClients.createDefault();
+   	                     CloseableHttpResponse response = httpclient.execute(request);
+   	                     InputStream inputStream = response.getEntity().getContent()) {
+   	                    responseCode.set(response.getStatusLine().getStatusCode());
+   	                    if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+   	                        System.out.println("[INFO] MMS Response [" + request.getMethod() + ":" +serverTrustMethod+"]: " + responseCode.get() + " " + request.getURI().toString());
+   	                    }
+   	                    if (inputStream != null) {
+   	                        responseBody.set(generateMmsOutput(inputStream, responseFile));
+   	                    }
+   	                } catch (Exception e) {
+   	                    LAST_EXCEPTION.set(e);
+   	                    e.printStackTrace();
+   	                }
+            	}
             }, null, TaskRunner.ThreadExecutionStrategy.NONE, true);
             try {
                 while (!future.isDone() && !future.isCancelled()) {
@@ -454,7 +576,7 @@ public class MMSUtils {
         return responseFile;
     }
 
-    public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException {
+	public static File sendMMSRequest(Project project, HttpRequestBase request) throws IOException, ServerException, URISyntaxException {
         return sendMMSRequest(project, request, null, null);
     }
 
