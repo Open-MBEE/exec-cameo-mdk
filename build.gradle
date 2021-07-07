@@ -168,8 +168,8 @@ dependencies {
         preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
-		preCompile group: 'org.apache.fop',name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
-		preCompile group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext:'zip'
+        preCompile group: 'org.apache.fop',name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
+        preCompile group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext:'zip'
     }
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
