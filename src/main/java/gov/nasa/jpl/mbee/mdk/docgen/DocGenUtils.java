@@ -136,14 +136,6 @@ public class DocGenUtils {
             matcher.appendReplacement(stringBuffer, "");
             stringBuffer.append(replacement);
         }
-    	
-        /*
-        while (matcher.find()) {
-            String replacement = htmlEntityToXmlEntity(matcher.group(1));
-            matcher.appendReplacement(stringBuffer, "");
-            stringBuffer.append(replacement);
-        }
-		*/
         matcher.appendTail(stringBuffer);
         return stringBuffer.toString();
     }
