@@ -2,6 +2,7 @@
 <resourceDescriptor critical="false"
                     date="${build.timestamp}"
                     description="DocGen, MMS syncing, and common profiles"
+                    homePage="https://github.com/buzztoys/MDK"
                     id="91110"
                     mdVersionMax="higher"
                     mdVersionMin="18.4"
