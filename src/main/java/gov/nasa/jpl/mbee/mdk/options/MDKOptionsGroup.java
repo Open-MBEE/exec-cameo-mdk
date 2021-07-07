@@ -25,7 +25,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             ENABLE_CHANGE_LISTENER_ID = "ENABLE_CHANGE_LISTENER_ID",
             ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
             CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
-    		DEFAULT_DOCBOOK_TO_PDF_STYLESHEET = "DEFAULT_DOCBOOK_TO_PDF_STYLESHEET";	
+    		DOCBOOK_TO_PDF_STYLESHEET = "DOCBOOK_TO_PDF_STYLESHEET";	
 
     public MDKOptionsGroup() {
         super(ID);
@@ -139,13 +139,13 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     }
     
     
-    public String getDefaultDocBookToPDFStyleSheet() {
-    	Property p = getProperty(DEFAULT_DOCBOOK_TO_PDF_STYLESHEET);
+    public String getDocBookToPDFStyleSheet() {
+    	Property p = getProperty(DOCBOOK_TO_PDF_STYLESHEET);
 		return (String) p.getValue();
     }
     
-    public void setDefaultDocBookToPDFStyleSheet(String value) {
-    	FileProperty property = new FileProperty(DEFAULT_DOCBOOK_TO_PDF_STYLESHEET, value, FileProperty.FILES_ONLY);
+    public void setDocBookToPDFStyleSheet(String value) {
+    	FileProperty property = new FileProperty(DOCBOOK_TO_PDF_STYLESHEET, value, FileProperty.FILES_ONLY);
     	property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
     	property.setGroup(GROUP);
     	
@@ -162,7 +162,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
-        setDefaultDocBookToPDFStyleSheet("");
+        setDocBookToPDFStyleSheet("");
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";

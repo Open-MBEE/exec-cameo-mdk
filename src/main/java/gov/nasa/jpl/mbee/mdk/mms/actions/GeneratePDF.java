@@ -109,8 +109,8 @@ public class GeneratePDF extends MDAction {
     protected boolean checkForStyleSheetXMLFile() {
     	
     	Application.getInstance().getGUILog().log("[Info] The default stylesheet can be set at \"Default Docbook to PDF Stylesheet\" in Options -> Environment -> MDK");
-    	if (MDKOptionsGroup.getMDKOptions().getDefaultDocBookToPDFStyleSheet() != null && !MDKOptionsGroup.getMDKOptions().getDefaultDocBookToPDFStyleSheet().trim().isEmpty())
-        	xslDefaultFile = new File(MDKOptionsGroup.getMDKOptions().getDefaultDocBookToPDFStyleSheet().trim());
+    	if (MDKOptionsGroup.getMDKOptions().getDocBookToPDFStyleSheet() != null && !MDKOptionsGroup.getMDKOptions().getDocBookToPDFStyleSheet().trim().isEmpty())
+        	xslDefaultFile = new File(MDKOptionsGroup.getMDKOptions().getDocBookToPDFStyleSheet().trim());
     	else 
 	       	xslDefaultFile = new File(pluginDirectory , "docbook-xsl-1.79.1" + File.separator + "fo" + File.separator + "mdk-default.xsl");
     	//Application.getInstance().getGUILog().showMessage("xsl: " + xslDefaultFile.getAbsolutePath());
@@ -128,7 +128,7 @@ public class GeneratePDF extends MDAction {
     		}
     	}
 	    else 
-	    	MDKOptionsGroup.getMDKOptions().setDefaultDocBookToPDFStyleSheet(xslDefaultFile.getAbsolutePath());
+	    	MDKOptionsGroup.getMDKOptions().setDocBookToPDFStyleSheet(xslDefaultFile.getAbsolutePath());
     	Application.getInstance().getGUILog().log("[Info] The stylesheet selected is " + xslDefaultFile.getAbsolutePath());
 	    return true;
     	
