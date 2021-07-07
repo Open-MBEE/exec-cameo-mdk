@@ -177,7 +177,7 @@ dependencies {
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/' + it })
     compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
-    compile fileTree(dir: 'build/generated-dist/plugins/gov.nasa.jpl.cae.magicdraw.mdk', include:['**/*.jar'])
+    compile files('build/generated-dist/plugins/gov.nasa.jpl.cae.magicdraw.mdk/fop-1.1.jar', 'build/generated-dist/plugins/gov.nasa.jpl.cae.magicdraw.mdk/xmlgraphics-commons-1.5.jar')
 }
 
 task extractDependencies {
