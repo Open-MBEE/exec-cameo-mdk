@@ -246,8 +246,12 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                     category.addAction(new PreviewDocumentAction(e));
                 }
 
-                ActionsCategory generateCategory = new ActionsCategory(null, "Generate");
-                generateCategory.setNested(true);
+                ActionsCategory generateCategory = (ActionsCategory) manager.getActionFor("Generate");
+                if (generateCategory == null) {
+                	generateCategory = new ActionsCategory("Generate", "Generate");
+                	generateCategory.setNested(true);
+                	category.addAction(generateCategory);
+                }
                 act = manager.getActionFor(GenerateDocBookDocument.DEFAULT_ID);
                 if (act == null) {
                     generateCategory.addAction(new GenerateDocBookDocument(e));
@@ -256,12 +260,6 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 if (act == null) {
                     generateCategory.addAction(new GeneratePDF(e));
                 }
-                /* Hide for now
-                act = manager.getActionFor(GeneratePDFFromDocBookDocument.DEFAULT_ID);
-                if (act == null) {
-                    generateCategory.addAction(new GeneratePDFFromDocBookDocument(e));
-                }*/
-                category.addAction(generateCategory);
             }
         }
 
