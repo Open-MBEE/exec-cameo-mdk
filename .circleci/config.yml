@@ -8,22 +8,27 @@ executors:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
+commands:
+  custom_env:
+    steps:
+      - run:
+          name: Preparing custom environment variables
+          command: printf "export ORG_GRADLE_PROJECT_buildNumber=$CIRCLE_BUILD_NUM\nexport ORG_GRADLE_PROJECT_buildTag=$CIRCLE_TAG" >> $BASH_ENV
+      - run:
+          name: Show custom environment variables
+          command: |
+            echo "ORG_GRADLE_PROJECT_buildNumber=$ORG_GRADLE_PROJECT_buildNumber"
+            echo "ORG_GRADLE_PROJECT_buildTag=$ORG_GRADLE_PROJECT_buildTag"
+
 jobs:
   checkout_run_test:
     executor: openjdk_executor
     description: "Perform all setup steps"
     steps:
-        - run:
-            name: Setup custom environment variables
-            command: printf "export ORG_GRADLE_PROJECT_buildNumber=$CIRCLE_BUILD_NUM\nexport ORG_GRADLE_PROJECT_buildTag=$CIRCLE_TAG" >> $BASH_ENV
-        - run:
-            name: Show custom environment variables
-            command: |
-              echo "ORG_GRADLE_PROJECT_buildNumber=$ORG_GRADLE_PROJECT_buildNumber"
-              echo "ORG_GRADLE_PROJECT_buildTag=$ORG_GRADLE_PROJECT_buildTag"
-        - checkout
-        - run:
-            name: Create output directories
+      - custom_env
+      - checkout
+      - run:
+          name: Create output directories
             command: mkdir -vp ~/circleci-artifacts ~/circleci-test-results ~/circleci-test-results/junit/
         
         - restore_cache:
@@ -43,7 +48,7 @@ jobs:
         
         - run:
             name: Compile
-            command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
+            command: ./gradlew --refresh-dependencies --info --stacktrace clean assemble
         
 #        # Test
 #        - run:
@@ -81,19 +86,21 @@ jobs:
   deploy_snapshot:
     executor: openjdk_executor
     steps:
-        - attach_workspace:
-            at: ~/
-        - run:
-            name: Deploy snapshot
-            command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace publishToSonatype
+      - custom_env
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Deploy snapshot
+          command: ./gradlew --info --stacktrace publishToSonatype
   deploy_release:
     executor: openjdk_executor
     steps:
+      - custom_env
       - attach_workspace:
           at: ~/
       - run:
           name: Deploy release
-          command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace publishToSonatype closeSonatypeStagingRepository
+          command: ./gradlew --info --stacktrace publishToSonatype closeSonatypeStagingRepository
 
 workflows:
   version: 2
