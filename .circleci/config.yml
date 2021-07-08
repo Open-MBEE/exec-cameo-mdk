@@ -7,12 +7,17 @@ executors:
     environment:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+      ORG_GRADLE_PROJECT_buildNumber: $CIRCLE_BUILD_NUM
+      ORG_GRADLE_PROJECT_buildTag: $CIRCLE_TAG
 
 jobs:
   checkout_run_test:
     executor: openjdk_executor
     description: "Perform all setup steps"
     steps:
+        - run:
+            name: Show build number
+            command: "echo $ORG_GRADLE_PROJECT_buildNumber"
         - checkout
         - run:
             name: Create output directories
