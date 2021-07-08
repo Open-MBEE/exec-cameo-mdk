@@ -29,13 +29,13 @@ jobs:
       - checkout
       - run:
           name: Create output directories
-            command: mkdir -vp ~/circleci-artifacts ~/circleci-test-results ~/circleci-test-results/junit/
+          command: mkdir -vp ~/circleci-artifacts ~/circleci-test-results ~/circleci-test-results/junit/
         
         - restore_cache:
             keys:
-                - gradle-repo-v5-{{ .Branch }}-{{ checksum "gradle.properties" }}
-                - gradle-repo-v5-{{ .Branch }}-
-                - gradle-repo-v5-
+              - gradle-repo-v5-{{ .Branch }}-{{ checksum "gradle.properties" }}
+              - gradle-repo-v5-{{ .Branch }}-
+              - gradle-repo-v5-
         - run:
             name: Download uncached dependencies
             command: ./gradlew dependencies
@@ -43,7 +43,7 @@ jobs:
         
         - save_cache:
             paths:
-                - ~/.gradle
+              - ~/.gradle
             key: gradle-repo-v5-{{ .Branch }}-{{ checksum "gradle.properties" }}
         
         - run:
@@ -80,8 +80,8 @@ jobs:
             root: ~/
             # Must be relative path from root
             paths:
-                - .gradle
-                - project
+              - .gradle
+              - project
 
   deploy_snapshot:
     executor: openjdk_executor
@@ -108,20 +108,20 @@ workflows:
     jobs:
       - checkout_run_test:
           filters:
-              tags:
-                  only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
+            tags:
+              only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
       - deploy_snapshot:
           requires:
-              - checkout_run_test
-          filters:  
-              branches:
-                  only: /((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/
+            - checkout_run_test
+          filters:
+            branches:
+              only: /((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/
       - deploy_release:
           requires:
-              - checkout_run_test
+            - checkout_run_test
           filters:
-              tags:
-                  only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
-              branches:
-                  ignore: /.*/
+            tags:
+              only: /[0-9.]+(-(a|b|rc)[0-9]+)?/
+            branches:
+              ignore: /.*/
 
