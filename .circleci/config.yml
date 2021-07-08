@@ -35,29 +35,29 @@ jobs:
         
         - run:
             name: Compile
-            command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildAccess=opensource -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
+            command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --refresh-dependencies --info --stacktrace clean assemble
         
-        # Test
-        - run:
-            name: Run tests
-            command: xvfb-run ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace test
-        
-        - run:
-            name: Collect test results
-            command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp -v {} ~/circleci-test-results/junit/ \;
-        - run:
-            name: Collect artifacts
-            command: '[ ! -d build/reports ] || cp -R build/reports ~/circleci-artifacts/'
-        
-          # Teardown
-          # Save test results
-        - store_test_results:
-            path: ~/circleci-test-results
-          # Save artifacts
-        - store_artifacts:
-            path: ~/circleci-artifacts
-        - store_artifacts:
-            path: ~/circleci-test-results
+#        # Test
+#        - run:
+#            name: Run tests
+#            command: xvfb-run ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace test
+#        
+#        - run:
+#            name: Collect test results
+#            command: find . -type f -regex ".*/build/test-results/.*xml" -exec cp -v {} ~/circleci-test-results/junit/ \;
+#        - run:
+#            name: Collect artifacts
+#            command: '[ ! -d build/reports ] || cp -R build/reports ~/circleci-artifacts/'
+#        
+#          # Teardown
+#          # Save test results
+#        - store_test_results:
+#            path: ~/circleci-test-results
+#          # Save artifacts
+#        - store_artifacts:
+#            path: ~/circleci-artifacts
+#        - store_artifacts:
+#            path: ~/circleci-test-results
         
         - run: rm -rf .git
         # Persist the specified paths (workspace/echo-output) into the workspace for use in build/test jobs.
@@ -76,19 +76,16 @@ jobs:
         - attach_workspace:
             at: ~/
         - run:
-            name: Deploy snapshot to Artifactory
-            command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$SNAPSHOT_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
+            name: Deploy snapshot
+            command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace publishToSonatype
   deploy_release:
     executor: openjdk_executor
     steps:
       - attach_workspace:
           at: ~/
       - run:
-          name: Deploy release to Artifactory
-          command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PartifactoryUrl=$ARTIFACTORY_URL -PartifactoryRepository=$RELEASE_ARTIFACTORY_REPOSITORY -PartifactoryUsername=$ARTIFACTORY_USERNAME -PartifactoryPassword=$ARTIFACTORY_PASSWORD --info --stacktrace artifactoryPublish
-      - run:
-          name: Deploy release to Bintray
-          command: ./gradlew -PbuildAccess=opensource -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG -PbintrayUser=$BINTRAY_USER -PbintrayKey=$BINTRAY_KEY -PbintrayRepo=$BINTRAY_REPO -PbintrayUserOrg=$BINTRAY_USER_ORG --info --stacktrace clean bintrayUpload
+          name: Deploy release
+          command: ./gradlew -PbuildNumber=$CIRCLE_BUILD_NUM -PbuildTag=$CIRCLE_TAG --info --stacktrace publishToSonatype closeSonatypeStagingRepository
 
 workflows:
   version: 2
