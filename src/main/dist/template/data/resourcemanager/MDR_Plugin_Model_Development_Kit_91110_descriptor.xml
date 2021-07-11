@@ -10,7 +10,7 @@
                     product="JPL Model Development Kit"
                     type="Plugin">
     <version human="${human.version}" resource="${internal.version}" internal="${internal.version}"/>
-    <provider name="NASA / Jet Propulsion Laboratory / Caltech / OpenMBEE"/>
+    <provider name="OpenMBEE"/>
     <edition>Reader</edition>
     <edition>Community</edition>
     <edition>Standard</edition>

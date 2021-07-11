@@ -148,7 +148,6 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
     	FileProperty property = new FileProperty(DOCBOOK_TO_PDF_STYLESHEET, value, FileProperty.FILES_ONLY);
     	property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
     	property.setGroup(GROUP);
-    	
     	addProperty(property, true);
     }
     
