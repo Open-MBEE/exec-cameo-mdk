@@ -42,7 +42,7 @@ public class GeneratePdfFromDocBookAction extends GeneratePdfAction {
         File outputPdfFile = askForPdfFile();
         if (outputPdfFile != null) {
             //3. pick a stylesheet(.xsl)
-            if (checkForStyleSheetXMLFile()) {
+            if (checkForStyleSheetXmlFile()) {
                 generate(docbookFile, xslDefaultFile, outputPdfFile);
             }
         }

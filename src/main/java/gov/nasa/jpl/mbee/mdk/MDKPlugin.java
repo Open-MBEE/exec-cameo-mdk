@@ -53,6 +53,11 @@ public class MDKPlugin extends Plugin {
         return INSTANCE;
     }
 
+    @Deprecated
+    public static String getVersion() {
+        return getInstance().getDescriptor().getVersion();
+    }
+
     public static void updateMainToolbarCategory() {
         if (MAIN_TOOLBAR_ACTIONS_MANAGER == null) {
             return;
