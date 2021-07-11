@@ -1,13 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.options;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.magicdraw.core.options.AbstractPropertyOptionsGroup;
-import com.nomagic.magicdraw.properties.BooleanProperty;
-import com.nomagic.magicdraw.properties.FileProperty;
-import com.nomagic.magicdraw.properties.Property;
-import com.nomagic.magicdraw.properties.PropertyResourceProvider;
-import com.nomagic.magicdraw.properties.StringProperty;
+import com.nomagic.magicdraw.properties.*;
 import com.nomagic.magicdraw.ui.ImageMap16;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 

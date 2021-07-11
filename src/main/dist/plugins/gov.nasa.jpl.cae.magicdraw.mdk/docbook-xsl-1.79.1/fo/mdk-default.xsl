@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Version 1.0
+<!--
+Version 1.0
 	 by: Miyako Wilson (Georgia Tech) 05/07/21
-		- created by including some of mgss.xsl without oygen.xsl
 		- handle mms-link-view and mms-cf
 		- html a, br, ol, ul, ol/li, ul/li
-		 
-	 mgss.xsl - Version 3.0
-     Updated by: Charles E Galey (313B) 4/22/13, 
-     Original OpsRev version by: Doris T Lamb (393A)-->
+-->
 
 <xsl:stylesheet 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
