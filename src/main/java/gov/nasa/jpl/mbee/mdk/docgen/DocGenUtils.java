@@ -159,7 +159,6 @@ public class DocGenUtils {
     }
 
     public static String fixString(Object s, boolean convertHtml) {
-    	
         String rv;
         // may want to look at
         // com.nomagic.magicdraw.uml.RepresentationTextCreator.getRepresentedText
@@ -174,9 +173,9 @@ public class DocGenUtils {
             }
             else {
                   	return htmlToXmlEntities(((String) s)
-                        .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
-                        .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"))
-                		.replaceAll( "[^\\x00-\\x7F]", "" );  //for line 402 of DocGen.mdzip
+                            .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
+                            .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"))
+                            .replaceAll("[^\\x00-\\x7F]", "");  //for line 402 of DocGen.mdzip
             }
         }
         else if (s instanceof Integer) {
