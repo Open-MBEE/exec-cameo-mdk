@@ -15,7 +15,6 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.actions.*;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
@@ -252,13 +251,13 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
                 	generateCategory.setNested(true);
                 	category.addAction(generateCategory);
                 }
-                act = manager.getActionFor(GenerateDocBookDocument.DEFAULT_ID);
+                act = manager.getActionFor(GenerateDocBookAction.DEFAULT_ID);
                 if (act == null) {
-                    generateCategory.addAction(new GenerateDocBookDocument(e));
+                    generateCategory.addAction(new GenerateDocBookAction(e));
                 }
-                act = manager.getActionFor(GeneratePDF.DEFAULT_ID);
+                act = manager.getActionFor(GeneratePdfAction.DEFAULT_ID);
                 if (act == null) {
-                    generateCategory.addAction(new GeneratePDF(e));
+                    generateCategory.addAction(new GeneratePdfAction(e));
                 }
             }
         }

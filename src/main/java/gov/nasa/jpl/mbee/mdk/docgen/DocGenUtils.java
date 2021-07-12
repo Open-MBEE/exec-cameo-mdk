@@ -7,15 +7,11 @@ import com.nomagic.magicdraw.properties.BooleanProperty;
 import com.nomagic.magicdraw.properties.ElementProperty;
 import com.nomagic.magicdraw.properties.NumberProperty;
 import com.nomagic.magicdraw.properties.StringProperty;
-import com.nomagic.magicdraw.uml.BaseElement;
-import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.docgen.view.ViewElement;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
-
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -128,11 +124,12 @@ public class DocGenUtils {
         
         while (matcher.find()) {
             String replacement = null;
-        	if ( matcher.group(1).equals("&nbsp;")) {
-        		replacement = "&#160;"; //line 1766 and others of DocGen.mdzip works with this except the line 402
-      	}
-        	else
-        		replacement = htmlEntityToXmlEntity(matcher.group(1));
+            if (matcher.group(1).equals("&nbsp;")) {
+                replacement = "&#160;"; //line 1766 and others of DocGen.mdzip works with this except the line 402
+            }
+            else {
+                replacement = htmlEntityToXmlEntity(matcher.group(1));
+            }
             matcher.appendReplacement(stringBuffer, "");
             stringBuffer.append(replacement);
         }
@@ -162,7 +159,6 @@ public class DocGenUtils {
     }
 
     public static String fixString(Object s, boolean convertHtml) {
-    	
         String rv;
         // may want to look at
         // com.nomagic.magicdraw.uml.RepresentationTextCreator.getRepresentedText
@@ -177,9 +173,9 @@ public class DocGenUtils {
             }
             else {
                   	return htmlToXmlEntities(((String) s)
-                        .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
-                        .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"))
-                		.replaceAll( "[^\\x00-\\x7F]", "" );  //for line 402 of DocGen.mdzip
+                            .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
+                            .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"))
+                            .replaceAll("[^\\x00-\\x7F]", "");  //for line 402 of DocGen.mdzip
             }
         }
         else if (s instanceof Integer) {
