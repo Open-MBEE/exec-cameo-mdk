@@ -45,9 +45,7 @@ public class DocumentAndPdfWriter implements RunnableWithProgress {
 		this(null, false, docbook, docbookXslFo, outputFile);
 	}
 
-	public DocumentAndPdfWriter(Document dge, boolean genNewImage, File docbook) {
-		this(dge, genNewImage, docbook, null, null);
-	}
+	
 
 	public DocumentAndPdfWriter(Document dge, boolean genNewImage, File docbook, File docbookXslFo, File outputFile) {
 		this.dge = dge;
@@ -57,64 +55,17 @@ public class DocumentAndPdfWriter implements RunnableWithProgress {
 		this.outputFile = outputFile;
 	}
 
-	protected boolean mdModel2Document(ProgressStatus status) {
-
-		//MD Model -> Document
-		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(docbook));
-
-			SessionManager.getInstance().createSession(Application.getInstance().getProject(), DocBookOutputVisitor.class.getSimpleName());
-			DocBookOutputVisitor visitor = new DocBookOutputVisitor(false, docbook.getParentFile().getAbsolutePath());
-			dge.accept(visitor);
-			SessionManager.getInstance().closeSession(Application.getInstance().getProject());
-			DBBook book = visitor.getBook();
-			if (book != null) {
-				DBSerializeVisitor v = new DBSerializeVisitor(genNewImage, docbook.getParentFile(), status);
-				book.accept(v);
-				writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-				writer.write(v.getOut());
-			}
-			writer.flush();
-			writer.close();
-			Application.getInstance().getGUILog().log("A DocBook xml file is created as " + docbook.getAbsolutePath());
-			return true;
-		} catch (IOException e) {
-			Application.getInstance().getGUILog().log("[ERROR] Failed to generate a DocBook XML file. " + ExceptionUtils.getStackTrace(e));
-			return false;
-		}
-
-	}
-
-	//similar to mdModel2Document but not create xml in temp directory and remove when the application ended.
+	//create xml in temp directory and remove when the application ended.
 	//no message to Notification window
 	//used by "DocGen->Generate->PDF" action
 	protected boolean mdModel2DocumentAsTemp(ProgressStatus status) {
-
-		//MD Model -> Document
 		try {
 			docbook = File.createTempFile(docbook.getName(), ".xml");
-			BufferedWriter writer = new BufferedWriter(new FileWriter(docbook));
-
-			SessionManager.getInstance().createSession(Application.getInstance().getProject(), DocBookOutputVisitor.class.getSimpleName());
-			DocBookOutputVisitor visitor = new DocBookOutputVisitor(false, docbook.getParentFile().getAbsolutePath());
-			dge.accept(visitor);
-			SessionManager.getInstance().closeSession(Application.getInstance().getProject());
-			DBBook book = visitor.getBook();
-			if (book != null) {
-				DBSerializeVisitor v = new DBSerializeVisitor(genNewImage, docbook.getParentFile(), status);
-				book.accept(v);
-				writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-				writer.write(v.getOut());
-			}
-			writer.flush();
-			writer.close();
-			//A DocBook xml file is created as " + docbook.getAbsolutePath()
-			return true;
+			return DocumentWriter.mdModel2Document(status, dge, genNewImage, docbook, false);
+			
 		} catch (IOException e) {
-			//[ERROR] Failed to generate a DocBook XML file. " + ExceptionUtils.getStackTrace(e));
 			return false;
 		}
-
 	}
     //DocGen -> Generate-> PDF
     protected void document2Pdf()  {
@@ -187,11 +138,9 @@ public class DocumentAndPdfWriter implements RunnableWithProgress {
 	public void run(ProgressStatus status) {
 		status.setIndeterminate(true);
 		status.setDescription("Generating a PDF file...");
-		if (mdModel2DocumentAsTemp(status)) {
+		if (mdModel2DocumentAsTemp(status)) 
 			document2Pdf();
-		}
-		else {
+		else 
 			Application.getInstance().getGUILog().log("[ERROR] Failed to generate a PDF file.");
-		}
 	}
 }
