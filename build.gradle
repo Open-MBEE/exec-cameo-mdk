@@ -199,13 +199,7 @@ task extractDependencies {
 					rename { String fileName -> fopNameVersion + '.jar'}
 				}
 				
-				copy {//not include commons-io-1.3.1.jar and commons-logging-1.0.4.jar because mdk already has commons-logging-1.2.jar and commons-io-1.3.2.jar
-					//batik and xalan are removed because they are in md/lib, but may necessary if they updated the version and requires to change classloader to be local in DocumentAndPDFWriter.java
-					//from archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/avalon-framewrk-4.2.0.jar', 
-					//archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/batik-all-1.7.jar',
-					//archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/serializer-2.7.0.jar', 
-					//archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xalan-2.7.0.jar',
-					//archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xercesImpl-2.7.1.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xml-apis-ext-1.3.04.jar',	archive.getParentFile().getAbsolutePath() + '/fop-1.1/lib/xmlgraphics-commons-1.5.jar'
+				copy {
 					from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion +'/lib', include: '*.jar', exclude: 'commons*.jar')
 					into 'build/dependency-cache/extracted/fop/jars'
 				}
@@ -338,35 +332,35 @@ class PreDist extends DefaultTask {
 		}
 		project.copy {
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/fo"
-			into "build/generated-dist/plugins/${groupName}/" + docbookVersion + "/fo"
+			into "build/generated-dist/plugins/${groupName}/docbook-xsl/fo"
 		}
 		project.copy{
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/common"
-			into "build/generated-dist/plugins/${groupName}/" + docbookVersion + "/common"
+			into "build/generated-dist/plugins/${groupName}/docbook-xsl/common"
 		}
 		project.copy {	
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/COPYING"
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/README"
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/RELEASE-NOTES.txt"
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/VERSION.xsl"
-			into "build/generated-dist/plugins/${groupName}/" + docbookVersion
+			into "build/generated-dist/plugins/${groupName}/docbook-xsl"
 		}
 		project.copy {
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/highlighting/common.xsl"
-			into "build/generated-dist/plugins/${groupName}/" + docbookVersion + "/highlighting"
+			into "build/generated-dist/plugins/${groupName}/docbook-xsl/highlighting"
 		}
 		project.copy {
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/html/chunker.xsl"
-			into "build/generated-dist/plugins/${groupName}/" + docbookVersion + "/html"
+			into "build/generated-dist/plugins/${groupName}/docbook-xsl/html"
 		}
 		project.copy {
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/build.xml"
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/lib.xsl"
-			into "build/generated-dist/plugins/${groupName}/" + docbookVersion + "/lib"
+			into "build/generated-dist/plugins/${groupName}/docbook-xsl/lib"
 		}
 		project.copy {
 			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/profiling/profile-mode.xsl"
-			into "build/generated-dist/plugins/${groupName}/" + docbookVersion + "/profiling"
+			into "build/generated-dist/plugins/${groupName}/docbook-xsl/profiling"
 		}
 		
 				
@@ -374,7 +368,6 @@ class PreDist extends DefaultTask {
 		project.copy {
 			from project.getTasks().getByName('license3rdPartyZip')
 			into "build/generated-dist/plugins/${groupName}/license3rdparty"
-			//from "build/tmp/license3rdparty"
 		}
 		
 		//including fop jar files in the plugin directory
@@ -609,7 +602,7 @@ test {
     classpath = files()
     doFirst {
         def arguments = ['-jar', testsHackJar.outputs.files.singleFile, '-cp',
-                fileTree(dir: 'build/generated-dist', include: '**/*.jar', exclude: 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/" + docbookVersion + "/**/*.jar' ).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+                fileTree(dir: 'build/generated-dist', include: '**/*.jar', exclude: 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/docbook-xsl/**/*.jar' ).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
 
 				// ---------------file needed to run for mdk plugin (including docbook to pdf function). Indivisually listed due to windows path limitation
 				// may replace with the following line for other os

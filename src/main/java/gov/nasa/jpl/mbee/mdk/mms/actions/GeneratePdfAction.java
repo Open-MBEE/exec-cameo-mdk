@@ -103,7 +103,7 @@ public class GeneratePdfAction extends MDAction {
             xslDefaultFile = new File(MDKOptionsGroup.getMDKOptions().getDocBookToPDFStyleSheet().trim());
         }
         else {
-            xslDefaultFile = new File(MDKPlugin.getInstance().getDescriptor().getPluginDirectory(), "docbook-xsl-1.79.1" + File.separator + "fo" + File.separator + "mdk-default.xsl");
+            xslDefaultFile = new File(MDKPlugin.getInstance().getDescriptor().getPluginDirectory(), "docbook-xsl" + File.separator + "fo" + File.separator + "mdk-default.xsl");
         }
         //Ask to select the stylesheet - a user has an opportunity to change the stylesheet.
         xslDefaultFile = fileSelect("Select a stylesheet (XSL)", xslDefaultFile, "Select", new FileNameExtensionFilter("Stylesheet (XSL)", "xsl"));

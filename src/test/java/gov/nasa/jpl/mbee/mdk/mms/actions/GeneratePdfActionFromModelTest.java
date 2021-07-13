@@ -57,7 +57,7 @@ public class GeneratePdfActionFromModelTest {
         project = Application.getInstance().getProject();
 
         //ClassLoader classLoader = GeneratePDFFromMDModelTest.class.getClassLoader();
-        docbookXslFo = new File(userdir + File.separator + "plugins" + File.separator + "gov.nasa.jpl.cae.magicdraw.mdk" + File.separator + "docbook-xsl-1.79.1" + File.separator + "fo" + File.separator + "mdk-default.xsl");
+        docbookXslFo = new File(userdir + File.separator + "plugins" + File.separator + "gov.nasa.jpl.cae.magicdraw.mdk" + File.separator + "docbook-xsl" + File.separator + "fo" + File.separator + "mdk-default.xsl");
         if (!docbookXslFo.exists()) {
             throw new Exception("\"docbook.xsl\" is not found in mdk plugin.");
         }
