@@ -377,7 +377,7 @@ class PreDist extends DefaultTask {
 		}
 	
         String pluginLibraries = ''
-        project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar', exclude: 'docbook*/**/*.jar').each { file ->
+        project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
             pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replace(File.separator, '/').replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
         }
         project.copy {
