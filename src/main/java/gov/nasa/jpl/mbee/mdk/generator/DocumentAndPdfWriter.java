@@ -67,27 +67,27 @@ public class DocumentAndPdfWriter implements RunnableWithProgress {
 			return false;
 		}
 	}
-    //DocGen -> Generate-> PDF
-    protected void document2Pdf()  {
-    	
-    	ClassLoader localClassLoader = Thread.currentThread().getContextClassLoader();
-    	try {
-    		FopFactory fopFactory = FopFactory.newInstance();//fopConfigFile);
-    	
-    		//make currentloader to be mainloader (batik, fop, xmlgraphics jar need to be loaded at the same level so images to be embedded in PDF).
-    		URL[] urls = new URL[1];
-    		//urls[0] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins" + File.separator + "gov.nasa.jpl.mbee.mdk")).toURI().toURL();
+	//DocGen -> Generate-> PDF
+	protected void document2Pdf()  {
+		
+		ClassLoader localClassLoader = Thread.currentThread().getContextClassLoader();
+		try {
+			FopFactory fopFactory = FopFactory.newInstance();//fopConfigFile);
+		
+			//make currentloader to be mainloader (batik, fop, xmlgraphics jar need to be loaded at the same level so images to be embedded in PDF).
+			URL[] urls = new URL[1];
+			//urls[0] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins" + File.separator + "gov.nasa.jpl.mbee.mdk")).toURI().toURL();
 			urls[0] = MDKPlugin.getInstance().getDescriptor().getPluginDirectory().toURI().toURL();
-    		URLClassLoader mainClassLoader = new URLClassLoader(urls, Application.class.getClassLoader());
-            Thread.currentThread().setContextClassLoader(mainClassLoader);
-    		
-        	StreamSource docbookSrc = new StreamSource(docbook);
+			URLClassLoader mainClassLoader = new URLClassLoader(urls, Application.class.getClassLoader());
+			Thread.currentThread().setContextClassLoader(mainClassLoader);
+			
+			StreamSource docbookSrc = new StreamSource(docbook);
 	
-	        // create a user agent (used to tweak rendering settings on a per-run basis.
-	        // we are just using defaults for now though.
-	        FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
-	        
-	        OutputStream pdfOut;
+			// create a user agent (used to tweak rendering settings on a per-run basis.
+			// we are just using defaults for now though.
+			FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
+			
+			OutputStream pdfOut;
 			try {
 				pdfOut = new java.io.FileOutputStream(outputFile);
 				try {
