@@ -10,6 +10,7 @@ import java.io.File;
 
 
 /**
+ * Hidden from MDK plugin
  * Action to generate a PDF file from a DocBook xml file
  *
  * @author mwilson

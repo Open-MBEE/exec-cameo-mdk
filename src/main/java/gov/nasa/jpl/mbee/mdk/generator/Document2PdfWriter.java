@@ -12,7 +12,7 @@ import java.io.File;
  *
  * @author mwilson
  */
-public class Document2PdfWriter extends DocumentAndPdfWriter {
+public class Document2PdfWriter extends PdfWriter {
 
     protected File docbook;
 

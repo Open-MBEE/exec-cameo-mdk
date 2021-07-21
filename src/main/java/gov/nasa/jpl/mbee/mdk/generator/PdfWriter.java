@@ -1,13 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.generator;
 
 import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBBook;
-import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBSerializeVisitor;
-import gov.nasa.jpl.mbee.mdk.model.DocBookOutputVisitor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.fop.apps.*;
@@ -33,7 +29,7 @@ import java.util.List;
  *
  * @author DavidWillard, Miyako Wilson
  */
-public class DocumentAndPdfWriter implements RunnableWithProgress {
+public class PdfWriter implements RunnableWithProgress {
 
 	private final Document dge;
 	private final boolean genNewImage;
@@ -41,13 +37,13 @@ public class DocumentAndPdfWriter implements RunnableWithProgress {
 	private final File outputFile;
 	private File docbook;
 
-	public DocumentAndPdfWriter(File docbook, File docbookXslFo, File outputFile) {
+	public PdfWriter(File docbook, File docbookXslFo, File outputFile) {
 		this(null, false, docbook, docbookXslFo, outputFile);
 	}
 
 	
 
-	public DocumentAndPdfWriter(Document dge, boolean genNewImage, File docbook, File docbookXslFo, File outputFile) {
+	public PdfWriter(Document dge, boolean genNewImage, File docbook, File docbookXslFo, File outputFile) {
 		this.dge = dge;
 		this.genNewImage = genNewImage;
 		this.docbook = docbook;
