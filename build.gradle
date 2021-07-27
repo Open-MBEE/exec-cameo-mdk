@@ -382,9 +382,6 @@ class PreDist extends DefaultTask {
             filter { String line -> line.replace('${build.timestamp}', buildTimestamp) }
             into 'build/generated-dist/data/resourcemanager'
         }
-        project.delete(
-            project.files('build/generated-dist/plugins/' + '${group}' + '/plugin.xml', 'build/generated-dist/plugins/' + '${group}')
-        )
     }
 }
 
