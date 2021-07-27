@@ -24,7 +24,7 @@ public class GenerateDocBookAction extends GeneratePdfFromDocBookAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        File docbookFile = askForDocBookFile("Specify a DocBook xml file to save...", "Save");
+        File docbookFile = askForDocBookFile("Specify a DocBook XML file to save...", "Save");
         if (docbookFile != null) { //cancelled
             generate(docbookFile);
         }
