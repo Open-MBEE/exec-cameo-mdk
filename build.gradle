@@ -70,20 +70,19 @@ repositories {
                 artifact '/[module][revision]/[classifier].[ext]'
             }
         }
-		ivy {
-			url 'https://sourceforge.net/projects/docbook/files/docbook-xsl/'
-			layout 'pattern', {
+        ivy {
+            url 'https://sourceforge.net/projects/docbook/files/docbook-xsl/'
+            layout 'pattern', {
                 artifact '[revision]/[classifier].[ext]' 
             }
         }
         ivy {    //downloading apache fop (version is defined in precompile)
-		    url 'https://archive.apache.org/dist/xmlgraphics/fop/binaries/'
-		    //url 'https://mirror.nodesdirect.com/apache/xmlgraphics/fop/binaries/' for newer version
+            url 'https://archive.apache.org/dist/xmlgraphics/fop/binaries/'
+            //url 'https://mirror.nodesdirect.com/apache/xmlgraphics/fop/binaries/' for newer version
             layout 'pattern', {
                 artifact '[classifier].[ext]'
             }
-		}
-		
+        }
     }
 }
 
@@ -134,7 +133,7 @@ dependencies {
 
     // Apache Commons-IO
     compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
-//    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    //compile group: 'commons-io', name: 'commons-io', version: '2.4'
 
     // Apache HTTP
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
@@ -147,7 +146,7 @@ dependencies {
     compile group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
 
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
-	
+
     // Test Dependencies
     //testCompile 'junit:junit:4.11'
     testCompile group: 'org.gradle', name: 'gradle-core', version: '3.5.1'
@@ -186,45 +185,44 @@ task extractDependencies {
     }
     doLast {
         inputs.files.each { archive ->
-			//unzip fop and pur jars in plugin directory and its license in tmp/license3rdparty 
-			if ( archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')){
-				//extract fop zip
-				copy {
-					from zipTree(archive)
-					into archive.getParentFile().getAbsolutePath()
-				}
-				copy {
-					from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/build/fop.jar'
-					into 'build/dependency-cache/extracted/fop/jars'
-					rename { String fileName -> fopNameVersion + '.jar'}
-				}
-				
-				copy {
-					from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion +'/lib', include: '*.jar', exclude: 'commons*.jar')
-					into 'build/dependency-cache/extracted/fop/jars'
-				}
-				copy { //license3rdparty
-					from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/LICENSE'
-					into 'build/dependency-cache/extracted/fop/license3rdparty'
-					rename { String fileName -> 'apache.fop.LICENSE'}
-				}
-				copy { //license3rdparty
-					from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/'+ fopNameVersion+ '/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
-					into 'build/dependency-cache/extracted/fop/license3rdparty'
-				}
-			}
-			else if( archive.getName().endsWith(docbookNameVersion + '-' + docbookNameVersion +'.zip')){
-				copy {
-						from archive
-						into 'build/dependency-cache/extracted/docbook'
-					}
-			}
-			else {	
-				copy {
-					from zipTree(archive)
-					into 'build/dependency-cache/extracted/magicdraw'
-				}
-			}
+            if ( archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')){
+                //extract fop zip
+                copy {
+                    from zipTree(archive)
+                    into archive.getParentFile().getAbsolutePath()
+                }
+                copy {
+                    from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/build/fop.jar'
+                    into 'build/dependency-cache/extracted/fop/jars'
+                    rename { String fileName -> fopNameVersion + '.jar'}
+                }
+                copy {
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion +'/lib', include: '*.jar', exclude: 'commons*.jar')
+                    into 'build/dependency-cache/extracted/fop/jars'
+                }
+                copy { //license3rdparty
+                    from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/LICENSE'
+                    into 'build/dependency-cache/extracted/fop/license'
+                    rename { String fileName -> 'apache_fop_license.txt'}
+                }
+                copy { //license3rdparty
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/'+ fopNameVersion+ '/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
+                    into 'build/dependency-cache/extracted/fop/license'
+                    rename { String fileName -> fileName.replace(".LICENSE.txt", "_license.txt")}
+                }
+            }
+            else if( archive.getName().endsWith(docbookNameVersion + '-' + docbookNameVersion +'.zip')){
+                copy {
+                    from zipTree(archive)
+                    into 'build/dependency-cache/extracted/docbook'
+                }
+            }
+            else {
+                copy {
+                    from zipTree(archive)
+                    into 'build/dependency-cache/extracted/magicdraw'
+                }
+            }
         }
         fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: '*.zip').each { archive ->
             copy {
@@ -232,7 +230,6 @@ task extractDependencies {
                 into 'build/dependency-cache/extracted/magicdraw'
             }
         }
-        
     }
 }
 compileJava.dependsOn extractDependencies
@@ -290,12 +287,6 @@ task javadocZip(type: Zip, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-task license3rdPartyZip(type: Zip) {
-	classifier = 'license3rdparty'
-    from "build/dependency-cache/extracted/fop/license3rdparty"
-}
-
-
 class PreDist extends DefaultTask {
     String humanVersion
     String internalVersion
@@ -322,60 +313,50 @@ class PreDist extends DefaultTask {
             from project.getTasks().getByName('javadocZip')
             into "build/generated-dist/plugins/${groupName}/javadoc"
         }
-        project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
-            file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${groupName}")))
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/fo"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/fo"
         }
-        //docbook unzip and put only necessary files to generated-dist
-		project.copy {
-			from project.zipTree("build/dependency-cache/extracted/docbook/" + docbookVersion + "-" + docbookVersion+".zip")
-			into "build/dependency-cache/extracted/docbook"
-		}
-		project.copy {
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/fo"
-			into "build/generated-dist/plugins/${groupName}/docbook-xsl/fo"
-		}
-		project.copy{
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/common"
-			into "build/generated-dist/plugins/${groupName}/docbook-xsl/common"
-		}
-		project.copy {	
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/COPYING"
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/README"
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/RELEASE-NOTES.txt"
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/VERSION.xsl"
-			into "build/generated-dist/plugins/${groupName}/docbook-xsl"
-		}
-		project.copy {
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/highlighting/common.xsl"
-			into "build/generated-dist/plugins/${groupName}/docbook-xsl/highlighting"
-		}
-		project.copy {
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/html/chunker.xsl"
-			into "build/generated-dist/plugins/${groupName}/docbook-xsl/html"
-		}
-		project.copy {
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/build.xml"
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/lib.xsl"
-			into "build/generated-dist/plugins/${groupName}/docbook-xsl/lib"
-		}
-		project.copy {
-			from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/profiling/profile-mode.xsl"
-			into "build/generated-dist/plugins/${groupName}/docbook-xsl/profiling"
-		}
-		
-				
-		//including docbook license files in the plugin directory
-		project.copy {
-			from project.getTasks().getByName('license3rdPartyZip')
-			into "build/generated-dist/plugins/${groupName}/license3rdparty"
-		}
-		
-		//including fop jar files in the plugin directory
-		project.copy {
-			from "build/dependency-cache/extracted/fop/jars"
-			into "build/generated-dist/plugins/${groupName}"
-		}
-	
+        project.copy{
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/common"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/common"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/COPYING"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/README"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/RELEASE-NOTES.txt"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/VERSION.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/highlighting/common.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/highlighting"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/html/chunker.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/html"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/build.xml"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/lib.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/lib"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/profiling/profile-mode.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/profiling"
+        }
+        //including docbook license files in the plugin directory
+        project.copy {
+            from "build/dependency-cache/extracted/fop/license"
+            into "build/generated-dist/plugins/${groupName}/license"
+        }
+
+        //including fop jar files in the plugin directory
+        project.copy {
+            from "build/dependency-cache/extracted/fop/jars"
+            into "build/generated-dist/plugins/${groupName}"
+        }
+
         String pluginLibraries = ''
         project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
             pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replace(File.separator, '/').replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
@@ -401,6 +382,9 @@ class PreDist extends DefaultTask {
             filter { String line -> line.replace('${build.timestamp}', buildTimestamp) }
             into 'build/generated-dist/data/resourcemanager'
         }
+        project.delete(
+            project.files('build/generated-dist/plugins/' + '${group}' + '/plugin.xml', 'build/generated-dist/plugins/' + '${group}')
+        )
     }
 }
 
@@ -414,7 +398,6 @@ task preDist(type: PreDist) {
 }
 preDist.dependsOn jar
 preDist.dependsOn javadocZip
-preDist.dependsOn license3rdPartyZip
 
 distributions {
     main {
