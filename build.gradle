@@ -357,6 +357,9 @@ class PreDist extends DefaultTask {
             into "build/generated-dist/plugins/${groupName}"
         }
 
+        project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
+            file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${groupName}")))
+        }
         String pluginLibraries = ''
         project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
             pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replace(File.separator, '/').replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
