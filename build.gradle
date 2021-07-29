@@ -174,6 +174,8 @@ String[] classpathLibraries = [
         'lib/xmlbeans-2.6.0.jar',
         'lib/y.jar',
 ]
+String docbookNameVersion = 'docbook-xsl-1.79.1'
+String fopNameVersion = 'fop-1.1'
 
 buildscript {
     repositories {
@@ -216,10 +218,22 @@ repositories {
     }
     else {
         ivy {
-            // http://download1.nomagic.com/magicdraw185sp2/MagicDraw_185_sp2_no_install.zip
             url 'http://download1.nomagic.com/'
             layout 'pattern', {
                 artifact '/[module][revision]/[classifier].[ext]'
+            }
+        }
+        ivy {
+            url 'https://sourceforge.net/projects/docbook/files/docbook-xsl/'
+            layout 'pattern', {
+                artifact '[revision]/[classifier].[ext]' 
+            }
+        }
+        ivy {    //downloading apache fop (version is defined in precompile)
+            url 'https://archive.apache.org/dist/xmlgraphics/fop/binaries/'
+            //url 'https://mirror.nodesdirect.com/apache/xmlgraphics/fop/binaries/' for newer version
+            layout 'pattern', {
+                artifact '[classifier].[ext]'
             }
         }
     }
@@ -272,7 +286,7 @@ dependencies {
 
     // Apache Commons-IO
     compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
-//    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    //compile group: 'commons-io', name: 'commons-io', version: '2.4'
 
     // Apache HTTP
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
@@ -306,41 +320,69 @@ dependencies {
         preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
+        preCompile group: 'org.apache.fop',name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
+        preCompile group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext:'zip'
     }
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
-    compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/' + it })
-    compile fileTree(dir: 'build/dependency-cache/extracted', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar'] ]).flatten())
+    compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/magicdraw/' + it })
+    compile fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
+    compile files('build/dependency-cache/extracted/fop/jars/fop-1.1.jar', 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar')
 }
 
 task extractDependencies {
     configurations.preCompile.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         inputs.file artifact.file
-        def zipFile = new ZipFile(artifact.file)
-        zipFile.entries().each { entry ->
-            if (!entry.isDirectory()) {
-                outputs.file 'build/dependency-cache/extracted/' + entry.getName()
-            }
-        }
     }
     doLast {
         inputs.files.each { archive ->
-            copy {
-                from zipTree(archive)
-                into 'build/dependency-cache/extracted'
+            if ( archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')){
+                //extract fop zip
+                copy {
+                    from zipTree(archive)
+                    into archive.getParentFile().getAbsolutePath()
+                }
+                copy {
+                    from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/build/fop.jar'
+                    into 'build/dependency-cache/extracted/fop/jars'
+                    rename { String fileName -> fopNameVersion + '.jar'}
+                }
+                copy {
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion +'/lib', include: '*.jar', exclude: 'commons*.jar')
+                    into 'build/dependency-cache/extracted/fop/jars'
+                }
+                copy { //license3rdparty
+                    from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/LICENSE'
+                    into 'build/dependency-cache/extracted/fop/license'
+                    rename { String fileName -> 'apache_fop_license.txt'}
+                }
+                copy { //license3rdparty
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/'+ fopNameVersion+ '/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
+                    into 'build/dependency-cache/extracted/fop/license'
+                    rename { String fileName -> fileName.replace(".LICENSE.txt", "_license.txt")}
+                }
+            }
+            else if( archive.getName().endsWith(docbookNameVersion + '-' + docbookNameVersion +'.zip')){
+                copy {
+                    from zipTree(archive)
+                    into 'build/dependency-cache/extracted/docbook'
+                }
+            }
+            else {
+                copy {
+                    from zipTree(archive)
+                    into 'build/dependency-cache/extracted/magicdraw'
+                }
             }
         }
-        fileTree(dir: 'build/dependency-cache/extracted', include: '*.zip').each { archive ->
+        fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: '*.zip').each { archive ->
             copy {
                 from zipTree(archive)
-                into 'build/dependency-cache/extracted'
+                into 'build/dependency-cache/extracted/magicdraw'
             }
         }
-        /*fileTree(dir: 'build/dependency-cache/extracted').each { file ->
-            outputs.file file
-        }*/
     }
 }
 compileJava.dependsOn extractDependencies
@@ -404,6 +446,7 @@ class PreDist extends DefaultTask {
     String groupName
     String buildTimestamp
     String descriptor
+    String docbookVersion
 
     @TaskAction
     void executeTask() {
@@ -423,10 +466,53 @@ class PreDist extends DefaultTask {
             from project.getTasks().getByName('javadocZip')
             into "build/generated-dist/plugins/${groupName}/javadoc"
         }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/fo"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/fo"
+        }
+        project.copy{
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/common"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/common"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/COPYING"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/README"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/RELEASE-NOTES.txt"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/VERSION.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/highlighting/common.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/highlighting"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/html/chunker.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/html"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/build.xml"
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/lib/lib.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/lib"
+        }
+        project.copy {
+            from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/profiling/profile-mode.xsl"
+            into "build/generated-dist/plugins/${groupName}/docbook-xsl/profiling"
+        }
+        //including docbook license files in the plugin directory
+        project.copy {
+            from "build/dependency-cache/extracted/fop/license"
+            into "build/generated-dist/plugins/${groupName}/license"
+        }
+
+        //including fop jar files in the plugin directory
+        project.copy {
+            from "build/dependency-cache/extracted/fop/jars"
+            into "build/generated-dist/plugins/${groupName}"
+        }
+
         project.fileTree(dir: 'build/generated-dist', include: '**/*${group}*/**').each { file ->
             file.renameTo(project.file(file.getAbsolutePath().replace('${group}', "${groupName}")))
         }
-
         String pluginLibraries = ''
         project.fileTree(dir: "build/generated-dist/plugins/${groupName}", include: '**/*.jar').each { file ->
             pluginLibraries += '\t\t<library name=\"' + file.absolutePath.replace(File.separator, '/').replaceAll(~/.*build\/generated-dist\/plugins\/${groupName}\//, '') + '\"/>' + System.lineSeparator()
@@ -461,6 +547,7 @@ task preDist(type: PreDist) {
     groupName = magicdDrawGroupName
     buildTimestamp = timestamp
     descriptor = descriptorFile
+    docbookVersion = docbookNameVersion
 }
 preDist.dependsOn jar
 preDist.dependsOn javadocZip
@@ -557,7 +644,7 @@ installDist {
     doLast {
         copy {
             fileMode 0755
-            from 'build/dependency-cache/extracted'
+            from 'build/dependency-cache/extracted/magicdraw'
             from 'build/plugin'
             into 'build/install'
         }
