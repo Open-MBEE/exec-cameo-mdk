@@ -79,7 +79,7 @@ String[] classpathLibraries = [
         'lib/bundles/io.netty.handler_4.1.21.Final.jar',
         'lib/bundles/io.netty.resolver_4.1.21.Final.jar',
         'lib/bundles/io.netty.transport_4.1.21.Final.jar',
-        'lib/bundles/javax.jmi_1.0.0.201912191136/javax_jmi-1_0-fr.jar',
+        'lib/bundles/javax.jmi_1.0.0.202006020804/javax_jmi-1_0-fr.jar',
         'lib/bundles/joda-time_2.9.1.jar',
         'lib/bundles/lz4-java_1.3.0.jar',
         'lib/bundles/org.agrona_0.9.12.jar',
@@ -314,13 +314,13 @@ dependencies {
     // Other dependencies we're unable to resolve via standard repositories
 
     if (buildAccess == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.nomagic', name: 'cae-cameo-systems-modeler-core', version: '4.4.3', classifier: 'linux', ext: 'zip'
+        preCompile group: 'gov.nasa.jpl.cae.nomagic', name: 'cae-cameo-systems-modeler-core', version: '4.4.4', classifier: 'linux', ext: 'zip'
     }
     else {
         preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
         preCompile group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
-        preCompile group: 'org.apache.fop',name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
+        preCompile group: 'org.apache.fop', name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
         preCompile group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext:'zip'
     }
 
@@ -329,7 +329,8 @@ dependencies {
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/magicdraw/' + it })
     compile fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar'] ]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
-    compile files('build/dependency-cache/extracted/fop/jars/fop-1.1.jar', 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar')
+    compile files('build/dependency-cache/extracted/fop/jars/fop-1.1.jar', 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar', 'build/dependency-cache/extracted/magicdraw/jre/lib/ext/jfxrt.jar')
+
 }
 
 task extractDependencies {
