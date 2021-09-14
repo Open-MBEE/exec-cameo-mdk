@@ -194,6 +194,12 @@ apply plugin: 'eclipse'
 apply plugin: 'java'
 apply plugin: 'distribution'
 
+java {
+    sourceCompatibility = 'VERSION_1_8'
+    targetCompatibility = 'VERSION_1_8'
+}
+
+
 // In this section you declare where to find the dependencies of your project
 repositories {
     mavenCentral()
@@ -665,11 +671,11 @@ task runJava(type: JavaExec) {
 
     standardOutput = System.out
     errorOutput = System.err
-
+    executable = buildDir.toString() + '/dependency-cache/extracted/magicdraw/jre/bin/java'
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
     jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
     // arguments to pass to the application
-    args 'DEVELOPER'
+    args 'DEVELOPER DIEVAS'
 }
 
 runJava.dependsOn installDist
