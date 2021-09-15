@@ -32,6 +32,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import javax.annotation.CheckForNull;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -68,7 +69,8 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                 for (MMSArtifact artifact : artifacts) {
                     HttpEntity entity = MultipartEntityBuilder.create().addTextBody(MDKConstants.ID_KEY, artifact.getId()).addTextBody(MDKConstants.CHECKSUM_KEY, artifact.getChecksum()).addTextBody("source", "magicdraw").addBinaryBody("file", artifact.getInputStream(), artifact.getContentType(), artifact.getId() + ".tmp").build();
                     File file = File.createTempFile(this.getClass().getSimpleName() + "-" + artifact.getContentType().getMimeType().replace('/', '-') + "-", null);
-                    FileUtils.copyInputStreamToFile(entity.getContent(), file); // if we use the entity's content in the file do we need to pass the entity
+                    FileOutputStream fileos = new FileOutputStream(file);
+                    entity.writeTo(fileos); // if we use the entity's content in the file do we need to pass the entity
                     HttpRequestBase artifactRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementEndpoint.builder(), project, file)
                             .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
                             .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
