@@ -105,16 +105,17 @@ public class MMSUtils {
         return sendMMSRequest(project, elementPutRequest, progressStatus);
     }
 
-    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
-        if (artifactIds == null || artifactIds.isEmpty()) {
-            return null;
-        }
-        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
-        HttpRequestBase artifactGetRequest = prepareEndpointBuilderBasicJsonPutRequest(MMSElementsEndpoint.builder(), project, sendData)
-                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
-        return sendMMSRequest(project, artifactGetRequest, progressStatus);
-    }
+    // REPLACED IN MMS4 with ELEMENTS ENDPOINT
+//    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
+//        if (artifactIds == null || artifactIds.isEmpty()) {
+//            return null;
+//        }
+//        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
+//        HttpRequestBase artifactGetRequest = prepareEndpointBuilderBasicJsonPutRequest(MMSElementsEndpoint.builder(), project, sendData)
+//                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+//                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+//        return sendMMSRequest(project, artifactGetRequest, progressStatus);
+//    }
 
     public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException,
             IOException, URISyntaxException, GeneralSecurityException {
@@ -163,11 +164,9 @@ public class MMSUtils {
         switch (jsonBlobType) {
             case ELEMENT_ID:
             case ELEMENT_JSON:
-                arrayName = "elements";
-                break;
             case ARTIFACT_ID:
             case ARTIFACT_JSON:
-                arrayName = "artifacts";
+                arrayName = "elements";
                 break;
             case ORG:
                 arrayName = "orgs";
@@ -492,6 +491,10 @@ public class MMSUtils {
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicJsonPostRequest(MMSEndpoint.Builder builder, Project project, File file) {
         return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.POST, ContentType.APPLICATION_JSON, file);
+    }
+
+    public static MMSEndpoint.Builder prepareEndpointBuilderBasicBinaryPostRequest(MMSEndpoint.Builder builder, Project project, File file) {
+        return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.POST, ContentType.MULTIPART_FORM_DATA, file);
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicJsonPutRequest(MMSEndpoint.Builder builder, Project project, File file) {

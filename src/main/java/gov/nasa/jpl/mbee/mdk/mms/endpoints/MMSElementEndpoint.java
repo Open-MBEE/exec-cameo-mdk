@@ -11,7 +11,7 @@ public class MMSElementEndpoint extends MMSElementsEndpoint {
         return new MMSElementEndpoint.ElementBuilder();
     }
 
-    public static class ElementBuilder extends RefBuilder {
+    public static class ElementBuilder extends ElementsBuilder {
         @Override
         public void prepareUriPath() {
             String suffix = getStringParam(MMSEndpointBuilderConstants.URI_ELEMENT_SUFFIX);

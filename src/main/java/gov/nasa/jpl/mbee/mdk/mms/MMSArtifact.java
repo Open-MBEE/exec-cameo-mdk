@@ -9,4 +9,5 @@ public interface MMSArtifact {
     String getChecksum();
     InputStream getInputStream();
     ContentType getContentType();
+    String getExtension();
 }

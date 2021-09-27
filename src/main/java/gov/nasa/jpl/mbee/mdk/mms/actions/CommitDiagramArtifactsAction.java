@@ -67,11 +67,15 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                 String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
                 String refId = MDUtils.getBranchId(project);
                 for (MMSArtifact artifact : artifacts) {
-                    HttpEntity entity = MultipartEntityBuilder.create().addTextBody(MDKConstants.ID_KEY, artifact.getId()).addTextBody(MDKConstants.CHECKSUM_KEY, artifact.getChecksum()).addTextBody("source", "magicdraw").addBinaryBody("file", artifact.getInputStream(), artifact.getContentType(), artifact.getId() + ".tmp").build();
+                    HttpEntity entity = MultipartEntityBuilder.create()
+//                            .addTextBody(MDKConstants.ID_KEY, artifact.getId())
+//                            .addTextBody(MDKConstants.CHECKSUM_KEY, artifact.getChecksum())
+//                            .addTextBody("source", "magicdraw")
+                            .addBinaryBody("file", artifact.getInputStream(), artifact.getContentType(), artifact.getId() + "_" + artifact.getExtension() + ".tmp").build();
                     File file = File.createTempFile(this.getClass().getSimpleName() + "-" + artifact.getContentType().getMimeType().replace('/', '-') + "-", null);
                     FileOutputStream fileos = new FileOutputStream(file);
                     entity.writeTo(fileos); // if we use the entity's content in the file do we need to pass the entity
-                    HttpRequestBase artifactRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementEndpoint.builder(), project, file)
+                    HttpRequestBase artifactRequest = MMSUtils.prepareEndpointBuilderBasicBinaryPostRequest(MMSElementEndpoint.builder(), project, file)
                             .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
                             .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
                             .addParam(MMSEndpointBuilderConstants.URI_ELEMENT_SUFFIX, artifact.getId()).build();
@@ -80,16 +84,16 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
                         file.deleteOnExit();
                     }
                 }
-                ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
-                objectNode.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(diagram));
-                ArrayNode updatedArtifactIdsNode = objectNode.putArray(MDKConstants.ARTIFACT_IDS_KEY);
-                initialArtifactIds.forEach(updatedArtifactIdsNode::add);
-                artifacts.stream().map(MMSArtifact::getId).forEachOrdered(updatedArtifactIdsNode::add);
-                File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, Collections.singleton(objectNode), MMSUtils.JsonBlobType.ELEMENT_JSON);
-                HttpRequestBase elementPostRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
-                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
-                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
-                MMSUtils.sendMMSRequest(project, elementPostRequest, progressStatus);
+//                ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
+//                objectNode.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(diagram));
+//                ArrayNode updatedArtifactIdsNode = objectNode.putArray(MDKConstants.ARTIFACT_IDS_KEY);
+//                initialArtifactIds.forEach(updatedArtifactIdsNode::add);
+//                artifacts.stream().map(MMSArtifact::getId).forEachOrdered(updatedArtifactIdsNode::add);
+//                File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, Collections.singleton(objectNode), MMSUtils.JsonBlobType.ELEMENT_JSON);
+//                HttpRequestBase elementPostRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
+//                        .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
+//                        .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
+//                MMSUtils.sendMMSRequest(project, elementPostRequest, progressStatus);
             } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
                 e.printStackTrace();
                 Application.getInstance().getGUILog().log("[ERROR] Failed to commit diagram artifacts for " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());

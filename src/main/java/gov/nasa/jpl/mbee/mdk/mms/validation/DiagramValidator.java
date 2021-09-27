@@ -2,6 +2,8 @@ package gov.nasa.jpl.mbee.mdk.mms.validation;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BaseJsonNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -73,9 +75,11 @@ public class DiagramValidator implements RunnableWithProgress {
         Application.getInstance().getEnvironmentOptions().getGeneralOptions().setUseSVGTextTag(true);
         try {
             Set<String> diagramIds = diagrams.stream().map(Converters.getElementToIdConverter()).filter(Objects::nonNull).collect(Collectors.toSet());
-            Map<String, ObjectNode> diagramElementsMap = new LinkedHashMap<>();
+            //Map<String, Set<ObjectNode>> diagramElementsMap = new LinkedHashMap<>();
+            Map<String, ObjectNode> artifactsMap = new LinkedHashMap<>();
             Map<String, Set<String>> elementArtifactMap = new LinkedHashMap<>();
 
+            //Get and/or check for existing diagram objects, collect their associated artifactIDs
             if (!diagramIds.isEmpty()) {
                 ObjectNode diagramElementsResponse;
                 try {
@@ -103,53 +107,26 @@ public class DiagramValidator implements RunnableWithProgress {
                     if ((idNode = jsonNode.get(MDKConstants.ID_KEY)) == null || !idNode.isTextual()) {
                         continue;
                     }
-                    diagramElementsMap.put(idNode.asText(), (ObjectNode) jsonNode);
-                    Set<String> artifactIds = elementArtifactMap.computeIfAbsent(idNode.asText(), o -> new LinkedHashSet<>());
-                    JsonNode artifactsNode;
-                    if ((artifactsNode = jsonNode.get(MDKConstants.ARTIFACT_IDS_KEY)) != null && artifactsNode.isArray()) {
-                        artifactsNode.forEach(node -> artifactIds.add(node.asText()));
+                    Set<String> artifactExtensions = elementArtifactMap.computeIfAbsent(idNode.asText(), o -> new LinkedHashSet<>());
+                    JsonNode artifactsArray;
+                    if ((artifactsArray = jsonNode.get(MDKConstants.ARTIFACTS_KEY)) != null && artifactsArray.isArray()) {
+                        artifactsArray.forEach(node -> {
+                            artifactExtensions.add(idNode.asText() + '_' + node.get("extension").asText());
+                            artifactsMap.put(idNode.asText() + '_' + node.get("extension").asText(), (ObjectNode) node);
+                        });
                     }
                 }
+
             }
 
-            Set<String> artifactIds = elementArtifactMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-            Map<String, ObjectNode> artifactsMap = new LinkedHashMap<>();
-
-            if (!artifactIds.isEmpty()) {
-                ObjectNode artifactsResponse;
-                try {
-                    File responseFile = MMSUtils.getArtifacts(project, artifactIds, progressStatus);
-                    try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
-                        artifactsResponse = JacksonUtils.parseJsonObject(jsonParser);
-                    }
-                } catch (IOException | ServerException | URISyntaxException | GeneralSecurityException e) {
-                    e.printStackTrace();
-                    Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation. Reason: " + e.getMessage());
-                    return;
-                }
-                JsonNode artifactsArray;
-                if (artifactsResponse == null || (artifactsArray = artifactsResponse.get("artifacts")) == null || !artifactsArray.isArray()) {
-                    Application.getInstance().getGUILog().log("[ERROR] Response of request to get artifacts is malformed. Skipping image validation.");
-                    return;
-                }
-                for (JsonNode jsonNode : artifactsArray) {
-                    JsonNode idNode;
-                    if (!jsonNode.isObject()) {
-                        continue;
-                    }
-                    if ((idNode = jsonNode.get(MDKConstants.ID_KEY)) == null || !idNode.isTextual()) {
-                        continue;
-                    }
-                    artifactsMap.put(idNode.asText(), (ObjectNode) jsonNode);
-                }
-            }
+            //Set<String> artifactExtensions = elementArtifactMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
 
             for (Diagram diagram : diagrams) {
                 String diagramId = Converters.getElementToIdConverter().apply(diagram);
                 if (diagramId == null) {
                     continue;
                 }
-                if (!diagramElementsMap.containsKey(diagramId)) {
+                if (!elementArtifactMap.containsKey(diagramId)) {
                     ValidationRuleViolation vrv = new ValidationRuleViolation(diagram, diagramExistenceRule.getDescription());
                     vrv.addAction(new ValidateElementAction(Collections.singleton(diagram), "Validate"));
                     diagramExistenceRule.addViolation(vrv);
@@ -182,14 +159,15 @@ public class DiagramValidator implements RunnableWithProgress {
                         Application.getInstance().getGUILog().log("[ERROR] An unexpected error occurred while generating diagrams. Skipping image validation for " + Converters.getElementToHumanNameConverter().apply(diagram) + ". Reason: " + e.getMessage());
                         break;
                     }
-                    ObjectNode existingArtifact = elementArtifactMap.getOrDefault(diagramId, Collections.emptySet()).stream().map(artifactsMap::get).filter(Objects::nonNull).filter(node -> {
+                    ObjectNode existingBinary = elementArtifactMap.getOrDefault(diagramId, Collections.emptySet()).stream().map(artifactsMap::get).filter(Objects::nonNull).filter(node -> {
                         JsonNode contentTypeNode = node.get(MDKConstants.CONTENT_TYPE_KEY);
                         return contentTypeNode != null && contentTypeNode.isTextual() && contentTypeNode.asText().equals(entry.getValue().getValue().getMimeType());
                     }).findFirst().orElse(null);
+
                     JsonNode checksumNode;
-                    if (existingArtifact == null || (checksumNode = existingArtifact.get(MDKConstants.CHECKSUM_KEY)) == null || !checksumNode.isTextual() || !checksumNode.asText().equals(checksum)) {
+                    if (existingBinary == null || (checksumNode = existingBinary.get(MDKConstants.CHECKSUM_KEY)) == null || !checksumNode.isTextual() || !checksumNode.asText().equals(checksum)) {
                         disparateArtifacts.add(new MMSArtifact() {
-                            private final String id = existingArtifact != null ? existingArtifact.get(MDKConstants.ID_KEY).asText() : UUID.randomUUID().toString();
+                            private final String id = diagramId;
 
                             @Override
                             public String getId() {
@@ -214,6 +192,9 @@ public class DiagramValidator implements RunnableWithProgress {
                             public ContentType getContentType() {
                                 return entry.getValue().getValue();
                             }
+
+                            @Override
+                            public String getExtension() { return entry.getKey(); }
                         });
                     }
                 }
