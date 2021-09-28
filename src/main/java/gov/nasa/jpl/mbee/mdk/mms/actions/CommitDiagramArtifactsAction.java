@@ -71,18 +71,15 @@ public class CommitDiagramArtifactsAction extends RuleViolationAction implements
 //                            .addTextBody(MDKConstants.ID_KEY, artifact.getId())
 //                            .addTextBody(MDKConstants.CHECKSUM_KEY, artifact.getChecksum())
 //                            .addTextBody("source", "magicdraw")
-                            .addBinaryBody("file", artifact.getInputStream(), artifact.getContentType(), artifact.getId() + "_" + artifact.getExtension() + ".tmp").build();
-                    File file = File.createTempFile(this.getClass().getSimpleName() + "-" + artifact.getContentType().getMimeType().replace('/', '-') + "-", null);
-                    FileOutputStream fileos = new FileOutputStream(file);
-                    entity.writeTo(fileos); // if we use the entity's content in the file do we need to pass the entity
-                    HttpRequestBase artifactRequest = MMSUtils.prepareEndpointBuilderBasicBinaryPostRequest(MMSElementEndpoint.builder(), project, file)
+                            .addBinaryBody("file", artifact.getFile(), artifact.getContentType(), artifact.getId() + "_" + artifact.getExtension() + ".tmp").build();
+                    HttpRequestBase artifactRequest = MMSUtils.prepareEndpointBuilderMultipartPostRequest(MMSElementEndpoint.builder(), project, entity)
                             .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
                             .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
                             .addParam(MMSEndpointBuilderConstants.URI_ELEMENT_SUFFIX, artifact.getId()).build();
                     MMSUtils.sendMMSRequest(project, artifactRequest, progressStatus);
-                    if(!file.delete()) { // if we cannot immediately delete we'll get it later
-                        file.deleteOnExit();
-                    }
+                    //if(!file.delete()) { // if we cannot immediately delete we'll get it later
+                    //    file.deleteOnExit();
+                    //}
                 }
 //                ObjectNode objectNode = JacksonUtils.getObjectMapper().createObjectNode();
 //                objectNode.put(MDKConstants.ID_KEY, Converters.getElementToIdConverter().apply(diagram));

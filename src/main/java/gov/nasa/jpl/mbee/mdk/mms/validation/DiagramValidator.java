@@ -180,13 +180,7 @@ public class DiagramValidator implements RunnableWithProgress {
                             }
 
                             @Override
-                            public InputStream getInputStream() {
-                                try {
-                                    return new FileInputStream(path.toFile());
-                                } catch (FileNotFoundException e) {
-                                    return null;
-                                }
-                            }
+                            public File getFile() throws FileNotFoundException { return path.toFile(); }
 
                             @Override
                             public ContentType getContentType() {
