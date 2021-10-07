@@ -119,8 +119,6 @@ public class DiagramValidator implements RunnableWithProgress {
 
             }
 
-            //Set<String> artifactExtensions = elementArtifactMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-
             for (Diagram diagram : diagrams) {
                 String diagramId = Converters.getElementToIdConverter().apply(diagram);
                 if (diagramId == null) {

@@ -106,18 +106,6 @@ public class MMSUtils {
         return sendMMSRequest(project, elementPutRequest, progressStatus);
     }
 
-    // REPLACED IN MMS4 with ELEMENTS ENDPOINT
-//    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
-//        if (artifactIds == null || artifactIds.isEmpty()) {
-//            return null;
-//        }
-//        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
-//        HttpRequestBase artifactGetRequest = prepareEndpointBuilderBasicJsonPutRequest(MMSElementsEndpoint.builder(), project, sendData)
-//                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-//                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
-//        return sendMMSRequest(project, artifactGetRequest, progressStatus);
-//    }
-
     public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException,
             IOException, URISyntaxException, GeneralSecurityException {
         // build request
