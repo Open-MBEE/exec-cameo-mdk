@@ -14,7 +14,7 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 
 ## Installation
 
-1. [Download](https://bintray.com/openmbee/maven/mdk/_latestVersion) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
+1. [Download](https://github.com/Open-MBEE/mdk/releases/latest) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
 
 2. Run CSM. From the main menu, select "Help" > "Resource/Plugin Manager".
    ![Resource/Plugin Manager](doc/images/resource-plugin-manager.png)
