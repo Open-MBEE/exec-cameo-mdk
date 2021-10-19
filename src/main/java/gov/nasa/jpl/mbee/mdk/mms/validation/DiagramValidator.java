@@ -75,7 +75,6 @@ public class DiagramValidator implements RunnableWithProgress {
         Application.getInstance().getEnvironmentOptions().getGeneralOptions().setUseSVGTextTag(true);
         try {
             Set<String> diagramIds = diagrams.stream().map(Converters.getElementToIdConverter()).filter(Objects::nonNull).collect(Collectors.toSet());
-            //Map<String, Set<ObjectNode>> diagramElementsMap = new LinkedHashMap<>();
             Map<String, ObjectNode> artifactsMap = new LinkedHashMap<>();
             Map<String, Set<String>> elementArtifactMap = new LinkedHashMap<>();
 
@@ -112,7 +111,9 @@ public class DiagramValidator implements RunnableWithProgress {
                     if ((artifactsArray = jsonNode.get(MDKConstants.ARTIFACTS_KEY)) != null && artifactsArray.isArray()) {
                         artifactsArray.forEach(node -> {
                             artifactExtensions.add(idNode.asText() + '_' + node.get("extension").asText());
-                            artifactsMap.put(idNode.asText() + '_' + node.get("extension").asText(), (ObjectNode) node);
+                            if (node instanceof ObjectNode) {
+                                artifactsMap.put(idNode.asText() + '_' + node.get("extension").asText(), (ObjectNode) node);
+                            }
                         });
                     }
                 }
@@ -158,7 +159,7 @@ public class DiagramValidator implements RunnableWithProgress {
                         break;
                     }
                     ObjectNode existingBinary = elementArtifactMap.getOrDefault(diagramId, Collections.emptySet()).stream().map(artifactsMap::get).filter(Objects::nonNull).filter(node -> {
-                        JsonNode contentTypeNode = node.get(MDKConstants.CONTENT_TYPE_KEY);
+                        JsonNode contentTypeNode = node.get(MDKConstants.MIMETYPE_KEY);
                         return contentTypeNode != null && contentTypeNode.isTextual() && contentTypeNode.asText().equals(entry.getValue().getValue().getMimeType());
                     }).findFirst().orElse(null);
 
