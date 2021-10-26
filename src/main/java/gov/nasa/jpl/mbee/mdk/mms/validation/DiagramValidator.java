@@ -179,7 +179,13 @@ public class DiagramValidator implements RunnableWithProgress {
                             }
 
                             @Override
-                            public File getFile() throws FileNotFoundException { return path.toFile(); }
+                            public InputStream getInputStream() {
+                                try {
+                                    return new FileInputStream(path.toFile());
+                                } catch (FileNotFoundException e) {
+                                    return null;
+                                }
+                            }
 
                             @Override
                             public ContentType getContentType() {
@@ -187,7 +193,7 @@ public class DiagramValidator implements RunnableWithProgress {
                             }
 
                             @Override
-                            public String getExtension() { return entry.getKey(); }
+                            public String getFileExtension() { return entry.getKey(); }
                         });
                     }
                 }
