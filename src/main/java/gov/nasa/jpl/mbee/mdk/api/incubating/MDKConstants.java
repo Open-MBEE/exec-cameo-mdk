@@ -46,7 +46,7 @@ public class MDKConstants {
             TWC_VERSION_KEY = "twcVersion",
             ARTIFACTS_KEY = "_artifacts",
             CHECKSUM_KEY = "checksum",
-            MIMETYPE_KEY = "mimetype",
+            MIME_TYPE_KEY = "mimetype",
             PROJECT_TYPE_KEY = "schema",
             PROJECT_TYPE_VALUE = "cameo",
             SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900",
@@ -71,5 +71,5 @@ public class MDKConstants {
 
     @Deprecated
     public static final String
-        CONTENT_TYPE_KEY = MIMETYPE_KEY;
+        CONTENT_TYPE_KEY = MIME_TYPE_KEY;
 }
