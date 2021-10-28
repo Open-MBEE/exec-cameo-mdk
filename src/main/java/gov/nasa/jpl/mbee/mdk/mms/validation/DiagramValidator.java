@@ -2,8 +2,6 @@ package gov.nasa.jpl.mbee.mdk.mms.validation;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BaseJsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
@@ -159,7 +157,7 @@ public class DiagramValidator implements RunnableWithProgress {
                         break;
                     }
                     ObjectNode existingBinary = elementArtifactMap.getOrDefault(diagramId, Collections.emptySet()).stream().map(artifactsMap::get).filter(Objects::nonNull).filter(node -> {
-                        JsonNode contentTypeNode = node.get(MDKConstants.MIMETYPE_KEY);
+                        JsonNode contentTypeNode = node.get(MDKConstants.MIME_TYPE_KEY);
                         return contentTypeNode != null && contentTypeNode.isTextual() && contentTypeNode.asText().equals(entry.getValue().getValue().getMimeType());
                     }).findFirst().orElse(null);
 
@@ -179,7 +177,13 @@ public class DiagramValidator implements RunnableWithProgress {
                             }
 
                             @Override
-                            public File getFile() throws FileNotFoundException { return path.toFile(); }
+                            public InputStream getInputStream() {
+                                try {
+                                    return new FileInputStream(path.toFile());
+                                } catch (FileNotFoundException e) {
+                                    return null;
+                                }
+                            }
 
                             @Override
                             public ContentType getContentType() {
@@ -187,7 +191,7 @@ public class DiagramValidator implements RunnableWithProgress {
                             }
 
                             @Override
-                            public String getExtension() { return entry.getKey(); }
+                            public String getFileExtension() { return entry.getKey(); }
                         });
                     }
                 }

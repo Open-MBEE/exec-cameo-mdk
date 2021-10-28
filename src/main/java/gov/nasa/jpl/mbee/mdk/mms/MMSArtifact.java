@@ -10,14 +10,7 @@ import java.io.InputStream;
 public interface MMSArtifact {
     String getId();
     String getChecksum();
-    default InputStream getInputStream() {
-        try {
-            return new FileInputStream(getFile());
-        } catch (FileNotFoundException e) {
-            return null;
-        }
-    }
-    File getFile() throws FileNotFoundException;
+    InputStream getInputStream();
     ContentType getContentType();
-    String getExtension();
+    String getFileExtension();
 }
