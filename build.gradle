@@ -26,7 +26,7 @@ try {
     println "Profile Properties File not found using default:" + e.message
     file("buildProfiles/opensource.properties").withInputStream { profiles.load(it) }
 }
-String[] classpathLibraries = profiles.getProperty("classpathLibraries");
+String[] classpathLibraries = profiles["classpathLibraries"].toString().split(',');
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
 String fopNameVersion = 'fop-1.1'
