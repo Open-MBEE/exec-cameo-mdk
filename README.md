@@ -9,12 +9,18 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 ## Prerequisites
 
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin)
-    * The latest Cameo MDK is tested with and supports **19.0 SP3**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+    * The latest Cameo MDK is tested with and supports **19.0 SP4**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+#### Versions prior to 5.x:
 * [Model Management System (MMS) 3](https://github.com/Open-MBEE/mms-alfresco)
+#### Version 5.0+
+* [Model Management System (MMS) 4](https://github.com/Open-MBEE/mms)
 
 ## Installation
 
-1. [Download](https://bintray.com/openmbee/maven/mdk/_latestVersion) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
+1. [Download](https://github.com/Open-MBEE/mdk/releases/latest) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
+
+    *Note: Make sure you are downloading the correct version for your installation of MMS (for mms-alfresco (mms3/donbot) use
+    version 4.5.x, for mms (mms4/execubots) use versions 5.0+)*
 
 2. Run CSM. From the main menu, select "Help" > "Resource/Plugin Manager".
    ![Resource/Plugin Manager](doc/images/resource-plugin-manager.png)
@@ -43,6 +49,15 @@ To learn how you can get involved in a variety of ways, please see [Contibuting 
 Cameo MDK is a Java project that uses the [Gradle](https://gradle.org/) build tool. It can be imported as a Gradle project in IDEs like [IntelliJ](https://www.jetbrains.com/idea/) and [Eclipse](https://www.eclipse.org/ide/).
 
 ## Common Tasks
+*Note starting in version 5.0 you will need to define a build profile (in `./buildProfiles`) which will house the classpath
+for your particular version of cameo. In order to retrieve this classpath, copy paste the CLASSPATH entry from your 
+`${md.install.dir}/bin/(magicraw/csm/cea).properties` file. Copy the entire line into a new file and find replace the `\:`
+with `,` for more information refer to the existing `buildProfiles/opensource.properties`. Also, note that that profile should
+work for most 19.0sp3 installations.*
+
+In order to use your custom profile run any of the below commands with `-PbuildAccess=<yourProfileName>` otherwise it will
+default to using `opensource`.
+
 * `./gradlew dependencies` will download all necessary dependencies.
 * `./gradlew assemble` will compile Cameo MDK from source.
 * `./gradlew distZip` will package the installable plugin.
