@@ -38,7 +38,7 @@ jobs:
             - gradle-repo-v5-
       - run:
           name: Download uncached dependencies
-          command: ./gradlew -PbuildAccess=opensource dependencies
+          command: ./gradlew dependencies
           no_output_timeout: 1h
 
       - save_cache:
@@ -91,7 +91,7 @@ jobs:
           at: ~/
       - run:
           name: Deploy snapshot
-          command: ./gradlew --info --stacktrace -PbuildAccess=opensource publishToSonatype
+          command: ./gradlew --info --stacktrace publishToSonatype
   deploy_release:
     executor: openjdk_executor
     steps:
@@ -100,7 +100,7 @@ jobs:
           at: ~/
       - run:
           name: Deploy release
-          command: ./gradlew --info --stacktrace -PbuildAccess=opensource publishToSonatype closeSonatypeStagingRepository
+          command: ./gradlew --info --stacktrace publishToSonatype closeSonatypeStagingRepository
 
 workflows:
   version: 2

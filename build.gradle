@@ -2,6 +2,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 import java.util.zip.ZipFile
+import groovy.json.JsonSlurper;
+
 
 String buildAccess = project.getProperties().getOrDefault('buildAccess', 'opensource')
 String buildTag = project.getProperties().get('buildTag')
@@ -12,20 +14,23 @@ if ((buildTag == null || buildTag.isEmpty()) && !version.endsWith('-SNAPSHOT')) 
     version += '-SNAPSHOT'
 }
 
-if (buildAccess == 'internal') {
-    group = group.replace('org.openmbee', 'gov.nasa.jpl.cae')
-}
-String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
-String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
-
-// classpathLibraries as defined in bin/[magicdraw|csm].properties#CLASSPATH are stored in ./buildProfiles
 def profiles = new Properties()
+def parser = new JsonSlurper()
 try {
     file("buildProfiles/" + buildAccess + ".properties").withInputStream { profiles.load(it) }
 } catch (FileNotFoundException e) {
     println "Profile Properties File not found using default:" + e.message
     file("buildProfiles/opensource.properties").withInputStream { profiles.load(it) }
 }
+
+if (profiles['group'] != null) {
+    group = group.replace('org.openmbee', profiles['group'])
+}
+String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
+String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
+
+// classpathLibraries as defined in bin/[magicdraw|csm].properties#CLASSPATH are stored in ./buildProfiles
+
 String[] classpathLibraries = profiles["classpathLibraries"].toString().split(',');
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
@@ -60,30 +65,6 @@ repositories {
     maven {
         url 'https://repo.gradle.org/gradle/libs-releases-local/'
     }
-    if (buildAccess == 'internal') {
-        maven {
-            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-snapshot-virtual'
-            credentials {
-                username project.getProperties().get('artifactoryUsername')
-                password project.getProperties().get('artifactoryPassword')
-            }
-        }
-        maven {
-            url 'https://cae-artifactory.jpl.nasa.gov/artifactory/maven-libs-release-virtual'
-            credentials {
-                username project.getProperties().get('artifactoryUsername')
-                password project.getProperties().get('artifactoryPassword')
-            }
-        }
-    }
-    else {
-        ivy {
-            url 'http://download1.nomagic.com/'
-            layout 'pattern', {
-                artifact '/[module][revision]/[classifier].[ext]'
-            }
-        }
-    }
     ivy {
         url 'https://sourceforge.net/projects/docbook/files/docbook-xsl/'
         layout 'pattern', {
@@ -98,6 +79,41 @@ repositories {
         }
     }
 }
+if (profiles['repositories'] != null) {
+    def repos = parser.parseText(profiles['repositories'].toString())
+    repos.each {
+        if (it.type == 'maven') {
+            def mavenRepo = it
+            repositories.maven {
+                url "${mavenRepo.url}"
+                if (mavenRepo.credentials == true) {
+                    credentials {
+                        username project.getProperties().get('artifactoryUsername')
+                        password project.getProperties().get('artifactoryPassword')
+                    }
+                }
+            }
+        }
+        if (it["type"] == 'ivy') {
+            def ivyRepo = it
+            repositories.ivy {
+                url "${ivyRepo.url}"
+                layout "${ivyRepo.layout.type}", {
+                    artifact '' + ivyRepo.layout.pattern
+                }
+            }
+        }
+    }
+}
+else {
+    repositories.ivy {
+        url 'http://download1.nomagic.com/'
+        layout 'pattern', {
+            artifact '/[module][revision]/[classifier].[ext]'
+        }
+    }
+}
+
 
 configurations {
     preCompile
@@ -173,9 +189,12 @@ dependencies {
     
     // Other dependencies we're unable to resolve via standard repositories
 
-    if (buildAccess == 'internal') {
-        preCompile group: 'gov.nasa.jpl.cae.nomagic', name: 'cae-cameo-systems-modeler-core', version: '4.4.4', classifier: 'linux', ext: 'zip'
-
+    if (profiles['nomagicDeps'] != null) {
+        def mdDeps = parser.parseText(profiles['nomagicDeps'].toString())
+        mdDeps.each {
+            def dep = it
+            preCompile group: "${dep.group}", name: "${dep.name}", version: "${dep.version}", classifier: "${dep.classifier != null ? dep.classifier : ''}", ext: "${dep.ext}"
+        }
     }
     else {
         preCompile group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
@@ -530,8 +549,8 @@ task runJava(type: JavaExec) {
 
     standardOutput = System.out
     errorOutput = System.err
-    if (buildAccess == 'internal') {
-        executable = '/Applications/MagicDraw/cae-cameo-systems-modeler-5.0.0-SNAPSHOT-macos/jre/Contents/Home/bin/java'
+    if (profiles["executablePath"] != null) {
+        executable = profiles["executablePath"]
     }
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
     jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
