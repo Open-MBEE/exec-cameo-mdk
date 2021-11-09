@@ -9,7 +9,7 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 ## Prerequisites
 
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin)
-    * The latest Cameo MDK is tested with and supports **19.0 SP4**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+    * The latest Cameo MDK is tested with and supports **19.0 SP3** and **19.0 SP4** (you must use a custom profile for SP4). Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
 #### Versions prior to 5.x:
 * [Model Management System (MMS) 3](https://github.com/Open-MBEE/mms-alfresco)
 #### Version 5.0+
@@ -19,8 +19,8 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 
 1. [Download](https://github.com/Open-MBEE/mdk/releases/latest) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
 
-    *Note: Make sure you are downloading the correct version for your installation of MMS (for mms-alfresco (mms3/donbot) use
-    version 4.5.x, for mms (mms4/execubots) use versions 5.0+)*
+    >**Note:** *Make sure you are downloading the correct version for your installation of MMS (for mms-alfresco (mms3/donbot) use
+    >version 4.5.x, for mms (mms4/execubots) use versions 5.0+)*
 
 2. Run CSM. From the main menu, select "Help" > "Resource/Plugin Manager".
    ![Resource/Plugin Manager](doc/images/resource-plugin-manager.png)
@@ -48,15 +48,32 @@ To learn how you can get involved in a variety of ways, please see [Contibuting 
 
 Cameo MDK is a Java project that uses the [Gradle](https://gradle.org/) build tool. It can be imported as a Gradle project in IDEs like [IntelliJ](https://www.jetbrains.com/idea/) and [Eclipse](https://www.eclipse.org/ide/).
 
-## Common Tasks
-*Note starting in version 5.0 you will need to define a build profile (in `./buildProfiles`) which will house the classpath
-for your particular version of cameo. In order to retrieve this classpath, copy paste the CLASSPATH entry from your 
-`${md.install.dir}/bin/(magicraw/csm/cea).properties` file. Copy the entire line into a new file and find replace the `\:`
-with `,` for more information refer to the existing `buildProfiles/opensource.properties`. Also, note that that profile should
-work for most 19.0sp3 installations.*
 
-In order to use your custom profile run any of the below commands with `-PbuildAccess=<yourProfileName>` otherwise it will
-default to using `opensource`.
+## Custom Build Profiles
+Starting with version 5.0+ you will be able to define custom build profiles (in `./buildProfiles`) which will house 
+the classpath and other variables previously managed by setting `-buildAccess=internal`. These profiles will allow
+customization based on your build process and for your particular version of Cameo. 
+
+**NOTE:** By default build profiles are excluded from being committed to git by a `buildProfiles/.gitignore`
+
+### Create a new profile
+Create a new java properties file in `buildProfiles/<yourProfileName>.properties`.
+In order to use a custom profile to run any of the below commands. Use the command with `-PbuildProfile=<yourProfileName>`
+> For more examples of what properties are available in profiles see the example file in `buildProfiles/example.properties`
+
+### For users of non-standard cameo bundles
+To retrieve the classpath:
+1. Copy the CLASSPATH entry from your `${md.install.dir}/bin/(magicraw/csm/cea).properties` file. 
+2. Paste the entire line into a new file and find replace the `\:` with `,` and set it equal to `classpath`
+3. Save this file to `buildProfiles/<yourProfileName>.properties`
+> This is only necessary for custom build repositories or non-SP3 builds, most users will not need to modify the classpath
+> and modification of the classpath is not necessary to use profiles!
+
+
+
+## Build
+>In order to use a custom profile to run any of the below commands. Use the command with `-PbuildProfile=<yourProfileName>` otherwise it will
+>default to using `opensource`.
 
 * `./gradlew dependencies` will download all necessary dependencies.
 * `./gradlew assemble` will compile Cameo MDK from source.

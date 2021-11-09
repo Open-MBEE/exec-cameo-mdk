@@ -5,7 +5,7 @@ import java.util.zip.ZipFile
 import groovy.json.JsonSlurper;
 
 
-String buildAccess = project.getProperties().getOrDefault('buildAccess', 'opensource')
+String buildProfile = project.getProperties().getOrDefault('buildProfile', 'opensource')
 String buildTag = project.getProperties().get('buildTag')
 if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
     throw new GradleException('Version mismatch: '+buildTag+' vs '+version)
@@ -16,12 +16,22 @@ if ((buildTag == null || buildTag.isEmpty()) && !version.endsWith('-SNAPSHOT')) 
 
 def profiles = new Properties()
 def parser = new JsonSlurper()
-try {
-    file("buildProfiles/" + buildAccess + ".properties").withInputStream { profiles.load(it) }
-} catch (FileNotFoundException e) {
-    println "Profile Properties File not found using default:" + e.message
-    file("buildProfiles/opensource.properties").withInputStream { profiles.load(it) }
+def defaults = new Properties()
+file("buildProfiles/opensource.properties").withInputStream { defaults.load(it) }
+
+if (buildProfile != 'opensource') {
+    try {
+        file("buildProfiles/" + buildProfile + ".properties").withInputStream { profiles.load(it) }
+    } catch (FileNotFoundException e) {
+        println "Profile Properties File not found using default:" + e.message
+        file("buildProfiles/opensource.properties").withInputStream { profiles.load(it) }
+    }
 }
+else{
+    profiles = defaults
+}
+
+
 
 if (profiles['group'] != null) {
     group = group.replace('org.openmbee', profiles['group'])
@@ -29,9 +39,14 @@ if (profiles['group'] != null) {
 String buildNumber = project.hasProperty('buildNumber') ? project.getProperty('buildNumber') : System.currentTimeSeconds()
 String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm").format(LocalDateTime.now())
 
-// classpathLibraries as defined in bin/[magicdraw|csm].properties#CLASSPATH are stored in ./buildProfiles
+String[] classpathLibraries = null
+if (profiles['classpathLibraries'] != null) {
+    classpathLibraries = profiles["classpathLibraries"].toString().split(',')
+}
+else{
+    classpathLibraries = defaults["classpathLibraries"].toString().split(',')
+}
 
-String[] classpathLibraries = profiles["classpathLibraries"].toString().split(',')
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
 String fopNameVersion = 'fop-1.1'
@@ -98,6 +113,12 @@ if (profiles['repositories'] != null) {
             def ivyRepo = it
             repositories.ivy {
                 url "${ivyRepo.url}"
+                if (ivyRepo.credentials == true) {
+                    credentials {
+                        username project.getProperties().get('artifactoryUsername')
+                        password project.getProperties().get('artifactoryPassword')
+                    }
+                }
                 layout "${ivyRepo.layout.type}", {
                     artifact '' + ivyRepo.layout.pattern
                 }

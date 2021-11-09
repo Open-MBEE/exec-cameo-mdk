@@ -48,7 +48,7 @@ jobs:
 
       - run:
           name: Compile
-          command: ./gradlew --refresh-dependencies --info --stacktrace -PbuildAccess=opensource clean assemble
+          command: ./gradlew --refresh-dependencies --info --stacktrace clean assemble
         
 #      # Test
 #      - run:
