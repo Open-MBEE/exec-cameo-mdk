@@ -1,14 +1,13 @@
+import groovy.json.JsonSlurper
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
-import java.util.zip.ZipFile
-import groovy.json.JsonSlurper;
-
 
 String buildProfile = project.getProperties().getOrDefault('buildProfile', 'opensource')
 String buildTag = project.getProperties().get('buildTag')
 if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
-    throw new GradleException('Version mismatch: '+buildTag+' vs '+version)
+    throw new GradleException('Version mismatch: ' + buildTag + ' vs ' + version)
 }
 if ((buildTag == null || buildTag.isEmpty()) && !version.endsWith('-SNAPSHOT')) {
     version += '-SNAPSHOT'
@@ -20,17 +19,11 @@ def defaults = new Properties()
 file("buildProfiles/opensource.properties").withInputStream { defaults.load(it) }
 
 if (buildProfile != 'opensource') {
-    try {
-        file("buildProfiles/" + buildProfile + ".properties").withInputStream { profiles.load(it) }
-    } catch (FileNotFoundException e) {
-        println "Profile Properties File not found using default:" + e.message
-        file("buildProfiles/opensource.properties").withInputStream { profiles.load(it) }
-    }
+    file("buildProfiles/" + buildProfile + ".properties").withInputStream { profiles.load(it) }
 }
-else{
+else {
     profiles = defaults
 }
-
 
 
 if (profiles['group'] != null) {
@@ -43,7 +36,7 @@ String[] classpathLibraries = null
 if (profiles['classpathLibraries'] != null) {
     classpathLibraries = profiles["classpathLibraries"].toString().split(',')
 }
-else{
+else {
     classpathLibraries = defaults["classpathLibraries"].toString().split(',')
 }
 
@@ -146,7 +139,7 @@ dependencies {
     // SLF4J API
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
     // compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
-    
+
     // SLF4J-Log4j12
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
     // compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21+'
@@ -154,29 +147,29 @@ dependencies {
     // JSoup
     compile group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
     // compile group: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
-    
+
     // JGraphT 
     compile group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
     // compile group: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
-    
+
     // JSON Simple
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
     // compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1+'
-    
+
     // SwingX-All
     compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.4'
     // compile group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.5+'
-    
+
     // OpenCSV
     compile group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
     // compile group: 'com.opencsv', name: 'opencsv', version: '3.8+'
-    
+
     // ActiveMQ 
     compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
     // compile group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
 
     // Jackson
-    compile group: 'com.fasterxml.jackson.core', name:'jackson-databind', version: '2.8.3'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.3'
 
     // JSON Patch
     compile group: "com.box", name: "json-patch", version: "1.13"
@@ -207,7 +200,7 @@ dependencies {
     testCompile group: 'org.gradle', name: 'gradle-tooling-api', version: '3.5.1'
 
     testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.1.1'
-    
+
     // Other dependencies we're unable to resolve via standard repositories
 
     if (profiles['nomagicDeps'] != null) {
@@ -224,12 +217,12 @@ dependencies {
     }
 
     preCompile group: 'org.apache.fop', name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
-    preCompile group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext:'zip'
+    preCompile group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext: 'zip'
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
     compile files(classpathLibraries.collect { 'build/dependency-cache/extracted/magicdraw/' + it })
-    compile fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([ classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar'] ]).flatten())
+    compile fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar']]).flatten())
     compile fileTree(dir: 'lib', include: ['**/*.jar'])
     if (profiles["compileFiles"] != null) {
         def compileArray = profiles["compileFiles"].toString().split(',')
@@ -249,33 +242,33 @@ task extractDependencies {
     }
     doLast {
         inputs.files.each { archive ->
-            if ( archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')){
+            if (archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')) {
                 //extract fop zip
                 copy {
                     from zipTree(archive)
                     into archive.getParentFile().getAbsolutePath()
                 }
                 copy {
-                    from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/build/fop.jar'
+                    from archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/build/fop.jar'
                     into 'build/dependency-cache/extracted/fop/jars'
-                    rename { String fileName -> fopNameVersion + '.jar'}
+                    rename { String fileName -> fopNameVersion + '.jar' }
                 }
                 copy {
-                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion +'/lib', include: '*.jar', exclude: 'commons*.jar')
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/lib', include: '*.jar', exclude: 'commons*.jar')
                     into 'build/dependency-cache/extracted/fop/jars'
                 }
                 copy { //license3rdparty
-                    from archive.getParentFile().getAbsolutePath() + '/' +fopNameVersion + '/LICENSE'
+                    from archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/LICENSE'
                     into 'build/dependency-cache/extracted/fop/license'
-                    rename { String fileName -> 'apache_fop_license.txt'}
+                    rename { String fileName -> 'apache_fop_license.txt' }
                 }
                 copy { //license3rdparty
-                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/'+ fopNameVersion+ '/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
                     into 'build/dependency-cache/extracted/fop/license'
-                    rename { String fileName -> fileName.replace(".LICENSE.txt", "_license.txt")}
+                    rename { String fileName -> fileName.replace(".LICENSE.txt", "_license.txt") }
                 }
             }
-            else if( archive.getName().endsWith(docbookNameVersion + '-' + docbookNameVersion +'.zip')){
+            else if (archive.getName().endsWith(docbookNameVersion + '-' + docbookNameVersion + '.zip')) {
                 copy {
                     from zipTree(archive)
                     into 'build/dependency-cache/extracted/docbook'
@@ -381,7 +374,7 @@ class PreDist extends DefaultTask {
             from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/fo"
             into "build/generated-dist/plugins/${groupName}/docbook-xsl/fo"
         }
-        project.copy{
+        project.copy {
             from "build/dependency-cache/extracted/docbook/" + docbookVersion + "/common"
             into "build/generated-dist/plugins/${groupName}/docbook-xsl/common"
         }
@@ -606,7 +599,8 @@ task runScript(type: Exec) {
 
     if (System.getProperty('os.name').toLowerCase().contains('windows')) {
         commandLine 'bin\\magicdraw.exe'
-    } else {
+    }
+    else {
         commandLine 'sh', 'bin/magicdraw'
     }
 }
@@ -673,7 +667,7 @@ test.dependsOn installDist
 task testrailPublish(type: JavaExec) {
     classpath configurations.testPublish
     main = 'org.openmbee.testrail.cli.JUnitPublisher'
-    def arguments = [ '--directory', 'build/test-results/test', '--milestone', version.replace('-SNAPSHOT', '') ]
+    def arguments = ['--directory', 'build/test-results/test', '--milestone', version.replace('-SNAPSHOT', '')]
     def s
     if ((s = project.getProperties().get('testrailHost')) != null) {
         arguments.addAll('--host', s)
