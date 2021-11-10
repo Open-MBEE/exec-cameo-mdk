@@ -9,18 +9,13 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 ## Prerequisites
 
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin)
-    * The latest Cameo MDK is tested with and supports **19.0 SP3** and **19.0 SP4** (you must use a custom profile for SP4). Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
-#### Versions prior to 5.x:
-* [Model Management System (MMS) 3](https://github.com/Open-MBEE/mms-alfresco)
-#### Version 5.0+
-* [Model Management System (MMS) 4](https://github.com/Open-MBEE/mms)
+    * The latest Cameo MDK is compatible with **19.0 SP3** and **19.0 SP4**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+* [Model Management System (MMS)](https://www.openmbee.org/projects.html#mms)
+    * The latest Cameo MDK is compatible with MMS **4.x**. Compatibility for previous version of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
 
 ## Installation
 
 1. [Download](https://github.com/Open-MBEE/mdk/releases/latest) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
-
-    >**Note:** *Make sure you are downloading the correct version for your installation of MMS (for mms-alfresco (mms3/donbot) use
-    >version 4.5.x, for mms (mms4/execubots) use versions 5.0+)*
 
 2. Run CSM. From the main menu, select "Help" > "Resource/Plugin Manager".
    ![Resource/Plugin Manager](doc/images/resource-plugin-manager.png)
