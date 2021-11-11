@@ -2,6 +2,9 @@ package gov.nasa.jpl.mbee.mdk.mms;
 
 import org.apache.http.entity.ContentType;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 public interface MMSArtifact {
@@ -9,4 +12,5 @@ public interface MMSArtifact {
     String getChecksum();
     InputStream getInputStream();
     ContentType getContentType();
+    String getFileExtension();
 }
