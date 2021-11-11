@@ -26,6 +26,7 @@ import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -105,17 +106,6 @@ public class MMSUtils {
         return sendMMSRequest(project, elementPutRequest, progressStatus);
     }
 
-    public static File getArtifacts(Project project, Collection<String> artifactIds, ProgressStatus progressStatus) throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
-        if (artifactIds == null || artifactIds.isEmpty()) {
-            return null;
-        }
-        File sendData = createEntityFile(MMSUtils.class, ContentType.APPLICATION_JSON, artifactIds, JsonBlobType.ARTIFACT_ID);
-        HttpRequestBase artifactGetRequest = prepareEndpointBuilderBasicJsonPutRequest(MMSElementsEndpoint.builder(), project, sendData)
-                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
-        return sendMMSRequest(project, artifactGetRequest, progressStatus);
-    }
-
     public static boolean validateJwtToken(Project project, ProgressStatus progressStatus) throws ServerException,
             IOException, URISyntaxException, GeneralSecurityException {
         // build request
@@ -163,11 +153,9 @@ public class MMSUtils {
         switch (jsonBlobType) {
             case ELEMENT_ID:
             case ELEMENT_JSON:
-                arrayName = "elements";
-                break;
             case ARTIFACT_ID:
             case ARTIFACT_JSON:
-                arrayName = "artifacts";
+                arrayName = "elements";
                 break;
             case ORG:
                 arrayName = "orgs";
@@ -494,6 +482,10 @@ public class MMSUtils {
         return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.POST, ContentType.APPLICATION_JSON, file);
     }
 
+    public static MMSEndpoint.Builder prepareEndpointBuilderMultipartPostRequest(MMSEndpoint.Builder builder, Project project, HttpEntity entity) {
+        return prepareEndpointBuilderEntityRequest(builder, project, HttpRequestType.POST, entity);
+    }
+
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicJsonPutRequest(MMSEndpoint.Builder builder, Project project, File file) {
         return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.PUT, ContentType.APPLICATION_JSON, file);
     }
@@ -512,5 +504,12 @@ public class MMSUtils {
                 .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project)
                 .addParam(MMSEndpointBuilderConstants.REST_CONTENT_TYPE, contentType)
                 .addParam(MMSEndpointBuilderConstants.REST_DATA_FILE, file);
+    }
+
+    public static MMSEndpoint.Builder prepareEndpointBuilderEntityRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, HttpEntity entity) {
+        return builder.addParam(MMSEndpointBuilderConstants.HTTP_ENTITY, entity)
+                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
+                .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
+                .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project);
     }
 }
