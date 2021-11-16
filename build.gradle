@@ -664,7 +664,7 @@ task runJava(type: JavaExec) {
     errorOutput = System.err
 
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
@@ -682,7 +682,7 @@ task testAVG(type: JavaExec) {
     errorOutput = System.err
 
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator']
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator']
 }
 
 testAVG.dependsOn installDist
@@ -740,7 +740,7 @@ test {
                                  /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */
                                  files(classpathLibraries.collect { 'build/install/' + it }).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  configurations.testCompile.resolvedConfiguration.resolvedArtifacts.stream().map { i -> i.getFile().getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
-                                 testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=false', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
+                                 testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
         String magicDrawLicense = project.getProperties().get('magicDrawLicense')
         if (magicDrawLicense != null && !magicDrawLicense.isEmpty()) {
             new File('build/install/mdlicense.tmp').write(new String(magicDrawLicense.decodeBase64()))
