@@ -337,9 +337,11 @@ public class MMSUtils {
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
                 }
                 else {
-                    if(!responseFile.delete()) { // if we cannot immediately delete we'll get it later
-                        responseFile.deleteOnExit();
-                    }
+                    //TODO: Figure out how to make this work for requests that need the response file.
+                    responseFile.deleteOnExit();
+//                    if(!responseFile.delete()) { // if we cannot immediately delete we'll get it later
+//                        responseFile.deleteOnExit();
+//                    }
                 }
             }
             return "";
