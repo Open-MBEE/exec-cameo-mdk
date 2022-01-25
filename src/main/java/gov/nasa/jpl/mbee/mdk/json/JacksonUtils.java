@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import gov.nasa.jpl.mbee.mdk.json.util.MMSJsonParserFactory;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -40,7 +41,7 @@ public class JacksonUtils {
 
     public static JsonFactory getJsonFactory() {
         if (JSON_FACTORY_INSTANCE == null) {
-            JSON_FACTORY_INSTANCE = new JsonFactory();
+            JSON_FACTORY_INSTANCE = new MMSJsonParserFactory();
             JSON_FACTORY_INSTANCE.setCodec(JacksonUtils.getObjectMapper());
         }
         return JSON_FACTORY_INSTANCE;
