@@ -42,10 +42,8 @@ class TempFileJsonFactory extends MappingJsonFactory {
 
         @Override
         public void close() throws IOException {
-            if (file != null && !MDKOptionsGroup.getMDKOptions().isLogJson()) {
-                if (!file.delete()) {
-                    file.deleteOnExit();
-                }
+            if (file != null && (MDKOptionsGroup.getMDKOptions().isLogJson() || !file.delete())) {
+                file.deleteOnExit();
             }
             super.close();
         }
