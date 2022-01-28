@@ -40,8 +40,7 @@ public class JacksonUtils {
 
     public static JsonFactory getJsonFactory() {
         if (JSON_FACTORY_INSTANCE == null) {
-            JSON_FACTORY_INSTANCE = new JsonFactory();
-            JSON_FACTORY_INSTANCE.setCodec(JacksonUtils.getObjectMapper());
+            JSON_FACTORY_INSTANCE = new TempFileJsonFactory(getObjectMapper());
         }
         return JSON_FACTORY_INSTANCE;
     }
