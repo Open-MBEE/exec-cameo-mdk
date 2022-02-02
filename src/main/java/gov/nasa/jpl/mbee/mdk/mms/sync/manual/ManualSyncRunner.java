@@ -81,9 +81,10 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setCurrent(0);
 
         List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
+        List<String> clientIds = new ArrayList<>(rootElements.size());
         Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
-            collectClientElementsRecursively(project, element, depth, clientElements);
+            collectClientElementsRecursively(project, element, depth, clientElements, clientIds);
             try {
                 File searchFile = searchForServerElements(project, element, progressStatus);
                 if(searchFile != null) {
@@ -120,28 +121,41 @@ public class ManualSyncRunner implements RunnableWithProgress {
             nodeIds.add(element.getLocalID());
         }
         File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
-        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
+        //TODO: Return to recursive search by rootElements / ownerID it was crashing MMS4 Elasticsearch
+//        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
+//                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+//                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSElementsEndpoint.builder(), project)
                 .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
                 .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+
         // use endpoint to make request
         return MMSUtils.sendMMSRequest(project, searchRequest, progressStatus);
     }
 
-    private static void collectClientElementsRecursively(Project project, Element element, int depth, List<Pair<Element, ObjectNode>> elements) {
+    private static void collectClientElementsRecursively(Project project, Element element, int depth, List<Pair<Element, ObjectNode>> elements, List<String> elementIds) {
         ObjectNode jsonObject = Converters.getElementToJsonConverter().apply(element, project);
         if (jsonObject == null) {
             return;
         }
-        elements.add(new Pair<>(element, jsonObject));
+        String id = element.getLocalID();
+        if (!elementIds.contains(id)) {
+            elements.add(new Pair<>(element, jsonObject));
+            elementIds.add(id);
+        }else {
+            return;
+        }
+
         if (depth-- != 0) {
             for (Element elementChild : element.getOwnedElement()) {
-                collectClientElementsRecursively(project, elementChild, depth, elements);
+                collectClientElementsRecursively(project, elementChild, depth, elements, elementIds);
             }
         }
         if (element.equals(project.getPrimaryModel())) {
+            elementIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
             List<Package> attachedModels = project.getModels();
             attachedModels.remove(project.getPrimaryModel());
-            attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements));
+            attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements, elementIds));
         }
     }
 
