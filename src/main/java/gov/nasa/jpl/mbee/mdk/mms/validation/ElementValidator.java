@@ -1,8 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.validation;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.ActionsCategory;
@@ -100,7 +98,7 @@ public class ElementValidator implements RunnableWithProgress {
             serverElements = new LinkedList<>();
             serverElementMap = new HashMap<>();
         } else {
-            serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual()).collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
+            serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual() && !json.get(MDKConstants.ID_KEY).asText().startsWith(MDKConstants.HIDDEN_ID_PREFIX)).collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
         }
 
         try {
@@ -151,11 +149,12 @@ public class ElementValidator implements RunnableWithProgress {
                     // solves edge case where first model validation incorrectly removes bins from project
                     removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.HOLDING_BIN_ID_PREFIX);
                 }
+                //Remove View Instances Bin
                 removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.VIEW_INSTANCES_BIN_PREFIX);
 
                 for(ObjectNode jsonObject : elementObjects) {
                     JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
-                    if(idValue != null && idValue.isTextual() && !serverElementMap.containsKey(idValue.asText())) {
+                    if(idValue != null && idValue.isTextual() && !idValue.asText().startsWith(MDKConstants.HIDDEN_ID_PREFIX) && !serverElementMap.containsKey(idValue.asText())) {
                         String id = idValue.asText();
 
                         Pair<Element, ObjectNode> currentClientElement = clientElementMap.get(id);
