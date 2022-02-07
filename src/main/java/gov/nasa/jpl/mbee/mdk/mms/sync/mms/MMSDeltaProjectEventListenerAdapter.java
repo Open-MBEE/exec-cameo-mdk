@@ -248,22 +248,16 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 int size = 0;
                 String commitSyncDirection = "";
                 for(ObjectNode jsonObject : commitObjects) {
-//                    if(jsonObject.isArray() && jsonObject.size() > 0) {
-//                        for(int i = 0; i < jsonObject.size(); i++) {
-                            JsonNode currentNode = jsonObject;
-                            JsonNode sourceField = currentNode.get(MDKConstants.SOURCE_FIELD);
-                            boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
-                            if(isSyncingCommit) {
-                                commitSyncDirection = "Removed";
-                            } else {
-                                commitSyncDirection = "Added";
-                            }
+                    JsonNode currentNode = jsonObject;
+                    JsonNode sourceField = currentNode.get(MDKConstants.SOURCE_FIELD);
+                    boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
+                    if(isSyncingCommit) {
+                        commitSyncDirection = "Removed";
+                    } else {
+                        commitSyncDirection = "Added";
+                    }
 
-                            size = validateJsonElementArray(currentNode, isSyncingCommit, lockedElementIds, size);
-//                        }
-//                    } else { // what do we throw here? and should we?
-//                        throw new IllegalStateException();
-//                    }
+                    size = validateJsonElementArray(currentNode, isSyncingCommit, lockedElementIds, size);
 
                     if (MDUtils.isDeveloperMode()) {
                         Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - " + commitSyncDirection + " " + NumberFormat.getInstance().format(size) + " MMS element change" + (size != 1 ? "s" : "") + " for commit " + commitId + ".");

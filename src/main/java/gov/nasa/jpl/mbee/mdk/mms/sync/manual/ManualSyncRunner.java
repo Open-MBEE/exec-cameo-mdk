@@ -81,10 +81,11 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setCurrent(0);
 
         List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
-        List<String> clientIds = new ArrayList<>(rootElements.size());
+        List<String> clientIdsVisited = new ArrayList<>(rootElements.size());
         Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
-            collectClientElementsRecursively(project, element, depth, clientElements, clientIds);
+            int loopDepth = depth;
+            collectClientElementsRecursively(project, element, loopDepth, clientElements, clientIdsVisited);
             try {
                 File searchFile = searchForServerElements(project, element, progressStatus);
                 if(searchFile != null) {
@@ -133,29 +134,28 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return MMSUtils.sendMMSRequest(project, searchRequest, progressStatus);
     }
 
-    private static void collectClientElementsRecursively(Project project, Element element, int depth, List<Pair<Element, ObjectNode>> elements, List<String> elementIds) {
+    private static void collectClientElementsRecursively(Project project, Element element, int loopDepth, List<Pair<Element, ObjectNode>> elements, List<String> visitedElementIds) {
         ObjectNode jsonObject = Converters.getElementToJsonConverter().apply(element, project);
         if (jsonObject == null) {
             return;
         }
-        String id = element.getLocalID();
-        if (!elementIds.contains(id)) {
-            elements.add(new Pair<>(element, jsonObject));
-            elementIds.add(id);
-        }else {
+        String id = Converters.getElementToIdConverter().apply(element);
+        if (visitedElementIds.contains(id)) {
             return;
         }
+        elements.add(new Pair<>(element, jsonObject));
+        visitedElementIds.add(id);
 
-        if (depth-- != 0) {
+        if (loopDepth-- != 0) {
             for (Element elementChild : element.getOwnedElement()) {
-                collectClientElementsRecursively(project, elementChild, depth, elements, elementIds);
+                collectClientElementsRecursively(project, elementChild, loopDepth, elements, visitedElementIds);
             }
         }
         if (element.equals(project.getPrimaryModel())) {
-            elementIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
+            visitedElementIds.add(Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()));
             List<Package> attachedModels = project.getModels();
             attachedModels.remove(project.getPrimaryModel());
-            attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements, elementIds));
+            attachedModels.forEach(attachedModel -> collectClientElementsRecursively(project, attachedModel, 0, elements, visitedElementIds));
         }
     }
 
