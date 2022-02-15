@@ -123,13 +123,9 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
         File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
         //TODO: Return to recursive search by rootElements / ownerID it was crashing MMS4 Elasticsearch
-//        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
-//                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-//                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
-        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSElementsEndpoint.builder(), project)
+        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
                 .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
                 .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
-
         // use endpoint to make request
         return MMSUtils.sendMMSRequest(project, searchRequest, progressStatus);
     }

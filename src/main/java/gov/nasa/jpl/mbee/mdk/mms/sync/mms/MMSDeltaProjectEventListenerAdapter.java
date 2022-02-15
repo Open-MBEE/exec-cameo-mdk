@@ -245,28 +245,44 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
 
             if(commitObjects != null && !commitObjects.isEmpty()) {
-                int size = 0;
+                Map<String, Integer> commitSizes = new HashMap<>();
                 String commitSyncDirection = "";
                 for(ObjectNode jsonObject : commitObjects) {
-                    JsonNode currentNode = jsonObject;
-                    JsonNode sourceField = currentNode.get(MDKConstants.SOURCE_FIELD);
-                    boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
-                    if(isSyncingCommit) {
-                        commitSyncDirection = "Removed";
-                    } else {
-                        commitSyncDirection = "Added";
+                    if(jsonObject.isArray() && jsonObject.size() > 0) {
+                        for(int i = 0; i < jsonObject.size(); i++) {
+                            JsonNode currentNode = jsonObject.get(i);
+                            validateJsonElementArray(currentNode, lockedElementIds, commitSizes);
+                        }
+                    } else { // what do we throw here? and should we?
+                        validateJsonElementArray(jsonObject, lockedElementIds, commitSizes);
                     }
-
-                    size = validateJsonElementArray(currentNode, isSyncingCommit, lockedElementIds, size);
-
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - " + commitSyncDirection + " " + NumberFormat.getInstance().format(size) + " MMS element change" + (size != 1 ? "s" : "") + " for commit " + commitId + ".");
+                        if (commitSizes.isEmpty()) {
+                            Application.getInstance().getGUILog().log("[INFO] No objects found in commit.");
+                            return;
+                        }else {
+                            for (Map.Entry<String, Integer> size : commitSizes.entrySet()) {
+                                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - " + size.getKey() + " " + NumberFormat.getInstance().format(size.getValue()) + " MMS element change" + (size.getValue() != 1 ? "s" : "") + " for commit " + commitId + ".");
+                            }
+                        }
                     }
                 }
             }
         }
 
-        private int validateJsonElementArray(JsonNode arrayNode, boolean isSyncingCommit, Set<String> lockedElementIds, int size) {
+        private void validateJsonElementArray(JsonNode arrayNode, Set<String> lockedElementIds, Map<String, Integer> sizes) {
+            JsonNode sourceField = arrayNode.get(MDKConstants.SOURCE_FIELD);
+            String commitSyncDirection = "";
+            int size = 0;
+            boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
+            if(isSyncingCommit) {
+                commitSyncDirection = "Removed";
+            } else {
+                commitSyncDirection = "Added";
+            }
+            if (sizes.get(commitSyncDirection) != null) {
+                size = sizes.get(commitSyncDirection);
+            }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
                 JsonNode changesJsonArray = arrayNode.get(entry.getKey());
                 if (changesJsonArray == null || !changesJsonArray.isArray()) {
@@ -309,8 +325,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                     size++;
                 }
             }
-
-            return size;
+            sizes.put(commitSyncDirection, size);
         }
     }
 }
