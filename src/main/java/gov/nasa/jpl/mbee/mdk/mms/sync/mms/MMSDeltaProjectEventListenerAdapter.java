@@ -246,14 +246,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
             if(commitObjects != null && !commitObjects.isEmpty()) {
                 Map<String, Integer> commitSizes = new HashMap<>();
-                String commitSyncDirection = "";
                 for(ObjectNode jsonObject : commitObjects) {
                     if(jsonObject.isArray() && jsonObject.size() > 0) {
-                        for(int i = 0; i < jsonObject.size(); i++) {
-                            JsonNode currentNode = jsonObject.get(i);
-                            validateJsonElementArray(currentNode, lockedElementIds, commitSizes);
-                        }
-                    } else { // what do we throw here? and should we?
                         validateJsonElementArray(jsonObject, lockedElementIds, commitSizes);
                     }
                     if (MDUtils.isDeveloperMode()) {
