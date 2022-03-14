@@ -81,7 +81,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setCurrent(0);
 
         List<Pair<Element, ObjectNode>> clientElements = new ArrayList<>(rootElements.size());
-        List<String> clientIdsVisited = new ArrayList<>(rootElements.size());
+        Set<String> clientIdsVisited = new HashSet<>(rootElements.size());
         Collection<File> responseFiles = new ArrayList<>(3);
         for (Element element : rootElements) {
             int loopDepth = depth;
@@ -129,7 +129,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         return MMSUtils.sendMMSRequest(project, searchRequest, progressStatus);
     }
 
-    private static void collectClientElementsRecursively(Project project, Element element, int loopDepth, List<Pair<Element, ObjectNode>> elements, List<String> visitedElementIds) {
+    private static void collectClientElementsRecursively(Project project, Element element, int loopDepth, List<Pair<Element, ObjectNode>> elements, Set<String> visitedElementIds) {
         ObjectNode jsonObject = Converters.getElementToJsonConverter().apply(element, project);
         if (jsonObject == null) {
             return;

@@ -274,7 +274,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             } else {
                 commitSyncDirection = "Added";
             }
-            if (sizes.get(commitSyncDirection) != null) {
+            if (sizes.containsKey(commitSyncDirection)) {
                 size = sizes.get(commitSyncDirection);
             }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
