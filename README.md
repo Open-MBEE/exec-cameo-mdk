@@ -11,7 +11,7 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin)
     * The latest Cameo MDK is compatible with **19.0 SP3** and **19.0 SP4**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
 * [Model Management System (MMS)](https://www.openmbee.org/projects.html#mms)
-    * The latest Cameo MDK is compatible with MMS **4.x**. Compatibility for previous version of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+    * The Cameo MDK (5.0+) is compatible with MMS **4.x**. Compatibility for previous version of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
 
 ## Installation
 
@@ -45,7 +45,7 @@ Cameo MDK is a Java project that uses the [Gradle](https://gradle.org/) build to
 
 
 ## Custom Build Profiles
-Starting with version 5.0+ you will be able to define custom build profiles (in `./buildProfiles`) which will house 
+Starting with version 4.5.1+ you will be able to define custom build profiles (in `./buildProfiles`) which will house 
 the classpath and other variables previously managed by setting `-buildAccess=internal`. These profiles will allow
 customization based on your build process and for your particular version of Cameo. 
 

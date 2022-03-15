@@ -1,15 +1,12 @@
 package gov.nasa.jpl.mbee.mdk.mms;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -24,10 +21,13 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.util.*;
+import gov.nasa.jpl.mbee.mdk.util.MDUtils;
+import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.*;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -110,7 +110,7 @@ public class MMSUtils {
             IOException, URISyntaxException, GeneralSecurityException {
         // build request
         HttpRequestBase request = prepareEndpointBuilderBasicGet(MMSValidateJwtToken.builder(), project).build();
-        
+
         // do request
         ObjectNode responseJson = JacksonUtils.getObjectMapper().createObjectNode();
         sendMMSRequest(project, request, progressStatus, responseJson);
@@ -335,11 +335,6 @@ public class MMSUtils {
                 if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
                     System.out.println("[INFO] Response Body: " + responseFile.getPath());
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
-                }
-                else {
-                    if(!responseFile.delete()) { // if we cannot immediately delete we'll get it later
-                        responseFile.deleteOnExit();
-                    }
                 }
             }
             return "";
