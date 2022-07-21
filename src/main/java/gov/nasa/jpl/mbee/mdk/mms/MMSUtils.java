@@ -24,6 +24,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
@@ -529,44 +530,6 @@ public class MMSUtils {
         return !throwServerException;
     }
 
-    /**
-     * @param project
-     * @return
-     * @throws IllegalStateException
-     */
-    public static String getServerUrl(Project project) throws IllegalStateException {
-        String urlString;
-        if (project == null) {
-            throw new IllegalStateException("Project is null.");
-        }
-        Element primaryModel = project.getPrimaryModel();
-        if (primaryModel == null) {
-            throw new IllegalStateException("Model is null.");
-        }
-
-        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
-            urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
-        }
-        else if (ProjectUtilities.isStandardSystemProfile(project.getPrimaryProject())) {
-            urlString = PROFILE_SERVER_CACHE.getIfPresent(project);
-            if (urlString == null) {
-                urlString = JOptionPane.showInputDialog("Specify server URL for standard profile.", null);
-            }
-            if (urlString == null || urlString.trim().isEmpty()) {
-                return null;
-            }
-            PROFILE_SERVER_CACHE.put(project, urlString);
-        }
-        else {
-            Utils.showPopupMessage("The root element does not have the ModelManagementSystem stereotype.\nPlease apply it and specify the server information.");
-            return null;
-        }
-        if (urlString == null || urlString.isEmpty()) {
-            return null;
-        }
-        return urlString.trim();
-    }
-
     public static String getMmsOrg(Project project)
             throws IOException, URISyntaxException, ServerException, GeneralSecurityException {
         URIBuilder uriBuilder = getServiceProjectsUri(project);
@@ -604,7 +567,7 @@ public class MMSUtils {
     }
 
     private static URIBuilder getServiceUri(Project project, String baseUrl) {
-        String urlString = project == null ? baseUrl : getServerUrl(project);
+        String urlString = project == null ? baseUrl : ProjectSettings.getMmsUrl(project);
         if (urlString == null) {
             return null;
         }

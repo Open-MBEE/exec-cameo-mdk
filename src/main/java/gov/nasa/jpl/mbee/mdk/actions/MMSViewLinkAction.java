@@ -9,6 +9,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
+import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
 import gov.nasa.jpl.mbee.mdk.ui.ViewEditorLinkForm;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
@@ -50,15 +51,11 @@ public class MMSViewLinkAction extends MDAction {
             }
 
             // build url
-            URIBuilder uriBase = MMSUtils.getServiceUri(project);
-            if (uriBase == null) {
-                Application.getInstance().getGUILog().log("[ERROR] Unable to retrieve MMS information from model stereotype. Cancelling view open.");
-                return;
-            }
-            //projects/PROJECT-ID_5_17_16_1_31_54_PM_5fc737b6_154bba92ecd_4cc1_cae_tw_jpl_nasa_gov_127_0_0_1/master/documents/_18_5_83a025f_1491339810716_846504_4332/views/_18_5_83a025f_1491339810716_846504_4332
-
+            String veHost = ProjectSettings.getOrDefault(project, ProjectSettings.VE_HOST);
+            String veBasePath = ProjectSettings.getOrDefault(project, ProjectSettings.VE_PATH);
+            URIBuilder uriBase = MMSUtils.getServiceUri(veHost);
             // include this in the host portion of the uri. not technically correct, but it prevents the # from being converted and breaking things
-            uriBase.setHost(uriBase.getHost() + "/alfresco/mmsapp/mms.html#");
+            uriBase.setHost(uriBase.getHost() + veBasePath);
             uriBase.setPath("");
 
             String uriPath;

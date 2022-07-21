@@ -9,6 +9,7 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
+import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -83,7 +84,7 @@ public class TicketUtils {
      * Will always return FALSE if popups are disabled and username/password are not pre-specified
      */
     public static boolean acquireMmsTicket(Project project) {
-        if (MMSUtils.getServerUrl(project) == null) {
+        if (ProjectSettings.getMmsUrl(project) == null) {
             Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
             return false;
         }

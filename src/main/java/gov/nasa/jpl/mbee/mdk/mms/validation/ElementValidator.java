@@ -112,8 +112,9 @@ public class ElementValidator implements RunnableWithProgress {
                             if (current == JsonToken.START_OBJECT) {
                                 String id;
                                 ObjectNode currentServerElement = JacksonUtils.parseJsonObject(jsonParser);
-                                if ((value = currentServerElement.get(MDKConstants.ID_KEY)) != null && value.isTextual()
-                                        && !processedElementIds.contains(id = value.asText())) {
+                                if ((value = currentServerElement.get(MDKConstants.ID_KEY)) != null
+                                        && value.isTextual() && !value.asText().startsWith(MDKConstants.HIDDEN_ID_PREFIX)
+                                        && !processedElementIds.contains(id = value.asText()) ) {
                                     //remove element from client and server maps if present, add appropriate validations already
                                     processedElementIds.add(id);
                                     Pair<Element, ObjectNode> currentClientElement = clientElementMap.remove(id);

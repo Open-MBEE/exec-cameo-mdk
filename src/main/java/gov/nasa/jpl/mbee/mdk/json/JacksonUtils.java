@@ -117,6 +117,11 @@ public class JacksonUtils {
         return getObjectMapper().readTree(jsonParser);
     }
 
+    public static ObjectNode parseJsonString(String string) throws IOException {
+        JsonParser parser = JacksonUtils.getJsonFactory().createParser(string);
+        return parseJsonObject(parser);
+    }
+
     public static ArrayNode parseJsonArray(JsonParser jsonParser, ArrayNode arrayNode) throws IOException {
         JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
         if (current != JsonToken.START_ARRAY) {
