@@ -5,14 +5,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -21,9 +16,9 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -33,7 +28,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -49,7 +43,7 @@ public class MMSUtils {
 
     private static final int CHECK_CANCEL_DELAY = 100;
     private static final AtomicReference<Exception> LAST_EXCEPTION = new AtomicReference<>();
-    private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
+
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
@@ -370,43 +364,7 @@ public class MMSUtils {
         return !throwServerException;
     }
 
-    /**
-     * @param project
-     * @return
-     * @throws IllegalStateException
-     */
-    public static String getServerUrl(Project project) throws IllegalStateException {
-        String urlString;
-        if (project == null) {
-            throw new IllegalStateException("Project is null.");
-        }
-        Element primaryModel = project.getPrimaryModel();
-        if (primaryModel == null) {
-            throw new IllegalStateException("Model is null.");
-        }
 
-        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
-            urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
-        }
-        else if (ProjectUtilities.isStandardSystemProfile(project.getPrimaryProject())) {
-            urlString = PROFILE_SERVER_CACHE.getIfPresent(project);
-            if (urlString == null) {
-                urlString = JOptionPane.showInputDialog("Specify server URL for standard profile.", null);
-            }
-            if (urlString == null || urlString.trim().isEmpty()) {
-                return null;
-            }
-            PROFILE_SERVER_CACHE.put(project, urlString);
-        }
-        else {
-            Utils.showPopupMessage("The root element does not have the ModelManagementSystem stereotype.\nPlease apply it and specify the server information.");
-            return null;
-        }
-        if (urlString == null || urlString.isEmpty()) {
-            return null;
-        }
-        return urlString.trim();
-    }
 
     public static String getMmsOrg(Project project)
             throws IOException, URISyntaxException, ServerException, GeneralSecurityException {
@@ -445,7 +403,7 @@ public class MMSUtils {
     }
 
     private static URIBuilder getServiceUri(Project project, String baseUrl) {
-        String urlString = project == null ? baseUrl : getServerUrl(project);
+        String urlString = project == null ? baseUrl : ProjectSettings.get(project, ProjectSettings.MMS_URL);
         if (urlString == null) {
             return null;
         }
@@ -490,7 +448,7 @@ public class MMSUtils {
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, ContentType contentType, File file) {
-        return prepareEndpointBuilderGenericRequest(builder, MMSUtils.getServerUrl(project), project, requestType, contentType, file);
+        return prepareEndpointBuilderGenericRequest(builder, ProjectSettings.getMmsUrl(project), project, requestType, contentType, file);
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderGenericRequest(MMSEndpoint.Builder builder, String uri, Project project, HttpRequestType requestType, ContentType contentType, File file) {
@@ -503,7 +461,7 @@ public class MMSUtils {
 
     public static MMSEndpoint.Builder prepareEndpointBuilderEntityRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, HttpEntity entity) {
         return builder.addParam(MMSEndpointBuilderConstants.HTTP_ENTITY, entity)
-                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
+                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, ProjectSettings.getMmsUrl(project))
                 .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
                 .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project);
     }

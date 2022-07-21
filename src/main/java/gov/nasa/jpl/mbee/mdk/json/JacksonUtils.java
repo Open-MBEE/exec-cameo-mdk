@@ -117,6 +117,11 @@ public class JacksonUtils {
         return getObjectMapper().readTree(jsonParser);
     }
 
+    public static ObjectNode parseJsonString(String string) throws IOException {
+        JsonParser parser = JacksonUtils.getJsonFactory().createParser(string);
+        return parseJsonObject(parser);
+    }
+
     public static Map<String, Set<ObjectNode>> parseResponseIntoObjects(File responseFile, String expectedKey) throws IOException {
         JsonToken current;
         Map<String, Set<ObjectNode>> parsedResponseObjects = new HashMap<>();
