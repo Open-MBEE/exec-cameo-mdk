@@ -36,6 +36,8 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     @Override
@@ -187,9 +189,9 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 },
                 Type.PRE
         ),
-        DOCUMENTATION(
+        DOCUMENTATION_PRE(
                 (element, project, objectNode) -> {
-                    objectNode.put(MDKConstants.DOCUMENTATION_KEY, ModelHelper.getComment(element));
+                    objectNode.put(MDKConstants.DOCUMENTATION_KEY, (String) Utils.getElementAttribute(element, Utils.AvailableAttribute.Documentation));
                     return objectNode;
                 },
                 Type.PRE
@@ -304,6 +306,25 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         }
                         iterator.remove();
                     }
+                    return objectNode;
+                },
+                Type.POST
+        ),
+        DOCUMENTATION_POST(
+                (element, project, objectNode) -> {
+                    if (element != null) {
+                        Element docEl = Utils.getDocumentationElement(element);
+                        if (docEl != null) {
+                            ArrayNode ownedCommentIds = ((ArrayNode) objectNode.get(MDKConstants.OWNED_COMMENT_IDS_KEY));
+                            for (int i = 0; i < ownedCommentIds.size(); i++) {
+                                if (ownedCommentIds.get(i).asText().equals(getEID(docEl)))
+                                    ownedCommentIds.remove(i);
+                            }
+                            objectNode.replace(MDKConstants.OWNED_COMMENT_IDS_KEY, ownedCommentIds);
+                        }
+
+                    }
+
                     return objectNode;
                 },
                 Type.POST

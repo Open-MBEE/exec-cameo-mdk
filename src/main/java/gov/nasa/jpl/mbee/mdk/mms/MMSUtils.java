@@ -403,16 +403,18 @@ public class MMSUtils {
     }
 
     private static URIBuilder getServiceUri(Project project, String baseUrl) {
-        String urlString = project == null ? baseUrl : ProjectSettings.get(project, ProjectSettings.MMS_URL);
+        String urlString = project == null ? baseUrl : ProjectSettings.get(project, ProjectSettings.MMS_HOST_URL);
         if (urlString == null) {
             return null;
         }
+        String basePath = ProjectSettings.getOrDefault(project, ProjectSettings.MMS_BASE_PATH);
 
         // [scheme:][//host][path][?query][#fragment]
 
         URIBuilder uri;
         try {
             uri = new URIBuilder(urlString);
+            uri.setPath(basePath);
         } catch (URISyntaxException e) {
             Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project. Reason: " + e.getMessage());
             e.printStackTrace();

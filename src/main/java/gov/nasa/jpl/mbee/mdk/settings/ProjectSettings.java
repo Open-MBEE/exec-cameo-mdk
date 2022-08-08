@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ProjectSettings {
@@ -25,9 +26,10 @@ public class ProjectSettings {
     private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
 
     public static final String
-            MMS_URL = "mmsUrl",
-            VE_HOST = "veHost",
-            VE_PATH = "vePath";
+            MMS_HOST_URL = "mms.hostUrl",
+            MMS_BASE_PATH = "mms.basePath",
+            VE_HOST_URL = "ve.hostUrl",
+            VE_BASE_PATH = "ve.basePath";
 
 
     public static ObjectNode getProjectSettings(Project project) {
@@ -49,14 +51,17 @@ public class ProjectSettings {
         return settingsNode;
     }
 
-
-
     public static String get(Project project, String settingName, Boolean useDefault) {
-        ObjectNode settingsNode = ProjectSettings.getProjectSettings(project);
-        if (settingsNode != null) {
-            JsonNode setting = settingsNode.get(settingName);
-            if (setting != null && setting.isTextual()) {
-                return setting.asText();
+        JsonNode settings = ProjectSettings.getProjectSettings(project);
+        if (settings != null) {
+            String[] fields = settingName.split("\\.");
+            for (String field : fields) {
+                if (settings != null) {
+                    settings = settings.get(field);
+                }
+            }
+            if (settings != null && settings.isTextual()) {
+                return settings.asText();
             }
         }
         return useDefault ? getDefault(project, settingName) : null;
@@ -72,19 +77,21 @@ public class ProjectSettings {
 
     private static String getDefault(Project project, String settingName) {
         switch (settingName) {
-            case VE_HOST:
-                return getOrDefault(project,MMS_URL);
-            case VE_PATH:
+            case VE_HOST_URL:
+                return getOrDefault(project,MMS_HOST_URL);
+            case VE_BASE_PATH:
                 return "/alfresco/mmsapp/mms.html#";
-            case MMS_URL:
+            case MMS_HOST_URL:
                 return getStereotypeUrl(project);
+            case MMS_BASE_PATH:
+                return "";
         }
 
         return "Not Found";
     }
 
     public static String getMmsUrl(Project project) {
-        return getOrDefault(project, MMS_URL);
+        return getOrDefault(project, MMS_HOST_URL);
     }
 
     /**

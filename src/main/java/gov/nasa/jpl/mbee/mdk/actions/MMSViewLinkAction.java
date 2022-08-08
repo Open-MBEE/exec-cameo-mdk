@@ -51,8 +51,8 @@ public class MMSViewLinkAction extends MDAction {
             }
 
             // build url
-            String veHost = ProjectSettings.getOrDefault(project, ProjectSettings.VE_HOST);
-            String veBasePath = ProjectSettings.getOrDefault(project, ProjectSettings.VE_PATH);
+            String veHost = ProjectSettings.getOrDefault(project, ProjectSettings.VE_HOST_URL);
+            String veBasePath = ProjectSettings.getOrDefault(project, ProjectSettings.VE_BASE_PATH);
             URIBuilder uriBase = MMSUtils.getServiceUri(veHost);
             // include this in the host portion of the uri. not technically correct, but it prevents the # from being converted and breaking things
             uriBase.setHost(uriBase.getHost() + veBasePath);
