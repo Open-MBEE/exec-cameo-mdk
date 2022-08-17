@@ -31,9 +31,9 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
   
 > Cameo MDK can also be installed headlessly by simply unzipping the plugin archive into the directory that CSM is installed in.
   
-## Usage
+## User Guide
 
-The latest user documentation can be accessed online: https://mdk.readthedocs.io/latest
+The latest user documentation can be accessed online: https://mdk.readthedocs.io/en/latest
 
 # Contributing
 
