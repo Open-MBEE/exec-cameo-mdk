@@ -33,7 +33,7 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
   
 ## Usage
 
-Documentation can be accessed [online](src/main/dist/manual) or offline in CSM from the main menu "Help" > "Other Documentation" > "MDK [...] UserGuide".
+The latest user documentation can be accessed online: https://mdk.readthedocs.io/latest
 
 # Contributing
 
