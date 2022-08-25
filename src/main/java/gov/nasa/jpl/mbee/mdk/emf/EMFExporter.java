@@ -320,7 +320,12 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                                 if (ownedCommentIds.get(i).asText().equals(getEID(docEl)))
                                     ownedCommentIds.remove(i);
                             }
-                            objectNode.replace(MDKConstants.OWNED_COMMENT_IDS_KEY, ownedCommentIds);
+                            if (ownedCommentIds.size() == 0) {
+                                objectNode.remove(MDKConstants.OWNED_COMMENT_IDS_KEY);
+                            } else {
+                                objectNode.replace(MDKConstants.OWNED_COMMENT_IDS_KEY, ownedCommentIds);
+                            }
+
                         }
 
                     }
