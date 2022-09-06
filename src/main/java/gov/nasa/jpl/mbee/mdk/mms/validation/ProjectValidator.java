@@ -113,8 +113,6 @@ public class ProjectValidator {
         }
     }
 
-    com.nomagic.magicdraw.core.project.options.CommonProjectOptions
-
     public void checkIfTWCServiceChanged(JsonNode projectJson) {
         JsonNode value;
         if ((value = projectJson.get(MDKConstants.TWC_SERVICE_ID)) != null && value.isTextual()
