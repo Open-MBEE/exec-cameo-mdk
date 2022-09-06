@@ -36,16 +36,17 @@ public class ProjectSettings {
         Package model = project.getPrimaryModel();
         Comment comment = new ArrayList<>(model.getOwnedComment()).get(0);
 
-        String s = StringUtils.substringBetween(comment.getBody(),"{","}");
+        String s = StringUtils.substring(comment.getBody(),StringUtils.indexOf(comment.getBody(),"{"),StringUtils.lastIndexOf(comment.getBody(),"}")+1);
         if (s == null) {
+            Application.getInstance().getGUILog().log("[WARNING] Unable to retrieve MDK settings from model documentation");
             return null;
         }
-        s = "{" + s + "}";
         ObjectNode settingsNode;
         try {
             settingsNode = JacksonUtils.parseJsonString(s);
         } catch (IOException ioException) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to retrieve MDK settings from model documentation:" + ioException.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unable to retrieve MDK settings from model documentation, your JSON may be malformed check the following message for details on how to fix the issue:");
+            Application.getInstance().getGUILog().log(ioException.getMessage());
             return null;
         }
         return settingsNode;

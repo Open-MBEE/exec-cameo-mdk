@@ -113,6 +113,8 @@ public class ProjectValidator {
         }
     }
 
+    com.nomagic.magicdraw.core.project.options.CommonProjectOptions
+
     public void checkIfTWCServiceChanged(JsonNode projectJson) {
         JsonNode value;
         if ((value = projectJson.get(MDKConstants.TWC_SERVICE_ID)) != null && value.isTextual()
@@ -183,6 +185,14 @@ public class ProjectValidator {
         String resourceId = "";
         String twcServerUrl = "";
         Project project = ProjectUtilities.getProject(iProject);
+        if (ProjectUtilities.isStandardSystemProfile(iProject)) {
+            try {
+                projectObjectNode.set("cameo", JacksonUtils.parseJsonString("{ \"custom\": { \"cameo\": { \"_standardProfile\": true }}}"));
+            }
+            catch (IOException e) {
+                Application.getInstance().getGUILog().log("Unknown JSON error");
+            }
+        }
         if (project != null && project.isRemote()) {
             resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());
             twcServerUrl = getTeamworkCloudServer();
