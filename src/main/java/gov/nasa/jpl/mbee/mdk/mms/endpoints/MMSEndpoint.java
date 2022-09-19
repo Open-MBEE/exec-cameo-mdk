@@ -5,6 +5,7 @@ import gov.nasa.jpl.mbee.mdk.http.HttpDeleteWithBody;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -61,6 +62,11 @@ public abstract class MMSEndpoint {
             return value instanceof String ? (String) value : "";
         }
 
+        protected Boolean getBooleanParam(String key) {
+            Object value = buildParams.get(key);
+            return value instanceof Boolean ? (Boolean) value : false;
+        }
+
         protected MMSUtils.HttpRequestType getHttpTypeParam() {
             Object value = buildParams.get(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE);
             return value instanceof MMSUtils.HttpRequestType ? (MMSUtils.HttpRequestType) value : null;
@@ -79,6 +85,11 @@ public abstract class MMSEndpoint {
         protected Project getProjectParam() {
             Object value = buildParams.get(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT);
             return value instanceof Project ? (Project) value : null;
+        }
+
+        protected HttpEntity getEntity() {
+            Object value = buildParams.get(MMSEndpointBuilderConstants.HTTP_ENTITY);
+            return value instanceof HttpEntity ? (HttpEntity) value : null;
         }
 
         private Map<String, String> getUriBuilderParams() {
@@ -109,6 +120,7 @@ public abstract class MMSEndpoint {
                 URI requestDest = uriBuilder.build();
                 final HttpRequestBase request;
                 MMSUtils.HttpRequestType type = getHttpTypeParam();
+                HttpEntity entity = getEntity();
                 File sendData = getFileParam();
                 ContentType contentType = getContentTypeParam();
                 Project project = getProjectParam();
@@ -131,16 +143,32 @@ public abstract class MMSEndpoint {
                         request = new HttpPut(requestDest);
                         break;
                 }
-                request.addHeader("Authorization", "Bearer " + TicketUtils.getTicket(project));
-                request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
-                if (sendData != null) {
-                    if (contentType != null) {
-                        request.addHeader(HTTP.CONTENT_TYPE, contentType.getMimeType());
+                // Add body to request
+                if (sendData != null || entity != null) {
+                    // Unless the body is a MultipartFormEntity, we will construct the put/post body from the sendData file
+                    if (entity == null) {
+                        FileEntity reqEntity = new FileEntity(sendData, contentType);
+                        entity = reqEntity;
                     }
-                    FileEntity reqEntity = new FileEntity(sendData, contentType);
-                    reqEntity.setChunked(true);
-                    ((HttpEntityEnclosingRequest) request).setEntity(reqEntity);
+                    //If using an Entity from the constructor, no headers should be set as they will be constructed
+                    //automatically unless they were generated from a file
+                    if (entity instanceof FileEntity) {
+                        if (contentType != null) {
+                            request.addHeader(HTTP.CONTENT_TYPE, contentType.getMimeType());
+                        }
+                        request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
+                        ((FileEntity) entity).setChunked(true);
+                    }
+                    //Add the entity created from the file above or the one passed from the constructor
+                    ((HttpEntityEnclosingRequest) request).setEntity(entity);
                 }
+                else {
+                    request.addHeader("charset", (contentType != null ? contentType.getCharset() : Consts.UTF_8).displayName());
+                }
+
+                request.addHeader("Authorization", "Bearer " + TicketUtils.getTicket(project));
+
+
                 uriBuilder = null;
                 return request;
             }

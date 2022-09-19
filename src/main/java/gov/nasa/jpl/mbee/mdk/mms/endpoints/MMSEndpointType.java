@@ -12,9 +12,7 @@ public enum MMSEndpointType {
     ELEMENTS("mmselements", "/elements"),
     ELEMENT("mmselement", ""),
     SEARCH("mmssearch", "/search"),
-    VALIDATETOKEN("checkauth", "/checkAuth"),
-    SYNCENABLE("syncenable", "/syncCheck"),
-    BACKGROUNDSYNC("backgroundsync", "/sync");
+    VALIDATETOKEN("checkauth", "/checkAuth");
 
     private String name;
     private String path;
@@ -31,10 +29,6 @@ public enum MMSEndpointType {
     public String getPath() {
             return path;
         }
-
-    public static final String IMPROPER_URI_ERROR_PREFIX = "[ERROR] Unexpected error in generation of MMS URL for ";
-    public static final String IMPROPER_URI_ERROR_PROJECT_SUFFIX = "project. Reason: Improper base URI.";
-    public static final String IMPROPER_URI_ERROR_REF_SUFFIX = "branch. Reason: Improper base URI.";
 
     public static final String AUTHENTICATION_RESPONSE_JSON_KEY = "token";
 }

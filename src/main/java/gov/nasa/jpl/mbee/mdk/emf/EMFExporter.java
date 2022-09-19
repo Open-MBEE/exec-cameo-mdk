@@ -285,7 +285,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 },
                 Type.PRE
         ),
-
         MOUNT_POST(
                 (element, project, objectNode) -> {
                     if (!objectNode.get(MDKConstants.TYPE_KEY).asText().equals("Mount")) {
@@ -447,22 +446,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     objectNode.put(MDKConstants.OWNER_ID_KEY, element instanceof Model && project.getModels().stream().anyMatch(model -> element == model) ? Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) : getEID(owner));
                     return objectNode;
                 }
-        ),
-        OWNING(
-                (element, project, eStructuralFeature, objectNode) -> eStructuralFeature.getName().startsWith("owning"),
-                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
-        ),
-        OWNED(
-                (element, project, eStructuralFeature, objectNode) -> eStructuralFeature.getName().startsWith("owned") && !eStructuralFeature.isOrdered(),
-                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
-        ),
-        NESTED(
-                (element, project, eStructuralFeature, objectNode) -> eStructuralFeature.getName().startsWith("nested"),
-                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
-        ),
-        PACKAGED_ELEMENT(
-                (element, project, eStructuralFeature, objectNode) -> UMLPackage.Literals.PACKAGE__PACKAGED_ELEMENT == eStructuralFeature || UMLPackage.Literals.COMPONENT__PACKAGED_ELEMENT == eStructuralFeature,
-                EMPTY_E_STRUCTURAL_FEATURE_FUNCTION
         ),
         DIRECTED_RELATIONSHIP__SOURCE(
                 (element, project, eStructuralFeature, objectNode) -> UMLPackage.Literals.DIRECTED_RELATIONSHIP__SOURCE == eStructuralFeature,

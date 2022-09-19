@@ -44,9 +44,9 @@ public class MDKConstants {
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
             TWC_ID_KEY = "twc" + ID_KEY_SUFFIX,
             TWC_VERSION_KEY = "twcVersion",
-            ARTIFACT_IDS_KEY = "_artifactIds",
+            ARTIFACTS_KEY = "_artifacts",
             CHECKSUM_KEY = "checksum",
-            CONTENT_TYPE_KEY = "contentType",
+            MIME_TYPE_KEY = "mimetype",
             PROJECT_TYPE_KEY = "schema",
             PROJECT_TYPE_VALUE = "cameo",
             SYSML_PROFILE_ID = "_11_5EAPbeta_be00301_1147434586638_637562_1900",
@@ -58,5 +58,18 @@ public class MDKConstants {
             AUTHORIZATION = "Authorization",
             CHARSET = "charset",
             APPLICATION_JSON = "application/json",
-            TWC_SERVICE_ID = "twcServiceId";
+            TWC_SERVICE_ID = "twcServiceId",
+            COMMITS_NODE = "commits",
+            ELEMENTS_NODE = "elements",
+            REFS_NODE = "refs",
+            MESSAGES_NODE = "messages",
+            REJECTED_NODE = "rejected",
+            SOURCE_FIELD = "source",
+            DELETED_FIELD = "deleted",
+            MAGICDRAW_SOURCE_VALUE = "magicdraw",
+            ELEMENT_TYPE_VALUE = "Element";
+
+    @Deprecated
+    public static final String
+        CONTENT_TYPE_KEY = MIME_TYPE_KEY;
 }

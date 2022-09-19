@@ -6,12 +6,12 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,8 +40,7 @@ public class JacksonUtils {
 
     public static JsonFactory getJsonFactory() {
         if (JSON_FACTORY_INSTANCE == null) {
-            JSON_FACTORY_INSTANCE = new JsonFactory();
-            JSON_FACTORY_INSTANCE.setCodec(JacksonUtils.getObjectMapper());
+            JSON_FACTORY_INSTANCE = new TempFileJsonFactory(getObjectMapper());
         }
         return JSON_FACTORY_INSTANCE;
     }
@@ -112,11 +111,8 @@ public class JacksonUtils {
 
     public static ObjectNode parseJsonObject(JsonParser jsonParser) throws IOException {
         JsonToken current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
-        while (current != JsonToken.START_OBJECT || jsonParser.getCurrentToken() == null) {
-            current = jsonParser.nextToken();
-            if(!jsonParser.hasCurrentToken()) {
-                throw new IOException("Unable to build object from JSON parser.");
-            }
+        if (current != JsonToken.START_OBJECT) {
+            throw new IOException("Unable to build object from JSON parser.");
         }
         return getObjectMapper().readTree(jsonParser);
     }
@@ -137,10 +133,10 @@ public class JacksonUtils {
                         keyName = jsonParser.getCurrentName();
                         if(keyName.equals(expectedKey)) {
                             parsedResponseObjects.put(expectedKey, parseExpectedArray(jsonParser, current));
-                        } else if(keyName.equals(MDKJsonConstants.MESSAGES_NODE) ) {
-                            parsedResponseObjects.put(MDKJsonConstants.MESSAGES_NODE, parseExpectedArray(jsonParser, current));
-                        } else if(keyName.equals(MDKJsonConstants.REJECTED_NODE)) {
-                            parsedResponseObjects.put(MDKJsonConstants.REJECTED_NODE, parseExpectedArray(jsonParser, current));
+                        } else if(keyName.equals(MDKConstants.MESSAGES_NODE) ) {
+                            parsedResponseObjects.put(MDKConstants.MESSAGES_NODE, parseExpectedArray(jsonParser, current));
+                        } else if(keyName.equals(MDKConstants.REJECTED_NODE)) {
+                            parsedResponseObjects.put(MDKConstants.REJECTED_NODE, parseExpectedArray(jsonParser, current));
                         } else if(keyName.equals("total") || keyName.equals("rejectedTotal")){
                             //TODO: fill in what to do with the totals
                         }
@@ -161,21 +157,12 @@ public class JacksonUtils {
             if(current.equals(JsonToken.START_ARRAY)) {
                 while (!jsonParser.isClosed() && current != JsonToken.END_ARRAY) {
                     if (current == JsonToken.START_OBJECT) {
-                        ObjectNode currentJsonObject = JacksonUtils.getObjectMapper().readTree(jsonParser);
-                        if(currentJsonObject != null) {
+                        ObjectNode currentJsonObject = JacksonUtils.parseJsonObject(jsonParser);
+                        if (currentJsonObject != null) {
                             parsedObjects.add(currentJsonObject);
                         }
-
-                        if(!jsonParser.isClosed()) {
-                            if(jsonParser.getCurrentToken() == null) {
-                                current = jsonParser.nextToken();
-                            }
-                        } else {
-                            break;
-                        }
-                    } else {
-                        current = jsonParser.nextToken();
                     }
+                    current = jsonParser.nextToken();
                 }
             }
         }

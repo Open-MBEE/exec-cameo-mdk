@@ -26,11 +26,12 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MDKPlugin extends Plugin {
     public static final String MAIN_TOOLBAR_CATEGORY_NAME = "MDK";
 
-    private static String VERSION;
+    private static MDKPlugin INSTANCE;
     private static boolean JAVAFX_SUPPORTED;
 
     public static ClassLoader extensionsClassloader;
@@ -40,11 +41,21 @@ public class MDKPlugin extends Plugin {
         super();
     }
 
-    public static String getVersion() {
-        if (VERSION == null) {
-            VERSION = PluginUtils.getPlugins().stream().map(Plugin::getDescriptor).filter(descriptor -> descriptor.getName().equals("Model Development Kit")).map(PluginDescriptor::getVersion).findAny().orElse(null);
+    public static MDKPlugin getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = PluginUtils.getPlugins().stream()
+                    .filter(plugin -> Objects.equals(plugin.getDescriptor().getName(), "Model Development Kit"))
+                    .filter(plugin -> plugin instanceof MDKPlugin)
+                    .map(plugin -> (MDKPlugin) plugin)
+                    .findAny()
+                    .orElseThrow(IllegalStateException::new);
         }
-        return VERSION;
+        return INSTANCE;
+    }
+
+    @Deprecated
+    public static String getVersion() {
+        return getInstance().getDescriptor().getVersion();
     }
 
     public static void updateMainToolbarCategory() {
@@ -72,7 +83,6 @@ public class MDKPlugin extends Plugin {
     @Override
     public void init() {
         ActionsConfiguratorsManager acm = ActionsConfiguratorsManager.getInstance();
-        System.setProperty("jsse.enableSNIExtension", "false");
         if (MDUtils.isDeveloperMode()) {
             System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
             System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");

@@ -14,7 +14,6 @@ import gov.nasa.jpl.mbee.mdk.emf.EMFImporter;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
@@ -219,8 +218,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                         .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams).build();
                 File responseFile = MMSUtils.sendMMSRequest(project, commitsRequest);
 
-                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
-                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);
+                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
                 if(elementObjects != null && !elementObjects.isEmpty()) {
                     for(ObjectNode jsonObject : elementObjects) {
                         JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
@@ -242,38 +241,42 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
         private void determineChangesUsingCommitResponse(File responseFile, Set<String> lockedElementIds, String commitId) throws IOException {
             // turns out the response still uses commits as the field of interest in terms of parsing
-            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.COMMITS_NODE);
-            Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKJsonConstants.COMMITS_NODE);
+            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+            Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
 
             if(commitObjects != null && !commitObjects.isEmpty()) {
-                int size = 0;
-                String commitSyncDirection = "";
+                Map<String, Integer> commitSizes = new HashMap<>();
                 for(ObjectNode jsonObject : commitObjects) {
                     if(jsonObject.isArray() && jsonObject.size() > 0) {
-                        for(int i = 0; i < jsonObject.size(); i++) {
-                            JsonNode currentNode = jsonObject.get(i);
-                            JsonNode sourceField = currentNode.get(MDKJsonConstants.SOURCE_FIELD);
-                            boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKJsonConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
-                            if(isSyncingCommit) {
-                                commitSyncDirection = "Removed";
-                            } else {
-                                commitSyncDirection = "Added";
-                            }
-
-                            size = validateJsonElementArray(currentNode, isSyncingCommit, lockedElementIds, size);
-                        }
-                    } else { // what do we throw here? and should we?
-                        throw new IllegalStateException();
+                        validateJsonElementArray(jsonObject, lockedElementIds, commitSizes);
                     }
-
                     if (MDUtils.isDeveloperMode()) {
-                        Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - " + commitSyncDirection + " " + NumberFormat.getInstance().format(size) + " MMS element change" + (size != 1 ? "s" : "") + " for commit " + commitId + ".");
+                        if (commitSizes.isEmpty()) {
+                            Application.getInstance().getGUILog().log("[INFO] No objects found in commit.");
+                            return;
+                        }else {
+                            for (Map.Entry<String, Integer> size : commitSizes.entrySet()) {
+                                Application.getInstance().getGUILog().log("[INFO] " + project.getName() + " - " + size.getKey() + " " + NumberFormat.getInstance().format(size.getValue()) + " MMS element change" + (size.getValue() != 1 ? "s" : "") + " for commit " + commitId + ".");
+                            }
+                        }
                     }
                 }
             }
         }
 
-        private int validateJsonElementArray(JsonNode arrayNode, boolean isSyncingCommit, Set<String> lockedElementIds, int size) {
+        private void validateJsonElementArray(JsonNode arrayNode, Set<String> lockedElementIds, Map<String, Integer> sizes) {
+            JsonNode sourceField = arrayNode.get(MDKConstants.SOURCE_FIELD);
+            String commitSyncDirection = "";
+            int size = 0;
+            boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
+            if(isSyncingCommit) {
+                commitSyncDirection = "Removed";
+            } else {
+                commitSyncDirection = "Added";
+            }
+            if (sizes.containsKey(commitSyncDirection)) {
+                size = sizes.get(commitSyncDirection);
+            }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
                 JsonNode changesJsonArray = arrayNode.get(entry.getKey());
                 if (changesJsonArray == null || !changesJsonArray.isArray()) {
@@ -285,7 +288,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                         throw new IllegalStateException();
                     }
                     JsonNode typeJsonNode = changeJsonObject.get(MDKConstants.TYPE_KEY);
-                    if (typeJsonNode != null && typeJsonNode.isTextual() && !MDKJsonConstants.ELEMENT_TYPE_VALUE.equalsIgnoreCase(typeJsonNode.asText())) {
+                    if (typeJsonNode != null && typeJsonNode.isTextual() && !MDKConstants.ELEMENT_TYPE_VALUE.equalsIgnoreCase(typeJsonNode.asText())) {
                         continue;
                     }
                     JsonNode idJsonNode = changeJsonObject.get(MDKConstants.ID_KEY);
@@ -316,8 +319,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                     size++;
                 }
             }
-
-            return size;
+            sizes.put(commitSyncDirection, size);
         }
     }
 }

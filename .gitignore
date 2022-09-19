@@ -13,3 +13,7 @@ target
 *.diff
 rebel.xml
 .DS_Store
+.vscode
+venv/*
+!venv/bin/
+*.groovy

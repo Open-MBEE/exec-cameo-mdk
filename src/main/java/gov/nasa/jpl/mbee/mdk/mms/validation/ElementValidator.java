@@ -1,8 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.mms.validation;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.actions.ActionsCategory;
@@ -17,7 +15,6 @@ import gov.nasa.jpl.mbee.mdk.actions.ClipboardAction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.json.MDKJsonConstants;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitClientElementAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.ElementDiffAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.UpdateClientElementAction;
@@ -108,7 +105,7 @@ public class ElementValidator implements RunnableWithProgress {
             processServerElements(clientElementMap, serverElementMap);
         } catch(IOException e) {
             e.printStackTrace();
-            Application.getInstance().getGUILog().log("[Error] An error occurred when attempting to process elements from the server.");
+            Application.getInstance().getGUILog().log("[ERROR] An error occurred when attempting to process elements from the server.");
         }
 
         LinkedHashSet<String> elementKeySet = new LinkedHashSet<>();
@@ -145,13 +142,14 @@ public class ElementValidator implements RunnableWithProgress {
     private void processServerElements(Map<String, Pair<Element, ObjectNode>> clientElementMap, Map<String, ObjectNode> serverElementMap) throws IOException {
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         for (File responseFile : serverElementFiles) {
-            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKJsonConstants.ELEMENTS_NODE);
-            Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKJsonConstants.ELEMENTS_NODE);
+            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.ELEMENTS_NODE);
+            Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.ELEMENTS_NODE);
             if(elementObjects != null && !elementObjects.isEmpty()) {
                 if(serverObjectsOnlyHasBins(elementObjects)) {
                     // solves edge case where first model validation incorrectly removes bins from project
                     removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.HOLDING_BIN_ID_PREFIX);
                 }
+                //Remove View Instances Bin
                 removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.VIEW_INSTANCES_BIN_PREFIX);
 
                 for(ObjectNode jsonObject : elementObjects) {
@@ -173,7 +171,7 @@ public class ElementValidator implements RunnableWithProgress {
     }
 
     private boolean serverObjectsOnlyHasBins(Set<ObjectNode> serverObjectNodes) {
-        if(serverObjectNodes.size() != 2) { // only intended to fix an edge case, use carefully
+        if(serverObjectNodes.size() != 2) {
             return false;
         }
 
@@ -191,7 +189,7 @@ public class ElementValidator implements RunnableWithProgress {
     }
 
     private void removeServerObjectNodeUsingIdPrefix(Set<ObjectNode> serverObjectNodes, String idPrefix) {
-        for(ObjectNode o : serverObjectNodes) { // only intended to fix an edge case, use carefully
+        for(ObjectNode o : serverObjectNodes) {
             if(o.get(MDKConstants.ID_KEY).asText() != null) {
                 String idValue = o.get(MDKConstants.ID_KEY).asText();
                 if(idValue.startsWith(idPrefix)) {
