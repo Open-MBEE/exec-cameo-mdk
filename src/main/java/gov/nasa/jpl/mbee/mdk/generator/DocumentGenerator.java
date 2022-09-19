@@ -683,20 +683,21 @@ public class DocumentGenerator {
                     e = ((CallBehaviorAction) an).getBehavior();
                 }
             }
-            Stereotype s = StereotypesHelper.checkForDerivedStereotype(e,
-                    DocGenProfile.javaExtensionStereotype);
-            String javaClazz = s.getName();
-            if (MDKPlugin.extensionsClassloader != null) {
-                try {
-                    java.lang.Class<?> clazz = java.lang.Class.forName(javaClazz, true,
-                            MDKPlugin.extensionsClassloader);
-                    dge = (Query) clazz.newInstance();
-                } catch (Exception e1) {
-                    Application.getInstance().getGUILog()
-                            .log("[ERROR] Cannot instantiate Java extension class " + javaClazz);
-                    e1.printStackTrace();
-                }
-            }
+            //TODO fix for 2021x, checkForDerivedStereotype changed
+//            Stereotype s = StereotypesHelper.checkForDerivedStereotype(e,
+//                    DocGenProfile.javaExtensionStereotype);
+//            String javaClazz = s.getName();
+//            if (MDKPlugin.extensionsClassloader != null) {
+//                try {
+//                    java.lang.Class<?> clazz = java.lang.Class.forName(javaClazz, true,
+//                            MDKPlugin.extensionsClassloader);
+//                    dge = (Query) clazz.newInstance();
+//                } catch (Exception e1) {
+//                    Application.getInstance().getGUILog()
+//                            .log("[ERROR] Cannot instantiate Java extension class " + javaClazz);
+//                    e1.printStackTrace();
+//                }
+//            }
         }
         else if (GeneratorUtils.hasStereotypeByString(an, DocGenProfile.simulateStereotype, true)) {
             dge = new Simulate();

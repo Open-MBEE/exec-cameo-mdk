@@ -21,6 +21,7 @@ import com.nomagic.magicdraw.validation.ValidationRunData;
 import com.nomagic.magicdraw.validation.ui.ValidationResultsWindowManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.jmi.helpers.TagsHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
@@ -1859,34 +1860,18 @@ public class Utils {
      * @param prop the Stereotype tag that the Slot instantiates
      * @return a Slot with zero or more values or null if no such Slot exists
      */
-    public static Slot getSlot(Element elem, Property prop) {
-        if (prop == null || elem == null) {
-            return null;
-        }
-        Element myOwner = prop.getOwner();
-        if (myOwner instanceof Stereotype
-                && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype) myOwner)) { // REVIEW
-            // may not be able to get slot from derived stereotype
-            Slot slot = StereotypesHelper.getSlot(elem, prop, false);
-            if (slot != null) {
-                return slot;
-            }
-        }
-        return null;
+    public static TaggedValue getTaggedValue(Element elem, Property prop){
+        return TagsHelper.getTaggedValue(elem, prop);
     }
 
     /**
      * @param elem
      * @return all slots for the element's applied stereotype instance
      */
-    public static List<Slot> getSlots(Element elem) {
-        List<Slot> slots = new ArrayList<Slot>();
-        InstanceSpecification localInstanceSpecification = elem.getAppliedStereotypeInstance();
-        if (localInstanceSpecification != null) {
-            slots.addAll(localInstanceSpecification.getSlot());
-        }
-        return slots;
+    public static List<TaggedValue> getTaggedValues(Element elem) {
+        return TagsHelper.collectVisibleTaggedValues(elem);
     }
+
 
     /**
      * Get the element's matching Slots or Properties.
@@ -1895,8 +1880,8 @@ public class Utils {
      * @param prop the Stereotype tag or Class Property
      * @return a slot that matches the input property or null
      */
-    public static Slot getStereotypeProperty(Element elem, Property prop) {
-        return getSlot(elem, prop);
+    public static TaggedValue getStereotypeProperty(Element elem, Property prop) {
+        return TagsHelper.getTaggedValue(elem, prop);
     }
 
     public static Property getClassProperty(Element elem, String propName,
@@ -1940,25 +1925,13 @@ public class Utils {
      *
      * @param elem the Element with the sought Properties.
      * @param prop the Stereotype tag or Class Property
-     * @return a Property or Slot that corresponds to the input property
+     * @return a TaggedValue that corresponds to the input property
      */
-    public static Element getElementProperty(Element elem, Property prop) {
-        if (prop == null) {
+    public static TaggedValue getElementProperty(Element elem, Property prop) {
+        if (prop == null ||  elem == null) {
             return null;
         }
-        if (prop.getOwner() instanceof Stereotype) {
-            Slot slot = getStereotypeProperty(elem, prop);
-            if (slot != null) {
-                return slot;
-            }
-        }
-        else {
-            Property result = getClassProperty(elem, prop, true);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
+        return TagsHelper.getTaggedValue(elem, prop);
     }
 
     /**
@@ -2047,23 +2020,8 @@ public class Utils {
     public static List<Object> getStereotypePropertyValues(Element elem, Property prop,
                                                            boolean useDefaultIfNoSlot) {
         List<Object> results = new ArrayList<Object>();
-        Slot elemProp = getStereotypeProperty(elem, prop);
-        if (elemProp != null) {
-            if (elemProp.getValue() != null) {
-                results.addAll(elemProp.getValue());
-            }
-        }
-        Element propOwner = prop.getOwner();
-        if (useDefaultIfNoSlot && results.isEmpty()) {
-            if (propOwner instanceof Stereotype
-                    && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype) propOwner)) {
-                ValueSpecification v = prop.getDefaultValue();
-                if (v != null) {
-                    results.add(v);
-                }
-            }
-        }
-        return results;
+        //TODO default values?
+        return TagsHelper.getStereotypePropertyValue(elem, prop, useDefaultIfNoSlot);
     }
 
     /*****************************************************************************************/

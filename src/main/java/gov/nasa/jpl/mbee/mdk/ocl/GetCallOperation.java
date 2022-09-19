@@ -287,7 +287,7 @@ public class GetCallOperation implements CallOperation {
                         if (elem.getOwnedElement() != null) {
                             members.addAll(elem.getOwnedElement());
                         }
-                        members.addAll(Utils.getSlots(elem));
+                        members.addAll(Utils.getTaggedValues(elem));
                         objectToAdd = members;
                         // } else if ( coll != null && !asCollection ) {
                         // objectToAdd = source;

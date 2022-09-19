@@ -440,11 +440,12 @@ public class EMFImporter implements JsonToElementFunction {
                             else if (element instanceof Slot && owningElement instanceof InstanceSpecification) {
                                 ((Slot) element).setOwningInstance((InstanceSpecification) owningElement);
                             }
-                            else if (element instanceof InstanceSpecification
-                                    && ((jsonNode = objectNode.get(KEY_FUNCTION.apply(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT))) != null && jsonNode.isTextual()
-                                    || (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
-                                ((InstanceSpecification) element).setStereotypedElement(owningElement);
-                            }
+                            //TODO fix this for 2021x, INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT is gone
+//                            else if (element instanceof InstanceSpecification
+//                                    && ((jsonNode = objectNode.get(KEY_FUNCTION.apply(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT))) != null && jsonNode.isTextual()
+//                                    || (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
+//                                ((InstanceSpecification) element).setStereotypedElement(owningElement);
+//                            }
                             else {
                                 element.setOwner(owningElement);
                             }

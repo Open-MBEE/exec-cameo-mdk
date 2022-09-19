@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationManager;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
@@ -51,17 +52,23 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
             return;
         }
         vwr.results.remove(rvr);
-        AnnotationManager.getInstance().remove(annotation);
-        AnnotationManager.getInstance().update();
+        Project project = Application.getInstance().getProject();
+        if(project != null) {
+            AnnotationManager.getInstance(project).remove(annotation);
+            AnnotationManager.getInstance(project).update();
+        }
         //ValidationResultsWindowManager.updateValidationResultsWindow(vwr.id, vwr.title, vwr.runData, vwr.results);
     }
 
     public void removeViolationsAndUpdateWindow(Collection<Annotation> annos) {
-        for (Annotation anno : annos) {
-            vwr.results.remove(vwr.mapping.get(anno));
-            AnnotationManager.getInstance().remove(anno);
+        Project project = Application.getInstance().getProject();
+        if(project != null) {
+            for (Annotation anno : annos) {
+                vwr.results.remove(vwr.mapping.get(anno));
+                AnnotationManager.getInstance(project).remove(anno);
+            }
+            AnnotationManager.getInstance(project).update();
         }
-        AnnotationManager.getInstance().update();
         //ValidationResultsWindowManager.updateValidationResultsWindow(vwr.id, vwr.title, vwr.runData, vwr.results);
     }
 
