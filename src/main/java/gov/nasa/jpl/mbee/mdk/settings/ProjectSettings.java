@@ -19,9 +19,12 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class ProjectSettings {
+
+    private static Boolean warnOnce = false;
 
     private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
 
@@ -37,8 +40,11 @@ public class ProjectSettings {
         Comment comment = new ArrayList<>(model.getOwnedComment()).get(0);
 
         String s = StringUtils.substring(comment.getBody(),StringUtils.indexOf(comment.getBody(),"{"),StringUtils.lastIndexOf(comment.getBody(),"}")+1);
-        if (s == null) {
-            Application.getInstance().getGUILog().log("[WARNING] Unable to retrieve MDK settings from model documentation");
+        if (Objects.equals(s, "")) {
+            if (!ProjectSettings.warnOnce) {
+                Application.getInstance().getGUILog().log("[WARNING] Unable to find MDK settings in model documentation. This warning will only appear once.");
+                ProjectSettings.warnOnce = true;
+            }
             return null;
         }
         ObjectNode settingsNode;
@@ -91,9 +97,6 @@ public class ProjectSettings {
         return "Not Found";
     }
 
-    public static String getMmsUrl(Project project) {
-        return getOrDefault(project, MMS_HOST_URL);
-    }
 
     /**
      * @param project
@@ -124,7 +127,9 @@ public class ProjectSettings {
             PROFILE_SERVER_CACHE.put(project, urlString);
         }
         else {
-            Utils.showPopupMessage("The root element does not have the ModelManagementSystem stereotype.\nPlease apply it and specify the server information.");
+            Utils.showPopupMessage("The root element does not have the ModelManagementSystem stereotype.\n" +
+                    "Please apply it and specify the server information in the documentation.\n " +
+                    "For more details on how to configure MDK, visit https://mdk.readthedocs.io");
             return null;
         }
         if (urlString == null || urlString.isEmpty()) {

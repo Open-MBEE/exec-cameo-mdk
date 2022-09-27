@@ -82,14 +82,18 @@ menu option when right-clicking on a view.
 
     {
       "mms": {
-        "hostUrl": "protocol://hostname.com:port/"
+        "hostUrl": "protocol://hostname.extension:port"
         "basePath": "/"
       },
       "ve": {
-        "hostUrl": "protocol://hostname.com:port/"
-        "pasePath": "/"
+        "hostUrl": "protocol://hostname.extension:port"
+        "basePath": "/"
       }
     }
+
+
+.. warning::
+    You **must** specify any path (i.e. anything after the ``.extension`` or ``:port``) via the `basePath` property for the specific service.
 
 Configuration via Stereotype Tag (pre 5.1.0)
 --------------------------------------------

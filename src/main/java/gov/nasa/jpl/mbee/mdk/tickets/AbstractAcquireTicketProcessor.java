@@ -14,7 +14,7 @@ public abstract class AbstractAcquireTicketProcessor {
     }
 
     public boolean acquireMmsTicket(Project project) {
-        if (ProjectSettings.getMmsUrl(project) == null) {
+        if (MMSUtils.getMmsUrl(project) == null) {
             Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
             return false;
         }
