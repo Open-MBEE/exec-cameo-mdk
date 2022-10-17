@@ -51,7 +51,7 @@ public class ProjectSettings {
         try {
             settingsNode = JacksonUtils.parseJsonString(s);
         } catch (IOException ioException) {
-            Application.getInstance().getGUILog().log("[ERROR] Unable to retrieve MDK settings from model documentation, your JSON may be malformed check the following message for details on how to fix the issue:");
+            Application.getInstance().getGUILog().log("[ERROR] Unable to retrieve MDK settings from model documentation. Your JSON may be malformed.");
             Application.getInstance().getGUILog().log(ioException.getMessage());
             return null;
         }
