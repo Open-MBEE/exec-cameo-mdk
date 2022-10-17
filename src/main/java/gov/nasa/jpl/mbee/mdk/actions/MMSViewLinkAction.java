@@ -53,14 +53,18 @@ public class MMSViewLinkAction extends MDAction {
             // build url
             String veHost = ProjectSettings.getOrDefault(project, ProjectSettings.VE_HOST_URL);
             String veBasePath = ProjectSettings.getOrDefault(project, ProjectSettings.VE_BASE_PATH);
-            URIBuilder uriBase = MMSUtils.getServiceUri(veHost);
-            // include this in the host portion of the uri. not technically correct, but it prevents the # from being converted and breaking things
-            uriBase.setHost(uriBase.getHost() + veBasePath);
-            uriBase.setPath("");
+            URIBuilder uriBase = MMSUtils.getUriBuilder(veHost, veBasePath);
+            if (uriBase == null)
+                return;
 
-            String uriPath;
+            if (!uriBase.getPath().endsWith("#") || (uriBase.getPath().equals("") && !uriBase.getHost().endsWith("#"))) {
+                uriBase.setPath(uriBase.getPath() + "#");
+            }
+
+
+            String viewPath;
             try {
-                uriPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/" + MDUtils.getBranchId(project);
+                viewPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/" + MDUtils.getBranchId(project);
             } catch (RuntimeException re) {
                 re.printStackTrace();
                 Application.getInstance().getGUILog().log("[ERROR] Unable to get TWC branch. Cancelling view open. Reason: " + re.getMessage());
@@ -115,12 +119,12 @@ public class MMSViewLinkAction extends MDAction {
                         label = "Documents containing " + element.getHumanName() + ":";
                         for (Element doc : documents) {
                             if (doc.equals(element)) {
-                                uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element);
+                                viewPath += "/documents/" + Converters.getElementToIdConverter().apply(element);
                             }
                             else {
-                                uriPath += "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                                viewPath += "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element);
                             }
-                            JButton button = new ViewButton(doc.getHumanName(), uriBase.setPath(uriPath).build());
+                            JButton button = new ViewButton(doc.getHumanName(), uriBase.setPath(uriBase.getPath() + viewPath).build());
                             linkButtons.add(button);
                         }
                     }
@@ -135,10 +139,10 @@ public class MMSViewLinkAction extends MDAction {
             else {
                 // build single link
                 if (documents.isEmpty()) {
-                    uriPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                    viewPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
                 }
                 else {
-                    uriPath += "/documents/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                    viewPath += "/documents/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/views/" + Converters.getElementToIdConverter().apply(element);
                 }
                 // just open it if possible
                 if (Desktop.isDesktopSupported()) {
@@ -147,7 +151,7 @@ public class MMSViewLinkAction extends MDAction {
                             Application.getInstance().getGUILog().log("[INFO] " + element.getHumanName()
                                     + " does not belong to a document hierarchy. Opening view in View Editor without document context.");
                         }
-                        Desktop.getDesktop().browse(uriBase.setPath(uriPath).build());
+                        Desktop.getDesktop().browse(uriBase.setPath(uriBase.getPath() + viewPath).build());
                     } catch (URISyntaxException | IOException e1) {
                         Application.getInstance().getGUILog().log("[ERROR] An error occurred while opening the View Editor page. Link: " + uriBase.toString());
                         e1.printStackTrace();

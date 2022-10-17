@@ -82,7 +82,7 @@ public class BasicAuthAcquireTicketProcessor extends AbstractAcquireTicketProces
         HttpRequestBase request = null;
         if (project != null) {
             request = MMSLoginEndpoint.builder()
-                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, ProjectSettings.getMmsUrl(project))
+                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getMmsUrl(project))
                     .addParam("username", username).addParam("password", password).build();
         } else if (baseUrl != null) {
             request = MMSLoginEndpoint.builder().addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, baseUrl)

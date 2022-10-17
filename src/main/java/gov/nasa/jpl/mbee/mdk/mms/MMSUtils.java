@@ -387,36 +387,20 @@ public class MMSUtils {
     }
 
     /**
-     * Returns a URIBuilder object with a path = "/alfresco/service". Used as the base for all of the rest of the
+     * Returns a URIBuilder object with a path. Used as the base for all of the rest of the
      * URIBuilder generating convenience classes.
      *
-     * @param project The project to gather the mms url and site name information from
+     * @param urlString: URL for the OpenMBEE Service being requested
+     * @param basePath: base path string for the desired service
      * @return URIBuilder
-     * @throws URISyntaxException
      */
-    public static URIBuilder getServiceUri(Project project) {
-        return getServiceUri(project, null);
-    }
-
-    public static URIBuilder getServiceUri(String baseUrl) {
-        return getServiceUri(null, baseUrl);
-    }
-
-    private static URIBuilder getServiceUri(Project project, String baseUrl) {
-        String urlString = project == null ? baseUrl : ProjectSettings.get(project, ProjectSettings.MMS_HOST_URL);
-        if (urlString == null) {
-            return null;
-        }
-        String basePath = ProjectSettings.getOrDefault(project, ProjectSettings.MMS_BASE_PATH);
-
-        // [scheme:][//host][path][?query][#fragment]
-
+    public static URIBuilder getUriBuilder(String urlString, String basePath) {
         URIBuilder uri;
         try {
             uri = new URIBuilder(urlString);
             uri.setPath(basePath);
         } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project. Reason: " + e.getMessage());
+            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of URL for project. Reason: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
@@ -427,6 +411,17 @@ public class MMSUtils {
         uri.setPath(path);
         return uri;
 
+    }
+
+    public static String getMmsUrl(Project project) {
+        String mmsHostUrl = ProjectSettings.getOrDefault(project, ProjectSettings.MMS_HOST_URL);
+        String mmsBasePath = ProjectSettings.getOrDefault(project, ProjectSettings.MMS_BASE_PATH);
+        URIBuilder uriBase = getUriBuilder(mmsHostUrl,mmsBasePath);
+        if (uriBase != null) {
+            return uriBase.toString();
+        }
+        Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project.");
+        return null;
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicGet(MMSEndpoint.Builder builder, Project project) {
@@ -450,7 +445,7 @@ public class MMSUtils {
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, ContentType contentType, File file) {
-        return prepareEndpointBuilderGenericRequest(builder, ProjectSettings.getMmsUrl(project), project, requestType, contentType, file);
+        return prepareEndpointBuilderGenericRequest(builder, MMSUtils.getMmsUrl(project), project, requestType, contentType, file);
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderGenericRequest(MMSEndpoint.Builder builder, String uri, Project project, HttpRequestType requestType, ContentType contentType, File file) {
@@ -463,7 +458,7 @@ public class MMSUtils {
 
     public static MMSEndpoint.Builder prepareEndpointBuilderEntityRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, HttpEntity entity) {
         return builder.addParam(MMSEndpointBuilderConstants.HTTP_ENTITY, entity)
-                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, ProjectSettings.getMmsUrl(project))
+                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getMmsUrl(project))
                 .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
                 .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project);
     }
