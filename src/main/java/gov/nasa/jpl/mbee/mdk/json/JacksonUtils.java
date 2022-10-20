@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -30,7 +30,7 @@ public class JacksonUtils {
             OBJECT_MAPPER_INSTANCE = new ObjectMapper();
             if (MDUtils.isDeveloperMode()) {
                 OBJECT_MAPPER_INSTANCE.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                if (MDKEnvironmentOptionsGroup.getInstance().isLogJson()) {
                     OBJECT_MAPPER_INSTANCE.enable(SerializationFeature.INDENT_OUTPUT);
                 }
             }

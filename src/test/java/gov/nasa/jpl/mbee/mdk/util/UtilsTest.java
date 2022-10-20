@@ -6,12 +6,11 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.tests.MagicDrawTestRunner;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.components.mdbasiccomponents.Component;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 
 import org.apache.commons.io.IOUtils;
 
@@ -45,8 +44,8 @@ public class UtilsTest {
         File testProjectFile = File.createTempFile("prj", ".mdzip");
         IOUtils.copy(classLoader.getResourceAsStream("CSyncTest.mdzip"), new FileOutputStream(testProjectFile));
 
-        MDKOptionsGroup.getMDKOptions().setDefaultValues();
-        MDKOptionsGroup.getMDKOptions().setLogJson(true);
+        MDKEnvironmentOptionsGroup.getInstance().setDefaultValues();
+        MDKEnvironmentOptionsGroup.getInstance().setLogJson(true);
         MagicDrawHelper.openProject(testProjectFile);
         project = Application.getInstance().getProject();
     }

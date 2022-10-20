@@ -9,7 +9,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.ui.ViewEditorLinkForm;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
@@ -51,9 +51,7 @@ public class MMSViewLinkAction extends MDAction {
             }
 
             // build url
-            String veHost = ProjectSettings.getOrDefault(project, ProjectSettings.VE_HOST_URL);
-            String veBasePath = ProjectSettings.getOrDefault(project, ProjectSettings.VE_BASE_PATH);
-            URIBuilder uriBase = MMSUtils.getUriBuilder(veHost, veBasePath);
+            URIBuilder uriBase = MDKProjectOptions.getVeUrl(project);
             if (uriBase == null)
                 return;
 

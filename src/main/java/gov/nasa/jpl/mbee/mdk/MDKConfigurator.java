@@ -30,6 +30,7 @@ import gov.nasa.jpl.mbee.mdk.model.UserScript;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserScriptAction;
 import gov.nasa.jpl.mbee.mdk.model.actions.RunUserValidationScriptAction;
 import gov.nasa.jpl.mbee.mdk.ocl.actions.OclQueryAction;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
@@ -207,11 +208,8 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             if (action == null) {
                 viewInstances.addAction(new GenerateViewPresentationAction(new LinkedHashSet<>(es), true));
             }
-
-            String url;
-            if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")
-                    && (url = (String) StereotypesHelper.getStereotypePropertyFirst(project.getPrimaryModel(), "ModelManagementSystem", "MMS URL")) != null
-                    && !url.isEmpty()) {
+            
+            if (MDKProjectOptions.getMbeeEnabled(project)) {
                 ActionsCategory tracingCategory = manager.getCategory("TRACING_CATEGORY");
                 if (tracingCategory != null) {
                     action = manager.getActionFor(MMSViewLinkAction.DEFAULT_ID);

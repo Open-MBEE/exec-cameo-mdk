@@ -29,6 +29,8 @@ public class MDKConstants {
             DOCUMENTATION_KEY = "documentation",
             OWNED_COMMENT_IDS_KEY = "ownedCommentIds",
             IS_GROUP_KEY = "_isGroup",
+            IS_PROFILE_KEY = "_isProfile",
+            PROJECT_MMS_URL_KEY = "mmsServer",
             PROPERTY_PATH_IDS_KEY = "_propertyPathIds",
             CONTENTS_KEY = DERIVED_KEY_PREFIX + "contents",
             DISPLAYED_ELEMENT_IDS_KEY = DERIVED_KEY_PREFIX + "displayedElement" + IDS_KEY_SUFFIX,

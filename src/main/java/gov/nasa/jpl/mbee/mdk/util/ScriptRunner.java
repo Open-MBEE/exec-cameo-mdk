@@ -12,7 +12,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 
 import javax.script.*;
 import java.io.File;
@@ -77,8 +77,8 @@ public class ScriptRunner {
         }
 
         inputs.put("inputElement", e);
-        File[] paths = MDKOptionsGroup.getMDKOptions().getCustomUserScriptDirectories();
-        int numDirs = MDKOptionsGroup.getMDKOptions().getNumberOfCustomUserScriptDirectories();
+        File[] paths = MDKEnvironmentOptionsGroup.getInstance().getCustomUserScriptDirectories();
+        int numDirs = MDKEnvironmentOptionsGroup.getInstance().getNumberOfCustomUserScriptDirectories();
         File[] binDirs = new File[2 + numDirs];
 
         for (int i = 0; i < numDirs; i++) {

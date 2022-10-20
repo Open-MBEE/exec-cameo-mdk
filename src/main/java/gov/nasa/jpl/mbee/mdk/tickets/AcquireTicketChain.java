@@ -9,7 +9,7 @@ import com.nomagic.magicdraw.core.Project;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 
 public class AcquireTicketChain {
     AbstractAcquireTicketProcessor chain;
@@ -31,7 +31,7 @@ public class AcquireTicketChain {
     }
 
     private void buildChain() {
-        List<String> authChain = MDKOptionsGroup.getMDKOptions().getAuthenticationChain();
+        List<String> authChain = MDKEnvironmentOptionsGroup.getInstance().getAuthenticationChain();
         try {
             chain = recursiveBuildChain(authChain);
         } catch (NoSuchMethodException | SecurityException | ClassNotFoundException | InstantiationException
