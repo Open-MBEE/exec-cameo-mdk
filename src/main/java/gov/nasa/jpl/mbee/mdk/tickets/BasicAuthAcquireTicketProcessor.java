@@ -24,7 +24,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.ui.ProgressStatusRunner;
 
-import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import gov.nasa.jpl.mbee.mdk.http.ServerException;
@@ -82,7 +82,7 @@ public class BasicAuthAcquireTicketProcessor extends AbstractAcquireTicketProces
         HttpRequestBase request = null;
         if (project != null) {
             request = MMSLoginEndpoint.builder()
-                    .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getMmsUrl(project))
+                    .addUri(MDKProjectOptions.getMmsUrl(project))
                     .addParam("username", username).addParam("password", password).build();
         } else if (baseUrl != null) {
             request = MMSLoginEndpoint.builder().addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, baseUrl)

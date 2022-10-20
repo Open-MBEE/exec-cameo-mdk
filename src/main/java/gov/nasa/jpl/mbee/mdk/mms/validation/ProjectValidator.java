@@ -19,6 +19,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.CommitProjectAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRule;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationRuleViolation;
 import gov.nasa.jpl.mbee.mdk.validation.ValidationSuite;
@@ -171,7 +172,9 @@ public class ProjectValidator {
 
 
     public static ObjectNode generateProjectObjectNode(Project project, String orgId) {
-        return generateProjectObjectNode(project.getPrimaryProject(), orgId);
+        ObjectNode projectNode = generateProjectObjectNode(project.getPrimaryProject(), orgId);
+        projectNode.put(MDKConstants.PROJECT_MMS_URL_KEY, MDKProjectOptions.getMmsUrl(project).toString());
+        return projectNode;
     }
 
     public static ObjectNode generateProjectObjectNode(IProject iProject, String orgId) {
@@ -184,12 +187,7 @@ public class ProjectValidator {
         String twcServerUrl = "";
         Project project = ProjectUtilities.getProject(iProject);
         if (ProjectUtilities.isStandardSystemProfile(iProject)) {
-            try {
-                projectObjectNode.set("cameo", JacksonUtils.parseJsonString("{ \"custom\": { \"cameo\": { \"_standardProfile\": true }}}"));
-            }
-            catch (IOException e) {
-                Application.getInstance().getGUILog().log("Unknown JSON error");
-            }
+            projectObjectNode.put(MDKConstants.IS_PROFILE_KEY, true);
         }
         if (project != null && project.isRemote()) {
             resourceId = ProjectUtilities.getResourceID(iProject.getLocationURI());

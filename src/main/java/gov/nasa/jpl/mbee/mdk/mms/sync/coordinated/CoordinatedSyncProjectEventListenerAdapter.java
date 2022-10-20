@@ -11,7 +11,7 @@ import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import javax.annotation.CheckForNull;
@@ -115,7 +115,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         private boolean disabled;
 
         public synchronized boolean isDisabled() {
-            return (disabled || !MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
+            return (disabled || !MDKEnvironmentOptionsGroup.getInstance().isCoordinatedSyncEnabled());
         }
 
         public synchronized void setDisabled(boolean disabled) {

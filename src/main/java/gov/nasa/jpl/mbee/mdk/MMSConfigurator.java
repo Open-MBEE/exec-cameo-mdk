@@ -9,7 +9,6 @@ import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateAllViewsAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.mms.actions.ValidateBranchesAction;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 
 public class MMSConfigurator implements AMConfigurator {
 

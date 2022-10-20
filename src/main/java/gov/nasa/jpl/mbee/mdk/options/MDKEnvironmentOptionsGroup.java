@@ -12,11 +12,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
+public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
 
     public static final String ID = "options.mdk";
     public static final String GROUP = "GROUP";
-    private static MDKOptionsGroup tempInstance = null;
+    private static MDKEnvironmentOptionsGroup INSTANCE;
 
     public static final String LOG_JSON_ID = "LOG_JSON_ID",
             PERSIST_CHANGELOG_ID = "PERSIST_CHANGELOG_ID",
@@ -26,19 +26,17 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
             MMS_AUTHENTICATION_CHAIN = "MMS_AUTHENTICATION_CHAIN",
     		DOCBOOK_TO_PDF_STYLESHEET = "DOCBOOK_TO_PDF_STYLESHEET";	
 
-    public MDKOptionsGroup() {
+    public MDKEnvironmentOptionsGroup() {
         super(ID);
     }
 
-    public static MDKOptionsGroup getMDKOptions() {
-        MDKOptionsGroup group = (MDKOptionsGroup) Application.getInstance().getEnvironmentOptions().getGroup(ID);
-        if (group == null) {
-            if (tempInstance == null) {
-                tempInstance = new MDKOptionsGroup();
-            }
-            return tempInstance;
+
+
+    public static MDKEnvironmentOptionsGroup getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new MDKEnvironmentOptionsGroup();
         }
-        return group;
+        return INSTANCE;
     }
 
     public boolean isLogJson() {
@@ -174,7 +172,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
         addProperty(property, false);
     }
 
-    public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> EnvironmentOptionsResources.getString(key);
+    public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> MDKEnvironmentOptionsGroupResources.getString(key);
 
     @Override
     public void setDefaultValues() {
@@ -192,7 +190,7 @@ public class MDKOptionsGroup extends AbstractPropertyOptionsGroup {
 
     @Override
     public String getName() {
-        return EnvironmentOptionsResources.getString(MDK_OPTIONS_NAME);
+        return MDKEnvironmentOptionsGroupResources.getString(MDK_OPTIONS_NAME);
     }
 
     @Override

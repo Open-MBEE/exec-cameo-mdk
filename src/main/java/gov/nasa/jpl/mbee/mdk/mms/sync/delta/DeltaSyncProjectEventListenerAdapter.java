@@ -8,8 +8,7 @@ import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.mms.sync.mms.MMSDeltaProjectEventListenerAdapter;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 
 import java.util.HashMap;
@@ -44,7 +43,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
 
     @Override
     public void projectPreSaved(Project project, boolean savedInServer) {
-        boolean save = MDKOptionsGroup.getMDKOptions().isPersistChangelog();
+        boolean save = MDKEnvironmentOptionsGroup.getInstance().isPersistChangelog();
         if (!save) {
             return;
         }

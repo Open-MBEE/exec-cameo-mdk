@@ -4,7 +4,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
-import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 
 public abstract class AbstractAcquireTicketProcessor {
     private AbstractAcquireTicketProcessor processor;
@@ -14,7 +14,7 @@ public abstract class AbstractAcquireTicketProcessor {
     }
 
     public boolean acquireMmsTicket(Project project) {
-        if (MMSUtils.getMmsUrl(project) == null) {
+        if (MDKProjectOptions.getMmsUrl(project) == null) {
             Application.getInstance().getGUILog().log("[ERROR] MMS url is not specified. Skipping login.");
             return false;
         }

@@ -5,7 +5,6 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.mms.validation.BranchValidator;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import java.awt.event.ActionEvent;

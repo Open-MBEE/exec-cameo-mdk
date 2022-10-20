@@ -15,8 +15,8 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
-import gov.nasa.jpl.mbee.mdk.settings.ProjectSettings;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import org.apache.commons.io.IOUtils;
@@ -133,7 +133,7 @@ public class MMSUtils {
 
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection<?> nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
-        if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+        if (MDKEnvironmentOptionsGroup.getInstance().isLogJson()) {
             System.out.println("[INFO] Request Body: " + requestFile.getPath());
             Application.getInstance().getGUILog().log("[INFO] Request Body: " + requestFile.getPath());
         }
@@ -254,7 +254,7 @@ public class MMSUtils {
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()) {
                     responseCode.set(response.getStatusLine().getStatusCode());
-                    if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                    if (MDKEnvironmentOptionsGroup.getInstance().isLogJson()) {
                         System.out.println("[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
                     }
                     if (inputStream != null) {
@@ -326,7 +326,7 @@ public class MMSUtils {
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                if (MDKEnvironmentOptionsGroup.getInstance().isLogJson()) {
                     System.out.println("[INFO] Response Body: " + responseFile.getPath());
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
                 }
@@ -386,44 +386,6 @@ public class MMSUtils {
         return null;
     }
 
-    /**
-     * Returns a URIBuilder object with a path. Used as the base for all of the rest of the
-     * URIBuilder generating convenience classes.
-     *
-     * @param urlString: URL for the OpenMBEE Service being requested
-     * @param basePath: base path string for the desired service
-     * @return URIBuilder
-     */
-    public static URIBuilder getUriBuilder(String urlString, String basePath) {
-        URIBuilder uri;
-        try {
-            uri = new URIBuilder(urlString);
-            uri.setPath(basePath);
-        } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of URL for project. Reason: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-        String path = Optional.ofNullable(uri.getPath()).orElse("");
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-        uri.setPath(path);
-        return uri;
-
-    }
-
-    public static String getMmsUrl(Project project) {
-        String mmsHostUrl = ProjectSettings.getOrDefault(project, ProjectSettings.MMS_HOST_URL);
-        String mmsBasePath = ProjectSettings.getOrDefault(project, ProjectSettings.MMS_BASE_PATH);
-        URIBuilder uriBase = getUriBuilder(mmsHostUrl,mmsBasePath);
-        if (uriBase != null) {
-            return uriBase.toString();
-        }
-        Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project.");
-        return null;
-    }
-
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicGet(MMSEndpoint.Builder builder, Project project) {
         return prepareEndpointBuilderBasicRequest(builder, project, HttpRequestType.GET, null, null);
     }
@@ -445,11 +407,11 @@ public class MMSUtils {
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, ContentType contentType, File file) {
-        return prepareEndpointBuilderGenericRequest(builder, MMSUtils.getMmsUrl(project), project, requestType, contentType, file);
+        return prepareEndpointBuilderGenericRequest(builder, MDKProjectOptions.getMmsUrl(project), project, requestType, contentType, file);
     }
 
-    public static MMSEndpoint.Builder prepareEndpointBuilderGenericRequest(MMSEndpoint.Builder builder, String uri, Project project, HttpRequestType requestType, ContentType contentType, File file) {
-        return builder.addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, uri)
+    public static MMSEndpoint.Builder prepareEndpointBuilderGenericRequest(MMSEndpoint.Builder builder, URIBuilder uri, Project project, HttpRequestType requestType, ContentType contentType, File file) {
+        return builder.addUri(uri)
                 .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
                 .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project)
                 .addParam(MMSEndpointBuilderConstants.REST_CONTENT_TYPE, contentType)
@@ -458,7 +420,7 @@ public class MMSUtils {
 
     public static MMSEndpoint.Builder prepareEndpointBuilderEntityRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, HttpEntity entity) {
         return builder.addParam(MMSEndpointBuilderConstants.HTTP_ENTITY, entity)
-                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getMmsUrl(project))
+                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MDKProjectOptions.getMmsUrl(project))
                 .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
                 .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project);
     }

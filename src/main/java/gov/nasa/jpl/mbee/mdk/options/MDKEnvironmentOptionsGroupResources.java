@@ -2,13 +2,13 @@ package gov.nasa.jpl.mbee.mdk.options;
 
 import com.nomagic.magicdraw.resources.ResourceManager;
 
-public class EnvironmentOptionsResources {
+public class MDKEnvironmentOptionsGroupResources {
     public static final String BUNDLE_NAME = "gov.nasa.jpl.mbee.mdk.options.EnvironmentOptionsResources";
 
     /**
      * Constructs this resource handler.
      */
-    private EnvironmentOptionsResources() {
+    private MDKEnvironmentOptionsGroupResources() {
         // do nothing.
     }
 
@@ -19,6 +19,6 @@ public class EnvironmentOptionsResources {
      * @return translated resource.
      */
     public static String getString(String key) {
-        return ResourceManager.getStringFor(key, BUNDLE_NAME, EnvironmentOptionsResources.class.getClassLoader());
+        return ResourceManager.getStringFor(key, BUNDLE_NAME, MDKEnvironmentOptionsGroupResources.class.getClassLoader());
     }
 }
