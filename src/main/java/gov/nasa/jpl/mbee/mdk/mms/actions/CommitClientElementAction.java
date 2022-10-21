@@ -28,10 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by igomes on 9/27/16.
@@ -125,10 +122,12 @@ public class CommitClientElementAction extends RuleViolationAction implements An
             Application.getInstance().getGUILog().log("[INFO] Queuing request to create/update " + NumberFormat.getInstance().format(elementsToUpdate.size()) + " element" + (elementsToUpdate.size() != 1 ? "s" : "") + " on MMS.");
             try {
                 File file = MMSUtils.createEntityFile(CommitClientElementAction.class, ContentType.APPLICATION_JSON, elementsToUpdate, MMSUtils.JsonBlobType.ELEMENT_JSON);
+                HashMap<String, String> uriBuilderParams = new HashMap<>();
+                uriBuilderParams.put("overwrite", "true");
                 HttpRequestBase elementsUpdateCreateRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
                         .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
                         .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
-                        .addParam("overwrite", "true")
+                        .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams)
                         .build();
                 TaskRunner.runWithProgressStatus(progressStatus -> {
                     try {

@@ -60,9 +60,9 @@ public class MMSViewLinkAction extends MDAction {
             }
 
 
-            String viewPath;
+            String viewFragment;
             try {
-                viewPath = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/" + MDUtils.getBranchId(project);
+                viewFragment = "/projects/" + Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + "/" + MDUtils.getBranchId(project);
             } catch (RuntimeException re) {
                 re.printStackTrace();
                 Application.getInstance().getGUILog().log("[ERROR] Unable to get TWC branch. Cancelling view open. Reason: " + re.getMessage());
@@ -117,12 +117,12 @@ public class MMSViewLinkAction extends MDAction {
                         label = "Documents containing " + element.getHumanName() + ":";
                         for (Element doc : documents) {
                             if (doc.equals(element)) {
-                                viewPath += "/documents/" + Converters.getElementToIdConverter().apply(element);
+                                viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(element);
                             }
                             else {
-                                viewPath += "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                                viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element);
                             }
-                            JButton button = new ViewButton(doc.getHumanName(), uriBase.setPath(uriBase.getPath() + viewPath).build());
+                            JButton button = new ViewButton(doc.getHumanName(), uriBase.setFragment(viewFragment).build());
                             linkButtons.add(button);
                         }
                     }
@@ -137,10 +137,10 @@ public class MMSViewLinkAction extends MDAction {
             else {
                 // build single link
                 if (documents.isEmpty()) {
-                    viewPath += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                    viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
                 }
                 else {
-                    viewPath += "/documents/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                    viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/views/" + Converters.getElementToIdConverter().apply(element);
                 }
                 // just open it if possible
                 if (Desktop.isDesktopSupported()) {
@@ -149,7 +149,7 @@ public class MMSViewLinkAction extends MDAction {
                             Application.getInstance().getGUILog().log("[INFO] " + element.getHumanName()
                                     + " does not belong to a document hierarchy. Opening view in View Editor without document context.");
                         }
-                        Desktop.getDesktop().browse(uriBase.setPath(uriBase.getPath() + viewPath).build());
+                        Desktop.getDesktop().browse(uriBase.setFragment(viewFragment).build());
                     } catch (URISyntaxException | IOException e1) {
                         Application.getInstance().getGUILog().log("[ERROR] An error occurred while opening the View Editor page. Link: " + uriBase.toString());
                         e1.printStackTrace();
