@@ -56,19 +56,41 @@ Configure Model for MMS and View Editor
 ========================================
 
 Configuration via Project Options (New 5.1.0+)
-------------------------------------
+----------------------------------------------
 
 This is the new (preferred) way to configure MDK models. This not only allows you to configure your
 model without the use of the stereotype/tag, it also allows the configuration of the "Open in View Editor"
 menu option when right-clicking on a view.
 
-1. Click "Options" in the menu bar at the top and select "Project"
-2. In the dialog box that pops up select "OpenMBEE"
+.. note::
+    Projects previously configured with the <<ModelManagementSystem>> stereotype will have their settings
+    automatically migrated to Project Options.
 
+#. Click "Options" in the menu bar at the top and select "Project" to open the Project Options Dialog.
+
+
+    .. figure:: ./images/open-project-options.png
+
+     Menu for opening project options
+#. In the dialog box that pops up select "General>MBEE" (For TWC projects you may need to lock them)
+
+
+    .. figure:: ./images/select-mbee-project-options.png
+
+     Where to select MBEE options in Project Options Dialog
+#. To enable MMS and View Editor integration you must first set ``Enable MBEE Integration`` to true
+#. Next enter the URL's for MMS and VE in their respective fields
+
+.. warning::
+    You **must** specify any path (i.e. anything after the ``.extension`` or ``:port``)
+    via the `base path` property for the specific service or it will be ignored.
+
+#. Finally, click ``Okay`` to save your selections.
 
 
 .. warning::
-    You **must** specify any path (i.e. anything after the ``.extension`` or ``:port``) via the `basePath` property for the specific service.
+    If you haven't already mounted ``SysML Extensions`` to your project. MDK will throw a warning and
+    disable MBEE Integration. Add the profile and then re-enable in Project Options
 
 Configuration via Stereotype Tag (pre 5.1.0)
 --------------------------------------------
