@@ -211,13 +211,13 @@ public class MDKProjectOptions {
         if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
             if (!getMbeeEnabled(project)) {
                 setOption(project.getOptions(), ENABLE_OPENMBEE_INTEGRATION, true);
-                Application.getInstance().getGUILog().log("[WARNING] <<ModelManagementSystem>> stereotype detected. Automatically enabling MBEE integration");
+                Application.getInstance().getGUILog().log("[INFO] ModelManagementSystem stereotype detected. Automatically migrating and re-enabling MBEE integration");
             }
             urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
             if (urlString != null && !urlString.equals("") && isMigrationAllowed(project)) {
                 uri = getUriBuilder(urlString, null);
                 if (uri == null) {
-                    Application.getInstance().getGUILog().log("[ERROR] Unable to migrate MMS Stereotype tag to project options.");
+                    Application.getInstance().getGUILog().log("[ERROR] Unable to migrate MMS URL to project options. Please manually re-enable via Options>Project>General>MBEE");
                     return;
                 }
                 setOption(project.getOptions(), MMS_HOST_URL, uri.getScheme() + "://" + uri.getHost());
