@@ -6,6 +6,10 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 
 # Quickstart
 
+## User Guide
+
+The latest user documentation can be accessed online: https://mdk.readthedocs.io/en/latest
+
 ## Prerequisites
 
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin)
@@ -18,22 +22,20 @@ Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/produc
 1. [Download](https://github.com/Open-MBEE/mdk/releases/latest) the Cameo MDK plugin, e.g. `mdk-*-plugin.zip`.
 
 2. Run CSM. From the main menu, select "Help" > "Resource/Plugin Manager".
-   ![Resource/Plugin Manager](doc/images/resource-plugin-manager.png)
+   ![Resource/Plugin Manager](docs/source/images/resource-plugin-manager.png)
    
 3. Click "Import", navigate to the downloaded Cameo MDK plugin, and click "Open".
 
 4. CSM should confirm installation with the following prompt.
 
-   ![MDK Installation Confirmation](doc/images/mdk-installation-confirmation.png)
+   ![MDK Installation Confirmation](docs/images/mdk-installation-confirmation.png)
    
 5. Restart CSM. To check installation, select from the main menu "Help" > "Resource/Plugin Manager" > "Plugins (no cost)" and ensure a row exists for "Model Development Kit" and its status is "Installed" with the correct version.
-  ![MDK Installed](doc/images/mdk-installed.png)
+  ![MDK Installed](doc/source/images/mdk-installed.png)
   
 > Cameo MDK can also be installed headlessly by simply unzipping the plugin archive into the directory that CSM is installed in.
   
-## Usage
 
-Documentation can be accessed [online](src/main/dist/manual) or offline in CSM from the main menu "Help" > "Other Documentation" > "MDK [...] UserGuide".
 
 # Contributing
 

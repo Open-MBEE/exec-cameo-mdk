@@ -11,7 +11,7 @@ import com.nomagic.uml2.transaction.TransactionCommitListener;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 
@@ -58,7 +58,7 @@ public class LocalDeltaTransactionCommitListener implements TransactionCommitLis
 
     public boolean isDisabled() {
         synchronized (this.disabled) {
-            return (disabled.get() || !MDKOptionsGroup.getMDKOptions().isChangeListenerEnabled());
+            return (disabled.get() || !MDKEnvironmentOptionsGroup.getInstance().isChangeListenerEnabled());
         }
     }
 

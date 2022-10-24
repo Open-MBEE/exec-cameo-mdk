@@ -98,7 +98,8 @@ public class ElementValidator implements RunnableWithProgress {
             serverElements = new LinkedList<>();
             serverElementMap = new HashMap<>();
         } else {
-            serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual()).collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
+            serverElementMap = serverElements.stream().filter(json -> json.has(MDKConstants.ID_KEY) && json.get(MDKConstants.ID_KEY).isTextual() && !json.get(MDKConstants.ID_KEY).asText().startsWith(MDKConstants.HIDDEN_ID_PREFIX)).collect(Collectors.toMap(json -> json.get(MDKConstants.ID_KEY).asText(), Function.identity()));
+
         }
 
         try {
@@ -154,7 +155,7 @@ public class ElementValidator implements RunnableWithProgress {
 
                 for(ObjectNode jsonObject : elementObjects) {
                     JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
-                    if(idValue != null && idValue.isTextual() && !serverElementMap.containsKey(idValue.asText())) {
+                    if(idValue != null && idValue.isTextual() && !idValue.asText().startsWith(MDKConstants.HIDDEN_ID_PREFIX) && !serverElementMap.containsKey(idValue.asText())) {
                         String id = idValue.asText();
 
                         Pair<Element, ObjectNode> currentClientElement = clientElementMap.get(id);
@@ -233,7 +234,7 @@ public class ElementValidator implements RunnableWithProgress {
     }
 
     public void finishViolation(ValidationRuleViolation validationRuleViolation, String id, Pair<Element, ObjectNode> clientElement, ObjectNode serverElement, JsonNode diff) {
-        validationRuleViolation.addAction(new CommitClientElementAction(id, clientElement != null ? clientElement.getKey() : null, clientElement != null ? clientElement.getValue() : null, project));
+        validationRuleViolation.addAction(new CommitClientElementAction(id, clientElement != null ? clientElement.getKey() : null, clientElement != null ? clientElement.getValue() : null, serverElement, project));
         validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElement != null ? clientElement.getKey() : null, serverElement, project) {
             @Override
             protected ValidationRuleViolation getEditableValidationRuleViolation(Element element, ObjectNode objectNode, String sysmlId) {

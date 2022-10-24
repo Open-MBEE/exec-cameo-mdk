@@ -46,6 +46,7 @@ import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.validation.*;
 import org.apache.log4j.Logger;
 
+import javax.annotation.CheckForNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.PrintWriter;
@@ -1828,6 +1829,18 @@ public class Utils {
             default:
                 return null;
         }
+    }
+
+    /**
+     * Get the Element which represents the documentation of the input Element.
+     *
+     * @param elem The owner of the documentation element
+     *
+     * @return the Element which represents the documentation of the input
+     */
+    @CheckForNull
+    public static Element getDocumentationElement(Element elem) {
+        return ModelHelper.getCommentElement(elem);
     }
 
     /**
