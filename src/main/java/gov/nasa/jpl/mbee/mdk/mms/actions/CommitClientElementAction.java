@@ -63,7 +63,7 @@ public class CommitClientElementAction extends RuleViolationAction implements An
                     ObjectNode serverObjectNode = ((CommitClientElementAction) action).getServerObjectNode();
                     ObjectNode elementObjectNode = ((CommitClientElementAction) action).getElementObjectNode();
                     if (elementObjectNode != null) {
-                        if (serverObjectNode != null && !serverObjectNode.get(MDKConstants.CONTENTS_KEY).isEmpty())
+                        if (serverObjectNode != null && serverObjectNode.get(MDKConstants.CONTENTS_KEY) != null && !serverObjectNode.get(MDKConstants.CONTENTS_KEY).isEmpty())
                             elementObjectNode.set(MDKConstants.CONTENTS_KEY, serverObjectNode.get(MDKConstants.CONTENTS_KEY));
                         elementsToUpdate.add(elementObjectNode);
                     }
