@@ -71,6 +71,7 @@ apply plugin: 'org.openjfx.javafxplugin'
 // In this section you declare where to find the dependencies of your project
 repositories {
     mavenCentral()
+    flatDir { dirs "libz" } //Put Cameo no-install and plugin zips here
     maven {
         url 'https://repo.gradle.org/gradle/libs-releases-local/'
     }
@@ -119,18 +120,6 @@ if (profiles['repositories'] != null) {
             }
         }
     }
-    else {
-        //TODO fix for 2021x
-//        ivy {
-//            // http://download1.nomagic.com/magicdraw185sp2/MagicDraw_185_sp2_no_install.zip
-//            url 'http://download1.nomagic.com/'
-//            layout 'pattern', {
-//                artifact '/[module][revision]/[classifier].[ext]'
-//            }
-//        }
-    }
-    jcenter()
-    flatDir { dirs "libz" } //Put Cameo no-install and plugin zips here
 }
 
 
@@ -216,9 +205,9 @@ dependencies {
         }
     }
     else {
-        preCompile group: 'com.nomagic', name: 'cameo', version: '2021x', classifier: 'Cameo_Enterprise_Architecture_2021x_no_install', ext: 'zip'
-        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
-        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
+        preCompile group: 'com.nomagic', name: 'cameo', version: '2021x', classifier: 'Cameo_Systems_Modeler_2021x_no_install', ext: 'zip'
+//        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
+//        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
     }
 
     preCompile group: 'org.apache.fop', name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
