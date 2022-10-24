@@ -40,13 +40,15 @@ public class CommitClientElementAction extends RuleViolationAction implements An
     private final String elementID;
     private final Element element;
     private final ObjectNode elementObjectNode;
+    private final ObjectNode serverObjectNode;
     private final Project project;
 
-    public CommitClientElementAction(String elementID, Element element, ObjectNode elementObjectNode, Project project) {
+    public CommitClientElementAction(String elementID, Element element, ObjectNode elementObjectNode, ObjectNode serverObjectNode, Project project) {
         super(DEFAULT_ID, DEFAULT_ID, null, null);
         this.elementID = elementID;
         this.element = element;
         this.elementObjectNode = elementObjectNode;
+        this.serverObjectNode = serverObjectNode;
         this.project = project;
     }
 
@@ -58,8 +60,11 @@ public class CommitClientElementAction extends RuleViolationAction implements An
         for (Annotation annotation : annotations) {
             for (NMAction action : annotation.getActions()) {
                 if (action instanceof CommitClientElementAction) {
+                    ObjectNode serverObjectNode = ((CommitClientElementAction) action).getServerObjectNode();
                     ObjectNode elementObjectNode = ((CommitClientElementAction) action).getElementObjectNode();
                     if (elementObjectNode != null) {
+                        if (serverObjectNode != null && !serverObjectNode.get(MDKConstants.CONTENTS_KEY).isEmpty())
+                            elementObjectNode.set(MDKConstants.CONTENTS_KEY, serverObjectNode.get(MDKConstants.CONTENTS_KEY));
                         elementsToUpdate.add(elementObjectNode);
                     }
                     else if (elementID.startsWith(MDKConstants.HOLDING_BIN_ID_PREFIX)) {
@@ -95,6 +100,10 @@ public class CommitClientElementAction extends RuleViolationAction implements An
 
     public ObjectNode getElementObjectNode() {
         return elementObjectNode;
+    }
+
+    public ObjectNode getServerObjectNode() {
+        return serverObjectNode;
     }
 
     @Override

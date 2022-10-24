@@ -234,7 +234,7 @@ public class ElementValidator implements RunnableWithProgress {
     }
 
     public void finishViolation(ValidationRuleViolation validationRuleViolation, String id, Pair<Element, ObjectNode> clientElement, ObjectNode serverElement, JsonNode diff) {
-        validationRuleViolation.addAction(new CommitClientElementAction(id, clientElement != null ? clientElement.getKey() : null, clientElement != null ? clientElement.getValue() : null, project));
+        validationRuleViolation.addAction(new CommitClientElementAction(id, clientElement != null ? clientElement.getKey() : null, clientElement != null ? clientElement.getValue() : null, serverElement, project));
         validationRuleViolation.addAction(new UpdateClientElementAction(id, clientElement != null ? clientElement.getKey() : null, serverElement, project) {
             @Override
             protected ValidationRuleViolation getEditableValidationRuleViolation(Element element, ObjectNode objectNode, String sysmlId) {
