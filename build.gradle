@@ -380,6 +380,10 @@ class PreDist extends DefaultTask {
             into "build/generated-dist/plugins/${groupName}"
         }
         project.copy {
+            from "build/dependency-cache/extracted/javafx"
+            into "build/generated-dist/plugins/${groupName}/javafx"
+        }
+        project.copy {
             from project.getTasks().getByName('javadocZip')
             into "build/generated-dist/plugins/${groupName}/javadoc"
         }
@@ -583,12 +587,12 @@ task runJava(type: JavaExec) {
         executable = profiles["executablePath"]
     }
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['--module-path', 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/lib', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
+    jvmArgs = ['--module-path', 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
 
-runJava.dependsOn installDist
+//runJava.dependsOn installDist
 
 task testAVG(type: JavaExec) {
     doFirst {
