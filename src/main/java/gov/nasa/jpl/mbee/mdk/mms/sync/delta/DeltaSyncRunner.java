@@ -322,12 +322,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             if (!postElements.isEmpty()) {
                 try {
                     File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, postElements, MMSUtils.JsonBlobType.ELEMENT_JSON);
-                    // HashMap<String, String> uriBuilderParams = new HashMap<>();
-                    // uriBuilderParams.put("overwrite", "true"); // Removing so Overwrite doesnt happen on DeltaSync
+                    HashMap<String, String> uriBuilderParams = new HashMap<>();
+                    uriBuilderParams.put("overwrite", "true"); // Removing so Overwrite doesnt happen on DeltaSync
                     HttpRequestBase elementsUpdateCreateRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSElementsEndpoint.builder(), project, file)
                             .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
                             .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId)
-                            // .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams) // Removing so Overwrite doesnt happen on DeltaSync
+                            .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams) // Removing so Overwrite doesnt happen on DeltaSync
                             .build();
                     TaskRunner.runWithProgressStatus(progressStatus1 -> {
                         try {
