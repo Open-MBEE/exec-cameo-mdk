@@ -125,6 +125,7 @@ if (profiles['repositories'] != null) {
 
 configurations {
     preCompile
+    distribution
     testPublish
 }
 
@@ -184,6 +185,8 @@ dependencies {
 
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 
+
+
     // Test Dependencies
     //testCompile 'junit:junit:4.11'
     testCompile group: 'org.gradle', name: 'gradle-core', version: '3.5.1'
@@ -212,6 +215,11 @@ dependencies {
 
     preCompile group: 'org.apache.fop', name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
     preCompile group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext: 'zip'
+
+    // JavaFX
+    preCompile group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2'
+    preCompile group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2'
+    preCompile group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2'
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
@@ -271,6 +279,12 @@ task extractDependencies {
                 copy {
                     from zipTree(archive)
                     into 'build/dependency-cache/extracted/docbook'
+                }
+            }
+            else if (archive.getName().startsWith('javafx')) {
+                copy {
+                    from archive.getAbsoluteFile()
+                    into 'build/dependency-cache/extracted/javafx'
                 }
             }
             else {
@@ -569,7 +583,7 @@ task runJava(type: JavaExec) {
         executable = profiles["executablePath"]
     }
     main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
+    jvmArgs = ['--module-path', 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/lib', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
