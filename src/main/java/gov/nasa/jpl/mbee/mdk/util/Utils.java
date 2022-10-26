@@ -17,6 +17,7 @@ import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.uml.RepresentationTextCreator;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
+import com.nomagic.magicdraw.validation.ValidationHelper;
 import com.nomagic.magicdraw.validation.ValidationRunData;
 import com.nomagic.magicdraw.validation.ui.ValidationResultsWindowManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -1580,7 +1581,9 @@ public class Utils {
             }
             mapping.put(rvr.getAnnotation(), rvr);
         }
-        ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
+        // 2021x
+        //ValidationResultsWindowManager.updateValidationResultsWindow(id, title, runData, results);
+        ValidationHelper.openValidationWindow(runData, vss.iterator().next().getName(), results);
     }
 
     /************************************************ Model Modification **************************************/
