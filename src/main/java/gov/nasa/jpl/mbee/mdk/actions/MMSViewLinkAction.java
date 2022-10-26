@@ -55,10 +55,6 @@ public class MMSViewLinkAction extends MDAction {
             if (uriBase == null)
                 return;
 
-            if (!uriBase.getPath().endsWith("#") || (uriBase.getPath().equals("") && !uriBase.getHost().endsWith("#"))) {
-                uriBase.setPath(uriBase.getPath() + "#");
-            }
-
 
             String viewFragment;
             try {
