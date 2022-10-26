@@ -79,9 +79,15 @@ menu option when right-clicking on a view.
 
      Where to select MBEE options in Project Options Dialog
 #. To enable MMS and View Editor integration you must first set ``Enable MBEE Integration`` to true
-#. Next enter the URL's for MMS and VE in their respective fields
+
+
+    .. figure:: ./images/mbee_project_options_enable.png
+
+     View of the options available for MBEE configuration
+#. Next enter the URL's for MMS and VE in their respective fields (see image above).
 
 .. warning::
+
     You **must** specify any path (i.e. anything after the ``.extension`` or ``:port``)
     via the `base path` property for the specific service or it will be ignored.
 

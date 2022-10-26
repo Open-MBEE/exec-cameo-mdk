@@ -8,6 +8,8 @@ target
 .project
 .settings
 *.iml
+*.ipr
+*.iws
 *.mdxml.bak
 *.jresult
 *.diff
