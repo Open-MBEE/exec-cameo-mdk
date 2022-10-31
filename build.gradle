@@ -201,6 +201,7 @@ dependencies {
     testImplementation group: 'org.gradle', name: 'gradle-messaging', version: '6.1.1'
     testImplementation group: 'org.gradle', name: 'gradle-logging', version: '6.1.1'
     testImplementation group: 'org.gradle', name: 'gradle-process-services', version: '6.1.1'
+    testImplementation group: 'org.gradle', name: 'gradle-worker-processes', version: '6.1.1'
     testImplementation group: 'org.gradle', name: 'gradle-tooling-api', version: '6.1.1'
 
     testPublish group: 'org.openmbee.testrail', name: 'testrail-cli', version: '1.1.1'
@@ -490,15 +491,17 @@ distZip {
     eachFile { file ->
         file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
     }
-    doLast {
-        copy {
-            from "build/distributions/mdk-${archiveVersion}-*.zip"
-            into 'local-distributions/'
-        }
-    }
+
 }
 
 distZip.dependsOn preDist
+distZip.doLast {
+    copy {
+        String publishVersion = version.endsWith('-SNAPSHOT') && buildTag != null && !buildTag.isEmpty() ? version.replace('-SNAPSHOT', '') : version
+        from "build/distributions/mdk-${publishVersion}-*.zip"
+        into 'local-distributions/'
+    }
+}
 
 apply plugin: "maven-publish"
 apply plugin: "signing"
@@ -632,7 +635,9 @@ test {
     ignoreFailures = true
     testLogging.showStandardStreams = true
     forkEvery 1
-
+    if (profiles["executablePath"] != null) {
+        executable = profiles["executablePath"]
+    }
     workingDir 'build/install'
 
     /**
@@ -667,7 +672,7 @@ test {
                          fileTree(dir: 'build/generated-dist', include: '**/*.jar').getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  /*fileTree(dir: 'build/install', include: ['plugins/** /*.jar']).asPath + */
                                  files(classpathLibraries.collect { 'build/install/' + it }).getFiles().stream().map { i -> i.getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
-                                 configurations.testImplementation.resolvedConfiguration.resolvedArtifacts.stream().map { i -> i.getFile().getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
+                                 configurations.testRuntimeClasspath.resolvedConfiguration.resolvedArtifacts.stream().map { i -> i.getFile().getAbsolutePath() }.collect(Collectors.joining(File.pathSeparator)) + File.pathSeparator +
                                  testsJar.outputs.files.singleFile, '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-test', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
         String magicDrawLicense = project.getProperties().get('magicDrawLicense')
         if (magicDrawLicense != null && !magicDrawLicense.isEmpty()) {
