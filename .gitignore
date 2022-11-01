@@ -8,8 +8,15 @@ target
 .project
 .settings
 *.iml
+*.ipr
+*.iws
 *.mdxml.bak
 *.jresult
 *.diff
 rebel.xml
 .DS_Store
+.vscode
+venv/*
+!venv/bin/
+*.groovy
+libz

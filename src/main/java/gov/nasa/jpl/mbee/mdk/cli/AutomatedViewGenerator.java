@@ -18,7 +18,7 @@ import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
@@ -167,9 +167,9 @@ public class AutomatedViewGenerator implements CommandLineAction {
             ticketStore = BasicAuthAcquireTicketProcessor.getCredentialsTicket(mmsUrl, parser.getOptionValue(MMS_USERNAME), parser.getOptionValue(MMS_PASSWORD), null);
             reportStatus("Started");
 
-            MDKOptionsGroup.getMDKOptions().setLogJson(parser.hasOption(DEBUG));
+            MDKEnvironmentOptionsGroup.getInstance().setLogJson(parser.hasOption(DEBUG));
             if (parser.hasOption(DEBUG)) {
-                System.out.println("[DEBUG] JSON will be saved. " + MDKOptionsGroup.getMDKOptions().isLogJson());
+                System.out.println("[DEBUG] JSON will be saved. " + MDKEnvironmentOptionsGroup.getInstance().isLogJson());
             }
 
             // login TeamworkCloud, set MMS credentials
@@ -265,12 +265,12 @@ public class AutomatedViewGenerator implements CommandLineAction {
             String projectId = parser.getOptionValue(PROJECT_ID);
             String refId = parser.getOptionValue(REF_ID);
             // we're using a generic request because the uri may differ from typical calls
-            HttpRequestBase projectRequest = MMSUtils.prepareEndpointBuilderGenericRequest(MMSProjectEndpoint.builder(), uri, project, MMSUtils.HttpRequestType.GET, null, null)
+            HttpRequestBase projectRequest = MMSUtils.prepareEndpointBuilderGenericRequest(MMSProjectEndpoint.builder(), new URIBuilder(uri), project, MMSUtils.HttpRequestType.GET, null, null)
                     .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId).build();
             MMSUtils.sendMMSRequest(null, projectRequest, null, projectsNode);
             if (!refId.equals("master")) {
                 // we're using a generic request because the uri may differ from typical calls
-                HttpRequestBase refRequest = MMSUtils.prepareEndpointBuilderGenericRequest(MMSRefEndpoint.builder(), uri, project, MMSUtils.HttpRequestType.GET, null, null)
+                HttpRequestBase refRequest = MMSUtils.prepareEndpointBuilderGenericRequest(MMSRefEndpoint.builder(), new URIBuilder(uri), project, MMSUtils.HttpRequestType.GET, null, null)
                         .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, projectId)
                         .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, refId).build();
                 MMSUtils.sendMMSRequest(null, refRequest, null, refsNode);

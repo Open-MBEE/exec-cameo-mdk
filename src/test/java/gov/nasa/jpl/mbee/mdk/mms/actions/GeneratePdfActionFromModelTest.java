@@ -6,7 +6,7 @@ import com.nomagic.magicdraw.tests.MagicDrawTestRunner;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.api.MagicDrawHelper;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -51,8 +51,8 @@ public class GeneratePdfActionFromModelTest {
         testProjectFile = File.createTempFile("DocGenCopied1", ".mdzip");
         FileUtils.copyFile(docGenProjectFile, testProjectFile);
 
-        MDKOptionsGroup.getMDKOptions().setDefaultValues();
-        MDKOptionsGroup.getMDKOptions().setLogJson(true);
+        MDKEnvironmentOptionsGroup.getInstance().setDefaultValues();
+        MDKEnvironmentOptionsGroup.getInstance().setLogJson(true);
         MagicDrawHelper.openProject(testProjectFile);
         project = Application.getInstance().getProject();
 

@@ -11,7 +11,8 @@ import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLoginAction;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.DeltaSyncRunner;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 
 import javax.annotation.CheckForNull;
@@ -45,7 +46,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
             return;
         }*/
         if ((project.isRemote() && !savedInServer)
-                || !StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")
+                || !MDKProjectOptions.getMbeeEnabled(project)
                 || CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()
                 || !TicketUtils.isTicketSet(project)) {
             // skip csync
@@ -94,7 +95,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         if (project == null) {
             return true;
         }
-        if (!StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+        if (!MDKProjectOptions.getMbeeEnabled(project)) {
             return true;
         }
         if (CoordinatedSyncProjectEventListenerAdapter.getProjectMapping(project).isDisabled()) {
@@ -115,7 +116,7 @@ public class CoordinatedSyncProjectEventListenerAdapter extends ProjectEventList
         private boolean disabled;
 
         public synchronized boolean isDisabled() {
-            return (disabled || !MDKOptionsGroup.getMDKOptions().isCoordinatedSyncEnabled());
+            return (disabled || !MDKEnvironmentOptionsGroup.getInstance().isCoordinatedSyncEnabled());
         }
 
         public synchronized void setDisabled(boolean disabled) {

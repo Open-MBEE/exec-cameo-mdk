@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static gov.nasa.jpl.mbee.mdk.mms.MMSUtils.HttpRequestType.*;
@@ -33,6 +32,11 @@ public abstract class MMSEndpoint {
     public MMSEndpoint(String baseUri) throws URISyntaxException {
         uriBuilder = new URIBuilder(baseUri);
         this.baseUri = baseUri;
+    }
+
+    public MMSEndpoint(URIBuilder uri) {
+        uriBuilder = uri;
+        this.baseUri = uri.toString();
     }
 
     public void setParameter(String key, String value) {
@@ -53,6 +57,11 @@ public abstract class MMSEndpoint {
             return this;
         }
 
+        public Builder addUri(URIBuilder newUri) {
+            uriBuilder = newUri;
+            return this;
+        }
+
         private Object getParam(String key) {
             return buildParams.get(key);
         }
@@ -60,6 +69,11 @@ public abstract class MMSEndpoint {
         protected String getStringParam(String key) {
             Object value = buildParams.get(key);
             return value instanceof String ? (String) value : "";
+        }
+
+        protected URIBuilder getURIParam(String key) {
+            Object value = buildParams.get(key);
+            return value instanceof URIBuilder ? (URIBuilder) value : null;
         }
 
         protected Boolean getBooleanParam(String key) {
@@ -104,13 +118,21 @@ public abstract class MMSEndpoint {
             }
         }
 
-        public HttpRequestBase build() throws IOException, URISyntaxException {
+        protected void configureUri() throws URISyntaxException{
             if(uriBuilder == null) {
-                String baseUri = getStringParam(MMSEndpointBuilderConstants.URI_BASE_PATH);
-                if(!baseUri.isEmpty()) {
-                    uriBuilder = new URIBuilder(baseUri);
+                uriBuilder = getURIParam(MMSEndpointBuilderConstants.URI_BASE_PATH);
+                if (uriBuilder == null){
+                    String baseUri = getStringParam(MMSEndpointBuilderConstants.URI_BASE_PATH);
+                    if(!baseUri.isEmpty()) {
+                        uriBuilder = new URIBuilder(baseUri);
+                    }
                 }
+
             }
+        }
+
+        public HttpRequestBase build() throws IOException, URISyntaxException {
+            configureUri();
 
             if(uriBuilder != null) {
                 prepareUriPath();
