@@ -87,6 +87,7 @@ menu option when right-clicking on a view.
 #. Next enter the URL's for MMS and VE in their respective fields (see image above).
 
 .. warning::
+
     You **must** specify any path (i.e. anything after the ``.extension`` or ``:port``)
     via the `base path` property for the specific service or it will be ignored.
 
