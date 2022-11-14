@@ -23,7 +23,7 @@ plugins {
     id 'eclipse'
     id 'java'
     id 'distribution'
-    id 'org.openjfx.javafxplugin'
+    id 'org.openjfx.javafxplugin' version '0.0.9'
 }
 
 String buildProfile = project.getProperties().getOrDefault('buildProfile', 'opensource')
