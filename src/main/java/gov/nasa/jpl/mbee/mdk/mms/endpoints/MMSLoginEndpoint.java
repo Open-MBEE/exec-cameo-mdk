@@ -35,12 +35,7 @@ public class MMSLoginEndpoint extends MMSEndpoint {
 
         @Override
         public HttpRequestBase build() throws IOException, URISyntaxException {
-            if (uriBuilder == null) {
-                String baseUri = getStringParam(MMSEndpointBuilderConstants.URI_BASE_PATH);
-                if (!baseUri.isEmpty()) {
-                    uriBuilder = new URIBuilder(baseUri);
-                }
-            }
+            configureUri();
 
             if (uriBuilder != null) {
                 prepareUriPath();

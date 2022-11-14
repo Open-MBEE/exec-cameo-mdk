@@ -8,6 +8,8 @@ target
 .project
 .settings
 *.iml
+*.ipr
+*.iws
 *.mdxml.bak
 *.jresult
 *.diff
@@ -17,3 +19,4 @@ rebel.xml
 venv/*
 !venv/bin/
 *.groovy
+libz

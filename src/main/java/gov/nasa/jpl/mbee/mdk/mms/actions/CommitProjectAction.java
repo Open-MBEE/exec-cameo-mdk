@@ -7,6 +7,7 @@ import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.ui.ProgressStatusRunner;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
@@ -104,6 +105,10 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                         JsonNode name, id;
                         if ((name = orgNode.get(MDKConstants.NAME_KEY)) != null && name.isTextual() && !name.asText().isEmpty()
                                 && (id = orgNode.get(MDKConstants.ID_KEY)) != null && id.isTextual() && !id.asText().isEmpty()) {
+                            // Only allow Public Orgs for Standard Profiles
+                            if (ProjectUtilities.isStandardSystemProfile(project.getPrimaryProject()) && !orgNode.get("public").asBoolean()) {
+                               break;
+                            }
                             mmsOrgs.add(new Pair<String, String>(id.asText(), name.asText()) {
                                 @Override
                                 public String toString() {
@@ -115,6 +120,7 @@ public class CommitProjectAction extends RuleViolationAction implements Annotati
                 }
             }
             mmsOrgs.sort(Comparator.comparing(Pair::toString));
+
             mmsOrgs.add(new Pair<String, String>(NEW_ORG_VALUE, "New...") {
                 @Override
                 public String toString() {

@@ -5,14 +5,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.task.ProgressStatus;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -20,10 +15,10 @@ import gov.nasa.jpl.mbee.mdk.http.ServerException;
 import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.MMSLogoutAction;
 import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
 import gov.nasa.jpl.mbee.mdk.util.TaskRunner;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -33,7 +28,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -49,7 +43,7 @@ public class MMSUtils {
 
     private static final int CHECK_CANCEL_DELAY = 100;
     private static final AtomicReference<Exception> LAST_EXCEPTION = new AtomicReference<>();
-    private static final Cache<Project, String> PROFILE_SERVER_CACHE = CacheBuilder.newBuilder().weakKeys().maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build();
+
 
     public enum HttpRequestType {
         GET, POST, PUT, DELETE
@@ -139,7 +133,7 @@ public class MMSUtils {
 
     public static File createEntityFile(Class<?> clazz, ContentType contentType, Collection<?> nodes, JsonBlobType jsonBlobType) throws IOException {
         File requestFile = File.createTempFile(clazz.getSimpleName() + "-" + contentType.getMimeType().replace('/', '-') + "-", null);
-        if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+        if (MDKEnvironmentOptionsGroup.getInstance().isLogJson()) {
             System.out.println("[INFO] Request Body: " + requestFile.getPath());
             Application.getInstance().getGUILog().log("[INFO] Request Body: " + requestFile.getPath());
         }
@@ -260,7 +254,7 @@ public class MMSUtils {
                      CloseableHttpResponse response = httpclient.execute(request);
                      InputStream inputStream = response.getEntity().getContent()) {
                     responseCode.set(response.getStatusLine().getStatusCode());
-                    if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                    if (MDKEnvironmentOptionsGroup.getInstance().isLogJson()) {
                         System.out.println("[INFO] MMS Response [" + request.getMethod() + "]: " + responseCode.get() + " " + request.getURI().toString());
                     }
                     if (inputStream != null) {
@@ -332,7 +326,7 @@ public class MMSUtils {
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-                if (MDKOptionsGroup.getMDKOptions().isLogJson()) {
+                if (MDKEnvironmentOptionsGroup.getInstance().isLogJson()) {
                     System.out.println("[INFO] Response Body: " + responseFile.getPath());
                     Application.getInstance().getGUILog().log("[INFO] Response Body: " + responseFile.getPath());
                 }
@@ -370,43 +364,7 @@ public class MMSUtils {
         return !throwServerException;
     }
 
-    /**
-     * @param project
-     * @return
-     * @throws IllegalStateException
-     */
-    public static String getServerUrl(Project project) throws IllegalStateException {
-        String urlString;
-        if (project == null) {
-            throw new IllegalStateException("Project is null.");
-        }
-        Element primaryModel = project.getPrimaryModel();
-        if (primaryModel == null) {
-            throw new IllegalStateException("Model is null.");
-        }
 
-        if (StereotypesHelper.hasStereotype(primaryModel, "ModelManagementSystem")) {
-            urlString = (String) StereotypesHelper.getStereotypePropertyFirst(primaryModel, "ModelManagementSystem", "MMS URL");
-        }
-        else if (ProjectUtilities.isStandardSystemProfile(project.getPrimaryProject())) {
-            urlString = PROFILE_SERVER_CACHE.getIfPresent(project);
-            if (urlString == null) {
-                urlString = JOptionPane.showInputDialog("Specify server URL for standard profile.", null);
-            }
-            if (urlString == null || urlString.trim().isEmpty()) {
-                return null;
-            }
-            PROFILE_SERVER_CACHE.put(project, urlString);
-        }
-        else {
-            Utils.showPopupMessage("The root element does not have the ModelManagementSystem stereotype.\nPlease apply it and specify the server information.");
-            return null;
-        }
-        if (urlString == null || urlString.isEmpty()) {
-            return null;
-        }
-        return urlString.trim();
-    }
 
     public static String getMmsOrg(Project project)
             throws IOException, URISyntaxException, ServerException, GeneralSecurityException {
@@ -426,47 +384,6 @@ public class MMSUtils {
             }
         }
         return null;
-    }
-
-    /**
-     * Returns a URIBuilder object with a path = "/alfresco/service". Used as the base for all of the rest of the
-     * URIBuilder generating convenience classes.
-     *
-     * @param project The project to gather the mms url and site name information from
-     * @return URIBuilder
-     * @throws URISyntaxException
-     */
-    public static URIBuilder getServiceUri(Project project) {
-        return getServiceUri(project, null);
-    }
-
-    public static URIBuilder getServiceUri(String baseUrl) {
-        return getServiceUri(null, baseUrl);
-    }
-
-    private static URIBuilder getServiceUri(Project project, String baseUrl) {
-        String urlString = project == null ? baseUrl : getServerUrl(project);
-        if (urlString == null) {
-            return null;
-        }
-
-        // [scheme:][//host][path][?query][#fragment]
-
-        URIBuilder uri;
-        try {
-            uri = new URIBuilder(urlString);
-        } catch (URISyntaxException e) {
-            Application.getInstance().getGUILog().log("[ERROR] Unexpected error in generation of MMS URL for project. Reason: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-        String path = Optional.ofNullable(uri.getPath()).orElse("");
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-        uri.setPath(path);
-        return uri;
-
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicGet(MMSEndpoint.Builder builder, Project project) {
@@ -490,11 +407,11 @@ public class MMSUtils {
     }
 
     public static MMSEndpoint.Builder prepareEndpointBuilderBasicRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, ContentType contentType, File file) {
-        return prepareEndpointBuilderGenericRequest(builder, MMSUtils.getServerUrl(project), project, requestType, contentType, file);
+        return prepareEndpointBuilderGenericRequest(builder, MDKProjectOptions.getMmsUrl(project), project, requestType, contentType, file);
     }
 
-    public static MMSEndpoint.Builder prepareEndpointBuilderGenericRequest(MMSEndpoint.Builder builder, String uri, Project project, HttpRequestType requestType, ContentType contentType, File file) {
-        return builder.addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, uri)
+    public static MMSEndpoint.Builder prepareEndpointBuilderGenericRequest(MMSEndpoint.Builder builder, URIBuilder uri, Project project, HttpRequestType requestType, ContentType contentType, File file) {
+        return builder.addUri(uri)
                 .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
                 .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project)
                 .addParam(MMSEndpointBuilderConstants.REST_CONTENT_TYPE, contentType)
@@ -503,7 +420,7 @@ public class MMSUtils {
 
     public static MMSEndpoint.Builder prepareEndpointBuilderEntityRequest(MMSEndpoint.Builder builder, Project project, HttpRequestType requestType, HttpEntity entity) {
         return builder.addParam(MMSEndpointBuilderConstants.HTTP_ENTITY, entity)
-                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MMSUtils.getServerUrl(project))
+                .addParam(MMSEndpointBuilderConstants.URI_BASE_PATH, MDKProjectOptions.getMmsUrl(project))
                 .addParam(MMSEndpointBuilderConstants.HTTP_REQUEST_TYPE, requestType)
                 .addParam(MMSEndpointBuilderConstants.MAGICDRAW_PROJECT, project);
     }

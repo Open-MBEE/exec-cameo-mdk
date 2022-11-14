@@ -16,9 +16,11 @@
 
 package gov.nasa.jpl.mbee.mdk.test.framework;
 
+import com.nomagic.esi.emf.a.D;
 import org.gradle.api.Action;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.internal.UncheckedException;
+import org.gradle.internal.concurrent.DefaultExecutorFactory;
 import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.event.DefaultListenerManager;
 import org.gradle.internal.event.ListenerManager;
@@ -27,8 +29,12 @@ import org.gradle.internal.logging.LoggingManagerInternal;
 import org.gradle.internal.logging.services.LoggingServiceRegistry;
 import org.gradle.internal.remote.MessagingClient;
 import org.gradle.internal.remote.ObjectConnection;
+import org.gradle.internal.remote.internal.ConnectCompletion;
+import org.gradle.internal.remote.internal.hub.MessageHubBackedClient;
+import org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection;
 import org.gradle.internal.remote.internal.inet.MultiChoiceAddress;
 import org.gradle.internal.remote.internal.inet.MultiChoiceAddressSerializer;
+import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector;
 import org.gradle.internal.remote.services.MessagingServices;
 import org.gradle.internal.serialize.Decoder;
 import org.gradle.internal.serialize.InputStreamBackedDecoder;
@@ -59,7 +65,7 @@ import java.util.concurrent.Callable;
  * care of deserializing and invoking the worker action.</p>
  *
  * <p> Instantiated in the implementation ClassLoader and invoked from {@link org.gradle.process.internal.worker.GradleWorkerMain}.
- * See {@link ApplicationClassesInSystemClassLoaderWorkerFactory} for details.</p>
+ * See {@link } for details.</p>
  */
 public class MagicDrawClassLoaderWorker implements Callable<Void> {
     private final DataInputStream configInputStream;
@@ -87,8 +93,12 @@ public class MagicDrawClassLoaderWorker implements Callable<Void> {
 
         // Read server address and start connecting
         MultiChoiceAddress serverAddress = new MultiChoiceAddressSerializer().read(decoder);
+
         MessagingServices messagingServices = new MessagingServices();
-        MagicDrawClassLoaderWorker.WorkerServices workerServices = new MagicDrawClassLoaderWorker.WorkerServices(messagingServices);
+        MagicDrawClassLoaderWorker.WorkerServices workerServices = new MagicDrawClassLoaderWorker.WorkerServices();
+        ExecutorFactory executorFactory = new DefaultExecutorFactory();
+
+
 
         WorkerLogEventListener workerLogEventListener = null;
         try {
@@ -104,7 +114,9 @@ public class MagicDrawClassLoaderWorker implements Callable<Void> {
                 throw UncheckedException.throwAsUncheckedException(e);
             }
 
-            final ObjectConnection connection = messagingServices.get(MessagingClient.class).getConnection(serverAddress);
+            //final ObjectConnection connection = messagingServices.get(MessagingClient.class).getConnection(serverAddress);
+            ConnectCompletion connectCompletion = new TcpOutgoingConnector().connect(serverAddress);
+            final ObjectConnection connection = new MessageHubBackedObjectConnection(executorFactory, connectCompletion);
             workerLogEventListener = configureLogging(loggingManager, connection);
             if (shouldPublishJvmMemoryInfo) {
                 configureWorkerJvmMemoryInfoEvents(workerServices, connection);
@@ -121,6 +133,10 @@ public class MagicDrawClassLoaderWorker implements Callable<Void> {
                     public ObjectConnection getServerConnection() {
                         return connection;
                     }
+
+                    public ServiceRegistry getServiceRegistry() {
+                        return workerServices;
+                    }
                 });
             } finally {
                 connection.stop();
@@ -129,7 +145,6 @@ public class MagicDrawClassLoaderWorker implements Callable<Void> {
             if (workerLogEventListener != null) {
                 loggingManager.removeOutputEventListener(workerLogEventListener);
             }
-            messagingServices.close();
             loggingManager.stop();
         }
 
@@ -139,7 +154,8 @@ public class MagicDrawClassLoaderWorker implements Callable<Void> {
     private WorkerLogEventListener configureLogging(LoggingManagerInternal loggingManager, ObjectConnection connection) {
         connection.useParameterSerializers(WorkerLoggingSerializer.create());
         WorkerLoggingProtocol workerLoggingProtocol = connection.addOutgoing(WorkerLoggingProtocol.class);
-        WorkerLogEventListener workerLogEventListener = new WorkerLogEventListener(workerLoggingProtocol);
+        WorkerLogEventListener workerLogEventListener = new WorkerLogEventListener();
+        workerLogEventListener.setWorkerLoggingProtocol(workerLoggingProtocol);
         loggingManager.addOutputEventListener(workerLogEventListener);
         return workerLogEventListener;
     }

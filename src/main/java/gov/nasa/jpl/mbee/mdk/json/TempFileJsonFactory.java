@@ -5,12 +5,10 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.util.JsonParserDelegate;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 
 class TempFileJsonFactory extends MappingJsonFactory {
 
@@ -42,7 +40,7 @@ class TempFileJsonFactory extends MappingJsonFactory {
 
         @Override
         public void close() throws IOException {
-            if (file != null && (MDKOptionsGroup.getMDKOptions().isLogJson() || !file.delete())) {
+            if (file != null && (MDKEnvironmentOptionsGroup.getInstance().isLogJson() || !file.delete())) {
                 file.deleteOnExit();
             }
             super.close();

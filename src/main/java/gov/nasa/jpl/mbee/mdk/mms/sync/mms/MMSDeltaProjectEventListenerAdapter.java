@@ -20,6 +20,7 @@ import gov.nasa.jpl.mbee.mdk.mms.endpoints.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElement;
 import gov.nasa.jpl.mbee.mdk.mms.sync.delta.SyncElements;
 import gov.nasa.jpl.mbee.mdk.mms.sync.status.SyncStatusConfigurator;
+import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.util.*;
 import org.apache.http.client.methods.HttpRequestBase;
 
@@ -49,7 +50,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 e.printStackTrace();
             }
         }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 1, TimeUnit.MINUTES)));
-        if (StereotypesHelper.hasStereotype(project.getPrimaryModel(), "ModelManagementSystem")) {
+        if (MDKProjectOptions.getMbeeEnabled(project)) {
             MMSLoginAction.loginAction(project);
         }
     }

@@ -12,7 +12,7 @@ import gov.nasa.jpl.mbee.mdk.generator.PdfWriter;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.generator.PostProcessor;
 import gov.nasa.jpl.mbee.mdk.model.Document;
-import gov.nasa.jpl.mbee.mdk.options.MDKOptionsGroup;
+import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
@@ -99,8 +99,8 @@ public class GeneratePdfAction extends MDAction {
     }
     protected boolean checkForStyleSheetXmlFile() {
         Application.getInstance().getGUILog().log("[INFO] The default stylesheet can be set at \"Default Docbook to PDF Stylesheet\" in Options -> Environment -> MDK");
-        if (MDKOptionsGroup.getMDKOptions().getDocBookToPDFStyleSheet() != null && !MDKOptionsGroup.getMDKOptions().getDocBookToPDFStyleSheet().trim().isEmpty()) {
-            xslDefaultFile = new File(MDKOptionsGroup.getMDKOptions().getDocBookToPDFStyleSheet().trim());
+        if (MDKEnvironmentOptionsGroup.getInstance().getDocBookToPDFStyleSheet() != null && !MDKEnvironmentOptionsGroup.getInstance().getDocBookToPDFStyleSheet().trim().isEmpty()) {
+            xslDefaultFile = new File(MDKEnvironmentOptionsGroup.getInstance().getDocBookToPDFStyleSheet().trim());
         }
         else {
             xslDefaultFile = new File(MDKPlugin.getInstance().getDescriptor().getPluginDirectory(), "docbook-xsl" + File.separator + "fo" + File.separator + "mdk-default.xsl");
@@ -119,7 +119,7 @@ public class GeneratePdfAction extends MDAction {
             }
         }
         else {
-            MDKOptionsGroup.getMDKOptions().setDocBookToPDFStyleSheet(xslDefaultFile.getAbsolutePath());
+            MDKEnvironmentOptionsGroup.getInstance().setDocBookToPDFStyleSheet(xslDefaultFile.getAbsolutePath());
         }
         Application.getInstance().getGUILog().log("[INFO] The stylesheet selected is " + xslDefaultFile.getAbsolutePath());
         return true;

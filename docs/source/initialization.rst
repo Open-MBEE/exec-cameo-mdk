@@ -46,10 +46,61 @@ To mount the model library:
     Importing SysML Extensions
 
 
-Add Model Management Stereotype
+Enable MBEE Integration
 ================================
 As of version 5.1.0 there are two ways to configure your model to connect to the Model Management System 
-and View Editor. First you must apply the Model Management System Stereotype:
+and View Editor (5.1.0+ only).
+
+
+Configure Model for MMS and View Editor
+========================================
+
+Configuration via Project Options (New 5.1.0+)
+----------------------------------------------
+
+This is the new (preferred) way to configure MDK models. This not only allows you to configure your
+model without the use of the stereotype/tag, it also allows the configuration of the "Open in View Editor"
+menu option when right-clicking on a view.
+
+.. note::
+    Projects previously configured with the <<ModelManagementSystem>> stereotype will have their settings
+    automatically migrated to Project Options.
+
+#. Click "Options" in the menu bar at the top and select "Project" to open the Project Options Dialog.
+
+
+    .. figure:: ./images/open-project-options.png
+
+     Menu for opening project options
+#. In the dialog box that pops up select "General>MBEE" (For TWC projects you may need to lock them)
+
+
+    .. figure:: ./images/select-mbee-project-options.png
+
+     Where to select MBEE options in Project Options Dialog
+#. To enable MMS and View Editor integration you must first set ``Enable MBEE Integration`` to true
+
+
+    .. figure:: ./images/mbee_project_options_enable.png
+
+     View of the options available for MBEE configuration
+#. Next enter the URL's for MMS and VE in their respective fields (see image above).
+
+.. warning::
+
+    You **must** specify any path (i.e. anything after the ``.extension`` or ``:port``)
+    via the `base path` property for the specific service or it will be ignored.
+
+#. Finally, click ``Okay`` to save your selections.
+
+
+.. warning::
+    If you haven't already mounted ``SysML Extensions`` to your project. MDK will throw a warning and
+    disable MBEE Integration. Add the profile and then re-enable in Project Options
+
+Configuration via Stereotype Tag (pre 5.1.0)
+--------------------------------------------
+First you must apply the Model Management System Stereotype:
 
 #. Right click "Model" package > Specification
 #. If greyed out, Model needs to be locked for teamwork before editing: Right click "Model" package > Lock element for edit
@@ -63,42 +114,11 @@ and View Editor. First you must apply the Model Management System Stereotype:
 .. figure:: ./images/adding-mms-stereotype.png
 
  Adding MMS Stereotype
-
-
-Configure Model for MMS and View Editor
-========================================
-
-Configuration via JSON (New 5.1.0+)
-------------------------------------
-
-This is the new (preferred) way to configure MDK models. This not only allows you to configure your
-model without the use of the stereotype tag, it also allows the configuration of the "Open in View Editor"
-menu option when right-clicking on a view.
-
-1. Click "Model" package, edit its documentation.
-2. Place the following configuration options into the documentation:
-
-.. code-block:: json
-
-    {
-      "mms": {
-        "hostUrl": "protocol://hostname.com:port/"
-        "basePath": "/"
-      },
-      "ve": {
-        "hostUrl": "protocol://hostname.com:port/"
-        "pasePath": "/"
-      }
-    }
-
-Configuration via Stereotype Tag (pre 5.1.0)
---------------------------------------------
-
 Actions
-1. Open “Model” package specification (double click package or right click package > specification)
-2. Scroll down to MMS section
-3. Enter server name as MMS URL (e.g. https://mms.hostname.com)
-4. Select "Close"
+#. Open “Model” package specification (double click package or right click package > specification)
+#. Scroll down to MMS section
+#. Enter server name as MMS URL (e.g. https://mms.hostname.com)
+#. Select "Close"
 
 
 
