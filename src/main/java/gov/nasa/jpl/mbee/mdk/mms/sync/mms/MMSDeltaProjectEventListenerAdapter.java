@@ -248,7 +248,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             if(commitObjects != null && !commitObjects.isEmpty()) {
                 Map<String, Integer> commitSizes = new HashMap<>();
                 for(ObjectNode jsonObject : commitObjects) {
-                    if(jsonObject.isArray() && jsonObject.size() > 0) {
+                    if(jsonObject.isObject() && jsonObject.size() > 0) {
                         validateJsonElementArray(jsonObject, lockedElementIds, commitSizes);
                     }
                     if (MDUtils.isDeveloperMode()) {
@@ -265,8 +265,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             }
         }
 
-        private void validateJsonElementArray(JsonNode arrayNode, Set<String> lockedElementIds, Map<String, Integer> sizes) {
-            JsonNode sourceField = arrayNode.get(MDKConstants.SOURCE_FIELD);
+        private void validateJsonElementArray(JsonNode objectNode, Set<String> lockedElementIds, Map<String, Integer> sizes) {
+            JsonNode sourceField = objectNode.get(MDKConstants.SOURCE_FIELD);
             String commitSyncDirection = "";
             int size = 0;
             boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
@@ -279,7 +279,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 size = sizes.get(commitSyncDirection);
             }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
-                JsonNode changesJsonArray = arrayNode.get(entry.getKey());
+                JsonNode changesJsonArray = objectNode.get(entry.getKey());
                 if (changesJsonArray == null || !changesJsonArray.isArray()) {
                     throw new IllegalStateException();
                 }
