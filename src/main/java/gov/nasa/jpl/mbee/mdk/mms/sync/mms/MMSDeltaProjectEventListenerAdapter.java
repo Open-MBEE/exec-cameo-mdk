@@ -43,13 +43,16 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             return;
         }
         projectClosed(project);
+        // no need to poll mms when it'll just do the whole thing at commit
+        /*
         getProjectMapping(project).setScheduledFuture(TaskRunner.scheduleWithProgressStatus(progressStatus -> {
             try {
                 getProjectMapping(project).update();
             } catch (URISyntaxException | IOException | ServerException | GeneralSecurityException e) {
                 e.printStackTrace();
             }
-        }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 1, TimeUnit.MINUTES)));
+        }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 60, TimeUnit.MINUTES)));
+        */
         if (MDKProjectOptions.getMbeeEnabled(project)) {
             MMSLoginAction.loginAction(project);
         }
