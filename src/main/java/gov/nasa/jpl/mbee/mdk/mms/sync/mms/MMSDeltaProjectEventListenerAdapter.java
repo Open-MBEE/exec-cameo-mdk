@@ -203,10 +203,10 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
 
         private void obtainAndParseCommits(Deque<String> commitIdDeque, Project project)
                 throws URISyntaxException, IOException, ServerException, GeneralSecurityException {
-            int limit = 100; // look at commits until it gets to lastSyncedCommitId
+            // look at commits until it gets to lastSyncedCommitId
             commitIdDeque.clear();
                 HashMap<String, String> uriBuilderParams = new HashMap<>();
-                uriBuilderParams.put("limit", Integer.toString(limit));
+                //uriBuilderParams.put("limit", Integer.toString(limit));
                 HttpRequestBase commitsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSCommitsEndpoint.builder(), project)
                         .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
                         .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project))
