@@ -143,8 +143,8 @@ public class ElementValidator implements RunnableWithProgress {
     private void processServerElements(Map<String, Pair<Element, ObjectNode>> clientElementMap, Map<String, ObjectNode> serverElementMap) throws IOException {
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         for (File responseFile : serverElementFiles) {
-            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.ELEMENTS_NODE);
-            Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.ELEMENTS_NODE);
+            Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.ELEMENTS_NODE);
+            Set<ObjectNode> elementObjects = new HashSet<ObjectNode>(parsedResponseObjects.get(MDKConstants.ELEMENTS_NODE));
             if(elementObjects != null && !elementObjects.isEmpty()) {
                 if(serverObjectsOnlyHasBins(elementObjects)) {
                     // solves edge case where first model validation incorrectly removes bins from project

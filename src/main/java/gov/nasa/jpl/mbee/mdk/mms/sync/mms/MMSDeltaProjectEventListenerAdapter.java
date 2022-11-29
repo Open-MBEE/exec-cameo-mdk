@@ -177,9 +177,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 return false;
             }
             Deque<String> commitIdDeque = new ArrayDeque<>();
-            int exponent = 0;
 
-            obtainAndParseCommits(commitIdDeque, exponent, project);
+            obtainAndParseCommits(commitIdDeque, project);
 
             if (commitIdDeque.isEmpty()) {
                 return true;
@@ -202,15 +201,10 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             return true;
         }
 
-        private void obtainAndParseCommits(Deque<String> commitIdDeque, int exponent, Project project)
+        private void obtainAndParseCommits(Deque<String> commitIdDeque, Project project)
                 throws URISyntaxException, IOException, ServerException, GeneralSecurityException {
-            int limit = 1;
-            int size = 0;
-
-            while(size < limit) { // setup so condition is true at least once, previously this was a do while loop
-                commitIdDeque.clear();
-                limit = (int) Math.pow(10, exponent++);
-
+            int limit = 100; // look at commits until it gets to lastSyncedCommitId
+            commitIdDeque.clear();
                 HashMap<String, String> uriBuilderParams = new HashMap<>();
                 uriBuilderParams.put("limit", Integer.toString(limit));
                 HttpRequestBase commitsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSCommitsEndpoint.builder(), project)
@@ -219,8 +213,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                         .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams).build();
                 File responseFile = MMSUtils.sendMMSRequest(project, commitsRequest);
 
-                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
-                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
+                Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+                List<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
                 if(elementObjects != null && !elementObjects.isEmpty()) {
                     for(ObjectNode jsonObject : elementObjects) {
                         JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
@@ -234,16 +228,14 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                             }
                             commitIdDeque.addFirst(id);
                         }
-                        size++;
                     }
                 }
-            }
         }
 
         private void determineChangesUsingCommitResponse(File responseFile, Set<String> lockedElementIds, String commitId) throws IOException {
             // turns out the response still uses commits as the field of interest in terms of parsing
-            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
-            Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
+            Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+            List<ObjectNode> commitObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
 
             if(commitObjects != null && !commitObjects.isEmpty()) {
                 Map<String, Integer> commitSizes = new HashMap<>();
