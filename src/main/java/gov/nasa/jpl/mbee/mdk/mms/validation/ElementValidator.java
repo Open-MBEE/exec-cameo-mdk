@@ -144,8 +144,9 @@ public class ElementValidator implements RunnableWithProgress {
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         for (File responseFile : serverElementFiles) {
             Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.ELEMENTS_NODE);
-            Set<ObjectNode> elementObjects = new HashSet<ObjectNode>(parsedResponseObjects.get(MDKConstants.ELEMENTS_NODE));
-            if(elementObjects != null && !elementObjects.isEmpty()) {
+            List<ObjectNode> elementObjectsList = parsedResponseObjects.get(MDKConstants.ELEMENTS_NODE);
+            if(elementObjectsList != null && !elementObjectsList.isEmpty()) {
+                Set<ObjectNode> elementObjects = new HashSet<>(elementObjectsList);
                 if(serverObjectsOnlyHasBins(elementObjects)) {
                     // solves edge case where first model validation incorrectly removes bins from project
                     removeServerObjectNodeUsingIdPrefix(elementObjects, MDKConstants.HOLDING_BIN_ID_PREFIX);
