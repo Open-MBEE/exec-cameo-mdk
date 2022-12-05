@@ -43,13 +43,16 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             return;
         }
         projectClosed(project);
+        // no need to poll mms when it'll just do the whole thing at commit
+        /*
         getProjectMapping(project).setScheduledFuture(TaskRunner.scheduleWithProgressStatus(progressStatus -> {
             try {
                 getProjectMapping(project).update();
             } catch (URISyntaxException | IOException | ServerException | GeneralSecurityException e) {
                 e.printStackTrace();
             }
-        }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 1, TimeUnit.MINUTES)));
+        }, "MMS Fetch", false, TaskRunner.ThreadExecutionStrategy.POOLED, false, (r, ses) -> ses.scheduleAtFixedRate(r, 0, 60, TimeUnit.MINUTES)));
+        */
         if (MDKProjectOptions.getMbeeEnabled(project)) {
             MMSLoginAction.loginAction(project);
         }
@@ -177,9 +180,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 return false;
             }
             Deque<String> commitIdDeque = new ArrayDeque<>();
-            int exponent = 0;
 
-            obtainAndParseCommits(commitIdDeque, exponent, project);
+            obtainAndParseCommits(commitIdDeque, project);
 
             if (commitIdDeque.isEmpty()) {
                 return true;
@@ -202,25 +204,20 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             return true;
         }
 
-        private void obtainAndParseCommits(Deque<String> commitIdDeque, int exponent, Project project)
+        private void obtainAndParseCommits(Deque<String> commitIdDeque, Project project)
                 throws URISyntaxException, IOException, ServerException, GeneralSecurityException {
-            int limit = 1;
-            int size = 0;
-
-            while(size < limit) { // setup so condition is true at least once, previously this was a do while loop
-                commitIdDeque.clear();
-                limit = (int) Math.pow(10, exponent++);
-
+            // look at commits until it gets to lastSyncedCommitId
+            commitIdDeque.clear();
                 HashMap<String, String> uriBuilderParams = new HashMap<>();
-                uriBuilderParams.put("limit", Integer.toString(limit));
+                //uriBuilderParams.put("limit", Integer.toString(limit));
                 HttpRequestBase commitsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSCommitsEndpoint.builder(), project)
                         .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
                         .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project))
                         .addParam(MMSEndpointBuilderConstants.URI_BUILDER_PARAMETERS, uriBuilderParams).build();
                 File responseFile = MMSUtils.sendMMSRequest(project, commitsRequest);
 
-                Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
-                Set<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
+                Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+                List<ObjectNode> elementObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
                 if(elementObjects != null && !elementObjects.isEmpty()) {
                     for(ObjectNode jsonObject : elementObjects) {
                         JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
@@ -234,21 +231,19 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                             }
                             commitIdDeque.addFirst(id);
                         }
-                        size++;
                     }
                 }
-            }
         }
 
         private void determineChangesUsingCommitResponse(File responseFile, Set<String> lockedElementIds, String commitId) throws IOException {
             // turns out the response still uses commits as the field of interest in terms of parsing
-            Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
-            Set<ObjectNode> commitObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
+            Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.COMMITS_NODE);
+            List<ObjectNode> commitObjects = parsedResponseObjects.get(MDKConstants.COMMITS_NODE);
 
             if(commitObjects != null && !commitObjects.isEmpty()) {
                 Map<String, Integer> commitSizes = new HashMap<>();
                 for(ObjectNode jsonObject : commitObjects) {
-                    if(jsonObject.isArray() && jsonObject.size() > 0) {
+                    if(jsonObject.isObject() && jsonObject.size() > 0) {
                         validateJsonElementArray(jsonObject, lockedElementIds, commitSizes);
                     }
                     if (MDUtils.isDeveloperMode()) {
@@ -265,8 +260,8 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
             }
         }
 
-        private void validateJsonElementArray(JsonNode arrayNode, Set<String> lockedElementIds, Map<String, Integer> sizes) {
-            JsonNode sourceField = arrayNode.get(MDKConstants.SOURCE_FIELD);
+        private void validateJsonElementArray(JsonNode objectNode, Set<String> lockedElementIds, Map<String, Integer> sizes) {
+            JsonNode sourceField = objectNode.get(MDKConstants.SOURCE_FIELD);
             String commitSyncDirection = "";
             int size = 0;
             boolean isSyncingCommit = sourceField != null && sourceField.isTextual() && MDKConstants.MAGICDRAW_SOURCE_VALUE.equalsIgnoreCase(sourceField.asText());
@@ -279,7 +274,7 @@ public class MMSDeltaProjectEventListenerAdapter extends ProjectEventListenerAda
                 size = sizes.get(commitSyncDirection);
             }
             for (Map.Entry<String, Changelog.ChangeType> entry : CHANGE_MAPPING.entrySet()) {
-                JsonNode changesJsonArray = arrayNode.get(entry.getKey());
+                JsonNode changesJsonArray = objectNode.get(entry.getKey());
                 if (changesJsonArray == null || !changesJsonArray.isArray()) {
                     throw new IllegalStateException();
                 }

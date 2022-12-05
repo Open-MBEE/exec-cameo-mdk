@@ -111,6 +111,9 @@ public class CommitClientElementAction extends RuleViolationAction implements An
         List<ObjectNode> elementsToUpdate = new ArrayList<>(1);
         List<String> elementsToDelete = new ArrayList<>(1);
         if (elementObjectNode != null) {
+            if (serverObjectNode != null && serverObjectNode.get(MDKConstants.CONTENTS_KEY) != null && !serverObjectNode.get(MDKConstants.CONTENTS_KEY).isEmpty()) {
+                elementObjectNode.set(MDKConstants.CONTENTS_KEY, serverObjectNode.get(MDKConstants.CONTENTS_KEY));
+            }
             elementsToUpdate.add(elementObjectNode);
         }
         else {

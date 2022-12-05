@@ -122,9 +122,9 @@ public class JacksonUtils {
         return parseJsonObject(parser);
     }
 
-    public static Map<String, Set<ObjectNode>> parseResponseIntoObjects(File responseFile, String expectedKey) throws IOException {
+    public static Map<String, List<ObjectNode>> parseResponseIntoObjects(File responseFile, String expectedKey) throws IOException {
         JsonToken current;
-        Map<String, Set<ObjectNode>> parsedResponseObjects = new HashMap<>();
+        Map<String, List<ObjectNode>> parsedResponseObjects = new HashMap<>();
         try(JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
             current = (jsonParser.getCurrentToken() == null ? jsonParser.nextToken() : jsonParser.getCurrentToken());
             if (current != JsonToken.START_OBJECT) {
@@ -155,8 +155,8 @@ public class JacksonUtils {
         return parsedResponseObjects;
     }
 
-    private static Set<ObjectNode> parseExpectedArray(JsonParser jsonParser, JsonToken current) throws IOException {
-        Set<ObjectNode> parsedObjects = new HashSet<>();
+    private static List<ObjectNode> parseExpectedArray(JsonParser jsonParser, JsonToken current) throws IOException {
+        List<ObjectNode> parsedObjects = new ArrayList<>();
         if (current != null) { // assumes the calling method has begun initial parsing stages
             current = jsonParser.nextToken();
             if(current.equals(JsonToken.START_ARRAY)) {

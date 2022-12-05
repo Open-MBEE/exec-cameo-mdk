@@ -203,8 +203,8 @@ public class CommitBranchAction extends RuleViolationAction implements Annotatio
     }
 
     private ObjectNode findParentBranch(File responseFile, String parentBranchId) throws IOException {
-        Map<String, Set<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.REFS_NODE);
-        Set<ObjectNode> refObjects = parsedResponseObjects.get(MDKConstants.REFS_NODE);
+        Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.REFS_NODE);
+        List<ObjectNode> refObjects = parsedResponseObjects.get(MDKConstants.REFS_NODE);
 
         if(refObjects != null && !refObjects.isEmpty()) {
             for(ObjectNode refObjectNode : refObjects) {

@@ -87,7 +87,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
             int loopDepth = depth;
             collectClientElementsRecursively(project, element, loopDepth, clientElements, clientIdsVisited);
             try {
-                File searchFile = searchForServerElements(project, element, progressStatus);
+                File searchFile = searchForServerElements(project, element, loopDepth, progressStatus);
                 if(searchFile != null) {
                     responseFiles.add(searchFile);
                 }
@@ -113,7 +113,7 @@ public class ManualSyncRunner implements RunnableWithProgress {
         elementValidator.run(progressStatus);
     }
 
-    private File searchForServerElements(Project project, Element element, ProgressStatus progressStatus)
+    private File searchForServerElements(Project project, Element element, int depth, ProgressStatus progressStatus)
             throws ServerException, IOException, URISyntaxException, GeneralSecurityException {
         Collection<String> nodeIds = new HashSet<>(); // this is a collection because the createEntityFile method expects it
         if(element.equals(project.getPrimaryModel())) {
@@ -121,10 +121,19 @@ public class ManualSyncRunner implements RunnableWithProgress {
         } else {
             nodeIds.add(element.getLocalID());
         }
-        File sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
-        HttpRequestBase searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
-                .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
-                .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+        File sendData;
+        HttpRequestBase searchRequest;
+        if (depth == 0) {
+            sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.ELEMENT_ID);
+            searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPutRequest(MMSElementsEndpoint.builder(), project, sendData)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                    .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+        } else {
+            sendData = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, nodeIds, MMSUtils.JsonBlobType.SEARCH);
+            searchRequest = MMSUtils.prepareEndpointBuilderBasicJsonPostRequest(MMSSearchEndpoint.builder(), project, sendData)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                    .addParam(MMSEndpointBuilderConstants.URI_REF_SUFFIX, MDUtils.getBranchId(project)).build();
+        }
         // use endpoint to make request
         return MMSUtils.sendMMSRequest(project, searchRequest, progressStatus);
     }
