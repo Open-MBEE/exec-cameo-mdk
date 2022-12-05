@@ -65,7 +65,7 @@ public class MDKPluginHelper {
 
     private void configureEnvironmentOptions() {
         EnvironmentOptions mdkOptions = Application.getInstance().getEnvironmentOptions();
-        mdkOptions.addGroup(new MDKEnvironmentOptionsGroup());
+        mdkOptions.addGroup(MDKEnvironmentOptionsGroup.getInstance());
     }
 
 
