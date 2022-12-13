@@ -1943,11 +1943,23 @@ public class Utils {
      * @param prop the Stereotype tag or Class Property
      * @return a TaggedValue that corresponds to the input property
      */
-    public static TaggedValue getElementProperty(Element elem, Property prop) {
+    public static Element getElementProperty(Element elem, Property prop) {
         if (prop == null ||  elem == null) {
             return null;
         }
-        return TagsHelper.getTaggedValue(elem, prop);
+        if (prop.getOwner() instanceof Stereotype) {
+            TaggedValue slot = getTaggedValue(elem, prop);
+            if (slot != null) {
+                return slot;
+            }
+        }
+        else {
+            Property result = getClassProperty(elem, prop, true);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
     }
 
     /**
@@ -2037,7 +2049,23 @@ public class Utils {
                                                            boolean useDefaultIfNoSlot) {
         List<Object> results = new ArrayList<Object>();
         //TODO default values?
-        return TagsHelper.getStereotypePropertyValue(elem, prop, useDefaultIfNoSlot);
+        TaggedValue elemProp = getTaggedValue(elem, prop);
+        if (elemProp != null) {
+            if (elemProp.getValue() != null) {
+                results.addAll(elemProp.getValue());
+            }
+        }
+        Element propOwner = prop.getOwner();
+        if (useDefaultIfNoSlot && results.isEmpty()) {
+            if (propOwner instanceof Stereotype
+                    && StereotypesHelper.hasStereotypeOrDerived(elem, (Stereotype) propOwner)) {
+                ValueSpecification v = prop.getDefaultValue();
+                if (v != null) {
+                    results.add(v);
+                }
+            }
+        }
+        return results;
     }
 
     /*****************************************************************************************/

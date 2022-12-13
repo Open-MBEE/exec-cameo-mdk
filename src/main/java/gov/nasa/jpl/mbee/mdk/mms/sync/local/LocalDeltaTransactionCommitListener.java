@@ -120,18 +120,6 @@ public class LocalDeltaTransactionCommitListener implements TransactionCommitLis
                             return;
                         }
 
-                        //TODO fix for 2021x, UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT is gone
-                        // id spoofing for proper removal of deleted elements in changelogs. this is based on the spoofing in EMFExporter, and MUST be updated when that is.
-//                        if (sourceElement instanceof InstanceSpecification) {
-//                            if (changedPropertyName.equals(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT.getName()) && event.getNewValue() == null && event.getOldValue() instanceof Element) {
-//                                Element origin = (Element) event.getOldValue();
-//                                String spoofedId = Converters.getElementToIdConverter().apply(origin) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
-//                                if (!spoofedId.equals(sourceElement.getLocalID())) {
-//                                    spoofedIdMapping.put(sourceElement.getLocalID(), spoofedId);
-//                                }
-//                            }
-//                        }
-//                        else if (sourceElement instanceof Slot) {
                         if (sourceElement instanceof Slot) {
                             if (changedPropertyName.equals(UMLPackage.Literals.SLOT__OWNING_INSTANCE.getName()) && event.getNewValue() == null && event.getOldValue() instanceof Element) {
                                 if (!spoofedIdMapping.containsKey(sourceElement.getLocalID()) && sourceElement.getLocalID().equals(Converters.getElementToIdConverter().apply(sourceElement))) {
@@ -165,6 +153,14 @@ public class LocalDeltaTransactionCommitListener implements TransactionCommitLis
                                         System.out.println("[WARNING] Spoofed element ID already exists with a different defining feature id component.");
                                     }
                                 }
+                            }
+                        }
+                        if (sourceElement instanceof TaggedValue) {
+                            // TODO
+                            if (changedPropertyName.equals(UMLPackage.Literals.TAGGED_VALUE__TAGGED_VALUE_OWNER.getName())) {
+
+                            } else if (changedPropertyName.equals(UMLPackage.Literals.TAGGED_VALUE__TAG_DEFINITION.getName())) {
+
                             }
                         }
 

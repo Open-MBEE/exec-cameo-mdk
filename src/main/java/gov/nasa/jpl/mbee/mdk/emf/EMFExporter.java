@@ -114,15 +114,20 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
 
         // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the MMS delta counts in some cases (annoying, but ultimately harmless)
         // NOTE - this spoofing is replicated in LocalSyncTransactionListener in order to properly add / remove elements in the unsynched queue. any updates here should be replicated there as well.
-        if (element instanceof InstanceSpecification && ((InstanceSpecification) element).getOwner() != null) {
-            return getEID(((InstanceSpecification) element).getOwner()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX;
-        }
+        // there's no more instance spec that's a result of stereotyping, so instance spec should just have their normal id
         /*if (eObject instanceof TimeExpression && ((TimeExpression) eObject).get_timeEventOfWhen() != null) {
             return getEID(((TimeExpression) eObject).get_timeEventOfWhen()) + MDKConstants.TIME_EXPRESSION_ID_SUFFIX;
         }*/
         if (element instanceof ValueSpecification && ((ValueSpecification) element).getOwningSlot() != null) {
             ValueSpecification slotValue = (ValueSpecification) element;
             return getEID(slotValue.getOwningSlot()) + MDKConstants.SLOT_VALUE_ID_SEPARATOR + slotValue.getOwningSlot().getValue().indexOf(slotValue) + "-" + slotValue.eClass().getName().toLowerCase();
+        }
+        if (element instanceof TaggedValue) {
+            TaggedValue slot = (TaggedValue) element;
+            if (slot.getTaggedValueOwner() != null && slot.getTagDefinition() != null) {
+                // add _asi to owner in constructed id to maintain continuity with 19.x slots
+                return getEID(slot.getOwner()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getTagDefinition());
+            }
         }
         if (element instanceof Slot) {
             Slot slot = (Slot) element;
@@ -174,12 +179,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 },
                 Type.PRE
         ),
-        /*CONNECTOR_END(
-                (element, project, objectNode) -> element instanceof ConnectorEnd ? null : objectNode
-        ),
-        DIAGRAM(
-                (element, project, objectNode) -> element instanceof Diagram ? null : objectNode
-        ),*/
         DIAGRAM_TYPE(
                 (element, project, objectNode) -> {
                     if (element instanceof Diagram) {
@@ -330,6 +329,61 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
 
                     }
 
+                    return objectNode;
+                },
+                Type.POST
+        ),
+        TAGGEDVALUE_POST(
+                (element, project, objectNode) -> {
+                    if (!(element instanceof TaggedValue)) {
+                        return objectNode;
+                    }
+                    TaggedValue v = (TaggedValue)element;
+                    ArrayNode l = (ArrayNode)objectNode.get("value");
+                    if (l == null) {
+                        l = JacksonUtils.getObjectMapper().createArrayNode();
+                        objectNode.set("value", l);
+                    }
+                    l.removeAll();
+                    // for continuity with 19.x mdk export, value is a list of objects with value key or elementId
+                    for (Object o: v.getValue()) {
+                        ObjectNode n = JacksonUtils.getObjectMapper().createObjectNode();
+                        JsonNode node = null;
+                        if (o instanceof String) {
+                            node = TextNode.valueOf((String) o);
+                        }
+                        else if (o instanceof Boolean) {
+                            node = BooleanNode.valueOf((boolean) o);
+                        }
+                        else if (o instanceof Integer) {
+                            node = IntNode.valueOf((Integer) o);
+                        }
+                        else if (o instanceof Double) {
+                            node = DoubleNode.valueOf((Double) o);
+                        }
+                        else if (o instanceof Long) {
+                            node = LongNode.valueOf((Long) o);
+                        }
+                        else if (o instanceof Short) {
+                            node = ShortNode.valueOf((Short) o);
+                        }
+                        else if (o instanceof Float) {
+                            node = FloatNode.valueOf((Float) o);
+                        }
+                        else if (o instanceof BigInteger) {
+                            node = BigIntegerNode.valueOf((BigInteger) o);
+                        }
+                        else if (o instanceof BigDecimal) {
+                            node = DecimalNode.valueOf((BigDecimal) o);
+                        }
+                        n.set("value", node);
+                        if (o instanceof Element) {
+                            node = TextNode.valueOf(getEID((Element)o));
+                            n.set("elementId", node);
+                            n.remove("value");
+                        }
+                        l.add(n);
+                    }
                     return objectNode;
                 },
                 Type.POST

@@ -22,6 +22,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
+import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
 import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
 import org.eclipse.emf.common.util.BasicEList;
@@ -84,7 +85,7 @@ public class EMFImporter implements JsonToElementFunction {
 
     protected List<PreProcessor> getPreProcessors() {
         if (preProcessors == null) {
-            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.EDITABLE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION);
+            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.EDITABLE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION, PreProcessor.TAGGED_VALUE);
         }
         return preProcessors;
     }
@@ -121,6 +122,34 @@ public class EMFImporter implements JsonToElementFunction {
                             if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
                                 return null;
                             }
+                            return element;
+                        }
+                ),
+                TAGGED_VALUE = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            if (!(element instanceof TaggedValue)) {
+                                return element;
+                            }
+                            ArrayNode value = (ArrayNode)objectNode.get("value");
+                            if (value == null) {
+                                return element;
+                            }
+                            ArrayNode newValue = JacksonUtils.getObjectMapper().createArrayNode();
+                            // unwrap value objects inside value array (they were exported as objects with value key
+                            // for continuity with 19.x mdk/ve stack
+                            for (JsonNode n: value) {
+                                if (n instanceof ObjectNode) {
+                                    if (n.has("elementId")) {
+                                        newValue.add(n.get("elementId"));
+                                    } else {
+                                        newValue.add(n.get("value"));
+                                    }
+                                } else {
+                                    // ???
+                                    newValue.add(n);
+                                }
+                            }
+                            objectNode.set("value", newValue);
                             return element;
                         }
                 );
@@ -444,13 +473,9 @@ public class EMFImporter implements JsonToElementFunction {
                             }
                             else if (element instanceof Slot && owningElement instanceof InstanceSpecification) {
                                 ((Slot) element).setOwningInstance((InstanceSpecification) owningElement);
+                            } else if (element instanceof TaggedValue) {
+                                ((TaggedValue) element).setTaggedValueOwner(owningElement);
                             }
-                            //TODO fix this for 2021x, INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT is gone
-//                            else if (element instanceof InstanceSpecification
-//                                    && ((jsonNode = objectNode.get(KEY_FUNCTION.apply(UMLPackage.Literals.INSTANCE_SPECIFICATION__STEREOTYPED_ELEMENT))) != null && jsonNode.isTextual()
-//                                    || (jsonNode = objectNode.get(MDKConstants.ID_KEY)) != null && jsonNode.isTextual() && jsonNode.asText().endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX))) {
-//                                ((InstanceSpecification) element).setStereotypedElement(owningElement);
-//                            }
                             else {
                                 element.setOwner(owningElement);
                             }

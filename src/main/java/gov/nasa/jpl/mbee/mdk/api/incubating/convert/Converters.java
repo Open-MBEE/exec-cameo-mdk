@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.ci.persistence.IProject;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
+import com.nomagic.uml2.ext.jmi.helpers.TagsHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.emf.EMFExporter;
@@ -63,17 +64,8 @@ public class Converters {
                         return project.getPrimaryModel();
                     }
                 }
-                if (id.endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX)) {
-                    String stereotypedElementId = id.substring(0, id.length() - MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX.length());
-                    Element stereotypedElement = ID_TO_ELEMENT_CONVERTER.apply(stereotypedElementId, project);
-                    if (stereotypedElement != null) {
-                        //TODO fix for 2021x
-                        //return stereotypedElement.getAppliedStereotypeInstance();
-                        System.out.println("Skipping " + id);
-                        return null;
-                    }
-                }
                 if (id.contains(MDKConstants.SLOT_VALUE_ID_SEPARATOR)) {
+                    //tagged values will not have value specs, so this should only apply to slots values
                     String[] sections = id.split(MDKConstants.SLOT_VALUE_ID_SEPARATOR);
                     Element element = Converters.getIdToElementConverter().apply(sections[0], project);
                     if (element == null || !(element instanceof Slot)) {
@@ -114,12 +106,19 @@ public class Converters {
                     if (sections.length < 2) {
                         return null;
                     }
+                    if (sections[0].endsWith(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX)) {
+                        // this is a tagged value, the owner should be found without the _asi suffix,
+                        // _asi is added during export for taggedvalue id in order to preserve continuity with 19.x mdk
+                        String[] s2 = sections[0].split(MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX);
+                        sections[0] = s2[0];
+                    }
                     Element owningInstance = Converters.getIdToElementConverter().apply(sections[0], project);
                     Element definingFeature = Converters.getIdToElementConverter().apply(sections[1], project);
-                    if (!(owningInstance instanceof InstanceSpecification) || !(definingFeature instanceof StructuralFeature)) {
-                        return null;
+                    if ((owningInstance instanceof InstanceSpecification) && (definingFeature instanceof StructuralFeature)) {
+                        return ((InstanceSpecification) owningInstance).getSlot().stream().filter(slot -> definingFeature.equals(slot.getDefiningFeature())).findAny().orElse(null);
+                    } else if ((owningInstance instanceof Element) && (definingFeature instanceof Property)) {
+                        return TagsHelper.getTaggedValue(owningInstance, (Property) definingFeature);
                     }
-                    return ((InstanceSpecification) owningInstance).getSlot().stream().filter(slot -> definingFeature.equals(slot.getDefiningFeature())).findAny().orElse(null);
                 }
                 return null;
             };
