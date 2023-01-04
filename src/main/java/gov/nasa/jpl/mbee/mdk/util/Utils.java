@@ -1829,6 +1829,9 @@ public class Utils {
                 else if (elem instanceof Constraint) {
                     return ((Constraint) elem).getSpecification();
                 }
+                else if (elem instanceof TaggedValue) {
+                    return ((TaggedValue) elem).getValue();
+                }
             default:
                 return null;
         }

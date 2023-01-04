@@ -446,9 +446,9 @@ public class CollectFilterParser {
                 }
             }
             //TODO fix for 2021x, checkForDerivedStereotype changed
-//            Object o = ScriptRunner.runScriptFromStereotype(e,
-//                    StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptCFStereotype),
-//                    inputs);
+            //Object o = ScriptRunner.runScriptFromStereotype(e,
+            //        StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptCFStereotype),
+            //        inputs);
             Object o = null;
             if (o != null && o instanceof Map && ((Map) o).containsKey("DocGenOutput")) {
                 Object l = ((Map) o).get("DocGenOutput");

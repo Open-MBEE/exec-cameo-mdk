@@ -187,28 +187,23 @@ public class ViewViewpointValidator implements Runnable {
             incomingFlowMultiplicity.addViolation(n, incomingFlowMultiplicity.getDescription());
         }
         if (n instanceof CallBehaviorAction) {
-            //TODO fix this for 2021x, checkForAllDerivedStereotypes is gone
-//            Behavior b = ((CallBehaviorAction) n).getBehavior();
-//            Collection<Stereotype> napplied = new HashSet<>(StereotypesHelper.(n, DocGenProfile.collectFilterStereotype));
-//            napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGenProfile.ignorableStereotype));
-//            napplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(n, DocGenProfile.tableColumnStereotype));
-//            if (b == null) {
-//                if (napplied.size() > 1) {
-//                    stereotypeMultiplicity.addViolation(n, stereotypeMultiplicity.getDescription());
-//                }
-//            }
-//            else {
-//                Collection<Stereotype> bapplied = new HashSet<>(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGenProfile.collectFilterStereotype));
-//                bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGenProfile.ignorableStereotype));
-//                bapplied.addAll(StereotypesHelper.checkForAllDerivedStereotypes(b, DocGenProfile.tableColumnStereotype));
-//                if (napplied.size() > 1 || bapplied.size() > 1) {
-//                    stereotypeMultiplicity.addViolation(n, stereotypeMultiplicity.getDescription());
-//                }
-//                if (!this.visited.contains(b)) {
-//                    this.visited.add(b);
-//                    validateActivity(b);
-//                }
-//            }
+            Behavior b = ((CallBehaviorAction) n).getBehavior();
+            Collection<Stereotype> napplied = n.getAppliedStereotype();
+            if (b == null) {
+                if (napplied.size() > 1) {
+                    stereotypeMultiplicity.addViolation(n, stereotypeMultiplicity.getDescription());
+                }
+            }
+            else {
+                Collection<Stereotype> bapplied = b.getAppliedStereotype();
+                if (napplied.size() > 1 || bapplied.size() > 1) {
+                    stereotypeMultiplicity.addViolation(n, stereotypeMultiplicity.getDescription());
+                }
+                if (!this.visited.contains(b)) {
+                    this.visited.add(b);
+                    validateActivity(b);
+                }
+            }
         }
         else if (n instanceof StructuredActivityNode) {
             validateActivity(n);

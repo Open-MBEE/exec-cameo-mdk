@@ -151,7 +151,7 @@ dependencies {
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
     // implementation group: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
 
-    // JGraphT 
+    // JGraphT
     implementation group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
     // implementation group: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
 
@@ -167,8 +167,8 @@ dependencies {
     implementation group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
     // implementation group: 'com.opencsv', name: 'opencsv', version: '3.8+'
 
-    // ActiveMQ 
-    implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
+    // ActiveMQ
+    //implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
     // implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
 
     // Jackson
@@ -189,7 +189,7 @@ dependencies {
     implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
 
     //OpenMBEE MMS Java Client
-    implementation group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
+    //implementation group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
 
     implementation group: 'com.beust', name: 'jcommander', version: '1.72'
 
@@ -215,7 +215,7 @@ dependencies {
         }
     }
     else {
-        preImplementation group: 'com.nomagic', name: 'cameo', version: '2021x', classifier: 'Cameo_Systems_Modeler_2021x_no_install', ext: 'zip'
+        preImplementation group: 'com.nomagic', name: 'cameo', version: '2021x', classifier: 'Cameo_Systems_Modeler_2021x_Refresh2_HF4_no_install', ext: 'zip'
 //        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
 //        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
     }
@@ -614,8 +614,8 @@ task runJava(type: JavaExec) {
     if (profiles["executablePath"] != null) {
         executable = profiles["executablePath"]
     }
-    main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['--module-path', 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
+    main = 'com.nomagic.magicdraw.Main'
+    jvmArgs = ['--module-path', 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Djdk.attach.allowAttachSelf=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
@@ -632,8 +632,8 @@ task testAVG(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 
-    main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator']
+    main = 'com.nomagic.magicdraw.Main'
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator']
 }
 
 testAVG.dependsOn installDist
@@ -686,6 +686,7 @@ test {
      * Example command: .../java -Dcom.nomagic.osgi.config.dir=configuration -Desi.system.config=data/application.conf -Djava.security.manager=worker.org.gradle.process.internal.worker.child.BootstrapSecurityManager -Dlogback.configurationFile=data/logback.xml -Dmd.class.path=$java.class.path -jar /Users/igomes/mdk/build/libs/mdk-*-tests-hack.jar -cp ... -Dfile.encoding=UTF-8 -Duser.country=US -Duser.language=en -Duser.variant -ea -cp .../.gradle/caches/.../workerMain/gradle-worker.jar worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 1'
      *
      * @author igomes
+     * TODO 2021x refresh 1 removed osgi
      */
     classpath = files()
     doFirst {

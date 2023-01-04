@@ -2,10 +2,7 @@ package gov.nasa.jpl.mbee.mdk.ocl;
 
 import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
-import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
+import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.emf.EmfUtils;
@@ -16,6 +13,7 @@ import gov.nasa.jpl.mbee.mdk.util.Utils2;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 
+import java.lang.Class;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -84,7 +82,7 @@ public class GetCallOperation implements CallOperation {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see gov.nasa.jpl.mbee.mdk.ocl.CallOperation#callOperation(java.lang.Object,
      * java.lang.Object[])
      */
@@ -242,9 +240,9 @@ public class GetCallOperation implements CallOperation {
                     }
                     boolean one = !filter && (onlyOneForAll || (asCollection && coll != null && onlyOnePer));
 
-                    // If the source is a Property or slot, get its value 
+                    // If the source is a Property or slot, get its value
                     if (Utils2.isNullOrEmpty(objectToAdd)
-                            && (source instanceof Property || source instanceof Slot)) {
+                            && (source instanceof Property || source instanceof Slot || source instanceof TaggedValue)) {
                         objectToAdd =
                                 Utils.getElementAttribute((Element) source,
                                         AvailableAttribute.Value);
