@@ -2,8 +2,6 @@ package gov.nasa.jpl.mbee.mdk.mms.sync.local;
 
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.project.ProjectEventListenerAdapter;
-//import com.nomagic.magicdraw.uml.transaction.MDTransactionManager;
-// TODO api changed in refresh 2, MDTransactionManager disappeared
 
 import java.util.Collections;
 import java.util.Map;
@@ -26,7 +24,7 @@ public class LocalDeltaProjectEventListenerAdapter extends ProjectEventListenerA
     public void projectOpened(Project project) {
         closeLocalCommitListener(project);
         if (project.isRemote()) {
-           // TODO ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(getProjectMapping(project).getLocalDeltaTransactionCommitListener());
+            project.getRepository().getTransactionManager().addTransactionCommitListenerIncludingUndoAndRedo(getProjectMapping(project).getLocalDeltaTransactionCommitListener());
         }
     }
 
@@ -56,7 +54,7 @@ public class LocalDeltaProjectEventListenerAdapter extends ProjectEventListenerA
     private static void closeLocalCommitListener(Project project) {
         LocalSyncProjectMapping localSyncProjectMapping = projectMappings.get(project);
         if (localSyncProjectMapping != null && localSyncProjectMapping.getLocalDeltaTransactionCommitListener() != null) {
-            // TODO project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalDeltaTransactionCommitListener());
+            project.getRepository().getTransactionManager().removeTransactionCommitListener(localSyncProjectMapping.getLocalDeltaTransactionCommitListener());
         }
     }
 
@@ -65,7 +63,7 @@ public class LocalDeltaProjectEventListenerAdapter extends ProjectEventListenerA
         if (localSyncProjectMapping == null) {
             projectMappings.put(project, localSyncProjectMapping = new LocalSyncProjectMapping(project));
             if (project.isRemote()) {
-               // TODO ((MDTransactionManager) project.getRepository().getTransactionManager()).addTransactionCommitListenerIncludingUndoAndRedo(localSyncProjectMapping.getLocalDeltaTransactionCommitListener());
+                project.getRepository().getTransactionManager().addTransactionCommitListenerIncludingUndoAndRedo(localSyncProjectMapping.getLocalDeltaTransactionCommitListener());
             }
         }
         return localSyncProjectMapping;
