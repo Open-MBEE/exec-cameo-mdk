@@ -1,6 +1,5 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
@@ -8,7 +7,6 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdfundamentalactivities.Activit
 import com.nomagic.uml2.ext.magicdraw.activities.mdstructuredactivities.StructuredActivityNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBPlot;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
@@ -17,6 +15,7 @@ import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -81,9 +80,10 @@ public class Plot extends TableStructure {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        String title = ((String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.plotStereotype, "plotTitle", DocGenProfile.PROFILE_NAME, "")).replace("'", "\\'").replace("\"", "'");
-        String config = ((String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.plotStereotype, "plotConfiguration", DocGenProfile.PROFILE_NAME, "")).replace("'", "\\'").replace("\"", "'");
-        String type = (String) StereotypesHelper.getStereotypePropertyValue(dgElement, DocGenProfile.plotStereotype, "plotType").stream().filter(p -> p instanceof EnumerationLiteral).map(p -> ((EnumerationLiteral) p).getName()).findFirst().orElse("");
+        super.initialize();
+        String title = ((String) GeneratorUtils.getStereotypePropertyFirst(dgElement, profile.plot().getPlotTitleProperty(), "")).replace("'", "\\'").replace("\"", "'");
+        String config = ((String) GeneratorUtils.getStereotypePropertyFirst(dgElement, profile.plot().getPlotConfigurationProperty(), "")).replace("'", "\\'").replace("\"", "'");
+        String type = GeneratorUtils.getStereotypePropertyValue(dgElement, profile.plot().getPlotTypeProperty(), Collections.emptyList()).stream().filter(p -> p instanceof EnumerationLiteral).map(p -> ((EnumerationLiteral) p).getName()).findFirst().orElse("");
 
         setTitle(title);
         setConfig(config);
@@ -110,7 +110,7 @@ public class Plot extends TableStructure {
                 if (outs != null && outs.size() == 1) {
                     ActivityNode next = outs.iterator().next().getTarget();
                     if (next instanceof StructuredActivityNode
-                            && StereotypesHelper.hasStereotypeOrDerived(next, DocGenProfile.tableStructureStereotype)) {
+                            && profile.tableStructure().is(next)) {
                         dgElement = next;
                     }
                 }
@@ -119,7 +119,7 @@ public class Plot extends TableStructure {
             {
                 dgElement = temp.getOwnedElement().stream()
                         .filter(x -> (x instanceof StructuredActivityNode
-                                && StereotypesHelper.hasStereotypeOrDerived(x, DocGenProfile.tableStructureStereotype)))
+                                && profile.tableStructure().is(x)))
                         //.collect(java.util.stream.Collectors.toList()); //return List<Element>
                         .findAny().orElse(null);
                 //dgElement = null;

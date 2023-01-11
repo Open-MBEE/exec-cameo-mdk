@@ -2,13 +2,15 @@ package gov.nasa.jpl.mbee.mdk.ocl;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.api.ElementFinder;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.generator.DocumentGenerator;
 import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
@@ -118,8 +120,7 @@ public class OclEvaluator {
 
     public static String queryElementToStringExpression(Element query) {
         String expr = null;
-        Object o = GeneratorUtils.getStereotypePropertyFirst(query, DocGenProfile.expressionChoosable, "expression",
-                DocGenProfile.PROFILE_NAME, null);
+        Object o = GeneratorUtils.getStereotypePropertyFirst(query, SysMLExtensions.getInstance(query).expressionChoosable().getExpressionProperty(), null);
         expr = queryObjectToStringExpression(o);
         if (notNullOrEndInQuestion(expr)) {
             return expr;
@@ -594,7 +595,7 @@ public class OclEvaluator {
                 Element sourceElement = (Element) source;
 
                 // If the source is a view, parse it.
-                if (sourceElement instanceof Class && StereotypesHelper.hasStereotypeOrDerived(sourceElement, DocGenProfile.viewStereotype)) {
+                if (sourceElement instanceof Class && SysMLProfile.getInstance(sourceElement).view().is(sourceElement)) {
                     ViewViewpointValidator dv = new ViewViewpointValidator(Collections.singleton(sourceElement), Project.getProject(sourceElement), true);
                     DocumentGenerator dg = new DocumentGenerator(sourceElement, dv, null);
                     ViewParser vp = new ViewParser(dg, true, true, dg.getDocument(), sourceElement);
@@ -604,8 +605,7 @@ public class OclEvaluator {
                 // Need to parse the behavior of the Viewpoint, not the
                 // Viewpoint itself.
                 if (sourceElement instanceof Class
-                        && StereotypesHelper.hasStereotypeOrDerived(sourceElement,
-                        DocGenProfile.viewpointStereotype)) {
+                        && SysMLProfile.getInstance(sourceElement).viewpoint().is(sourceElement)) {
                     sourceElement = ((Class) sourceElement).getClassifierBehavior();
                 }
 
@@ -841,7 +841,8 @@ public class OclEvaluator {
      */
     protected static void addExpressionOperations(DocGenEnvironmentFactory envFactory) {
         // add each of the elements with the Expression stereotype as shortcut/blackbox functions
-        List<Element> expressions = StereotypesHelper.getExtendedElements(Utils.getExpressionStereotype(Application.getInstance().getProject()));
+        Stereotype ex = SysMLExtensions.getInstanceByProject(Application.getInstance().getProject()).expression().getStereotype();
+        List<Element> expressions = StereotypesHelper.getExtendedElements(ex);
         for (Element expression : expressions) {
             // function name can't have spaces and strange characters; e.g. the name "four+five" would be parsed as a sum operation.
             String name = Utils.getName(expression);

@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.mms.actions;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
@@ -38,8 +39,8 @@ public class GenerateViewPresentationAction extends MMSAction {
     }
 
     public List<ValidationSuite> updateAction() {
-        Stereotype viewStereotype = Utils.getViewStereotype(project),
-                elementGroupStereotype = Utils.getElementGroupStereotype(project);
+        Stereotype viewStereotype = SysMLProfile.getInstance(project).view().getStereotype();
+        Stereotype elementGroupStereotype = SysMLProfile.getInstance(project).elementGroup().getStereotype();
 
         Set<Element> processedElements = new HashSet<>(elements.size());
         Queue<Element> queuedElements = new LinkedList<>(elements);

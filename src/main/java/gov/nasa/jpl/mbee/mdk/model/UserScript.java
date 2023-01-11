@@ -8,7 +8,6 @@ import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBText;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
@@ -32,19 +31,15 @@ public class UserScript extends Query {
 
     public String getStereotypeName() {
         Element e = this.dgElement;
-        if (!StereotypesHelper.hasStereotypeOrDerived(this.dgElement, DocGenProfile.userScriptStereotype)) {
-            if (this.dgElement instanceof CallBehaviorAction
-                    && ((CallBehaviorAction) this.dgElement).getBehavior() != null
-                    && StereotypesHelper.hasStereotypeOrDerived(
-                    ((CallBehaviorAction) this.dgElement).getBehavior(),
-                    DocGenProfile.userScriptStereotype)) {
+        if (!StereotypesHelper.hasStereotypeOrDerived(this.dgElement, profile.userScript().getStereotype())) {
+            if (this.dgElement instanceof CallBehaviorAction && ((CallBehaviorAction) this.dgElement).getBehavior() != null
+                    && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction) this.dgElement).getBehavior(),
+                        profile.userScript().getStereotype())) {
                 e = ((CallBehaviorAction) this.dgElement).getBehavior();
             }
         }
-        //TODO fix for 2021x, checkForDerivedStereotype changed
-//        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype);
-//        return s.getName();
-        return null;
+        Stereotype s = StereotypesHelper.checkForDerivedStereotype(e, profile.userScript().getStereotype());
+        return s.getName();
     }
 
     public Map<?, ?> getScriptOutput(Map<String, Object> inputs) {
@@ -69,23 +64,20 @@ public class UserScript extends Query {
                 inputs2.put("ForViewEditor", false);
             }
             Element e = this.dgElement;
-            if (!StereotypesHelper.hasStereotypeOrDerived(e, DocGenProfile.userScriptStereotype)) {
-                if (e instanceof CallBehaviorAction
-                        && ((CallBehaviorAction) e).getBehavior() != null
+            if (!StereotypesHelper.hasStereotypeOrDerived(e, profile.userScript().getStereotype())) {
+                if (e instanceof CallBehaviorAction && ((CallBehaviorAction) e).getBehavior() != null
                         && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction) e).getBehavior(),
-                        DocGenProfile.userScriptStereotype)) {
+                            profile.userScript().getStereotype())) {
                     e = ((CallBehaviorAction) e).getBehavior();
                 }
             }
-            //TODO fix for 2021x, checkForDerivedStereotype changed
-//            Object o = ScriptRunner.runScriptFromStereotype(e,
-//                    StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptStereotype),
-//                    inputs2);
-//            if (o != null && o instanceof Map) {
-//                return (Map<?, ?>) o;
-//            }
-
-        } catch (Exception /*TODO continued from above, was ScriptException*/ e) {
+            Object o = ScriptRunner.runScriptFromStereotype(e,
+                    StereotypesHelper.checkForDerivedStereotype(e, profile.userScript().getStereotype()),
+                    inputs2);
+            if (o != null && o instanceof Map) {
+                return (Map<?, ?>) o;
+            }
+        } catch (ScriptException e) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
@@ -161,19 +153,17 @@ public class UserScript extends Query {
         List<MDAction> res = new ArrayList<MDAction>();
         Element action = getDgElement();
         boolean added = false;
-        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGenProfile.editableTableStereotype)
-                || ((action instanceof CallBehaviorAction)
-                && ((CallBehaviorAction) action).getBehavior() != null && StereotypesHelper
-                .hasStereotypeOrDerived(((CallBehaviorAction) action).getBehavior(),
-                        DocGenProfile.editableTableStereotype))) {
+        if (StereotypesHelper.hasStereotypeOrDerived(action, profile.editableTable().getStereotype())
+                || ((action instanceof CallBehaviorAction) && ((CallBehaviorAction) action).getBehavior() != null
+                && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction) action).getBehavior(),
+                    profile.editableTable().getStereotype()))) {
             res.add(new RunUserEditableTableAction(this));
             added = true;
         }
-        if (StereotypesHelper.hasStereotypeOrDerived(action, DocGenProfile.validationScriptStereotype)
-                || ((action instanceof CallBehaviorAction)
-                && ((CallBehaviorAction) action).getBehavior() != null && StereotypesHelper
-                .hasStereotypeOrDerived(((CallBehaviorAction) action).getBehavior(),
-                        DocGenProfile.validationScriptStereotype))) {
+        if (StereotypesHelper.hasStereotypeOrDerived(action, profile.validationScript().getStereotype())
+                || ((action instanceof CallBehaviorAction) && ((CallBehaviorAction) action).getBehavior() != null
+                && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction) action).getBehavior(),
+                    profile.validationScript().getStereotype()))) {
             res.add(new RunUserValidationScriptAction(this));
             added = true;
         }
@@ -182,5 +172,4 @@ public class UserScript extends Query {
         }
         return res;
     }
-
 }

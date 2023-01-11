@@ -6,12 +6,14 @@ import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.pathvariables.PathVariablesResolver;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.options.MDKEnvironmentOptionsGroup;
 
 import javax.script.*;
@@ -61,19 +63,14 @@ public class ScriptRunner {
         GUILog log = Application.getInstance().getGUILog();
 
         Map<String, Object> inputs = new HashMap<>();
-        List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, "Expose", 1, false, 1);
-        if (queries == null || queries.isEmpty()) {
-            // For backward compatibility, also try Queries, the former name for
-            // Expose.
-            queries = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e, "Queries", 1, false, 1);
-        }
+        List<Element> queries = Utils.collectDirectedRelatedElementsByRelationshipStereotype(e, SysMLProfile.getInstance(e).expose().getStereotype(), 1, true, 1);
         for (NamedElement p : s.getInheritedMember()) {
             if (p instanceof Property) {
-                inputs.put(p.getName(), StereotypesHelper.getStereotypePropertyValue(e, s, (Property) p));
+                inputs.put(p.getName(), StereotypesHelper.getStereotypePropertyValue(e, (Property) p));
             }
         }
         for (Property p : s.getOwnedAttribute()) {
-            inputs.put(p.getName(), StereotypesHelper.getStereotypePropertyValue(e, s, p));
+            inputs.put(p.getName(), StereotypesHelper.getStereotypePropertyValue(e, p));
         }
 
         inputs.put("inputElement", e);
@@ -102,14 +99,11 @@ public class ScriptRunner {
             }
 
             String extension = ".py";
-            Object language = StereotypesHelper.getStereotypePropertyFirst(s, "DocGenScript", "language");
+            Object language = StereotypesHelper.getStereotypePropertyFirst(s, SysMLExtensions.getInstance(e).docGenScript().getLanguageProperty());
             if (language != null && language instanceof EnumerationLiteral) {
                 lang = ((EnumerationLiteral) language).getName();
                 if (lang.equals("groovy")) {
                     extension = ".groovy";
-                }
-                else if (lang.equals("qvt")) {
-                    extension = ".qvto";
                 }
             }
             filePath += extension;

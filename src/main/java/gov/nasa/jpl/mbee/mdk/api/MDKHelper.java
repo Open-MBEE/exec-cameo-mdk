@@ -29,31 +29,13 @@
 
 package gov.nasa.jpl.mbee.mdk.api;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.core.Project;
-import com.nomagic.task.ProgressStatus;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.http.ServerException;
-import gov.nasa.jpl.mbee.mdk.json.JacksonUtils;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.mms.actions.GenerateViewPresentationAction;
 import gov.nasa.jpl.mbee.mdk.tickets.BasicAuthAcquireTicketProcessor;
-import gov.nasa.jpl.mbee.mdk.util.TicketUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
+
 import java.util.Collections;
-import java.util.LinkedList;
 
 /**
  * This class exposes MDK operations for use in external programs.

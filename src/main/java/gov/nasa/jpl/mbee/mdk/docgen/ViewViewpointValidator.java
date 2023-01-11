@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.docgen;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.ActivityEdge;
@@ -17,6 +17,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.BehavioredClassifier;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.Constraint;
@@ -79,10 +80,9 @@ public class ViewViewpointValidator implements Runnable {
         this.elements = elements;
         this.project = project;
         this.recurse = recurse;
-
-        viewStereotype = Utils.getViewStereotype(project);
-        conformStereotype = Utils.getConformStereotype(project);
-        exposeStereotype = Utils.getExposeStereotype(project);
+        viewStereotype = SysMLProfile.getInstanceByProject(project).view().getStereotype();
+        conformStereotype = SysMLProfile.getInstanceByProject(project).conform().getStereotype();
+        exposeStereotype = SysMLProfile.getInstanceByProject(project).expose().getStereotype();
 
         visited = new HashSet<>();
         activityEdgeFactory = new ActivityEdgeFactory();
@@ -376,12 +376,12 @@ public class ViewViewpointValidator implements Runnable {
         for (Element constraintElement : constraintElements) {
             List<Object> separatelyConstrained = Utils2.newList();
             boolean isVpConstraint = BasicConstraint.elementIsViewpointConstraint(constraintElement);
-            boolean isExpressionChoosable = StereotypesHelper.hasStereotypeOrDerived(constraintElement, DocGenProfile.expressionChoosable);
+            boolean isExpressionChoosable = SysMLExtensions.getInstance(constraintElement).expressionChoosable().is(constraintElement);
             // if ( isVpConstraint) {
 
             Element vpConstraint = constraintElement;
             // contexts = vpcAlternativeContexts;
-            if (!isExpressionChoosable || BasicConstraint.iterateViewpointConstrraint(vpConstraint)) {
+            if (!isExpressionChoosable || BasicConstraint.iterateViewpointConstraint(vpConstraint)) {
                 separatelyConstrained.addAll(targets);
             }
             else {

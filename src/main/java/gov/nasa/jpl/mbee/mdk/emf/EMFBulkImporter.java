@@ -29,7 +29,6 @@ import java.util.function.BiFunction;
 /**
  * Created by igomes on 9/28/16.
  */
-// TODO What about locks? @donbot
 public class EMFBulkImporter implements BulkImportFunction {
     private final String sessionName;
     private int sessionCount;

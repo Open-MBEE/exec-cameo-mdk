@@ -1,18 +1,15 @@
 package gov.nasa.jpl.mbee.mdk.util;
 
-import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
-import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
+import com.nomagic.uml2.ext.jmi.helpers.TagsHelper;
 import com.nomagic.uml2.ext.magicdraw.actions.mdbasicactions.CallBehaviorAction;
 import com.nomagic.uml2.ext.magicdraw.activities.mdbasicactivities.InitialNode;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.Behavior;
-import com.nomagic.uml2.ext.magicdraw.mdprofiles.Profile;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
-import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.model.Document;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.DocumentMeta;
 import gov.nasa.jpl.mbee.mdk.model.docmeta.Person;
@@ -46,31 +43,32 @@ public class GeneratorUtils {
         return null;
     }
 
-    public static Object getStereotypePropertyFirst(Element element, String stereotypeName, String propertyName, String profileName, Object defaultValue) {
-        Collection<?> values = getStereotypePropertyValue(element, stereotypeName, propertyName, profileName, Collections.emptyList());
+    public static Object getStereotypePropertyFirst(Element element, Property property, Object defaultValue) {
+        Collection<?> values = getStereotypePropertyValue(element, property, Collections.emptyList());
         return !values.isEmpty() ? values.iterator().next() : defaultValue;
     }
 
-    public static List<?> getStereotypePropertyValue(Element element, String stereotypeName, String propertyName, String profileName, List<?> defaultValue) {
-        Project project = Project.getProject(element);
-        Profile profile = StereotypesHelper.getProfile(project, profileName);
-        Stereotype stereotype = StereotypesHelper.getStereotype(project, stereotypeName, profile);
-        List<?> value = StereotypesHelper.getStereotypePropertyValue(element, stereotype, propertyName);
+    public static List<?> getStereotypePropertyValue(Element element, Property property, List<?> defaultValue) {
+        TaggedValue value = TagsHelper.getTaggedValue(element, property);
+        List<?> values = value == null ? Collections.emptyList() : value.getValue();
         Behavior behavior;
-        if (value.isEmpty() && element instanceof CallBehaviorAction && (behavior = ((CallBehaviorAction) element).getBehavior()) != null) {
-            value = StereotypesHelper.getStereotypePropertyValue(behavior, stereotype, propertyName);
+        if (values.isEmpty() && element instanceof CallBehaviorAction && (behavior = ((CallBehaviorAction) element).getBehavior()) != null) {
+            value = TagsHelper.getTaggedValue(behavior, property);
+            if (value != null) {
+                values = value.getValue();
+            }
         }
-        if (value.isEmpty()) {
-            value = defaultValue;
+        if (values.isEmpty()) {
+            values = defaultValue;
         }
-        return value;
+        return values;
     }
 
-    public static boolean hasStereotypeByString(Element e, String stereotype) {
-        return hasStereotypeByString(e, stereotype, false);
+    public static boolean hasStereotype(Element e, Stereotype stereotype) {
+        return hasStereotype(e, stereotype, false);
     }
 
-    public static boolean hasStereotypeByString(Element e, String stereotype, boolean derived) {
+    public static boolean hasStereotype(Element e, Stereotype stereotype, boolean derived) {
         Behavior a = null;
         if (e instanceof CallBehaviorAction) {
             a = ((CallBehaviorAction) e).getBehavior();
@@ -80,8 +78,7 @@ public class GeneratorUtils {
                     || (a != null && StereotypesHelper.hasStereotype(a, stereotype))) {
                 return true;
             }
-        }
-        else {
+        } else {
             if (StereotypesHelper.hasStereotypeOrDerived(e, stereotype)
                     || (a != null && StereotypesHelper.hasStereotypeOrDerived(a, stereotype))) {
                 return true;
@@ -93,138 +90,76 @@ public class GeneratorUtils {
     public static void docMetadata(Document doc, Element start) {
         DocumentMeta meta = new DocumentMeta();
         doc.setMetadata(meta);
-
-        Stereotype documentView = StereotypesHelper.getStereotype(Application.getInstance().getProject(),
-                DocGenProfile.documentViewStereotype);
+        SysMLExtensions profile = SysMLExtensions.getInstance(start);
+        SysMLExtensions.ProductStereotype product = profile.product();
+        SysMLExtensions.DocumentMetaStereotype m = profile.documentMeta();
         // documentMeta Backwards Compatibility
-        String title = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "title");
-        String subtitle = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "subtitle");
-        String header = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "header");
-        String footer = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "footer");
-        String legalNotice = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "legalNotice");
-        String acknowledgements = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "acknowledgement");
-        Object chunkFirstSectionsO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "chunkFirstSections");
-        Diagram coverImage = (Diagram) StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "coverImage");
-        boolean chunkFirstSections = !(chunkFirstSectionsO instanceof Boolean && !(Boolean) chunkFirstSectionsO || chunkFirstSectionsO instanceof String
-                && chunkFirstSectionsO.equals("false"));
-        Object indexO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "index");
-        boolean index = (indexO instanceof Boolean && (Boolean) indexO || indexO instanceof String
-                && indexO.equals("true"));
-        Object tocSectionDepthO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "tocSectionDepth");
+        String title = m.getTitle(start);
+        String subtitle = m.getSubtitle(start);
+        List<String> header = m.getHeader(start);
+        List<String> footer = m.getFooter(start);
+        String legalNotice = m.getLegalNotice(start);
+        String acknowledgements = m.getAcknowledgements(start);
+        Boolean chunkFirstSectionsO = m.isChunkFirstSections(start);
+        Diagram coverImage = (Diagram) m.getCoverImage(start);
+        boolean chunkFirstSections = !(chunkFirstSectionsO instanceof Boolean && !(Boolean) chunkFirstSectionsO);
+        Boolean indexO = m.isIndex(start);
+        boolean index = (indexO instanceof Boolean && (Boolean) indexO);
+        Integer tocSectionDepthO = m.getTocSectionDepth(start);
         Integer tocSectionDepth = 20;
         if (tocSectionDepthO != null && tocSectionDepthO instanceof Integer && (Integer) tocSectionDepthO > 0) {
             tocSectionDepth = (Integer) tocSectionDepthO;
         }
-        if (tocSectionDepthO != null && tocSectionDepthO instanceof String) {
-            tocSectionDepth = Integer.parseInt((String) tocSectionDepthO);
-        }
-        Object chunkSectionDepthO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "chunkSectionDepth");
+        Integer chunkSectionDepthO = m.getChunkSectionDepth(start);
         Integer chunkSectionDepth = 20;
         if (chunkSectionDepthO != null && chunkSectionDepthO instanceof Integer
                 && (Integer) chunkSectionDepthO > 0) {
             chunkSectionDepth = (Integer) chunkSectionDepthO;
         }
-        if (chunkSectionDepthO != null && chunkSectionDepthO instanceof String) {
-            chunkSectionDepth = Integer.parseInt((String) chunkSectionDepthO);
-        }
 
         // Document View Settings
-        String DocumentID = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Document ID");
-        String DocumentVersion = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Version");
-        String LogoAlignment = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Logo Alignment");
-        String LogoLocation = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Logo Location");
-        String AbbreviatedProjectName = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                documentView, "Project Acronym");
-        String DocushareLink = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Docushare Link");
-        String AbbreiviatedTitle = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Document Acronym");
-        String TitlePageLegalNotice = (String) StereotypesHelper.getStereotypePropertyFirst(start,
-                documentView, "Title Page Legal Notice");
-        String FooterLegalNotice = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Footer Legal Notice");
-        String RemoveBlankPages = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Remove Blank Pages");
+        String LogoAlignment = product.getLogoAlignment(start);
+        String LogoLocation = product.getLogoLocation(start);
+        String AbbreviatedProjectName = product.getProjectAcronym(start);
 
-        List<String> CollaboratorEmail = StereotypesHelper.getStereotypePropertyValueAsString(start,
-                documentView, "Collaborator Email");
-        List<String> RevisionHistory = StereotypesHelper.getStereotypePropertyValueAsString(start,
-                documentView, "Revision History");
-        String JPLProjectTitle = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Formal Project Title");
+        String AbbreiviatedTitle = product.getDocumentAcronym(start);
+        String TitlePageLegalNotice = product.getTitlePageLegalNotice(start);
+        String FooterLegalNotice = product.getFooterLegalNotice(start);
+        Boolean RemoveBlankPages = product.isRemoveBlankPages(start);
 
-        String LogoSize = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Logo Size");
-        Object UseDefaultStylesheetO = StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "SupressMetadata");
+        List<String> CollaboratorEmail = product.getCollaboratorEmail(start);
+        List<String> RevisionHistory = product.getRevisionHistory(start);
+        String JPLProjectTitle = product.getFormalProjectTitle(start);
+
+        String LogoSize = product.getLogoSize(start);
+        Boolean UseDefaultStylesheetO = product.isSupressMetadata(start);
         boolean UseDefaultStylesheet = !(UseDefaultStylesheetO instanceof Boolean
-                && !(Boolean) UseDefaultStylesheetO || UseDefaultStylesheetO instanceof String
-                && UseDefaultStylesheetO.equals("false"));
+                && !(Boolean) UseDefaultStylesheetO);
 
-        Object genO = StereotypesHelper.getStereotypePropertyFirst(start,
-                DocGenProfile.documentMetaStereotype, "genNewImages");
-        boolean gen = (genO instanceof Boolean && (Boolean) genO || genO instanceof String
-                && genO.equals("true"));
+        Boolean genO = product.isGenNewImages(start);
+        boolean gen = (genO instanceof Boolean && genO);
 
         if (title == null || title.isEmpty()) {
             title = ((NamedElement) start).getName();
         }
 
-        if (FooterLegalNotice == null || FooterLegalNotice.isEmpty()) {
-            Property propertyByName = StereotypesHelper
-                    .getPropertyByName(documentView, "Footer Legal Notice");
-            if (propertyByName != null) {
-                FooterLegalNotice = UML2ModelUtil.getDefault(propertyByName);
-            }
-        }
-        if (TitlePageLegalNotice == null || TitlePageLegalNotice.isEmpty()) {
-            Property propertyByName = StereotypesHelper.getPropertyByName(documentView,
-                    "Title Page Legal Notice");
-            if (propertyByName != null) {
-                TitlePageLegalNotice = UML2ModelUtil.getDefault(propertyByName);
-            }
-
-        }
-
         // Institutional Logo setup
-        String instLogo = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "InstLogo");
-        String instLogoSize = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "InstLogoSize");
-        String instTxt1 = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Insttxt1");
-        String instTxt2 = (String) StereotypesHelper.getStereotypePropertyFirst(start, documentView,
-                "Insttxt2");
+        String instLogo = product.getInstLogo(start);
+        String instLogoSize = product.getInstLogoSize(start);
+        String instTxt1 = product.getInsttxt1(start);
+        String instTxt2 = product.getInsttxt2(start);
 
         // Collect author information
-        List<String> Author = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView,
-                "Author");
+        List<String> Author = product.getAuthor(start);
         // Collect approver information
-        List<String> Approver = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView,
-                "Approver");
+        List<String> Approver = product.getApprover(start);
         // Collect concurrence information
-        List<String> Concurrence = StereotypesHelper.getStereotypePropertyValueAsString(start, documentView,
-                "Concurrence");
+        List<String> Concurrence = product.getConcurrence(start);
 
         doc.setChunkFirstSections(chunkFirstSections);
         doc.setChunkSectionDepth(chunkSectionDepth);
-        doc.setFooter(footer);
-        doc.setHeader(header);
+        doc.setFooter(footer.size() == 0 ? null : footer.get(0));
+        doc.setHeader(header.size() == 0 ? null : header.get(0));
         doc.setTitle(title);
         doc.setTocSectionDepth(tocSectionDepth);
 
@@ -243,21 +178,18 @@ public class GeneratorUtils {
         meta.setChunkSectionDepth(chunkSectionDepth);
         meta.setChunkFirstSections(chunkFirstSections);
         meta.setCoverImage(coverImage);
-        meta.setFooter(footer);
-        meta.setHeader(header);
+        meta.setFooter(footer.size() == 0 ? null : footer.get(0));
+        meta.setHeader(header.size() == 0 ? null : header.get(0));
         meta.setTitlePageLegalNotice(legalNotice);
         meta.setIndex(index);
         meta.setSubtitle(subtitle);
         meta.setTitle(title);
         meta.setTocSectionDepth(tocSectionDepth);
-        meta.setDocumentId(DocumentID);
-        meta.setVersion(DocumentVersion);
         meta.setLogoAlignment(LogoAlignment);
         meta.setLogoLink(LogoLocation);
         meta.setProjectAcronym(AbbreviatedProjectName);
         meta.setDocumentAcronym(AbbreiviatedTitle);
         meta.setTitlePageLegalNotice(TitlePageLegalNotice);
-        meta.setLink(DocushareLink);
         meta.setFooterLegalNotice(FooterLegalNotice);
         meta.setProjectTitle(JPLProjectTitle);
         meta.setUseDefaultStyleSheet(UseDefaultStylesheet);
@@ -311,25 +243,9 @@ public class GeneratorUtils {
         return rs;
     }
 
-    public static Stereotype getViewpointStereotype(Project project) {
-        Profile profile = StereotypesHelper.getAllProfiles(project).stream().filter
-                ( x -> MDKConstants.SYSML_PROFILE_ID.equals(Converters.getElementToIdConverter().apply(x)))
-                .findAny()
-                .orElse(null);
-        if (profile == null) {
-            return null;
-        }
-        return StereotypesHelper.getStereotype(project, "Viewpoint", profile);
-    }
-
     public static Behavior getViewpointMethod(Classifier viewpoint, Project project) {
-
-        Stereotype viewpointStereotype = GeneratorUtils.getViewpointStereotype(project);
-        if (viewpointStereotype == null) {
-            return null;
-        }
-        List<?> methods = StereotypesHelper.getStereotypePropertyValue(viewpoint, GeneratorUtils.getViewpointStereotype(project), "method");
-        if (methods.isEmpty()) {
+        List<?> methods = SysMLProfile.getInstanceByProject(project).viewpoint().getMethod(viewpoint);
+        if (methods == null || methods.isEmpty()) {
             return null;
         }
         if (!(methods.get(0) instanceof Behavior)) {
@@ -337,6 +253,4 @@ public class GeneratorUtils {
         }
         return (Behavior) methods.get(0);
     }
-
-
 }

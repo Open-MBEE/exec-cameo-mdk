@@ -2,8 +2,8 @@ package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
@@ -27,7 +27,9 @@ public class TemporalDiff extends Table {
 
     @Override
     public void initialize() {
-        Object attr = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.attributeChoosable, "desiredAttribute", DocGenProfile.PROFILE_NAME, null);
+        super.initialize();
+        SysMLExtensions.TemporalDiffStereotype s = profile.temporalDiff();
+        Object attr = GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getDesiredAttributeProperty(), null);
         AvailableAttribute attributeToCompare;
         if (attr instanceof EnumerationLiteral) {
             attributeToCompare = Utils.AvailableAttribute.valueOf(((EnumerationLiteral) attr).getName());
@@ -44,10 +46,10 @@ public class TemporalDiff extends Table {
         else {
             tagAttr = "val";
         }
-        baseRefId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "baseRefId", DocGenProfile.PROFILE_NAME, null);
-        baseCommitId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "baseCommitId", DocGenProfile.PROFILE_NAME, null);
-        compareRefId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "compareRefId", DocGenProfile.PROFILE_NAME, null);
-        compareCommitId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.temporalDiffStereotype, "compareCommitId", DocGenProfile.PROFILE_NAME, "latest");
+        baseRefId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getBaseRefIdProperty(), null);
+        baseCommitId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getBaseCommitIdProperty(), null);
+        compareRefId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getCompareRefIdProperty(), null);
+        compareCommitId = (String) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getCompareCommitIdProperty(), "latest");
     }
 
     @Override

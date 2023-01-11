@@ -1,10 +1,9 @@
 package gov.nasa.jpl.mbee.mdk.constraint;
 
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Comment;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.DocGenUtils;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.util.*;
@@ -40,20 +39,16 @@ public class BasicConstraint implements Constraint {
         addConstrainedObjects(constrained);
     }
 
-    public static boolean iterateViewpointConstrraint(Element vpConstraint) {
+    public static boolean iterateViewpointConstraint(Element vpConstraint) {
         Boolean iterate = (Boolean) GeneratorUtils.getStereotypePropertyFirst(vpConstraint,
-                DocGenProfile.viewpointConstraintStereotype, "iterate", DocGenProfile.PROFILE_NAME, true);
-        // Boolean iterate = getBooleanPropertyValue( vpConstraint,
-        // DocGenProfile.expressionChoosable, "iterate" );
-        boolean result = !Boolean.FALSE.equals(iterate);
-        return result;
+                SysMLExtensions.getInstance(vpConstraint).viewpointConstraint().getIterateProperty(),true);
+        return !Boolean.FALSE.equals(iterate);
     }
 
-    public static boolean reportedViewpointConstrraint(Element vpConstraint) {
+    public static boolean reportedViewpointConstraint(Element vpConstraint) {
         Boolean report = (Boolean) GeneratorUtils.getStereotypePropertyFirst(vpConstraint,
-                DocGenProfile.viewpointConstraintStereotype, "validationReport", DocGenProfile.PROFILE_NAME, false);
-        boolean result = Boolean.TRUE.equals(report);
-        return result;
+                SysMLExtensions.getInstance(vpConstraint).viewpointConstraint().getValidationReportProperty(), false);
+        return Boolean.TRUE.equals(report);
     }
 
     /**
@@ -170,7 +165,7 @@ public class BasicConstraint implements Constraint {
         }
         constrainingElements.add(constrainingElement);
         if (!reported && elementIsViewpointConstraint(constrainingElement)) {
-            setReported(reportedViewpointConstrraint(constrainingElement));
+            setReported(reportedViewpointConstraint(constrainingElement));
         }
     }
 
@@ -352,9 +347,9 @@ public class BasicConstraint implements Constraint {
             if (elementIsUmlConstraint(e)) {
                 expr = DocGenUtils.fixString(asUmlConstraint(e).getSpecification());
             }
-            else if (GeneratorUtils.hasStereotypeByString(e, DocGenProfile.constraintStereotype, true)) {
-                Object v = GeneratorUtils.getStereotypePropertyFirst(e, DocGenProfile.constraintStereotype,
-                        "expression", DocGenProfile.PROFILE_NAME, null);
+            else if (GeneratorUtils.hasStereotype(e, SysMLExtensions.getInstance(e).constraint().getStereotype(), true)) {
+                Object v = GeneratorUtils.getStereotypePropertyFirst(e,
+                        SysMLExtensions.getInstance(e).constraint().getExpressionProperty(), null);
                 expr = v.toString();
             }
         }
@@ -368,8 +363,7 @@ public class BasicConstraint implements Constraint {
      * Create a BasicConstraint on one of two Elements or Collections.
      *
      * @param constraintElement the model element representing the constraint
-     * @param constrained1      the first candidate to be constrained
-     * @param constrained2      the second candidate to be constrained
+
      * @return a BasicConstraint on the first candidate if the evaluation works
      * or the evaluation does not work with the second candidate;
      * otherwise return a BasicConstraint on the second candidate.
@@ -651,14 +645,14 @@ public class BasicConstraint implements Constraint {
         if (elem == null) {
             return false;
         }
-        return StereotypesHelper.hasStereotypeOrDerived(elem, DocGenProfile.constraintStereotype);
+        return SysMLExtensions.getInstance(elem).constraint().is(elem);
     }
 
     public static boolean elementIsViewpointConstraint(Element elem) {
         if (elem == null) {
             return false;
         }
-        return StereotypesHelper.hasStereotypeOrDerived(elem, DocGenProfile.viewpointConstraintStereotype);
+        return SysMLExtensions.getInstance(elem).viewpointConstraint().is(elem);
     }
 
     public static boolean elementIsConstraint(Element elem) {

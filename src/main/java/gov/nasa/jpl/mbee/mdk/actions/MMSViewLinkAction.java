@@ -3,16 +3,16 @@ package gov.nasa.jpl.mbee.mdk.actions;
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.mms.MMSUtils;
 import gov.nasa.jpl.mbee.mdk.options.MDKProjectOptions;
 import gov.nasa.jpl.mbee.mdk.ui.ViewEditorLinkForm;
 import gov.nasa.jpl.mbee.mdk.util.MDUtils;
-import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.swing.*;
@@ -41,8 +41,8 @@ public class MMSViewLinkAction extends MDAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Stereotype documentStereotype = Utils.getDocumentStereotype(project);
-        Stereotype viewStereotype = Utils.getViewStereotype(project);
+        Stereotype documentStereotype = SysMLExtensions.getInstanceByProject(project).document().getStereotype();
+        Stereotype viewStereotype = SysMLProfile.getInstanceByProject(project).view().getStereotype();
 
         for (Element element : targetElements) {
             if (!StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)

@@ -9,7 +9,6 @@ import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.ProjectUtilitiesInternal;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.sysml.util.SysMLProfile;
-import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
@@ -17,6 +16,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.MDKConstants;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
@@ -36,8 +36,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+
 
 public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     @Override
@@ -228,7 +227,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         IS_GROUP(
                 (element, project, objectNode) -> {
                     if (element instanceof Package) {
-                        objectNode.put(MDKConstants.IS_GROUP_KEY, StereotypesHelper.getStereotypes(element).stream().anyMatch(stereotype -> "_18_5_3_8bf0285_1520469040211_2821_15754".equals(stereotype.getLocalID())));
+                        objectNode.put(MDKConstants.IS_GROUP_KEY, SysMLExtensions.getInstance(element).group().is(element));
                     }
                     return objectNode;
                 },
@@ -273,7 +272,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         VIEW(
                 (element, project, objectNode) -> {
-                    Stereotype viewStereotype = Utils.getViewStereotype(project);
+                    Stereotype viewStereotype = SysMLProfile.getInstance(element).view().getStereotype();
                     if (viewStereotype == null || !StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
                         return objectNode;
                     }
@@ -545,9 +544,8 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 (element, project, eStructuralFeature, objectNode) -> eStructuralFeature == UMLPackage.Literals.CONNECTOR__END,
                 (element, project, eStructuralFeature, objectNode) -> {
                     Connector connector = (Connector) element;
-                    // TODO Stop using Strings @donbot
                     List<List<Object>> propertyPaths = connector.getEnd().stream()
-                            .map(connectorEnd -> StereotypesHelper.hasStereotype(connectorEnd, SysMLProfile.NESTEDCONNECTOREND_STEREOTYPE) ? StereotypesHelper.getStereotypePropertyValue(connectorEnd, SysMLProfile.NESTEDCONNECTOREND_STEREOTYPE, SysMLProfile.ELEMENTPROPERTYPATH_PROPERTYPATH_PROPERTY) : null)
+                            .map(connectorEnd -> SysMLProfile.NestedConnectorEndStereotype.isInstance(connectorEnd) ? SysMLProfile.getInstance(connector).nestedConnectorEnd().getPropertyPath(connector) : null)
                             .map(elements -> {
                                 if (elements == null) {
                                     return new ArrayList<>(1);

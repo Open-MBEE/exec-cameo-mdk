@@ -19,11 +19,9 @@ import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.validation.RuleViolationResult;
 import com.nomagic.magicdraw.validation.ValidationHelper;
 import com.nomagic.magicdraw.validation.ValidationRunData;
-import com.nomagic.magicdraw.validation.ui.ValidationResultsWindowManager;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.jmi.helpers.TagsHelper;
-import com.nomagic.uml2.ext.magicdraw.classes.mddependencies.Dependency;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
@@ -41,11 +39,9 @@ import gov.nasa.jpl.mbee.mdk.generator.CollectFilterParser;
 import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
-import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation;
-import gov.nasa.jpl.mbee.mdk.ocl.GetCallOperation.CallReturnType;
+
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.validation.*;
-import org.apache.log4j.Logger;
 
 import javax.annotation.CheckForNull;
 import javax.swing.*;
@@ -784,31 +780,6 @@ public class Utils {
     }
 
     /**
-     * @param e
-     * @param stereotype
-     * @param direction  direction 0 means both, 1 means e is the client, 2 means e is
-     *                   the supplier
-     * @param derived
-     * @param depth      collect to what level of depth - 0 is infinite
-     * @return
-     */
-    public static List<Element> collectDirectedRelatedElementsByRelationshipStereotypeString(Element e, String stereotype, int direction, boolean derived, int depth) {
-        Project project = Project.getProject(e);
-        if (e == null) {
-            return Utils2.newList();
-        }
-        if (direction < 0 || direction > 2) {
-            badDirectionError(direction, "collectDirectedRelatedElementsByRelationshipStereotype()");
-            direction = 0;
-        }
-        Stereotype s = StereotypesHelper.getStereotype(project, stereotype);
-        if (s != null) {
-            return collectDirectedRelatedElementsByRelationshipStereotype(e, s, direction, derived, depth);
-        }
-        return Utils2.newList();
-    }
-
-    /**
      * depending on includeInherited flag, gets all the attributes of e based on
      * redefinition (if e is not a classifier it'll be ignored) if
      * includeInherited is false, will get the owned attributes of the
@@ -1284,47 +1255,6 @@ public class Utils {
         }
         Utils2.put(nameOrIdSearchOwnerCache, owner, pattern, results);
         return results;
-    }
-
-    public static Stereotype getConformStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420728091_674481_152");
-    }
-
-    public static Stereotype getExposeStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_5beta_17530432_1382587480303_325976_12505");
-    }
-
-    public static Stereotype getElementGroupStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_5beta_17530432_1382588727729_600191_12925");
-    }
-
-    public static Stereotype getViewStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420760998_43940_227");
-    }
-
-    public static Stereotype getViewpointStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_11_5EAPbeta_be00301_1147420812402_281263_364");
-    }
-
-    public static Stereotype getCharacterizesStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_5_1_8660276_1407362513794_939259_26181");
-    }
-
-    public static Stereotype getDocumentStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_87b0275_1371477871400_792964_43374");
-    }
-
-    public static Stereotype getProductStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_1_407019f_1326996604350_494231_11646");
-    }
-
-    public static Stereotype getExpressionStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_2_3_e9f034d_1382549095816_841656_29288");
-    }
-
-    @Deprecated
-    public static Stereotype getViewClassStereotype(Project project) {
-        return (Stereotype) project.getElementByID("_17_0_1_232f03dc_1325612611695_581988_21583");
     }
 
     public static Property getGeneratedFromViewProperty(Project project) {

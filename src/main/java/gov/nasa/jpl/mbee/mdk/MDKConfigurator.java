@@ -6,6 +6,7 @@ import com.nomagic.actions.ActionsManager;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.actions.*;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.ui.browser.Tree;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
@@ -17,7 +18,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import gov.nasa.jpl.mbee.mdk.actions.*;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.ValidateAllViewsAction;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.ValidateViewAction;
 import gov.nasa.jpl.mbee.mdk.docgen.actions.PreviewDocumentAction;
@@ -113,11 +113,11 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         if (project == null) {
             return;
         }
-        Stereotype viewStereotype = Utils.getViewStereotype(project);
-        Stereotype sysmlviewpoint = Utils.getViewpointStereotype(project);
-        Stereotype documentView = Utils.getProductStereotype(project);
-        Stereotype classview = Utils.getViewClassStereotype(project);
-        Stereotype elementGroupStereotype = Utils.getElementGroupStereotype(project);
+        SysMLProfile sysml = SysMLProfile.getInstance(e);
+        SysMLExtensions profile = SysMLExtensions.getInstance(e);
+        Stereotype viewStereotype = sysml.view().getStereotype();
+        Stereotype sysmlviewpoint = sysml.viewpoint().getStereotype();
+        Stereotype elementGroupStereotype = sysml.elementGroup().getStereotype();
 
         ActionsCategory modelLoad = myCategory(manager, "MMSContext", "MMS");
         if (!TicketUtils.isTicketSet(project)) {
@@ -149,23 +149,23 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
 
         // add menus in reverse order since they are inserted at top
         // View Interaction menu
-        if (StereotypesHelper.hasStereotypeOrDerived(e, DocGenProfile.validationScriptStereotype)) {
+        if (StereotypesHelper.hasStereotypeOrDerived(e, profile.validationScript().getStereotype())) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
             us.setDgElement(e);
-            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGenProfile.queriesStereotype, 1, false, 1);
+            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotype(e,
+                    SysMLProfile.getInstance(e).expose().getStereotype(), 1, true, 1);
             us.setTargets(Utils2.asList(targets, Object.class));
             if (manager.getActionFor(RunUserValidationScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserValidationScriptAction(us, true));
             }
         }
-        else if (StereotypesHelper.hasStereotypeOrDerived(e, DocGenProfile.userScriptStereotype)) {
+        else if (StereotypesHelper.hasStereotypeOrDerived(e, profile.userScript().getStereotype())) {
             ActionsCategory c = myCategory(manager, "ViewInteraction", "View Interaction");
             UserScript us = new UserScript();
             us.setDgElement(e);
-            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotypeString(e,
-                    DocGenProfile.queriesStereotype, 1, false, 1);
+            List<Element> targets = Utils.collectDirectedRelatedElementsByRelationshipStereotype(e,
+                    SysMLProfile.getInstance(e).expose().getStereotype(), 1, true, 1);
             us.setTargets(Utils2.asList(targets, Object.class));
             if (manager.getActionFor(RunUserScriptAction.DEFAULT_ID) == null) {
                 c.addAction(new RunUserScriptAction(us, true));
@@ -183,8 +183,8 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             // to avoid adding an empty menu category, so the category is
             // removed in this case.
             // Not worth implementing multi-selection for this legacy feature. Would require refactoring and testing.
-            if (classview != null && es.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(e, viewStereotype)) {
-                Boolean collectActions = (Boolean) StereotypesHelper.getStereotypePropertyFirst(e, classview, "collectViewActions");
+            if (es.size() == 1 && StereotypesHelper.hasStereotypeOrDerived(e, profile.view().getStereotype())) {
+                Boolean collectActions = (Boolean) StereotypesHelper.getStereotypePropertyFirst(e, profile.view().getCollectViewActionsProperty());
                 if (collectActions != null && collectActions) {
                     ActionsCategory category = (ActionsCategory) manager.getActionFor("ViewInteraction");
                     if (category == null) {
@@ -208,7 +208,7 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
             if (action == null) {
                 viewInstances.addAction(new GenerateViewPresentationAction(new LinkedHashSet<>(es), true));
             }
-            
+
             if (MDKProjectOptions.getMbeeEnabled(project)) {
                 ActionsCategory tracingCategory = manager.getCategory("TRACING_CATEGORY");
                 if (tracingCategory != null) {

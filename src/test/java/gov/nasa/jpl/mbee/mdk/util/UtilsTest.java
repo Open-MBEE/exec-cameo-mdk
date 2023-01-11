@@ -52,87 +52,9 @@ public class UtilsTest {
 
     /********************************************** Direct Stereotype Utils **********************************************/
 
-    @Test
-    public void _utils_getConformsStereotype() {
-        BaseElement test = Utils.getConformStereotype(project);
-        Assert.assertNotNull(test);
-        System.out.println(((Stereotype)test).getName());
-        Assert.assertTrue(((Stereotype)test).getName().equals("Conform"));
-    }
 
-    @Test
-    public void _utils_getExposeStereotype() {
-        BaseElement test = Utils.getExposeStereotype(project);
-        Assert.assertNotNull(test);
-        System.out.println(((Stereotype)test).getName());
-        Assert.assertTrue(((Stereotype)test).getName().equals("Expose"));
-    }
 
-    @Test
-    public void _utils_getElementGroupStereotype() {
-        BaseElement test = Utils.getElementGroupStereotype(project);
-        Assert.assertNotNull(test);
-        System.out.println(((Stereotype)test).getName());
-        Assert.assertTrue(((Stereotype)test).getName().equals("ElementGroup"));
-    }
 
-    @Test
-    public void _utils_getViewStereotype() {
-        BaseElement test = Utils.getViewStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("View"));
-    }
-
-    @Test
-    public void _utils_getViewpointStereotype() {
-        BaseElement test = Utils.getViewpointStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Viewpoint"));
-    }
-
-    @Test
-    public void _utils_getCharacterizesStereotype() {
-        BaseElement test = Utils.getCharacterizesStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("characterizes"));
-    }
-
-    @Test
-    public void _utils_getDocumentStereotype() {
-        BaseElement test = Utils.getDocumentStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Document"));
-    }
-
-    @Test
-    public void _utils_getProductStereotype() {
-        BaseElement test = Utils.getProductStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("Product"));
-    }
-
-    @Test
-    public void _utils_getViewClassStereotype() {
-        BaseElement test = Utils.getViewClassStereotype(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Stereotype)test).getName().equals("view"));
-    }
-
-    /********************************************** Direct Property Utils **********************************************/
-
-    @Test
-    public void _utils_getGeneratedFromViewProperty() {
-        BaseElement test = Utils.getGeneratedFromViewProperty(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Property)test).getName().equals("generatedFromView"));
-    }
-
-    @Test
-    public void _utils_getGeneratedFromElementProperty() {
-        BaseElement test = Utils.getGeneratedFromElementProperty(project);
-        Assert.assertNotNull(test);
-        Assert.assertTrue(((Property)test).getName().equals("generatedFromElement"));
-    }
 
     @AfterClass
     public static void closeProject() throws IOException {

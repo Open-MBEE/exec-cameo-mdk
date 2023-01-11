@@ -4,7 +4,7 @@ import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
@@ -55,19 +55,21 @@ public class BulletedList extends Table {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
+        super.initialize();
+        SysMLExtensions.BulletedListStereotype s = profile.bulletedList();
         Boolean showTargets = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
-                DocGenProfile.bulletedListStereotype, "showTargets", DocGenProfile.PROFILE_NAME, false);
+                s.getShowTargetsProperty(), false);
         Boolean showSPN = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
-                DocGenProfile.bulletedListStereotype, "showStereotypePropertyNames", DocGenProfile.PROFILE_NAME, false);
+                s.getShowStereotypePropertyNamesProperty(), false);
         Boolean ordered = (Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
-                DocGenProfile.bulletedListStereotype, "orderedList", DocGenProfile.PROFILE_NAME, false);
+                s.getOrderedListProperty(), false);
         setShowTargets(showTargets);
         setShowStereotypePropertyNames(showSPN);
         setOrderedList(ordered);
         setIncludeDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
-                DocGenProfile.documentationChoosable, "includeDoc", DocGenProfile.PROFILE_NAME, false));
-        setStereotypeProperties((List<Property>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.stereotypePropertyChoosable,
-                        "stereotypeProperties", DocGenProfile.PROFILE_NAME, new ArrayList<Property>()));
+                s.getIncludeDocProperty(), false));
+        setStereotypeProperties((List<Property>) GeneratorUtils.getStereotypePropertyValue(dgElement,
+                s.getStereotypePropertiesProperty(), new ArrayList<Property>()));
     }
 
     @Override

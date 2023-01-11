@@ -1,6 +1,8 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.magicdraw.actions.MDAction;
+import com.nomagic.magicdraw.core.Application;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.generator.Generatable;
 
@@ -57,7 +59,9 @@ public abstract class Query extends DocGenElement implements Generatable {
      */
     @Override
     public void initialize() {
-
+        if (profile == null) {
+            profile = SysMLExtensions.getInstanceByProject(Application.getInstance().getProject());
+        }
     }
 
     /**

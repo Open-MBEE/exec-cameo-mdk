@@ -3,7 +3,6 @@ package gov.nasa.jpl.mbee.mdk.model;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBImage;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
@@ -91,7 +90,7 @@ public class Image extends Query {
 
                     String doc = ModelHelper.getComment(diagram);
                     if (doc != null && (forViewEditor || (!doc.trim().isEmpty() && !getDoNotShow()))) {
-                        if ((Boolean) GeneratorUtils.getStereotypePropertyFirst(diagram, DocGenProfile.editableChoosable, "editable", DocGenProfile.PROFILE_NAME, true)) {
+                        if ((Boolean) GeneratorUtils.getStereotypePropertyFirst(diagram, profile.editableChoosable().getEditableProperty(), true)) {
                             res.add(new DBParagraph(doc, diagram, From.DOCUMENTATION));
                         }
                         else {
@@ -108,15 +107,15 @@ public class Image extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        // TODO Auto-generated method stub
+        super.initialize();
         setDoNotShow((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
-                DocGenProfile.imageStereotype, "doNotShow", DocGenProfile.PROFILE_NAME, false));
-        setCaptions((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.hasCaptions,
-                "captions", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
-        setShowCaptions((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.hasCaptions,
-                "showCaptions", DocGenProfile.PROFILE_NAME, true));
-        setExcludeFromList((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.hasCaptions,
-                "excludeFromList", DocGenProfile.PROFILE_NAME, false));
+                profile.image().getDoNotShowProperty(), false));
+        setCaptions((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement,
+                profile.hasCaptions().getCaptionsProperty(), new ArrayList<String>()));
+        setShowCaptions((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                profile.hasCaptions().getShowCaptionsProperty(), true));
+        setExcludeFromList((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                profile.hasCaptions().getExcludeFromListProperty(), false));
     }
 
 }

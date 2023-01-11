@@ -5,7 +5,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.EnumerationLiteral;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
 import gov.nasa.jpl.mbee.mdk.api.incubating.convert.Converters;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
 
@@ -18,7 +17,8 @@ public class TomSawyerDiagram extends Query {
 
     @Override
     public void initialize() {
-        Object o = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "diagramType", DocGenProfile.PROFILE_NAME, null);
+        super.initialize();
+        Object o = GeneratorUtils.getStereotypePropertyFirst(dgElement, profile.tomSawyerDiagram().getDiagramTypeProperty(), null);
         if (o instanceof String) {
             setDiagramType(DiagramType.valueOf(o.toString()));
         }
@@ -29,7 +29,7 @@ public class TomSawyerDiagram extends Query {
             Application.getInstance().getGUILog().log("[WARNING] No diagram type specified for " + Converters.getElementToHumanNameConverter().apply(dgElement) + ". Skipping diagram generation.");
             return;
         }
-        Object o2 = GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tomSawyerDiagramStereotype, "collectRelatedElements", DocGenProfile.PROFILE_NAME, false);
+        Object o2 = GeneratorUtils.getStereotypePropertyFirst(dgElement, profile.tomSawyerDiagram().getCollectRelatedElementsProperty(), false);
         if (o2 instanceof Boolean) {
             collectRelatedElements = (Boolean) o2;
         }

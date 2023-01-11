@@ -13,7 +13,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.*;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaProjectEventListenerAdapter;
 import gov.nasa.jpl.mbee.mdk.mms.sync.local.LocalDeltaTransactionCommitListener;
@@ -302,10 +301,10 @@ public class GenericTable extends Table {
     @Override
     public void initialize() {
         super.initialize();
-        setHeaders((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.headersChoosable,
-                "headers", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
-        setSkipIfNoDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.docSkippable,
-                "skipIfNoDoc", DocGenProfile.PROFILE_NAME, false));
+        setHeaders((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement,
+                profile.headersChoosable().getHeadersProperty(), new ArrayList<String>()));
+        setSkipIfNoDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
+                profile.documentationSkippable().getSkipIfNoDocProperty(), false));
     }
 
 }

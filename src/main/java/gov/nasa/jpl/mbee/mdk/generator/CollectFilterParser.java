@@ -14,7 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.activities.mdintermediateactivities.MergeN
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedEdgeVector;
 import gov.nasa.jpl.mbee.mdk.generator.graphs.DirectedGraphHashSet;
@@ -48,6 +48,11 @@ public class CollectFilterParser {
         return context == null ? null : context.getValidator();
     }
 
+    public static SysMLExtensions profile;
+
+    public static void setProfile(SysMLExtensions p) {
+        profile = p;
+    }
     /**
      * gets a graph of the collect/filter actions that starts from a, evaluates
      * and executes actions topologically and return result
@@ -89,9 +94,6 @@ public class CollectFilterParser {
             if (node.getNode() instanceof CallBehaviorAction) {
                 if (ins.size() == 1) {
                     res = collectAndFilter((CallBehaviorAction) node.getNode(), ins.iterator().next());
-                    /*System.out.println( "collectAndFilter(): returned (after removing duplicates) res["
-                            + res.size() + "]="
-                            + MoreToString.Helper.toLongString( res ) );*/
                     node.setResult(res);
                 }
                 else {
@@ -144,7 +146,7 @@ public class CollectFilterParser {
         graph.addVertex(source);
         for (ActivityEdge e : cur.getOutgoing()) {
             ActivityNode n = e.getTarget();
-            if (GeneratorUtils.hasStereotypeByString(n, DocGenProfile.collectFilterStereotype, true)) {
+            if (profile.collectOrFilter().is(n)) {
                 CollectFilterNode target = mapping.get(n);
                 if (target == null) {
                     target = new CollectFilterNode(n);
@@ -165,34 +167,33 @@ public class CollectFilterParser {
      */
     @SuppressWarnings("unchecked")
     private static List<Element> collectAndFilter(CallBehaviorAction cba, List<Element> in) {
-        //System.out.println("collectAndFilter(): cba=" + MoreToString.Helper.toLongString( cba ) );
-        //System.out.println("collectAndFilter(): in[" + in.size() + "]=" + MoreToString.Helper.toLongString( in ) );
-        Integer depth = (Integer) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.depthChoosable,
-                "depth", DocGenProfile.PROFILE_NAME, 0);
-        int direction = ((Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.directionChoosable,
-                "directionOut", DocGenProfile.PROFILE_NAME, true)) ? 1 : 2;
+        Integer depth = (Integer) GeneratorUtils.getStereotypePropertyFirst(cba,
+                profile.depthChoosable().getDepthProperty(), 0);
+        int direction = ((Boolean) GeneratorUtils.getStereotypePropertyFirst(cba,
+                profile.directionChoosable().getDirectionOutProperty(), true)) ? 1 : 2;
         List<Stereotype> stereotypes = (List<Stereotype>) GeneratorUtils.getStereotypePropertyValue(cba,
-                DocGenProfile.stereotypeChoosable, "stereotypes", DocGenProfile.PROFILE_NAME, new ArrayList<Stereotype>());
+                profile.stereotypeChoosable().getStereotypesProperty(), new ArrayList<Stereotype>());
         List<Class> metaclasses = (List<Class>) GeneratorUtils.getStereotypePropertyValue(cba,
-                DocGenProfile.metaclassChoosable, "metaclasses", DocGenProfile.PROFILE_NAME, new ArrayList<Class>());
-        Boolean derived = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.derivedChoosable,
-                "considerDerived", DocGenProfile.PROFILE_NAME, true);
-        List<String> names = (List<String>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.nameChoosable,
-                "names", DocGenProfile.PROFILE_NAME, new ArrayList<String>());
+                profile.metaclassChoosable().getMetaclassesProperty(), new ArrayList<Class>());
+        Boolean derived = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba,
+                profile.considerDerivedChoosable().getConsiderDerivedProperty(), true);
+        List<String> names = (List<String>) GeneratorUtils.getStereotypePropertyValue(cba,
+                profile.nameChoosable().getNamesProperty(), new ArrayList<String>());
         List<String> diagramTypes = ((List<NamedElement>) GeneratorUtils.getStereotypePropertyValue(
-                cba, DocGenProfile.diagramTypeChoosable, "diagramTypes", DocGenProfile.PROFILE_NAME, new ArrayList<NamedElement>())).stream().map(NamedElement::getName).collect(Collectors.toList());
-        Boolean include = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.includeChoosable,
-                "include", DocGenProfile.PROFILE_NAME, true);
-        List<Property> stereotypeProperties = (List<Property>) GeneratorUtils.getStereotypePropertyValue(cba, DocGenProfile.stereotypePropertyChoosable, "stereotypeProperties",
-                DocGenProfile.PROFILE_NAME, new ArrayList<Property>());
-        Boolean inherited = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.inheritedChoosable,
-                "includeInherited", DocGenProfile.PROFILE_NAME, false);
+                cba, profile.diagramTypeChoosable().getDiagramTypesProperty(), new ArrayList<NamedElement>()))
+                .stream().map(NamedElement::getName).collect(Collectors.toList());
+        Boolean include = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba,
+                profile.includeChoosable().getIncludeProperty(), true);
+        List<Property> stereotypeProperties = (List<Property>) GeneratorUtils.getStereotypePropertyValue(cba,
+                profile.stereotypePropertiesChoosable().getStereotypePropertiesProperty(), new ArrayList<Property>());
+        Boolean inherited = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba,
+                profile.includeInheritedChoosable().getIncludeInheritedProperty(), false);
         EnumerationLiteral asso = (EnumerationLiteral) GeneratorUtils.getStereotypePropertyFirst(cba,
-                DocGenProfile.associationChoosable, "associationType", DocGenProfile.PROFILE_NAME, null);
-        String expression = (String) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.expressionChoosable,
-                "expression", DocGenProfile.PROFILE_NAME, null);
-        Boolean iterate = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba, DocGenProfile.expressionChoosable,
-                "iterate", DocGenProfile.PROFILE_NAME, true);
+                profile.associationTypeChoosable().getAssociationTypeProperty(), null);
+        String expression = (String) GeneratorUtils.getStereotypePropertyFirst(cba,
+                profile.expressionChoosable().getExpressionProperty(), null);
+        Boolean iterate = (Boolean) GeneratorUtils.getStereotypePropertyFirst(cba,
+                profile.expressionChoosable().getIterateProperty(), true);
         AggregationKind associationType = null;
         if (asso != null) {
             if (asso.getName().equals("composite")) {
@@ -210,46 +211,42 @@ public class CollectFilterParser {
         }
         List<Element> res = new ArrayList<Element>();
 
-        if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectDiagram)) {
+        if (GeneratorUtils.hasStereotype(cba, profile.collectThingsOnDiagram().getStereotype())) {
             for (Element e : in) {
                 if (e instanceof Diagram) {
                     res.addAll(Utils.getElementsOnDiagram((Diagram) e));
                 }
             }
-        }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectAssociationStereotype)) {
+        } else if (GeneratorUtils.hasStereotype(cba, profile.collectByAssociation().getStereotype())) {
             for (Element e : in) {
                 res.addAll(Utils.collectAssociatedElements(e, depth, associationType));
             }
-        }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectOwnedElementStereotype)) {
+        } else if (GeneratorUtils.hasStereotype(cba, profile.collectOwnedElements().getStereotype())) {
             for (Element e : in) {
                 res.addAll(Utils.collectOwnedElements(e, depth));
             }
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectOwnerStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectOwners().getStereotype())) {
             for (Element e : in) {
                 res.addAll(Utils.collectOwners(e, depth));
             }
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectRelMetaclassStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectByDirectedRelationshipMetaclasses().getStereotype())) {
             for (Element e : in) {
                 res.addAll(Utils.collectDirectedRelatedElementsByRelationshipMetaclasses(e, metaclasses,
                         direction, depth));
             }
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectRelStereotypeStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectByDirectedRelationshipStereotypes().getStereotype())) {
             for (Element e : in) {
                 res.addAll(Utils.collectDirectedRelatedElementsByRelationshipStereotypes(e, stereotypes,
                         direction, derived, depth));
             }
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectStereotypePropStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectByStereotypeProperties().getStereotype())) {
             List<Object> blah = new ArrayList<Object>();
             for (Element e : in) {
-                for (Property p : stereotypeProperties)
-                //blah.addAll(StereotypesHelper.getStereotypePropertyValue(e, (Stereotype)p.getOwner(), p));
-                {
+                for (Property p : stereotypeProperties) {
                     blah.addAll(Utils.collectByStereotypeProperty(e, p));
                 }
             }
@@ -259,7 +256,7 @@ public class CollectFilterParser {
                 }
             }
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectTypeStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectTypes().getStereotype())) {
             for (Element e : in) {
                 if (e instanceof TypedElement) {
                     if (((TypedElement) e).getType() != null) {
@@ -275,56 +272,51 @@ public class CollectFilterParser {
                 }
             }
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectClassifierAttributes)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectClassifierAttributes().getStereotype())) {
             for (Element e : in) {
                 res.addAll(Utils.getAttributes(e, inherited));
             }
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectExpressionStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectByExpression().getStereotype())) {
             res.addAll(Utils.collectByExpression(in, expression, iterate));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.filterDiagramTypeStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.filterByDiagramType().getStereotype())) {
             res.addAll(Utils.filterDiagramsByDiagramTypes(in, diagramTypes, include));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.filterMetaclassStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.filterByMetaclasses().getStereotype())) {
             res.addAll(Utils.filterElementsByMetaclasses(in, metaclasses, include));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.filterNameStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.filterByNames().getStereotype())) {
             res.addAll(Utils.filterElementsByNameRegex(in, names, include));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.filterStereotypeStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.filterByStereotypes().getStereotype())) {
             res.addAll(Utils.filterElementsByStereotypes(in, stereotypes, include, derived));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.filterExpressionStereotype)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.filterByExpression().getStereotype())) {
             res.addAll(Utils.filterElementsByExpression(in, expression, include, iterate));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.collectionStereotype)
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectionAndFilterGroup().getStereotype())
                 && cba.getBehavior() != null) {
             res.addAll(collectAndFilterGroup((Activity) cba.getBehavior(), in));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.removeDuplicates)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.removeDuplicates().getStereotype())) {
             res.addAll(Utils.removeDuplicates(in));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.userScriptCFStereotype, true)) {
+        else if (GeneratorUtils.hasStereotype(cba, profile.collectFilterUserScript().getStereotype(), true)) {
             res.addAll(getUserScriptCF(in, cba));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.sortByName)) {
-            res.addAll(sortElements(in, DocGenProfile.sortByName, cba));
+        else if (GeneratorUtils.hasStereotype(cba, profile.sortByName().getStereotype())) {
+            res.addAll(sortElements(in, null, cba));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.sortByAttribute)) {
-            res.addAll(sortElements(in, DocGenProfile.sortByAttribute, cba));
+        else if (GeneratorUtils.hasStereotype(cba, profile.sortByAttribute().getStereotype())) {
+            res.addAll(sortElements(in, profile.sortByAttribute().getDesiredAttributeProperty(), cba));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.sortByProperty)) {
-            res.addAll(sortElements(in, DocGenProfile.sortByProperty, cba));
+        else if (GeneratorUtils.hasStereotype(cba, profile.sortByProperty().getStereotype())) {
+            res.addAll(sortElements(in, profile.sortByProperty().getDesiredPropertyProperty(), cba));
         }
-        else if (GeneratorUtils.hasStereotypeByString(cba, DocGenProfile.sortByExpression)) {
-            res.addAll(sortElements(in, DocGenProfile.sortByExpression, cba));
+        else if (GeneratorUtils.hasStereotype(cba, profile.sortByExpression().getStereotype())) {
+            res.addAll(sortElements(in, profile.sortByExpression().getExpressionProperty(), cba));
         }
-        // TODO -- duplicates should probably not be removed if just sorting!
-        /*System.out.println( "collectAndFilter(): returning (before removing duplicates) res["
-                            + res.size() + "]="
-                            + MoreToString.Helper.toLongString( res ) );*/
-
         return Utils.removeDuplicates(res);
     }
 
@@ -333,37 +325,32 @@ public class CollectFilterParser {
      * behavior.
      *
      * @param in             elements to be sorted
-     * @param sortStereotype the kind of sort based on sort stereotype name. This may be
+     * @param sortProperty the kind of sort based on sort stereotype name. This may be
      *                       sortByProperty, sortByAttribute, or sortByName as found in
      *                       DocGenProfile.
      * @param cba            call behavior to be applied before getting the specified
      * @return
      */
-    public static List<Element> sortElements(Collection<? extends Element> in, String sortStereotype,
+    public static List<Element> sortElements(Collection<? extends Element> in, Property sortProperty,
                                              Element cba) {
         List<Element> ordered = new ArrayList<Element>(in);
 
-        boolean isProp = sortStereotype.equals(DocGenProfile.sortByProperty);
-        boolean isAttr = sortStereotype.equals(DocGenProfile.sortByAttribute);
-        boolean isExpr = sortStereotype.equals(DocGenProfile.sortByExpression);
-        boolean isName = sortStereotype.equals(DocGenProfile.sortByName);
+        boolean isName = false;
+        boolean isProp = false;
+        boolean isAttr = false;
+        boolean isExpr = false;
+        if (sortProperty == null) {
+            isName = true;
+        } else {
+            isProp = sortProperty.getName().equals("desiredProperty");
+            isAttr = sortProperty.getName().equals("desiredAttribute");
+            isExpr = sortProperty.getName().equals("expression");
+        }
         if (!isProp && !isAttr && !isName && !isExpr) {
-            log.error("Error! Trying to sort by unknown sort type: " + sortStereotype);
+            log.error("Error! Trying to sort by unknown sort type: " + sortProperty.getName());
             return ordered;
         }
-
-        String stereotypeProperty = null;
-        if (isProp) {
-            stereotypeProperty = "desiredProperty";
-        }
-        else if (isAttr) {
-            stereotypeProperty = "desiredAttribute";
-        }
-        else if (isExpr) {
-            stereotypeProperty = "expression";
-        }
-
-        Object o = GeneratorUtils.getStereotypePropertyFirst(cba, sortStereotype, stereotypeProperty, DocGenProfile.PROFILE_NAME, null);
+        Object o = GeneratorUtils.getStereotypePropertyFirst(cba, sortProperty, null);
 
         if (o instanceof Property && isProp) {
             ordered = Utils.sortByProperty(in, (Property) o);
@@ -378,14 +365,11 @@ public class CollectFilterParser {
             ordered = Utils2.asList(Utils.sortByName(in), Element.class);
         }
         else {
-            log.error("Error! Trying to sort as " + sortStereotype
+            log.error("Error! Trying to sort as " + sortProperty.getName()
                     + ", but the property/attribute is the wrong type: " + o);
             return ordered;
         }
-        o = GeneratorUtils.getStereotypePropertyFirst(cba, sortStereotype, "reverse", DocGenProfile.PROFILE_NAME, false);
-        if (o == null) {
-            o = GeneratorUtils.getStereotypePropertyFirst(cba, sortStereotype, "invertOrder", DocGenProfile.PROFILE_NAME, false);
-        }
+        o = GeneratorUtils.getStereotypePropertyFirst(cba, profile.sortable().getReverseProperty(), false);
 
         Boolean b = null;
         try {
@@ -412,11 +396,10 @@ public class CollectFilterParser {
         List<Element> res = in;
         if (outs != null && outs.size() == 1) {
             ActivityNode n = outs.iterator().next().getTarget();
-            if (StereotypesHelper.hasStereotypeOrDerived(n, DocGenProfile.collectFilterStereotype)
+            if (profile.collectOrFilter().is(n)
                     || n instanceof CallBehaviorAction
                     && ((CallBehaviorAction) n).getBehavior() != null
-                    && StereotypesHelper.hasStereotypeOrDerived(((CallBehaviorAction) n).getBehavior(),
-                    DocGenProfile.collectFilterStereotype)) {
+                    && profile.collectOrFilter().is(((CallBehaviorAction) n).getBehavior())) {
                 res = startCollectAndFilterSequence(n, in);
             }
         }
@@ -438,18 +421,15 @@ public class CollectFilterParser {
             Map<String, Object> inputs = new HashMap<String, Object>();
             inputs.put("DocGenTargets", in);
             Element e = cba;
-            if (!StereotypesHelper.hasStereotypeOrDerived(cba, DocGenProfile.userScriptCFStereotype)) {
+            if (!profile.collectFilterUserScript().is(e)) {
                 if (cba.getBehavior() != null
-                        && StereotypesHelper.hasStereotypeOrDerived(cba.getBehavior(),
-                        DocGenProfile.userScriptCFStereotype)) {
+                        && profile.collectFilterUserScript().is(cba.getBehavior())) {
                     e = ((CallBehaviorAction) e).getBehavior();
                 }
             }
-            //TODO fix for 2021x, checkForDerivedStereotype changed
-            //Object o = ScriptRunner.runScriptFromStereotype(e,
-            //        StereotypesHelper.checkForDerivedStereotype(e, DocGenProfile.userScriptCFStereotype),
-            //        inputs);
-            Object o = null;
+            Object o = ScriptRunner.runScriptFromStereotype(e,
+                    StereotypesHelper.checkForDerivedStereotype(e, profile.collectFilterUserScript().getStereotype()),
+                    inputs);
             if (o != null && o instanceof Map && ((Map) o).containsKey("DocGenOutput")) {
                 Object l = ((Map) o).get("DocGenOutput");
                 if (l instanceof List) {
@@ -460,7 +440,7 @@ public class CollectFilterParser {
                     }
                 }
             }
-        } catch (Exception /*//TODO continued from above, was ScriptException*/ ex) {
+        } catch (ScriptException ex) {
             ex.printStackTrace();
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -469,5 +449,4 @@ public class CollectFilterParser {
         }
         return res;
     }
-
 }

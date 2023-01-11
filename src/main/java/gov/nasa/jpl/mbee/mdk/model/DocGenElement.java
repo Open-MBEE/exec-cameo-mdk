@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 
 public abstract class DocGenElement implements IDocGenElement {
 
@@ -13,7 +14,7 @@ public abstract class DocGenElement implements IDocGenElement {
      * this is usually the call behavior action element in a viewpoint method
      */
     protected Element dgElement; //the call behavior action/structured activity that correspond to this/ the view element if a view section
-
+    protected SysMLExtensions profile;
     public DocGenElement() {
         ignore = false;
         loop = false;
@@ -44,6 +45,7 @@ public abstract class DocGenElement implements IDocGenElement {
 
     public void setDgElement(Element e) {
         dgElement = e;
+        profile = SysMLExtensions.getInstance(e);
     }
 
     public String getTitlePrefix() {
@@ -68,6 +70,10 @@ public abstract class DocGenElement implements IDocGenElement {
 
     public boolean getLoop() {
         return this.loop;
+    }
+
+    public void setProfile(SysMLExtensions profile) {
+        this.profile = profile;
     }
 
     protected String toStringStart() {

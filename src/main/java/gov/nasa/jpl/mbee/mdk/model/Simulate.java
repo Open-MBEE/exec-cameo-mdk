@@ -4,10 +4,8 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.simulation.SimulationManager;
 import com.nomagic.magicdraw.simulation.execution.SimulationResult;
-import com.nomagic.magicdraw.simulation.execution.session.SimulationSession;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DocumentElement;
 
 import java.text.NumberFormat;
@@ -24,7 +22,7 @@ public class Simulate extends Query {
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         super.visit(forViewEditor, outputDir);
-        
+
         for (Object o : getTargets()) {
             if (o instanceof Element) {
                 long startTime = System.currentTimeMillis();
@@ -58,14 +56,14 @@ public class Simulate extends Query {
                 }
             }
         }
- 
+
         return Collections.emptyList();
     }
 
     @Override
     public void initialize() {
         super.initialize();
-        Object o = StereotypesHelper.getStereotypePropertyFirst(dgElement, DocGenProfile.simulateStereotype, "timeout");
+        Object o = StereotypesHelper.getStereotypePropertyFirst(dgElement, profile.simulate().getTimeoutProperty());
         if (o != null && o instanceof Integer) {
             timeout = (Integer) o;
         }

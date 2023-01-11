@@ -13,7 +13,7 @@ public class Document extends Container {
     private String subheader;
     private String subfooter;
 
-    private String RemoveBlankPages;
+    private boolean RemoveBlankPages;
     private boolean UseDefaultStylesheet;
 
     private boolean chunkFirstSections;
@@ -76,13 +76,13 @@ public class Document extends Container {
         return UseDefaultStylesheet;
     }
 
-    public Boolean getRemoveBlankPages() {
-        return RemoveBlankPages == "1";
+    public boolean getRemoveBlankPages() {
+        return RemoveBlankPages;
     }
 
 
-    public void setRemoveBlankPages(String s) {
-        RemoveBlankPages = s;
+    public void setRemoveBlankPages(Boolean s) {
+        RemoveBlankPages = s == null ? false : s;
     }
 
     public void setUseDefaultStylesheet(boolean s) {

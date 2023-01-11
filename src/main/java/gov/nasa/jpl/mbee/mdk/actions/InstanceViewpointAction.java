@@ -5,6 +5,7 @@ import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
@@ -12,6 +13,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.util.Utils;
 
 import java.awt.event.ActionEvent;
@@ -46,8 +48,8 @@ public class InstanceViewpointAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        sysmlView = Utils.getViewClassStereotype(project);
-        sysmlViewpoint = Utils.getViewpointStereotype(project);
+        sysmlView = SysMLExtensions.getInstanceByProject(project).view().getStereotype();
+        sysmlViewpoint = SysMLProfile.getInstanceByProject(project).viewpoint().getStereotype();;
         ef = Project.getProject(viewpoint).getElementsFactory();
         if (sysmlView == null) {
             gl.log("The view stereotype cannot be found");
@@ -83,7 +85,7 @@ public class InstanceViewpointAction extends MDAction {
         view.setName(name);
         StereotypesHelper.addStereotype(view, sysmlView);
         Generalization conforms = ef.createGeneralizationInstance();
-        StereotypesHelper.addStereotype(conforms, Utils.getConformStereotype(project));
+        StereotypesHelper.addStereotype(conforms, SysMLExtensions.getInstance(owner).conforms().getStereotype());
         ModelHelper.setClientElement(conforms, view);
         ModelHelper.setSupplierElement(conforms, vp);
         conforms.setOwner(view);

@@ -3,7 +3,7 @@ package gov.nasa.jpl.mbee.mdk.model;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBHasContent;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBParagraph;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTableEntry;
@@ -29,7 +29,9 @@ public class Common {
     public static List<DocumentElement> getReferenceAsDocumentElements(Reference ref, Query query) {
         Boolean editable = null;
         Object o;
-        if (query != null && query.getDgElement() != null && (o = StereotypesHelper.getStereotypePropertyFirst(query.getDgElement(), DocGenProfile.editableChoosable, "editable")) instanceof Boolean) {
+        if (query != null && query.getDgElement() != null
+                && (o = StereotypesHelper.getStereotypePropertyFirst(query.getDgElement(),
+                    SysMLExtensions.getInstance(query.getDgElement()).editableChoosable().getEditableProperty())) instanceof Boolean) {
             editable = (Boolean) o;
         }
         return getReferenceAsDocumentElements(ref, editable);

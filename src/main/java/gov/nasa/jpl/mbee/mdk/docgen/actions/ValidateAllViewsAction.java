@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
@@ -50,7 +51,7 @@ public class ValidateAllViewsAction extends MDAction {
     }
 
     private Set<Element> getViews(Project project) {
-        Stereotype viewStereotype = Utils.getViewStereotype(project);
+        Stereotype viewStereotype = SysMLProfile.getInstanceByProject(project).view().getStereotype();
         if (viewStereotype == null) {
             return Collections.emptySet();
         }

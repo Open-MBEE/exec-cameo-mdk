@@ -56,7 +56,6 @@ public class RunUserValidationScriptAction extends MDAction {
         if (o != null && o.containsKey("DocGenValidationOutput")) {
             Object l = o.get("DocGenValidationOutput");
             if (l instanceof List) {
-                // TODO @donbot remove Application.getProject() call
                 Utils.displayValidationWindow(Application.getInstance().getProject(), (List<ValidationSuite>) l, "User Validation Script Results");
             }
         }
@@ -70,7 +69,6 @@ public class RunUserValidationScriptAction extends MDAction {
                         vs.add((ValidationSuite) s.doSwitch((Suite) object));
                     }
                 }
-                // TODO @donbot remove Application.getProject() call S
                 Utils.displayValidationWindow(Application.getInstance().getProject(), vs, "User Validation Script Results");
             }
         }

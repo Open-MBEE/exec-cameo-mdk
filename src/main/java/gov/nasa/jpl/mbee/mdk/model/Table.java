@@ -1,7 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBColSpec;
 import gov.nasa.jpl.mbee.mdk.docgen.docbook.DBTable;
 import gov.nasa.jpl.mbee.mdk.util.GeneratorUtils;
@@ -136,26 +136,17 @@ public abstract class Table extends Query {
     @SuppressWarnings("unchecked")
     @Override
     public void initialize() {
-        setCaptions((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.hasCaptions,
-                "captions", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
-        setShowCaptions((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.hasCaptions,
-                "showCaptions", DocGenProfile.PROFILE_NAME, true));
-        setStereotypeProperties((List<Property>) GeneratorUtils
-                .getStereotypePropertyValue(dgElement, DocGenProfile.stereotypePropertyChoosable,
-                        "stereotypeProperties", DocGenProfile.PROFILE_NAME, new ArrayList<Property>()));
-        setIncludeDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement,
-                DocGenProfile.documentationChoosable, "includeDoc", DocGenProfile.PROFILE_NAME, false));
-        setStyle((String) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype, "style",
-                DocGenProfile.PROFILE_NAME, null));
-        setColwidths((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, DocGenProfile.tableStereotype,
-                "colwidths", DocGenProfile.PROFILE_NAME, new ArrayList<String>()));
-        setTranspose((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
-                "transpose", DocGenProfile.PROFILE_NAME, false));
-        setHideHeaders((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
-                "hideHeaders", DocGenProfile.PROFILE_NAME, false));
-        setShowIfEmpty((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
-                "showIfEmpty", DocGenProfile.PROFILE_NAME, false));
-        setExcludeFromList((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, DocGenProfile.tableStereotype,
-                "excludeFromList", DocGenProfile.PROFILE_NAME, false));
+        super.initialize();
+        SysMLExtensions.TableStereotype s = profile.table();
+        setCaptions((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, s.getCaptionsProperty(), new ArrayList<String>()));
+        setShowCaptions((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getShowCaptionsProperty(), true));
+        setStereotypeProperties((List<Property>) GeneratorUtils.getStereotypePropertyValue(dgElement, s.getStereotypePropertiesProperty(), new ArrayList<Property>()));
+        setIncludeDoc((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getIncludeDocProperty(), false));
+        setStyle((String) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getStyleProperty(), null));
+        setColwidths((List<String>) GeneratorUtils.getStereotypePropertyValue(dgElement, s.getColwidthsProperty(), new ArrayList<String>()));
+        setTranspose((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getTransposeProperty(), false));
+        setHideHeaders((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getHideHeadersProperty(), false));
+        setShowIfEmpty((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getShowIfEmptyProperty(), false));
+        setExcludeFromList((Boolean) GeneratorUtils.getStereotypePropertyFirst(dgElement, s.getExcludeFromListProperty(), false));
     }
 }

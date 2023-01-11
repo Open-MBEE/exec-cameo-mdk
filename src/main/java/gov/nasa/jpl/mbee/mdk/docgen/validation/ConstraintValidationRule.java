@@ -5,14 +5,13 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.magicdraw.validation.ElementValidationRuleImpl;
 import com.nomagic.magicdraw.validation.SmartListenerConfigurationProvider;
-import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.jmi.smartlistener.SmartListenerConfig;
 import com.nomagic.uml2.ext.magicdraw.classes.mdinterfaces.Interface;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
+import gov.nasa.jpl.mbee.mdk.SysMLExtensions;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint;
 import gov.nasa.jpl.mbee.mdk.constraint.BasicConstraint.Type;
-import gov.nasa.jpl.mbee.mdk.docgen.DocGenProfile;
 import gov.nasa.jpl.mbee.mdk.docgen.ViewViewpointValidator;
 import gov.nasa.jpl.mbee.mdk.ocl.OclEvaluator;
 import gov.nasa.jpl.mbee.mdk.util.CompareUtils;
@@ -202,8 +201,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
     public static boolean isDocGenConstraint(gov.nasa.jpl.mbee.mdk.constraint.Constraint constraint) {
         Element constrObj = getConstraintObject(constraint);
-        return (constrObj != null && StereotypesHelper.hasStereotypeOrDerived(constrObj,
-                DocGenProfile.constraintStereotype));
+        return (constrObj != null && SysMLExtensions.getInstance(constrObj).constraint().is(constrObj));
     }
 
     private static boolean isLanguageOcl(gov.nasa.jpl.mbee.mdk.constraint.Constraint constraint) {
@@ -276,7 +274,7 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.nomagic.magicdraw.validation.ElementValidationRuleImpl#dispose()
      */
     @Override
