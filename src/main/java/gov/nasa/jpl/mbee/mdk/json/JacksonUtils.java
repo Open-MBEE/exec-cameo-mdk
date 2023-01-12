@@ -146,7 +146,8 @@ public class JacksonUtils {
                             //TODO: fill in what to do with the totals
                         }
                         else {
-                            throw new IOException("Unable to properly read this JSON format, check REST responses.");
+                            //throw new IOException("Unable to properly read this JSON format, check REST responses.");
+                            //ignore other keys
                         }
                     }
                 }
