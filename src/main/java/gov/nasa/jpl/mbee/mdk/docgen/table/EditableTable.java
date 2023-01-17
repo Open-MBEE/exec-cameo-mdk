@@ -189,16 +189,17 @@ public class EditableTable extends JDialog {
             if (retval == JFileChooser.APPROVE_OPTION) {
                 if (choose.getSelectedFile() != null) {
                     File savefile = choose.getSelectedFile();
+                    Project project = Application.getInstance().getProject();
                     try {
-                        SessionManager.getInstance().createSession("change");
+                        SessionManager.getInstance().createSession(project,"change");
                         CSVReader reader = new CSVReader(new FileReader(savefile), separator.charAt(0));
                         importFromCsv(reader);
                         reader.close();
-                        SessionManager.getInstance().closeSession();
+                        SessionManager.getInstance().closeSession(project);
                         gl.log("import succeeded");
                     } catch (IOException ex) {
                         gl.log("import failed");
-                        SessionManager.getInstance().cancelSession();
+                        SessionManager.getInstance().cancelSession(project);
                         gl.log(ex.getMessage());
                         for (StackTraceElement s : ex.getStackTrace()) {
                             gl.log("\t" + s.toString());

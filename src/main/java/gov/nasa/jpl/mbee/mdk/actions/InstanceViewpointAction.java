@@ -66,11 +66,13 @@ public class InstanceViewpointAction extends MDAction {
             gl.log("you didn't select a package");
             return;
         }
+        Project project = Application.getInstance().getProject();
         try {
-            SessionManager.getInstance().createSession("instance viewpoint");
+            SessionManager.getInstance().createSession(project, "instance viewpoint");
             instance(pack, (Class) viewpoint, ((Class) viewpoint).getName());
-            SessionManager.getInstance().closeSession();
+            SessionManager.getInstance().closeSession(project);
         } catch (Exception ex) {
+            SessionManager.getInstance().cancelSession(project);
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             ex.printStackTrace(pw);

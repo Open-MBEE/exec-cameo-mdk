@@ -1,6 +1,7 @@
 package gov.nasa.jpl.mbee.mdk.model;
 
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.simulation.SimulationManager;
 import com.nomagic.magicdraw.simulation.execution.SimulationResult;
@@ -22,7 +23,7 @@ public class Simulate extends Query {
     @Override
     public List<DocumentElement> visit(boolean forViewEditor, String outputDir) {
         super.visit(forViewEditor, outputDir);
-
+        Project project = Application.getInstance().getProject();
         for (Object o : getTargets()) {
             if (o instanceof Element) {
                 long startTime = System.currentTimeMillis();
@@ -33,8 +34,8 @@ public class Simulate extends Query {
                 } catch (Exception e) {
                     e.printStackTrace();
                     Application.getInstance().getGUILog().log("[ERROR] Simulation of " + ((Element) o).getHumanName() + " encountered an unexpected exception: \"" + e.getMessage() + ".\" Terminating.");
-                    if (SessionManager.getInstance().isSessionCreated()) {
-                        SessionManager.getInstance().cancelSession();
+                    if (SessionManager.getInstance().isSessionCreated(project)) {
+                        SessionManager.getInstance().cancelSession(project);
                     }
                     continue;
                 }
@@ -47,8 +48,8 @@ public class Simulate extends Query {
                 if (!simulationResult.getMainSession().isClosed()) {
                     Application.getInstance().getGUILog().log("[WARNING] Simulation of " + ((Element) o).getHumanName() + " timed out after " + NumberFormat.getInstance().format(timeout) + " seconds. Terminating.");
                     SimulationManager.terminateSession(simulationResult.getMainSession());
-                    if (SessionManager.getInstance().isSessionCreated()) {
-                        SessionManager.getInstance().cancelSession();
+                    if (SessionManager.getInstance().isSessionCreated(project)) {
+                        SessionManager.getInstance().cancelSession(project);
                     }
                 }
                 else {

@@ -106,10 +106,11 @@ public class MagicDrawHelper {
      * @throws IllegalStateException
      */
     public static void createSession() throws IllegalStateException {
-        if (SessionManager.getInstance().isSessionCreated()) {
+        Project project = Application.getInstance().getProject();
+        if (SessionManager.getInstance().isSessionCreated(project)) {
             throw new IllegalStateException("Unable to create session: a session is already open.");
         }
-        SessionManager.getInstance().createSession("Programmatic changes");
+        SessionManager.getInstance().createSession(project,"Programmatic changes");
         initializeFactory();
     }
 
@@ -120,10 +121,11 @@ public class MagicDrawHelper {
      * @throws IllegalStateException
      */
     public static void closeSession() throws IllegalStateException {
-        if (!SessionManager.getInstance().isSessionCreated()) {
+        Project project = Application.getInstance().getProject();
+        if (!SessionManager.getInstance().isSessionCreated(project)) {
             throw new IllegalStateException("Unable to close session: no session has been created to close.");
         }
-        SessionManager.getInstance().closeSession();
+        SessionManager.getInstance().closeSession(project);
     }
 
 

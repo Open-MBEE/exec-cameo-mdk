@@ -4,6 +4,7 @@ import com.nomagic.magicdraw.automaton.AutomatonPlugin;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.ApplicationEnvironment;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.pathvariables.PathVariablesResolver;
 import com.nomagic.magicdraw.sysml.util.SysMLProfile;
@@ -147,8 +148,9 @@ public class ScriptRunner {
         Object output = null;
         ClassLoader localClassLoader = Thread.currentThread().getContextClassLoader();
         boolean sessionCreated = false;
-        if (!SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().createSession(language + " script run");
+        Project project = Application.getInstance().getProject();
+        if (!SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().createSession(project,language + " script run");
             sessionCreated = true;
         }
         String scriptResolvedPath = null;
@@ -197,8 +199,8 @@ public class ScriptRunner {
             }
             output = se.get("scriptOutput");
 
-            if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
-                SessionManager.getInstance().closeSession();
+            if (sessionCreated && SessionManager.getInstance().isSessionCreated(project)) {
+                SessionManager.getInstance().closeSession(project);
                 sessionCreated = false;
             }
             return output;
@@ -207,9 +209,9 @@ public class ScriptRunner {
             e.printStackTrace();
         } finally {
             Thread.currentThread().setContextClassLoader(localClassLoader);
-            if (sessionCreated && SessionManager.getInstance().isSessionCreated()) {
+            if (sessionCreated && SessionManager.getInstance().isSessionCreated(project)) {
                 // if we made the session, need to cancel due to script failure
-                SessionManager.getInstance().cancelSession();
+                SessionManager.getInstance().cancelSession(project);
             }
         }
         return output;

@@ -18,6 +18,7 @@ public class MDKConstants {
             ID_KEY_SUFFIX = "Id",
             IDS_KEY_SUFFIX = ID_KEY_SUFFIX + "s",
             SLOT_ID_SEPARATOR = "-slot-",
+            TAGGED_VALUE_ID_SEPARATOR = "_asi-slot-",
             SLOT_VALUE_ID_SEPARATOR = SLOT_ID_SEPARATOR.substring(0, SLOT_ID_SEPARATOR.length() - 1) + "value-",
             TYPE_KEY = "type",
             NAME_KEY = "name",

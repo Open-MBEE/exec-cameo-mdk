@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.actions;
 
 import com.nomagic.magicdraw.actions.MDAction;
 import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.ui.dialogs.MDDialogParentProvider;
 import com.nomagic.magicdraw.ui.dialogs.SelectElementInfo;
@@ -99,8 +100,8 @@ public class CreateRestrictedValueAction extends MDAction {
                 selectedElement = (Element) dlg2.getSelectedElement();
             }
         }
-
-        SessionManager.getInstance().createSession("instance restricted value");
+        Project project = Application.getInstance().getProject();
+        SessionManager.getInstance().createSession(project, "instance restricted value");
         for (Property prop : props) {
             if (!prop.isEditable()) {
                 Application.getInstance().getGUILog().log(prop.getQualifiedName() + " is not editable. Skipped creating restricted value.");
@@ -140,6 +141,6 @@ public class CreateRestrictedValueAction extends MDAction {
         }
 
         // close session
-        SessionManager.getInstance().closeSession();
+        SessionManager.getInstance().closeSession(project);
     }
 }

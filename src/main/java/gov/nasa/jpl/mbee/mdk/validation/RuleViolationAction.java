@@ -88,7 +88,8 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
         if (listener != null) {
             listener.setDisabled(true);
         }
-        SessionManager.getInstance().createSession(sessionName);
+        Project project = Application.getInstance().getProject();
+        SessionManager.getInstance().createSession(project, sessionName);
         Collection<Annotation> toremove = new HashSet<Annotation>();
         try {
             boolean noneditable = false;
@@ -100,7 +101,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
                     noneditable = true;
                 }
             }
-            SessionManager.getInstance().closeSession();
+            SessionManager.getInstance().closeSession(project);
             if (noneditable) {
                 Application.getInstance().getGUILog().log("[ERROR] There were some elements couldn't be imported");
             }
@@ -111,7 +112,7 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
             this.removeViolationsAndUpdateWindow(toremove);
 
         } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
+            SessionManager.getInstance().cancelSession(project);
             Utils.printException(ex);
         }
         if (listener != null) {
@@ -120,25 +121,26 @@ public abstract class RuleViolationAction extends MDAction implements IRuleViola
     }
 
     protected void execute(String sessionName) {
+        Project project = Application.getInstance().getProject();
         LocalDeltaTransactionCommitListener listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(Application.getInstance().getProject()).getLocalDeltaTransactionCommitListener();
         if (listener != null) {
             listener.setDisabled(true);
         }
-        SessionManager.getInstance().createSession("Change Rel");
+        SessionManager.getInstance().createSession(project, "Change Rel");
         try {
             if (doAction(null)) {
-                SessionManager.getInstance().closeSession();
+                SessionManager.getInstance().closeSession(project);
                 saySuccess();
                 doAfterSuccess();
                 this.removeViolationAndUpdateWindow();
             }
             else {
-                SessionManager.getInstance().cancelSession();
+                SessionManager.getInstance().cancelSession(project);
             }
             //AnnotationManager.getInstance().remove(annotation);
             //AnnotationManager.getInstance().update();
         } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
+            SessionManager.getInstance().cancelSession(project);
             Utils.printException(ex);
         }
         if (listener != null) {

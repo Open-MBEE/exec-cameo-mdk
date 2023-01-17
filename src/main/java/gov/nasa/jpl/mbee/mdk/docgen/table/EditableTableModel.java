@@ -2,6 +2,7 @@ package gov.nasa.jpl.mbee.mdk.docgen.table;
 
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
@@ -125,8 +126,9 @@ public class EditableTableModel extends AbstractTableModel {
             gl.log("Element " + ((NamedElement) element).getQualifiedName() + " is not editable!");
             return;
         }
+        Project project = Application.getInstance().getProject();
         try {
-            SessionManager.getInstance().createSession("change");
+            SessionManager.getInstance().createSession(project, "change");
             if (element instanceof Property && what == PropertyEnum.VALUE) {
                 if (value instanceof String) {
                     Utils.setPropertyValue((Property) element, (String) value);
@@ -147,9 +149,9 @@ public class EditableTableModel extends AbstractTableModel {
             }
             changed.add(element);
             this.fireTableCellUpdated(row, col);
-            SessionManager.getInstance().closeSession();
+            SessionManager.getInstance().closeSession(project);
         } catch (Exception ex) {
-            SessionManager.getInstance().cancelSession();
+            SessionManager.getInstance().cancelSession(project);
             gl.log(ex.getMessage());
             for (StackTraceElement s : ex.getStackTrace()) {
                 gl.log(s.toString());

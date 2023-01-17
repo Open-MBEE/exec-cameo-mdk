@@ -119,7 +119,9 @@ public class LocalDeltaTransactionCommitListener implements TransactionCommitLis
                             doneSignal.countDown();
                             return;
                         }
-
+                        // for slots and tagged values - this is building up the spoofed id when they get deleted - the owner and defining feature properties will be 'updated' in that order followed by
+                        // "instance deleted" change property name - because during deletion there's no way to lookup those values, it's keying on these property changes before deletion to keep track
+                        // of the correct mms id
                         if (sourceElement instanceof Slot) {
                             if (changedPropertyName.equals(UMLPackage.Literals.SLOT__OWNING_INSTANCE.getName()) && event.getNewValue() == null && event.getOldValue() instanceof Element) {
                                 if (!spoofedIdMapping.containsKey(sourceElement.getLocalID()) && sourceElement.getLocalID().equals(Converters.getElementToIdConverter().apply(sourceElement))) {
@@ -156,11 +158,37 @@ public class LocalDeltaTransactionCommitListener implements TransactionCommitLis
                             }
                         }
                         if (sourceElement instanceof TaggedValue) {
-                            // TODO
-                            if (changedPropertyName.equals(UMLPackage.Literals.TAGGED_VALUE__TAGGED_VALUE_OWNER.getName())) {
-
-                            } else if (changedPropertyName.equals(UMLPackage.Literals.TAGGED_VALUE__TAG_DEFINITION.getName())) {
-
+                            if (changedPropertyName.equals(UMLPackage.Literals.TAGGED_VALUE__TAGGED_VALUE_OWNER.getName()) && event.getNewValue() == null && event.getOldValue() instanceof Element) {
+                                if (!spoofedIdMapping.containsKey(sourceElement.getLocalID()) && sourceElement.getLocalID().equals(Converters.getElementToIdConverter().apply(sourceElement))) {
+                                    spoofedIdMapping.put(sourceElement.getLocalID(), MDKConstants.TAGGED_VALUE_ID_SEPARATOR);
+                                }
+                                if (spoofedIdMapping.containsKey(sourceElement.getLocalID())) {
+                                    String spoofedId = spoofedIdMapping.get(sourceElement.getLocalID());
+                                    Element owningInstance = (Element) event.getOldValue();
+                                    if (spoofedId.startsWith(MDKConstants.TAGGED_VALUE_ID_SEPARATOR)) {
+                                        String owningInstanceId = spoofedIdMapping.containsKey(owningInstance.getLocalID()) ? spoofedIdMapping.get(owningInstance.getLocalID()) : Converters.getElementToIdConverter().apply(owningInstance);
+                                        spoofedId = owningInstanceId + spoofedId;
+                                        spoofedIdMapping.put(sourceElement.getLocalID(), spoofedId);
+                                    }
+                                    else if (!spoofedId.startsWith(Converters.getElementToIdConverter().apply(owningInstance))) {
+                                        System.out.println("[WARNING] Spoofed element ID already exists with a different owner id component.");
+                                    }
+                                }
+                            } else if (changedPropertyName.equals(UMLPackage.Literals.TAGGED_VALUE__TAG_DEFINITION.getName()) && event.getNewValue() == null && event.getOldValue() instanceof Element) {
+                                if (!spoofedIdMapping.containsKey(sourceElement.getLocalID()) && sourceElement.getLocalID().equals(Converters.getElementToIdConverter().apply(sourceElement))) {
+                                    spoofedIdMapping.put(sourceElement.getLocalID(), MDKConstants.TAGGED_VALUE_ID_SEPARATOR);
+                                }
+                                if (spoofedIdMapping.containsKey(sourceElement.getLocalID())) {
+                                    String spoofedId = spoofedIdMapping.get(sourceElement.getLocalID());
+                                    Element definingFeature = (Element) event.getOldValue();
+                                    if (spoofedId.endsWith(MDKConstants.TAGGED_VALUE_ID_SEPARATOR)) {
+                                        spoofedId = spoofedId + Converters.getElementToIdConverter().apply(definingFeature);
+                                        spoofedIdMapping.put(sourceElement.getLocalID(), spoofedId);
+                                    }
+                                    else if (!spoofedId.endsWith(Converters.getElementToIdConverter().apply(definingFeature))) {
+                                        System.out.println("[WARNING] Spoofed element ID already exists with a different tag definition id component.");
+                                    }
+                                }
                             }
                         }
 
@@ -216,7 +244,10 @@ public class LocalDeltaTransactionCommitListener implements TransactionCommitLis
                         }
                         if (spoofedIdMapping.containsKey(sysmlId)) {
                             String spoofedId = spoofedIdMapping.get(sysmlId);
-                            if (!(sourceElement instanceof Slot) || !(spoofedId.startsWith(MDKConstants.SLOT_VALUE_ID_SEPARATOR) || spoofedId.endsWith(MDKConstants.SLOT_VALUE_ID_SEPARATOR))) {
+                            // use spoofed id as long as it's not slot or tagged value and it's not in the middle of building their deletion
+                            if (!(sourceElement instanceof Slot || sourceElement instanceof TaggedValue) ||
+                                    !(spoofedId.startsWith(MDKConstants.SLOT_VALUE_ID_SEPARATOR) || spoofedId.endsWith(MDKConstants.SLOT_VALUE_ID_SEPARATOR) ||
+                                            spoofedId.startsWith(MDKConstants.TAGGED_VALUE_ID_SEPARATOR) || spoofedId.endsWith(MDKConstants.TAGGED_VALUE_ID_SEPARATOR) )) {
                                 sysmlId = spoofedId;
                             }
                             if (sysmlId.isEmpty()) {

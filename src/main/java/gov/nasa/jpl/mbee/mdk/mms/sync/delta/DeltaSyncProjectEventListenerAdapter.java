@@ -73,7 +73,7 @@ public class DeltaSyncProjectEventListenerAdapter extends ProjectEventListenerAd
             }
         }
         if (SessionManager.getInstance().isSessionCreated(project)) {
-            SessionManager.getInstance().closeSession();
+            SessionManager.getInstance().closeSession(project);
         }
 
         if (listener != null) {

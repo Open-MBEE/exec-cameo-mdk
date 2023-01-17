@@ -3,6 +3,8 @@ package gov.nasa.jpl.mbee.mdk.validation;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
+import com.nomagic.magicdraw.core.Application;
+import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 
 import java.util.Collection;
@@ -63,16 +65,18 @@ public abstract class GenericRuleViolationAction extends RuleViolationAction imp
     }
 
     public void onStart() {
-        if (SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().closeSession();
+        Project project = Application.getInstance().getProject();
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession(project);
         }
-        SessionManager.getInstance().createSession(getSessionName());
+        SessionManager.getInstance().createSession(project, getSessionName());
         //ProgressStatusRunner.runWithProgressStatus(progress, getProgressDescription(), false, 0);
     }
 
     public void onStop() {
-        if (SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().closeSession();
+        Project project = Application.getInstance().getProject();
+        if (SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().closeSession(project);
         }
     }
 

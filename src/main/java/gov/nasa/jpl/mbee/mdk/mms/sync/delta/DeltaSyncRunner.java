@@ -449,8 +449,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // CLEAR IN-MEMORY AND PERSIST UNPROCESSED & FAILURES
 
         listener.setDisabled(true);
-        if (!SessionManager.getInstance().isSessionCreated()) {
-            SessionManager.getInstance().createSession("Delta Sync Changelog Persistence");
+        Project project = Application.getInstance().getProject();
+        if (!SessionManager.getInstance().isSessionCreated(project)) {
+            SessionManager.getInstance().createSession(project, "Delta Sync Changelog Persistence");
         }
 
         MMSDeltaProjectEventListenerAdapter.MMSDeltaProjectMapping mmsDeltaProjectMapping = MMSDeltaProjectEventListenerAdapter.getProjectMapping(project);
@@ -499,7 +500,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             e.printStackTrace();
         }
 
-        SessionManager.getInstance().closeSession();
+        SessionManager.getInstance().closeSession(project);
         listener.setDisabled(false);
 
         // SUCCESS
