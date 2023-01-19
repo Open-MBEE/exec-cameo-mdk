@@ -215,7 +215,7 @@ dependencies {
         }
     }
     else {
-        preImplementation group: 'com.nomagic', name: 'cameo', version: '2021x', classifier: 'Cameo_Systems_Modeler_2021x_Refresh2_HF4_no_install', ext: 'zip'
+        preImplementation group: 'com.nomagic', name: 'democsm', version: '2021xRefresh2', classifier: 'Cameo_Systems_Modeler_Demo_2021x_Refresh2_no_install', ext: 'zip'
 //        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
 //        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
     }
