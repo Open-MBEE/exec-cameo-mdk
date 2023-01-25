@@ -287,6 +287,17 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                 },
                 Type.PRE
         ),
+        VIEW_POST(
+                (element, project, objectNode) -> {
+                    Stereotype viewStereotype = Utils.getViewStereotype(project);
+                    if (viewStereotype == null || !StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype)) {
+                        return objectNode;
+                    }
+                    objectNode.remove(MDKConstants.OWNED_RULE_IDS);
+                    return objectNode;
+                },
+                Type.POST
+        ),
         MOUNT_POST(
                 (element, project, objectNode) -> {
                     if (!objectNode.get(MDKConstants.TYPE_KEY).asText().equals("Mount")) {
