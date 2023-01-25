@@ -8,6 +8,7 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.jmi.reflect.AbstractRepository;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.ParameterableElement;
@@ -24,6 +25,7 @@ import gov.nasa.jpl.mbee.mdk.api.incubating.convert.JsonToElementFunction;
 import gov.nasa.jpl.mbee.mdk.json.ImportException;
 import gov.nasa.jpl.mbee.mdk.json.ReferenceException;
 import gov.nasa.jpl.mbee.mdk.util.Changelog;
+import gov.nasa.jpl.mbee.mdk.util.Utils;
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.UniqueEList;
 import org.eclipse.emf.ecore.*;
@@ -84,7 +86,7 @@ public class EMFImporter implements JsonToElementFunction {
 
     protected List<PreProcessor> getPreProcessors() {
         if (preProcessors == null) {
-            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.EDITABLE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION);
+            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.EDITABLE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION, PreProcessor.VIEW_OWNED_RULE_ID);
         }
         return preProcessors;
     }
@@ -120,6 +122,19 @@ public class EMFImporter implements JsonToElementFunction {
                             String id = jsonNode.asText();
                             if (id.startsWith(MDKConstants.HIDDEN_ID_PREFIX)) {
                                 return null;
+                            }
+                            return element;
+                        }
+                ),
+                VIEW_OWNED_RULE_ID = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            JsonNode jsonNode = objectNode.get(MDKConstants.OWNED_RULE_IDS);
+                            if (jsonNode == null || !jsonNode.isArray()) {
+                                return element;
+                            }
+                            // if element is a view, remove ownedRuleIds
+                            if (StereotypesHelper.hasStereotypeOrDerived(element, Utils.getViewStereotype(project))) {
+                                objectNode.remove(MDKConstants.OWNED_RULE_IDS);
                             }
                             return element;
                         }
