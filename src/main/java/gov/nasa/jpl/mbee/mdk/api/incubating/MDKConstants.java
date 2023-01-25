@@ -71,7 +71,8 @@ public class MDKConstants {
             SOURCE_FIELD = "source",
             DELETED_FIELD = "deleted",
             MAGICDRAW_SOURCE_VALUE = "magicdraw",
-            ELEMENT_TYPE_VALUE = "Element";
+            ELEMENT_TYPE_VALUE = "Element",
+            OWNED_RULE_IDS = "ownedRuleIds";
 
     @Deprecated
     public static final String

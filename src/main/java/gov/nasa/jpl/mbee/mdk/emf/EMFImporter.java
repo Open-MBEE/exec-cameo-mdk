@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
+import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
+import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.jmi.reflect.AbstractRepository;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.ParameterableElement;
@@ -15,6 +17,7 @@ import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdtemplates.TemplatePa
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.impl.UMLFactoryImpl;
+import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLFactory;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
 import gov.nasa.jpl.mbee.mdk.api.function.TriFunction;
@@ -85,7 +88,7 @@ public class EMFImporter implements JsonToElementFunction {
 
     protected List<PreProcessor> getPreProcessors() {
         if (preProcessors == null) {
-            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.EDITABLE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION, PreProcessor.TAGGED_VALUE);
+            preProcessors = Arrays.asList(PreProcessor.CREATE, PreProcessor.EDITABLE, PreProcessor.DOCUMENTATION, PreProcessor.SYSML_ID_VALIDATION, PreProcessor.TAGGED_VALUE, PreProcessor.VIEW_OWNED_RULE_ID);
         }
         return preProcessors;
     }
@@ -150,6 +153,20 @@ public class EMFImporter implements JsonToElementFunction {
                                 }
                             }
                             objectNode.set("value", newValue);
+                            return element;
+                        }
+                ),
+                VIEW_OWNED_RULE_ID = new PreProcessor(
+                        (objectNode, project, strict, element) -> {
+                            JsonNode jsonNode = objectNode.get(MDKConstants.OWNED_RULE_IDS);
+                            if (jsonNode == null || !jsonNode.isArray()) {
+                                return element;
+                            }
+                            Stereotype view = SysMLProfile.getInstanceByProject(project).view().getStereotype();
+                            // if element is a view, remove ownedRuleIds
+                            if (StereotypesHelper.hasStereotypeOrDerived(element, view)) {
+                                objectNode.remove(MDKConstants.OWNED_RULE_IDS);
+                            }
                             return element;
                         }
                 );
