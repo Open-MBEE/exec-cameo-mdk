@@ -62,7 +62,7 @@ public class EMFBulkImporter implements BulkImportFunction {
         String initialProgressStatusDescription = null;
         long initialProgressStatusCurrent = 0;
         boolean initialProgressStatusIndeterminate = false;
-        RepositoryModelValidator validator = new RepositoryModelValidator(project);
+        RepositoryModelValidator validator = new RepositoryModelValidator();
 
         if (progressStatus != null) {
             initialProgressStatusDescription = progressStatus.getDescription();

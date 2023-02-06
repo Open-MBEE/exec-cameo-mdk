@@ -1,6 +1,6 @@
 package gov.nasa.jpl.mbee.mdk.http;
 
-import org.apache.commons.lang.WordUtils;
+import org.apache.commons.text.WordUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

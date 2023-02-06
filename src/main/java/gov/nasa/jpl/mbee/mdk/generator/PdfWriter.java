@@ -5,7 +5,7 @@ import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
 import gov.nasa.jpl.mbee.mdk.MDKPlugin;
 import gov.nasa.jpl.mbee.mdk.model.Document;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.fop.apps.*;
 
 import javax.xml.transform.Result;
@@ -41,7 +41,7 @@ public class PdfWriter implements RunnableWithProgress {
 		this(null, false, docbook, docbookXslFo, outputFile);
 	}
 
-	
+
 
 	public PdfWriter(Document dge, boolean genNewImage, File docbook, File docbookXslFo, File outputFile) {
 		this.dge = dge;
@@ -58,31 +58,31 @@ public class PdfWriter implements RunnableWithProgress {
 		try {
 			docbook = File.createTempFile(docbook.getName(), ".xml");
 			return DocumentWriter.mdModel2Document(status, dge, genNewImage, docbook, false);
-			
+
 		} catch (IOException e) {
 			return false;
 		}
 	}
 	//DocGen -> Generate-> PDF
 	protected void document2Pdf()  {
-		
+
 		ClassLoader localClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			FopFactory fopFactory = FopFactory.newInstance();//fopConfigFile);
-		
+
 			//make currentloader to be mainloader (batik, fop, xmlgraphics jar need to be loaded at the same level so images to be embedded in PDF).
 			URL[] urls = new URL[1];
 			//urls[0] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins" + File.separator + "gov.nasa.jpl.mbee.mdk")).toURI().toURL();
 			urls[0] = MDKPlugin.getInstance().getDescriptor().getPluginDirectory().toURI().toURL();
 			URLClassLoader mainClassLoader = new URLClassLoader(urls, Application.class.getClassLoader());
 			Thread.currentThread().setContextClassLoader(mainClassLoader);
-			
+
 			StreamSource docbookSrc = new StreamSource(docbook);
-	
+
 			// create a user agent (used to tweak rendering settings on a per-run basis.
 			// we are just using defaults for now though.
 			FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
-			
+
 			OutputStream pdfOut;
 			try {
 				pdfOut = new java.io.FileOutputStream(outputFile);
@@ -134,9 +134,9 @@ public class PdfWriter implements RunnableWithProgress {
 	public void run(ProgressStatus status) {
 		status.setIndeterminate(true);
 		status.setDescription("Generating a PDF file...");
-		if (mdModel2DocumentAsTemp(status)) 
+		if (mdModel2DocumentAsTemp(status))
 			document2Pdf();
-		else 
+		else
 			Application.getInstance().getGUILog().log("[ERROR] Failed to generate a PDF file.");
 	}
 }

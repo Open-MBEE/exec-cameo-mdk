@@ -15,7 +15,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 
 /**
@@ -31,7 +31,7 @@ public class DocumentWriter implements RunnableWithProgress {
 	private final Document dge;
 	private final boolean genNewImage;
 	private File docbook;
-	
+
     public DocumentWriter(Document dge, File outputfile, boolean genNewImage) {
         this.dge = dge;
         this.genNewImage = genNewImage;
