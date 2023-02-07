@@ -103,7 +103,7 @@ public class ElementValidator implements RunnableWithProgress {
         }
 
         try {
-            processServerElements(clientElementMap, serverElementMap);
+            processServerElements(serverElementMap);
         } catch(IOException e) {
             e.printStackTrace();
             Application.getInstance().getGUILog().log("[ERROR] An error occurred when attempting to process elements from the server.");
@@ -140,7 +140,7 @@ public class ElementValidator implements RunnableWithProgress {
         Application.getInstance().getGUILog().log("[INFO] ---  End " + validationSuite.getName() + " Summary  ---");
     }
 
-    private void processServerElements(Map<String, Pair<Element, ObjectNode>> clientElementMap, Map<String, ObjectNode> serverElementMap) throws IOException {
+    private void processServerElements(Map<String, ObjectNode> serverElementMap) throws IOException {
         // process the parsers against the lists, adding processed keys to processed sets in case of multiple returns
         for (File responseFile : serverElementFiles) {
             Map<String, List<ObjectNode>> parsedResponseObjects = JacksonUtils.parseResponseIntoObjects(responseFile, MDKConstants.ELEMENTS_NODE);
@@ -158,14 +158,7 @@ public class ElementValidator implements RunnableWithProgress {
                     JsonNode idValue = jsonObject.get(MDKConstants.ID_KEY);
                     if(idValue != null && idValue.isTextual() && !idValue.asText().startsWith(MDKConstants.HIDDEN_ID_PREFIX) && !serverElementMap.containsKey(idValue.asText())) {
                         String id = idValue.asText();
-
-                        Pair<Element, ObjectNode> currentClientElement = clientElementMap.get(id);
                         serverElementMap.put(id, jsonObject);
-                        if (currentClientElement == null) {
-                            addMissingInClientViolation(jsonObject);
-                        } else {
-                            addElementEquivalenceViolation(currentClientElement, jsonObject);
-                        }
                     }
                 }
             }
@@ -210,6 +203,9 @@ public class ElementValidator implements RunnableWithProgress {
         String type = typeJsonNode != null ? typeJsonNode.asText("Element") : "Element";
         JsonNode nameJsonNode = serverElement.get(MDKConstants.NAME_KEY);
         String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
+        if (name.equals("<>")) {
+            name = "<"  + id + ">";
+        }
         finishViolation(new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + type + " " + name), id, null, serverElement, null);
     }
 
