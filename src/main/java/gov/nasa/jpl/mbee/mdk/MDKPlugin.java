@@ -48,7 +48,7 @@ public class MDKPlugin extends Plugin implements ResourceDependentPlugin {
     }
 
     public boolean isPluginRequired(Project var1) {
-        return ProjectUtilities.findAttachedProjectByName(var1, "SysML Extensions.mdzip") != null;
+        return ProjectUtilities.findAttachedProjectByName(var1, "SysML Extensions.mdxml") != null;
     }
 
     public static void updateMainToolbarCategory() {

@@ -14,7 +14,8 @@ public class MMSProjectsEndpoint extends MMSEndpoint {
     public static class ProjectsBuilder extends Builder {
         @Override
         public void prepareUriPath() {
-            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.PROJECTS.getPath());
+            String path = uriBuilder.getPath();
+            uriBuilder.setPath((path == null ? "" : path) + MMSEndpointType.PROJECTS.getPath());
             uriBuilder.clearParameters();
         }
     }

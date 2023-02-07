@@ -14,7 +14,8 @@ public class MMSValidateJwtToken extends MMSEndpoint {
     public static class ValidateJwtTokenBuilder extends Builder {
         @Override
         public void prepareUriPath() {
-            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.VALIDATETOKEN.getPath());
+            String path = uriBuilder.getPath();
+            uriBuilder.setPath((path == null ? "" : path) + MMSEndpointType.VALIDATETOKEN.getPath());
             uriBuilder.clearParameters();
         }
     }

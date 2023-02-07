@@ -29,7 +29,8 @@ public class MMSLoginEndpoint extends MMSEndpoint {
     public static class LoginBuilder extends Builder {
         @Override
         public void prepareUriPath() {
-            uriBuilder.setPath(uriBuilder.getPath() + MMSEndpointType.LOGIN.getPath());
+            String path = uriBuilder.getPath();
+            uriBuilder.setPath((path == null ? "" : path) + MMSEndpointType.LOGIN.getPath());
             uriBuilder.clearParameters();
         }
 
