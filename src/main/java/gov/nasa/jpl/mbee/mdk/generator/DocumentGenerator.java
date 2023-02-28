@@ -296,7 +296,7 @@ public class DocumentGenerator {
                     next2 = context.getCurrentNode();
                     evaluatedConstraintsForNext = true;
                 }
-                else if (profile.formattingAndDisplayTemplate().is(next)
+                else if (profile.formattingAndDisplayTemplate().is(next) || profile.tableStructure().is(next)
                         || b != null) {
                     parseResults = parseQuery(next, parent);
                     next2 = next;
