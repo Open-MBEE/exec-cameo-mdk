@@ -68,7 +68,7 @@ public class DocumentGenerator {
         this.profile = SysMLExtensions.getInstance(e);
         this.product = this.profile.product().getStereotype();
         this.sysmlview = SysMLProfile.getInstance(e).view().getStereotype();
-        this.conform = this.profile.conforms().getStereotype();
+        this.conform = SysMLProfile.getInstance(e).conform().getStereotype();
         this.expose = SysMLProfile.getInstance(e).expose().getStereotype();
         this.doc = new Document();
         this.context = new GenerationContext(new Stack<>(), null, dv, Application.getInstance().getGUILog());
