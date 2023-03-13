@@ -121,7 +121,7 @@ public class DocGenUtils {
     public static String htmlToXmlEntities(String html) {
         StringBuffer stringBuffer = new StringBuffer();
         Matcher matcher = ENTITY_PATTERN.matcher(html);
-        
+
         while (matcher.find()) {
             String replacement = null;
             if (matcher.group(1).equals("&nbsp;")) {
@@ -174,8 +174,8 @@ public class DocGenUtils {
             else {
                   	return htmlToXmlEntities(((String) s)
                             .replaceAll("&(?![A-Za-z#0-9]+;)", "&amp;").replaceAll("<([>=\\s])", "&lt;$1")
-                            .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"))
-                            .replaceAll("[^\\x00-\\x7F]", "");  //for line 402 of DocGen.mdzip
+                            .replaceAll("<<", "&lt;&lt;").replaceAll("<(?![^>]+>)", "&lt;"));
+                            //.replaceAll("[^\\x00-\\x7F]", "");  //for line 402 of DocGen.mdzip
             }
         }
         else if (s instanceof Integer) {
