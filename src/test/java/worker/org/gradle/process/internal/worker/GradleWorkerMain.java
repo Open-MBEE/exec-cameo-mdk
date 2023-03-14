@@ -18,15 +18,9 @@ package worker.org.gradle.process.internal.worker;
 
 //import org.gradle.internal.classloader.FilteringClassLoader;
 import org.gradle.process.internal.streams.EncodedStream;
+import org.openmbee.mdk.test.framework.GradleMagicDrawLauncher;
 
 import java.io.DataInputStream;
-import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -35,7 +29,7 @@ import java.util.concurrent.Callable;
  */
 
 /**
- * Disables the Gradle dynamic classloading as its already done in {@link gov.nasa.jpl.mbee.mdk.test.framework.GradleMagicDrawLauncher}.
+ * Disables the Gradle dynamic classloading as its already done in {@link GradleMagicDrawLauncher}.
  * Additionally uses reflection to change the system class loader to the current OSGi one, since Gradle library uses it to load the JUnit test and potentially other necessary components that will not be available in the bootstrap class loader.
  *
  * @author igomes
@@ -99,7 +93,7 @@ public class GradleWorkerMain {
 
         //Class<? extends Callable> workerClass = ClassLoader.loadClass("org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker").asSubclass(Callable.class);
         //Class<? extends Callable> workerClass = Class.forName("org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker", false, getClass().getClassLoader()).asSubclass(Callable.class);
-        Class<? extends Callable> workerClass = Class.forName("gov.nasa.jpl.mbee.mdk.test.framework.MagicDrawClassLoaderWorker", false, getClass().getClassLoader()).asSubclass(Callable.class);
+        Class<? extends Callable> workerClass = Class.forName("org.openmbee.mdk.test.framework.MagicDrawClassLoaderWorker", false, getClass().getClassLoader()).asSubclass(Callable.class);
         Callable<Void> main = workerClass.getConstructor(DataInputStream.class).newInstance(instr);
         main.call();
     }

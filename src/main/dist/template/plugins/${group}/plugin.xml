@@ -1,11 +1,11 @@
 <plugin
-        id="gov.nasa.jpl.mbee.mdk"
+        id="org.openmbee.mdk"
         name="Model Development Kit"
         internalVersion="${internal.version}"
         version="${human.version}"
         provider-name="OpenMBEE"
         class-lookup="LocalFirst"
-        class="gov.nasa.jpl.mbee.mdk.MDKPlugin">
+        class="org.openmbee.mdk.MDKPlugin">
     <requires>
         <api version="1.0"/>
     </requires>

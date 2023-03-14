@@ -334,7 +334,7 @@ task testsJar(type: Jar, dependsOn: testClasses) {
     archiveClassifier = 'tests'
     from sourceSets.test.output
 
-    exclude 'gov/nasa/jpl/mbee/mdk/test/framework/**'
+    exclude 'org/openmbee/mdk/test/framework/**'
     exclude 'org/**'
     exclude 'worker/**'
     //include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
@@ -344,14 +344,14 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     archiveClassifier = 'tests-hack'
     from sourceSets.test.output
 
-    include 'gov/nasa/jpl/mbee/mdk/test/framework/**'
+    include 'org/openmbee/mdk/test/framework/**'
     include 'org/**'
     include 'worker/**'
     //exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
         attributes(
-                'Main-Class': 'gov.nasa.jpl.mbee.mdk.test.framework.GradleMagicDrawLauncher'
+                'Main-Class': 'org.openmbee.mdk.test.framework.GradleMagicDrawLauncher'
         )
     }
 }
@@ -615,7 +615,7 @@ task runJava(type: JavaExec) {
         executable = profiles["executablePath"]
     }
     main = 'com.nomagic.magicdraw.Main'
-    jvmArgs = ['--module-path', 'plugins/gov.nasa.jpl.cae.magicdraw.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Djdk.attach.allowAttachSelf=true']
+    jvmArgs = ['--module-path', 'plugins/org.openmbee.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Djdk.attach.allowAttachSelf=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
@@ -633,7 +633,7 @@ task testAVG(type: JavaExec) {
     errorOutput = System.err
 
     main = 'com.nomagic.magicdraw.Main'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator']
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=org.openmbee.pma.cli.AutomatedViewGenerator']
 }
 
 testAVG.dependsOn installDist
