@@ -347,7 +347,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         TAGGEDVALUE_POST(
                 (element, project, objectNode) -> {
-                    if (!(element instanceof TaggedValue)) {
+                    if (!(element instanceof TaggedValue) || element instanceof ElementTaggedValue) {
                         return objectNode;
                     }
                     TaggedValue v = (TaggedValue)element;

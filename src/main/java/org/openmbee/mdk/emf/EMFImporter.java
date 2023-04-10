@@ -130,7 +130,7 @@ public class EMFImporter implements JsonToElementFunction {
                 ),
                 TAGGED_VALUE = new PreProcessor(
                         (objectNode, project, strict, element) -> {
-                            if (!(element instanceof TaggedValue)) {
+                            if (!(element instanceof TaggedValue) || element instanceof ElementTaggedValue) {
                                 return element;
                             }
                             ArrayNode value = (ArrayNode)objectNode.get("value");
