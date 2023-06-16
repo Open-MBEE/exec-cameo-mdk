@@ -28,7 +28,7 @@ public class ElementDiffAction extends MDAction {
     @Override
     public void actionPerformed(@CheckForNull ActionEvent actionEvent) {
         if (!MDKPlugin.isJavaFXSupported()) {
-            JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), "The " + NAME + " feature requires JavaFX. Please add \"-Dorg.osgi.framework.bundle.parent=ext\" to the\n\"JAVA_ARGS\" line in the properties file(s) in your MagicDraw bin directory and restart.");
+            JOptionPane.showMessageDialog(Application.getInstance().getMainFrame(), "The " + NAME + " feature requires JavaFX. JavaFX Library not found.");
             return;
         }
         try {
