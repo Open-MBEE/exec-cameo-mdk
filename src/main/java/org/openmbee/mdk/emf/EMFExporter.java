@@ -156,14 +156,14 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     }
 
     private enum Processor {
-        APPLIED_STEREOTYPE(
+        /*APPLIED_STEREOTYPE(
                 (element, project, objectNode) -> {
                     ArrayNode applied = StereotypesHelper.getStereotypes(element).stream().map(stereotype -> TextNode.valueOf(getEID(stereotype))).collect(MDKCollectors.toArrayNode());
                     objectNode.set(MDKConstants.APPLIED_STEREOTYPE_IDS_KEY, applied);
                     return objectNode;
                 },
                 Type.PRE
-        ),
+        ),*/
         ATTACHED_PROJECT(
                 (element, project, objectNode) -> ProjectUtilities.isElementInAttachedProject(element) && ProjectUtilities.getAttachedProjects(project.getPrimaryProject()).stream().noneMatch(iAttachedProject -> ProjectUtilitiesInternal.distanceFromProject(iAttachedProject) == 1 && ProjectUtilities.isAttachedProjectRoot(element, iAttachedProject)) ? null : objectNode,
                 Type.PRE
