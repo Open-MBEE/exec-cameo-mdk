@@ -7,7 +7,7 @@
                     mdVersionMax="higher"
                     mdVersionMin="18.4"
                     name="Model Development Kit"
-                    product="JPL Model Development Kit"
+                    product="Model Development Kit"
                     type="Plugin">
     <version human="${human.version}" resource="${internal.version}" internal="${internal.version}"/>
     <provider name="OpenMBEE"/>
