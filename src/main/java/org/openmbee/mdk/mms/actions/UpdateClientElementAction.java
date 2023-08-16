@@ -265,6 +265,10 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                 if (sysmlIdJsonNode == null || !sysmlIdJsonNode.isTextual()) {
                     continue;
                 }
+                JsonNode typeNode = entryObjectNode.get(MDKConstants.TYPE_KEY);
+                if (typeNode == null) { // this may happen with ve added artifacts in a beta version that's not attached to a model element
+                    continue;
+                }
                 String entryId = sysmlIdJsonNode.asText();
                 // TODO Abstract this stuff to a converter @donbot
                 String name = null;
@@ -277,8 +281,9 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         name = "<>";
                     }
                 }
+                String type = typeNode != null ? typeNode.asText("Element") : "Element";
                 ValidationRuleViolation validationRuleViolation = new ValidationRuleViolation(entryElement != null && !Project.isElementDisposed(entryElement) ? entryElement : project.getPrimaryModel(), "["
-                        + (entryElement != null && !Project.isElementDisposed(entryElement) ? "UPDATE" : "CREATE") + " FAILED]" + (entryElement == null || Project.isElementDisposed(entryElement) ? " " + entryObjectNode.get(MDKConstants.TYPE_KEY).asText("Element") + " " + name + " : " + entryId : "")
+                        + (entryElement != null && !Project.isElementDisposed(entryElement) ? "UPDATE" : "CREATE") + " FAILED]" + (entryElement == null || Project.isElementDisposed(entryElement) ? " " + type + " " + name + " : " + entryId : "")
                         + ((entryElement == null || Project.isElementDisposed(entryElement)) && entryException != null ? " -" : "") + (entryException != null ? " " + (entryException instanceof ReadOnlyElementException ? "Element is not editable." : entryException.getMessage()) : ""));
                 addUpdateElementActions(validationRuleViolation, entryElement, entryId, entryObjectNode);
                 (entryException instanceof ReadOnlyElementException ? editableValidationRule : failedChangeValidationRule).addViolation(validationRuleViolation);
