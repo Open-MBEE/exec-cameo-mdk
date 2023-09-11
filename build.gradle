@@ -13,14 +13,17 @@ buildscript {
     }
     dependencies {
         classpath "io.github.gradle-nexus:publish-plugin:1.0.0"
+        classpath group: 'org.openjfx', name: 'javafx-plugin', version: '0.0.14'
     }
 }
+
 
 plugins {
     id 'idea'
     id 'eclipse'
     id 'java'
     id 'distribution'
+    id 'org.openjfx.javafxplugin' version '0.0.14'
 }
 
 String buildProfile = project.getProperties().getOrDefault('buildProfile', 'opensource')
@@ -63,14 +66,10 @@ else {
 String docbookNameVersion = 'docbook-xsl-1.79.1'
 String fopNameVersion = 'fop-1.1'
 
-java {
-    sourceCompatibility = 'VERSION_1_8'
-    targetCompatibility = 'VERSION_1_8'
-}
-
-
 // In this section you declare where to find the dependencies of your project
 repositories {
+    mavenCentral()
+    flatDir { dirs "libz" } //Put Cameo no-install and plugin zips here
     ivy {
         url "https://sourceforge.net/projects/docbook/files/docbook-xsl/"
         patternLayout {
@@ -91,7 +90,6 @@ repositories {
 
         //url 'https://mirror.nodesdirect.com/apache/xmlgraphics/fop/binaries/' for newer version
     }
-    mavenCentral()
     maven {
         url 'https://repo.gradle.org/gradle/libs-releases-local/'
     }
@@ -135,6 +133,7 @@ if (profiles['repositories'] != null) {
 
 configurations {
     preImplementation
+    distribution
     testPublish
 }
 
@@ -152,7 +151,7 @@ dependencies {
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
     // implementation group: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
 
-    // JGraphT 
+    // JGraphT
     implementation group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
     // implementation group: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
 
@@ -168,8 +167,8 @@ dependencies {
     implementation group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
     // implementation group: 'com.opencsv', name: 'opencsv', version: '3.8+'
 
-    // ActiveMQ 
-    implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
+    // ActiveMQ
+    //implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
     // implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
 
     // Jackson
@@ -187,10 +186,10 @@ dependencies {
     implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.2'
 
     // Apache Commons CLI
-    implementation group: 'commons-cli', name: 'commons-cli', version: '1.2'
+    implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
 
     //OpenMBEE MMS Java Client
-    implementation group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
+    //implementation group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
 
     implementation group: 'com.beust', name: 'jcommander', version: '1.72'
 
@@ -216,13 +215,18 @@ dependencies {
         }
     }
     else {
-        preImplementation group: 'com.nomagic', name: 'demomagicdraw', version: '190sp3', classifier: 'MagicDraw_Demo_190_sp3_no_install', ext: 'zip'
-        preImplementation group: 'com.nomagic', name: 'sysml', version: '190sp3', classifier: 'SysML_Plugin_190_sp3_bundle', ext: 'zip'
-        preImplementation group: 'com.nomagic', name: 'cst', version: '190sp3', classifier: 'Cameo_Simulation_Toolkit_Plugin_190_sp3', ext: 'zip'
+        preImplementation group: 'com.nomagic', name: 'democsm', version: '2022xRefresh1', classifier: 'Cameo_Systems_Modeler_2022x_Refresh1_HF1_no_install', ext: 'zip'
+//        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
+//        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
     }
 
     preImplementation group: 'org.apache.fop', name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
     preImplementation group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext: 'zip'
+
+    // JavaFX
+    //preImplementation group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2'
+    //preImplementation group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2'
+    //preImplementation group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2'
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
@@ -236,7 +240,17 @@ dependencies {
             implementation files(it)
         }
     }
+    else {
+        implementation files('build/dependency-cache/extracted/fop/jars/fop-1.1.jar', 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar')
+    }
 
+}
+
+javafx {
+    version = "11.0.2"
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing' ]
+    platform = 'win'
+    configurations = ['preImplementation']
 }
 
 task extractDependencies {
@@ -278,6 +292,12 @@ task extractDependencies {
                     into 'build/dependency-cache/extracted/docbook'
                 }
             }
+            else if (archive.getName().startsWith('javafx')) {
+                copy {
+                    from archive.getAbsoluteFile()
+                    into 'build/dependency-cache/extracted/javafx'
+                }
+            }
             else {
                 copy {
                     from zipTree(archive)
@@ -316,7 +336,7 @@ task testsJar(type: Jar, dependsOn: testClasses) {
     archiveClassifier = 'tests'
     from sourceSets.test.output
 
-    exclude 'gov/nasa/jpl/mbee/mdk/test/framework/**'
+    exclude 'org/openmbee/mdk/test/framework/**'
     exclude 'org/**'
     exclude 'worker/**'
     //include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
@@ -326,14 +346,14 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     archiveClassifier = 'tests-hack'
     from sourceSets.test.output
 
-    include 'gov/nasa/jpl/mbee/mdk/test/framework/**'
+    include 'org/openmbee/mdk/test/framework/**'
     include 'org/**'
     include 'worker/**'
     //exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
         attributes(
-                'Main-Class': 'gov.nasa.jpl.mbee.mdk.test.framework.GradleMagicDrawLauncher'
+                'Main-Class': 'org.openmbee.mdk.test.framework.GradleMagicDrawLauncher'
         )
     }
 }
@@ -381,6 +401,10 @@ abstract class PreDist extends DefaultTask {
             from 'lib'
             from project.jar
             into "${outputDir}/plugins/${groupName}"
+        }
+        project.copy {
+            from "${extractedCache}/javafx"
+            into "${outputDir}/plugins/${groupName}/javafx"
         }
         project.copy {
             from project.getTasks().getByName('javadocZip')
@@ -491,7 +515,6 @@ distZip {
     eachFile { file ->
         file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
     }
-
 }
 
 distZip.dependsOn preDist
@@ -593,8 +616,8 @@ task runJava(type: JavaExec) {
     if (profiles["executablePath"] != null) {
         executable = profiles["executablePath"]
     }
-    main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext']
+    main = 'com.nomagic.magicdraw.Main'
+    jvmArgs = ['--module-path', 'plugins/org.openmbee.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Djdk.attach.allowAttachSelf=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
@@ -611,8 +634,8 @@ task testAVG(type: JavaExec) {
     standardOutput = System.out
     errorOutput = System.err
 
-    main = 'com.nomagic.osgi.launcher.ProductionFrameworkLauncher'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Dcom.nomagic.osgi.config.dir=configuration', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dorg.osgi.framework.bundle.parent=ext', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=gov.nasa.jpl.mbee.pma.cli.AutomatedViewGenerator']
+    main = 'com.nomagic.magicdraw.Main'
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=org.openmbee.pma.cli.AutomatedViewGenerator']
 }
 
 testAVG.dependsOn installDist
@@ -665,6 +688,7 @@ test {
      * Example command: .../java -Dcom.nomagic.osgi.config.dir=configuration -Desi.system.config=data/application.conf -Djava.security.manager=worker.org.gradle.process.internal.worker.child.BootstrapSecurityManager -Dlogback.configurationFile=data/logback.xml -Dmd.class.path=$java.class.path -jar /Users/igomes/mdk/build/libs/mdk-*-tests-hack.jar -cp ... -Dfile.encoding=UTF-8 -Duser.country=US -Duser.language=en -Duser.variant -ea -cp .../.gradle/caches/.../workerMain/gradle-worker.jar worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 1'
      *
      * @author igomes
+     * TODO 2021x refresh 1 removed osgi
      */
     classpath = files()
     doFirst {

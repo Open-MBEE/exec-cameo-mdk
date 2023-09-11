@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <diagram version="9" type="View Diagram" baseType="Class Diagram" abbreviation="vd" category="MDK">
-    <requiredPlugin>gov.nasa.jpl.mbee.mdk#Model Development Kit;SysML Extensions.mdxml;UML_Standard_Profile.mdzip
+    <requiredPlugin>org.openmbee.mdk#Model Development Kit;SysML Extensions.mdxml;UML_Standard_Profile.mdzip
     </requiredPlugin>
     <toolbarConfiguration>
         <baseCategory id="COMMON_ELEMENTS_STATIC" parentCategoryID="COMMON_ELEMENTS_STATIC" expandedByDefault="true"/>
