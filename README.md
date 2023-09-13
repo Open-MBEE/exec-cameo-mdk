@@ -1,6 +1,6 @@
 # Cameo Model Development Kit (MDK)
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Open-MBEE/mdk?label=download)](https://github.com/Open-MBEE/mdk/releases/latest) [![Maven Central](https://img.shields.io/maven-central/v/org.openmbee.mdk.magic/mdk)](https://search.maven.org/artifact/org.openmbee.mdk.magic/mdk) [![Jira](https://img.shields.io/badge/issues-jira-blue)](https://openmbee.atlassian.net/browse/MDK) [![CircleCI](https://circleci.com/gh/Open-MBEE/mdk.svg?style=shield)](https://circleci.com/gh/Open-MBEE/mdk) [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/Open-MBEE/mdk.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Open-MBEE/mdk/context:java)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Open-MBEE/mdk?label=download)](https://github.com/Open-MBEE/mdk/releases/latest) [![Maven Central](https://img.shields.io/maven-central/v/org.openmbee.mdk.magic/mdk)](https://search.maven.org/artifact/org.openmbee.mdk.magic/mdk) [![CircleCI](https://circleci.com/gh/Open-MBEE/mdk.svg?style=shield)](https://circleci.com/gh/Open-MBEE/mdk) 
 
 Cameo MDK is a plugin for [Cameo Systems Modeler](https://www.nomagic.com/products/cameo-systems-modeler) and other No Magic environment bundles that’s primary purposes are to sync models with the [MMS](https://github.com/Open-MBEE/mms-alfresco) and implement the [DocGen](src/main/dist/manual) language, which allows modelers to dynamically generate documents in a model-based approach using the view and viewpoint concept.
 
