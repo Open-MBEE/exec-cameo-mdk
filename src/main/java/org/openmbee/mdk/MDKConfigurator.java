@@ -17,6 +17,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import org.openmbee.mdk.actions.ExportToJsonRecursivelyAction;
 import org.openmbee.mdk.docgen.actions.ValidateAllViewsAction;
 import org.openmbee.mdk.docgen.actions.ValidateViewAction;
 import org.openmbee.mdk.docgen.actions.PreviewDocumentAction;
@@ -119,6 +120,30 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         Stereotype viewStereotype = sysml.view().getStereotype();
         Stereotype sysmlviewpoint = sysml.viewpoint().getStereotype();
         Stereotype elementGroupStereotype = sysml.elementGroup().getStereotype();
+
+        {
+            ActionsCategory exportCategory = myCategory(manager, "MDK_JSON_Serialization", "MDK JSON Export");
+
+            if (es != null) {
+                ExportToJsonRecursivelyAction elementOnly = ExportToJsonRecursivelyAction.exportElementOnly(es);
+                if (manager.getActionFor(elementOnly.getID()) == null) {
+                    exportCategory.addAction(elementOnly);
+                }
+                ExportToJsonRecursivelyAction exportElementHierarchy = ExportToJsonRecursivelyAction.exportElementHierarchy(es);
+                if (manager.getActionFor(exportElementHierarchy.getID()) == null) {
+                    exportCategory.addAction(exportElementHierarchy);
+                }
+            } else if (e != null) {
+                ExportToJsonRecursivelyAction elementOnly = ExportToJsonRecursivelyAction.exportElementOnly(e);
+                if (manager.getActionFor(elementOnly.getID()) == null) {
+                    exportCategory.addAction(elementOnly);
+                }
+                ExportToJsonRecursivelyAction exportElementHierarchy = ExportToJsonRecursivelyAction.exportElementHierarchy(e);
+                if (manager.getActionFor(exportElementHierarchy.getID()) == null) {
+                    exportCategory.addAction(exportElementHierarchy);
+                }
+            }
+        }
 
         ActionsCategory modelLoad = myCategory(manager, "MMSContext", "MMS");
         if (!TicketUtils.isTicketSet(project)) {
@@ -361,5 +386,13 @@ public class MDKConfigurator implements BrowserContextAMConfigurator, DiagramCon
         migrateCategory.setNested(true);
         category.addAction(migrateCategory);
         migrateCategory.addAction(new GroupsMigrationAction());
+
+        {
+            MDActionsCategory exportCategory = new MDActionsCategory(MDKConfigurator.class.getSimpleName() + "-Serialization", "MDK JSON");
+            exportCategory.setNested(true);
+            category.addAction(exportCategory);
+
+            exportCategory.addAction(ExportToJsonRecursivelyAction.exportEntirePrimaryModel());
+        }
     }
 }
