@@ -68,8 +68,8 @@ public class PdfWriter implements RunnableWithProgress {
 
 		ClassLoader localClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
-			FopFactory fopFactory = FopFactory.newInstance();//fopConfigFile);
-
+			FopFactory fopFactory = FopFactory.newInstance(new File(".").toURI());//fopConfigFile);
+			
 			//make currentloader to be mainloader (batik, fop, xmlgraphics jar need to be loaded at the same level so images to be embedded in PDF).
 			URL[] urls = new URL[1];
 			//urls[0] = (new File(ApplicationEnvironment.getInstallRoot() + File.separator + "plugins" + File.separator + "org.openmbee.mdk")).toURI().toURL();
@@ -91,8 +91,10 @@ public class PdfWriter implements RunnableWithProgress {
 					Fop fop = fopFactory.newFop(MimeConstants.MIME_PDF, foUserAgent, pdfOut);
 					// Setup XSLT
 					Transformer transformer = TransformerFactory.newInstance().newTransformer(new StreamSource(docbookXslFo));
+
 					// Pipe the FO events to FOP
 					Result res = new SAXResult(fop.getDefaultHandler());
+
 					//transform Docbook -> XSL-FO -> PDF
 					transformer.transform(docbookSrc, res);
 
