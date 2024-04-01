@@ -36,7 +36,7 @@ Version 1.0
             </l:context>
         </l:l10n> 
     </l:i18n>
-     
+         
     <!-- for table - copied from mgss.xsl -->
     <xsl:template name="calsTable">
         <xsl:variable name="keep.together">
