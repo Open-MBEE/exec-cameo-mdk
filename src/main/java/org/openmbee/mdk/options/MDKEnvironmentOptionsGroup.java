@@ -149,11 +149,9 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
 
 
     public List<String> getAuthenticationChain() {
-        String val = PROPERTY_RESOURCE_PROVIDER.getString(MMS_AUTHENTICATION_CHAIN, null);
-        if(val == null || val.isEmpty()) {
-            Property p = getProperty(MMS_AUTHENTICATION_CHAIN);
-            val = p.getValueStringRepresentation();
-        }
+        //Defaults can now be overridden inside the EnvironmentOptionsResources.properties file using MMS_AUTHENTICATION_CHAIN_DEFAULTS
+        Property p = getProperty(MMS_AUTHENTICATION_CHAIN);
+        String val = p.getValueStringRepresentation();
         if (val == null || val.isEmpty()) {
             return new ArrayList<>();
         }
@@ -175,13 +173,19 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
 
     @Override
     public void setDefaultValues() {
+        
+        //Boeing: You can now set the default Auth chain using the EnvironmentOptionsResources.properties file
+        String authDefault = MDKEnvironmentOptionsGroupResources.getString(MMS_AUTHENTICATION_CHAIN + "_DEFAULT");
+        if (authDefault == null || authDefault.isEmpty()) {
+            authDefault = "org.openmbee.mdk.tickets.BasicAuthAcquireTicketProcessor,org.openmbee.mdk.tickets.AuthenticationChainError";
+        }
         setLogJson(false);
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
         setAuthenticationChain(
-                "org.openmbee.mdk.tickets.BasicAuthAcquireTicketProcessor,org.openmbee.mdk.tickets.AuthenticationChainError");
+                authDefault);
         setDocBookToPDFStyleSheet("");
     }
 
