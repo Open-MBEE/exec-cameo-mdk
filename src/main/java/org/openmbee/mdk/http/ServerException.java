@@ -1,6 +1,6 @@
 package org.openmbee.mdk.http;
 
-import org.apache.commons.text.WordUtils;
+import org.apache.commons.lang3.text.WordUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

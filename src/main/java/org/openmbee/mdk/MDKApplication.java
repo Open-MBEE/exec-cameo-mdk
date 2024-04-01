@@ -29,7 +29,7 @@ public class MDKApplication extends Application {
         return INSTANCE;
     }
 
-    public static void main(String... args) {
-        Application.launch(MDKApplication.class);
+    public static void main(String[] args) {
+        launch(MDKApplication.class);
     }
 }

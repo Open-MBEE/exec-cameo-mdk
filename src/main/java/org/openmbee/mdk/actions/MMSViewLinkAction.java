@@ -113,10 +113,10 @@ public class MMSViewLinkAction extends MDAction {
                         label = "Documents containing " + element.getHumanName() + ":";
                         for (Element doc : documents) {
                             if (doc.equals(element)) {
-                                viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(element);
+                                viewFragment += "/" + Converters.getElementToIdConverter().apply(element) + "/present?viewId=" + Converters.getElementToIdConverter().apply(element);
                             }
                             else {
-                                viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(doc) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                                viewFragment += "/" + Converters.getElementToIdConverter().apply(doc) + "/present?viewId=" + Converters.getElementToIdConverter().apply(element);
                             }
                             JButton button = new ViewButton(doc.getHumanName(), uriBase.setFragment(viewFragment).build());
                             linkButtons.add(button);
@@ -133,10 +133,10 @@ public class MMSViewLinkAction extends MDAction {
             else {
                 // build single link
                 if (documents.isEmpty()) {
-                    viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(element) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                    viewFragment += "/" + Converters.getElementToIdConverter().apply(element) + "/present?viewId=" + Converters.getElementToIdConverter().apply(element);
                 }
                 else {
-                    viewFragment += "/documents/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/views/" + Converters.getElementToIdConverter().apply(element);
+                    viewFragment += "/" + Converters.getElementToIdConverter().apply(documents.iterator().next()) + "/present?viewId=" + Converters.getElementToIdConverter().apply(element);
                 }
                 // just open it if possible
                 if (Desktop.isDesktopSupported()) {

@@ -21,3 +21,5 @@ venv/*
 *.groovy
 libz
 mddocs
+bin
+.run

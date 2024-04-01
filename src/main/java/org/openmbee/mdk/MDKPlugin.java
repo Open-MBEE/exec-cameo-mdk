@@ -118,14 +118,14 @@ public class MDKPlugin extends Plugin implements ResourceDependentPlugin {
         try {
             Class.forName("javafx.application.Platform");
         } catch (ClassNotFoundException e) {
-            System.err.println("[WARNING] JavaFX libraries are unavailable. Please add \"-Dorg.osgi.framework.bundle.parent=ext\" to the \"JAVA_ARGS\" line in the properties file(s) in your MagicDraw bin directory and restart.");
+            System.err.println("[WARNING] JavaFX libraries are unavailable.");
             return;
         }
         new Thread(() -> {
             try {
-                Class<?> clazz = Class.forName("org.openmbee.mdk.MDKApplication");
+                Class<?> clazz = Class.forName("org.openmbee.mdk.Launcher");
                 Method method = clazz.getMethod("main", String[].class);
-                // has to be before invocation since it hangs
+                //has to be before invocation since it hangs
                 MDKPlugin.JAVAFX_SUPPORTED = true;
                 method.invoke(null, new Object[]{new String[]{}});
             } catch (Exception | Error e) {
