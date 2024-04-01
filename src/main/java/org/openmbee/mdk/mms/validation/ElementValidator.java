@@ -203,7 +203,7 @@ public class ElementValidator implements RunnableWithProgress {
         String type = typeJsonNode != null ? typeJsonNode.asText("Element") : "Element";
         JsonNode nameJsonNode = serverElement.get(MDKConstants.NAME_KEY);
         String name = nameJsonNode != null ? nameJsonNode.asText("<>") : "<>";
-        if (name.equals("<>") || name.equals("")) {
+        if (name.equals("<>") || name.trim().equals("")) {
             name = "<"  + id + ">";
         }
         finishViolation(new ValidationRuleViolation(project.getPrimaryModel(), "[MISSING IN CLIENT] " + type + " " + name), id, null, serverElement, null);
