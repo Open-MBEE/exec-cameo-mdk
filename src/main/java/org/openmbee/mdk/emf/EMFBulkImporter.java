@@ -188,7 +188,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                             System.err.println("[FAILED 1.5] Could not create " + sysmlId);
                         }
                         Element element = Converters.getIdToElementConverter().apply(sysmlId, project);
-                        failedElementMap.put(new Pair<>(element != null && !isElementInvalid(element) && !project.isDisposed(element) ? element : null, objectNode), exception);
+                        failedElementMap.put(new Pair<>(element != null && !project.isDisposed(element) ? element : null, objectNode), exception);
                         objectNodes.remove(objectNode);
                         continue bulkImport;
                     }
@@ -223,7 +223,7 @@ public class EMFBulkImporter implements BulkImportFunction {
                             System.err.println("[FAILED 2] Could not import " + sysmlId);
                         }
                         Element element = Converters.getIdToElementConverter().apply(sysmlId, project);
-                        failedElementMap.put(new Pair<>(element != null && !isElementInvalid(element) && !project.isDisposed(element) ? element : null, objectNode), exception);
+                        failedElementMap.put(new Pair<>(element != null && !project.isDisposed(element) ? element : null, objectNode), exception);
                         iterator.remove();
                         continue bulkImport;
                     }
@@ -255,21 +255,22 @@ public class EMFBulkImporter implements BulkImportFunction {
                             if (MDUtils.isDeveloperMode()) {
                                 System.err.println("[FAILED 3] " + result.toString());
                             }
-                            failedElementMap.put(new Pair<>(element != null && !isElementInvalid(element) && !project.isDisposed(element) ? element : null, objectNode), new ImportException(element, objectNode, "Element failed validation after importing. Reason: " + result.getReason()));
+                            failedElementMap.put(new Pair<>(element != null && !project.isDisposed(element) ? element : null, objectNode), new ImportException(element, objectNode, "Element failed validation after importing. Reason: " + result.getReason()));
                             objectNodes.remove(objectNode);
                             continue bulkImport;
                         }
-
-                        if (isElementInvalid(element)) {
-                            if (MDUtils.isDeveloperMode()) {
-                                JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
-                                String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
-                                System.err.println("[FAILED 4] Could not create " + sysmlId);
-                            }
-                            failedElementMap.put(new Pair<>(element != null && !isElementInvalid(element) && !project.isDisposed(element) ? element : null, objectNode), new ImportException(element, objectNode, "Element was found to be invalid after importing."));
-                            objectNodes.remove(objectNode);
-                            continue bulkImport;
-                        }
+                        
+                        // TODO: Need to see if we should/can reimplement this
+                        // if (isElementInvalid(element)) {
+                        //     if (MDUtils.isDeveloperMode()) {
+                        //         JsonNode sysmlIdJsonNode = objectNode.get(MDKConstants.ID_KEY);
+                        //         String sysmlId = sysmlIdJsonNode != null && sysmlIdJsonNode.isTextual() ? sysmlIdJsonNode.asText() : "<>";
+                        //         System.err.println("[FAILED 4] Could not create " + sysmlId);
+                        //     }
+                        //     failedElementMap.put(new Pair<>(element != null && !project.isDisposed(element) ? element : null, objectNode), new ImportException(element, objectNode, "Element was found to be invalid after importing."));
+                        //     objectNodes.remove(objectNode);
+                        //     continue bulkImport;
+                        // }
                         ObjectNode sourceObjectNode = Converters.getElementToJsonConverter().apply(element, project);
                         if (!JsonEquivalencePredicate.getInstance().test(sourceObjectNode, objectNode)) {
                             // currently handled as a warning instead of an error
@@ -340,34 +341,7 @@ public class EMFBulkImporter implements BulkImportFunction {
     public Map<Element, ObjectNode> getNonEquivalentElements() {
         return nonEquivalentElements;
     }
-
-    // //Shim for 2022x R2 until we can figure out if it's still ncessary
-    // public static boolean isElementInvalid(Element element) {
-    //     //For 2021x and earlier
-    //     //return element.isInvalid();
-    //     return false;
-    // }
     
-    // Is Element Invalid Shim for versions earlier that 2021x
-    private static boolean isElementInvalid(Element element) {
-
-        String className = "Element";
-        String instanceMethodName = "isInvalid";
-        Class<?>[] formalParameters = {};
-        Object[] effectiveParameters = new Object[] {};
-        String packageName = "com.nomagic.uml2.ext.magicdraw.classes.mdkernel";
-        try {
-            Class<?> clazz = Class.forName(packageName + "." + className);
-            Method method = clazz.getMethod(instanceMethodName, formalParameters);
-            return (boolean) method.invoke(element, effectiveParameters);
-        } catch (NoSuchMethodException e) {
-            return false;
-        } catch (Exception e) {
-             Application.getInstance().getGUILog().log("Error accessing Cameo API (EMFBulkImporter.Shims)");
-             return false;
-        }
-     }
-
     private static RepositoryModelValidator getValidator(Project project) {
         String className = "RepositoryModelValidator";
         String packageName = "com.nomagic.magicdraw.uml.transaction";
