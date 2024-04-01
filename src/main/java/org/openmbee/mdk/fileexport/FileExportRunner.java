@@ -22,7 +22,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Diagram;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import org.openmbee.mdk.emf.BulkExport;
 import org.openmbee.mdk.json.JacksonUtils;
-import org.openmbee.mdk.options.MDKOptionsGroup;
+import org.openmbee.mdk.options.MDKEnvironmentOptionsGroup;
 import org.openmbee.mdk.options.MDKProjectOptionsGroup;
 import org.openmbee.mdk.util.Pair;
 
@@ -279,9 +279,9 @@ public class FileExportRunner implements RunnableWithProgress {
 			ZipOutputStream zipOutputStream, ObjectMapper mapper)
 			throws IOException, JsonGenerationException, JsonMappingException {
 
-		if (MDKOptionsGroup.getMDKOptions().isExportMdkzipDiagramElementsMappingEnabled()
+		if (MDKEnvironmentOptionsGroup.getInstance().isExportMdkzipDiagramElementsMappingEnabled()
 				&& this.exportDiagramMappings == null) {
-			
+
 			writePresentationElementsToZip(diagrams, zipOutputStream, mapper);
 		} else if (this.exportDiagramMappings) {
 			writePresentationElementsToZip(diagrams, zipOutputStream, mapper);

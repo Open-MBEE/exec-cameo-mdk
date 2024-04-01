@@ -23,7 +23,8 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
             ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
             CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
             MMS_AUTHENTICATION_CHAIN = "MMS_AUTHENTICATION_CHAIN",
-    		DOCBOOK_TO_PDF_STYLESHEET = "DOCBOOK_TO_PDF_STYLESHEET";
+    		DOCBOOK_TO_PDF_STYLESHEET = "DOCBOOK_TO_PDF_STYLESHEET",
+            EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING = "EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING";
 
     public MDKEnvironmentOptionsGroup() {
         super(ID);
@@ -169,6 +170,18 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
         addProperty(property, true);
     }
 
+    public void setExportMdkzipDiagramElementsMapping(Boolean value) {
+        BooleanProperty property = new BooleanProperty(EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property, true);
+    }
+
+    public boolean isExportMdkzipDiagramElementsMappingEnabled() {
+        Property p = getProperty(EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING);
+        return (Boolean) p.getValue();
+    }
+
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> MDKEnvironmentOptionsGroupResources.getString(key);
 
     @Override
@@ -187,6 +200,7 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
         setAuthenticationChain(
                 authDefault);
         setDocBookToPDFStyleSheet("");
+        setExportMdkzipDiagramElementsMapping(true);
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";
