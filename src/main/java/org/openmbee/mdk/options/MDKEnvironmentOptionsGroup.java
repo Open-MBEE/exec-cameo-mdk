@@ -166,14 +166,14 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
         StringProperty property = new StringProperty(MMS_AUTHENTICATION_CHAIN, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property, false);
+        addProperty(property, true);
     }
 
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> MDKEnvironmentOptionsGroupResources.getString(key);
 
     @Override
     public void setDefaultValues() {
-        
+
         //Boeing: You can now set the default Auth chain using the EnvironmentOptionsResources.properties file
         String authDefault = MDKEnvironmentOptionsGroupResources.getString(MMS_AUTHENTICATION_CHAIN + "_DEFAULT");
         if (authDefault == null || authDefault.isEmpty()) {
