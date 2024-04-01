@@ -64,7 +64,7 @@ else {
 
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
-String fopNameVersion = 'fop-1.1'
+String fopNameVersion = 'fop-2.9'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -220,7 +220,7 @@ dependencies {
 //        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
     }
 
-    preImplementation group: 'org.apache.fop', name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
+    preImplementation group: 'org.apache.fop', name: 'fop', version: '2.9', classifier: fopNameVersion + '-bin', ext: 'zip'
     preImplementation group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext: 'zip'
 
     // JavaFX
@@ -233,16 +233,7 @@ dependencies {
     implementation files(classpathLibraries.collect { 'build/dependency-cache/extracted/magicdraw/' + it })
     implementation fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar']]).flatten())
     implementation fileTree(dir: 'lib', include: ['**/*.jar'])
-    implementation files("build/dependency-cache/extracted/fop/jars/${fopNameVersion}.jar", 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar')
-    if (profiles["implementationFiles"] != null) {
-        def implementationArray = profiles["implementationFiles"].toString().split(',')
-        implementationArray.each {
-            implementation files(it)
-        }
-    }
-    else {
-        implementation files('build/dependency-cache/extracted/fop/jars/fop-1.1.jar', 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar')
-    }
+    implementation files("build/dependency-cache/extracted/fop/jars/fop-core-2.9.jar", "build/dependency-cache/extracted/fop/jars/fop-events-2.9.jar", "build/dependency-cache/extracted/fop/jars/fop-util-2.9.jar", 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-2.9.jar')
 
 }
 
@@ -267,12 +258,11 @@ task extractDependencies {
                     into archive.getParentFile().getAbsolutePath()
                 }
                 copy {
-                    from archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/build/fop.jar'
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/fop/build', include: '*.jar')
                     into 'build/dependency-cache/extracted/fop/jars'
-                    rename { String fileName -> fopNameVersion + '.jar' }
                 }
                 copy {
-                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/lib', include: '*.jar', exclude: 'commons*.jar')
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/fop/lib', include: '*.jar', exclude: 'commons*.jar')
                     into 'build/dependency-cache/extracted/fop/jars'
                 }
                 copy { //license3rdparty
@@ -281,7 +271,7 @@ task extractDependencies {
                     rename { String fileName -> 'apache_fop_license.txt' }
                 }
                 copy { //license3rdparty
-                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/fop/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
                     into 'build/dependency-cache/extracted/fop/license'
                     rename { String fileName -> fileName.replace(".LICENSE.txt", "_license.txt") }
                 }
@@ -303,6 +293,11 @@ task extractDependencies {
                     from zipTree(archive)
                     into 'build/dependency-cache/extracted/magicdraw'
                 }
+                copy {
+                    from 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
+                    into 'build/tmp/com.nomagic.conceptmodeler'
+                }
+                
             }
         }
         fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: '*.zip').each { archive ->
@@ -311,6 +306,7 @@ task extractDependencies {
                 into 'build/dependency-cache/extracted/magicdraw'
             }
         }
+        delete 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
     }
 }
 compileJava.dependsOn extractDependencies
@@ -599,6 +595,11 @@ installDist {
             from 'build/plugin'
             into 'build/install'
         }
+        copy {
+            from 'build/tmp/com.nomagic.conceptmodeler'
+            into 'build/install/plugins/com.nomagic.conceptmodeler'
+        }
+        delete 'build/tmp/com.nomagic.conceptmodeler'
     }
 }
 

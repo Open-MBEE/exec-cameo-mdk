@@ -164,6 +164,10 @@ public class DocGenUtils {
         // may want to look at
         // com.nomagic.magicdraw.uml.RepresentationTextCreator.getRepresentedText
         if (s instanceof String) {
+            //Handle noMagic attribute prefixes on <a> tags for mdel cross-refs
+            if (((String) s).contains("erit")){
+                s = ((String) s).replaceAll("erit:[a-z]*=[A-Za-z_\"]*","");
+            }
             if (((String) s).contains("<html>")){
                 if (convertHtml) {
                     return htmlToXmlEntities((String) s);
