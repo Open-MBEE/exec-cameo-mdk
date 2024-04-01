@@ -11,6 +11,7 @@ public class DiffView extends VBox {
 
     public DiffView(JsonNode source, JsonNode target, JsonNode patch) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("DiffView.fxml"));
+        loader.setClassLoader(DiffView.class.getClassLoader());
         loader.setController(controller = new DiffViewController(source, target, patch));
         loader.setRoot(this);
         loader.load();
