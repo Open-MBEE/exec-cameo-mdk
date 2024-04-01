@@ -230,9 +230,13 @@ dependencies {
     preImplementation group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext: 'zip'
 
     // JavaFX
-    //preImplementation group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2'
-    //preImplementation group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2'
-    //preImplementation group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2'
+    distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'mac'
+    distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'mac'
+    distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'mac'
+
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
@@ -246,7 +250,7 @@ dependencies {
 javafx {
     version = "11.0.2"
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing' ]
-    platform = 'win'
+    platform = 'linux'
 }
 
 task extractDependencies {
@@ -394,6 +398,7 @@ abstract class PreDist extends DefaultTask {
         }
         project.copy {
             from project.configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.file
+            from project.configurations.distribution.resolvedConfiguration.resolvedArtifacts.file
             from 'lib'
             from project.jar
             into "${outputDir}/plugins/${groupName}"
