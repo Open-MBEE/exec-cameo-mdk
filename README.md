@@ -13,7 +13,8 @@ The latest user documentation can be accessed online: https://mdk.readthedocs.io
 ## Prerequisites
 
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin) (Only CSM has been tested)
-    * The latest Cameo MDK is compatible with **2022x Refresh1**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+    * The latest Cameo MDK is compatible with **2021x Refresh2** thru **2022x Refresh2**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+
 * [Model Management System (MMS)](https://www.openmbee.org/projects.html#mms)
     * The Cameo MDK (5.0+) is compatible with MMS **4.x**. Compatibility for previous version of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
 

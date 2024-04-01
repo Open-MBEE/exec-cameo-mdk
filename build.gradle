@@ -13,6 +13,7 @@ buildscript {
     }
     dependencies {
         classpath "io.github.gradle-nexus:publish-plugin:1.0.0"
+        classpath group: "com.jfrog.artifactory", name: 'com.jfrog.artifactory.gradle.plugin', version: '5.1.9'
         classpath group: 'org.openjfx', name: 'javafx-plugin', version: '0.0.14'
     }
 }
@@ -24,10 +25,12 @@ plugins {
     id 'java'
     id 'distribution'
     id 'org.openjfx.javafxplugin' version '0.0.14'
+    id 'com.jfrog.artifactory' version '5.1.9'
 }
 
 String buildProfile = project.getProperties().getOrDefault('buildProfile', 'opensource')
 String buildTag = project.getProperties().get('buildTag')
+
 if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
     throw new GradleException('Version mismatch: ' + buildTag + ' vs ' + version)
 }
@@ -65,6 +68,7 @@ else {
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
 String fopNameVersion = 'fop-2.9'
+
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -207,6 +211,7 @@ dependencies {
 
     // Other dependencies we're unable to resolve via standard repositories
 
+    // Handle build all-in-one profile workflow
     if (profiles['nomagicDeps'] != null) {
         def mdDeps = parser.parseText(profiles['nomagicDeps'].toString())
         mdDeps.each {
@@ -214,6 +219,7 @@ dependencies {
             preImplementation group: "${dep.group}", name: "${dep.name}", version: "${dep.version}", classifier: "${dep.classifier != null ? dep.classifier : ''}", ext: "${dep.ext}"
         }
     }
+    // Default Dev Workflow, this will only correctly pull from the local ./libz flatDir
     else {
         preImplementation group: 'com.nomagic', name: 'democsm', version: '2022xRefresh1', classifier: 'Cameo_Systems_Modeler_2022x_Refresh1_HF1_no_install', ext: 'zip'
 //        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
@@ -231,7 +237,7 @@ dependencies {
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
     implementation files(classpathLibraries.collect { 'build/dependency-cache/extracted/magicdraw/' + it })
-    implementation fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar']]).flatten())
+    implementation fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([classpathLibraries, ['plugins/com.nomagic.conceptmodeler/**/*jar', 'plugins/com.nomagic.magicdraw.xmiexporter/**/*jar', 'plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar']]).flatten())
     implementation fileTree(dir: 'lib', include: ['**/*.jar'])
     implementation files("build/dependency-cache/extracted/fop/jars/fop-core-2.9.jar", "build/dependency-cache/extracted/fop/jars/fop-events-2.9.jar", "build/dependency-cache/extracted/fop/jars/fop-util-2.9.jar", 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-2.9.jar')
 
@@ -240,8 +246,7 @@ dependencies {
 javafx {
     version = "11.0.2"
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing' ]
-    platform = 'win'
-    configurations = ['preImplementation']
+    platform = 'linux'
 }
 
 task extractDependencies {
@@ -305,6 +310,7 @@ task extractDependencies {
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted/magicdraw'
             }
+            
         }
         delete 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
     }
@@ -583,6 +589,27 @@ signing {
 nexusPublishing {
     repositories {
         sonatype()
+    }
+}
+
+artifactoryPublish {
+    publications('mavenJava')
+    
+}
+
+artifactoryPublish.dependsOn distZip
+
+artifactory {
+    publish {
+        contextUrl = project.property('artifactoryUrl') as String
+        repository {
+            repoKey = project.property('artifactoryRepository')
+            username = project.getProperties().get('artifactoryUsername').toString()
+            password = project.getProperties().get('artifactoryPassword').toString()
+        }
+    }
+    if (buildNumber != null && !buildNumber.isEmpty()) {
+        clientConfig.info.setBuildNumber(buildNumber)
     }
 }
 

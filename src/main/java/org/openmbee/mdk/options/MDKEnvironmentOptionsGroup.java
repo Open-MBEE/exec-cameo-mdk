@@ -2,7 +2,7 @@ package org.openmbee.mdk.options;
 
 import com.nomagic.magicdraw.core.options.AbstractPropertyOptionsGroup;
 import com.nomagic.magicdraw.properties.*;
-import com.nomagic.magicdraw.ui.ImageMap16;
+import com.nomagic.magicdraw.ui.Icons;
 import org.openmbee.mdk.util.MDUtils;
 
 import javax.swing.*;
@@ -194,6 +194,6 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
 
     @Override
     public Icon getGroupIcon() {
-        return ImageMap16.SETTINGS;
+        return Icons.SETTINGS;
     }
 }
