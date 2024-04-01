@@ -246,7 +246,7 @@ dependencies {
 javafx {
     version = "11.0.2"
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing' ]
-    platform = 'linux'
+    platform = 'win'
 }
 
 task extractDependencies {
@@ -285,12 +285,6 @@ task extractDependencies {
                 copy {
                     from zipTree(archive)
                     into 'build/dependency-cache/extracted/docbook'
-                }
-            }
-            else if (archive.getName().startsWith('javafx')) {
-                copy {
-                    from archive.getAbsoluteFile()
-                    into 'build/dependency-cache/extracted/javafx'
                 }
             }
             else {
@@ -403,10 +397,6 @@ abstract class PreDist extends DefaultTask {
             from 'lib'
             from project.jar
             into "${outputDir}/plugins/${groupName}"
-        }
-        project.copy {
-            from "${extractedCache}/javafx"
-            into "${outputDir}/plugins/${groupName}/javafx"
         }
         project.copy {
             from project.getTasks().getByName('javadocZip')
@@ -644,8 +634,14 @@ task runJava(type: JavaExec) {
     if (profiles["executablePath"] != null) {
         executable = profiles["executablePath"]
     }
+    debugOptions {
+       enabled = true
+       port = 31001
+       server = true
+       suspend = false
+   }
     main = 'com.nomagic.magicdraw.Main'
-    jvmArgs = ['--module-path', 'plugins/org.openmbee.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Djdk.attach.allowAttachSelf=true']
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }

@@ -123,9 +123,9 @@ public class MDKPlugin extends Plugin implements ResourceDependentPlugin {
         }
         new Thread(() -> {
             try {
-                Class<?> clazz = Class.forName("org.openmbee.mdk.MDKApplication");
+                Class<?> clazz = Class.forName("org.openmbee.mdk.Launcher");
                 Method method = clazz.getMethod("main", String[].class);
-                // has to be before invocation since it hangs
+                //has to be before invocation since it hangs
                 MDKPlugin.JAVAFX_SUPPORTED = true;
                 method.invoke(null, new Object[]{new String[]{}});
             } catch (Exception | Error e) {
