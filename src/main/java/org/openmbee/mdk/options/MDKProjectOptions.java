@@ -46,9 +46,11 @@ public class MDKProjectOptions {
         MDKProjectOptions.setOption(var0, VE_HOST_URL,"");
         MDKProjectOptions.setOption(var0, VE_BASE_PATH,"");
         MDKProjectOptions.setOption(var0, MDK_MIGRATE_STEREOTYPE, true);
-        MDKProjectOptions.setOption(var0, PROPERTY_AUTOSAVE_MDKMODEL, false);
-        MDKProjectOptions.setOption(var0, PROPERTY_AUTOSAVE_MDKZIP, false);
-        MDKProjectOptions.setOption(var0, PROPERTY_CONTEXT_EXPORT_LEVEL, Arrays.asList(ContextExportLevel.values()), ContextExportLevel.Containment);
+
+        //below were added by LieberLieber's JSON export but doesn't seem to be used/called anywhere
+        //MDKProjectOptions.setOption(var0, PROPERTY_AUTOSAVE_MDKMODEL, false);
+        //MDKProjectOptions.setOption(var0, PROPERTY_AUTOSAVE_MDKZIP, false);
+        //MDKProjectOptions.setOption(var0, PROPERTY_CONTEXT_EXPORT_LEVEL, Arrays.asList(ContextExportLevel.values()), ContextExportLevel.Containment);
     }
 
     public static void setOption(ProjectOptions var0, String projectOption, String newValue) {
