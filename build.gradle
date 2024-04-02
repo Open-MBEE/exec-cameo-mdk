@@ -171,10 +171,6 @@ dependencies {
     implementation group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
     // implementation group: 'com.opencsv', name: 'opencsv', version: '3.8+'
 
-    // ActiveMQ
-    //implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
-    // implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
-
     // Jackson
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.3'
 
@@ -191,9 +187,6 @@ dependencies {
 
     // Apache Commons CLI
     implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
-
-    //OpenMBEE MMS Java Client
-    //implementation group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
 
     implementation group: 'com.beust', name: 'jcommander', version: '1.72'
 
@@ -221,9 +214,7 @@ dependencies {
     }
     // Default Dev Workflow, this will only correctly pull from the local ./libz flatDir
     else {
-        preImplementation group: 'com.nomagic', name: 'democsm', version: '2022xRefresh1', classifier: 'Cameo_Systems_Modeler_2022x_Refresh1_HF1_no_install', ext: 'zip'
-//        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
-//        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
+        preImplementation group: 'com.nomagic', name: 'democsm', version: '2022xRefresh2', classifier: 'Cameo_Systems_Modeler_2022x_Refresh2_HF1_no_install', ext: 'zip'
     }
 
     preImplementation group: 'org.apache.fop', name: 'fop', version: '2.9', classifier: fopNameVersion + '-bin', ext: 'zip'
@@ -339,7 +330,6 @@ task testsJar(type: Jar, dependsOn: testClasses) {
     exclude 'org/openmbee/mdk/test/framework/**'
     exclude 'org/**'
     exclude 'worker/**'
-    //include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 }
 
 task testsHackJar(type: Jar, dependsOn: testClasses) {
@@ -349,7 +339,6 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     include 'org/openmbee/mdk/test/framework/**'
     include 'org/**'
     include 'worker/**'
-    //exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
         attributes(
