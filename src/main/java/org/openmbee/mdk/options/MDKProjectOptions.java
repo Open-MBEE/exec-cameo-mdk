@@ -5,20 +5,24 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.core.options.ProjectOptions;
 import com.nomagic.magicdraw.properties.BooleanProperty;
+import com.nomagic.magicdraw.properties.ChoiceProperty;
 import com.nomagic.magicdraw.properties.Property;
 import com.nomagic.magicdraw.properties.StringProperty;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import org.apache.http.client.utils.URIBuilder;
+import org.openmbee.mdk.fileexport.ContextExportLevel;
 
 import javax.swing.*;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 public class MDKProjectOptions {
 
     public static final String ID = "options.project.mdk";
-    public static final String GROUP = "PROJECT_GENERAL_PROPERTIES";
+    public static final String GROUP = ProjectOptions.PROJECT_GENERAL_PROPERTIES;
     public static final String MMS_HOST_URL="MMS_HOST_URL",
             MMS_BASE_PATH="MMS_BASE_PATH",
             VE_HOST_URL="VE_HOST_URL",
@@ -27,7 +31,10 @@ public class MDKProjectOptions {
             ENABLE_OPENMBEE_INTEGRATION = "ENABLE_OPENMBEE_INTEGRATION",
             MDK_MMS_URL = "MDK_MMS_URL",
             MDK_VE_URL = "MDK_VE_URL",
-            MDK_MIGRATE_STEREOTYPE = "MDK_MIGRATE_STEREOTYPE";
+            MDK_MIGRATE_STEREOTYPE = "MDK_MIGRATE_STEREOTYPE",
+            PROPERTY_AUTOSAVE_MDKMODEL = "PROPERTY_AUTOSAVE_MDKMODEL",
+            PROPERTY_AUTOSAVE_MDKZIP = "PROPERTY_AUTOSAVE_MDKZIP",
+            PROPERTY_CONTEXT_EXPORT_LEVEL = "PROPERTY_CONTEXT_EXPORT_LEVEL";
 
     public MDKProjectOptions() {
     }
@@ -39,6 +46,11 @@ public class MDKProjectOptions {
         MDKProjectOptions.setOption(var0, VE_HOST_URL,"");
         MDKProjectOptions.setOption(var0, VE_BASE_PATH,"");
         MDKProjectOptions.setOption(var0, MDK_MIGRATE_STEREOTYPE, true);
+
+        //below were added by LieberLieber's JSON export but doesn't seem to be used/called anywhere
+        //MDKProjectOptions.setOption(var0, PROPERTY_AUTOSAVE_MDKMODEL, false);
+        //MDKProjectOptions.setOption(var0, PROPERTY_AUTOSAVE_MDKZIP, false);
+        //MDKProjectOptions.setOption(var0, PROPERTY_CONTEXT_EXPORT_LEVEL, Arrays.asList(ContextExportLevel.values()), ContextExportLevel.Containment);
     }
 
     public static void setOption(ProjectOptions var0, String projectOption, String newValue) {
@@ -67,9 +79,52 @@ public class MDKProjectOptions {
         }
     }
 
+    public static <T> void setOption(ProjectOptions var0, String projectOption, List<T> choices, T newValue) {
+        Property var1 = var0.getProperty(MDKProjectOptions.GROUP, projectOption);
+        if (var1 == null) {
+            ChoiceProperty var2 = new ChoiceProperty(projectOption, "", choices);
+            var2.setGroup(MDKProjectOptions.MDK_PROJECT_OPTIONS_GROUP);
+            var2.setResourceProvider(MDKPropertyResourceProvider.getInstance());
+            var2.setValue(newValue);
+            var0.addProperty(MDKProjectOptions.GROUP, var2);
+        }
+        else if (!var1.getValue().equals(newValue)) {
+            var1.setValue(newValue);
+        }
+    }
+
+    public static boolean isAutosaveMDKModel(Project project) {
+        Property property = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, PROPERTY_AUTOSAVE_MDKMODEL);
+        if (property != null) {
+            return (boolean) property.getValue();
+        } else {
+            return false;
+        }
+
+    }
+
+    public static boolean isAutosaveMDKZip(Project project) {
+        Property property = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, PROPERTY_AUTOSAVE_MDKZIP);
+        if (property != null) {
+            return (boolean) property.getValue();
+        } else {
+            return false;
+        }
+
+    }
+
+    public static ContextExportLevel getContextExportLevel(Project project) {
+        Property property = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, PROPERTY_CONTEXT_EXPORT_LEVEL);
+        if (property != null) {
+            return ContextExportLevel.valueOf(property.getValueStringRepresentation());
+        } else {
+            return ContextExportLevel.None;
+        }
+    }
+
     public static boolean getMbeeEnabled(Project project) {
         if (project != null) {
-            Property mmsEnabledProperty = project.getOptions().getProperty("PROJECT_GENERAL_PROPERTIES", ENABLE_OPENMBEE_INTEGRATION);
+            Property mmsEnabledProperty = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, ENABLE_OPENMBEE_INTEGRATION);
             if (mmsEnabledProperty instanceof BooleanProperty) {
                 return ((BooleanProperty) mmsEnabledProperty).getBoolean();
             }
@@ -79,7 +134,7 @@ public class MDKProjectOptions {
 
     public static String getMmsHost(Project project) {
         if (project != null) {
-            Property mmsHostProperty = project.getOptions().getProperty("PROJECT_GENERAL_PROPERTIES", MMS_HOST_URL);
+            Property mmsHostProperty = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, MMS_HOST_URL);
             if (mmsHostProperty instanceof StringProperty) {
                 return ((StringProperty) mmsHostProperty).getString();
             }
@@ -89,7 +144,7 @@ public class MDKProjectOptions {
 
     public static String getMmsBasePath(Project project) {
         if (project != null) {
-            Property mmsBasePathProperty = project.getOptions().getProperty("PROJECT_GENERAL_PROPERTIES", MMS_BASE_PATH);
+            Property mmsBasePathProperty = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, MMS_BASE_PATH);
             if (mmsBasePathProperty instanceof StringProperty) {
                 return ((StringProperty) mmsBasePathProperty).getString();
             }
@@ -99,7 +154,7 @@ public class MDKProjectOptions {
 
     public static String getVeHost(Project project) {
         if (project != null) {
-            Property veHostProperty = project.getOptions().getProperty("PROJECT_GENERAL_PROPERTIES", VE_HOST_URL);
+            Property veHostProperty = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, VE_HOST_URL);
             if (veHostProperty instanceof StringProperty) {
                 return ((StringProperty) veHostProperty).getString();
             }
@@ -109,7 +164,7 @@ public class MDKProjectOptions {
 
     public static String getVeBasePath(Project project) {
         if (project != null) {
-            Property veBasePathProperty = project.getOptions().getProperty("PROJECT_GENERAL_PROPERTIES", VE_BASE_PATH);
+            Property veBasePathProperty = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, VE_BASE_PATH);
             if (veBasePathProperty instanceof StringProperty) {
                 return ((StringProperty) veBasePathProperty).getString();
             }
@@ -182,7 +237,7 @@ public class MDKProjectOptions {
 
     public static boolean isMigrationAllowed(Project project) {
         if (project != null) {
-            Property migrate = project.getOptions().getProperty("PROJECT_GENERAL_PROPERTIES", MDK_MIGRATE_STEREOTYPE);
+            Property migrate = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, MDK_MIGRATE_STEREOTYPE);
             if (migrate instanceof BooleanProperty) {
                 return ((BooleanProperty) migrate).getBoolean();
             }
