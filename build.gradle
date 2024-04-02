@@ -13,6 +13,7 @@ buildscript {
     }
     dependencies {
         classpath "io.github.gradle-nexus:publish-plugin:1.0.0"
+        classpath group: "com.jfrog.artifactory", name: 'com.jfrog.artifactory.gradle.plugin', version: '5.1.9'
         classpath group: 'org.openjfx', name: 'javafx-plugin', version: '0.0.14'
     }
 }
@@ -24,10 +25,12 @@ plugins {
     id 'java'
     id 'distribution'
     id 'org.openjfx.javafxplugin' version '0.0.14'
+    id 'com.jfrog.artifactory' version '5.1.9'
 }
 
 String buildProfile = project.getProperties().getOrDefault('buildProfile', 'opensource')
 String buildTag = project.getProperties().get('buildTag')
+
 if (buildTag != null && !buildTag.isEmpty() && buildTag != version) {
     throw new GradleException('Version mismatch: ' + buildTag + ' vs ' + version)
 }
@@ -64,7 +67,8 @@ else {
 
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
-String fopNameVersion = 'fop-1.1'
+String fopNameVersion = 'fop-2.9'
+
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -167,10 +171,6 @@ dependencies {
     implementation group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
     // implementation group: 'com.opencsv', name: 'opencsv', version: '3.8+'
 
-    // ActiveMQ
-    //implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.9.1'
-    // implementation group: 'org.apache.activemq', name: 'activemq-all', version: '5.14.0+'
-
     // Jackson
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.3'
 
@@ -188,9 +188,6 @@ dependencies {
     // Apache Commons CLI
     implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
 
-    //OpenMBEE MMS Java Client
-    //implementation group: 'org.openmbee.mms', name: 'mms-java-client', version: '3.4.2'
-
     implementation group: 'com.beust', name: 'jcommander', version: '1.72'
 
     // Test Dependencies
@@ -207,6 +204,7 @@ dependencies {
 
     // Other dependencies we're unable to resolve via standard repositories
 
+    // Handle build all-in-one profile workflow
     if (profiles['nomagicDeps'] != null) {
         def mdDeps = parser.parseText(profiles['nomagicDeps'].toString())
         mdDeps.each {
@@ -214,43 +212,36 @@ dependencies {
             preImplementation group: "${dep.group}", name: "${dep.name}", version: "${dep.version}", classifier: "${dep.classifier != null ? dep.classifier : ''}", ext: "${dep.ext}"
         }
     }
+    // Default Dev Workflow, this will only correctly pull from the local ./libz flatDir
     else {
-        preImplementation group: 'com.nomagic', name: 'democsm', version: '2022xRefresh1', classifier: 'Cameo_Systems_Modeler_2022x_Refresh1_HF1_no_install', ext: 'zip'
-//        preCompile group: 'com.nomagic', name: 'sysml', version: '2021x', classifier: 'SysML_Plugin_2021x', ext: 'zip'
-//        preCompile group: 'com.nomagic', name: 'cst', version: '2021x', classifier: 'Cameo_Simulation_Toolkit_Plugin_2021x', ext: 'zip'
+        preImplementation group: 'com.nomagic', name: 'democsm', version: '2022xRefresh2', classifier: 'Cameo_Systems_Modeler_2022x_Refresh2_HF1_no_install', ext: 'zip'
     }
 
-    preImplementation group: 'org.apache.fop', name: 'fop', version: '1.1', classifier: fopNameVersion + '-bin', ext: 'zip'
+    preImplementation group: 'org.apache.fop', name: 'fop', version: '2.9', classifier: fopNameVersion + '-bin', ext: 'zip'
     preImplementation group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext: 'zip'
 
     // JavaFX
-    //preImplementation group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2'
-    //preImplementation group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2'
-    //preImplementation group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2'
+    distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'mac'
+    distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'mac'
+    distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'mac'
+
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
     implementation files(classpathLibraries.collect { 'build/dependency-cache/extracted/magicdraw/' + it })
-    implementation fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([classpathLibraries, ['plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar']]).flatten())
+    implementation fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: ['lib/**/*.jar', 'plugins/**/*.jar'], exclude: ([classpathLibraries, ['plugins/com.nomagic.conceptmodeler/**/*jar', 'plugins/com.nomagic.magicdraw.xmiexporter/**/*jar', 'plugins/com.nomagic.collaborator.publisher/**/*.jar', 'plugins/com.nomagic.magicdraw.emfuml2xmi*/**/*.jar', 'plugins/com.nomagic.magicdraw.automaton/lib/engines/**/*.jar', 'plugins/tomsawyer/**/*.jar', 'plugins/com.intercax.syndeia.md/**/*.jar']]).flatten())
     implementation fileTree(dir: 'lib', include: ['**/*.jar'])
-    implementation files("build/dependency-cache/extracted/fop/jars/${fopNameVersion}.jar", 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar')
-    if (profiles["implementationFiles"] != null) {
-        def implementationArray = profiles["implementationFiles"].toString().split(',')
-        implementationArray.each {
-            implementation files(it)
-        }
-    }
-    else {
-        implementation files('build/dependency-cache/extracted/fop/jars/fop-1.1.jar', 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-1.5.jar')
-    }
+    implementation files("build/dependency-cache/extracted/fop/jars/fop-core-2.9.jar", "build/dependency-cache/extracted/fop/jars/fop-events-2.9.jar", "build/dependency-cache/extracted/fop/jars/fop-util-2.9.jar", 'build/dependency-cache/extracted/fop/jars/xmlgraphics-commons-2.9.jar')
 
 }
 
 javafx {
     version = "11.0.2"
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing' ]
-    platform = 'win'
-    configurations = ['preImplementation']
+    platform = 'linux'
 }
 
 task extractDependencies {
@@ -267,12 +258,11 @@ task extractDependencies {
                     into archive.getParentFile().getAbsolutePath()
                 }
                 copy {
-                    from archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/build/fop.jar'
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/fop/build', include: '*.jar')
                     into 'build/dependency-cache/extracted/fop/jars'
-                    rename { String fileName -> fopNameVersion + '.jar' }
                 }
                 copy {
-                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/lib', include: '*.jar', exclude: 'commons*.jar')
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/fop/lib', include: '*.jar', exclude: 'commons*.jar')
                     into 'build/dependency-cache/extracted/fop/jars'
                 }
                 copy { //license3rdparty
@@ -281,7 +271,7 @@ task extractDependencies {
                     rename { String fileName -> 'apache_fop_license.txt' }
                 }
                 copy { //license3rdparty
-                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
+                    from fileTree(dir: archive.getParentFile().getAbsolutePath() + '/' + fopNameVersion + '/fop/lib', include: '*.LICENSE.txt', exclude: 'commons*LICENSE.txt')
                     into 'build/dependency-cache/extracted/fop/license'
                     rename { String fileName -> fileName.replace(".LICENSE.txt", "_license.txt") }
                 }
@@ -292,17 +282,16 @@ task extractDependencies {
                     into 'build/dependency-cache/extracted/docbook'
                 }
             }
-            else if (archive.getName().startsWith('javafx')) {
-                copy {
-                    from archive.getAbsoluteFile()
-                    into 'build/dependency-cache/extracted/javafx'
-                }
-            }
             else {
                 copy {
                     from zipTree(archive)
                     into 'build/dependency-cache/extracted/magicdraw'
                 }
+                copy {
+                    from 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
+                    into 'build/tmp/com.nomagic.conceptmodeler'
+                }
+                
             }
         }
         fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: '*.zip').each { archive ->
@@ -310,7 +299,9 @@ task extractDependencies {
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted/magicdraw'
             }
+            
         }
+        delete 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
     }
 }
 compileJava.dependsOn extractDependencies
@@ -339,7 +330,6 @@ task testsJar(type: Jar, dependsOn: testClasses) {
     exclude 'org/openmbee/mdk/test/framework/**'
     exclude 'org/**'
     exclude 'worker/**'
-    //include 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 }
 
 task testsHackJar(type: Jar, dependsOn: testClasses) {
@@ -349,7 +339,6 @@ task testsHackJar(type: Jar, dependsOn: testClasses) {
     include 'org/openmbee/mdk/test/framework/**'
     include 'org/**'
     include 'worker/**'
-    //exclude 'gov/nasa/jpl/mbee/mdk/test/tests/**'
 
     manifest {
         attributes(
@@ -398,13 +387,10 @@ abstract class PreDist extends DefaultTask {
         }
         project.copy {
             from project.configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.file
+            from project.configurations.distribution.resolvedConfiguration.resolvedArtifacts.file
             from 'lib'
             from project.jar
             into "${outputDir}/plugins/${groupName}"
-        }
-        project.copy {
-            from "${extractedCache}/javafx"
-            into "${outputDir}/plugins/${groupName}/javafx"
         }
         project.copy {
             from project.getTasks().getByName('javadocZip')
@@ -590,6 +576,27 @@ nexusPublishing {
     }
 }
 
+artifactoryPublish {
+    publications('mavenJava')
+    
+}
+
+artifactoryPublish.dependsOn distZip
+
+artifactory {
+    publish {
+        contextUrl = project.property('artifactoryUrl') as String
+        repository {
+            repoKey = project.property('artifactoryRepository')
+            username = project.getProperties().get('artifactoryUsername').toString()
+            password = project.getProperties().get('artifactoryPassword').toString()
+        }
+    }
+    if (buildNumber != null && !buildNumber.isEmpty()) {
+        clientConfig.info.setBuildNumber(buildNumber)
+    }
+}
+
 installDist {
     destinationDir = file('build/plugin')
     doLast {
@@ -599,6 +606,11 @@ installDist {
             from 'build/plugin'
             into 'build/install'
         }
+        copy {
+            from 'build/tmp/com.nomagic.conceptmodeler'
+            into 'build/install/plugins/com.nomagic.conceptmodeler'
+        }
+        delete 'build/tmp/com.nomagic.conceptmodeler'
     }
 }
 
@@ -616,8 +628,14 @@ task runJava(type: JavaExec) {
     if (profiles["executablePath"] != null) {
         executable = profiles["executablePath"]
     }
+    debugOptions {
+       enabled = true
+       port = 31001
+       server = true
+       suspend = false
+   }
     main = 'com.nomagic.magicdraw.Main'
-    jvmArgs = ['--module-path', 'plugins/org.openmbee.mdk/javafx', '--add-modules', 'javafx.controls,javafx.swing,javafx.fxml', '-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Djdk.attach.allowAttachSelf=true']
+    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }

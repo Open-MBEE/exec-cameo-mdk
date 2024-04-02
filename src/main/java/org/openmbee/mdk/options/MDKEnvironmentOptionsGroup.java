@@ -2,7 +2,7 @@ package org.openmbee.mdk.options;
 
 import com.nomagic.magicdraw.core.options.AbstractPropertyOptionsGroup;
 import com.nomagic.magicdraw.properties.*;
-import com.nomagic.magicdraw.ui.ImageMap16;
+import com.nomagic.magicdraw.ui.Icons;
 import org.openmbee.mdk.util.MDUtils;
 
 import javax.swing.*;
@@ -23,7 +23,8 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
             ENABLE_COORDINATED_SYNC_ID = "ENABLE_COORDINATED_SYNC_ID",
             CUSTOM_USER_SCRIPT_DIRECTORIES_ID = "CUSTOM_USER_SCRIPT_DIRECTORIES_ID",
             MMS_AUTHENTICATION_CHAIN = "MMS_AUTHENTICATION_CHAIN",
-    		DOCBOOK_TO_PDF_STYLESHEET = "DOCBOOK_TO_PDF_STYLESHEET";
+    		DOCBOOK_TO_PDF_STYLESHEET = "DOCBOOK_TO_PDF_STYLESHEET",
+            EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING = "EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING";
 
     public MDKEnvironmentOptionsGroup() {
         super(ID);
@@ -149,11 +150,9 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
 
 
     public List<String> getAuthenticationChain() {
-        String val = PROPERTY_RESOURCE_PROVIDER.getString(MMS_AUTHENTICATION_CHAIN, null);
-        if(val == null || val.isEmpty()) {
-            Property p = getProperty(MMS_AUTHENTICATION_CHAIN);
-            val = p.getValueStringRepresentation();
-        }
+        //Defaults can now be overridden inside the EnvironmentOptionsResources.properties file using MMS_AUTHENTICATION_CHAIN_DEFAULTS
+        Property p = getProperty(MMS_AUTHENTICATION_CHAIN);
+        String val = p.getValueStringRepresentation();
         if (val == null || val.isEmpty()) {
             return new ArrayList<>();
         }
@@ -168,21 +167,40 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
         StringProperty property = new StringProperty(MMS_AUTHENTICATION_CHAIN, value);
         property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
         property.setGroup(GROUP);
-        addProperty(property, false);
+        addProperty(property, true);
+    }
+
+    public void setExportMdkzipDiagramElementsMapping(Boolean value) {
+        BooleanProperty property = new BooleanProperty(EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING, value);
+        property.setResourceProvider(PROPERTY_RESOURCE_PROVIDER);
+        property.setGroup(GROUP);
+        addProperty(property, true);
+    }
+
+    public boolean isExportMdkzipDiagramElementsMappingEnabled() {
+        Property p = getProperty(EXPORT_MDKZIP_DIAGRAM_ELEMENTS_MAPPING);
+        return (Boolean) p.getValue();
     }
 
     public static final PropertyResourceProvider PROPERTY_RESOURCE_PROVIDER = (key, property) -> MDKEnvironmentOptionsGroupResources.getString(key);
 
     @Override
     public void setDefaultValues() {
+
+        //Boeing: You can now set the default Auth chain using the EnvironmentOptionsResources.properties file
+        String authDefault = MDKEnvironmentOptionsGroupResources.getString(MMS_AUTHENTICATION_CHAIN + "_DEFAULT");
+        if (authDefault == null || authDefault.isEmpty()) {
+            authDefault = "org.openmbee.mdk.tickets.BasicAuthAcquireTicketProcessor,org.openmbee.mdk.tickets.AuthenticationChainError";
+        }
         setLogJson(false);
         setPersistChangelog(true);
         setChangeListenerEnabled(true);
         setCoordinatedSyncEnabled(true);
         setUserScriptDirectory("");
         setAuthenticationChain(
-                "org.openmbee.mdk.tickets.BasicAuthAcquireTicketProcessor,org.openmbee.mdk.tickets.AuthenticationChainError");
+                authDefault);
         setDocBookToPDFStyleSheet("");
+        setExportMdkzipDiagramElementsMapping(true);
     }
 
     private static final String MDK_OPTIONS_NAME = "MDK_OPTIONS_NAME";
@@ -194,6 +212,6 @@ public class MDKEnvironmentOptionsGroup extends AbstractPropertyOptionsGroup {
 
     @Override
     public Icon getGroupIcon() {
-        return ImageMap16.SETTINGS;
+        return Icons.SETTINGS;
     }
 }

@@ -85,8 +85,8 @@ public class ViewViewpointValidator implements Runnable {
         exposeStereotype = SysMLProfile.getInstanceByProject(project).expose().getStereotype();
 
         visited = new HashSet<>();
-        activityEdgeFactory = new ActivityEdgeFactory();
-        directedGraph = new DefaultDirectedGraph<>(Element.class);
+        this.activityEdgeFactory = new ActivityEdgeFactory();
+        this.directedGraph = new DefaultDirectedGraph<>(Element.class);
     }
 
     public boolean isFailed() {
