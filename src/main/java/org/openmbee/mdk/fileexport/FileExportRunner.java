@@ -23,7 +23,6 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import org.openmbee.mdk.emf.BulkExport;
 import org.openmbee.mdk.json.JacksonUtils;
 import org.openmbee.mdk.options.MDKEnvironmentOptionsGroup;
-import org.openmbee.mdk.options.MDKProjectOptionsGroup;
 import org.openmbee.mdk.util.Pair;
 
 import java.io.*;
