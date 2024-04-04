@@ -16,12 +16,14 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.compositestructures.mdinternalstructures.Connector;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
+import com.nomagic.magicdraw.hyperlinks.ElementHyperlink;
 import org.openmbee.mdk.SysMLExtensions;
 import org.openmbee.mdk.api.function.TriFunction;
 import org.openmbee.mdk.api.incubating.MDKConstants;
 import org.openmbee.mdk.api.incubating.convert.Converters;
 import org.openmbee.mdk.api.stream.MDKCollectors;
 import org.openmbee.mdk.json.JacksonUtils;
+import org.openmbee.mdk.util.MDUtils;
 import org.openmbee.mdk.util.Utils;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
@@ -36,7 +38,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-
+import java.io.Reader;
 
 public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     @Override
@@ -96,45 +98,14 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         return objectNode;
     }
 
+    /*
+     * @deprecated
+     * As of MDK 6.1.1 this function has been moved to make it more widely available to other processes. This link is subject to remvoal in a future version. Please refactor accordingly
+     * @see org.openmbee.mdk.util.MDUtils#getEID() 
+     */
+    @Deprecated(since="6.1.1")
     public static String getEID(EObject eObject) {
-        if (eObject == null) {
-            return null;
-        }
-        if (!(eObject instanceof Element)) {
-            return EcoreUtil.getID(eObject);
-        }
-        Element element = (Element) eObject;
-        Project project = Project.getProject(element);
-
-        // custom handling of primary model id
-        if (element instanceof Model && element == project.getPrimaryModel()) {
-            return Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) + MDKConstants.PRIMARY_MODEL_ID_SUFFIX;
-        }
-
-        // local projects don't properly maintain the ids of some elements. this id spoofing mitigates that for us, but can mess up the MMS delta counts in some cases (annoying, but ultimately harmless)
-        // NOTE - this spoofing is replicated in LocalSyncTransactionListener in order to properly add / remove elements in the unsynched queue. any updates here should be replicated there as well.
-        // there's no more instance spec that's a result of stereotyping, so instance spec should just have their normal id
-        /*if (eObject instanceof TimeExpression && ((TimeExpression) eObject).get_timeEventOfWhen() != null) {
-            return getEID(((TimeExpression) eObject).get_timeEventOfWhen()) + MDKConstants.TIME_EXPRESSION_ID_SUFFIX;
-        }*/
-        if (element instanceof ValueSpecification && ((ValueSpecification) element).getOwningSlot() != null) {
-            ValueSpecification slotValue = (ValueSpecification) element;
-            return getEID(slotValue.getOwningSlot()) + MDKConstants.SLOT_VALUE_ID_SEPARATOR + slotValue.getOwningSlot().getValue().indexOf(slotValue) + "-" + slotValue.eClass().getName().toLowerCase();
-        }
-        if (element instanceof TaggedValue) {
-            TaggedValue slot = (TaggedValue) element;
-            if (slot.getTaggedValueOwner() != null && slot.getTagDefinition() != null) {
-                // add _asi to owner in constructed id to maintain continuity with 19.x slots
-                return getEID(slot.getOwner()) + MDKConstants.APPLIED_STEREOTYPE_INSTANCE_ID_SUFFIX + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getTagDefinition());
-            }
-        }
-        if (element instanceof Slot) {
-            Slot slot = (Slot) element;
-            if (slot.getOwningInstance() != null && ((Slot) element).getDefiningFeature() != null) {
-                return getEID(slot.getOwningInstance()) + MDKConstants.SLOT_ID_SEPARATOR + getEID(slot.getDefiningFeature());
-            }
-        }
-        return element.getLocalID();
+        return MDUtils.getEID(eObject);
     }
 
     private static void dumpUMLPackageLiterals() {
@@ -158,7 +129,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     private enum Processor {
         /*APPLIED_STEREOTYPE(
                 (element, project, objectNode) -> {
-                    ArrayNode applied = StereotypesHelper.getStereotypes(element).stream().map(stereotype -> TextNode.valueOf(getEID(stereotype))).collect(MDKCollectors.toArrayNode());
+                    ArrayNode applied = StereotypesHelper.getStereotypes(element).stream().map(stereotype -> TextNode.valueOf(MDUtils.getEID(stereotype))).collect(MDKCollectors.toArrayNode());
                     objectNode.set(MDKConstants.APPLIED_STEREOTYPE_IDS_KEY, applied);
                     return objectNode;
                 },
@@ -189,6 +160,10 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         ),
         DOCUMENTATION_PRE(
                 (element, project, objectNode) -> {
+                    //Todo: FIgure out how to read this stuff and parse the <a tags from MD
+                    // String doc_text = (String) Utils.getElementAttribute(element, Utils.AvailableAttribute.Documentation);
+                    // Reader reader = new StringReader(doc_text);
+                    // HTMLDocument html = new HTMLDocument(doc_text);
                     objectNode.put(MDKConstants.DOCUMENTATION_KEY, (String) Utils.getElementAttribute(element, Utils.AvailableAttribute.Documentation));
                     return objectNode;
                 },
@@ -238,17 +213,16 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         element.getOwner() != null && Converters.getElementToIdConverter().apply(element.getOwner()).endsWith(MDKConstants.SYNC_SYSML_ID_SUFFIX) ? null : objectNode,
                 Type.PRE
         ),
-        /*
-        TWC_ID is disabled indefinitely, due to our inability to update the ID and associated issues
-        TWC_ID(
-                (element, project, objectNode) -> {
-                    if (project.isRemote()) {
-                        objectNode.put(MDKConstants.TWC_ID_KEY, element.getID());
-                    }
-                    return objectNode;
-                }
-        ),
-        */
+        //TWC_ID is disabled indefinitely, due to our inability to update the ID and associated issues
+        // TWC_ID(
+        //         (element, project, objectNode) -> {
+        //             if (project.isRemote() && element.getID() != element.getLocalID()) {
+        //                 objectNode.put(MDKConstants.TWC_ID_KEY, element.getID());
+        //             }
+        //             return objectNode;
+        //         },
+        //         Type.PRE
+        // ),
         TYPE(
                 (element, project, objectNode) -> {
                     if (!objectNode.has(MDKConstants.TYPE_KEY)) {
@@ -328,7 +302,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         if (docEl != null) {
                             ArrayNode ownedCommentIds = ((ArrayNode) objectNode.get(MDKConstants.OWNED_COMMENT_IDS_KEY));
                             for (int i = 0; i < ownedCommentIds.size(); i++) {
-                                if (ownedCommentIds.get(i).asText().equals(getEID(docEl)))
+                                if (ownedCommentIds.get(i).asText().equals(MDUtils.getEID(docEl)))
                                     ownedCommentIds.remove(i);
                             }
                             if (ownedCommentIds.size() == 0) {
@@ -390,7 +364,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                         }
                         n.set("value", node);
                         if (o instanceof Element) {
-                            node = TextNode.valueOf(getEID((Element)o));
+                            node = TextNode.valueOf(MDUtils.getEID((Element)o));
                             n.set("elementId", node);
                             n.remove("value");
                         }
@@ -449,7 +423,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
             //return fillValueSpecification((ValueSpecification) object);
         }
         else if (eStructuralFeature instanceof EReference && object instanceof EObject) {
-            return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(getEID(((EObject) object)), project, eStructuralFeature);
+            return EMFExporter.DEFAULT_SERIALIZATION_FUNCTION.apply(MDUtils.getEID(((EObject) object)), project, eStructuralFeature);
         }
         else if (object instanceof String) {
             return TextNode.valueOf((String) object);
@@ -522,7 +496,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     /*if (element instanceof ValueSpecification && !(element instanceof TimeExpression)) {
                         return objectNode;
                     }*/
-                    objectNode.put(MDKConstants.ID_KEY, getEID(element));
+                    objectNode.put(MDKConstants.ID_KEY, MDUtils.getEID(element));
                     return objectNode;
                 }
         ),
@@ -535,7 +509,7 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
                     }*/
                     //UNCHECKED_E_STRUCTURAL_FEATURE_FUNCTION.apply(element, project, UMLPackage.Literals.ELEMENT__OWNER, objectNode);
                     // safest way to prevent circular references, like with ValueSpecifications
-                    objectNode.put(MDKConstants.OWNER_ID_KEY, element instanceof Model && project.getModels().stream().anyMatch(model -> element == model) ? Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) : getEID(owner));
+                    objectNode.put(MDKConstants.OWNER_ID_KEY, element instanceof Model && project.getModels().stream().anyMatch(model -> element == model) ? Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()) : MDUtils.getEID(owner));
                     return objectNode;
                 }
         ),
