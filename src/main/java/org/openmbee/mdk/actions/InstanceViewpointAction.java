@@ -89,10 +89,9 @@ public class InstanceViewpointAction extends MDAction {
         if (MDKProjectOptions.instanceVPDoc(project)) {
             String vp_doc = ModelHelper.getComment(vp);
             if (vp_doc.isEmpty()) {
-                vp_doc = "name";
+                vp_doc = name + " Placeholder Text";
             }
-            String doc = "<pre>" + vp_doc + "</pre>";
-            ModelHelper.setComment(view, doc);
+            ModelHelper.setComment(view, vp_doc);
         }
         
         
