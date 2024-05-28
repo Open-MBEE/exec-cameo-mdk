@@ -229,10 +229,13 @@ dependencies {
     distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'win'
     distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'win'
     distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-graphics', version: '11.0.2', classifier: 'win'
+    distribution group: 'org.openjfx', name: 'javafx-base', version: '11.0.2', classifier: 'win'
     distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'mac'
     distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'mac'
     distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'mac'
-
+    distribution group: 'org.openjfx', name: 'javafx-graphics', version: '11.0.2', classifier: 'mac'
+    distribution group: 'org.openjfx', name: 'javafx-base', version: '11.0.2', classifier: 'mac'
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
     // This was necessary because of the Application class stubbing that was done in the chromium libraries.
