@@ -14,6 +14,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
 import com.nomagic.uml2.impl.ElementsFactory;
 import org.openmbee.mdk.SysMLExtensions;
+import org.openmbee.mdk.options.MDKProjectOptions;
 import org.openmbee.mdk.util.Utils;
 
 import java.awt.event.ActionEvent;
@@ -48,8 +49,8 @@ public class InstanceViewpointAction extends MDAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         GUILog gl = Application.getInstance().getGUILog();
-        sysmlView = SysMLExtensions.getInstanceByProject(project).view().getStereotype();
-        sysmlViewpoint = SysMLProfile.getInstanceByProject(project).viewpoint().getStereotype();;
+        sysmlView = SysMLProfile.getInstanceByProject(project).view().getStereotype();
+        sysmlViewpoint = SysMLProfile.getInstanceByProject(project).viewpoint().getStereotype();
         ef = Project.getProject(viewpoint).getElementsFactory();
         if (sysmlView == null) {
             gl.log("The view stereotype cannot be found");
@@ -85,6 +86,16 @@ public class InstanceViewpointAction extends MDAction {
         Class view = ef.createClassInstance();
         view.setOwner(owner);
         view.setName(name);
+        if (MDKProjectOptions.instanceVPDoc(project)) {
+            String vp_doc = ModelHelper.getComment(vp);
+            if (vp_doc.isEmpty()) {
+                vp_doc = "name";
+            }
+            String doc = "<pre>" + vp_doc + "</pre>";
+            ModelHelper.setComment(view, doc);
+        }
+        
+        
         StereotypesHelper.addStereotype(view, sysmlView);
         Generalization conforms = ef.createGeneralizationInstance();
         StereotypesHelper.addStereotype(conforms, SysMLExtensions.getInstance(owner).conforms().getStereotype());
