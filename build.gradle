@@ -191,6 +191,10 @@ dependencies {
 
     implementation group: 'com.beust', name: 'jcommander', version: '1.72'
 
+    // jsoup HTML parser library @ https://jsoup.org/
+    implementation group: 'org.jsoup', name: 'jsoup', version: '1.17.2'
+
+
     // Test Dependencies
     //testImplementation 'junit:junit:4.11'
     testImplementation group: 'org.gradle', name: 'gradle-core', version: '6.1.1'

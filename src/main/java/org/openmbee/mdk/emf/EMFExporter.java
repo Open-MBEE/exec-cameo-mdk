@@ -25,11 +25,15 @@ import org.openmbee.mdk.api.stream.MDKCollectors;
 import org.openmbee.mdk.json.JacksonUtils;
 import org.openmbee.mdk.util.MDUtils;
 import org.openmbee.mdk.util.Utils;
+import org.w3c.dom.html.HTMLDocument;
 import org.eclipse.emf.ecore.EDataType;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -39,6 +43,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.io.Reader;
+import java.io.StringReader;
 
 public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     @Override
@@ -161,7 +166,13 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
         DOCUMENTATION_PRE(
                 (element, project, objectNode) -> {
                     //Todo: FIgure out how to read this stuff and parse the <a tags from MD
-                    // String doc_text = (String) Utils.getElementAttribute(element, Utils.AvailableAttribute.Documentation);
+                    String doc_text = (String) Utils.getElementAttribute(element, Utils.AvailableAttribute.Documentation);
+                    Document doc = Jsoup.parse(doc_text);
+                    Elements crossReferences = doc.select("a[href^=mdel:]");
+                    if (!crossReferences.isEmpty()) {
+                        crossReferences.tagName("mms-cf");
+                        
+                    }
                     // Reader reader = new StringReader(doc_text);
                     // HTMLDocument html = new HTMLDocument(doc_text);
                     objectNode.put(MDKConstants.DOCUMENTATION_KEY, (String) Utils.getElementAttribute(element, Utils.AvailableAttribute.Documentation));

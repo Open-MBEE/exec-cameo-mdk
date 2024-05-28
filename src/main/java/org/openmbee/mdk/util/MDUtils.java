@@ -1,6 +1,5 @@
 package org.openmbee.mdk.util;
 
-import com.nomagic.log.LoggerBridge;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
@@ -10,7 +9,6 @@ import com.nomagic.magicdraw.export.image.ImageExporter;
 import com.nomagic.magicdraw.ui.browser.BrowserTabTree;
 import com.nomagic.magicdraw.ui.browser.Node;
 import com.nomagic.magicdraw.uml.BaseElement;
-import com.nomagic.magicdraw.uml.symbols.DiagramPaintContext;
 import com.nomagic.magicdraw.uml.symbols.DiagramPresentationElement;
 import com.nomagic.magicdraw.uml.symbols.PresentationElement;
 import com.nomagic.uml2.ext.magicdraw.auxiliaryconstructs.mdmodels.Model;
@@ -18,24 +16,15 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Slot;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.TaggedValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
-import com.nomagic.utils.CameoUtilities;
-import com.nomagic.utils.FileHelper;
 
 import org.openmbee.mdk.api.incubating.MDKConstants;
 import org.openmbee.mdk.api.incubating.convert.Converters;
 import org.openmbee.mdk.docgen.DocGenUtils;
-import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
-import org.apache.batik.util.XMLResourceDescriptor;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.w3c.dom.Document;
 
 import javax.annotation.CheckForNull;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.nio.charset.Charset;
@@ -43,8 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.nomagic.magicdraw.uml.DiagramTypeConstants.*;
 
 /**
  * A collection of utility functions for accessing the MagicDraw (MD)

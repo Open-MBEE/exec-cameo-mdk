@@ -13,6 +13,8 @@ import com.nomagic.magicdraw.core.project.ProjectDescriptor;
 import com.nomagic.magicdraw.core.project.ProjectDescriptorsFactory;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
+
 import org.openmbee.mdk.actions.ClipboardAction;
 import org.openmbee.mdk.api.incubating.MDKConstants;
 import org.openmbee.mdk.api.incubating.convert.Converters;
@@ -39,9 +41,10 @@ import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.util.*;
 
-public class BranchValidator {
+public class BranchValidator implements RunnableWithProgress {
 
     private final Project project;
+    private boolean allBranches;
     private boolean errors;
     private ValidationSuite validationSuite = new ValidationSuite("structure");
     //    private ValidationRule twcMissingBranchValidationRule = new ValidationRule("Missing in Client", "Branch shall exist in TWC if it exists in MMS.", ViolationSeverity.WARNING);
@@ -49,15 +52,16 @@ public class BranchValidator {
     private ValidationRule branchEquivalenceValidationRule = new ValidationRule("Branch Equivalence", "Branch shall be represented in MagicDraw and MMS equivalently.", ViolationSeverity.ERROR);
     private ValidationRule mmsBuildingBranchValidationRule = new ValidationRule("Building on Server", "Branch shall be completely built on MMS before it is used.", ViolationSeverity.WARNING);
 
-    public BranchValidator(Project project) {
+    public BranchValidator(Project project, boolean allBranches) {
         this.project = project;
+        this.allBranches = allBranches;
 //        validationSuite.addValidationRule(twcMissingBranchValidationRule);
         validationSuite.addValidationRule(mmsMissingBranchValidationRule);
         validationSuite.addValidationRule(branchEquivalenceValidationRule);
         validationSuite.addValidationRule(mmsBuildingBranchValidationRule);
     }
 
-    public void validate(ProgressStatus progressStatus, boolean allBranches) {
+    public void run(ProgressStatus progressStatus) {
         if (project == null) {
             return;
         }
@@ -82,7 +86,7 @@ public class BranchValidator {
         }
 
         Collection<EsiUtils.EsiBranchInfo> targetBranches = null;
-        if (allBranches) {
+        if (this.allBranches) {
             try {
                 ProjectDescriptor projectDescriptor = ProjectDescriptorsFactory.createAnyRemoteProjectDescriptor(project);
                 targetBranches = EsiUtils.getBranches(projectDescriptor);
@@ -107,7 +111,7 @@ public class BranchValidator {
             String entryKey;
             if ((value = branchJson.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
                 entryKey = value.asText();
-                if (allBranches || entryKey.equals(currentBranch)) {
+                if (this.allBranches || entryKey.equals(currentBranch)) {
                     clientBranches.put(entryKey, new Pair<>(branch, branchJson));
                 }
             }
@@ -135,7 +139,7 @@ public class BranchValidator {
                         String entryKey;
                         if ((value = refObjectNode.get(MDKConstants.ID_KEY)) != null && value.isTextual()) {
                             entryKey = value.asText();
-                            if (allBranches || entryKey.equals(currentBranch)) {
+                            if (this.allBranches || entryKey.equals(currentBranch)) {
                                 serverBranches.put(entryKey, refObjectNode);
                             }
                         }
