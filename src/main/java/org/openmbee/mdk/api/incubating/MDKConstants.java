@@ -51,7 +51,7 @@ public class MDKConstants {
             REF_CREATED_STATUS = "created",
             ORG_KEY = "org",
             ORG_ID_KEY = ORG_KEY + ID_KEY_SUFFIX,
-            TWC_ID_KEY = "twc" + ID_KEY_SUFFIX,
+            TWC_ID_KEY = DERIVED_KEY_PREFIX + "twc" + ID_KEY_SUFFIX,
             TWC_VERSION_KEY = "twcVersion",
             ARTIFACTS_KEY = "_artifacts",
             CHECKSUM_KEY = "checksum",
