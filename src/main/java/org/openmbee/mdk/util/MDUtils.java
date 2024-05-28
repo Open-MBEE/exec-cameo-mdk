@@ -224,14 +224,18 @@ public class MDUtils {
             System.setProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME, Boolean.toString(svgEnrichedExportPropertyValue));
 
             ImageExporter.export(diagramPresentationElement, ImageExporter.SVG, svgFile, false, DocGenUtils.DOCGEN_DIAGRAM_DPI, DocGenUtils.DOCGEN_DIAGRAM_SCALE_PERCENT);
-            StringBuilder svgString = new StringBuilder(readFileToString(svgFile, StandardCharsets.UTF_8));
+            String svgString = readFileToString(svgFile, StandardCharsets.UTF_8);
             if (isEnriched(svgString)) {
-
-                Pattern p = Pattern.compile("id=\"([a-z0-9\\-]+)\"");
+                Project project = diagramPresentationElement.getProject();
+                Pattern p = Pattern.compile("id=\"([a-z0-9-]+)\"");
                 Matcher m = p.matcher(svgString);
-                m.replaceAll(match -> getEID(Converters.getIdToElementConverter().apply(match.group(1), diagramPresentationElement.getProject())));
-                appendStyle(svgString);
-                EnrichedSVGExporter.rewriteFile(svgFile, svgString, StandardCharsets.UTF_8);
+                svgString = m.replaceAll(match -> {
+                    String replace = "id=\"" + fixId(match.group(1), project) + "\"";
+                    return replace;
+                });
+                StringBuilder sb = new StringBuilder(svgString);
+                appendStyle(sb);
+                EnrichedSVGExporter.rewriteFile(svgFile, sb, StandardCharsets.UTF_8);
             }
         } finally {
             if (originalSvgEnrichedExportPropertyValue != null) {
@@ -241,6 +245,16 @@ public class MDUtils {
                 System.clearProperty(SVG_ENRICHED_EXPORT_PROPERTY_NAME);
             }
         }
+    }
+
+    private static String fixId (String id, Project project) {
+        try {
+            UUID.fromString(id);
+            id = getEID(Converters.getIdToElementConverter().apply(id, project));
+        } catch(IllegalArgumentException e) {
+            //Do Nothing
+        }
+        return id;
     }
 
     public static String readFileToString(File file, @CheckForNull Charset charset) {
@@ -279,7 +293,7 @@ public class MDUtils {
   
      }
 
-    public static boolean isEnriched(StringBuilder svgString) {
+    public static boolean isEnriched(String svgString) {
         int styleComment = svgString.indexOf("<!--STYLE -->");
         return styleComment > 0;
     }
