@@ -190,7 +190,11 @@ public class BranchValidator implements RunnableWithProgress {
                 serverBranch.remove(MDKConstants.STATUS_KEY);
                 serverBranch.remove(MDKConstants.PARENT_COMMIT_ID);
 
-                clientBranch.getValue().put(MDKConstants.DELETED_FIELD, false);
+                clientBranch.getValue().put(MDKConstants.ARCHIVED_FIELD, false);
+                if (serverBranch.get(MDKConstants.DELETED_FIELD) != null) {
+                    serverBranch.set(MDKConstants.ARCHIVED_FIELD, serverBranch.get(MDKConstants.DELETED_FIELD));
+                    serverBranch.remove(MDKConstants.DELETED_FIELD);
+                }
                 JsonNode diff = JsonPatchFunction.getInstance().apply(clientBranch.getValue(), serverBranch);
                 if (diff != null && diff.isArray() && diff.size() > 0) {
                     ValidationRuleViolation v = new ValidationRuleViolation(project.getPrimaryModel(), "[BRANCH NOT EQUIVALENT] The Teamwork Cloud branch \"" + clientBranch.getKey().getName() + "\" is not equivalent to the corresponding MMS branch.");
