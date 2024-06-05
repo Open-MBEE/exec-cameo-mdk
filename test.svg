@@ -1,0 +1,17 @@
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+         width="16px" height="16px" viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="572.6992" y1="816.3008" x2="585.6992" y2="816.3008" gradientTransform="matrix(1 0 0 1 -571.1992 -808.8008)">
+        <stop  offset="0" style="stop-color:#FFF9C4"/>
+        <stop  offset="1" style="stop-color:#FFFDE7"/>
+</linearGradient>
+<rect x="1.5" y="1.5" style="fill:url(#SVGID_1_);stroke:#424242;stroke-miterlimit:10;" width="13" height="12"/>
+<line style="fill:none;stroke:#424242;stroke-miterlimit:10;" x1="2" y1="11.5" x2="14" y2="11.5"/>
+<line style="fill:none;stroke:#424242;stroke-miterlimit:10;" x1="2" y1="9.5" x2="14" y2="9.5"/>
+<g>
+        <path style="fill:#424242;" d="M6,8L4,2.3h1.3l1.4,4.2l1.4-4.2h1.2L7.3,8H6z"/>
+        <path style="fill:#424242;" d="M9.2,3.8h1v0.6c0.1-0.2,0.3-0.4,0.5-0.5s0.5-0.2,0.8-0.2c0.5,0,0.9,0.2,1.2,0.6s0.5,0.9,0.5,1.6
+                c0,0.7-0.2,1.2-0.5,1.6S12,8.1,11.5,8.1c-0.2,0-0.4,0-0.6-0.1s-0.4-0.2-0.6-0.5v2.1H9.2V3.8z M10.3,5.8c0,0.5,0.1,0.8,0.3,1
+                s0.4,0.3,0.7,0.3c0.3,0,0.5-0.1,0.6-0.3s0.3-0.5,0.3-1c0-0.4-0.1-0.8-0.3-1s-0.4-0.3-0.6-0.3c-0.3,0-0.5,0.1-0.7,0.3
+                S10.3,5.4,10.3,5.8z"/>
+</g>
+</svg>
