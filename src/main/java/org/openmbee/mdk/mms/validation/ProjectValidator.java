@@ -9,7 +9,8 @@ import com.nomagic.magicdraw.core.Project;
 import com.nomagic.magicdraw.core.ProjectUtilities;
 import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.esi.EsiUtils.EsiBranchInfo;
-
+import com.nomagic.task.ProgressStatus;
+import com.nomagic.task.RunnableWithProgress;
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
 import org.openmbee.mdk.api.incubating.MDKConstants;
@@ -25,7 +26,8 @@ import org.openmbee.mdk.validation.ValidationSuite;
 import org.openmbee.mdk.validation.ViolationSeverity;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
-import org.openmbee.mdk.mms.endpoints.MMSProjectsEndpoint;
+import org.openmbee.mdk.mms.endpoints.MMSProjectEndpoint;
+import org.openmbee.mdk.mms.endpoints.MMSEndpointBuilderConstants;
 
 import javax.swing.JOptionPane;
 import java.io.File;
@@ -56,7 +58,7 @@ import java.security.GeneralSecurityException;
  */
 
 
-public class ProjectValidator {
+public class ProjectValidator implements RunnableWithProgress {
 
     private final Project project;
     private boolean errors;
@@ -102,7 +104,8 @@ public class ProjectValidator {
                     MMSUtils.JsonBlobType.PROJECT);
             // generate project post request
             HttpRequestBase request = MMSUtils
-                    .prepareEndpointBuilderBasicJsonPostRequest(MMSProjectsEndpoint.builder(), project, sendData)
+                    .prepareEndpointBuilderBasicJsonPostRequest(MMSProjectEndpoint.builder(), project, sendData)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
                     .build();
             // do project post request
             MMSUtils.sendMMSRequest(project, request);
@@ -130,13 +133,20 @@ public class ProjectValidator {
         }
     }
 
-    public void validate() {
+    @Override
+    public void run(ProgressStatus progressStatus) {
         ObjectNode response;
 
 
         try {
-            HttpRequestBase projectsRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSProjectsEndpoint.builder(), project).build();
-            File responseFile = MMSUtils.sendMMSRequest(project, projectsRequest);
+            HttpRequestBase projectRequest = MMSUtils.prepareEndpointBuilderBasicGet(MMSProjectEndpoint.builder(), project)
+                    .addParam(MMSEndpointBuilderConstants.URI_PROJECT_SUFFIX, Converters.getIProjectToIdConverter().apply(project.getPrimaryProject()))
+                    .build();
+            if (progressStatus != null) {
+                progressStatus.setDescription("Retrieving Project(s)");
+                progressStatus.setIndeterminate(true);
+            }
+            File responseFile = MMSUtils.sendMMSRequest(project, projectRequest);
             try (JsonParser jsonParser = JacksonUtils.getJsonFactory().createParser(responseFile)) {
                 response = JacksonUtils.parseJsonObject(jsonParser);
             }

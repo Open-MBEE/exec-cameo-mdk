@@ -12,6 +12,7 @@ import com.nomagic.magicdraw.esi.EsiUtils;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
 import com.nomagic.task.RunnableWithProgress;
+import com.nomagic.ui.ProgressStatusRunner;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ValueSpecification;
 import org.openmbee.mdk.api.incubating.MDKConstants;
@@ -59,12 +60,16 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         this.shouldCommit = shouldCommit;
         this.shouldCommitDeletes = shouldCommitDeletes;
         this.shouldUpdate = shouldUpdate;
-    }
-
+    }   
+    
     @SuppressWarnings("unchecked")
     @Override
     public void run(ProgressStatus progressStatus) {
-        progressStatus.setDescription("Initializing");
+        progressStatus.setDescription("Coordinated Sync: Initializing");
+        progressStatus.setCurrent(0);
+        progressStatus.setIndeterminate(false);
+        progressStatus.setMax(15);
+        progressStatus.cancelIfCanceled();
         if (ProjectUtilities.isFromEsiServer(project.getPrimaryProject()) && EsiUtils.getLoggedUserName() == null) {
             Utils.guilog("[WARNING] You need to be logged in to Teamwork Cloud first. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync.");
             return;
@@ -78,9 +83,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Utils.guilog("[ERROR] An error occurred while validating credentials. Credentials will be cleared. Skipping sync. All changes will be persisted in the model and re-attempted in the next sync. Reason: " + e.getMessage());
             return;
         }
+        progressStatus.increase();
+        progressStatus.setDescription("Coordinated Sync: Project Validation");
+        progressStatus.cancelIfCanceled();
 
         ProjectValidator pv = new ProjectValidator(project);
-        pv.validate();
+        ProgressStatusRunner.runWithProgressStatus(pv, "Coordinated Sync: Project Validation", true, 0);
+
         if (pv.hasErrors()) {
             Application.getInstance().getGUILog().log("[WARNING] Coordinated Sync can not complete and will be skipped.");
             return;
@@ -90,9 +99,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Utils.displayValidationWindow(project, pv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
             return;
         }
-
-        BranchValidator bv = new BranchValidator(project);
-        bv.validate(null, false);
+        progressStatus.increase();
+        progressStatus.setDescription("Coordinated Sync: Branch Validation");
+        progressStatus.cancelIfCanceled();
+        
+        BranchValidator bv = new BranchValidator(project, false);
+        ProgressStatusRunner.runWithProgressStatus(bv, "Coordinated Sync: Branch Validation", true, 0);
         if (bv.hasErrors()) {
             Application.getInstance().getGUILog().log("[WARNING] Coordinated sync can not complete and will be skipped.");
             return;
@@ -102,7 +114,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             Utils.displayValidationWindow(project, bv.getValidationSuite(), "Coordinated Sync Pre-Condition Validation");
             return;
         }
-
+        progressStatus.increase();
         LocalDeltaTransactionCommitListener listener = LocalDeltaProjectEventListenerAdapter.getProjectMapping(project).getLocalDeltaTransactionCommitListener();
 
         // UPDATE LOCKS
@@ -110,7 +122,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         listener.setDisabled(true);
 
         // UPDATE MMS CHANGELOG
-
+        progressStatus.setDescription("Coordinated Sync: Updating Server Changelog");
+        progressStatus.cancelIfCanceled();
         try {
             if (!MMSDeltaProjectEventListenerAdapter.getProjectMapping(project).update()) {
                 Application.getInstance().getGUILog().log("[WARNING] MMS history is unavailable. Skipping sync. All changes will be re-attempted in the next sync.");
@@ -121,9 +134,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
             e.printStackTrace();
             return;
         }
-
+        progressStatus.increase();
         // BUILD COMPLETE LOCAL CHANGELOG
-
+        progressStatus.setDescription("Coordinated Sync: Building Local Changelog");
+        progressStatus.cancelIfCanceled();
         Changelog<String, Element> persistedLocalChangelog = new Changelog<>();
         Collection<SyncElement> persistedLocalSyncElements = SyncElements.getAllByType(project, SyncElement.Type.LOCAL);
         for (SyncElement syncElement : persistedLocalSyncElements) {
@@ -154,8 +168,10 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 localUpdated = localChangelog.get(Changelog.ChangeType.UPDATED),
                 localDeleted = localChangelog.get(Changelog.ChangeType.DELETED);
 
+        progressStatus.increase();
         // BUILD COMPLETE MMS CHANGELOG
-
+        progressStatus.setDescription("Coordinated Sync: Building Server Changelog");
+        progressStatus.cancelIfCanceled();
         Changelog<String, Void> persistedMmsChangelog = new Changelog<>();
         Collection<SyncElement> persistedMmsSyncElements = SyncElements.getAllByType(project, SyncElement.Type.MMS);
         for (SyncElement syncElement : persistedMmsSyncElements) {
@@ -177,9 +193,9 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         Map<String, ObjectNode> mmsJsons = new HashMap<>(elementIdsToGet.size());
 
         // Get latest json for element added/changed from MMS
-
+        progressStatus.increase();
         if (!elementIdsToGet.isEmpty()) {
-            progressStatus.setDescription("Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
+            progressStatus.setDescription("Coordinated Sync: Getting " + elementIdsToGet.size() + " added/changed element" + (elementIdsToGet.size() != 1 ? "s" : "") + " from MMS");
             File responseFile;
             ObjectNode response;
             try {
@@ -220,8 +236,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         // NEW CONFLICT DETECTION
-
-        progressStatus.setDescription("Detecting conflicts");
+        progressStatus.increase();
+        progressStatus.setDescription("Coordinated Sync: Detecting conflicts");
         Map<String, Pair<Changelog.Change<Element>, Changelog.Change<Void>>> conflictedChanges = new LinkedHashMap<>(),
                 unconflictedChanges = new LinkedHashMap<>();
         localChangelog.findConflicts(mmsChangelog, (change, change2) -> change != null && change2 != null, conflictedChanges, unconflictedChanges);
@@ -305,13 +321,13 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         // POINT OF NO RETURN
-
+        progressStatus.increase();
         // COMMIT UNCONFLICTED CREATIONS AND UPDATES TO MMS
         String projectId = Converters.getIProjectToIdConverter().apply(project.getPrimaryProject());
         String refId = MDUtils.getBranchId(project);
         boolean shouldLogNoLocalChanges = shouldCommit;
         if (shouldCommit && !localElementsToPost.isEmpty()) {
-            progressStatus.setDescription("Committing creations and updates to MMS");
+            progressStatus.setDescription("Coordinated Sync: Committing creations and updates to MMS");
             LinkedList<ObjectNode> postElements = new LinkedList<>();
             for (Element element : localElementsToPost.values()) {
                 ObjectNode elementObjectNode = Converters.getElementToJsonConverter().apply(element, project);
@@ -345,12 +361,12 @@ public class DeltaSyncRunner implements RunnableWithProgress {
                 shouldLogNoLocalChanges = false;
             }
         }
-
+        progressStatus.increase();
         // COMMIT UNCONFLICTED DELETIONS TO MMS
         // NEEDS TO BE AFTER LOCAL; EX: MOVE ELEMENT OUT ON MMS, DELETE OWNER LOCALLY, WHAT HAPPENS?
 
         if (shouldCommit && shouldCommitDeletes && !deleteElements.isEmpty()) {
-            progressStatus.setDescription("Committing deletions to MMS");
+            progressStatus.setDescription("Coordinated Sync: Committing deletions to MMS");
             try {
                 File file = MMSUtils.createEntityFile(this.getClass(), ContentType.APPLICATION_JSON, deleteElements, MMSUtils.JsonBlobType.ELEMENT_ID);
                 HttpRequestBase elementsDeleteRequest = MMSUtils.prepareEndpointBuilderBasicJsonDeleteRequest(MMSElementsEndpoint.builder(), project, file)
@@ -373,7 +389,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         // OUTPUT RESULT OF LOCAL CHANGES
-
+        progressStatus.increase();
         if (shouldLogNoLocalChanges) {
             Application.getInstance().getGUILog().log("[INFO] No local changes to commit to MMS.");
         }
@@ -381,7 +397,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         // ADD CREATED ELEMENTS LOCALLY FROM MMS
         // CHANGE UPDATED ELEMENTS LOCALLY FROM MMS
         // REMOVE DELETED ELEMENTS LOCALLY FROM MMS
-
+        progressStatus.increase();
         if (shouldUpdate) {
             listener.setDisabled(true);
 
@@ -401,8 +417,8 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         // HANDLE CONFLICTS
-
-        progressStatus.setDescription("Finishing up");
+        progressStatus.increase();
+        progressStatus.setDescription("Coordinated Sync: Finishing up");
 
         Set<Element> localConflictedElements = new HashSet<>();
         Set<ObjectNode> mmsConflictedElements = new HashSet<>();
@@ -422,7 +438,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         ElementValidator elementValidator = new ElementValidator("CSync Conflict Validation", ElementValidator.buildElementPairs(localConflictedElements, project), mmsConflictedElements, project);
-        elementValidator.run(progressStatus);
+        ProgressStatusRunner.runWithProgressStatus(elementValidator, "Element Validation", true, 0);
         if (!elementValidator.getInvalidElements().isEmpty()) {
             Application.getInstance().getGUILog().log("[INFO] There are potential conflicts in " + elementValidator.getInvalidElements().size() + " element" + (elementValidator.getInvalidElements().size() != 1 ? "s" : "") + " between MMS and local changes. Please resolve them and re-sync.");
             vss.add(elementValidator.getValidationSuite());
@@ -447,7 +463,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
         }
 
         // CLEAR IN-MEMORY AND PERSIST UNPROCESSED & FAILURES
-
+        progressStatus.increase();
         listener.setDisabled(true);
         Project project = Application.getInstance().getProject();
         if (!SessionManager.getInstance().isSessionCreated(project)) {
@@ -502,7 +518,7 @@ public class DeltaSyncRunner implements RunnableWithProgress {
 
         SessionManager.getInstance().closeSession(project);
         listener.setDisabled(false);
-
+        progressStatus.increase();
         // SUCCESS
         failure = false;
     }

@@ -53,7 +53,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
         progressStatus.setIndeterminate(true);
 
         ProjectValidator pv = new ProjectValidator(project);
-        pv.validate();
+        
+        pv.run(progressStatus);
         if (pv.hasErrors()) {
             Application.getInstance().getGUILog().log("[ERROR] Project validation could not be completed. Manual validation aborted.");
             return;
@@ -64,8 +65,8 @@ public class ManualSyncRunner implements RunnableWithProgress {
         }
 
         if (project.isRemote()) {
-            BranchValidator bv = new BranchValidator(project);
-            bv.validate(null, false);
+            BranchValidator bv = new BranchValidator(project, false);
+            bv.run(null);
             if (bv.hasErrors()) {
                 Application.getInstance().getGUILog().log("[ERROR] Branch validation could not be completed. Manual validation aborted.");
                 return;

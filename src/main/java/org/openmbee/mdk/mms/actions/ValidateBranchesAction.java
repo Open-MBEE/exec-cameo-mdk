@@ -20,8 +20,8 @@ public class ValidateBranchesAction extends MMSAction {
 
         @Override
         public void run(ProgressStatus arg0) {
-            BranchValidator branchValidator = new BranchValidator(Application.getInstance().getProject());
-            branchValidator.validate(arg0, true);
+            BranchValidator branchValidator = new BranchValidator(Application.getInstance().getProject(), true);
+            branchValidator.run(arg0);
             if (branchValidator.hasErrors()) {
                 Application.getInstance().getGUILog().log("[ERROR] Unable to complete validate branches action.");
                 return;

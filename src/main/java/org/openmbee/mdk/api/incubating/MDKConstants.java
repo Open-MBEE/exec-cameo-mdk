@@ -74,6 +74,7 @@ public class MDKConstants {
             MESSAGES_NODE = "messages",
             REJECTED_NODE = "rejected",
             SOURCE_FIELD = "source",
+            ARCHIVED_FIELD = "_archived",
             DELETED_FIELD = "deleted",
             MAGICDRAW_SOURCE_VALUE = "magicdraw",
             ELEMENT_TYPE_VALUE = "Element",
