@@ -179,7 +179,7 @@ dependencies {
 
     // Apache Commons-IO
     implementation group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
-    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.1'
+    implementation group: 'org.apache.commons', name: 'commons-text', version: '1.12.0'
     //implementation group: 'commons-io', name: 'commons-io', version: '2.4'
 
     // Apache HTTP
@@ -299,7 +299,7 @@ task extractDependencies {
                     from 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
                     into 'build/tmp/com.nomagic.conceptmodeler'
                 }
-                
+
             }
         }
         fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: '*.zip').each { archive ->
@@ -307,7 +307,7 @@ task extractDependencies {
                 from zipTree(archive)
                 into 'build/dependency-cache/extracted/magicdraw'
             }
-            
+
         }
         delete 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
     }
@@ -586,7 +586,7 @@ nexusPublishing {
 
 artifactoryPublish {
     publications('mavenJava')
-    
+
 }
 
 artifactoryPublish.dependsOn distZip
