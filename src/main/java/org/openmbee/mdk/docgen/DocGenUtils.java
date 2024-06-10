@@ -241,6 +241,22 @@ public class DocGenUtils {
         return "";
     }
 
+    public static String fixId(Object s) {
+        if (s instanceof String) {
+            return (String) s;
+        } else if (s instanceof ElementValue) {
+            return MDUtils.getEID(((ElementValue) s).getElement());
+        } else if (s instanceof InstanceValue) {
+            InstanceSpecification is = ((InstanceValue) s).getInstance();
+            if (is != null) {
+                return MDUtils.getEID(is);
+            } else {
+                return "notFound";
+            }
+        } else {
+            return MDUtils.getEID((Element) s);
+        }
+    }
     //in case Expression is used other than RestrictedValue, only considered as RestrictedValue when 1st operand is LiteralString with "RestrictedValue"
     private static String getRestrictedValue(Object s) {
         if (s instanceof Expression) { //Expression is NamedElement
