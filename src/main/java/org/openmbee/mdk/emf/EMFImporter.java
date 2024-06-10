@@ -108,7 +108,7 @@ public class EMFImporter implements JsonToElementFunction {
                                 ModelHelper.setComment(element, jsonNode.asText());
                                 //prevent ownedCommentIds empty array from wiping out documentation later
                                 if (objectNode.get(MDKConstants.OWNED_COMMENT_IDS_KEY) != null
-                                        && objectNode.get(MDKConstants.OWNED_COMMENT_IDS_KEY).isEmpty()) {
+                                        && objectNode.get(MDKConstants.OWNED_COMMENT_IDS_KEY).size() == 0) {
                                     objectNode.remove(MDKConstants.OWNED_COMMENT_IDS_KEY);
                                 }
                             }

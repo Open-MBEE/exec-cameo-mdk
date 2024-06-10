@@ -9,6 +9,7 @@ import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import org.openmbee.mdk.api.incubating.MDKConstants;
 import org.openmbee.mdk.emf.EMFExporter;
 import org.openmbee.mdk.emf.EMFImporter;
+import org.openmbee.mdk.util.MDUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.function.BiFunction;
@@ -40,7 +41,7 @@ public class Converters {
 
     public static Function<Element, String> getElementToIdConverter() {
         if (ELEMENT_TO_ID_CONVERTER == null) {
-            ELEMENT_TO_ID_CONVERTER = EMFExporter::getEID;
+            ELEMENT_TO_ID_CONVERTER = MDUtils::getEID;
         }
         return ELEMENT_TO_ID_CONVERTER;
     }
