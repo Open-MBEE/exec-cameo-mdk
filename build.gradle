@@ -215,7 +215,7 @@ dependencies {
     }
     // Default Dev Workflow, this will only correctly pull from the local ./libz flatDir
     else {
-        preImplementation group: 'com.nomagic', name: 'democsm', version: '2022xRefresh2', classifier: 'Cameo_Systems_Modeler_2022x_Refresh2_HF1_no_install', ext: 'zip'
+        preImplementation group: 'com.nomagic', name: 'democsm', version: '2024xRefresh2', classifier: 'Cameo_Systems_Modeler_2024x_Refresh2_no_install', ext: 'zip'
     }
 
     preImplementation group: 'org.apache.fop', name: 'fop', version: '2.9', classifier: fopNameVersion + '-bin', ext: 'zip'
@@ -288,11 +288,6 @@ task extractDependencies {
                     from zipTree(archive)
                     into 'build/dependency-cache/extracted/magicdraw'
                 }
-                copy {
-                    from 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
-                    into 'build/tmp/com.nomagic.conceptmodeler'
-                }
-                
             }
         }
         fileTree(dir: 'build/dependency-cache/extracted/magicdraw', include: '*.zip').each { archive ->
@@ -359,11 +354,17 @@ task javadocZip(type: Zip, dependsOn: javadoc) {
 }
 
 abstract class PreDist extends DefaultTask {
+    @Internal
     String humanVersion
+    @Internal
     String internalVersion
+    @Internal
     String groupName
+    @Internal
     String buildTimestamp
+    @Internal
     String descriptor
+    @Internal
     String docbookVersion
 
     @InputDirectory
@@ -607,11 +608,6 @@ installDist {
             from 'build/plugin'
             into 'build/install'
         }
-        copy {
-            from 'build/tmp/com.nomagic.conceptmodeler'
-            into 'build/install/plugins/com.nomagic.conceptmodeler'
-        }
-        delete 'build/tmp/com.nomagic.conceptmodeler'
     }
 }
 
@@ -630,13 +626,13 @@ task runJava(type: JavaExec) {
         executable = profiles["executablePath"]
     }
     debugOptions {
-       enabled = true
+       //enabled = true
        port = 31001
        server = true
        suspend = false
    }
     main = 'com.nomagic.magicdraw.Main'
-    jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true']
+    jvmArgs = ['-XX:+IgnoreUnrecognizedVMOptions', '-Xmx4000M', '-Xss1024K', '-DLOCALCONFIG=true', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Desi.system.config=data/application.conf', '-Djdk.attach.allowAttachSelf=true', '-Dsun.locale.formatasdefault=true', '-XX:-OmitStackTraceInFastThrow', '--illegal-access=permit', '-Dfile.encoding=UTF-8', '@bin/vm.options', '-Djdk.util.zip.disableZip64ExtraFieldValidation=true']
     // arguments to pass to the application
     args 'DEVELOPER'
 }
