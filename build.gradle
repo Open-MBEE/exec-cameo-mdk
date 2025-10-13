@@ -143,13 +143,6 @@ configurations {
 
 // In this section you declare the dependencies for your production and test code
 dependencies {
-    // SLF4J API
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.2'
-    // implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21+'
-
-    // SLF4J-Log4j12
-    implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.2'
-    // implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.21+'
 
     // JSoup
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
@@ -516,7 +509,7 @@ distZip.doLast {
 
 apply plugin: "maven-publish"
 apply plugin: "signing"
-apply plugin: "io.github.gradle-nexus.publish-plugin"
+//apply plugin: "io.github.gradle-nexus.publish-plugin"
 
 publishing {
     // Reference to Gradle publications defined in the build script.
@@ -560,18 +553,33 @@ publishing {
         }
     }
 }
-
-signing {
-    required { gradle.taskGraph.hasTask("publishToSonatype") }
-    sign publishing.publications.mavenJava
-
-    if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
-        String signingKey = new String((project.findProperty("signingKey") as String).decodeBase64())
-        String signingPassword = project.findProperty("signingPassword")
-        useInMemoryPgpKeys(signingKey, signingPassword)
+repositories {
+    maven {
+        def releaseRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+        url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releaseRepoUrl
+        if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
+            credentials {
+                username = ossrhUsername
+                password = ossrhPassword
+            }
+        }
     }
 }
+signing {
+    //required { gradle.taskGraph.hasTask("publishToSonatype") }
+    //sign publishing.publications.mavenJava
 
+    if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
+        def signingKey = signingKey.replaceAll(/\\n/, "\n")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign publishing.publications.mavenJava
+        /*String signingKey = new String((project.findProperty("signingKey") as String).decodeBase64())
+        String signingPassword = project.findProperty("signingPassword")
+        useInMemoryPgpKeys(signingKey, signingPassword)*/
+    }
+}
+/*
 nexusPublishing {
     repositories {
         sonatype()
@@ -598,9 +606,11 @@ artifactory {
         clientConfig.info.setBuildNumber(buildNumber)
     }
 }
-
+*/
+//tasks.withType(Copy).configureEach {duplicatesStrategy = DuplicatesStrategy.EXCLUDE}
 installDist {
     destinationDir = file('build/plugin')
+    duplicatesStrategy DuplicatesStrategy.EXCLUDE
     doLast {
         copy {
             fileMode 0755
