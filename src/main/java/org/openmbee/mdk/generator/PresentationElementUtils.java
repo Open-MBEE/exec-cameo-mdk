@@ -1,11 +1,9 @@
 package org.openmbee.mdk.generator;
 
-import com.nomagic.magicdraw.commands.Command;
-import com.nomagic.magicdraw.commands.CommandHistory;
-import com.nomagic.magicdraw.commands.MacroCommand;
-import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Package;
@@ -283,11 +281,8 @@ public class PresentationElementUtils {
         Expression expression = c.getSpecification() instanceof Expression ? (Expression) c.getSpecification() : null;
         if (expression != null) {
             try {
-                Command command = RemoveCommandCreator.getCommand(expression);
-                command.execute();
-                MacroCommand macroCommand = CommandHistory.getCommandForAppend(expression);
-                macroCommand.add(command);
-            } catch (RuntimeException ignored) {
+                ModelElementsManager.getInstance().removeElement(expression);
+            } catch (ReadOnlyElementException | RuntimeException ignored) {
                 System.out.println("Could not clean up " + expression.getLocalID());
                 return;
             }
