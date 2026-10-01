@@ -1,7 +1,5 @@
 package org.openmbee.mdk.docgen.table;
 
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.CSVWriter;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.magicdraw.core.Project;
@@ -12,6 +10,11 @@ import com.nomagic.magicdraw.uml2.util.UML2ModelUtil;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.NamedElement;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Property;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
 import org.openmbee.mdk.api.incubating.convert.Converters;
 import org.openmbee.mdk.util.Utils;
 
@@ -192,12 +195,14 @@ public class EditableTable extends JDialog {
                     Project project = Application.getInstance().getProject();
                     try {
                         SessionManager.getInstance().createSession(project,"change");
-                        CSVReader reader = new CSVReader(new FileReader(savefile), separator.charAt(0));
+                        CSVReader reader = new CSVReaderBuilder(new FileReader(savefile))
+                                .withCSVParser(new CSVParserBuilder().withSeparator(separator.charAt(0)).build())
+                                .build();
                         importFromCsv(reader);
                         reader.close();
                         SessionManager.getInstance().closeSession(project);
                         gl.log("import succeeded");
-                    } catch (IOException ex) {
+                    } catch (IOException | CsvValidationException ex) {
                         gl.log("import failed");
                         SessionManager.getInstance().cancelSession(project);
                         gl.log(ex.getMessage());
@@ -209,7 +214,7 @@ public class EditableTable extends JDialog {
             }
         }
 
-        private void importFromCsv(CSVReader reader) throws IOException {
+        private void importFromCsv(CSVReader reader) throws IOException, CsvValidationException {
             GUILog gl = Application.getInstance().getGUILog();
             Project project = Application.getInstance().getProject();
             List<List<PropertyEnum>> what = ntable.getWhatToChange();
@@ -386,7 +391,7 @@ public class EditableTable extends JDialog {
                 if (choose.getSelectedFile() != null) {
                     File savefile = choose.getSelectedFile();
                     try {
-                        CSVWriter csvWriter = new CSVWriter(new FileWriter(savefile), separator.charAt(0));
+                        CSVWriter csvWriter = new CSVWriter(new FileWriter(savefile), separator.charAt(0), CSVWriter.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
                         exportToCsv(csvWriter);
                         csvWriter.close();
                         gl.log("export succeeded");

@@ -165,7 +165,7 @@ dependencies {
     implementation group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.4'
 
     // OpenCSV
-    implementation group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
+    implementation group: 'com.opencsv', name: 'opencsv', version: '5.11.2'
 
     // Jackson
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.3'
