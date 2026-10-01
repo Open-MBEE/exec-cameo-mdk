@@ -521,7 +521,9 @@ publishing {
             artifact sourcesJar
             artifact testsJar
             artifact javadocJar
-            artifact distZip
+            artifact(distZip) {
+                classifier = 'plugin'
+            }
             pom {
                 name = project.name
                 description = "Cameo / Magic plugin for MMS sync and DocGen"
