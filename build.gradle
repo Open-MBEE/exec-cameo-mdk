@@ -67,7 +67,7 @@ else {
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
 String fopNameVersion = 'fop-2.9'
-String javafxVersion = '11.0.2'
+String javafxVersion = '21.0.8'
 
 
 // In this section you declare where to find the dependencies of your project
