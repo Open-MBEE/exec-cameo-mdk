@@ -13,7 +13,7 @@ The latest user documentation can be accessed online: https://mdk.readthedocs.io
 ## Prerequisites
 
 * [Cameo Systems Modeler (CSM)](https://www.nomagic.com/products/cameo-systems-modeler) or another No Magic environment bundle that includes the [SysML plugin](https://www.nomagic.com/product-addons/magicdraw-addons/sysml-plugin) (Only CSM has been tested)
-    * Cameo MDK **7.x** is built against **2024x Refresh2** (JDK 17) and is only expected to work with 2024x. Cameo MDK **6.x** is compatible with **2021x Refresh2** thru **2022x Refresh2**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
+    * The `develop` branch is built against **2026x Refresh1** (JDK 21). Cameo MDK **7.x** is built against **2024x Refresh2** (JDK 17) and is only expected to work with 2024x. Cameo MDK **6.x** is compatible with **2021x Refresh2** thru **2022x Refresh2**. Compatibility for previous versions of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
 
 * [Model Management System (MMS)](https://www.openmbee.org/projects.html#mms)
     * The Cameo MDK (5.0+) is compatible with MMS **4.x**. Compatibility for previous version of Cameo MDK can be found in the [compatibility matrices](https://github.com/Open-MBEE/open-mbee.github.io/wiki/Compatibilities).
@@ -45,6 +45,11 @@ To learn how you can get involved in a variety of ways, please see [Contibuting 
 # Local Development
 
 Cameo MDK is a Java project that uses the [Gradle](https://gradle.org/) build tool. It can be imported as a Gradle project in IDEs like [IntelliJ](https://www.jetbrains.com/idea/) and [Eclipse](https://www.eclipse.org/ide/).
+
+### Prerequisites
+* JDK 21 (the Gradle toolchain is pinned to 21; the sources are compiled with `--release 17`).
+* The Cameo Systems Modeler "no install" distribution the build compiles against. It is a licensed vendor artifact and is **not** in this repository. By default the build looks for
+  `libz/democsm-2026xRefresh1-Cameo_Systems_Modeler_2026x_Refresh1_no_install.zip` (i.e. the vendor's `Cameo_Systems_Modeler_2026x_Refresh1_no_install.zip` renamed to the `<name>-<version>-<classifier>.zip` layout Gradle expects from a flat directory repository), or pull it from a repository declared in a build profile — see `buildProfiles/example.properties`.
 
 
 ## Custom Build Profiles
