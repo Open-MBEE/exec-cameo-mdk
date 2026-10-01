@@ -4,28 +4,27 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url 'https://plugins.gradle.org/m2/'
-        }
-    }
-    dependencies {
-        classpath "io.github.gradle-nexus:publish-plugin:1.0.0"
-        classpath group: "com.jfrog.artifactory", name: 'com.jfrog.artifactory.gradle.plugin', version: '5.1.9'
-        classpath group: 'org.openjfx', name: 'javafx-plugin', version: '0.0.14'
-    }
-}
-
-
 plugins {
     id 'idea'
     id 'eclipse'
     id 'java'
     id 'distribution'
-    id 'org.openjfx.javafxplugin' version '0.0.14'
-    id 'com.jfrog.artifactory' version '5.1.9'
+    id 'maven-publish'
+    id 'signing'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'com.jfrog.artifactory' version '5.2.5'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+// Cameo 2024x ships JDK 17 and 2026x ships JDK 21; targeting 17 keeps the plugin jar loadable on both.
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
 }
 
 String buildProfile = project.getProperties().getOrDefault('buildProfile', 'opensource')
@@ -68,6 +67,7 @@ else {
 
 String docbookNameVersion = 'docbook-xsl-1.79.1'
 String fopNameVersion = 'fop-2.9'
+String javafxVersion = '11.0.2'
 
 
 // In this section you declare where to find the dependencies of your project
@@ -75,7 +75,7 @@ repositories {
     mavenCentral()
     flatDir { dirs "libz" } //Put Cameo no-install and plugin zips here
     ivy {
-        url "https://sourceforge.net/projects/docbook/files/docbook-xsl/"
+        url = "https://sourceforge.net/projects/docbook/files/docbook-xsl/"
         patternLayout {
             artifact "[revision]/[classifier].[ext]"
         }
@@ -84,7 +84,7 @@ repositories {
         }
     }
     ivy {    //downloading apache fop (version is defined in preimplementation)
-        url "https://archive.apache.org/dist/xmlgraphics/fop/binaries/"
+        url = "https://archive.apache.org/dist/xmlgraphics/fop/binaries/"
         patternLayout {
             artifact "[classifier].[ext]"
         }
@@ -95,7 +95,7 @@ repositories {
         //url 'https://mirror.nodesdirect.com/apache/xmlgraphics/fop/binaries/' for newer version
     }
     maven {
-        url 'https://repo.gradle.org/gradle/libs-releases-local/'
+        url = 'https://repo.gradle.org/gradle/libs-releases-local/'
     }
 }
 if (profiles['repositories'] != null) {
@@ -104,7 +104,7 @@ if (profiles['repositories'] != null) {
         if (it.type == 'maven') {
             def mavenRepo = it
             repositories.maven {
-                url "${mavenRepo.url}"
+                url = "${mavenRepo.url}"
                 if (mavenRepo.credentials == true) {
                     credentials {
                         username project.getProperties().get('artifactoryUsername').toString()
@@ -116,7 +116,7 @@ if (profiles['repositories'] != null) {
         if (it["type"] == 'ivy') {
             def ivyRepo = it
             repositories.ivy {
-                url "${ivyRepo.url}"
+                url = "${ivyRepo.url}"
                 if (ivyRepo.credentials == true) {
                     credentials {
                         username project.getProperties().get('artifactoryUsername').toString()
@@ -137,7 +137,15 @@ if (profiles['repositories'] != null) {
 
 configurations {
     preImplementation
-    distribution
+    // Platform-specific JavaFX jars bundled into the plugin for the platforms this build does not run on.
+    distribution {
+        transitive = false
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+            attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY))
+            attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, LibraryElements.JAR))
+        }
+    }
     testPublish
 }
 
@@ -146,23 +154,18 @@ dependencies {
 
     // JSoup
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
-    // implementation group: 'org.jsoup', name: 'jsoup', version: '1.9.1+'
 
     // JGraphT
     implementation group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
-    // implementation group: 'org.jgrapht', name: 'jgrapht', version: '1.0.0+'
 
     // JSON Simple
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
-    // implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1+'
 
     // SwingX-All
     implementation group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.4'
-    // implementation group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.5+'
 
     // OpenCSV
     implementation group: 'net.sf.opencsv', name: 'opencsv', version: '2.3'
-    // implementation group: 'com.opencsv', name: 'opencsv', version: '3.8+'
 
     // Jackson
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.3'
@@ -173,7 +176,6 @@ dependencies {
     // Apache Commons-IO
     implementation group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.12.0'
-    //implementation group: 'commons-io', name: 'commons-io', version: '2.4'
 
     // Apache HTTP
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
@@ -214,13 +216,12 @@ dependencies {
     preImplementation group: 'org.apache.fop', name: 'fop', version: '2.9', classifier: fopNameVersion + '-bin', ext: 'zip'
     preImplementation group: 'net.sourceforge.docbook', name: 'docbook-xsl', version: '1.79.1', classifier: docbookNameVersion, ext: 'zip'
 
-    // JavaFX
-    distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'win'
-    distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'win'
-    distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'win'
-    distribution group: 'org.openjfx', name: 'javafx-fxml', version: '11.0.2', classifier: 'mac'
-    distribution group: 'org.openjfx', name: 'javafx-controls', version: '11.0.2', classifier: 'mac'
-    distribution group: 'org.openjfx', name: 'javafx-swing', version: '11.0.2', classifier: 'mac'
+    // JavaFX (the linux jars come through the javafx plugin on the runtime classpath)
+    ['win', 'mac', 'mac-aarch64'].each { javafxPlatform ->
+        ['javafx-base', 'javafx-graphics', 'javafx-controls', 'javafx-fxml', 'javafx-swing'].each { javafxModule ->
+            distribution group: 'org.openjfx', name: javafxModule, version: javafxVersion, classifier: javafxPlatform
+        }
+    }
 
 
     // This ensures classpath load order to match the MagicDraw provided order and then includes extras needed for non-OpenAPI stuff.
@@ -233,18 +234,16 @@ dependencies {
 }
 
 javafx {
-    version = "11.0.2"
+    version = javafxVersion
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.swing' ]
     platform = 'linux'
 }
 
-task extractDependencies {
-    configurations.preImplementation.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-        inputs.file artifact.file
-    }
+tasks.register('extractDependencies') {
+    inputs.files configurations.preImplementation
     outputs.dir 'build/dependency-cache'
     doLast {
-        inputs.files.each { archive ->
+        configurations.preImplementation.files.each { archive ->
             if (archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')) {
                 //extract fop zip
                 copy {
@@ -347,36 +346,36 @@ task javadocZip(type: Zip, dependsOn: javadoc) {
 }
 
 abstract class PreDist extends DefaultTask {
-    @Internal
+    @Input
     String humanVersion
-    @Internal
+    @Input
     String internalVersion
-    @Internal
+    @Input
     String groupName
-    @Internal
+    @Input
     String buildTimestamp
-    @Internal
+    @Input
     String descriptor
-    @Internal
+    @Input
     String docbookVersion
 
     @InputDirectory
-    String sourceDist = 'src/main/dist'
+    File sourceDist
 
     @InputDirectory
-    String sourceDistTemplate = sourceDist + '/template'
+    File sourceDistTemplate
 
     @InputDirectory
-    String extractedCache = 'build/dependency-cache/extracted'
+    File extractedCache
 
     @OutputDirectory
-    String outputDir = 'build/generated-dist'
+    File outputDir
 
     @TaskAction
     void executeTask() {
         project.copy {
             from sourceDist
-            exclude sourceDistTemplate
+            exclude 'template'
             from sourceDistTemplate
             into outputDir
         }
@@ -473,7 +472,12 @@ task preDist(type: PreDist) {
     buildTimestamp = timestamp
     descriptor = descriptorFile
     docbookVersion = docbookNameVersion
+    sourceDist = file('src/main/dist')
+    sourceDistTemplate = file('src/main/dist/template')
+    extractedCache = file('build/dependency-cache/extracted')
+    outputDir = file('build/generated-dist')
 }
+preDist.dependsOn extractDependencies
 preDist.dependsOn jar
 preDist.dependsOn javadocZip
 
@@ -491,10 +495,10 @@ tasks.withType(Tar) {
 }
 
 distZip {
-    includeEmptyDirs false
-    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+    includeEmptyDirs = false
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     eachFile { file ->
-        file.setPath(path.substring(path.indexOf("/") + 1, path.length()))
+        file.setPath(file.path.substring(file.path.indexOf("/") + 1))
     }
 }
 
@@ -507,27 +511,15 @@ distZip.doLast {
     }
 }
 
-apply plugin: "maven-publish"
-apply plugin: "signing"
-//apply plugin: "io.github.gradle-nexus.publish-plugin"
-
 publishing {
     // Reference to Gradle publications defined in the build script.
     publications {
         mavenJava(MavenPublication) {
             from components.java
-            artifact sourcesJar {
-                classifier "sources"
-            }
-            artifact testsJar {
-                classifier "tests"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
-            }
-            artifact distZip {
-                classifier "plugin"
-            }
+            artifact sourcesJar
+            artifact testsJar
+            artifact javadocJar
+            artifact distZip
             pom {
                 name = project.name
                 description = "Cameo / Magic plugin for MMS sync and DocGen"
@@ -553,13 +545,10 @@ publishing {
         }
     }
 }
-repositories {
-    maven {
-        def releaseRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-        def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-        url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releaseRepoUrl
-        if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
-            credentials {
+nexusPublishing {
+    repositories {
+        sonatype {
+            if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
                 username = ossrhUsername
                 password = ossrhPassword
             }
@@ -579,41 +568,34 @@ signing {
         useInMemoryPgpKeys(signingKey, signingPassword)*/
     }
 }
-/*
-nexusPublishing {
-    repositories {
-        sonatype()
-    }
-}
-
 artifactoryPublish {
     publications('mavenJava')
-    
 }
 
 artifactoryPublish.dependsOn distZip
 
-artifactory {
-    publish {
-        contextUrl = project.property('artifactoryUrl') as String
-        repository {
-            repoKey = project.property('artifactoryRepository')
-            username = project.getProperties().get('artifactoryUsername').toString()
-            password = project.getProperties().get('artifactoryPassword').toString()
+if (project.hasProperty('artifactoryUrl')) {
+    artifactory {
+        publish {
+            contextUrl = project.property('artifactoryUrl') as String
+            repository {
+                repoKey = project.property('artifactoryRepository')
+                username = project.getProperties().get('artifactoryUsername').toString()
+                password = project.getProperties().get('artifactoryPassword').toString()
+            }
+        }
+        if (buildNumber != null && !buildNumber.isEmpty()) {
+            clientConfig.info.setBuildNumber(buildNumber)
         }
     }
-    if (buildNumber != null && !buildNumber.isEmpty()) {
-        clientConfig.info.setBuildNumber(buildNumber)
-    }
 }
-*/
-//tasks.withType(Copy).configureEach {duplicatesStrategy = DuplicatesStrategy.EXCLUDE}
+
 installDist {
     destinationDir = file('build/plugin')
-    duplicatesStrategy DuplicatesStrategy.EXCLUDE
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     doLast {
         copy {
-            fileMode 0755
+            filePermissions { unix(0755) }
             from 'build/dependency-cache/extracted/magicdraw'
             from 'build/plugin'
             into 'build/install'
@@ -628,7 +610,7 @@ task runJava(type: JavaExec) {
         classpath files(classpathLibraries.collect { 'build/install/' + it })
     }
     workingDir 'build/install'
-    ignoreExitValue true
+    ignoreExitValue = true
 
     standardOutput = System.out
     errorOutput = System.err
@@ -641,7 +623,7 @@ task runJava(type: JavaExec) {
        server = true
        suspend = false
    }
-    main = 'com.nomagic.magicdraw.Main'
+    mainClass = 'com.nomagic.magicdraw.Main'
     jvmArgs = ['-XX:+IgnoreUnrecognizedVMOptions', '-Xmx4000M', '-Xss1024K', '-DLOCALCONFIG=true', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Desi.system.config=data/application.conf', '-Djdk.attach.allowAttachSelf=true', '-Dsun.locale.formatasdefault=true', '-XX:-OmitStackTraceInFastThrow', '--illegal-access=permit', '-Dfile.encoding=UTF-8', '@bin/vm.options', '-Djdk.util.zip.disableZip64ExtraFieldValidation=true']
     // arguments to pass to the application
     args 'DEVELOPER'
@@ -654,12 +636,12 @@ task testAVG(type: JavaExec) {
         classpath files(classpathLibraries.collect { 'build/install/' + it })
     }
     workingDir 'build/install'
-    ignoreExitValue true
+    ignoreExitValue = true
 
     standardOutput = System.out
     errorOutput = System.err
 
-    main = 'com.nomagic.magicdraw.Main'
+    mainClass = 'com.nomagic.magicdraw.Main'
     jvmArgs = ['-Xmx8192M', '-Xss512M', '-DLOCALCONFIG=true', '-DWINCONFIG=true', '-Djsse.enableSNIExtension=true', '-Djava.net.preferIPv4Stack=true', '-Dcom.sun.media.imageio.disableCodecLib=true', '-noverify', '-Dlocal.config.dir.ext=-dev', '-splash:data/splash.png', '-Dmd.class.path=$java.class.path', '-Desi.system.config=data/application.conf', '-Dlogback.configurationFile=data/logback.xml', '-Dsun.locale.formatasdefault=true', '-Dcom.nomagic.magicdraw.launcher=com.nomagic.magicdraw.commandline.CommandLineActionLauncher', '-Dcom.nomagic.magicdraw.commandline.action=org.openmbee.pma.cli.AutomatedViewGenerator']
 }
 
@@ -682,7 +664,7 @@ runScript.dependsOn installDist
 test {
     ignoreFailures = true
     testLogging.showStandardStreams = true
-    forkEvery 1
+    forkEvery = 1
     if (profiles["executablePath"] != null) {
         executable = profiles["executablePath"]
     }
@@ -741,7 +723,7 @@ test.dependsOn installDist
 
 task testrailPublish(type: JavaExec) {
     classpath configurations.testPublish
-    main = 'org.openmbee.testrail.cli.JUnitPublisher'
+    mainClass = 'org.openmbee.testrail.cli.JUnitPublisher'
     def arguments = ['--directory', 'build/test-results/test', '--milestone', version.replace('-SNAPSHOT', '')]
     def s
     if ((s = project.getProperties().get('testrailHost')) != null) {
