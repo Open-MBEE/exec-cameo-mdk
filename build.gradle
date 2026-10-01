@@ -246,6 +246,8 @@ tasks.register('extractDependencies') {
     inputs.files configurations.preImplementation
     outputs.dir 'build/dependency-cache'
     doLast {
+        // A different Cameo zip must not leave jars from the previous one on the classpath.
+        delete 'build/dependency-cache/extracted/magicdraw'
         configurations.preImplementation.files.each { archive ->
             if (archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')) {
                 //extract fop zip
