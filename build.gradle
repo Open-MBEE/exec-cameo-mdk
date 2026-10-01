@@ -211,8 +211,9 @@ dependencies {
         }
     }
     // Default Dev Workflow, this will only correctly pull from the local ./libz flatDir
+    // (see buildProfiles/example.properties for the expected file name)
     else {
-        preImplementation group: 'com.nomagic', name: 'democsm', version: '2024xRefresh2', classifier: 'Cameo_Systems_Modeler_2024x_Refresh2_no_install', ext: 'zip'
+        preImplementation group: 'com.nomagic', name: 'democsm', version: '2026xRefresh1', classifier: 'Cameo_Systems_Modeler_2026x_Refresh1_no_install', ext: 'zip'
     }
 
     preImplementation group: 'org.apache.fop', name: 'fop', version: '2.9', classifier: fopNameVersion + '-bin', ext: 'zip'
@@ -245,6 +246,8 @@ tasks.register('extractDependencies') {
     inputs.files configurations.preImplementation
     outputs.dir 'build/dependency-cache'
     doLast {
+        // A different Cameo zip must not leave jars from the previous one on the classpath.
+        delete 'build/dependency-cache/extracted/magicdraw'
         configurations.preImplementation.files.each { archive ->
             if (archive.getName().endsWith(fopNameVersion + '-' + fopNameVersion + '-bin.zip')) {
                 //extract fop zip
