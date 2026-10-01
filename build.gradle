@@ -168,10 +168,10 @@ dependencies {
     implementation group: 'com.opencsv', name: 'opencsv', version: '5.11.2'
 
     // Jackson
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.3'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.19.0'
 
     // JSON Patch
-    implementation group: "com.box", name: "json-patch", version: "1.13"
+    implementation group: "com.box", name: "json-patch", version: "1.16"
 
     // Apache Commons-IO
     implementation group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
