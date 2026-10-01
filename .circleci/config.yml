@@ -1,9 +1,15 @@
 version: 2.1
 
+# The Compile step needs the licensed Cameo "no install" zip (see build.gradle and
+# buildProfiles/example.properties). It is not in the repository, so on a plain
+# public checkout the Compile step fails at dependency resolution. To make it pass,
+# attach a context that exports ORG_GRADLE_PROJECT_buildProfile (plus
+# ORG_GRADLE_PROJECT_artifactoryUsername/Password) for a profile whose
+# repositories provide the zip.
 executors:
   openjdk_executor:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:21.0
     environment:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
