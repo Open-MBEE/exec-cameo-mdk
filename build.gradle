@@ -178,8 +178,8 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.12.0'
 
     // Apache HTTP
-    implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
-    implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.2'
+    implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.14'
+    implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.14'
 
     // Apache Commons CLI
     implementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
