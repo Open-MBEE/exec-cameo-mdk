@@ -156,7 +156,7 @@ dependencies {
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.6.1'
 
     // JGraphT
-    implementation group: 'net.sf.jgrapht', name: 'jgrapht', version: '0.8.3'
+    implementation group: 'org.jgrapht', name: 'jgrapht-core', version: '1.5.2'
 
     // JSON Simple
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1'
