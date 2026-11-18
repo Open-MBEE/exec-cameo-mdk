@@ -12,6 +12,7 @@ import com.nomagic.magicdraw.esi.EsiUtils.EsiBranchInfo;
 
 import com.nomagic.magicdraw.teamwork2.ITeamworkService;
 import com.nomagic.magicdraw.teamwork2.TeamworkService;
+import com.nomagic.magicdraw.teamwork2.esi.CategoryInfo;
 import org.openmbee.mdk.api.incubating.MDKConstants;
 import org.openmbee.mdk.api.incubating.convert.Converters;
 import org.openmbee.mdk.http.ServerException;
@@ -199,7 +200,10 @@ public class ProjectValidator {
         projectObjectNode.put(MDKConstants.TWC_ID_KEY, resourceId);
         String categoryId = "";
         if (project != null && project.getPrimaryProject() == iProject && !resourceId.isEmpty()) {
-            categoryId = EsiUtils.getCategoryID(resourceId);
+            CategoryInfo categoryInfo = EsiUtils.getCategoryInfoByResourceID(resourceId);
+            if (categoryInfo != null && categoryInfo.getID() != null) {
+                categoryId = categoryInfo.getID().toString();
+            }
         }
         projectObjectNode.put(MDKConstants.CATEGORY_ID_KEY, categoryId);
         return projectObjectNode;

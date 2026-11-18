@@ -1,9 +1,12 @@
 version: 2.1
 
+# The build needs the licensed Cameo "no install" zip, which is not in the repository. The
+# fetch_cameo_zip step downloads it into libz/ from CAMEO_ZIP_URL, a project environment variable
+# (optionally CAMEO_ZIP_USERNAME, CAMEO_ZIP_PASSWORD and CAMEO_ZIP_SHA256).
 executors:
   openjdk_executor:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:21.0
     environment:
       _JAVA_OPTIONS: "-Xmx3g"
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -19,6 +22,73 @@ commands:
           command: |
             echo "ORG_GRADLE_PROJECT_buildNumber=$ORG_GRADLE_PROJECT_buildNumber"
             echo "ORG_GRADLE_PROJECT_buildTag=$ORG_GRADLE_PROJECT_buildTag"
+  fetch_cameo_zip:
+    steps:
+      - run:
+          name: Fetch the Cameo no_install zip
+          command: |
+            # Keep the file name in step with the democsm dependency in build.gradle.
+            zip=libz/democsm-2026xRefresh1-Cameo_Systems_Modeler_2026x_Refresh1_no_install.zip
+            if [ -z "${CAMEO_ZIP_URL:-}" ]; then
+              echo "Error: CAMEO_ZIP_URL is not set, so there is nowhere to get $zip from."
+              echo "Set it in the CircleCI project environment variables to an https URL of the licensed zip."
+              exit 1
+            fi
+            case "$CAMEO_ZIP_URL" in
+              https://*) ;;
+              *) echo "Error: CAMEO_ZIP_URL must be an https URL."; exit 1 ;;
+            esac
+            # The URL and the credentials travel in a curl config file, never on a command line.
+            umask 077
+            cfg=$(mktemp)
+            printf 'url = "%s"\n' "$CAMEO_ZIP_URL" > "$cfg"
+            if [ -n "${CAMEO_ZIP_USERNAME:-}" ]; then
+              printf 'user = "%s:%s"\n' "$CAMEO_ZIP_USERNAME" "${CAMEO_ZIP_PASSWORD:-}" >> "$cfg"
+            fi
+            mkdir -p libz
+            if ! curl -sS --fail --location --proto '=https' --retry 3 -K "$cfg" -o "$zip"; then
+              rm -f "$cfg" "$zip"
+              echo "Error: could not download the Cameo zip from CAMEO_ZIP_URL."
+              exit 1
+            fi
+            rm -f "$cfg"
+            if [ -n "${CAMEO_ZIP_SHA256:-}" ]; then
+              echo "$CAMEO_ZIP_SHA256  $zip" | sha256sum -c -
+            fi
+            if ! unzip -Z1 "$zip" > /dev/null; then
+              echo "Error: the download is not a zip archive."
+              exit 1
+            fi
+            ls -l "$zip"
+  require_publishing_credentials:
+    steps:
+      - run:
+          name: Require the publishing credentials
+          command: |
+            # Names only, never values.
+            for name in CENTRAL_TOKEN_USERNAME CENTRAL_TOKEN_PASSWORD GPG_PRIVATE_KEY GPG_PASSPHRASE; do
+              if [ -z "${!name:-}" ]; then
+                echo "Error: ${name} is not set; the 'Maven Central' context supplies it."
+                exit 1
+              fi
+            done
+  export_signing_key:
+    steps:
+      - run:
+          name: Hand the signing key to Gradle
+          command: |
+            # The context may hold the key ASCII-armoured or base64-encoded on one line; Gradle needs it armoured.
+            umask 077
+            case "$GPG_PRIVATE_KEY" in
+              *"-----BEGIN PGP PRIVATE KEY BLOCK-----"*) printf '%s\n' "$GPG_PRIVATE_KEY" > /tmp/signing-key.asc ;;
+              *) printf '%s' "$GPG_PRIVATE_KEY" | tr -d ' \n' | base64 -d > /tmp/signing-key.asc ;;
+            esac
+            if ! grep -q -- '-----BEGIN PGP PRIVATE KEY BLOCK-----' /tmp/signing-key.asc; then
+              echo "Error: GPG_PRIVATE_KEY is neither an armoured private key nor its base64 encoding."
+              exit 1
+            fi
+            echo 'export ORG_GRADLE_PROJECT_signingKey="$(cat /tmp/signing-key.asc)"' >> "$BASH_ENV"
+            echo 'export ORG_GRADLE_PROJECT_signingPassword="$GPG_PASSPHRASE"' >> "$BASH_ENV"
 
 jobs:
   checkout_run_test:
@@ -36,6 +106,7 @@ jobs:
             - gradle-repo-v5-{{ .Branch }}-{{ checksum "gradle.properties" }}
             - gradle-repo-v5-{{ .Branch }}-
             - gradle-repo-v5-
+      - fetch_cameo_zip
       - run:
           name: Download uncached dependencies
           command: ./gradlew dependencies
@@ -83,24 +154,85 @@ jobs:
             - .gradle
             - project
 
+  # Publishing uses the organization's 'Maven Central' context: a Central Portal user token
+  # (CENTRAL_TOKEN_USERNAME, CENTRAL_TOKEN_PASSWORD) and the release signing key
+  # (GPG_PRIVATE_KEY, GPG_PASSPHRASE).
   deploy_snapshot:
     executor: openjdk_executor
     steps:
       - custom_env
       - attach_workspace:
           at: ~/
+      - require_publishing_credentials
+      - export_signing_key
       - run:
-          name: Deploy snapshot
-          command: ./gradlew --info --stacktrace publishToSonatype
+          name: Deploy snapshot to the Central Portal snapshot repository
+          command: |
+            export ORG_GRADLE_PROJECT_centralUsername="$CENTRAL_TOKEN_USERNAME"
+            export ORG_GRADLE_PROJECT_centralPassword="$CENTRAL_TOKEN_PASSWORD"
+            ./gradlew --info --stacktrace publish
+
+  # A Maven Central version can never be replaced, so everything that can fail runs before the
+  # upload: the credentials, the version check, and building and signing the bundle.
   deploy_release:
     executor: openjdk_executor
     steps:
       - custom_env
       - attach_workspace:
           at: ~/
+      - require_publishing_credentials
       - run:
-          name: Deploy release
-          command: ./gradlew --info --stacktrace publishToSonatype closeSonatypeStagingRepository
+          name: Refuse a version already on Maven Central
+          command: |
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://repo1.maven.org/maven2/org/openmbee/mdk/magic/mdk/${CIRCLE_TAG}/")
+            case "$code" in
+              404) echo "org.openmbee.mdk.magic:mdk ${CIRCLE_TAG} is not on Maven Central yet" ;;
+              200) echo "Error: org.openmbee.mdk.magic:mdk ${CIRCLE_TAG} is already on Maven Central and cannot be replaced."; exit 1 ;;
+              *) echo "Error: could not ask Maven Central (HTTP $code); nothing was published."; exit 1 ;;
+            esac
+      - export_signing_key
+      - run:
+          name: Build and sign the deployment bundle
+          command: |
+            ./gradlew --info --stacktrace cleanCentralStaging centralBundle
+            bundle=build/central/central-bundle.zip
+            poms=$(unzip -Z1 "$bundle" | grep -c '\.pom$')
+            signed=$(unzip -Z1 "$bundle" | grep -c '\.pom\.asc$')
+            echo "$poms modules, $signed signed"
+            if [ "$poms" -eq 0 ] || [ "$poms" -ne "$signed" ]; then
+              echo "Error: the bundle is empty or unsigned; nothing was published."
+              exit 1
+            fi
+      - run:
+          name: Upload the bundle and wait until Maven Central publishes it
+          no_output_timeout: 35m
+          command: |
+            # The token travels in a curl config file, never on a command line.
+            auth=$(mktemp)
+            printf 'header = "Authorization: Bearer %s"\n' "$(printf '%s:%s' "$CENTRAL_TOKEN_USERNAME" "$CENTRAL_TOKEN_PASSWORD" | base64 -w0)" > "$auth"
+            api=https://central.sonatype.com/api/v1/publisher
+            code=$(curl -sS -K "$auth" -o /tmp/deployment-id -w '%{http_code}' \
+              --form bundle=@build/central/central-bundle.zip \
+              "$api/upload?publishingType=AUTOMATIC&name=mdk-${CIRCLE_TAG}")
+            if [ "$code" != 201 ]; then
+              echo "Error: the Central Portal refused the upload (HTTP $code)."
+              cat /tmp/deployment-id
+              exit 1
+            fi
+            id=$(cat /tmp/deployment-id)
+            echo "Deployment $id uploaded"
+            for attempt in $(seq 1 180); do
+              status=$(curl -sS -K "$auth" -X POST "$api/status?id=$id" || true)
+              state=$(printf '%s' "$status" | jq -r '.deploymentState // empty' 2>/dev/null || true)
+              echo "$(date -u +%H:%M:%S) ${state:-no answer}"
+              case "$state" in
+                PUBLISHED) exit 0 ;;
+                FAILED) printf '%s\n' "$status"; exit 1 ;;
+              esac
+              sleep 10
+            done
+            echo "Error: deployment $id was not published within 30 minutes; check it at https://central.sonatype.com/publishing/deployments."
+            exit 1
 
 workflows:
   version: 2
@@ -113,12 +245,16 @@ workflows:
       - deploy_snapshot:
           requires:
             - checkout_run_test
+          context:
+            - Maven Central
           filters:
             branches:
               only: /((release|hotfix|support)/[0-9.]+(-(a|b|rc)[0-9]+)?|master|develop)/
       - deploy_release:
           requires:
             - checkout_run_test
+          context:
+            - Maven Central
           filters:
             tags:
               only: /[0-9.]+(-(a|b|rc)[0-9]+)?/

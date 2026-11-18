@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker{
-            image 'circleci/openjdk@sha256:012843a8f91da1ea5e22e142bb5cb8c999a7457e03b8c79ab45d5fcb68043383'
+            image 'cimg/openjdk:21.0-browsers'
         }
     }
     environment {
