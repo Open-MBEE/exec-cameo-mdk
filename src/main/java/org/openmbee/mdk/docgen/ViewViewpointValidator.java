@@ -31,8 +31,7 @@ import org.openmbee.mdk.validation.ValidationRuleViolation;
 import org.openmbee.mdk.validation.ValidationSuite;
 import org.openmbee.mdk.validation.ViolationSeverity;
 import org.eclipse.ocl.ParserException;
-import org.jgrapht.DirectedGraph;
-import org.jgrapht.EdgeFactory;
+import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.openmbee.mdk.util.*;
 
@@ -69,8 +68,7 @@ public class ViewViewpointValidator implements Runnable {
         validationSuite.addValidationRule(stereotypeMultiplicity);
     }
 
-    private DirectedGraph<NamedElement, Element> directedGraph;
-    private ActivityEdgeFactory activityEdgeFactory;
+    private Graph<NamedElement, Element> directedGraph;
 
     private Stereotype viewStereotype;
     private Stereotype conformStereotype;
@@ -85,7 +83,6 @@ public class ViewViewpointValidator implements Runnable {
         exposeStereotype = SysMLProfile.getInstanceByProject(project).expose().getStereotype();
 
         visited = new HashSet<>();
-        this.activityEdgeFactory = new ActivityEdgeFactory();
         this.directedGraph = new DefaultDirectedGraph<>(Element.class);
     }
 
@@ -99,18 +96,6 @@ public class ViewViewpointValidator implements Runnable {
             if (StereotypesHelper.hasStereotypeOrDerived(element, viewStereotype) && element instanceof NamedElement) {
                 validateView((NamedElement) element);
             }
-        }
-    }
-
-    class ActivityEdgeFactory implements EdgeFactory<ActivityNode, ActivityEdge> {
-        @Override
-        public ActivityEdge createEdge(ActivityNode sourceVertex, ActivityNode targetVertex) {
-            for (ActivityEdge ae : sourceVertex.getOutgoing()) {
-                if (ae.getTarget() == targetVertex) {
-                    return ae;
-                }
-            }
-            return null;
         }
     }
 
@@ -161,7 +146,7 @@ public class ViewViewpointValidator implements Runnable {
     }
 
     private void validateActivity(NamedElement activity) {
-        DirectedGraph<ActivityNode, ActivityEdge> graph = new DefaultDirectedGraph<>(activityEdgeFactory);
+        Graph<ActivityNode, ActivityEdge> graph = new DefaultDirectedGraph<>(ActivityEdge.class);
         List<InitialNode> initialNodes = findInitialNodes(activity);
         if (initialNodes.size() > 1) {
             initialNodeMultiplicity.addViolation(activity, initialNodeMultiplicity.getDescription());
@@ -175,7 +160,7 @@ public class ViewViewpointValidator implements Runnable {
         }
     }
 
-    private void validateNode(ActivityNode n, DirectedGraph<ActivityNode, ActivityEdge> graph) {
+    private void validateNode(ActivityNode n, Graph<ActivityNode, ActivityEdge> graph) {
         Collection<ActivityEdge> outgoingEdges = n.getOutgoing();
         if (!(n instanceof ForkNode) && outgoingEdges.size() > 1) {
             outgoingFlowMultiplicity.addViolation(n, outgoingFlowMultiplicity.getDescription());
@@ -212,11 +197,11 @@ public class ViewViewpointValidator implements Runnable {
         for (ActivityEdge out : outgoingEdges) {
             ActivityNode next = out.getTarget();
             if (graph.containsVertex(next)) {
-                graph.addEdge(n, next);
+                graph.addEdge(n, next, out);
             }
             else {
                 graph.addVertex(next);
-                graph.addEdge(n, next);
+                graph.addEdge(n, next, out);
                 validateNode(next, graph);
             }
         }
