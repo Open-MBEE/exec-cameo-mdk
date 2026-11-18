@@ -294,6 +294,11 @@ tasks.register('extractDependencies') {
             }
             
         }
+        // Concept Modeler stays off the compile classpath but is put back into the staging install by installDist.
+        sync {
+            from 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
+            into 'build/dependency-cache/stashed/com.nomagic.conceptmodeler'
+        }
         delete 'build/dependency-cache/extracted/magicdraw/plugins/com.nomagic.conceptmodeler'
     }
 }
@@ -606,6 +611,11 @@ installDist {
             from 'build/dependency-cache/extracted/magicdraw'
             from 'build/plugin'
             into 'build/install'
+        }
+        copy {
+            filePermissions { unix(0755) }
+            from 'build/dependency-cache/stashed/com.nomagic.conceptmodeler'
+            into 'build/install/plugins/com.nomagic.conceptmodeler'
         }
     }
 }
