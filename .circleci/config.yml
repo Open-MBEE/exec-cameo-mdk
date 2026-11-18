@@ -1,11 +1,8 @@
 version: 2.1
 
-# The Compile step needs the licensed Cameo "no install" zip (see build.gradle and
-# buildProfiles/example.properties). It is not in the repository, so on a plain
-# public checkout the Compile step fails at dependency resolution. To make it pass,
-# attach a context that exports ORG_GRADLE_PROJECT_buildProfile (plus
-# ORG_GRADLE_PROJECT_artifactoryUsername/Password) for a profile whose
-# repositories provide the zip.
+# The build needs the licensed Cameo "no install" zip, which is not in the repository. The
+# fetch_cameo_zip step downloads it into libz/ from CAMEO_ZIP_URL, a project environment variable
+# (optionally CAMEO_ZIP_USERNAME, CAMEO_ZIP_PASSWORD and CAMEO_ZIP_SHA256).
 executors:
   openjdk_executor:
     docker:
@@ -25,6 +22,44 @@ commands:
           command: |
             echo "ORG_GRADLE_PROJECT_buildNumber=$ORG_GRADLE_PROJECT_buildNumber"
             echo "ORG_GRADLE_PROJECT_buildTag=$ORG_GRADLE_PROJECT_buildTag"
+  fetch_cameo_zip:
+    steps:
+      - run:
+          name: Fetch the Cameo no_install zip
+          command: |
+            # Keep the file name in step with the democsm dependency in build.gradle.
+            zip=libz/democsm-2026xRefresh1-Cameo_Systems_Modeler_2026x_Refresh1_no_install.zip
+            if [ -z "${CAMEO_ZIP_URL:-}" ]; then
+              echo "Error: CAMEO_ZIP_URL is not set, so there is nowhere to get $zip from."
+              echo "Set it in the CircleCI project environment variables to an https URL of the licensed zip."
+              exit 1
+            fi
+            case "$CAMEO_ZIP_URL" in
+              https://*) ;;
+              *) echo "Error: CAMEO_ZIP_URL must be an https URL."; exit 1 ;;
+            esac
+            # The URL and the credentials travel in a curl config file, never on a command line.
+            umask 077
+            cfg=$(mktemp)
+            printf 'url = "%s"\n' "$CAMEO_ZIP_URL" > "$cfg"
+            if [ -n "${CAMEO_ZIP_USERNAME:-}" ]; then
+              printf 'user = "%s:%s"\n' "$CAMEO_ZIP_USERNAME" "${CAMEO_ZIP_PASSWORD:-}" >> "$cfg"
+            fi
+            mkdir -p libz
+            if ! curl -sS --fail --location --proto '=https' --retry 3 -K "$cfg" -o "$zip"; then
+              rm -f "$cfg" "$zip"
+              echo "Error: could not download the Cameo zip from CAMEO_ZIP_URL."
+              exit 1
+            fi
+            rm -f "$cfg"
+            if [ -n "${CAMEO_ZIP_SHA256:-}" ]; then
+              echo "$CAMEO_ZIP_SHA256  $zip" | sha256sum -c -
+            fi
+            if ! unzip -Z1 "$zip" > /dev/null; then
+              echo "Error: the download is not a zip archive."
+              exit 1
+            fi
+            ls -l "$zip"
   require_publishing_credentials:
     steps:
       - run:
@@ -71,6 +106,7 @@ jobs:
             - gradle-repo-v5-{{ .Branch }}-{{ checksum "gradle.properties" }}
             - gradle-repo-v5-{{ .Branch }}-
             - gradle-repo-v5-
+      - fetch_cameo_zip
       - run:
           name: Download uncached dependencies
           command: ./gradlew dependencies
