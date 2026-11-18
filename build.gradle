@@ -13,7 +13,6 @@ plugins {
     id 'signing'
     id 'org.openjfx.javafxplugin' version '0.1.0'
     id 'com.jfrog.artifactory' version '5.2.5'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
 }
 
 java {
@@ -557,20 +556,47 @@ publishing {
         }
     }
 }
-nexusPublishing {
+publishing {
     repositories {
-        sonatype {
-            if (project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')) {
-                username = ossrhUsername
-                password = ossrhPassword
+        if (version.endsWith('SNAPSHOT')) {
+            maven {
+                name = 'centralSnapshots'
+                url = 'https://central.sonatype.com/repository/maven-snapshots/'
+                if (project.hasProperty('centralUsername') && project.hasProperty('centralPassword')) {
+                    credentials {
+                        username = centralUsername
+                        password = centralPassword
+                    }
+                }
+            }
+        } else {
+            // Maven Central takes a release as one bundle, so releases are staged here and zipped by centralBundle.
+            maven {
+                name = 'centralStaging'
+                url = layout.buildDirectory.dir('central-staging')
             }
         }
     }
 }
-signing {
-    //required { gradle.taskGraph.hasTask("publishToSonatype") }
-    //sign publishing.publications.mavenJava
 
+tasks.register('cleanCentralStaging', Delete) {
+    delete layout.buildDirectory.dir('central-staging')
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+    mustRunAfter tasks.named('cleanCentralStaging')
+}
+
+// The deployment bundle the Central Publisher API accepts: the staged Maven layout of this module.
+tasks.register('centralBundle', Zip) {
+    dependsOn 'publish'
+    from layout.buildDirectory.dir('central-staging')
+    exclude '**/maven-metadata.xml*'
+    archiveFileName = 'central-bundle.zip'
+    destinationDirectory = layout.buildDirectory.dir('central')
+}
+
+signing {
     if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
         def signingKey = signingKey.replaceAll(/\\n/, "\n")
         useInMemoryPgpKeys(signingKey, signingPassword)
