@@ -1,7 +1,5 @@
 package org.openmbee.mdk.viewedit;
 
-import com.nomagic.magicdraw.core.Application;
-import com.nomagic.magicdraw.core.GUILog;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.ElementValue;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -26,7 +24,6 @@ public class DBAlfrescoVisitor extends DBAbstractVisitor {
     private Stack<Set<String>> viewElements = new Stack<>(); //ids of view elements
     private Set<DBImage> images = new LinkedHashSet<>();
     protected boolean recurse;
-    private GUILog gl = Application.getInstance().getGUILog();
 
     private Map<From, String> sourceMapping = new HashMap<>();
     private Map<Element, List<Element>> view2viewElements = new HashMap<>();
