@@ -35,8 +35,6 @@ public class DocumentMeta {
     private String subtitle;
     private String header;
     private String footer;
-    private String subheader;
-    private String subfooter;
     private int tocSectionDepth = 20;
     private int chunkSectionDepth = 20;
     private boolean useDefaultStyleSheet = true;

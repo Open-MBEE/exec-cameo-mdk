@@ -62,10 +62,6 @@ public abstract class MMSEndpoint {
             return this;
         }
 
-        private Object getParam(String key) {
-            return buildParams.get(key);
-        }
-
         protected String getStringParam(String key) {
             Object value = buildParams.get(key);
             return value instanceof String ? (String) value : "";

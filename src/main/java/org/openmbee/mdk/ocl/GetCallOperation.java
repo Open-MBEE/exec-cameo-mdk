@@ -29,7 +29,6 @@ public class GetCallOperation implements CallOperation {
         SELF, NAME, TYPE, VALUE, MEMBER, RELATIONSHIP, OWNER, DEFAULT
     }
 
-    private boolean collect = true;                     // TODO
     public boolean filter = true;                     // REVIEW
     // --
     // should
@@ -58,8 +57,6 @@ public class GetCallOperation implements CallOperation {
     public boolean useName = true;
     public boolean useType = true;
     public boolean useValue = true;
-    private boolean matchNull = true;                     // TODO
-    private boolean activityEdgeIsRelationship = true;                     // TODO
 
     /**
      * Always filter on these; i.e. collected elements should match all Objects
