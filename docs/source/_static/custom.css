@@ -1,0 +1,31 @@
+/* OpenMBEE brand guide: https://www.openmbee.org/brand.html */
+@import url('https://fonts.googleapis.com/css2?family=ABeeZee&display=swap');
+
+:root {
+    --openmbee-dark-blue: #10052F;
+    --openmbee-light-blue: #64DDFA;
+    --openmbee-grey: #D6D6D6;
+}
+
+/* The full colour logo is for dark backgrounds; the padding is its clear zone. */
+div.sphinxsidebar p.logo {
+    background: var(--openmbee-dark-blue);
+    border-radius: 8px;
+    padding: 28px;
+    margin-bottom: 18px;
+}
+
+div.sphinxsidebar p.logo img.logo {
+    display: block;
+    margin: 0 auto;
+}
+
+a.reference {
+    border-bottom-color: var(--openmbee-grey);
+}
+
+a:hover,
+a.reference:hover,
+div.sphinxsidebar a:hover {
+    border-bottom: 2px solid var(--openmbee-light-blue);
+}
