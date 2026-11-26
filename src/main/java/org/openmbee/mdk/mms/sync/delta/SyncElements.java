@@ -3,11 +3,9 @@ package org.openmbee.mdk.mms.sync.delta;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nomagic.magicdraw.commands.Command;
-import com.nomagic.magicdraw.commands.CommandHistory;
-import com.nomagic.magicdraw.commands.MacroCommand;
-import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
+import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.uml2.ext.jmi.helpers.ModelHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Element;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.InstanceSpecification;
@@ -51,13 +49,14 @@ public class SyncElements {
     }
 
     public static SyncElement setByType(Project project, SyncElement.Type type, String comment) {
+        // Callers (DeltaSyncRunner, DeltaSyncProjectEventListenerAdapter) wrap
+        // this in a SessionManager session, so the OpenAPI removal is safe here.
+        // RemoveCommandCreator is not present in all 2024x refreshes (missing in
+        // 2024x Refresh 3), which made every save throw NoClassDefFoundError.
         getAllByType(project, type).stream().map(SyncElement::getElement).forEach(element -> {
             try {
-                Command command = RemoveCommandCreator.getCommand(element);
-                command.execute();
-                MacroCommand macroCommand = CommandHistory.getCommandForAppend(element);
-                macroCommand.add(command);
-            } catch (RuntimeException e) {
+                ModelElementsManager.getInstance().removeElement(element);
+            } catch (ReadOnlyElementException | RuntimeException e) {
                 System.out.println("Unable to delete sync element: " + element.getName());
                 e.printStackTrace();
             }

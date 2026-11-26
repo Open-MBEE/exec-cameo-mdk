@@ -7,12 +7,9 @@ import com.nomagic.actions.ActionsCategory;
 import com.nomagic.actions.NMAction;
 import com.nomagic.magicdraw.annotation.Annotation;
 import com.nomagic.magicdraw.annotation.AnnotationAction;
-import com.nomagic.magicdraw.commands.Command;
-import com.nomagic.magicdraw.commands.CommandHistory;
-import com.nomagic.magicdraw.commands.MacroCommand;
-import com.nomagic.magicdraw.commands.RemoveCommandCreator;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.Project;
+import com.nomagic.magicdraw.openapi.uml.ModelElementsManager;
 import com.nomagic.magicdraw.openapi.uml.ReadOnlyElementException;
 import com.nomagic.magicdraw.openapi.uml.SessionManager;
 import com.nomagic.task.ProgressStatus;
@@ -216,11 +213,8 @@ public class UpdateClientElementAction extends RuleViolationAction implements An
                         }
 
                         try {
-                            Command command = RemoveCommandCreator.getCommand(element);
-                            command.execute();
-                            MacroCommand macroCommand = CommandHistory.getCommandForAppend(element);
-                            macroCommand.add(command);
-                        } catch (RuntimeException e) {
+                            ModelElementsManager.getInstance().removeElement(element);
+                        } catch (ReadOnlyElementException | RuntimeException e) {
                             exception = e;
                         }
                         if (exception == null) {
