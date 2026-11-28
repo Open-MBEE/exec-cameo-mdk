@@ -162,9 +162,6 @@ dependencies {
         exclude group: 'junit', module: 'junit'
     }
 
-    // SwingX-All
-    implementation group: 'org.swinglabs.swingx', name: 'swingx-all', version: '1.6.5-1'
-
     // OpenCSV
     implementation group: 'com.opencsv', name: 'opencsv', version: '5.11.2'
 
