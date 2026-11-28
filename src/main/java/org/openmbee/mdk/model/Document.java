@@ -10,8 +10,6 @@ public class Document extends Container {
 
     private String header;
     private String footer;
-    private String subheader;
-    private String subfooter;
 
     private boolean RemoveBlankPages;
     private boolean UseDefaultStylesheet;

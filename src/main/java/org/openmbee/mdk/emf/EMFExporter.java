@@ -31,8 +31,6 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -106,24 +104,6 @@ public class EMFExporter implements BiFunction<Element, Project, ObjectNode> {
     @Deprecated(since="6.1.1")
     public static String getEID(EObject eObject) {
         return MDUtils.getEID(eObject);
-    }
-
-    private static void dumpUMLPackageLiterals() {
-        for (Field field : UMLPackage.Literals.class.getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                try {
-                    field.setAccessible(true);
-                    Object o = field.get(null);
-                    System.out.println(field.getName() + ": " + o);
-                    if (o instanceof EReference) {
-                        EReference eReference = (EReference) o;
-                        System.out.println(" --- " + eReference.getEReferenceType() + " : " + eReference.getEReferenceType().getInstanceClass());
-                    }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     private enum Processor {

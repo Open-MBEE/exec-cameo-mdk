@@ -203,27 +203,6 @@ public class ConstraintValidationRule extends ValidationRule implements ElementV
         return (constrObj != null && SysMLExtensions.getInstance(constrObj).constraint().is(constrObj));
     }
 
-    private static boolean isLanguageOcl(org.openmbee.mdk.constraint.Constraint constraint) {
-        if (isDocGenConstraint(constraint)) {
-            return true;
-        }
-        if (!isUml(constraint)) {
-            return false; // complain??
-        }
-        ValueSpecification spec = ((Constraint) getConstraintObject(constraint)).getSpecification();
-        if (!(spec instanceof OpaqueExpression)) {
-            return false;
-        }
-        OpaqueExpression expr = (OpaqueExpression) spec;
-        List<String> languages = expr.getLanguage();
-        for (String lang : languages) {
-            if (lang.trim().equalsIgnoreCase("ocl")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public Set<Annotation> run(Project paramProject, Constraint paramConstraint, Collection<? extends Element> paramCollection) {
         Set<Annotation> result;
