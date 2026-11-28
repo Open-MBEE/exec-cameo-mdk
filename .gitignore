@@ -17,7 +17,6 @@ rebel.xml
 .DS_Store
 .vscode
 venv/*
-!venv/bin/
 *.groovy
 libz
 mddocs
