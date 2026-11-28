@@ -5,10 +5,13 @@ import com.nomagic.magicdraw.commandline.CommandLineActionManager;
 import com.nomagic.magicdraw.core.Application;
 import com.nomagic.magicdraw.core.options.EnvironmentOptions;
 import com.nomagic.magicdraw.evaluation.EvaluationConfigurator;
+import com.nomagic.magicdraw.hyperlinks.HyperlinksHandlersRegistry;
 import com.nomagic.magicdraw.uml.DiagramDescriptor;
 import com.nomagic.magicdraw.uml.DiagramTypeConstants;
 import org.openmbee.mdk.cli.AutomatedCommitter;
 import org.openmbee.mdk.cli.AutomatedViewGenerator;
+import org.openmbee.mdk.hyperlinks.TranclusionHandler;
+import org.openmbee.mdk.hyperlinks.TransclusionEditorPanel;
 import org.openmbee.mdk.mms.sync.status.SyncStatusConfigurator;
 import org.openmbee.mdk.options.ConfigureProjectOptions;
 import org.openmbee.mdk.options.MDKEnvironmentOptionsGroup;
@@ -34,6 +37,8 @@ public class MDKPluginHelper {
         // This somehow allows things to be loaded to evaluate opaque expressions or something.
         EvaluationConfigurator.getInstance().registerBinaryImplementers(this.getClass().getClassLoader());
 
+        // Add Transclusion Handler
+        HyperlinksHandlersRegistry.addHandler(new TranclusionHandler());
 
 
         CommandLineActionManager.getInstance().addAction(new AutomatedViewGenerator());

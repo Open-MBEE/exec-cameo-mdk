@@ -6,8 +6,11 @@ import com.nomagic.magicdraw.sysml.util.SysMLProfile;
 import com.nomagic.magicdraw.uml.BaseElement;
 import com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Class;
+import com.nomagic.uml2.ext.magicdraw.commonbehaviors.mdbasicbehaviors.OpaqueBehavior;
 import com.nomagic.uml2.ext.magicdraw.classes.mdkernel.*;
 import com.nomagic.uml2.ext.magicdraw.mdprofiles.Stereotype;
+import com.nomagic.uml2.ext.magicdraw.metadata.UMLPackage;
+
 import org.openmbee.mdk.SysMLExtensions;
 import org.openmbee.mdk.api.ElementFinder;
 import org.openmbee.mdk.api.incubating.convert.Converters;
@@ -36,6 +39,7 @@ import org.eclipse.ocl.helper.OCLHelper;
 import org.eclipse.ocl.lpg.AbstractLexer;
 import org.eclipse.ocl.lpg.AbstractParser;
 import org.eclipse.ocl.lpg.ProblemHandler;
+import org.eclipse.ocl.types.OCLStandardLibrary;
 import org.eclipse.ocl.util.OCLUtil;
 
 import java.util.ArrayList;
@@ -44,6 +48,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for encapsulating the OCL query and constraint evaluations.
@@ -200,6 +206,7 @@ public class OclEvaluator {
         if (query instanceof Element) {
             Element element = (Element) query;
             exprString = queryElementToStringExpression(element);
+            //if ()
         }
         else if (query instanceof String) {
             exprString = (String) query;
@@ -337,6 +344,7 @@ public class OclEvaluator {
         // if ( !wasOn ) Debug.turnOff();
         return result;
     }
+    
 
     public static List<GetCallOperation> addOperation(String[] names, EClassifier callerType,
                                                       EClassifier returnType, EClassifier parmType, String parmName, boolean zeroArgToo,
@@ -686,7 +694,7 @@ public class OclEvaluator {
         DocGenOperationInstance doi = new DocGenOperationInstance();
         doi.setName(opName);
         doi.setAnnotationName("DocGenEnvironment");
-
+                                    
         // REVIEW -- Can we do better than OclAny? Would it help avoid needing
         // to add oclAsType() before and after?
         doi.setCallerType(OCLStandardLibraryImpl.INSTANCE.getOclAny());
@@ -710,7 +718,95 @@ public class OclEvaluator {
         envFactory.getDgEnvironment().addDgOperation(doi);
         envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
     }
+    protected static void addAdvancedExpressionOperation(String name, String exprString, OpaqueBehavior expression, DocGenEnvironmentFactory envFactory) {
+        DocGenOperationInstance doi = new DocGenOperationInstance();
+        doi.setName(name);
+        doi.setAnnotationName("DocGenEnvironment");
+        EClassifier callerType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+        EClassifier returnType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+        List<com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint> preCondition = expression.getPrecondition().stream().collect(Collectors.toList());
+        if (preCondition.size() > 0) {
+            String preConditionType = queryElementToStringExpression(preCondition.get(0));
+            callerType =  UMLPackage.eINSTANCE.getEClassifier(preConditionType);
+            if (callerType == null) {
+                Application.getInstance().getGUILog().log("Unable to find pre-condition type " + preConditionType + " for docgen expression " + name + " defaulting to OCLAny");
+                callerType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+            }
+        }
+        doi.setCallerType(callerType);
+        List<com.nomagic.uml2.ext.magicdraw.classes.mdkernel.Constraint> postCondition = expression.getPostcondition().stream().collect(Collectors.toList());
+        if (postCondition.size() > 0) {
+            String postConditionType = queryElementToStringExpression(postCondition.get(0));
+            returnType =  UMLPackage.eINSTANCE.getEClassifier(postConditionType);
+            if (returnType == null) {
+                Application.getInstance().getGUILog().log("Unable to find post-condition type " + postConditionType + " for docgen expression" + name + " defaulting to OCLAny");
+                returnType = OCLStandardLibraryImpl.INSTANCE.getOclAny();
+            }
+        }
+        doi.setReturnType(returnType);
+        expression.getOwnedParameter().stream().forEach(param -> {
+            EParameter eparam = EcoreFactory.eINSTANCE.createEParameter();
+            eparam.setName(param.getName());
+            if (param.getType() != null) {
+                EClassifier type = getParamType(param);
+                if (type != null) {
+                    eparam.setEType(type);
+                    doi.addParameter(eparam);
+                } else {
+                    doi.addStringParameter(eparam);
+                }
+            }
+        });
+        doi.setOperation(new CallOperation() {
+                @Override
+                public Object callOperation(Object source, Object[] args) {
+                    Object result = null;
+                    StringBuffer sb = new StringBuffer();
+                    List<EParameter> params = doi.getParameters();
+                    for (int i = 0; i < params.size(); i++) {
+                        EParameter p = params.get(i);
+                        try {
+                            String arg = args[i].toString();
+                            sb.append("let ");
+                        
+                            sb.append(p.getName() + " : " + p.getEType().getName());
+                            sb.append(" = " + arg);
+                            sb.append(" in ");
+                        } catch (Throwable ignored) {}
+                    }
+                    sb.append(exprString);
+                    try {
+                        result = evaluateQuery(source, sb.toString(), isVerboseDefault());
+                    } catch (Throwable e) {
+                        Debug.error(true, false, e.getLocalizedMessage());
+                    }
+                    return result;
+                };
+            });
+        
+            envFactory.getDgEnvironment().addDgOperation(doi);
+            envFactory.getDgEvaluationEnvironment().addDgOperation(doi);
+    }
 
+    protected static EClassifier getParamType(Parameter param) {
+        String typeName  = param.getType().getName();
+        switch (typeName.toLowerCase()) {
+            case "string": {
+                return OCLStandardLibraryImpl.INSTANCE.getString();
+            }
+            case "boolean": {
+                return OCLStandardLibraryImpl.INSTANCE.getBoolean();
+            }
+            case "integer":
+            case "real":
+            case "unlimitednatural": {
+                return OCLStandardLibraryImpl.INSTANCE.getInteger();
+            }
+            default: {
+                return param.getType().eClass();
+            }
+        }
+    }
 //    /**
 //     * @param result
 //     * @return an OclCollection
@@ -850,6 +946,9 @@ public class OclEvaluator {
             String exprString = queryElementToStringExpression(expression);
             if (!Utils2.isNullOrEmpty(name)) {
                 try {
+                    if (expression instanceof OpaqueBehavior) {
+                        addAdvancedExpressionOperation(name, exprString, (OpaqueBehavior) expression, envFactory);
+                    }
                     addExpressionOperation(name, exprString, envFactory);
                 } catch (Throwable e) {
                     Debug.error(true, false, "Could not add " + name + " OCL shortcut with expression \"" + exprString + "\". " + e.getLocalizedMessage());

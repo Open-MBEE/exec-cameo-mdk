@@ -23,6 +23,7 @@ public class MDKConstants {
             TYPE_KEY = "type",
             TYPE_ID_KEY = TYPE_KEY + ID_KEY_SUFFIX,
             NAME_KEY = "name",
+            NAME_KEY_SUFFIX = "Name",
             FQN_KEY = "fullyQualifiedName",
             LABEL_KEY = "label",
             ID_KEY = "id",

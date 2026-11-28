@@ -34,7 +34,8 @@ public class MDKProjectOptions {
             MDK_MIGRATE_STEREOTYPE = "MDK_MIGRATE_STEREOTYPE",
             PROPERTY_AUTOSAVE_MDKMODEL = "PROPERTY_AUTOSAVE_MDKMODEL",
             PROPERTY_AUTOSAVE_MDKZIP = "PROPERTY_AUTOSAVE_MDKZIP",
-            PROPERTY_CONTEXT_EXPORT_LEVEL = "PROPERTY_CONTEXT_EXPORT_LEVEL";
+            PROPERTY_CONTEXT_EXPORT_LEVEL = "PROPERTY_CONTEXT_EXPORT_LEVEL",
+            INSTANCE_VP_DOC = "INSTANCE_VP_DOC";
 
     public MDKProjectOptions() {
     }
@@ -46,6 +47,7 @@ public class MDKProjectOptions {
         MDKProjectOptions.setOption(var0, VE_HOST_URL,"");
         MDKProjectOptions.setOption(var0, VE_BASE_PATH,"");
         MDKProjectOptions.setOption(var0, MDK_MIGRATE_STEREOTYPE, true);
+        MDKProjectOptions.setOption(var0, INSTANCE_VP_DOC, true);
 
         //below were added by LieberLieber's JSON export but doesn't seem to be used/called anywhere
         //MDKProjectOptions.setOption(var0, PROPERTY_AUTOSAVE_MDKMODEL, false);
@@ -240,6 +242,16 @@ public class MDKProjectOptions {
             Property migrate = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, MDK_MIGRATE_STEREOTYPE);
             if (migrate instanceof BooleanProperty) {
                 return ((BooleanProperty) migrate).getBoolean();
+            }
+        }
+        return false;
+    }
+
+    public static boolean instanceVPDoc(Project project) {
+        if (project != null) {
+            Property instanceDoc = project.getOptions().getProperty(ProjectOptions.PROJECT_GENERAL_PROPERTIES, INSTANCE_VP_DOC);
+            if (instanceDoc instanceof BooleanProperty) {
+                return ((BooleanProperty) instanceDoc).getBoolean();
             }
         }
         return false;
